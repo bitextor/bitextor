@@ -1,0 +1,188 @@
+README FILE OF BITEXTOR
+
+1. Programs
+
+	bt-parcollector -> Processes a website looking for parallel
+                           webpages, i.e., webpages that are translations
+                           between them. The result is a collection of
+                           webpages that can be updated periodically.
+                           Execute without parameters to show the 
+                           instructions of use.
+
+        bt-collection2tmx -> Once a collection has been created, bilingual 
+                             texts are aligned and TMX files are generated. 
+                             Execute without parameters to show the
+                             instructions of use.
+
+        bt-psbrtagaligner -> This program is an aligner designed to process
+                             the XML file collection downloaded using
+                             parallel collector. It is executed inside the
+                             program collection2tmx although it can be used
+                             independently.
+
+        bt-unicode2ascii -> This program was designed to replace any unicode
+  	                    characters for its ISO-8859-15 representation,
+                            given that the parallel collector works with
+                            this encoding.
+
+
+2. Install
+
+	a. Requirements:
+	        - i686, ppc, SPARC, etc.
+		- g++ (version 2.95 or newer)
+		- gnu make
+		- libxml2 (version 2.6.12 or newer)
+		- wget application
+
+	b. Building & installing
+		- ./configure
+		- make
+		- make install (or make-install script)
+
+
+3. Configuration
+
+	This program uses a configuration file that is called
+        bitextor.cfg and that can be found in the directory
+        where the installation took place (usually /usr/local/bitextor).
+	This file contains general configuration settings and the 
+	values of all thresholds used to compare webpages.
+
+
+4. Resources
+
+	a. Language guessers: Bitextor needs some language guessing tools 
+	                      to determine the language of a webpage. These
+	                      tools are supported by some parameter files:
+		- trigramlgparam: Contains the parameters of the
+                                  language-guesser based on trigrams.
+		- wordlgparam: Contains the parameters of the
+                               language-guesser based on the frequency of
+                               words.
+		- urllgparam: Contains the parameters of the
+                              language-guesser based on the URL.
+
+	b. URL generator: Bitextor can generate URL variants based on
+           (urlpatterns)  previously established patterns. This file
+                          contains the patterns needed in the URL generation process.
+		               
+	c. Configuration file: It contains several default values, the
+	   (bitextor.cfg)      languages to consider, the language guessers
+	                       configuration, etc. It was explained in
+                               section 3.
+                               
+        d. Website information file: An example of this file which especify
+           (elperiodico.txt)         the urls that contain the webpages to
+                                     download and compare looking for bitexts
+                                     is also included. The file is called
+                                     "elperiodico.txt" and can be found in the
+                                     directory where the installation took 
+                                     place.
+
+
+5. Running Bitextor
+
+        The bt-parcollector application can directly process a website without
+	any other information but it is recommended to use a website 
+	information file. This file will contain the list of languages that
+	can be found in the website (and that are interesting for the
+        collecting process) and a list of URLs. The first of the
+        URLs is the website to download, and the rest are websites
+        that possibly contain parallel webpages to the website. An
+        example of this file would be:
+
+        	es ca
+	        http://www.elperiodico.com/
+
+        The application will download webpages in Spanish (es) and
+        Catalan (ca) and it will not follow any links but
+        those whose URL begin with "http://www.elperiodico.com/".
+
+	Once that the downloading process has finished, the application
+	bt-collection2tmx processes the collection to generate the
+	final TMX corpus. The first step is to extract the best
+        candidates to be bitext and to discard the rest. Then, the
+	bitexts are aligned using the application bt-psbrtagaligner.
+
+	Execution of the applications without parameters will show the usage 
+	reference. A sample of the generation of a corpus with the option
+	of pattern generation is shown next:
+	
+		bt-parcollector -g1 urlpatterns elperiodico.txt
+		bt-collection2tmx www.elperiodico.com
+
+	When these commands end, the TMX corpus can be found in
+	www.elperiodico.com/whole . 
+	Additionally, a previously generated collection could be updated
+	easily, with the new webpages contained in the same website:
+		
+		bt-parcollector -r www.elperiodico.com
+		bt-collection2tmx www.elperiodico.com
+
+	So that, the TMX corpus would be updated with more files.
+
+
+6. Adding new languages
+	
+	Bitextor works with a fixed set of five languages by default, which
+	are Spanish, English, Catalan, Portuguese and Galician. However,
+	a new language can be added if there is a corpus of that language.
+	This corpus should be in plain text (without tags) although it may
+	contain HTML entities. The corpus will be used to train the language
+	guessers so that the new language could be identified.
+
+        The steps required for adding a new language are:
+
+		1. Edit the file util/languageutils.cpp and add the id
+		   of the new language to the 2 functions (in an analogous
+		   way to those functions).
+
+		2. Edit the file util/languageutils.h and increase the value
+		   of the constant kNumLanguages.
+
+		3. Install the application again using make and make install.
+
+		4. Train the trigram language guesser parameters file using
+		   the new corpus:
+
+			bt-langguesser -tt n <corpus> trigramlgparam
+
+		   where n is the number of the language that is being
+		   inserted minus 1 (5 for the first new language, 6 for the
+		   second one, etc.).
+
+		5. Train the language guesser based on the frequency of
+		   words using the new corpus:
+                        bt-langguesser -nd wordlgparam
+			bt-langguesser -td n <corpus> wordlgparam
+			bt-langguesser -rd 500 wordlgparam
+
+		   where n is the number of the language that is being
+		   inserted minus 1 (5 for the first language, 6 for the
+		   second, etc.).
+
+		6. Edit the configuration file to add the heuristic value
+		   of the normalizedsize of the new language (which is the
+		   relation between the sizes of parallel texts of different
+		   languages):
+			
+			<languages>
+			    <language code="es" normalizedsize="1.00"/>
+			    ...
+			    <language code="id" normalizedsize="x"/>
+		    
+		    where id is the id of the new language (the same than in
+		    step 1) and x is the relation between the size of a text
+		    in the new language and the size in the "es" language
+		    in this case (because for es it is 1.00).
+		    
+	Adding more languages require following all the steps in
+	the specified order.
+
+	It is highly recommended to use corpora of all languages to train
+	the word language guesser, when adding a new language. This is
+	because the dictionary distributed has been compacted to contain only
+	500 different words, and new languages would not be treated equally
+	before the compactation.
+
