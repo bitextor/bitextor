@@ -1,0 +1,66 @@
+
+<!ELEMENT psbr (metainfo,content)>
+
+<!ELEMENT metainfo (source,local,language,process,similar)>
+
+<!ENTITY % xhtml SYSTEM "xhtml.dtd">
+%xhtml;
+<!ELEMENT content (html)>
+
+<!ELEMENT source (location,date)>
+
+<!ELEMENT local (date,size,tagsnumber,tagtreenumber)>
+
+<!ELEMENT language (guesser*)>
+<!ATTLIST language
+code CDATA #REQUIRED>
+
+<!ELEMENT process (application*)>
+
+<!ELEMENT similar (id*)>
+
+<!ELEMENT location EMPTY>
+<!ATTLIST location
+domain CDATA #REQUIRED
+path CDATA #REQUIRED
+file CDATA #REQUIRED
+ext CDATA #REQUIRED
+param CDATA #REQUIRED>
+
+<!ELEMENT date EMPTY>
+<!ATTLIST date
+type (generation|retrieval) #REQUIRED
+value CDATA #REQUIRED>
+
+<!ELEMENT size EMPTY>
+<!ATTLIST size
+value CDATA #REQUIRED
+text CDATA #REQUIRED>
+
+<!ELEMENT tagnumber EMPTY>
+<!ATTLIST tagnumber
+value CDATA #REQUIRED>
+
+<!ELEMENT tagtreenumber EMPTY>
+<!ATTLIST tagtreenumber
+value CDATA #REQUIRED>
+
+<!ELEMENT guesser (lang*)>
+<!ATTLIST guesser
+name CDATA #REQUIRED>
+
+<!ELEMENT application EMPTY>
+<!ATTLIST application
+name CDATA #REQUIRED
+version CDATA #REQUIRED>
+
+<!ELEMENT id EMPTY>
+<!ATTLIST id
+langcode CDATA #REQUIRED
+value CDATA #REQUIRED
+distance CDATA #REQUIRED>
+
+<!ELEMENT lang EMPTY>
+<!ATTLIST lang
+code CDATA #REQUIRED
+probability CDATA #REQUIRED>
