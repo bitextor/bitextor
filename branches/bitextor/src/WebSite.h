@@ -1,30 +1,51 @@
 #ifndef WEBSITE_H_
 #define WEBSITE_H_
 
-#include "WebPage.h"
+#include "WebFile.h"
+#include "GlobalParams.h"
+#include "Heuristics.h"
+#include "Bitext.h"
+
+#include <dirent.h> 
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <map>
+#include <vector>
+
+
 
 /**
+ * @class WebSite
+ * @brief Classe que conté els elements d'un lloc web.
+ * 
  * Classe que representa els elements continguts per un lloc web.
  * Conté informació sobre els fitxers que pengen de l'arbre de
- * directoris, de forma que es pot ordenar, fàcilment, la informació
- * dels fitxers descarregats pel DownloadMod.
+ * directoris diferenciats per nivells, de forma que es pot ordenar,
+ * fàcilment, la informació dels fitxers descarregats pel DownloadMod.
  * 
  * @author Miquel Esplà i Gomis. 
  */
 class WebSite
 {
 private:
+
+	/**
+	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
+	 */
+	bool initialized;
+
 	/**
 	 * Ruta del directori base on es troba descarregat el lloc web.
 	 */
 	string base_path;
-	 
+
 	/**
 	 * Llistat de fitxers continguts al directori web.
 	 */
-	vector<WebFile> llista_fitxers;
-	
+	vector< vector<WebFile> > file_list;
+
 public:
 	/**
 	 * Constructor per defecte de la classe.
@@ -37,49 +58,53 @@ public:
 	~WebSite();
 	
 	/**
-	 * Constructor sobrecarregat de la classe.
-	 * @param base_path Ruta on es localitza el directori base del que penja tot el lloc web descarregat.
-	 */
-	WebSite(string base_path);
-	
-	/**
-	 * Mètode que crea un fitxer en XML amb tota la informació emmagatzemada en la classe.
-	 * @param XML_path Ruta on es localitza el fitxer generat.
-	 */
-	void toXML(string XML_path);
-	
-	/**
-	 * Mètode que permet establir la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
-	 * @param base_path Ruta on es localitza el directori base del que penja tot el lloc web descarregat.
-	 */
-	void setBasePath(string base_path);
-	
-	/**
 	 * Mètode que permet obtenir la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
+	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
 	 */
-	string getBasePath();
-
-	/**
-	 * Mètode que permet afegir un fitxer web a la llista.
-	 * @param wf Fitxer web que es vol afegir a la llista.
-	 * @return Retorna <code>true</code> en cas de que es puga fer la inserció a la llista i <code>false</code> en cas contrari.
-	 */
-	bool addWebFile(WebFile wf);
-	
-	/**
-	 * Mètode que permet eliminar un fitxer web de la llista.
-	 * @param file_path Ruta del fitxer que es vol eliminar.
-	 * @return Retorna <code>true</code> en cas de que es puga fer l'elimiació a la llista i <code>false</code> en cas contrari.
-	 */
-	bool removeWebFile(string file_path);
+	string GetBasePath();
 	
 	/**
 	 * Mètode que retorna les dades del fitxer emmagatzemat a la llista segons l'índex passat per paràmetre.
 	 * @param pos Índex del fitxer a la llista de fitxers.
+	 * @param level Nivell en què es troba el fitxer en l'arbre de directoris.
+	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
+	 * @throw char* El mètode llança una excepció si s'intenta accedir a un nivell que no existeix mitjançant el paràmetre level.
+	 * @throw char* El mètode llança una excepció si s'intenta accedir a una posició del nivell especificat que no existeix mitjançant el paràmetre pos.
 	 * @return Retorna el WebFile emmagatzemat a la posició <code>pos</code> de la llista de WebFiles.
 	 */
-	int getWebFile(int pos);
+	WebFile GetWebFile(unsigned int pos, unsigned int level);
+	
+	/**
+	 * Mètode que retorna el nombre de fitxers continguts al directori inicialitzat.
+	 * @throw char* El mètode llança una excepció si s'intenta accedir a un nivell que no existeix mitjançant el paràmetre level.
+	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
+	 * @return Retorna el nombre de fitxers continguts al directori inicialitzat.
+	 */
+	unsigned int WebFileCount(unsigned int level);
+	
+	/**
+	 * Mètode que retorna el nombre de nivells de l'arbre de directoris representat.
+	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
+	 * @return Retorna el nombre de nivells de l'arbre de directoris representat.
+	 */
+	unsigned int LevelCount();
+	
+	/**
+	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
+	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
+	 */
+	bool Initialize(string base_path);
+	
+	/**
+	 * Mètode que compara, segons els límits establerts als paràmetres globals, els fitxers web
+	 * continguts al lloc web per a obtenir una llista de conjunts de fitxers possibles candi-
+	 * dats a tractar-se del mateix fitxer en diferents idiomes.
+	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
+	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
+	 * un altre vector compost per les rutes dels fitxers candidats. 
+	 */
+	vector<Bitext> GetMatchedFiles();
 };
 
 #endif /*WEBSITE_H_*/
