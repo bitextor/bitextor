@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This configuration file will contain the set of tags that should be
+	 taken in account when aligning two files, whatever their format is -->
+
+<!-- TAGS FOR XHTML -->
+<configuration>
+	<general>
+		<tagAlignerConfigFile>/home/miquel/Escriptori/bitextor-2.0.0/config.xml</tagAlignerConfigFile>
+		<textCatConfigFile>/home/miquel/Escriptori/bitextor-2.0.0/conf.txt</textCatConfigFile>
+		<tagAlignerMode>1</tagAlignerMode>
+		<fileSizePercent>40</fileSizePercent>
+		<textLengthPercent>2000</textLengthPercent>
+		<editDistancePercent>10</editDistancePercent>
+		<directoryPathDistance>2</directoryPathDistance>
+	</general>
+	<irrelevantTags>
+		<tag>br</tag>
+		<tag>meta</tag>
+	</irrelevantTags>
+	<downloadMod>
+		<downloadPath>/home/miquel/Escriptori/</downloadPath>
+		<maxBytesToDownload>800000</maxBytesToDownload>
+		<extensions>
+			<acceptedExtenssion>php</acceptedExtenssion>
+			<acceptedExtenssion>asp</acceptedExtenssion>
+			<acceptedExtenssion>aspx</acceptedExtenssion>
+			<acceptedExtenssion>xml</acceptedExtenssion>
+			<acceptedExtenssion>html</acceptedExtenssion>
+			<acceptedExtenssion>htm</acceptedExtenssion>
+		</extensions>
+	</downloadMod>
+</configuration>
