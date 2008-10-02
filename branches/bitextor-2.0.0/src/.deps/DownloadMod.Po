@@ -2,10 +2,10 @@ DownloadMod.o DownloadMod.o: DownloadMod.cpp DownloadMod.h \
   /usr/include/stdio.h /usr/include/features.h /usr/include/sys/cdefs.h \
   /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
   /usr/include/gnu/stubs-32.h \
-  /usr/lib/gcc/i486-linux-gnu/4.2.3/include/stddef.h \
+  /usr/lib/gcc/i486-linux-gnu/4.2.4/include/stddef.h \
   /usr/include/bits/types.h /usr/include/bits/typesizes.h \
   /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
-  /usr/lib/gcc/i486-linux-gnu/4.2.3/include/stdarg.h \
+  /usr/lib/gcc/i486-linux-gnu/4.2.4/include/stdarg.h \
   /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
   /usr/include/stdlib.h /usr/include/bits/waitflags.h \
   /usr/include/bits/waitstatus.h /usr/include/endian.h \
@@ -42,8 +42,8 @@ DownloadMod.o DownloadMod.o: DownloadMod.cpp DownloadMod.h \
   /usr/include/c++/4.2/exception_defines.h /usr/include/c++/4.2/exception \
   /usr/include/c++/4.2/bits/char_traits.h \
   /usr/include/c++/4.2/bits/stl_algobase.h /usr/include/c++/4.2/climits \
-  /usr/lib/gcc/i486-linux-gnu/4.2.3/include/limits.h \
-  /usr/lib/gcc/i486-linux-gnu/4.2.3/include/syslimits.h \
+  /usr/lib/gcc/i486-linux-gnu/4.2.4/include/limits.h \
+  /usr/lib/gcc/i486-linux-gnu/4.2.4/include/syslimits.h \
   /usr/include/limits.h /usr/include/bits/posix1_lim.h \
   /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
   /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
@@ -106,7 +106,7 @@ DownloadMod.o DownloadMod.o: DownloadMod.cpp DownloadMod.h \
   /usr/include/glib-2.0/glib/gerror.h /usr/include/glib-2.0/glib/gquark.h \
   /usr/include/glib-2.0/glib/gtypes.h \
   /usr/lib/glib-2.0/include/glibconfig.h \
-  /usr/lib/gcc/i486-linux-gnu/4.2.3/include/float.h \
+  /usr/lib/gcc/i486-linux-gnu/4.2.4/include/float.h \
   /usr/include/glibmm-2.4/glibmm/unicode.h \
   /usr/include/glib-2.0/glib/gstrfuncs.h /usr/include/c++/4.2/iterator \
   /usr/include/c++/4.2/bits/stream_iterator.h \
@@ -151,7 +151,7 @@ DownloadMod.h:
 
 /usr/include/gnu/stubs-32.h:
 
-/usr/lib/gcc/i486-linux-gnu/4.2.3/include/stddef.h:
+/usr/lib/gcc/i486-linux-gnu/4.2.4/include/stddef.h:
 
 /usr/include/bits/types.h:
 
@@ -163,7 +163,7 @@ DownloadMod.h:
 
 /usr/include/wchar.h:
 
-/usr/lib/gcc/i486-linux-gnu/4.2.3/include/stdarg.h:
+/usr/lib/gcc/i486-linux-gnu/4.2.4/include/stdarg.h:
 
 /usr/include/bits/stdio_lim.h:
 
@@ -295,9 +295,9 @@ GlobalParams.h:
 
 /usr/include/c++/4.2/climits:
 
-/usr/lib/gcc/i486-linux-gnu/4.2.3/include/limits.h:
+/usr/lib/gcc/i486-linux-gnu/4.2.4/include/limits.h:
 
-/usr/lib/gcc/i486-linux-gnu/4.2.3/include/syslimits.h:
+/usr/lib/gcc/i486-linux-gnu/4.2.4/include/syslimits.h:
 
 /usr/include/limits.h:
 
@@ -459,7 +459,7 @@ GlobalParams.h:
 
 /usr/lib/glib-2.0/include/glibconfig.h:
 
-/usr/lib/gcc/i486-linux-gnu/4.2.3/include/float.h:
+/usr/lib/gcc/i486-linux-gnu/4.2.4/include/float.h:
 
 /usr/include/glibmm-2.4/glibmm/unicode.h:
 

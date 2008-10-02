@@ -14,6 +14,7 @@
 
 
 
+
 pkgdatadir = $(datadir)/bitextor
 pkglibdir = $(libdir)/bitextor
 pkgincludedir = $(includedir)/bitextor
@@ -52,6 +53,15 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+am__installdirs = "$(DESTDIR)$(sysconfdir)"
+sysconfDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(sysconf_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
@@ -68,11 +78,11 @@ DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run aclocal-1.10
-AMTAR = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run tar
-AUTOCONF = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run automake-1.10
+ACLOCAL = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run aclocal-1.10
+AMTAR = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run tar
+AUTOCONF = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run automake-1.10
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -106,7 +116,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = -ltagaligner -lenca -lxml++-2.6 -ltidy -ltextcat 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = bitextor
@@ -121,10 +131,10 @@ SHELL = /bin/bash
 STRIP = 
 VERSION = 2.0.0
 WGET = wget
-abs_builddir = /home/miquel/Escriptori/bitextor-2.0.0
-abs_srcdir = /home/miquel/Escriptori/bitextor-2.0.0
-abs_top_builddir = /home/miquel/Escriptori/bitextor-2.0.0
-abs_top_srcdir = /home/miquel/Escriptori/bitextor-2.0.0
+abs_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
+abs_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
+abs_top_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
+abs_top_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -144,7 +154,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /home/miquel/Escriptori/bitextor-2.0.0/install-sh
+install_sh = $(SHELL) /home/miquel/repos_bitextor/branches/bitextor-2.0.0/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -159,13 +169,14 @@ psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 srcdir = .
-sysconfdir = ${prefix}/etc
+sysconfdir = /usr/local/etc/bitextor/conf
 target_alias = 
 top_builddir = .
 top_srcdir = .
+sysconf_DATA = conf/*
 SUBDIRS = src
 EXTRA_DIST = AUTHORS ChangeLog NEWS doc bitextor.doxyfile\
-README THANKS conf.txt config.xml autogen.sh doc
+README THANKS conf autogen.sh doc
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
@@ -221,6 +232,23 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+install-sysconfDATA: $(sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(sysconfdir)" || $(MKDIR_P) "$(DESTDIR)$(sysconfdir)"
+	@list='$(sysconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  $(sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
+
+uninstall-sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sysconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -502,9 +530,12 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile config.h
+all-am: Makefile $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
+	for dir in "$(DESTDIR)$(sysconfdir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -552,7 +583,7 @@ install-data-am:
 
 install-dvi: install-dvi-recursive
 
-install-exec-am:
+install-exec-am: install-sysconfDATA
 
 install-html: install-html-recursive
 
@@ -584,7 +615,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-sysconfDATA
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
 	install-strip
@@ -599,10 +630,11 @@ uninstall-am:
 	install-dvi install-dvi-am install-exec install-exec-am \
 	install-html install-html-am install-info install-info-am \
 	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
+	install-ps-am install-strip install-sysconfDATA installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
-	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am
+	pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
+	uninstall-sysconfDATA
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

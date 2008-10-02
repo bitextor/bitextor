@@ -15,6 +15,7 @@
 
 
 
+
 pkgdatadir = $(datadir)/bitextor
 pkglibdir = $(libdir)/bitextor
 pkgincludedir = $(includedir)/bitextor
@@ -40,7 +41,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(textcatconfdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_bitextor_OBJECTS = Bitext.$(OBJEXT) DownloadMod.$(OBJEXT) \
@@ -64,14 +65,22 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(bitextor_SOURCES)
 DIST_SOURCES = $(bitextor_SOURCES)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+textcatconfDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(textcatconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run aclocal-1.10
-AMTAR = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run tar
-AUTOCONF = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run automake-1.10
+ACLOCAL = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run aclocal-1.10
+AMTAR = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run tar
+AUTOCONF = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run automake-1.10
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -105,7 +114,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = -ltagaligner -lenca -lxml++-2.6 -ltidy -ltextcat 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/miquel/Escriptori/bitextor-2.0.0/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = bitextor
@@ -120,10 +129,10 @@ SHELL = /bin/bash
 STRIP = 
 VERSION = 2.0.0
 WGET = wget
-abs_builddir = /home/miquel/Escriptori/bitextor-2.0.0/src
-abs_srcdir = /home/miquel/Escriptori/bitextor-2.0.0/src
-abs_top_builddir = /home/miquel/Escriptori/bitextor-2.0.0
-abs_top_srcdir = /home/miquel/Escriptori/bitextor-2.0.0
+abs_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0/src
+abs_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0/src
+abs_top_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
+abs_top_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -143,7 +152,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /home/miquel/Escriptori/bitextor-2.0.0/install-sh
+install_sh = $(SHELL) /home/miquel/repos_bitextor/branches/bitextor-2.0.0/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -162,6 +171,8 @@ sysconfdir = ${prefix}/etc
 target_alias = 
 top_builddir = ..
 top_srcdir = ..
+textcatconfdir = /usr/local/etc/bitextor/LM
+textcatconf_DATA = LM/*
 bitextor_SOURCES = \
 Bitext.h \
 Bitext.cpp \
@@ -188,7 +199,7 @@ INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 -I/usr/lib/libxml++-2.6/include -I/usr/include/libxml2
 
 LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca
-EXTRA_DIST = LM2 LexAnalyzer config.xml LexAnalyzer.cpp
+EXTRA_DIST = LexAnalyzer config.xml LexAnalyzer.cpp
 all: all-am
 
 .SUFFIXES:
@@ -277,6 +288,23 @@ include ./$(DEPDIR)/WebSite.Po
 #	source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+install-textcatconfDATA: $(textcatconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(textcatconfdir)" || $(MKDIR_P) "$(DESTDIR)$(textcatconfdir)"
+	@list='$(textcatconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(textcatconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(textcatconfdir)/$$f'"; \
+	  $(textcatconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(textcatconfdir)/$$f"; \
+	done
+
+uninstall-textcatconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(textcatconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(textcatconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(textcatconfdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -353,9 +381,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(textcatconfdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -402,7 +430,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-textcatconfDATA
 
 install-dvi: install-dvi-am
 
@@ -437,7 +465,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-textcatconfDATA
 
 .MAKE: install-am install-strip
 
@@ -449,10 +477,11 @@ uninstall-am: uninstall-binPROGRAMS
 	install-exec install-exec-am install-html install-html-am \
 	install-info install-info-am install-man install-pdf \
 	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	install-textcatconfDATA installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am tags uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-textcatconfDATA
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

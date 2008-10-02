@@ -47,10 +47,10 @@ main (int argc, char *const *argv)
 	string file_name;
 	bool show_howtouse=false;
 	string dest_dir;
-	
+
 	if(argc==2){
 		show_howtouse=true;
-		if(strcmp(argv[2],"-h")!=0)
+		if(strcmp(argv[1],"-h")!=0 && strcmp(argv[1],"--help")!=0)
 			cout<<"The selected option is not correct."<<endl;
 	}
 	else{
@@ -59,7 +59,7 @@ main (int argc, char *const *argv)
 		else{
 			try{
 				if(!GlobalParams::LoadGlobalParams(argv[1]))
-					cerr<<"Bitextor could'nt open the config file."<<endl;
+					cerr<<"Bitextor can't open the config file. Please, specifie it in the bitextor's configuration file in the section <textCatConfigFile>XXXXX</textCatConfigFile>"<<endl;
 				else{
 					if(strcmp(argv[2],"-d")==0){
 						cout<<"Inicialising Bitextor's destination path..."<<endl;
