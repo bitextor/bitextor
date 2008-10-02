@@ -6,8 +6,8 @@
 <!-- TAGS FOR XHTML -->
 <configuration>
 	<general>
-		<tagAlignerConfigFile>/home/miquel/repos_bitextor/branches/bitextor-2.0.0/conf/tagaligner_config.xml</tagAlignerConfigFile>
-		<textCatConfigFile>/home/miquel/repos_bitextor/branches/bitextor-2.0.0/LM/conf.txt</textCatConfigFile>
+		<tagAlignerConfigFile>/usr/local/etc/bitextor/conf/tagaligner_config.xml</tagAlignerConfigFile>
+		<textCatConfigFile>/usr/local/etc/bitextor/LM/conf.txt</textCatConfigFile>
 		<tagAlignerMode>1</tagAlignerMode>
 		<fileSizePercent>40</fileSizePercent>
 		<textLengthPercent>2000</textLengthPercent>
