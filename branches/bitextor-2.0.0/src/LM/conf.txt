@@ -12,12 +12,12 @@
 # likely candidates more quickly.
 #
 
-./es.utf8.lm	es
-./en.utf8.lm	en
-./ca.utf8.lm	ca
-./fr.utf8.lm	fr
-./an.utf8.lm	an
-./gl.utf8.lm	gl
-./ga.utf8.lm	ga
-./eu.utf8.lm	eu
-./de.utf8.lm	de
+/usr/local/etc/bitextor/LM/es.utf8.lm	es
+/usr/local/etc/bitextor/LM/en.utf8.lm	en
+/usr/local/etc/bitextor/LM/ca.utf8.lm	ca
+/usr/local/etc/bitextor/LM/fr.utf8.lm	fr
+/usr/local/etc/bitextor/LM/an.utf8.lm	an
+/usr/local/etc/bitextor/LM/gl.utf8.lm	gl
+/usr/local/etc/bitextor/LM/ga.utf8.lm	ga
+/usr/local/etc/bitextor/LM/eu.utf8.lm	eu
+/usr/local/etc/bitextor/LM/de.utf8.lm	de
