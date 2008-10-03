@@ -111,6 +111,11 @@ private:
 	 * Paràmetre que indica la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 */
 	static string download_path;
+	
+	/**
+	 * Indicador que permet forçar a bitextor a consultar l'idioma de cada fitxer o permetre que ell mateix intente esbrinar-lo.
+	 */
+	static bool guess_language;
 
 public:
 	/**
@@ -262,6 +267,18 @@ public:
 	 * @return Retorna la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 */
 	static string GetDownloadPath();
+	
+	/**
+	 * Mètode que permet indicar a bitextor si ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
+	 * @param Valor que es preten donar a aquest paràmetre.
+	 */
+	static void SetGuessLanguage(bool value);
+	
+	/**
+	 * Mètode que permet saber si bitextor ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
+	 * @return Retorna true en cas que bitextor siga qui esbrina l'idioma i false si l'ha de consultar a l'usuari.
+	 */
+	static bool GetGuessLanguage();
 };
 
 #endif /*GLOBALPARAMS_H_*/

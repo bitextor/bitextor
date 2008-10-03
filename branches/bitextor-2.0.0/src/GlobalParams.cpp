@@ -28,6 +28,8 @@ vector<string> GlobalParams::accepted_extenssions;
 
 string GlobalParams::download_path="~/";
 
+bool GlobalParams::guess_language=true;
+
 void GlobalParams::SetMaxEditDistance(float value)
 {
 	if(value>0)
@@ -249,4 +251,14 @@ int GlobalParams::GetMaxBytesToDownload()
 string GlobalParams::GetDownloadPath()
 {
 	return download_path;
+}
+
+void GlobalParams::SetGuessLanguage(bool value)
+{
+	guess_language=value;
+}
+
+bool GlobalParams::GetGuessLanguage()
+{
+	return guess_language;
 }

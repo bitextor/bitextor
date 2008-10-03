@@ -11,7 +11,7 @@ WebFile::~WebFile(){}
 bool WebFile::Initialize(string path)
 {
 	string str_temp;
-	filebuf fb;
+	filebuf *fb;
 	istream *in;
 	bool exit=true;
 	
@@ -33,25 +33,33 @@ bool WebFile::Initialize(string path)
 			}
 			
 			//We open the file to process it whith the lexic analyzer to separate the tags and the text.
-			fb.open (path.c_str(),ios::in);
-			if(fb.is_open()){
-				in=new istream(&fb);
+			fb=new filebuf();
+			fb->open (path.c_str(),ios::in);
+			if(fb->is_open()){
+				in=new istream(fb);
 				FlexLexer* lexer = new yyFlexLexer(in);
 				lexer->yylex();
 				
 				//We set the tag list
 				this->tag_list=my_lex_tag_list;
-				//We gess the language and set it
-				void *h = textcat_Init(GlobalParams::GetTextCatConfigFile().c_str());
-				str_temp=textcat_Classify(h, my_lex_text.c_str(), my_lex_text.length()+1);
-				this->lang=str_temp.substr(1,str_temp.find_first_of("]")-1);
-				if(str_temp[0]!='[')
-					exit=false;
-				textcat_Done(h);
-				fb.close();
-				delete in;
-				h=NULL;
-				delete lexer;
+				if(GlobalParams::GetGuessLanguage()){
+					//We gess the language and set it
+					void *h = textcat_Init(GlobalParams::GetTextCatConfigFile().c_str());
+					str_temp=textcat_Classify(h, my_lex_text.c_str(), my_lex_text.length());
+					this->lang=str_temp.substr(1,str_temp.find_first_of("]")-1);
+	
+					if(str_temp[0]!='[')
+						exit=false;
+					textcat_Done(h);
+					delete in;
+					h=NULL;
+					delete lexer;
+					fb->close();
+				}
+				else{
+					cout<<"Set the language for the file "<<this->path<<" : ";
+					cin>>this->lang;
+				}
 			}
 			else
 				exit=false;

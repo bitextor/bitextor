@@ -68,7 +68,7 @@ bool DownloadMod::StartDownload(string website)
 	ostringstream ss;
 	bool exit;
 
-	command="wget -rq --no-parent ";
+	command="wget -rq ";
 	if(this->max_downloaded_size>-1){
 		ss<<this->max_downloaded_size;
 		command+=" -Q "+ss.str();
