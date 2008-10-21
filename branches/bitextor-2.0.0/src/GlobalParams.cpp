@@ -143,6 +143,7 @@ void GlobalParams::ProcessNode(const xmlpp::Node* node, string tagname="", unsig
 	string out;
 	string before;
 	string after;
+	string accepted_ext;
 
 	//if(nodeText && nodeText->is_white_space()) //Let's ignore the indenting - you don't always want to do this.
 	//	return;
@@ -185,15 +186,19 @@ void GlobalParams::ProcessNode(const xmlpp::Node* node, string tagname="", unsig
 		else if (tagname == "maxBytesToDownload")
 			bytes_to_download = atoi(nodeText->get_content().c_str());
 
-		else if (tagname == "acceptedExtenssion")
-			accepted_extenssions.push_back(nodeText->get_content());
+		else if (tagname == "acceptedExtenssion"){
+			accepted_ext=nodeText->get_content();
+			//We convert the extenssion of the file to lower characters to make it compatible whith the accepted extenssions in configuration file.
+			transform(accepted_ext.begin(), accepted_ext.end(), accepted_ext.begin(), ::tolower);
+			accepted_extenssions.push_back(accepted_ext);
+		}
 
 		else if (tagname == "downloadPath")
 			download_path=nodeText->get_content();
 
 		else if (tagname == "tag"){
-				irrelevant_tags.push_back(nodeText->get_content());
-				tag_map[nodeText->get_content()]=1;
+			irrelevant_tags.push_back(nodeText->get_content());
+			tag_map[nodeText->get_content()]=1;
 		}
 	}
 	if(!nodeContent)

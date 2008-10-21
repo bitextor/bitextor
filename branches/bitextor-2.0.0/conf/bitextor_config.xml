@@ -32,7 +32,7 @@
 	<!-- Section to configure the download module. -->
 	<downloadMod>
 		<!-- Directory of destination for the downloads. -->
-		<downloadPath>/home/miquel/Escriptori/</downloadPath>
+		<downloadPath>/home/miquel/Desktop/</downloadPath>
 		<!-- Maximum size to download in bytes. -->
 		<maxBytesToDownload>800000</maxBytesToDownload>
 		<!-- List of extensions for the files to download. -->
