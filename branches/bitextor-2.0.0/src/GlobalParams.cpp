@@ -186,9 +186,9 @@ void GlobalParams::ProcessNode(const xmlpp::Node* node, string tagname="", unsig
 		else if (tagname == "maxBytesToDownload")
 			bytes_to_download = atoi(nodeText->get_content().c_str());
 
-		else if (tagname == "acceptedExtenssion"){
+		else if (tagname == "acceptedExtension"){
 			accepted_ext=nodeText->get_content();
-			//We convert the extenssion of the file to lower characters to make it compatible whith the accepted extenssions in configuration file.
+			//We convert the extension of the file to lower characters to make it compatible whith the accepted extensions in configuration file.
 			transform(accepted_ext.begin(), accepted_ext.end(), accepted_ext.begin(), ::tolower);
 			accepted_extenssions.push_back(accepted_ext);
 		}

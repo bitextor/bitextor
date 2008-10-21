@@ -37,12 +37,12 @@
 		<maxBytesToDownload>800000</maxBytesToDownload>
 		<!-- List of extensions for the files to download. -->
 		<extensions>
-			<acceptedExtenssion>php</acceptedExtenssion>
-			<acceptedExtenssion>asp</acceptedExtenssion>
-			<acceptedExtenssion>aspx</acceptedExtenssion>
-			<acceptedExtenssion>xml</acceptedExtenssion>
-			<acceptedExtenssion>html</acceptedExtenssion>
-			<acceptedExtenssion>htm</acceptedExtenssion>
+			<acceptedExtension>php</acceptedExtension>
+			<acceptedExtension>asp</acceptedExtension>
+			<acceptedExtension>aspx</acceptedExtension>
+			<acceptedExtension>xml</acceptedExtension>
+			<acceptedExtension>html</acceptedExtension>
+			<acceptedExtension>htm</acceptedExtension>
 		</extensions>
 	</downloadMod>
 </configuration>
