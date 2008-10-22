@@ -199,7 +199,7 @@ INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 -I/usr/lib/libxml++-2.6/include -I/usr/include/libxml2
 
 LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca
-EXTRA_DIST = LexAnalyzer config.xml LexAnalyzer.cpp
+EXTRA_DIST = LexAnalyzer LexAnalyzer.cpp LM
 all: all-am
 
 .SUFFIXES:

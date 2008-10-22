@@ -1,6 +1,5 @@
 bin_PROGRAMS = bitextor
 
-
 textcatconfdir = /usr/local/etc/bitextor/LM
 textcatconf_DATA = LM/*
 
@@ -31,4 +30,4 @@ INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 
 LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca
 
-EXTRA_DIST = LexAnalyzer config.xml LexAnalyzer.cpp
+EXTRA_DIST = LexAnalyzer LexAnalyzer.cpp LM

@@ -104,8 +104,8 @@ FLEX = flex
 GENERIC_API_VERSION = 2.0
 GENERIC_LIBRARY_NAME = bitextor
 GENERIC_LIBRARY_VERSION = 2:0:0
-GENERIC_RELEASE = 2.0
-GENERIC_VERSION = 2.0.0
+GENERIC_RELEASE = 2.0rc1
+GENERIC_VERSION = 2.0rc1
 GREP = /bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -129,7 +129,7 @@ PATH_SEPARATOR = :
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = 
-VERSION = 2.0.0
+VERSION = 2.0rc1
 WGET = wget
 abs_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
 abs_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
@@ -175,8 +175,8 @@ top_builddir = .
 top_srcdir = .
 sysconf_DATA = conf/*
 SUBDIRS = src
-EXTRA_DIST = AUTHORS ChangeLog NEWS doc bitextor.doxyfile\
-README THANKS conf autogen.sh doc
+EXTRA_DIST = AUTHORS ChangeLog NEWS bitextor.doxyfile\
+README THANKS autogen.sh conf doc
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
