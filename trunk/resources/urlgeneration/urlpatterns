@@ -1,7 +1,0 @@
-es "es" -> "en" "ca" "pt" "ga" ""
-en "en" -> "es" "ca" "pt" "ga" ""
-ca "ca" -> "es" "en" "pt" "ga" ""
-pt "pt" -> "es" "en" "ca" "ga" ""
-gl "ga" -> "es" "en" "ca" "pt" ""
-es "=CAS" -> "=CAT"
-ca "=CAT" -> "=CAS"
