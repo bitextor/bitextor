@@ -132,7 +132,7 @@ main (int argc, char *const *argv)
 							cout<<"No correspondences were found between the files in the specified directory."<<endl;
 					}
 				}
-				else if(strcmp(argv[2],"-w")==0){
+				else{
 					DownloadMod mod;
 					cout<<"Downloading from "<<dest_dir<<" (this will take some time)..."<<endl;
 					mod.SetDestPath(GlobalParams::GetDownloadPath());

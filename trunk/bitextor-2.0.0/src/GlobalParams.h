@@ -1,12 +1,14 @@
 #ifndef GLOBALPARAMS_H_
 #define GLOBALPARAMS_H_
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <string>
+#include <algorithm>
 #include <vector>
-#include <libxml++/libxml++.h>
+#include <libxml++.h>
 
 using namespace std;
 

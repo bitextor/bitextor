@@ -32,7 +32,7 @@
 	<!-- Section to configure the download module. -->
 	<downloadMod>
 		<!-- Directory of destination for the downloads. -->
-		<downloadPath>/home/miquel/Desktop/</downloadPath>
+		<downloadPath>/home/miquel/</downloadPath>
 		<!-- Maximum size to download in bytes. -->
 		<maxBytesToDownload>800000</maxBytesToDownload>
 		<!-- List of extensions for the files to download. -->
@@ -42,7 +42,9 @@
 			<acceptedExtension>aspx</acceptedExtension>
 			<acceptedExtension>xml</acceptedExtension>
 			<acceptedExtension>html</acceptedExtension>
-			<acceptedExtension>htm</acceptedExtension>
+			<acceptedExtension>cgi</acceptedExtension>
+			<acceptedExtension>jsp</acceptedExtension>
+			<acceptedExtension></acceptedExtension>
 		</extensions>
 	</downloadMod>
 </configuration>

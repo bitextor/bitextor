@@ -1,13 +1,13 @@
 #ifndef FILEPREPROCESS_H_
 #define FILEPREPROCESS_H_
 
-#include <stdio.h>
-#include <errno.h>
+#include <cstdio>
+#include <cerrno>
 #include <iostream>
-#include <tidy/tidy.h>
-#include <tidy/buffio.h>
-#include <tidy/platform.h>
-#include <tidy/tidyenum.h>
+#include <tidy.h>
+#include <buffio.h>
+#include <platform.h>
+#include <tidyenum.h>
 #include <fstream>
 #include <enca.h>
 #include "GlobalParams.h"

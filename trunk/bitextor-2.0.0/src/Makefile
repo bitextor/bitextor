@@ -76,11 +76,11 @@ DATA = $(textcatconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run aclocal-1.10
-AMTAR = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run tar
-AUTOCONF = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run automake-1.10
+ACLOCAL = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run aclocal-1.10
+AMTAR = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run tar
+AUTOCONF = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run automake-1.10
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -114,7 +114,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = -ltagaligner -lenca -lxml++-2.6 -ltidy -ltextcat 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = bitextor
@@ -129,10 +129,10 @@ SHELL = /bin/bash
 STRIP = 
 VERSION = 2.0rc1
 WGET = wget
-abs_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0/src
-abs_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0/src
-abs_top_builddir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
-abs_top_srcdir = /home/miquel/repos_bitextor/branches/bitextor-2.0.0
+abs_builddir = /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/src
+abs_srcdir = /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/src
+abs_top_builddir = /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0
+abs_top_srcdir = /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -152,7 +152,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /home/miquel/repos_bitextor/branches/bitextor-2.0.0/install-sh
+install_sh = $(SHELL) /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -196,7 +196,7 @@ AM_CFLAGS = -g3 -Wall -Wunused \
 INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 -I/usr/include/glibmm-2.4 -I/usr/lib/glibmm-2.4/include -I/usr/include/sigc++-2.0 \
 -I/usr/lib/sigc++-2.0/include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
--I/usr/lib/libxml++-2.6/include -I/usr/include/libxml2
+-I/usr/lib/libxml++-2.6/include -I/usr/include/libxml2 -I/usr/include/tidy -I/usr/include/libtextcat
 
 LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca
 EXTRA_DIST = LexAnalyzer LexAnalyzer.cpp LM

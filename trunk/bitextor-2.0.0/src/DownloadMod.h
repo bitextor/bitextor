@@ -1,8 +1,8 @@
 #ifndef DOWNLOADMOD_
 #define DOWNLOADMOD_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "GlobalParams.h"
 #include <iostream>

@@ -341,7 +341,7 @@ Copyright (C) 2006 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/miquel/repos_bitextor/branches/bitextor-2.0.0'
+ac_pwd='/home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/bin/mkdir -p'
@@ -545,19 +545,19 @@ s,@am__isrc@,|#_!!_#|,g
 s,@CYGPATH_W@,|#_!!_#|echo,g
 s,@PACKAGE@,|#_!!_#|bitextor,g
 s,@VERSION@,|#_!!_#|2.0rc1,g
-s,@ACLOCAL@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run aclocal-1.10,g
-s,@AUTOCONF@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoconf,g
-s,@AUTOMAKE@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run automake-1.10,g
-s,@AUTOHEADER@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run autoheader,g
-s,@MAKEINFO@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run makeinfo,g
-s,@install_sh@,|#_!!_#|$(SHELL) /home/miquel/repos_bitextor/branches/bitextor-2.0.0/install-sh,g
+s,@ACLOCAL@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run aclocal-1.10,g
+s,@AUTOCONF@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run autoconf,g
+s,@AUTOMAKE@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run automake-1.10,g
+s,@AUTOHEADER@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run autoheader,g
+s,@MAKEINFO@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run makeinfo,g
+s,@install_sh@,|#_!!_#|$(SHELL) /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/install-sh,g
 s,@STRIP@,|#_!!_#|,g
 s,@INSTALL_STRIP_PROGRAM@,|#_!!_#|$(install_sh) -c -s,g
 s,@mkdir_p@,|#_!!_#|/bin/mkdir -p,g
 s,@AWK@,|#_!!_#|mawk,g
 s,@SET_MAKE@,|#_!!_#|,g
 s,@am__leading_dot@,|#_!!_#|.,g
-s,@AMTAR@,|#_!!_#|${SHELL} /home/miquel/repos_bitextor/branches/bitextor-2.0.0/missing --run tar,g
+s,@AMTAR@,|#_!!_#|${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor-2.0.0/missing --run tar,g
 s,@am__tar@,|#_!!_#|${AMTAR} chof - "$$tardir",g
 s,@am__untar@,|#_!!_#|${AMTAR} xf -,g
 s,@CXX@,|#_!!_#|g++,g

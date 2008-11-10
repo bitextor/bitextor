@@ -3,7 +3,7 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
-#include <libxml++/libxml++.h>
+#include <libxml++.h>
 #include <string>
 #include <iostream>
 #include <fstream>
