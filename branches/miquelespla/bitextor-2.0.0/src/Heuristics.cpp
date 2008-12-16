@@ -32,265 +32,227 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile wf1, WebFile wf2, float* r
 			end=f.tellg();
 			f.close();
 			wf2_size=end-init;
-			if(wf1_size>wf2_size){
-				exit=((((float)wf1_size/wf2_size)-1)*100<=GlobalParams::GetFileSizeDifferencePercent());
-				if(result!=NULL)
-					*result=(((float)wf1_size/wf2_size)-1)*100;
-			}
-			else{
-				exit=((((float)wf2_size/wf1_size)-1)*100<=GlobalParams::GetFileSizeDifferencePercent());
-				if(result!=NULL)
-					*result=(((float)wf2_size/wf1_size)-1)*100;
-			}
+
+			exit=(((float)abs(wf1_size-wf2_size)/(float)(wf1_size+wf2_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
+			if(result!=NULL)
+				*result=((float)abs(wf1_size-wf2_size)/(float)(wf1_size+wf2_size))*100;
 		}
 		catch(...){
 			exit=false;
 		}
 	}
-
 	return exit;
 }
 
 bool Heuristics::HaveAcceptableEditDistance(WebFile wf1, WebFile wf2, float* result=NULL)
 {
 	vector<int> tag_array1, tag_array2;
-	int i, j, val_aux, max_dist, max_j, text_distance;
-	float diagonal_inc;
-	bool jump;
-	int **tab_aux;
-	int vec1len, vec2len;
-	float exit;
+	int res;
+	float beam;
+	unsigned int vec1len, vec2len;
 	
-	//We get the tag and text lists from both the WebFiles 
-	try{
-		tag_array1=wf1.GetTagArray();
-		tag_array2=wf2.GetTagArray();
-	}
-	catch(char* error){
-		cout<<error;
-	}
-	
-	try{
-		vec1len=tag_array1.size();
-		vec2len=tag_array2.size();
-		
-		//We calculate the maximal edit distance possible to accept the pair or not. 
-		if(GlobalParams::GetMaxEditDistance()==-1)
-			max_dist=vec1len+vec2len;
-		else
-		{
-			max_dist=((float)GlobalParams::GetMaxEditDistance()/100)*((float)(vec1len+vec2len)/2);
-		}
-		//If the size diference between the both tag/text arrays is greather than the max. distance accepted, we will consider that the files are different.
-		if(vec1len-vec2len<=max_dist && vec2len-vec1len<=max_dist){
-			//If the max. distance acceptable is greather than the length of one of the tag/text arrays, we will calculate the wole table of values for the edit distance.
-			if(max_dist>vec1len || max_dist>vec2len)
-				max_dist=vec1len+vec2len;
-			//We inicialize the table to calculate the edit distance
-			tab_aux=new int*[vec1len+1];
-			for(i=0;i<vec1len+1;i++)
-				tab_aux[i]=new int[vec2len+1];
-			
-			for(i=0;i<vec1len+1;i++)
-			{
-				if(i>max_dist)
-					tab_aux[i][0]=-1;
-				else
-					tab_aux[i][0]=i;
-			}
-			for(i=1;i<vec2len+1;i++)
-			{
-				if(i>max_dist)
-					tab_aux[0][i]=-1;
-				else
-					tab_aux[0][i]=i;
-			}
-			
-			//We calculate the value of the inclination in the diagonal search for the edit distance.
-			if(vec1len>max_dist || vec2len>max_dist){
-				diagonal_inc=((float)(vec2len-max_dist))/((float)(vec1len-max_dist));
-				if(diagonal_inc<0)
-					diagonal_inc=diagonal_inc*-1;
-			}
-			else
-				diagonal_inc=0;
-			//If the value of diagonal_inc is greather than 0, we search only in the diagonal determined
-			//by this value.
-			if(diagonal_inc>(float)0)
-			{
-				/*
-				cout<<"  |";
-				for(i=1; i<vec1len+1; i++)
-					cout<<tag_array1[i-1]<<"|";
-				cout<<endl;
-				//*/
-				for(i=1; i<vec1len+1; i++)
-				{
-					/*We calculate the starting point and the ending point in the row of the table
-					  for the iteration*/
-					//
-					//cout<<tag_array2[i-1]<<"|";
-					//
-					if(i>max_dist+1){
-						j=1+(diagonal_inc*((i-max_dist)-1));
-						tab_aux[i][j-1]=-1;
-						
-						max_j=max_dist+1+(diagonal_inc*(i-1));
-						if(max_j>vec2len+1)
-							max_j=vec2len+1;
-						/*
-						for(int w=1;w<j;w++)
-							cout<<"|  ";
-						//*/
-					}
-					else{
-						j=1;
-						max_j=max_dist+1+(diagonal_inc*(i-1));
-						if(max_j>vec2len+1)
-							max_j=vec2len+1;
-					}
-					//Now we start the iteration, considering that -1 is the infinite value.
-					for(; j<max_j ; j++)
-					{
-						val_aux=GetMinorValue(tab_aux[i-1][j],tab_aux[i-1][j-1],tab_aux[i][j-1], max_dist+1);
-						if(tag_array1[i-1]==tag_array2[j-1] || val_aux==-1)
-							tab_aux[i][j]=val_aux;
-						else
-						{
-							if(tag_array1[i-1]>0 && tag_array2[j-1]>0){
-								if(GlobalParams::GetTextDistancePercentDifferenciator()<0)
-									tab_aux[i][j]=val_aux;
-								else{
-									text_distance=tag_array1[i-1]-tag_array2[j-1];
-									if(text_distance<0)
-										text_distance=text_distance*-1;
-									if(text_distance>(((float)(tag_array1[i-1]+tag_array2[j-1])/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/100)))
-										tab_aux[i][j]=val_aux+1;
-									else
-										tab_aux[i][j]=val_aux;
-									/*if(text_distance>(((tag_array1[i-1]+tag_array2[j-1])/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/100)))
-										cout<<"Tag1="<<tag_array1[i-1]<<" Tag2="<<tag_array2[j-1]<<" Text Distance="<<text_distance<<" Max distance="<<(((tag_array1[i-1]+tag_array2[j-1])/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100))<<" -> "<<"Sí"<<endl;
-									else
-										cout<<"Tag1="<<tag_array1[i-1]<<" Tag2="<<tag_array2[j-1]<<" Text Distance="<<text_distance<<" Max distance="<<(((tag_array1[i-1]+tag_array2[j-1])/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100))<<" -> "<<"No"<<endl;*/
-								}
-								
-							}
-							else
-								tab_aux[i][j]=val_aux+1;
-						}
-						/*
-						if(tab_aux[i][j]<10 && tab_aux[i][j]!=-1)
-							cout<<tab_aux[i][j]<<" |";
-						else
-							cout<<tab_aux[i][j]<<"|";
-						//*/
-					}
-					/*Finaly, continue writing -1 in the cells which will be visited by the algorithm in the next iteration.
-					  In this way, we are telling the algorithm that those cells contents the value "infinite".*/
-					if(max_dist+1+(diagonal_inc*(i))>vec2len+1)
-						max_j=vec2len+1;
-					else
-						max_j=max_dist+1+(diagonal_inc*(i));
-					for(; j<max_j ; j++){
-						tab_aux[i][j]=-1;
-						//
-						//cout<<tab_aux[i][j]<<"|";
-					}
-					//
-					//cout<<endl;
-				}
-			}
-			//If diagonal_inc value is 0, we will calculate the whole table to obtain the edit distance.
-			else
-			{
-				for(i=1; i<vec1len+1; i++)
-				{
-					jump=false;
-					for(j=1; j<vec2len+1 && !jump; j++)
-					{
-						val_aux=GetMinorValue(tab_aux[i-1][j],tab_aux[i-1][j-1],tab_aux[i][j-1], max_dist+1);
-						if(val_aux==-1){
-							tab_aux[i][j]=val_aux;
-							jump=true;
-						}
-						else{
-							if(tag_array1[i-1]==tag_array2[j-1])
-								tab_aux[i][j]=val_aux;
-							else{
-								if(tag_array1[i-1]>0 && tag_array2[j-1]>0){
-									if(GlobalParams::GetTextDistancePercentDifferenciator()<0)
-										tab_aux[i][j]=val_aux;
-									else{
-										text_distance=tag_array1[i-1]-tag_array2[j-1];
-										if(text_distance<0)
-											text_distance=text_distance*-1;
-										if(text_distance>(((float)(tag_array1[i-1]+tag_array2[j-1])/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100)))
-											tab_aux[i][j]=val_aux+1;
-										else
-											tab_aux[i][j]=val_aux;
-										//cout<<"Tag1="<<tag_array1[i-1]<<" Tag2="<<tag_array2[j-1]<<" Text Distance="<<text_distance<<" Max distance="<<((((tag_array1[i-1]+tag_array2[j-1])/2)*-1)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100))<<" -> "<<(text_distance>((((tag_array1[i-1]+tag_array2[j-1])/2)*-1)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100)))<<endl;
-									}
-								}
-								else
-									tab_aux[i][j]=val_aux+1;
-							}
-						}
-					}
-				}
-			}
-			val_aux=tab_aux[vec1len][vec2len];
-			for(i=0; i<vec1len+1; i++){
-				delete[] tab_aux[i];
-			}
-			delete[] tab_aux;
-			exit= val_aux;
-		}
-		else
-			exit= -1;
+	tag_array1=wf1.GetTagArray();
+	tag_array2=wf2.GetTagArray();
+	vec1len=tag_array1.size();
+	vec2len=tag_array2.size();
+	//We calculate the maximal edit distance possible to accept the pair or not. 
+	if(GlobalParams::GetMaxEditDistance()==-1)
+		beam=0;
+	else
+		beam=GlobalParams::GetMaxEditDistance();
+
+	res=EditDistance(tag_array1, tag_array2, true, beam);
+	if(res>-1){
 		if(result!=NULL)
-			*result=exit;
-		if(exit>-1 && (float)(exit*100)/vec1len<=GlobalParams::GetMaxEditDistance())
-			return true;
-		else
-			return false;
+			*result=res;
+		return true;
 	}
-	catch(...){
-		try{
-			for(i=0; i<vec1len+1; i++){
-				delete[] tab_aux[i];
-			}
-			delete[] tab_aux;
-		}
-		catch(...){}
+	else
 		return false;
-	}
 }
 
 
+int Heuristics::EditDistance(vector<int>& tts1, vector<int>& tts2, const bool &percent_beam, const float &beam_value) {
+	int result;
+	unsigned int i, j, k;
 
-int Heuristics::GetMinorValue(int vl1, int vl2, int vl3, int infinite)
-{
-	int exit;
-	int v1,v2,v3;
+	double **matrix;
+	double subscost, inscost, delcost; //Temporary costs
+	unsigned int startingcol, endingcol; //Indicate what columns of the row are processed
+	unsigned int nextstartingcol, nextendingcol; //Indicate what columns of the row are processed in the next row
+	unsigned short ttssize1=tts1.size();
+	unsigned short ttssize2=tts2.size();
+	double max_val;
+	unsigned int x_limit, y_limit;
+	double despl;
+	unsigned int row_size, col_size;
+	unsigned int dist_before;
 
-	if(vl1==-1) v1=infinite; else v1=vl1;
-	if(vl2==-1) v2=infinite; else v2=vl2;
-	if(vl3==-1) v3=infinite; else v3=vl3;
-	if(v1<v2){
-		if(v1<v3)
-			exit= v1;
+	if (ttssize1 > 0 && ttssize2 > 0) {
+		//We calculate the row maximum length
+		if(beam_value>0){
+			if(percent_beam){
+				if(beam_value>100){
+					row_size=ttssize2+1;
+					col_size=ttssize1+1;
+				}
+				else{
+					if(ttssize1>ttssize2){
+						row_size=floor((beam_value/100)*(ttssize1));
+						col_size=floor((beam_value/100)*(ttssize1));
+					}
+					else{
+						row_size=ceil((beam_value/100)*(ttssize2));
+						col_size=ceil((beam_value/100)*(ttssize2));
+					}
+					if(row_size>ttssize2+1 || col_size>ttssize1+1){
+						row_size=ttssize2+1;
+						col_size=ttssize1+1;
+					}
+				}
+			}
+			else{
+				if(beam_value>ttssize2 || beam_value>ttssize1){
+					row_size=ttssize2+1;
+					col_size=ttssize1+1;
+				}
+				else{
+					row_size=beam_value;
+					col_size=beam_value;
+				}
+			}
+		}
+		else{
+			row_size=ttssize2+1;
+			col_size=ttssize1+1;
+		}
+		
+		//We calculate the distance of the starting point of every row from the origin column
+		if(col_size!=ttssize1+1)
+			despl=((float)(ttssize2+1-row_size))/(ttssize1+1-col_size);
 		else
-			exit= v3;
-	}
+			despl=0;
+
+		//Initializing the algorithm
+		matrix=new double*[2];//We keep only 2 rows of the matrix
+
+		startingcol=0;
+		endingcol=row_size-1;//Initially the whole row is processed
+		nextstartingcol=floor(despl);
+		nextendingcol=floor(row_size-1+despl);
+
+		matrix[0]=NULL;
+		matrix[1]=new double[nextendingcol-startingcol+1];
+
+		//Inicialization of the first row: only insertion costs
+		matrix[1][0]=0;
+
+		for (j=0; j<endingcol; j++)
+			matrix[1][j+1] = Cost(INSERT, tts2[j], 0) + matrix[1][j];
+		for(;j<nextendingcol;j++)
+			matrix[1][j+1] = numeric_limits<double>::max();
+		
+		for (i=0; i<ttssize1 && startingcol<endingcol; i++) {
+			if(i>col_size){
+				dist_before=nextstartingcol-startingcol;
+				startingcol = nextstartingcol;
+				endingcol = nextendingcol;
+				nextstartingcol=floor(despl*(i+1-col_size));
+			}
+			else{
+				dist_before=0;
+				startingcol = nextstartingcol;
+				endingcol = nextendingcol;
+				nextstartingcol=0;
+			}
+			nextendingcol=ceil(row_size+(despl*(i+1)));
+			if(nextendingcol>ttssize2)
+				nextendingcol=ttssize2+1;
+
+			if(matrix[0]!=NULL)
+				delete[] matrix[0];
+			matrix[0]=matrix[1];
+
+			matrix[1]=new double[nextendingcol-startingcol+1];
+
+			//Setting the first column position
+			matrix[1][0] = Cost(DELETE, 0, tts1[i]) + matrix[0][dist_before];
+
+			//Setting the rest of the row
+			for (j=0; j<endingcol-startingcol; j++) {
+
+				//Substitution cost
+				subscost = Cost(SUBST,tts2[j+startingcol], tts1[i]) + matrix[0][j+dist_before];
+
+				//Insertion cost
+				inscost = Cost(INSERT,tts2[j+startingcol], 0) + matrix[1][j];
+
+				//Deletion cost
+					delcost = Cost(DELETE,0, tts1[i]) + matrix[0][j+1+dist_before];
+
+				//Choosing the minimal cost
+				if (subscost < inscost) {
+					if (subscost < delcost)
+						matrix[1][j+1] = subscost;
+					else
+						matrix[1][j+1] = delcost;
+				} else {
+					if (inscost < delcost)
+						matrix[1][j+1] = inscost;
+					else
+						matrix[1][j+1] = delcost;
+				}
+			}
+			for(;j<nextendingcol-startingcol; j++){
+				matrix[1][j+1]=numeric_limits<double>::max();
+			}
+		}
+		if (startingcol==endingcol){
+			result=-1;
+		}
+
+		result=matrix[1][endingcol-startingcol];
+
+		delete[] matrix[0];
+		delete[] matrix[1];
+		delete[] matrix;
+		matrix = NULL;
+	} // Big if
 	else{
-		if(v2<v3)
-			exit= v2;
-		else
-			exit= v3;
+		result=-1;
 	}
-	
-	if(exit>=infinite)
-		return -1;
-	else
-		return exit;
+	if(row_size<result)
+		result=-1;
+	return result;
+}
+
+
+double Heuristics::Cost(const short &op, const int &tag1, const int &tag2){
+	double result;
+	unsigned int text_distance;
+	switch(op){
+		case SUBST:
+			if(tag1>0 && tag2>0){
+				if(GlobalParams::GetTextDistancePercentDifferenciator()<0)
+					result=0;
+				else{
+					text_distance=abs(tag1-tag2);
+					if(text_distance>(((float)(tag1+tag2)/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100)))
+						result=1;
+					else
+						result=0;
+				}
+			}
+			else{
+				if(tag1!=tag2)
+					result=1;
+				else
+					result=0;
+			}
+		break;
+		default:
+			result=1;
+		break;
+	}
+	return result;
 }
