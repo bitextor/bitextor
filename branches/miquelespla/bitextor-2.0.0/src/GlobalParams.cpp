@@ -22,7 +22,7 @@ int GlobalParams::tagaligner_mode=1;
 
 string GlobalParams::config_file;
 
-int GlobalParams::bytes_to_download=-1;
+int GlobalParams::downloaded_size=-1;
 
 vector<string> GlobalParams::accepted_extenssions;
 
@@ -45,11 +45,15 @@ float GlobalParams::GetMaxEditDistance()
 
 int GlobalParams::GetHTMLTagValue(string tag)
 {
-	if(tag_map.find(tag)==tag_map.end()){
-		tag_map[tag]=tag_map_counter;
-		tag_map_counter--;
-	}
-	return tag_map[tag];	
+	if(Config::getTagType(tag)==IRRELEVANT)
+		return IRRELEVANT;
+	else{
+		if(tag_map.find(tag)==tag_map.end()){
+			tag_map[tag]=tag_map_counter;
+			tag_map_counter--;
+		}
+		return tag_map[tag];
+	}	
 }
 	
 void GlobalParams::AddIrrelevantTag(string tag)
@@ -183,23 +187,11 @@ void GlobalParams::ProcessNode(const xmlpp::Node* node, string tagname="", unsig
 		else if (tagname == "editDistancePercent")
 			max_edit_distance_length = atof(nodeText->get_content().c_str());
 
-		else if (tagname == "maxBytesToDownload")
-			bytes_to_download = atoi(nodeText->get_content().c_str());
-
-		else if (tagname == "acceptedExtension"){
-			accepted_ext=nodeText->get_content();
-			//We convert the extension of the file to lower characters to make it compatible whith the accepted extensions in configuration file.
-			transform(accepted_ext.begin(), accepted_ext.end(), accepted_ext.begin(), ::tolower);
-			accepted_extenssions.push_back(accepted_ext);
-		}
+		else if (tagname == "maxDownloadedSize")
+			downloaded_size = atoi(nodeText->get_content().c_str());
 
 		else if (tagname == "downloadPath")
 			download_path=nodeText->get_content();
-
-		else if (tagname == "tag"){
-			irrelevant_tags.push_back(nodeText->get_content());
-			tag_map[nodeText->get_content()]=1;
-		}
 	}
 	if(!nodeContent)
 	{
@@ -235,6 +227,13 @@ bool GlobalParams::LoadGlobalParams(string path)
 	test_file.open(GlobalParams::GetTextCatConfigFile().c_str(),ios::in);
 	if(!test_file.is_open())
 		throw "The TextCat configuration file is not specified correctly.";
+	try{
+		Config::setXmlFile(GlobalParams::GetTagAlignerConfigFile());
+		Config::buildTagSet();
+	}
+	catch(...){
+		throw "The TagAligner configuration file can't been opened.";
+	}
 
 	test_file.open(GlobalParams::GetTagAlignerConfigFile().c_str(),ios::in);
 	if(!test_file.is_open())
@@ -248,9 +247,9 @@ vector<string> GlobalParams::GetAcceptedExtenssions()
 	return accepted_extenssions;
 }
 	
-int GlobalParams::GetMaxBytesToDownload()
+int GlobalParams::GetMaxDownloadedSize()
 {
-	return bytes_to_download;
+	return downloaded_size;
 }
 
 string GlobalParams::GetDownloadPath()
