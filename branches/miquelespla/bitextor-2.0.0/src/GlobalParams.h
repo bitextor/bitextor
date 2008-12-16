@@ -13,6 +13,8 @@
 
 using namespace std;
 
+#define IRRELEVANT 1
+
 /**
  * @class GlobalParams
  * @brief Classe que conté els paràmetres globals de l'aplicació.
