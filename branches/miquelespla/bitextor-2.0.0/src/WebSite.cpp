@@ -49,8 +49,6 @@ bool WebSite::Initialize(string base_path)
 	unsigned int level;
 	bool exit=true;
 
-		
-		
 	try{
 		//Firstly, we prove that base_path is a valid directory.
 		if ( stat(base_path.c_str(), &fich)>=0 ){
