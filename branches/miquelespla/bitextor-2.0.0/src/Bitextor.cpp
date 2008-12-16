@@ -43,12 +43,13 @@ main (int argc, char *const *argv)
 	Bitext bitext;
 	ifstream file;
 	unsigned int i;
-	ostringstream aux_sstream;
+	ostringstream *aux_sstream;
 	string file_name;
 	bool show_howtouse=false;
 	string dest_dir="";
 	string config_file="/usr/local/etc/bitextor/conf/bitextor_config.xml";
 	bool download;
+	struct stat my_stat;
 
 	try{
 		for(i=1;i<argc;i++){
@@ -103,29 +104,23 @@ main (int argc, char *const *argv)
 					if(!ws.Initialize(dest_dir))
 						cerr<<"There were an error while trying to load the files in the selected directory."<<endl;
 					else{
-						mkdir((dest_dir+"bitexts/").c_str(),0777);
+						if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
+							mkdir((dest_dir+"bitexts/").c_str(),0777);
+						else
+							cout<<"Existeix!"<<endl;
 						cout<<"Comparing the files..."<<endl;
 						results=ws.GetMatchedFiles();
 						for(n_results=0;n_results<results.size();n_results++){
 							bitext=results[n_results];
-							
-							file.open((dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx").c_str(),ios::in);
-							if(file.is_open()){
-								file.close();
-								i=1;
-								do{
-									file.close();
-									aux_sstream<<i;
-									file.open((dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream.str()+".tmx").c_str(),ios::in);
-									aux_sstream.clear();
-									i++;
-								}while(file.is_open());
-								file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream.str()+".tmx";
+							file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx";
+							for(i=0, aux_sstream=new ostringstream(ios_base::out);stat((file_name).c_str(), &my_stat) == 0;i++){
+								delete aux_sstream;
+								aux_sstream=new ostringstream(ios_base::out);
+								*aux_sstream<<i;
+								file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream->str()+".tmx";
 							}
-							else
-								file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx";
 							bitext.GenerateBitext(file_name);
-							cout<<"\tThe bitext between "<<GetFileName(bitext.GetFirstWebFile().GetPath())<<" and "<<GetFileName(bitext.GetSecondWebFile().GetPath())<<" has been created."<<endl;
+							cout<<"\tThe bitext between "<<bitext.GetFirstWebFile().GetPath()<<" and "<<bitext.GetSecondWebFile().GetPath()<<" has been created."<<endl;
 							cout<<"\tEdit distance: "<<bitext.GetEditDistance()<<"%  Size difference:"<<bitext.GetSizeDistance()<<"%"<<endl<<endl;
 						}
 						if(results.size()==0)
@@ -142,26 +137,21 @@ main (int argc, char *const *argv)
 					if(!ws.Initialize(GlobalParams::GetDownloadPath()+dest_dir+"/"))
 						cerr<<"There were an error while trying to load the files in the selected directory."<<endl;
 					else{
-						mkdir((GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/").c_str(),0777);
+						if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
+							mkdir((GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/").c_str(),0777);
+						else
+							cout<<"Existeix!"<<endl;
 						cout<<"Comparing the files..."<<endl;
 						results=ws.GetMatchedFiles();
 						for(n_results=0;n_results<results.size();n_results++){
 							bitext=results[n_results];
-							file.open((GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx").c_str(),ios::in);
-							if(file.is_open()){
-								file.close();
-								i=1;
-								do{
-									file.close();
-									aux_sstream<<i;
-									file.open((GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream.str()+".tmx").c_str(),ios::in);
-									aux_sstream.clear();
-									i++;
-								}while(file.is_open());
-								file_name=GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream.str()+".tmx";
+							file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx";
+							for(i=0, aux_sstream=new ostringstream(ios_base::out);stat((file_name).c_str(), &my_stat) == 0;i++){
+								delete aux_sstream;
+								aux_sstream=new ostringstream(ios_base::out);
+								*aux_sstream<<i;
+								file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+aux_sstream->str()+".tmx";
 							}
-							else
-								file_name=GlobalParams::GetDownloadPath()+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile().GetPath())+"_"+GetFileName(bitext.GetSecondWebFile().GetPath())+".tmx";
 							bitext.GenerateBitext(file_name);
 							cout<<"\tThe bitext between "<<GetFileName(bitext.GetFirstWebFile().GetPath())<<" and "<<GetFileName(bitext.GetSecondWebFile().GetPath())<<" has been created."<<endl;
 							cout<<"\tEdit distance: "<<bitext.GetEditDistance()<<"%  Size difference:"<<bitext.GetSizeDistance()<<"%"<<endl<<endl;
