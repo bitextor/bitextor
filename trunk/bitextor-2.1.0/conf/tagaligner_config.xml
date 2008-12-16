@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- This configuration file will contain the set of tags that should be
+	 taken in account when aligning two files, whatever their format is -->
+
+<!-- TAGS FOR XHTML -->
+<configuration>
+	<tagset>
+		<tags format="xhtml">
+			<type typename="structural">
+				<tag>blockquote</tag>
+				<tag>body</tag>
+				<tag>caption</tag>
+				<tag>col</tag>
+				<tag>colgroup</tag>
+				<tag>dd</tag>
+				<tag>dir</tag>
+				<tag>div</tag>
+				<tag>dl</tag>
+				<tag>dt</tag>
+				<tag>h1</tag>
+				<tag>h2</tag>
+				<tag>h3</tag>
+				<tag>h4</tag>
+				<tag>h5</tag>
+				<tag>h6</tag>
+				<tag>head</tag>
+				<tag>hr</tag>
+				<tag>html</tag>
+				<tag>li</tag>
+				<tag>menu</tag>
+				<tag>noframes</tag>
+				<tag>noscript</tag>
+				<tag>ol</tag>
+				<tag>optgroup</tag>
+				<tag>option</tag>
+				<tag>p</tag>
+				<tag>q</tag>
+				<tag>select</tag>
+				<tag>table</tag>
+				<tag>tbody</tag>
+				<tag>td</tag>
+				<tag>tfoot</tag>
+				<tag>th</tag>
+				<tag>thead</tag>
+				<tag>tr</tag>
+				<tag>ul</tag>
+			</type>
+		
+			<type typename="format">
+				<tag>abbr</tag>
+				<tag>acronym</tag>
+				<tag>b</tag>
+				<tag>big</tag>
+				<tag>center</tag>
+				<tag>cite</tag>
+				<tag>code</tag>
+				<tag>dfn</tag>
+				<tag>em</tag>
+				<tag>font</tag>
+				<tag>i</tag>
+				<tag>pre</tag>
+				<tag>s</tag>
+				<tag>small</tag>
+				<tag>span</tag>
+				<tag>strike</tag>
+				<tag>strong</tag>
+				<tag>style</tag>
+				<tag>sub</tag>
+				<tag>sup</tag>
+				<tag>tt</tag>
+				<tag>u</tag>
+			</type>
+			
+			<type typename="content">
+				<tag>area</tag>
+				<tag>fieldset</tag>
+				<tag>form</tag>
+				<tag>iframe</tag>
+				<tag>img</tag>
+				<tag>input</tag>
+				<tag>isindex</tag>
+				<tag>label</tag>
+				<tag>legend</tag>
+				<tag>map</tag>
+				<tag>object</tag>
+				<tag>param</tag>
+				<tag>textarea</tag>
+				<tag>title</tag>
+			</type>
+			
+			<type typename="irrelevant">
+				<tag>a</tag>
+				<tag>address</tag>
+				<tag>applet</tag>
+				<tag>base</tag>
+				<tag>basefont</tag>
+				<tag>bdo</tag>
+				<tag>br</tag>
+				<tag>button</tag>
+				<tag>del</tag>
+				<tag>ins</tag>
+				<tag>kbd</tag>
+				<tag>link</tag>
+				<tag>meta</tag>
+				<tag>samp</tag>
+				<tag>script</tag>
+				<tag>var</tag>
+			</type>
+		</tags>	
+	</tagset>
+	<!-- Here you can set which characters should be taken into account. The syntax is common regular expressions. -->
+	<!-- Alpha: [0-9A-Za-zÀ-ÖØ-öø-ÿ] -->
+	<!-- Blankspace: [\t\n[[:space:]]]|&#160;|&nbsp; -->
+	<!-- Capital: [A-ZÀ-ÖØ-Þ] -->
+	<charset>
+		<alphanumeric>[0-9A-Za-zÀ-ÖØ-öø-ÿ]</alphanumeric>
+		<blankspace>[[:space:]]</blankspace>
+		<capital>[A-ZÀ-ÖØ-Þ]</capital>
+	</charset>
+	<edition_parameters>
+		<costs>
+			<cost op="ins" in="structural" value="1"/>
+			
+			<cost op="ins" in="format" value="0.75"/>
+			
+			<cost op="ins" in="content" value="1.25"/>
+			
+			<cost op="ins" in="text" value="0.01"/>
+			
+			<cost op="del" out="structural" value="1"/>
+			
+			<cost op="del" out="format" value="0.75"/>
+			
+			<cost op="del" out="content" value="1.25"/>
+			
+			<cost op="del" out="text" value="0.01"/>
+			
+			<cost op="sub" out="structural" in="structural" value="1.5"/>
+			
+			<cost op="sub" in="format" out="structural" value="1.75"/>
+			
+			<cost op="sub" in="content" out="structural" value="999999999"/>
+			
+			<cost op="sub" in="format" out="format" value="0.4"/>
+			
+			<cost op="sub" in="content" out="format" value="999999999"/>
+			
+			<cost op="sub" in="content" out="content" value="999999999"/>
+			
+			<cost op="sub" in="text" out="text" value="0.01"/>
+			
+			<textsizemin>20</textsizemin>
+			<textsizeminrelation>0.6</textsizeminrelation>
+		</costs>
+		
+		<!-- Triggers applied to the context of dots to score sentence borders while splitting sentences -->
+		<!-- Syntax: <characters_before_dot-characters_after_dot> -->
+		<weights>
+			<weight before="anything" after="number" value="-0.5"/>			<!-- Between anything and a number -->
+			
+			<weight before="anything" after="blank" value="0.5"/>			<!-- Between anything and a blank space -->
+			
+			<weight before="anything" after="noncapital" value="-0.2"/>		<!-- Between anything and a non-capital letter -->
+			
+			<weight before="anything" after="dot" value="-0.5"/>			<!-- Between anything and another dot -->
+			
+			<weight before="anything" after="blankcap" value="0.5"/>		<!-- Between anything and a blank space and a capital letter -->
+			
+			<weight before="anything" after="blanknoncap" value="0.2"/>		<!-- Between anything and a blank space and a non-capital letter -->
+			
+			<weight before="capital" after="anything" value="-0.5"/>		<!-- Between a capital letter and anything -->
+			
+			<weight before="threechar" after="anything" value="-0.5"/>		<!-- Between a word of 3 characters or less and anything -->
+			
+			<weight before="blank" after="anything" value="0.2"/>			<!-- Between a blank space and anything -->
+			
+			<weight before="quotes" after="quotes" value="-0.5"/>			<!-- Between quote symbols (' or ") -->
+			
+			<weight before="dot" after="anything" value="0.4"/>				<!-- Between a dot and anything -->
+		</weights>
+	</edition_parameters>
+</configuration>

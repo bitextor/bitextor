@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This configuration file will contain the set of tags that should be
+	 taken in account when comparing and aligning the two files. -->
+
+<configuration>
+	<!-- This is the general section in the configuration. -->
+	<general>
+		<!-- Here you have to set the path were the system can find the configuration file of TagAligner. -->
+		<tagAlignerConfigFile>/usr/local/etc/bitextor/conf/tagaligner_config.xml</tagAlignerConfigFile>
+		<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
+		<textCatConfigFile>/usr/local/etc/bitextor/LM/conf.txt</textCatConfigFile>
+		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
+		<tagAlignerMode>l</tagAlignerMode>
+		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	
+		<fileSizePercent>40</fileSizePercent>
+		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
+		It's recommended that this percentage to be higger than 80%. -->
+		<textLengthPercent>90</textLengthPercent>
+		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
+		obtained in the comparation, the bitext is discarted. -->
+		<editDistancePercent>10</editDistancePercent>
+		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
+		files with a difference of depth in the directory tree equal or lower than two. -->
+		<directoryPathDistance>2</directoryPathDistance>
+	</general>
+	<!-- Section to configure the download module. -->
+	<downloadMod>
+		<!-- Directory of destination for the downloads. -->
+		<downloadPath>/home/miquel/</downloadPath>
+		<!-- Maximum size to download in bytes. -->
+		<maxDownloadedSize>1048576</maxDownloadedSize>
+	</downloadMod>
+</configuration>
