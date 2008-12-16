@@ -30,4 +30,4 @@ INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 
 LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca -lmagic
 
-EXTRA_DIST = LexAnalyzer LexAnalyzer.cpp LM
+EXTRA_DIST = LM
