@@ -27,7 +27,10 @@ bool Bitext::Initialize(WebFile wf1, WebFile wf2)
 					this->byte_size_distance=aux_result;
 					if(exit){
 						exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
-						aux_result=aux_result*100/(float)wf1.GetTagArray().size();
+						if(wf1.GetTagArray().size()>wf2.GetTagArray().size())
+							aux_result=aux_result*100/((float)wf1.GetTagArray().size());
+						else
+							aux_result=aux_result*100/((float)wf2.GetTagArray().size());
 						this->edit_distance=aux_result;
 					}
 				}
@@ -51,37 +54,41 @@ bool Bitext::GenerateBitext(string path)
 	TagAligner2step_l *tagalignerB;
 	TagAligner2_1 *tagalignerC;
 	bool exit=true;
-	char *lwebpage, *rwebpage;
-	FILE *fin1, *fin2;
+	string lwebpage, rwebpage, aux;
+	ifstream fin1, fin2;
 	int bytesreaded;
 	int length;
 	string tagaligneroutput;
 	ofstream ofile;
 
 	if(this->is_initialized){
-		if (!(fin1=fopen(this->wf1.GetPath().c_str(), "r"))) {//There were errors opening the first input file
-			exit=false;
+		fin1.open(this->wf1.GetPath().c_str());
+		if (!fin1.is_open()) {//There were errors opening the first input file
+			fprintf(stderr,"File \"%s\" could not be opened\n",this->wf1.GetPath().c_str());
 		} else {
-			if (!(fin2=fopen(this->wf2.GetPath().c_str(), "r"))) {//There were errors opening the first input file
-				fclose(fin1);
-				exit=false;
+			fin2.open(this->wf2.GetPath().c_str());
+			if (!fin2.is_open()) {//There were errors opening the first input file
+				fprintf(stderr,"File \"%s\" could not be opened\n",this->wf2.GetPath().c_str());
+				fin1.close();
 			} else {
-				fseek(fin1, 0, SEEK_END);
-				length=ftell(fin1);
-				lwebpage=new char[length+1];
-				rewind(fin1);
-				bytesreaded=fread(lwebpage, 1, length, fin1);
-				lwebpage[bytesreaded]='\0';
-				fclose(fin1);
-		
-				fseek(fin2, 0, SEEK_END);
-				length=ftell(fin2);
-				rwebpage=new char[length+1];
-				rewind(fin2);
-				bytesreaded=fread(rwebpage, 1, length, fin2);
-				rwebpage[bytesreaded]='\0';
-				fclose(fin2);
 				
+				fin1>>lwebpage;
+				fin1>>aux;
+				while(!fin1.eof()){
+					lwebpage+=" "+aux;
+					fin1>>aux;
+				}
+
+				fin2>>rwebpage;
+				fin2>>aux;
+				while(!fin2.eof()){
+					rwebpage+=" "+aux;
+					fin2>>aux;
+				}
+
+				fin1.close();
+				fin2.close();
+
 				ofile.open(path.c_str(), ios::out);
 				if(!ofile.is_open())
 					exit=false;
@@ -119,8 +126,6 @@ bool Bitext::GenerateBitext(string path)
 						ofile<<tagaligneroutput<<endl;
 					}
 				}
-				delete[] lwebpage;
-				delete[] rwebpage;
 			}
 		}
 	}
