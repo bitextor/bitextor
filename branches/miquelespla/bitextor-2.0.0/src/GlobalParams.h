@@ -1,6 +1,7 @@
 #ifndef GLOBALPARAMS_H_
 #define GLOBALPARAMS_H_
 
+#include <tagaligner/configreader.h>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -100,9 +101,9 @@ private:
 	static int tagaligner_mode;
 	
 	/**
-	 * Nombre màxim de bytes que es descarregaran quan s'arrenque el mòdul de descàrrega web.
+	 * Temps màxim de descàrrega.
 	 */
-	static int bytes_to_download;
+	static int downloaded_size;
 
 	/**
 	 * Paràmetre que registra les extenssions dels fitxers objectius de la descàrrega.
@@ -262,7 +263,7 @@ public:
 	 * Mètode que permet obtenir el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
 	 * @return Retorna el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
 	 */
-	static int GetMaxBytesToDownload();
+	static int GetMaxDownloadedSize();
 
 	/**
 	 * Mètode que permet obtenir la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
