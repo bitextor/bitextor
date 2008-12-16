@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>Bitextor: Fitxer de Codi src/Bitext.h</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- Generat per Doxygen 1.5.5 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>Pàgina&nbsp;principal</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li class="current"><a href="files.html"><span>Fitxers</span></a></li>
+    </ul>
+  </div>
+<h1>src/Bitext.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="preprocessor">#ifndef BITEXT_H_</span>
+<a name="l00002"></a>00002 <span class="preprocessor"></span><span class="preprocessor">#define BITEXT_H_</span>
+<a name="l00003"></a>00003 <span class="preprocessor"></span>
+<a name="l00004"></a>00004 <span class="preprocessor">#include "WebFile.h"</span>
+<a name="l00005"></a>00005 <span class="preprocessor">#include "Heuristics.h"</span>
+<a name="l00006"></a>00006 <span class="preprocessor">#include "GlobalParams.h"</span>
+<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;tagaligner/tagaligner2-1.h&gt;</span>
+<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;tagaligner/tagaligner2step-l.h&gt;</span>
+<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;tagaligner/tagaligner2step-ad.h&gt;</span>
+<a name="l00010"></a>00010 
+<a name="l00022"></a><a class="code" href="classBitext.html">00022</a> <span class="keyword">class </span><a class="code" href="classBitext.html" title="Classe que conté els elements dels bitextos.">Bitext</a>
+<a name="l00023"></a>00023 {
+<a name="l00024"></a>00024 <span class="keyword">private</span>:
+<a name="l00028"></a>00028          <span class="keywordtype">bool</span> is_initialized;
+<a name="l00029"></a>00029 
+<a name="l00033"></a>00033         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf1;
+<a name="l00034"></a>00034 
+<a name="l00038"></a>00038         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf2;
+<a name="l00039"></a>00039         
+<a name="l00044"></a>00044         <span class="keywordtype">bool</span> same_extension;
+<a name="l00045"></a>00045         
+<a name="l00049"></a>00049         <span class="keywordtype">float</span> byte_size_distance;
+<a name="l00050"></a>00050         
+<a name="l00054"></a>00054         <span class="keywordtype">float</span> edit_distance;
+<a name="l00055"></a>00055 <span class="keyword">public</span>:
+<a name="l00059"></a>00059         <a class="code" href="classBitext.html#1c6af4c09cdff1d2f2e07dfd13f5cb21">Bitext</a>();
+<a name="l00060"></a>00060 
+<a name="l00064"></a>00064         <span class="keyword">virtual</span> <a class="code" href="classBitext.html#cc306899182094b781a46ea34927b31a">~Bitext</a>();
+<a name="l00065"></a>00065         
+<a name="l00078"></a>00078         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#afb40cf06cf30ff700e45a99966cd3da">Initialize</a>(<a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf1, <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf2);
+<a name="l00079"></a>00079         
+<a name="l00086"></a>00086         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> <a class="code" href="classBitext.html#6c8051c1f9af7308ecec9929781b75f5">GetFirstWebFile</a>();
+<a name="l00087"></a>00087 
+<a name="l00094"></a>00094         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> <a class="code" href="classBitext.html#d90f8494c1241779baaa5af4da303ece">GetSecondWebFile</a>();
+<a name="l00095"></a>00095         
+<a name="l00104"></a>00104         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#372fa258d770ec0ce84c8858b227072d">GenerateBitext</a>(<span class="keywordtype">string</span> path);
+<a name="l00105"></a>00105         
+<a name="l00114"></a>00114         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#a72961ca1b4c098a66d9da44201a0bce">GetSameExtension</a>();
+<a name="l00115"></a>00115         
+<a name="l00122"></a>00122         <span class="keywordtype">float</span> <a class="code" href="classBitext.html#05ba9eb256c647047c99f7d9f3c486aa">GetSizeDistance</a>();
+<a name="l00123"></a>00123         
+<a name="l00132"></a>00132         <span class="keywordtype">float</span> <a class="code" href="classBitext.html#c8257968decc648d33b20ed627d6033f">GetEditDistance</a>();
+<a name="l00133"></a>00133 };
+<a name="l00134"></a>00134 
+<a name="l00135"></a>00135 <span class="preprocessor">#endif </span><span class="comment">/*BITEXT_H_*/</span>
+</pre></div></div>
+<hr size="1"><address style="text-align: right;"><small>Generat a Thu Oct 2 09:29:02 2008 per a Bitextor per&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.5 </small></address>
+</body>
+</html>
