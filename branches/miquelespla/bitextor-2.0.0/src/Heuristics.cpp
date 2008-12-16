@@ -102,8 +102,8 @@ int Heuristics::EditDistance(vector<int>& tts1, vector<int>& tts2, const bool &p
 						col_size=floor((beam_value/100)*(ttssize1));
 					}
 					else{
-						row_size=ceil((beam_value/100)*(ttssize2));
-						col_size=ceil((beam_value/100)*(ttssize2));
+						row_size=floor((beam_value/100)*(ttssize2));
+						col_size=floor((beam_value/100)*(ttssize2));
 					}
 					if(row_size>ttssize2+1 || col_size>ttssize1+1){
 						row_size=ttssize2+1;
