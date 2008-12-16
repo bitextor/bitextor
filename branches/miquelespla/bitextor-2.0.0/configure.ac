@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.61)
 
-AC_INIT([bitextor], [2.0rc1], [miquelespla@gmail.com])
+AC_INIT([bitextor], [2.1rc1], [miquelespla@gmail.com])
 AC_CONFIG_SRCDIR([src/Bitext.h])
 AC_CONFIG_HEADER([config.h])
 
@@ -11,7 +11,7 @@ GENERIC_LIBRARY_NAME=bitextor
 
 # Release versioning
 GENERIC_MAJOR_VERSION=2
-GENERIC_MINOR_VERSION=0
+GENERIC_MINOR_VERSION=1
 GENERIC_MICRO_VERSION=rc1
 
 # API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
@@ -50,25 +50,13 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-AC_CHECK_TOOL(WGET, [wget], [false])
+AC_CHECK_TOOL(HTTRACK, [httrack], [false])
 if test "${WGET}" = false; then
 	AC_MSG_ERROR([
  
-	Cannot find the downloading application wget.
+	Cannot find the website mirroring application httrack.
  
-	Install wget and then re-run this configuration script.
-	Try ``./configure --help'' for a help.
- 
-	])
-fi
-
-AC_CHECK_TOOL(FLEX, [flex], [false])
-if test "${FLEX}" = false; then
-	AC_MSG_ERROR([
- 
-	Cannot find the application Flex.
- 
-	Install Flex and then re-run this configuration script.
+	Install httrack and then re-run this configuration script.
 	Try ``./configure --help'' for a help.
  
 	])
