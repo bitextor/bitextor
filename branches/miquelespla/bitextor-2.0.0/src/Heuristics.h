@@ -3,6 +3,8 @@
 
 #include "GlobalParams.h"
 #include "WebFile.h"
+#include <tagaligner/tagaligner-generic.h>
+#include <math.h>
 
 /**
  * @class Heuristics
@@ -55,20 +57,19 @@ public:
 	 * @return Retorna la distància d'edició calculada com a enter major o igual a zero. En cas que la distància excedisca el màxim establert, el mètode retornarà -1.
 	 */
 	static bool HaveAcceptableEditDistance(WebFile wf1, WebFile wf2, float* result);
-	
+
 	/**
-	 * Mètode auxiliar que calcula el menor de tres enters. Si un dels paràmetres val -1 no serà
-	 * tingut en compte.
-	 * @param v1 Primer valor de la comparació.
-	 * @param v2 Segon valor de la comparació.
-	 * @param v3 Tercer valor de la comparació.
-	 * @param infinite Un enter que és major que qualsevol dels possibles valors passats pels altres
-	 * tres paràmetres. Per tant, es pot utilitzar aquest com a valor d'infinit, ja que cap dels enters
-	 * a evaluar el superaran mai.
-	 * @return Valor escollit. Si tots tres paràmetres valen -1, es retorna -1, indicant que cap valor
-	 * és acceptable per a la distància d'edició.
+	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
+	 * @param op Code of the operation wich will be performed (deletion, insertion, substitution).
+	 * @param tag1 First operand.
+	 * @param tag2 Second operand.
+	 * @return Cost of the operation. 
 	 */
+	static double Cost(const short &op, const int &tag1, const int &tag2);
+	
 	static int GetMinorValue(int vl1, int vl2, int vl3, int infinite);
+	
+	static int EditDistance(vector<int>& tts1, vector<int>& tts2, const bool &percent_beam, const float &beam_value);
 };
 
 #endif /*HEURISTICS_H_*/
