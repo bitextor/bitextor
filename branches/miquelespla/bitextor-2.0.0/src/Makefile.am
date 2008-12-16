@@ -28,6 +28,6 @@ INCLUDES = -I/usr/include/libxml++-2.6 -I/usr/include/libxml++-2.6/libxml++ \
 -I/usr/lib/sigc++-2.0/include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include \
 -I/usr/lib/libxml++-2.6/include -I/usr/include/libxml2 -I/usr/include/tidy -I/usr/include/libtextcat
 
-LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca
+LDADD = -ltextcat -lxml++-2.6 -ltidy -ltagaligner -lenca -lmagic
 
 EXTRA_DIST = LexAnalyzer LexAnalyzer.cpp LM
