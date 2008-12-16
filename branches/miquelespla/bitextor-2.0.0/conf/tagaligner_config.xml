@@ -73,7 +73,6 @@
 			</type>
 			
 			<type typename="content">
-				<tag>a</tag>
 				<tag>area</tag>
 				<tag>fieldset</tag>
 				<tag>form</tag>
@@ -91,6 +90,7 @@
 			</type>
 			
 			<type typename="irrelevant">
+				<tag>a</tag>
 				<tag>address</tag>
 				<tag>applet</tag>
 				<tag>base</tag>
@@ -115,7 +115,7 @@
 	<!-- Capital: [A-ZÀ-ÖØ-Þ] -->
 	<charset>
 		<alphanumeric>[0-9A-Za-zÀ-ÖØ-öø-ÿ]</alphanumeric>
-		<blankspace>[\t\n\r[[:space:]]]|&#160;</blankspace>
+		<blankspace>[[:space:]]</blankspace>
 		<capital>[A-ZÀ-ÖØ-Þ]</capital>
 	</charset>
 	<edition_parameters>
