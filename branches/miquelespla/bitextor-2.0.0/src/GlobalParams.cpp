@@ -2,10 +2,6 @@
 
 float GlobalParams::max_edit_distance_length=-1;
 
-map< string,int > GlobalParams::tag_map;
-
-int GlobalParams::tag_map_counter=-1;
-
 vector< string > GlobalParams::irrelevant_tags;
 	
 int GlobalParams::directory_depth_distance=0;
