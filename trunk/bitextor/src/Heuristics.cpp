@@ -188,7 +188,7 @@ int Heuristics::EditDistance(vector<int>& tts1, vector<int>& tts2, const bool &p
 				inscost = Cost(INSERT,tts2[j+startingcol], 0) + matrix[1][j];
 
 				//Deletion cost
-					delcost = Cost(DELETE,0, tts1[i]) + matrix[0][j+1+dist_before];
+				delcost = Cost(DELETE,0, tts1[i]) + matrix[0][j+1+dist_before];
 
 				//Choosing the minimal cost
 				if (subscost < inscost) {
