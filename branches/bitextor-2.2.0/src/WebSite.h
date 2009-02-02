@@ -6,6 +6,7 @@
 #include "Heuristics.h"
 #include "Bitext.h"
 
+#include <libtagaligner/configreader.h>
 #include <dirent.h> 
 #include <iostream>
 #include <sys/types.h>
@@ -39,12 +40,12 @@ private:
 	/**
 	 * Ruta del directori base on es troba descarregat el lloc web.
 	 */
-	string base_path;
+	wstring base_path;
 
 	/**
 	 * Llistat de fitxers continguts al directori web.
 	 */
-	vector< vector<WebFile> > file_list;
+	vector< vector< WebFile* > > file_list;
 
 public:
 	/**
@@ -62,7 +63,7 @@ public:
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
 	 */
-	string GetBasePath();
+	wstring GetBasePath();
 	
 	/**
 	 * Mètode que retorna les dades del fitxer emmagatzemat a la llista segons l'índex passat per paràmetre.
@@ -73,7 +74,7 @@ public:
 	 * @throw char* El mètode llança una excepció si s'intenta accedir a una posició del nivell especificat que no existeix mitjançant el paràmetre pos.
 	 * @return Retorna el WebFile emmagatzemat a la posició <code>pos</code> de la llista de WebFiles.
 	 */
-	WebFile GetWebFile(unsigned int pos, unsigned int level);
+	WebFile* GetWebFile(const unsigned int &pos, const unsigned int &level);
 	
 	/**
 	 * Mètode que retorna el nombre de fitxers continguts al directori inicialitzat.
@@ -81,7 +82,7 @@ public:
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna el nombre de fitxers continguts al directori inicialitzat.
 	 */
-	unsigned int WebFileCount(unsigned int level);
+	unsigned int WebFileCount(const unsigned int &level);
 	
 	/**
 	 * Mètode que retorna el nombre de nivells de l'arbre de directoris representat.
@@ -94,7 +95,7 @@ public:
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
 	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
 	 */
-	bool Initialize(string base_path);
+	bool Initialize(const wstring &base_path);
 	
 	/**
 	 * Mètode que compara, segons els límits establerts als paràmetres globals, els fitxers web

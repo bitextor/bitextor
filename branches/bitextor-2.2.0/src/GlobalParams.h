@@ -1,7 +1,7 @@
 #ifndef GLOBALPARAMS_H_
 #define GLOBALPARAMS_H_
 
-#include <tagaligner/configreader.h>
+#include <libtagaligner/configreader.h>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -9,7 +9,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <libxml++.h>
 
 using namespace std;
 
@@ -30,7 +29,13 @@ private:
 	/**
 	 * Variable que conté la ruta on es troba el fitxer de configuració de l'aplicació.
 	 */
-	static string config_file;
+	static wstring config_file;
+
+	/**
+	 * Senyal que identifica si el limit de distància d'edició és percentual sobre els fitxers
+	 * d'entrada o és absolut.
+	 */
+	 static bool is_percentual_edmax;
 
 	/**
 	 * Màxima distància d'edició permesa per a establir una possible correspondència entre fitxers HTML.
@@ -43,19 +48,19 @@ private:
 	 * a la llista "irrelevant_tags" es marcaran amb enters negatius. Els enters correspondan a longituds
 	 * de text contingut entre les etiquetes.
 	 */
-	static map< string,int > tag_map;
+	//static map< string,int > tag_map;
 	
 	/**
 	 * Comptador descendent per al mapejat d'etiquetes HMLT. S'utilitza per a saber quin valor tindrà la
 	 * pròxima etiqueta HTML inclosa al map.
 	 */
-	static int tag_map_counter;
+	//static int tag_map_counter;
 	
 	/**
 	 * Llistat d'etiquetes que, per la poca informació que aporten, són despreciades. Les etiquetes
 	 * contingudes en aquesta llista no seran utilitzaedes per a la comparació entre fitxers web.
 	 */
-	static vector< string > irrelevant_tags;
+	//static vector< string > irrelevant_tags;
 	
 	/**
 	 * Distància màxima de profunditat en l'arbre de directoris que poden tenir dos fitxers web a
@@ -86,12 +91,12 @@ private:
 	/**
 	 * Ruta del fitxer de configuració de la llibreria TagAligner.
 	 */
-	static string tagaligner_config_file;
+	static wstring tagaligner_config_file;
 	
 	/**
 	 * Ruta del fitxer de configuració de la llibreria TextCat.
 	 */
-	static string textcat_config_file;
+	static wstring textcat_config_file;
 	
 	/**
 	 * Mode d'aliniament en TagAligner. Pot tenir tres valors numèrics (1, 2 o 3) corresponents
@@ -110,12 +115,12 @@ private:
 	/**
 	 * Paràmetre que registra les extenssions dels fitxers objectius de la descàrrega.
 	 */
-	static vector<string> accepted_extenssions;
+	static vector<wstring> accepted_extenssions;
 	
 	/**
 	 * Paràmetre que indica la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 */
-	static string download_path;
+	static wstring download_path;
 	
 	/**
 	 * Indicador que permet forçar a bitextor a consultar l'idioma de cada fitxer o permetre que ell mateix intente esbrinar-lo.
@@ -129,7 +134,13 @@ public:
 	 * @param value Llindar que es preten establir com a màxima distància d'edició.
 	 * @throw char* El mètode llança una excepció si el valor a assignar no és major que 0.
 	 */
-	static void SetMaxEditDistance(float value);
+	static void SetMaxEditDistance(const float &value);
+	
+	/**
+	 * Mètode que indica si el valor de màxima distància d'edició és percentual o absolut.
+	 * @return Retorna <code>true</code> en cas que el valor de màxima distància d'edició siga percentual i <code>false</code> en cas que siga absolut.
+	 */
+	static bool IsPercentMaxEditDistance();
 	
 	/**
 	 * Mètode que permet obtenir la màxima distància d'edició entre fitxers web establerta.
@@ -151,13 +162,13 @@ public:
 	 * @return Retorna l'identificador enter de l'etiqueta passada per paràmetre. Si l'identificador és
 	 * major que 0, significa que aquesta etiqueta no és rellevant.
 	 */
-	static int GetHTMLTagValue(string tag);
+	static int GetHTMLTagValue(const wstring tag);
 	
 	/**
 	 * Mètode que afegix una nova etiqueta a la llista d'etiquetes irrelevants.
 	 * @param tag Etiqueta que es dessitja afegir a la llista.
 	 */
-	static void AddIrrelevantTag(string tag);
+	static void AddIrrelevantTag(const wstring &tag);
 	
 	/**
 	 * Mètode que permet establir el límit de profunditat en l'arbre de directoris per a la comparació
@@ -165,14 +176,14 @@ public:
 	 * @param value Valor del límit que es vol establir. Si el valor que es passa és igual o menor a
 	 * zero, només es comprovaran els fit xers que es troben en el mateix nivell de profunditat.
 	 */
-	static void SetDirectoryDepthDistance(int value);
+	static void SetDirectoryDepthDistance(const int &value);
 	
 	
 	/**
 	 * Mètode que permet establir el valor de la variable ja descrita <code>text_distance_percent_differenciator</code>.
 	 * @param value Valor que es vol establir.
 	 */
-	static void SetTextDistancePercentDifferenciator(float value);
+	static void SetTextDistancePercentDifferenciator(const float &value);
 	
 	/**
 	 * Mètode que permet obtenir el límit de profunditat en l'arbre de directoris per a la comparació
@@ -192,7 +203,7 @@ public:
 	 * @return bool Retorna <code>true</code> si la càrrega s'ha realitzat de forma satisfactòria i
 	 * <code>false</code> en cas contrari.
 	 */
-	static bool LoadGlobalParams(string path);
+	static bool LoadGlobalParams(const wstring &path);
 	
 	/**
 	 * Mètode que permet obtenir el percentatge màxim de diferència de mida de dos fitxers per a ser
@@ -206,31 +217,31 @@ public:
 	 * Mètode que permet establir el valor de la variable ja descrita <code>file_size_difference_percent</code>.
 	 * @param value Valor que es vol establir.
 	 */
-	static void SetFileSizeDifferencePercent(float value);
+	static void SetFileSizeDifferencePercent(const float &value);
 	
 	/**
 	 * Mètode que permet establir la ruta on es troba el fitxer de configuració de la llibreria TextCat.
 	 * @param path Ruta on es troba el fitxer.
 	 */
-	static void SetTextCatConfigFile(string path);
+	static void SetTextCatConfigFile(const wstring &path);
 	
 	/**
 	 * Mètode que permet obtenir la ruta on es troba el fitxer de configuració de la llibreria TextCat.
 	 * @return Retorna la ruta on es troba el fitxer.
 	 */
-	static string GetTextCatConfigFile();
+	static wstring GetTextCatConfigFile();
 	
 	/**
 	 * Mètode que permet establir la ruta on es troba el fitxer de configuració de la llibreria Tagaligner.
 	 * @param path Ruta on es troba el fitxer.
 	 */
-	static void SetTagAlignerConfigFile(string path);
+	static void SetTagAlignerConfigFile(const wstring &path);
 	
 	/**
 	 * Mètode que permet obtenir la ruta on es troba el fitxer de configuració de la llibreria Tagaligner.
 	 * @return Retorna la ruta on es troba el fitxer.
 	 */
-	static string GetTagAlignerConfigFile();
+	static wstring GetTagAlignerConfigFile();
 	
 	/**
 	 * Mètode que permet establir el mode d'aliniament de TagAligner.
@@ -240,7 +251,7 @@ public:
 	 * 3-Aliniament directe de text i etiquetes en dos pasos.
 	 * @throw char* El mètode llança una excepció si el mode especificat per a TagAligner no és valid.
 	 */
-	static void SetTagAlignerMode(int mode);
+	static void SetTagAlignerMode(const int &mode);
 	
 	/**
 	 * Mètode que permet obtenir el mode d'aliniament de TagAligner.
@@ -253,13 +264,13 @@ public:
 	 * @param node Node que es processarà.
 	 * @param indention
 	 */
-	static void ProcessNode(const xmlpp::Node* node, string tagname, unsigned int indentation);
+	static void ProcessNode(xmlNode* node, wstring tagname);
 	
 	/**
 	 * Mètode que permet obtenir la llista d'extensions acceptades per als fitxer a descarregar pel mòdul de descàrrega.
 	 * @return Retorna la llista d'extensions acceptades per als fitxer a descarregar pel mòdul de descàrrega.
 	 */
-	static vector<string> GetAcceptedExtenssions();
+	static vector<wstring> GetAcceptedExtenssions();
 
 	/**
 	 * Mètode que permet obtenir el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
@@ -271,13 +282,13 @@ public:
 	 * Mètode que permet obtenir la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 * @return Retorna la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 */
-	static string GetDownloadPath();
+	static wstring GetDownloadPath();
 	
 	/**
 	 * Mètode que permet indicar a bitextor si ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
 	 * @param Valor que es preten donar a aquest paràmetre.
 	 */
-	static void SetGuessLanguage(bool value);
+	static void SetGuessLanguage(const bool &value);
 	
 	/**
 	 * Mètode que permet saber si bitextor ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.

@@ -84,12 +84,12 @@ Try ``./configure --help'' for a help.
  
 ])])
 
-AC_CHECK_LIB([xml++-2.6], [main], [], [AC_MSG_ERROR([
+AC_CHECK_LIB([xml2], [main], [], [AC_MSG_ERROR([
  
-Cannot find the C++ wrapper for XML 2 library libxml++-2.6.
-Did you specify the path with ``./configure --with-xml2pp=PATH''?
+Cannot find the XML 2 library
+Did you specify the path with ``./configure --with-xml2=PATH''?
  
-Install the C++ wrapper for ``libxml2'' and then re-run this configuration script.
+Install the ``libxml2'' and then re-run this configuration script.
 Try ``./configure --help'' for a help.
  
 ])])

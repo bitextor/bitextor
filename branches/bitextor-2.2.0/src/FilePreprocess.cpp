@@ -1,9 +1,10 @@
 #include "FilePreprocess.h"
 
-bool FilePreprocess::PreprocessFile(string file_path)
+bool FilePreprocess::PreprocessFile(const wstring &file_path)
 {
 	fstream file;
-	string encod,line,buff;
+	wstring line,buff;
+	string encod;
 	TidyDoc tdoc;
 	int ok, rc;
 	bool exit=true;
@@ -11,24 +12,27 @@ bool FilePreprocess::PreprocessFile(string file_path)
 	TidyBuffer output;
 	EncaAnalyser analyser;
 	EncaEncoding encoding;
+	FILE* fin;
+	wint_t aux_car;
 	
-	if(GlobalParams::GetTextCatConfigFile()!=""){
+	if(GlobalParams::GetTextCatConfigFile()!=L""){
 		//We detect the charset encode of the file.
 		try{	
 			tidyBufInit(&output);
 			tidyBufInit(&errbuf);
-			file.open(file_path.c_str(), ios::in);
-			if(file.is_open()){
-				int i=0;
-				getline(file,line);
-				while(!file.eof()){
-					if(line.length()>0)
-						buff+=line.c_str();
-					getline(file,line);
-					i++;
+			fin=fopen(Config::toString(file_path).c_str(),"r");
+			if (!fin) {//There were errors opening the first input file
+				exit=false;
+			} else {
+				aux_car=getwc(fin);
+				while(aux_car!=WEOF){
+					buff+=(wchar_t)aux_car;
+					aux_car=getwc(fin);
 				}
+				fclose(fin);
+
 				analyser=enca_analyser_alloc("__");
-				encoding = enca_analyse_const(analyser, (unsigned char*)buff.c_str(), buff.length());
+				encoding = enca_analyse_const(analyser, (unsigned char*) buff.c_str(), buff.length());
 				encod = enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV);
 				if (enca_charset_name(encoding.charset, ENCA_NAME_STYLE_CSTOCS) != NULL)
 			      encod=enca_charset_name(encoding.charset, ENCA_NAME_STYLE_CSTOCS);
@@ -53,17 +57,15 @@ bool FilePreprocess::PreprocessFile(string file_path)
 				
 				rc = tidySetErrorBuffer(tdoc, &errbuf);
 				rc = tidyCleanAndRepair( tdoc );
-				rc = tidyParseFile(tdoc, file_path.c_str());
+				rc = tidyParseFile(tdoc, Config::toString(file_path).c_str());
 				rc = tidySaveBuffer( tdoc, &output );
 				
-				file.open(file_path.c_str(),ios::out);
+				file.open(Config::toString(file_path).c_str(),ios::out);
 				file<<output.bp;
 				file.close();
 				tidyRelease( tdoc );
 				enca_analyser_free(analyser);
 			}
-			else
-				exit=false;
 			
 			if(&output!=NULL)
 				tidyBufFree( &output );

@@ -9,7 +9,7 @@ Bitext::~Bitext()
 {
 }
 
-bool Bitext::Initialize(WebFile wf1, WebFile wf2)
+bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 {
 	this->wf1=wf1;
 	this->wf2=wf2;
@@ -17,8 +17,8 @@ bool Bitext::Initialize(WebFile wf1, WebFile wf2)
 
 	float aux_result;
 	
-	if(wf1.IsInitialized() && wf2.IsInitialized()){
-		if(wf1.GetLang()!=wf2.GetLang()){
+	if(wf1->IsInitialized() && wf2->IsInitialized()){
+		if(wf1->GetLang()!=wf2->GetLang()){
 			try{
 				exit=Heuristics::HaveTheSameExtension(wf1,wf2);
 				this->same_extension=exit;
@@ -27,10 +27,10 @@ bool Bitext::Initialize(WebFile wf1, WebFile wf2)
 					this->byte_size_distance=aux_result;
 					if(exit){
 						exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
-						if(wf1.GetTagArray().size()>wf2.GetTagArray().size())
-							aux_result=aux_result*100/((float)wf1.GetTagArray().size());
+						if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
+							aux_result=aux_result*100/((float)(*wf1->GetTagArrayReference()).size());
 						else
-							aux_result=aux_result*100/((float)wf2.GetTagArray().size());
+							aux_result=aux_result*100/((float)(*wf2->GetTagArrayReference()).size());
 						this->edit_distance=aux_result;
 					}
 				}
@@ -48,85 +48,51 @@ bool Bitext::Initialize(WebFile wf1, WebFile wf2)
 	return exit;
 }
 	
-bool Bitext::GenerateBitext(string path)
+bool Bitext::GenerateBitext(const string &path)
 {
 	TagAligner2step_ad *tagalignerA;
 	TagAligner2step_l *tagalignerB;
 	TagAligner2_1 *tagalignerC;
 	bool exit=true;
-	string lwebpage, rwebpage, aux;
 	ifstream fin1, fin2;
-	int bytesreaded;
-	int length;
-	string tagaligneroutput;
-	ofstream ofile;
+	wstring tagaligneroutput;
+	FILE* fout;
 
 	if(this->is_initialized){
-		fin1.open(this->wf1.GetPath().c_str());
-		if (!fin1.is_open()) {//There were errors opening the first input file
-			fprintf(stderr,"File \"%s\" could not be opened\n",this->wf1.GetPath().c_str());
-		} else {
-			fin2.open(this->wf2.GetPath().c_str());
-			if (!fin2.is_open()) {//There were errors opening the first input file
-				fprintf(stderr,"File \"%s\" could not be opened\n",this->wf2.GetPath().c_str());
-				fin1.close();
-			} else {
-				
-				fin1>>lwebpage;
-				fin1>>aux;
-				while(!fin1.eof()){
-					lwebpage+=" "+aux;
-					fin1>>aux;
-				}
-
-				fin2>>rwebpage;
-				fin2>>aux;
-				while(!fin2.eof()){
-					rwebpage+=" "+aux;
-					fin2>>aux;
-				}
-
-				fin1.close();
-				fin2.close();
-
-				ofile.open(path.c_str(), ios::out);
-				if(!ofile.is_open())
+		switch(GlobalParams::GetTagAlignerMode()){
+			case 1:
+				tagalignerA=new TagAligner2step_ad();
+				if (tagalignerA->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
+					tagaligneroutput=tagalignerA->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
+				} else
 					exit=false;
-				else{
-					if(exit){
-						switch(GlobalParams::GetTagAlignerMode()){
-							case 1:
-								tagalignerA=new TagAligner2step_ad();
-								tagalignerA->getConfig(GlobalParams::GetTagAlignerConfigFile());
-								if (tagalignerA->Align(lwebpage,rwebpage)) {
-									tagaligneroutput=tagalignerA->GenerateTMX(this->wf1.GetLang().c_str(), this->wf2.GetLang().c_str());
-								} else
-									exit=false;
-								delete tagalignerA;
-							break;
-							case 2:
-								tagalignerB=new TagAligner2step_l();
-								tagalignerB->getConfig(GlobalParams::GetTagAlignerConfigFile());
-								if (tagalignerB->Align(lwebpage,rwebpage)) {
-									tagaligneroutput=tagalignerB->GenerateTMX(this->wf1.GetLang().c_str(), this->wf2.GetLang().c_str());
-								} else
-									exit=false;
-								delete tagalignerB;
-							break;
-							case 3:
-								tagalignerC=new TagAligner2_1();
-								tagalignerC->getConfig(GlobalParams::GetTagAlignerConfigFile());
-								if (tagalignerC->Align(lwebpage,rwebpage)) {
-									tagaligneroutput=tagalignerC->GenerateTMX(this->wf1.GetLang().c_str(), this->wf2.GetLang().c_str());
-								} else
-									exit=false;
-								delete tagalignerC;
-							break;
-						}
-						ofile<<tagaligneroutput<<endl;
-					}
-				}
+				delete tagalignerA;
+			break;
+			case 2:
+				tagalignerB=new TagAligner2step_l();
+				if (tagalignerB->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
+					tagaligneroutput=tagalignerB->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
+				} else
+					exit=false;
+				delete tagalignerB;
+			break;
+			case 3:
+				tagalignerC=new TagAligner2_1();
+				if (tagalignerC->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
+					tagaligneroutput=tagalignerC->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
+				} else
+					exit=false;
+				delete tagalignerC;
+			break;
+		}
+		fout=fopen(path.c_str(),"w");
+		if (!fout)//Hubo errores en la apertura del fichero de salida
+			wcout<<tagaligneroutput<<endl;
+		else{
+			if (tagaligneroutput!=L""){
+				fputws(tagaligneroutput.c_str(),fout);
 			}
+			fclose(fout);
 		}
 	}
 	else
@@ -158,7 +124,7 @@ float Bitext::GetEditDistance()
 		throw "Bitext not initialized.";
 }
 
-WebFile Bitext::GetFirstWebFile()
+WebFile* Bitext::GetFirstWebFile()
 {
 	if(this->is_initialized)
 		return this->wf1;
@@ -166,7 +132,7 @@ WebFile Bitext::GetFirstWebFile()
 		throw "Bitext not initialized.";
 }
 
-WebFile Bitext::GetSecondWebFile()
+WebFile* Bitext::GetSecondWebFile()
 {
 	if(this->is_initialized)
 		return this->wf2;

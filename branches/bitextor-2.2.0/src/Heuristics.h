@@ -3,8 +3,9 @@
 
 #include "GlobalParams.h"
 #include "WebFile.h"
-#include <tagaligner/tagaligner-generic.h>
 #include <math.h>
+#include <libtagaligner/configreader.h>
+#include <libtagaligner/tagaligner-generic.h>
 
 /**
  * @class Heuristics
@@ -30,7 +31,7 @@ public:
 	 * @param wf2 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre l'altre fitxer web amb el qual hem de fer la comparació.
 	 * @return Retorna <code>true</code> si l'extensió d'ambdós fitxers és la mateixa, o <code>false</code> en cas contrari. 
 	 */
-	static bool HaveTheSameExtension(WebFile wf1, WebFile wf2);
+	static bool HaveTheSameExtension(WebFile *wf1, WebFile *wf2);
 	
 	/**
 	 * Mètode que indica si dos fitxers web poden ser el mateix basant-se en la seua mida en bytes. Per a activar aquest mètode cal donar un percentatge
@@ -40,7 +41,7 @@ public:
 	 * @param result Paràmetre que serveix per a obtenir el percentatge de diferència de mida entre els dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
 	 * @return Retorna <code>true</code> si la diferència de mida dels fitxers és acceptable segons els paràmetres establerts, o <code>false</code> en cas contrari. 
 	 */
-	static bool HaveAcceptableSizeDifference(WebFile wf1, WebFile wf2, float* result);
+	static bool HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, float* result);
 	
 	/**
 	 * Mètode que calcula la distància d'edició entre dues cadenes d'etiquetes HTML/Text tal com s'estableixen a la classe WebFile.
@@ -56,20 +57,16 @@ public:
 	 * @param result Paràmetre que serveix per a obtenir la distància d'edició entre els vectors d'etiquetes HTML/Text dels dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
 	 * @return Retorna la distància d'edició calculada com a enter major o igual a zero. En cas que la distància excedisca el màxim establert, el mètode retornarà -1.
 	 */
-	static bool HaveAcceptableEditDistance(WebFile wf1, WebFile wf2, float* result);
+	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, float* result);
 
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
 	 * @param op Code of the operation wich will be performed (deletion, insertion, substitution).
-	 * @param tag1 First operand.
-	 * @param tag2 Second operand.
+	 * @param ctag1 First operand.
+	 * @param ctag2 Second operand.
 	 * @return Cost of the operation. 
 	 */
-	static double Cost(const short &op, const int &tag1, const int &tag2);
-	
-	static int GetMinorValue(int vl1, int vl2, int vl3, int infinite);
-	
-	static int EditDistance(vector<int>& tts1, vector<int>& tts2, const bool &percent_beam, const float &beam_value);
+	static double Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2);
 };
 
 #endif /*HEURISTICS_H_*/

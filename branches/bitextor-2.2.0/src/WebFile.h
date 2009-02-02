@@ -3,7 +3,6 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
-#include <libxml++.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -11,6 +10,7 @@
 #include <exception>
 #include <stdexcept>
 #include <vector>
+#include <libtagaligner/fragmented_file.h>
 
 extern "C"{
 #include <textcat.h>
@@ -35,22 +35,22 @@ private:
 	/**
 	 * Adreça on es troba el fitxer.
 	 */
-	string path;
+	wstring path;
 	
 	/**
 	 * Lengua en què està escrit el text contingut pel fitxer.
 	 */
-	string lang;
+	wstring lang;
 	
 	/**
 	 * Tipus de dades contingudes al fitxer.
 	 */
-	string file_type;
+	wstring file_type;
 	
 	/**
-	 * Llista d'etiquetes HTML del fitxer.
+	 * Objecte que conté el fitxer HTML dividit en etiquetes i blocs de text.
 	 */
-	vector<int> tag_list;
+	FragmentedFile file;
 
 	/**
 	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
@@ -77,35 +77,42 @@ public:
 	 * @param path Ruta del fitxer a què fa referència la classe.
 	 * @throw char* El mètode llança una excepció si no s'ha especificat el fitxer de configuració de TextCat.
 	 */
-	bool Initialize(string path);
+	bool Initialize(const wstring &path);
 	
 	/**
 	 * Mètode que permet obtenir el paràmetre sobre l'idioma del fitxer.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @return Retorna el codi d'idioma en què està escrit el text del fitxer.
 	 */
-	string GetLang();
+	wstring GetLang();
 	
 	/**
 	 * Mètode que permet obtenir el paràmetre sobre la ruta on es troba el fitxer en el sistema de directoris.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @return Retorna la ruta on es troba el fitxer en el sistema de directoris.
 	 */
-	string GetPath();
+	wstring GetPath();
 	
 	/**
 	 * Mètode que permet obtenir el valor del paràmetre sobre el tipus de contingut (extensió) del fitxer.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @return Retorna l'extensió del fitxer.
 	 */
-	string GetFileType();
+	wstring GetFileType();
 	
 	/**
 	 * Mètode que retorna un array format per la cadena d'etiquetes contingudes al fitxer web.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @reutrn Retorna la llista d'etiquetes, codificades amb números enters, en un vector.
 	 */
-	vector<int> GetTagArray();
+	vector<Fragment*> * GetTagArrayReference();
+	
+	/**
+	 * Mètode que retorna l'objecte FragmentedFile que conté el fitxer XHTML.
+	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
+	 * @reutrn Retorna l'objecte FragmentedFile que conté el fitxer XHTML.
+	 */
+	FragmentedFile* GetFragmentedFileReference();
 	
 	/**
 	 * Mètode que indica si el fitxer està inicialitzat correctament.

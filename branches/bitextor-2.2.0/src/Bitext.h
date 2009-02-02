@@ -4,9 +4,10 @@
 #include "WebFile.h"
 #include "Heuristics.h"
 #include "GlobalParams.h"
-#include <tagaligner/tagaligner2-1.h>
-#include <tagaligner/tagaligner2step-l.h>
-#include <tagaligner/tagaligner2step-ad.h>
+#include <libtagaligner/tagaligner2-1.h>
+#include <libtagaligner/tagaligner2step-l.h>
+#include <libtagaligner/tagaligner2step-ad.h>
+#include <libtagaligner/configreader.h>
 
 /**
  * @class Bitext
@@ -30,12 +31,12 @@ private:
 	/**
 	 * El primer fitxer web del bitext.
 	 */
-	WebFile wf1;
+	WebFile *wf1;
 
 	/**
 	 * El segon fitxer web del bitext.
 	 */
-	WebFile wf2;
+	WebFile *wf2;
 	
 	/**
 	 * Variable que es troba a <code>true</code> si ambdós fitxers tenen la mateixa extensió i
@@ -75,7 +76,7 @@ public:
 	 * un bitext a partir d'ells i estan escrits en llengües diferents, mentre que retorna <code>false</code>
 	 * en cas contrari.
 	 */
-	bool Initialize(WebFile wf1, WebFile wf2);
+	bool Initialize(WebFile *wf1, WebFile *wf2);
 	
 	/**
 	 * Mètode que retorna el primer fitxer web del bitext.
@@ -83,7 +84,7 @@ public:
 	 * estat inicialitzat correctament.
 	 * @return Retorna el primer fitxer web del bitext.
 	 */
-	WebFile GetFirstWebFile();
+	WebFile* GetFirstWebFile();
 
 	/**
 	 * Mètode que retorna el segon fitxer web del bitext.
@@ -91,7 +92,7 @@ public:
 	 * estat inicialitzat correctament.
 	 * @return Retorna el segon fitxer web del bitext.
 	 */
-	WebFile GetSecondWebFile();
+	WebFile* GetSecondWebFile();
 	
 	/**
 	 * Mètode que crea el bitext a partir dels dos fiters web introduïts en la inicialització.
@@ -101,7 +102,7 @@ public:
 	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>
 	 * en cas contrari.
 	 */
-	bool GenerateBitext(string path);
+	bool GenerateBitext(const string &path);
 	
 	/**
 	 * Mètode que retorna <code>true</code> si ambdós fitxers tenen la mateixa extensió

@@ -9,17 +9,17 @@ DownloadMod::~DownloadMod()
 {
 }
 
-void DownloadMod::SetMaxDownloadedSize(long mds)
+void DownloadMod::SetMaxDownloadedSize(const long &mds)
 {
 	this->max_downloaded_size=mds;
 }
 
-void DownloadMod::SetDestPath(string path)
+void DownloadMod::SetDestPath(const wstring &path)
 {
 	this->dest_path=path;
 }
 
-bool DownloadMod::StartDownload(string website)
+bool DownloadMod::StartDownload(const wstring &website)
 {
 	string command;
 	unsigned int i;
@@ -31,7 +31,7 @@ bool DownloadMod::StartDownload(string website)
 		ss<<this->max_downloaded_size;
 		command+=" -M"+ss.str();
 	}
-	command+=" -Q -q -%i0 -I0 -O "+dest_path+" "+website+" > /dev/null";
+	command+=" -Q -q -%i0 -I0 -O "+Config::toString(dest_path)+" "+Config::toString(website)+" > /dev/null";
 	exit=system(command.c_str());
 	
 	return exit;
