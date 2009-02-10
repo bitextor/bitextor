@@ -15,7 +15,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	this->wf2=wf2;
 	bool exit;
 
-	float aux_result;
+	double aux_result;
 	
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
@@ -27,11 +27,15 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 					this->byte_size_distance=aux_result;
 					if(exit){
 						exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
-						if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
-							aux_result=aux_result*100/((float)(*wf1->GetTagArrayReference()).size());
-						else
-							aux_result=aux_result*100/((float)(*wf2->GetTagArrayReference()).size());
-						this->edit_distance=aux_result;
+						if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
+							aux_result=0;
+						else{
+							if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
+								aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
+							else
+								aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
+							this->edit_distance=aux_result;
+						}
 					}
 				}
 				this->is_initialized=true;
@@ -59,7 +63,7 @@ bool Bitext::GenerateBitext(const string &path)
 	FILE* fout;
 
 	if(this->is_initialized){
-		switch(GlobalParams::GetTagAlignerMode()){
+		switch(Config::getMode()){
 			case 1:
 				tagalignerA=new TagAligner2step_ad();
 				if (tagalignerA->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
@@ -108,7 +112,7 @@ bool Bitext::GetSameExtension()
 		throw "Bitext not initialized.";
 }
 	
-float Bitext::GetSizeDistance()
+double Bitext::GetSizeDistance()
 {
 	if(this->is_initialized)
 		return this->byte_size_distance;
@@ -116,7 +120,7 @@ float Bitext::GetSizeDistance()
 		throw "Bitext not initialized.";
 }
 	
-float Bitext::GetEditDistance()
+double Bitext::GetEditDistance()
 {
 	if(this->is_initialized)
 		return this->edit_distance;

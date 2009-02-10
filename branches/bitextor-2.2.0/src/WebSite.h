@@ -40,7 +40,7 @@ private:
 	/**
 	 * Ruta del directori base on es troba descarregat el lloc web.
 	 */
-	wstring base_path;
+	string base_path;
 
 	/**
 	 * Llistat de fitxers continguts al directori web.
@@ -63,7 +63,7 @@ public:
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
 	 */
-	wstring GetBasePath();
+	string GetBasePath();
 	
 	/**
 	 * Mètode que retorna les dades del fitxer emmagatzemat a la llista segons l'índex passat per paràmetre.
@@ -95,7 +95,7 @@ public:
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
 	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
 	 */
-	bool Initialize(const wstring &base_path);
+	bool Initialize(const string &base_path);
 	
 	/**
 	 * Mètode que compara, segons els límits establerts als paràmetres globals, els fitxers web

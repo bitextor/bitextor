@@ -40,7 +40,7 @@ public:
 	 * @return El mètode retorna <code>true</code> si el preprocessament s'ha efectuat de forma satisfactòria o <code>false</code> en cas contrari.
 	 * @throw char* El mètode llança un missatge d'error si no s'ha especificat la ruta al fitxer de configuració de la llibreria TextCat.
 	 */
-	static bool PreprocessFile(const wstring &file_path);
+	static bool PreprocessFile(const string &file_path);
 };
 
 #endif /*FILEPREPROCESS_H_*/

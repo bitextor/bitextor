@@ -2,13 +2,20 @@
 
 WebSite::WebSite()
 {
-	this->base_path=L"";
+	this->base_path="";
 	this->initialized=false;
 }
 
-WebSite::~WebSite(){}
+WebSite::~WebSite()
+{
+	unsigned int i,j;
+	
+	for(i=0;i<file_list.size();i++)
+		for(j=0;j<file_list[i].size();j++)
+			delete file_list[i][j];
+}
 
-wstring WebSite::GetBasePath()
+string WebSite::GetBasePath()
 {
 	if(this->initialized)
 		return this->base_path;
@@ -36,22 +43,22 @@ WebFile* WebSite::GetWebFile(const unsigned int &pos, const unsigned int &level)
 		throw "Object not initialized.";
 }
 
-bool WebSite::Initialize(const wstring &base_path)
+bool WebSite::Initialize(const string &base_path)
 {
 	DIR *directorio;
 	struct dirent *fichero;
 	struct stat fich;
-	wstring dir, file_name;
-	vector<wstring> pila;
+	string dir, file_name;
+	vector<string> pila;
 	vector<WebFile*> vec_aux;
-	map<wstring,int> dir_level;
+	map<string,int> dir_level;
 	WebFile *wf;
 	unsigned int level;
 	bool exit=true;
 
 	try{
 		//Firstly, we prove that base_path is a valid directory.
-		if ( stat(Config::toString(base_path).c_str(), &fich)>=0 ){
+		if ( stat(base_path.c_str(), &fich)>=0 ){
 			if(!S_ISDIR(fich.st_mode))
 				return false;
 		}
@@ -64,15 +71,15 @@ bool WebSite::Initialize(const wstring &base_path)
 		{
 			dir=pila.back();
 			pila.pop_back();
-			directorio = opendir(Config::toString(dir).c_str());
-			level=dir_level[dir];
+			directorio = opendir(dir.c_str());
 			if(directorio!=NULL){
+				level=dir_level[dir];
 				while ( (fichero=readdir(directorio)) != NULL ){
 					if ( strcmp(fichero->d_name, "..") != 0 && strcmp(fichero->d_name, ".") != 0 ){
-						file_name=dir+Config::toWstring(fichero->d_name);
-						if ( stat(Config::toString(file_name).c_str(), &fich)>=0 ){
+						file_name=dir+fichero->d_name;
+						if ( stat(file_name.c_str(), &fich)>=0 ){
 							if(S_ISDIR(fich.st_mode)){
-								file_name=file_name+L"/";
+								file_name=file_name+"/";
 								pila.push_back(file_name);
 								dir_level[file_name]=level+1;
 							}
@@ -82,6 +89,7 @@ bool WebSite::Initialize(const wstring &base_path)
 								wf->Initialize(file_name);
 								if(wf->IsInitialized())
 								{
+									//cout<<file_name<<endl;
 									while(level>=file_list.size())
 										this->file_list.push_back(vec_aux);
 									this->file_list[level].push_back(wf);
@@ -92,8 +100,8 @@ bool WebSite::Initialize(const wstring &base_path)
 						}
 					}
 				}
+				closedir(directorio);
 			}
-			closedir(directorio);
 		}
 		directorio=NULL;
 		this->initialized=true;

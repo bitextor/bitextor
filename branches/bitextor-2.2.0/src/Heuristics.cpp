@@ -5,7 +5,7 @@ bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 	return (wf1->GetFileType()==wf2->GetFileType());
 }
 
-bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, float* result=NULL)
+bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double* result=NULL)
 {
 	bool exit;
 	int init, end;
@@ -19,23 +19,23 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, float*
 	}
 	else{
 		try{
-			f.open(Config::toString(wf1->GetPath()).c_str());
+			f.open(wf1->GetPath().c_str());
 			init=f.tellg();
 			f.seekg(0, ios::end);
 			end=f.tellg();
 			f.close();
 			wf1_size=end-init;
 			
-			f.open(Config::toString(wf2->GetPath()).c_str());
+			f.open(wf2->GetPath().c_str());
 			init=f.tellg();
 			f.seekg(0, ios::end);
 			end=f.tellg();
 			f.close();
 			wf2_size=end-init;
 
-			exit=(((float)abs(wf1_size-wf2_size)/(float)(wf1_size+wf2_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
+			exit=(((double)abs(wf1_size-wf2_size)/(double)(wf1_size+wf2_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
 			if(result!=NULL)
-				*result=((float)abs(wf1_size-wf2_size)/(float)(wf1_size+wf2_size))*100;
+				*result=((double)abs(wf1_size-wf2_size)/(double)(wf1_size+wf2_size))*100;
 		}
 		catch(...){
 			exit=false;
@@ -44,11 +44,11 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, float*
 	return exit;
 }
 
-bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, float* result=NULL)
+bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result=NULL)
 {
 	vector<Fragment*> *tag_array1, *tag_array2;
 	double res;
-	float beam;
+	double beam;
 	unsigned int vec1len, vec2len;
 	double aux_result;
 	
@@ -57,20 +57,24 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, float* r
 	vec1len=wf1->GetFragmentedFileReference()->getSize();
 	vec2len=wf2->GetFragmentedFileReference()->getSize();
 	//We calculate the maximal edit distance possible to accept the pair or not. 
-	if(GlobalParams::GetMaxEditDistance()==-1)
+	if(Config::getDiagonalSize()==-1)
 		beam=0;
 	else
-		beam=GlobalParams::GetMaxEditDistance();
+		beam=Config::getDiagonalSize();
 
+	/*switch (Config::getMode()){
+		case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
+		default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
+	}*/
 	TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, GlobalParams::IsPercentMaxEditDistance(), beam, &res);
 	if(result!=NULL)
 		*result=res;
 
 	if(GlobalParams::IsPercentMaxEditDistance()){
 		if(vec1len>vec2len)
-			aux_result=res*100/((float)(vec1len));
+			aux_result=res*100/((double)(vec1len));
 		else
-			aux_result=res*100/((float)(vec2len));
+			aux_result=res*100/((double)(vec2len));
 	}
 	else
 		aux_result=res;
@@ -81,8 +85,6 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, float* r
 	else
 		return false;
 }
-
-//template wstring TagAligner_generic::EditDistanceBeam(vector<FragmentRef>& tts1, vector<FragmentRef>& tts2, double (*CostFunc)(const short&,const FragmentRef&,const FragmentRef&), const bool &percent_beam, const float &beam_value, double* distance); 
 
 double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2){
 	unsigned int text_distance;
@@ -114,7 +116,7 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 					aux_text=dynamic_cast<Text*>(tag1);
 					aux_text2=dynamic_cast<Text*>(tag2);
 					text_distance=abs(aux_text2->getLength()-aux_text->getLength());
-					if(text_distance>(((float)(aux_text->getLength()+aux_text2->getLength())/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(float)100)))
+					if(text_distance>(((double)(aux_text->getLength()+aux_text2->getLength())/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100)))
 						result=1;
 					else
 						result=0;

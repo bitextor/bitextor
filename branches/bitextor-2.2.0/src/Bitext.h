@@ -47,12 +47,17 @@ private:
 	/**
 	 * Percentatge de diferència de mida en bytes entre ambdós fitxers.
 	 */
-	float byte_size_distance;
+	double byte_size_distance;
 	
 	/**
 	 * Percentatge de distància d'edició entre els arrays d'etiquetes/text d'ambdós fitxers.
 	 */
-	float edit_distance;
+	double edit_distance;
+	
+	/**
+	 * Ruta d'aliniament per als bitextos.
+	 */
+	string alignment_path;
 public:
 	/**
 	 * Constructor de la classe Bitext.
@@ -120,7 +125,7 @@ public:
 	 * ha estat inicialitzat correctament.
 	 * @return Retorna el percentatge de diferència de mida en bytes entre ambdós fitxers.
 	 */
-	float GetSizeDistance();
+	double GetSizeDistance();
 	
 	/**
 	 * Mètode que retorna el percentatge de distància d'edició entre els arrays d'etiquetes/text
@@ -130,7 +135,7 @@ public:
 	 * @return Retorna el percentatge de distància d'edició entre els arrays d'etiquetes/text
 	 * d'ambdós fitxers.
 	 */
-	float GetEditDistance();
+	double GetEditDistance();
 };
 
 #endif /*BITEXT_H_*/

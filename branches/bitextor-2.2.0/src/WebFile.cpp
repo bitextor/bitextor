@@ -8,7 +8,7 @@ WebFile::WebFile()
 
 WebFile::~WebFile(){}
 
-bool WebFile::Initialize(const wstring &path)
+bool WebFile::Initialize(const string &path)
 {
 	wstring str_temp;
 	filebuf *fb;
@@ -31,7 +31,7 @@ bool WebFile::Initialize(const wstring &path)
 				this->file_type=path.substr(path.find_last_of('.')+1);
 			}
 			catch(std::out_of_range& e){
-				this->file_type=L"";
+				this->file_type="";
 			}
 			if(file.LoadFile(path)){
 				//We set the tag list
@@ -47,7 +47,7 @@ bool WebFile::Initialize(const wstring &path)
 					h=NULL;
 				}
 				else{
-					wcout<<"Set the language for the file "<<this->path<<" : ";
+					cout<<"Set the language for the file "<<this->path<<" : ";
 					wcin>>this->lang;
 				}
 			}
@@ -74,7 +74,7 @@ wstring WebFile::GetLang()
 		return this->lang;
 }
 
-wstring WebFile::GetPath()
+string WebFile::GetPath()
 {
 	if(this->initialized==false)
 		throw "Object not initialized";
@@ -82,7 +82,7 @@ wstring WebFile::GetPath()
 		return this->path;
 }
 
-wstring WebFile::GetFileType()
+string WebFile::GetFileType()
 {
 	if(this->initialized==false)
 		throw "Object not initialized";

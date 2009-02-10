@@ -6,6 +6,8 @@
 #include <math.h>
 #include <libtagaligner/configreader.h>
 #include <libtagaligner/tagaligner-generic.h>
+#include <libtagaligner/tagaligner-dt.h>
+#include <libtagaligner/tagaligner2step-l.h>
 
 /**
  * @class Heuristics
@@ -41,7 +43,7 @@ public:
 	 * @param result Paràmetre que serveix per a obtenir el percentatge de diferència de mida entre els dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
 	 * @return Retorna <code>true</code> si la diferència de mida dels fitxers és acceptable segons els paràmetres establerts, o <code>false</code> en cas contrari. 
 	 */
-	static bool HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, float* result);
+	static bool HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double* result);
 	
 	/**
 	 * Mètode que calcula la distància d'edició entre dues cadenes d'etiquetes HTML/Text tal com s'estableixen a la classe WebFile.
@@ -57,7 +59,7 @@ public:
 	 * @param result Paràmetre que serveix per a obtenir la distància d'edició entre els vectors d'etiquetes HTML/Text dels dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
 	 * @return Retorna la distància d'edició calculada com a enter major o igual a zero. En cas que la distància excedisca el màxim establert, el mètode retornarà -1.
 	 */
-	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, float* result);
+	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result);
 
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.

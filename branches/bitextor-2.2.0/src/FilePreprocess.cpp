@@ -1,6 +1,6 @@
 #include "FilePreprocess.h"
 
-bool FilePreprocess::PreprocessFile(const wstring &file_path)
+bool FilePreprocess::PreprocessFile(const string &file_path)
 {
 	fstream file;
 	wstring line,buff;
@@ -20,7 +20,7 @@ bool FilePreprocess::PreprocessFile(const wstring &file_path)
 		try{	
 			tidyBufInit(&output);
 			tidyBufInit(&errbuf);
-			fin=fopen(Config::toString(file_path).c_str(),"r");
+			fin=fopen(file_path.c_str(),"r");
 			if (!fin) {//There were errors opening the first input file
 				exit=false;
 			} else {
@@ -57,10 +57,10 @@ bool FilePreprocess::PreprocessFile(const wstring &file_path)
 				
 				rc = tidySetErrorBuffer(tdoc, &errbuf);
 				rc = tidyCleanAndRepair( tdoc );
-				rc = tidyParseFile(tdoc, Config::toString(file_path).c_str());
+				rc = tidyParseFile(tdoc, file_path.c_str());
 				rc = tidySaveBuffer( tdoc, &output );
 				
-				file.open(Config::toString(file_path).c_str(),ios::out);
+				file.open(file_path.c_str(),ios::out);
 				file<<output.bp;
 				file.close();
 				tidyRelease( tdoc );

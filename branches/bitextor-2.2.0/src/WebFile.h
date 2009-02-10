@@ -35,7 +35,7 @@ private:
 	/**
 	 * Adreça on es troba el fitxer.
 	 */
-	wstring path;
+	string path;
 	
 	/**
 	 * Lengua en què està escrit el text contingut pel fitxer.
@@ -45,7 +45,7 @@ private:
 	/**
 	 * Tipus de dades contingudes al fitxer.
 	 */
-	wstring file_type;
+	string file_type;
 	
 	/**
 	 * Objecte que conté el fitxer HTML dividit en etiquetes i blocs de text.
@@ -77,7 +77,7 @@ public:
 	 * @param path Ruta del fitxer a què fa referència la classe.
 	 * @throw char* El mètode llança una excepció si no s'ha especificat el fitxer de configuració de TextCat.
 	 */
-	bool Initialize(const wstring &path);
+	bool Initialize(const string &path);
 	
 	/**
 	 * Mètode que permet obtenir el paràmetre sobre l'idioma del fitxer.
@@ -91,14 +91,14 @@ public:
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @return Retorna la ruta on es troba el fitxer en el sistema de directoris.
 	 */
-	wstring GetPath();
+	string GetPath();
 	
 	/**
 	 * Mètode que permet obtenir el valor del paràmetre sobre el tipus de contingut (extensió) del fitxer.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @return Retorna l'extensió del fitxer.
 	 */
-	wstring GetFileType();
+	string GetFileType();
 	
 	/**
 	 * Mètode que retorna un array format per la cadena d'etiquetes contingudes al fitxer web.

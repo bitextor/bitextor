@@ -14,7 +14,7 @@ hostname = elcampello
 uname -m = i686
 uname -r = 2.6.27-11-generic
 uname -s = Linux
-uname -v = #1 SMP Wed Jan 28 00:02:01 UTC 2009
+uname -v = #1 SMP Thu Jan 29 19:24:39 UTC 2009
 
 /usr/bin/uname -p = unknown
 /bin/uname -X     = unknown
