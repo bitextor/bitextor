@@ -54,50 +54,41 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	
 bool Bitext::GenerateBitext(const string &path)
 {
-	TagAligner2step_ad *tagalignerA;
-	TagAligner2step_l *tagalignerB;
-	TagAligner2_1 *tagalignerC;
+	Aligner *aligner;
+	bool correct_alignment;
 	bool exit=true;
 	ifstream fin1, fin2;
 	wstring tagaligneroutput;
 	FILE* fout;
-
 	if(this->is_initialized){
-		switch(Config::getMode()){
-			case 1:
-				tagalignerA=new TagAligner2step_ad();
-				if (tagalignerA->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
-					tagaligneroutput=tagalignerA->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
-				} else
-					exit=false;
-				delete tagalignerA;
-			break;
-			case 2:
-				tagalignerB=new TagAligner2step_l();
-				if (tagalignerB->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
-					tagaligneroutput=tagalignerB->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
-				} else
-					exit=false;
-				delete tagalignerB;
-			break;
-			case 3:
-				tagalignerC=new TagAligner2_1();
-				if (tagalignerC->Align(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference())) {
-					tagaligneroutput=tagalignerC->GenerateTMX(this->wf1->GetLang().c_str(), this->wf2->GetLang().c_str());
-				} else
-					exit=false;
-				delete tagalignerC;
-			break;
-		}
-		fout=fopen(path.c_str(),"w");
-		if (!fout)//Hubo errores en la apertura del fichero de salida
-			wcout<<tagaligneroutput<<endl;
-		else{
-			if (tagaligneroutput!=L""){
-				fputws(tagaligneroutput.c_str(),fout);
+		aligner=new Aligner();
+		try{
+			switch (Config::getMode()) {
+				case 1:exit=aligner->Align2StepsTED(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
+				case 2: exit=aligner->Align2StepsL(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
+				case 3: exit=aligner->Align1Step(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
 			}
-			fclose(fout);
 		}
+		catch(char const* e){
+			cout<<e<<endl;
+		}
+		if (exit) {
+			try{
+				tagaligneroutput=aligner->GenerateTMX(wf1->GetLang(), wf2->GetLang());
+			}
+			catch(char const* e){
+				cout<<e<<endl;
+			}
+			fout=fopen(path.c_str(),"w");
+			if (!fout) {//Hubo errores en la apertura del fichero de salida
+					wcout<<tagaligneroutput;
+			} else {
+				if (tagaligneroutput!=L"")
+					fputws(tagaligneroutput.c_str(),fout);
+				fclose(fout);
+			}
+		}
+		delete aligner;
 	}
 	else
 		throw "Bitext not initialized.";

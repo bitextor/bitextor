@@ -4,10 +4,8 @@
 #include "WebFile.h"
 #include "Heuristics.h"
 #include "GlobalParams.h"
-#include <libtagaligner/tagaligner2-1.h>
-#include <libtagaligner/tagaligner2step-l.h>
-#include <libtagaligner/tagaligner2step-ad.h>
-#include <libtagaligner/configreader.h>
+#include <libtagaligner/Aligner.h>
+#include <libtagaligner/ConfigReader.h>
 
 /**
  * @class Bitext

@@ -10,7 +10,7 @@
 #include <exception>
 #include <stdexcept>
 #include <vector>
-#include <libtagaligner/fragmented_file.h>
+#include <libtagaligner/FragmentedFile.h>
 
 extern "C"{
 #include <textcat.h>

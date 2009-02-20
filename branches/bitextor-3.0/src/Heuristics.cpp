@@ -66,7 +66,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 		case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
 		default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
 	}*/
-	TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, GlobalParams::IsPercentMaxEditDistance(), beam, &res);
+	EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, GlobalParams::IsPercentMaxEditDistance(), beam, &res);
 	if(result!=NULL)
 		*result=res;
 

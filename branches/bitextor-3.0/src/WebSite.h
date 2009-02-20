@@ -6,7 +6,7 @@
 #include "Heuristics.h"
 #include "Bitext.h"
 
-#include <libtagaligner/configreader.h>
+#include <libtagaligner/ConfigReader.h>
 #include <dirent.h> 
 #include <iostream>
 #include <sys/types.h>

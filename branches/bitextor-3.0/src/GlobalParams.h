@@ -1,7 +1,7 @@
 #ifndef GLOBALPARAMS_H_
 #define GLOBALPARAMS_H_
 
-#include <libtagaligner/configreader.h>
+#include <libtagaligner/ConfigReader.h>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>

@@ -4,10 +4,8 @@
 #include "GlobalParams.h"
 #include "WebFile.h"
 #include <math.h>
-#include <libtagaligner/configreader.h>
-#include <libtagaligner/tagaligner-generic.h>
-#include <libtagaligner/tagaligner-dt.h>
-#include <libtagaligner/tagaligner2step-l.h>
+#include <libtagaligner/ConfigReader.h>
+#include <libtagaligner/EditDistanceTools.h>
 
 /**
  * @class Heuristics

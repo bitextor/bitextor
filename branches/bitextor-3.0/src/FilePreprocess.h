@@ -10,7 +10,7 @@
 #include <tidyenum.h>
 #include <fstream>
 #include <enca.h>
-#include <libtagaligner/configreader.h>
+#include <libtagaligner/ConfigReader.h>
 #include "GlobalParams.h"
 
 using namespace std;

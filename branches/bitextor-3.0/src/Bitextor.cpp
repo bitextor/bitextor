@@ -47,7 +47,7 @@ main (int argc, char *const *argv)
 	string file_name;
 	bool show_howtouse=false;
 	string dest_dir="";
-	string config_file="/usr/local/etc/bitextor/conf/bitextor_config.xml";
+	string config_file="/usr/local/etc/bitextor/conf/config.xml";
 	bool download;
 	struct stat my_stat;
 

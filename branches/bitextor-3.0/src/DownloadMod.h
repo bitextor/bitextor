@@ -10,7 +10,7 @@
 #include <vector>
 #include <sstream>
 #include <sys/stat.h>
-#include <libtagaligner/configreader.h>
+#include <libtagaligner/ConfigReader.h>
 
 using namespace std;
 
