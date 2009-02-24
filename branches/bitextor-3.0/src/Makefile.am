@@ -23,8 +23,8 @@ Bitextor.cpp
 AM_CFLAGS = -g3 -Wall -Wunused \
 -Wmissing-prototypes
 
-INCLUDES = -I/usr/include/libxml2 -I/usr/include/tidy -I/usr/include/libtextcat
+INCLUDES = $(BITEXTOR_CFLAGS) -I$(prefix)/include/tidy -I$(prefix)/include/libtextcat
 
-LDADD = -ltextcat -lxml2 -ltidy -ltagaligner -lenca -lmagic
+LDADD = $(BITEXTOR_LIBS) $(LIBS)
 
 EXTRA_DIST = LM
