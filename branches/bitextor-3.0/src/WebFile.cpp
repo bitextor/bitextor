@@ -1,5 +1,4 @@
 #include "WebFile.h"
-#include <tagaligner/tagaligner-generic.h>
 
 WebFile::WebFile()
 {

@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <vector>
 #include <libtagaligner/FragmentedFile.h>
+#include <libtagaligner/Aligner.h>
 
 extern "C"{
 #include <textcat.h>
