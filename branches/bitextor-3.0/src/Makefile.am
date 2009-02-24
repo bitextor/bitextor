@@ -1,6 +1,6 @@
 bin_PROGRAMS = bitextor
 
-textcatconfdir = /usr/local/etc/bitextor/LM
+textcatconfdir = $(prefix)/etc/bitextor/LM
 textcatconf_DATA = LM/*
 
 bitextor_SOURCES = \
