@@ -101,7 +101,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdio.h stdlib.h string.h stddef.h ctype.h time.h])
 
-AC_CHECK_HEADER(tagaligner/Aligner.h)
+AC_CHECK_HEADERS([tidy/tidy.h tidy/tidyenum.h tidy/buffio.h tidy/plataform.h textcat.h])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
