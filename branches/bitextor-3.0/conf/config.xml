@@ -300,12 +300,12 @@
 			</ta:weights>
 		</ta:edition_parameters>
 		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
-		<ta:mode>l</ta:mode>
+		<ta:mode>dt</ta:mode>
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
-	<bi:downloadModDest max_size="1048576">/home/miquel/</bi:downloadModDest>
+	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
 	<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
-	<bi:textCatConfigFile>/usr/local/etc/bitextor/LM/conf.txt</bi:textCatConfigFile>
+	<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
 	<bi:discriminationParameters>
 		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	
@@ -324,4 +324,14 @@
 		files with a difference of depth in the directory tree equal or lower than two. -->
 		<bi:directoryPathDistance>2</bi:directoryPathDistance>
 	</bi:discriminationParameters>
+	<bi:languages dir="/usr/local/etc/bitextor/LM/">
+		<bi:language fingerprint="es.utf8.lm" lang_code="es" />
+		<bi:language fingerprint="ca.utf8.lm" lang_code="ca" />
+		<bi:language fingerprint="fr.utf8.lm" lang_code="fr" />
+		<bi:language fingerprint="an.utf8.lm" lang_code="an" />
+		<bi:language fingerprint="gl.utf8.lm" lang_code="gl" />
+		<bi:language fingerprint="ga.utf8.lm" lang_code="ga" />
+		<bi:language fingerprint="eu.utf8.lm" lang_code="eu" />
+		<bi:language fingerprint="de.utf8.lm" lang_code="de" />
+	</bi:languages>
 </bi:configuration>
