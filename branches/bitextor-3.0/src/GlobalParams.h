@@ -105,8 +105,20 @@ private:
 	 * Indicador que permet forçar a bitextor a consultar l'idioma de cada fitxer o permetre que ell mateix intente esbrinar-lo.
 	 */
 	static bool guess_language;
+	
+	
+	/**
+	 * Directori base on es troben els fingerprints.
+	 */
+	static wstring fingerprints_dir;
+	
+	static void GenerateTextCatConfigFile();
 
 public:
+	/**
+	 * Llista de fingerprints per a la detecció d'idiomes.
+	 */
+	static map<wstring,wstring> fingerprints;
 	/**
 	 * Mètode que permet establir la màxima distància d'eidició entre dos fiters web per a considerar
 	 * que són el mateix.

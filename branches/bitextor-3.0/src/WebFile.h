@@ -15,7 +15,6 @@
 
 extern "C"{
 #include <textcat.h>
-//#include <magic.h>
 }
 using namespace std;
 

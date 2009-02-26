@@ -12,7 +12,7 @@ double GlobalParams::file_size_difference_percent=-1;
 
 //wstring GlobalParams::tagaligner_config_file=L"";
 
-wstring GlobalParams::textcat_config_file=L"";
+wstring GlobalParams::textcat_config_file=L"/tmp/textcat_conf.txt";
 
 //int GlobalParams::tagaligner_mode=1;
 
@@ -27,6 +27,10 @@ wstring GlobalParams::download_path=L"~/";
 bool GlobalParams::guess_language=true;
 
 bool GlobalParams::is_percentual_edmax=true;
+
+wstring GlobalParams::fingerprints_dir=L"";
+
+map<wstring,wstring> GlobalParams::fingerprints;
 
 void GlobalParams::SetMaxEditDistance(const double &value)
 {
@@ -111,6 +115,7 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 	wstring lang1=L"", lang2=L"";
 	double percent;
 	bool continue_loop=true;
+	wstring fingerprint=L"", lang_code=L"";
 
 	for (cur_node = node; cur_node; cur_node = cur_node->next) {
 		if(!(cur_node->type==XML_TEXT_NODE && xmlIsBlankNode(cur_node))){
@@ -123,9 +128,9 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 			if(cur_node->type==XML_TEXT_NODE){
 				if (tagname == L"downloadModDest")
 					download_path=Config::xmlToWstring(cur_node->content);
-				else if (tagname == L"textCatConfigFile"){
+				/*else if (tagname == L"textCatConfigFile"){
 					textcat_config_file = Config::xmlToWstring(cur_node->content);
-				}
+				}*/
 				else if (tagname == L"fileSizePercent"){
 					file_size_difference_percent = atof(Config::toString(Config::xmlToWstring(cur_node->content)).c_str());
 				}
@@ -169,6 +174,25 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 							}
 						}
 					}
+					else if(tagname == L"languages"){
+						if(key==L"dir"){
+							if(value[value.length()-1]!=L'/')
+								fingerprints_dir=value+L"/";
+							else
+								fingerprints_dir=value;
+						}
+					}
+					else if(tagname == L"language"){
+						if(key==L"fingerprint")
+							fingerprint=value;
+						else if(key==L"lang_code")
+							lang_code=value;
+						if(lang_code!=L"" && fingerprint!=L""){
+							fingerprints[lang_code]=fingerprints_dir+fingerprint;
+							lang_code=L"";
+							fingerprint=L"";
+						}
+					}
 					free(node_prop);
 					propPtr = propPtr->next;
 				}
@@ -181,6 +205,17 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 			continue_loop=true;
 		}
 	}
+}
+
+void GlobalParams::GenerateTextCatConfigFile()
+{
+	wofstream os;
+	map<wstring,wstring>::iterator it;
+	
+	os.open("/tmp/textcat_conf.txt",ios::out);
+	for(it=fingerprints.begin();it!=fingerprints.end();it++)
+		os<<it->second<<L" "<<it->first<<endl;
+	os.close();
 }
 
 bool GlobalParams::LoadGlobalParams(const string &path)
@@ -201,6 +236,7 @@ bool GlobalParams::LoadGlobalParams(const string &path)
 			ProcessNode(root_element, L"");
 			xmlFreeDoc(doc);
 			xmlCleanupParser();
+			GenerateTextCatConfigFile();
 		}	
 	    exit=true;
 	}

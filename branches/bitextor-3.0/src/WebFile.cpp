@@ -7,6 +7,45 @@ WebFile::WebFile()
 
 WebFile::~WebFile(){}
 
+/*typedef struct {
+
+	void **fprint;
+	uint4 size;
+	uint4 maxsize;
+
+	char output[MAXOUTPUTSIZE];
+
+} textcat_t;
+
+void *textcatInit(){
+	textcat_t *h;
+	char line[1024];
+	FILE *fp;
+	map<wstring,wstring>::iterator it;
+	unsigned int i;
+
+	h = (textcat_t *)wg_malloc(sizeof(textcat_t));
+	h->size = GlobalParams::fingerprints.size();
+	h->maxsize = GlobalParams::fingerprints.size();
+	h->fprint = (void **)wg_malloc( sizeof(void*) * h->maxsize );
+
+	for(i=0,it=GlobalParams::fingerprints.begin();it!=fingerprints.end();i++,it++){
+		if ((h->fprint[i] = fp_Init( it->first ))!=NULL) {
+			if ( fp_Read( h->fprint[i], it->second, 400 ) == 0 ) {
+				textcat_Done(h);
+				return NULL;
+			}
+		}
+		else{
+			free (h->fprint);
+			free (h);
+			return NULL;
+		}
+	}
+	fclose(fp);
+	return h;
+}*/
+
 bool WebFile::Initialize(const string &path)
 {
 	wstring str_temp;
@@ -109,3 +148,24 @@ FragmentedFile* WebFile::GetFragmentedFileReference()
 	else
 		return &file;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

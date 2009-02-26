@@ -66,7 +66,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 		case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
 		default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
 	}*/
-	EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, GlobalParams::IsPercentMaxEditDistance(), beam, &res);
+	EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &EditDistanceTools::Cost_text_and_tags_l, true, 100, &res);
 	if(result!=NULL)
 		*result=res;
 
@@ -116,10 +116,11 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 					aux_text=dynamic_cast<Text*>(tag1);
 					aux_text2=dynamic_cast<Text*>(tag2);
 					text_distance=abs(aux_text2->getLength()-aux_text->getLength());
-					if(text_distance>(((double)(aux_text->getLength()+aux_text2->getLength())/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100)))
+					/*if(text_distance>(((double)(aux_text->getLength()+aux_text2->getLength())/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100)))
 						result=1;
 					else
-						result=0;
+						result=0;*/
+					result=abs(aux_text->getLength()-aux_text2->getLength());
 				}
 			}
 		break;
