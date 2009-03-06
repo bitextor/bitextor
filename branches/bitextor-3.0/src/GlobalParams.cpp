@@ -1,7 +1,9 @@
 #include "GlobalParams.h"
 
-double GlobalParams::max_edit_distance_length=-1;
-	
+double GlobalParams::max_edit_distance_length_absolute=-1;
+
+double GlobalParams::max_edit_distance_length_percentual=-1;
+
 int GlobalParams::directory_depth_distance=0;
 
 double GlobalParams::text_distance_percent_differenciator=-1;
@@ -19,8 +21,6 @@ int GlobalParams::downloaded_size=-1;
 wstring GlobalParams::download_path=L"~/";
 
 bool GlobalParams::guess_language=true;
-
-bool GlobalParams::is_percentual_edmax=true;
 
 wstring GlobalParams::fingerprints_dir=L"";
 
@@ -47,17 +47,22 @@ double GlobalParams::GetMaxTotalTextLengthDiff()
 	return max_total_text_lenght_diff;
 }
 
-void GlobalParams::SetMaxEditDistance(const double &value)
+/*void GlobalParams::SetMaxEditDistance(const double &value)
 {
 	if(value>0)
 		max_edit_distance_length=value;
 	else
 		throw "The assigned value for the max. edit distance parameter is not valid.";
+}*/
+
+double GlobalParams::GetMaxEditDistanceAbsolute()
+{
+	return max_edit_distance_length_absolute;
 }
 
-double GlobalParams::GetMaxEditDistance()
+double GlobalParams::GetMaxEditDistancePercentual()
 {
-	return max_edit_distance_length;
+	return max_edit_distance_length_percentual;
 }
 	
 void GlobalParams::SetDirectoryDepthDistance(const int &value)
@@ -109,11 +114,6 @@ wstring GlobalParams::GetTextCatConfigFile()
 	return textcat_config_file;
 }
 
-bool GlobalParams::IsPercentMaxEditDistance()
-{
-	return is_percentual_edmax;
-}
-
 void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 	xmlNode *cur_node = NULL;
 	xmlChar *node_prop;
@@ -154,14 +154,11 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 						downloaded_size = atoi(Config::toString(value).c_str());
 					}
 					else if (tagname == L"maxEditDistance"){
-						if(key==L"mode"){
-							if( value==L"percent" )
-								is_percentual_edmax=true;
-							else if( value==L"absolute" )
-								is_percentual_edmax=false;
+						if(key==L"absolute"){
+							max_edit_distance_length_absolute=atof(Config::toString(value).c_str());
 						}
-						else if(key==L"value"){
-							max_edit_distance_length=atof(Config::toString(value).c_str());
+						else if(key==L"percentual"){
+							max_edit_distance_length_percentual=atof(Config::toString(value).c_str());
 						}
 					}
 					else if (tagname == L"textLengthDifferencePercents" && key==L"default"){

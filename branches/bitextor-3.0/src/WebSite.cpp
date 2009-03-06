@@ -41,8 +41,6 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	stack<string> *dirs, *subdirs;
 	unsigned int i;
 	FILE * fout;
-	unsigned int starting_tuid=0;
-	unsigned int last_tuid=0;
 
 	try{
 		if(GlobalParams::AllBitextInAFile()){
@@ -100,19 +98,10 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			if(level<GlobalParams::GetDirectoryDepthDistance())
 				level++;
 			else{
-				if(GlobalParams::AllBitextInAFile()){
-					if(!exit)
-						exit=GetMatchedFiles(dest_path, file_list, level+1, fout, starting_tuid, &last_tuid);
-					else
-						GetMatchedFiles(dest_path, file_list, level+1, fout, starting_tuid, &last_tuid);
-					starting_tuid=last_tuid;
-				}
-				else{
-					if(!exit)
-						exit=GetMatchedFiles(dest_path, file_list, level+1, fout);
-					else
-						GetMatchedFiles(dest_path, file_list, level+1, fout);
-				}
+				if(!exit)
+					exit=GetMatchedFiles(dest_path, file_list, level+1, fout);
+				else
+					GetMatchedFiles(dest_path, file_list, level+1, fout);
 				for(i=0; i<file_list[0]->size();i++)
 					delete file_list[0]->at(i);
 				delete file_list[0];
@@ -123,19 +112,10 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		}
 		delete dirs;
 		for(level=GlobalParams::GetDirectoryDepthDistance()+1;level>=1;level--){
-			if(GlobalParams::AllBitextInAFile()){
-				if(!exit)
-					exit=GetMatchedFiles(dest_path, file_list, level, fout, starting_tuid, &last_tuid);
-				else
-					GetMatchedFiles(dest_path, file_list, level, fout, starting_tuid, &last_tuid);
-				starting_tuid=last_tuid;
-			}
-			else{
-				if(!exit)
-					exit=GetMatchedFiles(dest_path, file_list, level, fout);
-				else
-					GetMatchedFiles(dest_path, file_list, level, fout);
-			}
+			if(!exit)
+				exit=GetMatchedFiles(dest_path, file_list, level, fout);
+			else
+				GetMatchedFiles(dest_path, file_list, level, fout);
 			for(i=0; i<file_list[0]->size();i++)
 				delete file_list[0]->at(i);
 			delete file_list[0];
@@ -157,7 +137,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	return exit;
 }
 
-bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout, unsigned int starting_tuid, unsigned int *last_tuid)
+bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout)
 {
 	bool exit=false;
 	unsigned int i,j,k,l;
@@ -166,6 +146,8 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 	ostringstream *aux_sstream;
 	struct stat my_stat;
 	FILE* fout;
+	unsigned int starting_tuid=0;
+	unsigned int last_tuid=0;
 
 	for(i=0;i<file_list[0]->size();i++){
 		for(j=0;j<size;j++){
@@ -178,9 +160,10 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 				if(bitext->Initialize(file_list[0]->at(i),file_list[j]->at(k)))
 				{
 					if(GlobalParams::AllBitextInAFile()){
-						bitext->GenerateBitext(main_fout, starting_tuid, last_tuid);
+						bitext->GenerateBitext(main_fout, starting_tuid, &last_tuid);
 						wcout<<L"\tThe bitext between "<<Config::toWstring(bitext->GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(bitext->GetSecondWebFile()->GetPath())<<L" has been created"<<endl;
 						wcout<<L"\tEdit distance: "<<bitext->GetEditDistance()<<L"%  Size difference:"<<bitext->GetSizeDistance()<<L"%"<<endl<<endl;
+						starting_tuid=last_tuid;
 					}
 					else{
 						file_name=dest_dir+GetFileName(bitext->GetFirstWebFile()->GetPath())+"_"+GetFileName(bitext->GetSecondWebFile()->GetPath())+".tmx";

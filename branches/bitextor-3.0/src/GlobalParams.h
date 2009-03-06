@@ -32,16 +32,13 @@ private:
 	static string config_file;
 
 	/**
-	 * Senyal que identifica si el limit de distància d'edició és percentual sobre els fitxers
-	 * d'entrada o és absolut.
-	 */
-	static bool is_percentual_edmax;
-
-	/**
 	 * Màxima distància d'edició permesa per a establir una possible correspondència entre fitxers HTML.
 	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
 	 */
-	static double max_edit_distance_length;
+	static double max_edit_distance_length_absolute;
+	
+	
+	static double max_edit_distance_length_percentual;
 	
 	/**
 	 * Distància màxima de profunditat en l'arbre de directoris que poden tenir dos fitxers web a
@@ -131,19 +128,21 @@ public:
 	 * @param value Llindar que es preten establir com a màxima distància d'edició.
 	 * @throw char* El mètode llança una excepció si el valor a assignar no és major que 0.
 	 */
-	static void SetMaxEditDistance(const double &value);
+	//static void SetMaxEditDistance(const double &value);
 	
 	/**
 	 * Mètode que indica si el valor de màxima distància d'edició és percentual o absolut.
 	 * @return Retorna <code>true</code> en cas que el valor de màxima distància d'edició siga percentual i <code>false</code> en cas que siga absolut.
 	 */
-	static bool IsPercentMaxEditDistance();
+	//static bool IsPercentMaxEditDistance();
 	
 	/**
 	 * Mètode que permet obtenir la màxima distància d'edició entre fitxers web establerta.
 	 * @return Llindar que es establert com a màxima distància d'edició.
 	 */
-	static double GetMaxEditDistance();
+	static double GetMaxEditDistancePercentual();
+
+	static double GetMaxEditDistanceAbsolute();
 	
 	/**
 	 * Mètode que permet obtenir el precentatge de màxima distància entre textos per a

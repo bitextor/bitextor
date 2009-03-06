@@ -50,7 +50,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	double res;
 	double beam;
 	unsigned int vec1len, vec2len;
-	unsigned int max_diff;
+	unsigned int max_diff_abs, max_diff_percent;
 
 	tag_array1=wf1->GetTagArrayReference();
 	tag_array2=wf2->GetTagArrayReference();
@@ -58,16 +58,21 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	vec2len=wf2->GetFragmentedFileReference()->getSize();
 
 	//We calculate the maximal edit distance possible to accept the pair or not. 
-	if(GlobalParams::IsPercentMaxEditDistance()){
+	if(GlobalParams::GetMaxEditDistancePercentual()==-1)
+		max_diff_percent=numeric_limits<unsigned int>::max();
+	else{
 		if(vec1len>vec2len)
-			max_diff=floor(vec1len*(GlobalParams::GetMaxEditDistance()/(double)100));
+			max_diff_percent=floor(vec1len*(GlobalParams::GetMaxEditDistancePercentual()/(double)100));
 		else
-			max_diff=floor(vec2len*(GlobalParams::GetMaxEditDistance()/(double)100));
+			max_diff_percent=floor(vec2len*(GlobalParams::GetMaxEditDistancePercentual()/(double)100));
 	}
+	if(GlobalParams::GetMaxEditDistanceAbsolute()==-1)
+		max_diff_abs=numeric_limits<unsigned int>::max();
 	else
-		max_diff=GlobalParams::GetMaxEditDistance();
+		max_diff_abs=GlobalParams::GetMaxEditDistanceAbsolute();
+		
 
-	if(abs((int)vec1len-(int)vec2len)>max_diff){
+	if(abs((int)vec1len-(int)vec2len)>max_diff_abs || abs((int)vec1len-(int)vec2len)>max_diff_percent){
 		if(result!=NULL)
 			*result=abs((int)vec1len-(int)vec2len);
 		return false;
@@ -86,7 +91,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 		if(result!=NULL)
 			*result=res;
 
-		if(max_diff>res)
+		if(max_diff_abs>res && max_diff_percent>res)
 			return true;
 		else
 			return false;

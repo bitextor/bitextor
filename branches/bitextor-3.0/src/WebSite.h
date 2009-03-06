@@ -111,7 +111,7 @@ public:
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 
 	 */
-	bool GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout=NULL, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
+	bool GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout=NULL);
 };
 
 #endif /*WEBSITE_H_*/
