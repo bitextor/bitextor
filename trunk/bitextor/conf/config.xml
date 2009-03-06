@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This configuration file will contain the set of tags that should be
+	 taken in account when comparing and aligning the two files. -->
+<bi:configuration xmlns:bi="bitextor">
+	<!--<xi:include href="/usr/local/etc/tagaligner/config.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>-->
+	<ta:configuration xmlns:ta="tagaligner">
+		<ta:tagset>
+			<ta:tags format="xhtml">
+				<ta:type typename="structural">
+					<ta:tag>blockquote</ta:tag>
+					<ta:tag>body</ta:tag>
+					<ta:tag>caption</ta:tag>
+					<ta:tag>col</ta:tag>
+					<ta:tag>colgroup</ta:tag>
+					<ta:tag>dd</ta:tag>
+					<ta:tag>dir</ta:tag>
+					<ta:tag>div</ta:tag>
+					<ta:tag>dl</ta:tag>
+					<ta:tag>dt</ta:tag>
+					<ta:tag>h1</ta:tag>
+					<ta:tag>h2</ta:tag>
+					<ta:tag>h3</ta:tag>
+					<ta:tag>h4</ta:tag>
+					<ta:tag>h5</ta:tag>
+					<ta:tag>h6</ta:tag>
+					<ta:tag>head</ta:tag>
+					<ta:tag>hr</ta:tag>
+					<ta:tag>html</ta:tag>
+					<ta:tag>li</ta:tag>
+					<ta:tag>menu</ta:tag>
+					<ta:tag>noframes</ta:tag>
+					<ta:tag>noscript</ta:tag>
+					<ta:tag>ol</ta:tag>
+					<ta:tag>optgroup</ta:tag>
+					<ta:tag>option</ta:tag>
+					<ta:tag>p</ta:tag>
+					<ta:tag>q</ta:tag>
+					<ta:tag>select</ta:tag>
+					<ta:tag>table</ta:tag>
+					<ta:tag>tbody</ta:tag>
+					<ta:tag>td</ta:tag>
+					<ta:tag>tfoot</ta:tag>
+					<ta:tag>th</ta:tag>
+					<ta:tag>thead</ta:tag>
+					<ta:tag>tr</ta:tag>
+					<ta:tag>ul</ta:tag>
+				</ta:type>
+			
+				<ta:type typename="format">
+					<ta:tag>abbr</ta:tag>
+					<ta:tag>acronym</ta:tag>
+					<ta:tag>b</ta:tag>
+					<ta:tag>big</ta:tag>
+					<ta:tag>center</ta:tag>
+					<ta:tag>cite</ta:tag>
+					<ta:tag>code</ta:tag>
+					<ta:tag>dfn</ta:tag>
+					<ta:tag>em</ta:tag>
+					<ta:tag>font</ta:tag>
+					<ta:tag>i</ta:tag>
+					<ta:tag>pre</ta:tag>
+					<ta:tag>s</ta:tag>
+					<ta:tag>small</ta:tag>
+					<ta:tag>span</ta:tag>
+					<ta:tag>strike</ta:tag>
+					<ta:tag>strong</ta:tag>
+					<ta:tag>style</ta:tag>
+					<ta:tag>sub</ta:tag>
+					<ta:tag>sup</ta:tag>
+					<ta:tag>tt</ta:tag>
+					<ta:tag>u</ta:tag>
+				</ta:type>
+				
+				<ta:type typename="content">
+					<ta:tag>area</ta:tag>
+					<ta:tag>fieldset</ta:tag>
+					<ta:tag>form</ta:tag>
+					<ta:tag>iframe</ta:tag>
+					<ta:tag>img</ta:tag>
+					<ta:tag>input</ta:tag>
+					<ta:tag>isindex</ta:tag>
+					<ta:tag>label</ta:tag>
+					<ta:tag>legend</ta:tag>
+					<ta:tag>map</ta:tag>
+					<ta:tag>object</ta:tag>
+					<ta:tag>param</ta:tag>
+					<ta:tag>textarea</ta:tag>
+					<ta:tag>title</ta:tag>
+				</ta:type>
+				
+				<ta:type typename="irrelevant">
+					<ta:tag>a</ta:tag>
+					<ta:tag>address</ta:tag>
+					<ta:tag>applet</ta:tag>
+					<ta:tag>base</ta:tag>
+					<ta:tag>basefont</ta:tag>
+					<ta:tag>bdo</ta:tag>
+					<ta:tag>br</ta:tag>
+					<ta:tag>button</ta:tag>
+					<ta:tag>del</ta:tag>
+					<ta:tag>ins</ta:tag>
+					<ta:tag>kbd</ta:tag>
+					<ta:tag>link</ta:tag>
+					<ta:tag>meta</ta:tag>
+					<ta:tag>samp</ta:tag>
+					<ta:tag>script</ta:tag>
+					<ta:tag>var</ta:tag>
+				</ta:type>
+			</ta:tags>	
+		</ta:tagset>
+		<!-- Here you can set which characters should be taken into account. The syntax is common regular expressions. -->
+		<!-- Alpha: [0-9A-Za-zÀ-ÖØ-öø-ÿ] -->
+		<!-- Blankspace: [\t\n[[:space:]]]|&#160;|&nbsp; -->
+		<!-- Capital: [A-ZÀ-ÖØ-Þ] -->
+		<ta:charset>
+			<ta:alphanumeric>[0-9A-Za-zÀ-ÖØ-öø-ÿ]</ta:alphanumeric>
+			<ta:blankspace>[[:space:]]</ta:blankspace>
+			<ta:capital>[A-ZÀ-ÖØ-Þ]</ta:capital>
+		</ta:charset>
+		<ta:splitting value="0.2">
+			<!--The list of operations to define the conditions is:
+				BLANK: The character in relative position "pos" is a blank space.
+				CAPITAL: The character in relative position "pos" is a capital letter.
+				ALPHANUM: The character in relative position "pos" is an alphanumeric.
+				EQ: The character in relative position "pos" is equal that "value".
+				GT: The character in relative position "pos" is greater than "value".
+				LT: The character in relative position "pos" is less than "value".
+				GE: The character in relative position "pos" is greater or equal than "value".
+				LE: The character in relative position "pos" is less or equal than "value".
+	
+				You can realize the inverse operation setting the "inverse" flag the value "true". This flag
+				is false by default.
+			-->
+			<ta:rules>
+				<!-- RULE 1: Point before a number -->
+				<ta:rule points="-0.5">
+					<ta:and>
+						<ta:condition op="ge" value="0" after="1" />
+						<ta:condition op="le" value="9" after="1" />
+					</ta:and>
+				</ta:rule>
+				<!-- RULE 2: Point before a blank space -->
+				<ta:rule points="0.5">
+					<ta:condition op="blank" after="1" />
+				</ta:rule>
+				<!-- RULE 3: Point before a capital letter -->
+				<ta:rule points="-0.2">
+					<ta:not>
+						<ta:condition op="capital" after="1" />
+					</ta:not>
+				</ta:rule>
+				<!-- RULE 4: Point before a point -->
+				<ta:rule points="-0.5">
+					<ta:condition op="eq" value="." after="1" />
+				</ta:rule>
+				<!-- RULE 5: Point followed by a blank space and a capital letter  -->
+				<ta:rule points="0.5">
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:condition op="capital" after="2" />
+					</ta:and>
+				</ta:rule>
+				<!-- RULE 6: Point followed by a blank and a non capital letter -->
+				<ta:rule points="-0.2">
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:not>
+							<ta:condition op="capital" after="2" />
+						</ta:not>
+					</ta:and>
+				</ta:rule>
+				<!-- RULE 7: Point followed by a blank space, a ¿ and a capital letter -->
+				<ta:rule points="0.5">
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:condition op="capital" after="3" />
+						<ta:or>
+							<ta:condition op="eq" value="¿" after="2" />
+							<ta:condition op="eq" value="¡" after="2" />
+							<ta:condition op="eq" value='"' after="2" />
+						</ta:or>
+					</ta:and>
+				</ta:rule>
+				<!-- RULE 8: Point followed a ! -->
+				<ta:rule points="-0.5">
+					<ta:or>
+						<ta:condition op="eq" value="!" after="1" />
+						<ta:condition op="eq" value="?" after="1" />
+						<ta:condition op="eq" value="]" after="1" />
+						<ta:condition op="eq" value=")" after="1" />
+					</ta:or>
+				</ta:rule>
+				<!-- RULE 9: A point preceded by a capital letter -->
+				<ta:rule points="-0.5">
+					<ta:condition op="capital" before="1" />
+				</ta:rule>
+				<!-- RULE 10: A point preceded by an space and three capital letters -->
+				<ta:rule points="-0.5">
+					<ta:or>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="capital" before="2" />
+							<ta:condition op="capital" before="3" />
+							<ta:condition op="blank" before="4" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="capital" before="2" />
+							<ta:condition op="blank" before="3" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="blank" before="2" />
+						</ta:and>
+					</ta:or>
+				</ta:rule>
+				<!-- RULE 11: A point preceded by a blank space -->
+				<ta:rule points="0.2">
+					<ta:condition op="blank" before="1" />
+				</ta:rule>
+				<!-- RULE 12: A point preceded by a " and followed by a " -->
+				<ta:rule points="-0.2">
+					<ta:or>
+						<ta:and>
+							<ta:condition op="eq" value='"' before="1" />
+							<ta:condition op="eq" value='"' after="1" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="eq" value="'" before="1" />
+							<ta:condition op="eq" value="'" after="1" />
+						</ta:and>
+					</ta:or>
+				</ta:rule>
+				<!-- RULE 13: A point preceded by a point -->
+				<ta:rule points="-0.2">
+					<ta:condition op="eq" value="." after="1" />
+				</ta:rule>
+			</ta:rules>
+		</ta:splitting>
+		<ta:edition_parameters>
+			<ta:costs>
+				<ta:cost op="ins" in="structural" value="1"/>
+				
+				<ta:cost op="ins" in="format" value="0.75"/>
+				
+				<ta:cost op="ins" in="content" value="1.25"/>
+				
+				<ta:cost op="ins" in="text" value="0.01"/>
+				
+				<ta:cost op="del" out="structural" value="1"/>
+				
+				<ta:cost op="del" out="format" value="0.75"/>
+				
+				<ta:cost op="del" out="content" value="1.25"/>
+				
+				<ta:cost op="del" out="text" value="0.01"/>
+				
+				<ta:cost op="sub" out="structural" in="structural" value="1.5"/>
+				
+				<ta:cost op="sub" in="format" out="structural" value="1.75"/>
+				
+				<ta:cost op="sub" in="content" out="structural" value="999999999"/>
+				
+				<ta:cost op="sub" in="format" out="format" value="0.4"/>
+				
+				<ta:cost op="sub" in="content" out="format" value="999999999"/>
+				
+				<ta:cost op="sub" in="content" out="content" value="999999999"/>
+				
+				<ta:cost op="sub" in="text" out="text" value="0.01"/>
+				
+				<ta:diagonal mode="percent" value="5" />
+				<ta:textsizemin value="20" />
+				<ta:textsizeminrelation value="0.6" />
+			</ta:costs>
+		</ta:edition_parameters>
+		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
+		<ta:mode value="l" />
+	</ta:configuration>
+	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
+	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
+	<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
+	<!--<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>-->
+	<!--Section where the parameters to discrimine pairs of webs are set. -->
+	<bi:criteria>
+		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	
+		<bi:fileSizePercent value="30" />
+		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
+		It's recommended that this percentage to be higger than 80%. -->
+		<bi:textLengthDifferencePercents default="30">
+			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="30" />
+			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="30" />
+			<bi:textLengthDifferencePercent lang1="es" lang2="fr" difference="30" />
+		</bi:textLengthDifferencePercents>
+		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
+		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
+		<bi:maxEditDistance percentual="5" absolute="10" />
+		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
+		files with a difference of depth in the directory tree equal or lower than two. -->
+		<bi:directoryPathDistance value="1" />
+		<bi:maxTotalTextLengthPercent value="20" />
+		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
+		<bi:numericFingerprintDistance value="1" />
+	</bi:criteria>
+	<bi:languages dir="/usr/local/etc/bitextor/LM/">
+		<bi:language fingerprint="en.utf8.lm" code="en" />
+		<bi:language fingerprint="es.utf8.lm" code="es" />
+		<bi:language fingerprint="ca.utf8.lm" code="ca" />
+		<bi:language fingerprint="fr.utf8.lm" code="fr" />
+		<bi:language fingerprint="an.utf8.lm" code="an" />
+		<bi:language fingerprint="gl.utf8.lm" code="gl" />
+		<bi:language fingerprint="ga.utf8.lm" code="ga" />
+		<bi:language fingerprint="eu.utf8.lm" code="eu" />
+		<bi:language fingerprint="de.utf8.lm" code="de" />
+	</bi:languages>
+</bi:configuration>
