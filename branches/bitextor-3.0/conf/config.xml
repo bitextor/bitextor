@@ -118,7 +118,7 @@
 			<ta:blankspace>[[:space:]]</ta:blankspace>
 			<ta:capital>[A-ZÀ-ÖØ-Þ]</ta:capital>
 		</ta:charset>
-		<ta:splitting>
+		<ta:splitting value="0.2">
 			<!--The list of operations to define the conditions is:
 				BLANK: The character in relative position "pos" is a blank space.
 				CAPITAL: The character in relative position "pos" is a capital letter.
@@ -135,8 +135,10 @@
 			<ta:rules>
 				<!-- RULE 1: Point before a number -->
 				<ta:rule points="-0.5">
-					<ta:condition op="ge" value="0" after="1" />
-					<ta:condition op="le" value="9" after="1" />
+					<ta:and>
+						<ta:condition op="ge" value="0" after="1" />
+						<ta:condition op="le" value="9" after="1" />
+					</ta:and>
 				</ta:rule>
 				<!-- RULE 2: Point before a blank space -->
 				<ta:rule points="0.5">
@@ -144,7 +146,9 @@
 				</ta:rule>
 				<!-- RULE 3: Point before a capital letter -->
 				<ta:rule points="-0.2">
-					<ta:condition op="capital" inverse="true" after="1" />
+					<ta:not>
+						<ta:condition op="capital" after="1" />
+					</ta:not>
 				</ta:rule>
 				<!-- RULE 4: Point before a point -->
 				<ta:rule points="-0.5">
@@ -152,87 +156,85 @@
 				</ta:rule>
 				<!-- RULE 5: Point followed by a blank space and a capital letter  -->
 				<ta:rule points="0.5">
-					<ta:condition op="blank" after="1" />
-					<ta:condition op="capital" after="2" />
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:condition op="capital" after="2" />
+					</ta:and>
 				</ta:rule>
 				<!-- RULE 6: Point followed by a blank and a non capital letter -->
 				<ta:rule points="-0.2">
-					<ta:condition op="blank" after="1" />
-					<ta:condition op="capital" inverse="true" after="2" />
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:not>
+							<ta:condition op="capital" after="2" />
+						</ta:not>
+					</ta:and>
 				</ta:rule>
 				<!-- RULE 7: Point followed by a blank space, a ¿ and a capital letter -->
 				<ta:rule points="0.5">
-					<ta:condition op="blank" after="1" />
-					<ta:condition op="capital" after="3" />
-					<ta:condition op="eq" value="¿" after="2" />
+					<ta:and>
+						<ta:condition op="blank" after="1" />
+						<ta:condition op="capital" after="3" />
+						<ta:or>
+							<ta:condition op="eq" value="¿" after="2" />
+							<ta:condition op="eq" value="¡" after="2" />
+							<ta:condition op="eq" value='"' after="2" />
+						</ta:or>
+					</ta:and>
 				</ta:rule>
-				<!-- RULE 8: Point followed by a blank space, a ¡ and a capital letter -->
-				<ta:rule points="0.5">
-					<ta:condition op="blank" after="1" />
-					<ta:condition op="capital" after="3" />
-					<ta:condition op="eq" value="¡" after="2" />
-				</ta:rule>
-				<!-- RULE 9: Point followed by a blank space, a " and a capital letter -->
-				<ta:rule points="0.5">
-					<ta:condition op="blank" after="1" />
-					<ta:condition op="capital" after="3" />
-					<ta:condition op="eq" value='"' after="2" />
-				</ta:rule>
-				<!-- RULE 10: Point followed a ! -->
+				<!-- RULE 8: Point followed a ! -->
 				<ta:rule points="-0.5">
-					<ta:condition op="eq" value="!" after="1" />
+					<ta:or>
+						<ta:condition op="eq" value="!" after="1" />
+						<ta:condition op="eq" value="?" after="1" />
+						<ta:condition op="eq" value="]" after="1" />
+						<ta:condition op="eq" value=")" after="1" />
+					</ta:or>
 				</ta:rule>
-				<!-- RULE 11 Point followed a ? -->
-				<ta:rule points="-0.5">
-					<ta:condition op="eq" value="?" after="1" />
-				</ta:rule>
-				<!-- RULE 12 Point followed a ] -->
-				<ta:rule points="-0.5">
-					<ta:condition op="eq" value="]" after="1" />
-				</ta:rule>
-				<!-- RULE 13 Point followed a ) -->
-				<ta:rule points="-0.5">
-					<ta:condition op="eq" value=")" after="1" />
-				</ta:rule>
-				<!-- RULE 14: A point preceded by a capital letter -->
-				<!--<ta:rule points="-0.5">
-					<ta:condition op="capital" before="1" />
-				</ta:rule>-->
-				<!-- RULE 15: A point preceded by an space and three capital letters -->
+				<!-- RULE 9: A point preceded by a capital letter -->
 				<ta:rule points="-0.5">
 					<ta:condition op="capital" before="1" />
-					<ta:condition op="capital" before="2" />
-					<ta:condition op="capital" before="3" />
-					<ta:condition op="blank" before="4" />
 				</ta:rule>
-				<!-- RULE 16: A point preceded by an space and two capital letters -->
+				<!-- RULE 10: A point preceded by an space and three capital letters -->
 				<ta:rule points="-0.5">
-					<ta:condition op="capital" before="1" />
-					<ta:condition op="capital" before="2" />
-					<ta:condition op="blank" before="3" />
+					<ta:or>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="capital" before="2" />
+							<ta:condition op="capital" before="3" />
+							<ta:condition op="blank" before="4" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="capital" before="2" />
+							<ta:condition op="blank" before="3" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="capital" before="1" />
+							<ta:condition op="blank" before="2" />
+						</ta:and>
+					</ta:or>
 				</ta:rule>
-				<!-- RULE 17: A point preceded by an space and one capital letter -->
-				<ta:rule points="-0.5">
-					<ta:condition op="capital" before="1" />
-					<ta:condition op="blank" before="2" />
-				</ta:rule>
-				<!-- RULE 18: A point preceded by a blank space -->
+				<!-- RULE 11: A point preceded by a blank space -->
 				<ta:rule points="0.2">
 					<ta:condition op="blank" before="1" />
 				</ta:rule>
-				<!-- RULE 19: A point preceded by a " and followed by a " -->
+				<!-- RULE 12: A point preceded by a " and followed by a " -->
 				<ta:rule points="-0.2">
-					<ta:condition op="eq" value='"' before="1" />
-					<ta:condition op="eq" value='"' after="1" />
+					<ta:or>
+						<ta:and>
+							<ta:condition op="eq" value='"' before="1" />
+							<ta:condition op="eq" value='"' after="1" />
+						</ta:and>
+						<ta:and>
+							<ta:condition op="eq" value="'" before="1" />
+							<ta:condition op="eq" value="'" after="1" />
+						</ta:and>
+					</ta:or>
 				</ta:rule>
-				<!-- RULE 20: A point preceded by a ' and followed by a ' -->
+				<!-- RULE 13: A point preceded by a point -->
 				<ta:rule points="-0.2">
-					<ta:condition op="eq" value="'" before="1" />
-					<ta:condition op="eq" value="'" after="1" />
-				</ta:rule>
-				<!-- RULE 21: A point preceded by a point -->
-				<ta:rule points="0.2">
-					<ta:condition op="eq" value="." before="1" />
+					<ta:condition op="eq" value="." after="1" />
 				</ta:rule>
 			</ta:rules>
 		</ta:splitting>
@@ -268,70 +270,48 @@
 				
 				<ta:cost op="sub" in="text" out="text" value="0.01"/>
 				
-				<ta:diagonal mode="percent">10</ta:diagonal>
-				<ta:textsizemin>20</ta:textsizemin>
-				<ta:textsizeminrelation>0.6</ta:textsizeminrelation>
+				<ta:diagonal mode="percent" value="5" />
+				<ta:textsizemin value="20" />
+				<ta:textsizeminrelation value="0.6" />
 			</ta:costs>
-			
-			<!-- Triggers applied to the context of dots to score sentence borders while splitting sentences -->
-			<!-- Syntax: <characters_before_dot-characters_after_dot> -->
-			<ta:weights>
-				<ta:weight before="anything" after="number" value="-0.5"/>			<!-- Between anything and a number -->
-				
-				<ta:weight before="anything" after="blank" value="0.5"/>			<!-- Between anything and a blank space -->
-				
-				<ta:weight before="anything" after="noncapital" value="-0.2"/>		<!-- Between anything and a non-capital letter -->
-				
-				<ta:weight before="anything" after="dot" value="-0.5"/>			<!-- Between anything and another dot -->
-				
-				<ta:weight before="anything" after="blankcap" value="0.5"/>		<!-- Between anything and a blank space and a capital letter -->
-				
-				<ta:weight before="anything" after="blanknoncap" value="0.2"/>		<!-- Between anything and a blank space and a non-capital letter -->
-				
-				<ta:weight before="capital" after="anything" value="-0.5"/>		<!-- Between a capital letter and anything -->
-				
-				<ta:weight before="threechar" after="anything" value="-0.5"/>		<!-- Between a word of 3 characters or less and anything -->
-				
-				<ta:weight before="blank" after="anything" value="0.2"/>			<!-- Between a blank space and anything -->
-				
-				<ta:weight before="quotes" after="quotes" value="-0.5"/>			<!-- Between quote symbols (' or ") -->
-				
-				<ta:weight before="dot" after="anything" value="0.4"/>				<!-- Between a dot and anything -->
-			</ta:weights>
 		</ta:edition_parameters>
 		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
-		<ta:mode>dt</ta:mode>
+		<ta:mode value="l" />
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
 	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
 	<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
-	<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>
+	<!--<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>-->
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
-	<bi:discriminationParameters>
+	<bi:criteria>
 		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	
-		<bi:fileSizePercent>40</bi:fileSizePercent>
+		<bi:fileSizePercent value="30" />
 		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
 		It's recommended that this percentage to be higger than 80%. -->
-		<bi:textLengthDifferencePercents default="90">
-			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="80" />
-			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="80" />
-			<bi:textLengthDifferencePercent lang1="es" lang2="fr" difference="80" />
+		<bi:textLengthDifferencePercents default="30">
+			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="30" />
+			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="30" />
+			<bi:textLengthDifferencePercent lang1="es" lang2="fr" difference="30" />
 		</bi:textLengthDifferencePercents>
 		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
 		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
-		<bi:maxEditDistance mode="percent">10</bi:maxEditDistance>
+		<bi:maxEditDistance mode="percent" value="5" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. -->
-		<bi:directoryPathDistance>2</bi:directoryPathDistance>
-	</bi:discriminationParameters>
+		<bi:directoryPathDistance value="1" />
+		<bi:maxTotalTextLengthPercent value="20" />
+		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
+		<bi:numericFingerprintDistance value="1" />
+	</bi:criteria>
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
-		<bi:language fingerprint="es.utf8.lm" lang_code="es" />
-		<bi:language fingerprint="ca.utf8.lm" lang_code="ca" />
-		<bi:language fingerprint="fr.utf8.lm" lang_code="fr" />
-		<bi:language fingerprint="an.utf8.lm" lang_code="an" />
-		<bi:language fingerprint="gl.utf8.lm" lang_code="gl" />
-		<bi:language fingerprint="ga.utf8.lm" lang_code="ga" />
-		<bi:language fingerprint="eu.utf8.lm" lang_code="eu" />
-		<bi:language fingerprint="de.utf8.lm" lang_code="de" />
+		<bi:language fingerprint="en.utf8.lm" code="en" />
+		<bi:language fingerprint="es.utf8.lm" code="es" />
+		<bi:language fingerprint="ca.utf8.lm" code="ca" />
+		<bi:language fingerprint="fr.utf8.lm" code="fr" />
+		<bi:language fingerprint="an.utf8.lm" code="an" />
+		<bi:language fingerprint="gl.utf8.lm" code="gl" />
+		<bi:language fingerprint="ga.utf8.lm" code="ga" />
+		<bi:language fingerprint="eu.utf8.lm" code="eu" />
+		<bi:language fingerprint="de.utf8.lm" code="de" />
 	</bi:languages>
 </bi:configuration>

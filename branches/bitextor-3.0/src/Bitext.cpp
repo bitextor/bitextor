@@ -5,9 +5,7 @@ Bitext::Bitext()
 	this->is_initialized=false;
 }
 
-Bitext::~Bitext()
-{
-}
+Bitext::~Bitext(){}
 
 bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 {
@@ -24,17 +22,23 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 				this->same_extension=exit;
 				if(exit){
 					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
-					this->byte_size_distance=aux_result;
 					if(exit){
-						exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
-						if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
-							aux_result=0;
-						else{
-							if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
-								aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
-							else
-								aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
-							this->edit_distance=aux_result;
+						this->byte_size_distance=aux_result;
+						exit=Heuristics::NearTotalTextSize(*wf1,*wf2);
+						if(exit){
+							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
+							if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
+								aux_result=0;
+							else{
+								if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
+									aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
+								else
+									aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
+								this->edit_distance=aux_result;
+							}
+							if(exit){
+								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2);
+							}
 						}
 					}
 				}
@@ -52,7 +56,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	return exit;
 }
 	
-bool Bitext::GenerateBitext(const string &path)
+bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigned int *last_tuid)
 {
 	Aligner *aligner;
 	bool correct_alignment;
@@ -60,6 +64,7 @@ bool Bitext::GenerateBitext(const string &path)
 	ifstream fin1, fin2;
 	wstring tagaligneroutput;
 	FILE* fout;
+
 	if(this->is_initialized){
 		aligner=new Aligner();
 		try{
@@ -74,18 +79,17 @@ bool Bitext::GenerateBitext(const string &path)
 		}
 		if (exit) {
 			try{
-				tagaligneroutput=aligner->GenerateTMX(wf1->GetLang(), wf2->GetLang());
+				if(GlobalParams::AllBitextInAFile()){
+					tagaligneroutput=aligner->GenerateTMX(wf1->GetLang(), wf2->GetLang(), false, false, true, starting_tuid, last_tuid);
+				}
+				else
+					tagaligneroutput=aligner->GenerateTMX(wf1->GetLang(), wf2->GetLang(), true, true, false);
+
+				if (tagaligneroutput!=L"")
+					fputws(tagaligneroutput.c_str(),main_fout);
 			}
 			catch(char const* e){
 				cout<<e<<endl;
-			}
-			fout=fopen(path.c_str(),"w");
-			if (!fout) {//Hubo errores en la apertura del fichero de salida
-					wcout<<tagaligneroutput;
-			} else {
-				if (tagaligneroutput!=L"")
-					fputws(tagaligneroutput.c_str(),fout);
-				fclose(fout);
 			}
 		}
 		delete aligner;

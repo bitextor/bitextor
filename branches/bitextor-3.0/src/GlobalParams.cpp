@@ -10,17 +10,11 @@ map<wstring,double> GlobalParams::file_size_diference_percents;
 
 double GlobalParams::file_size_difference_percent=-1;
 
-//wstring GlobalParams::tagaligner_config_file=L"";
-
 wstring GlobalParams::textcat_config_file=L"/tmp/textcat_conf.txt";
-
-//int GlobalParams::tagaligner_mode=1;
 
 string GlobalParams::config_file;
 
 int GlobalParams::downloaded_size=-1;
-
-//vector<wstring> GlobalParams::accepted_extenssions;
 
 wstring GlobalParams::download_path=L"~/";
 
@@ -31,6 +25,27 @@ bool GlobalParams::is_percentual_edmax=true;
 wstring GlobalParams::fingerprints_dir=L"";
 
 map<wstring,wstring> GlobalParams::fingerprints;
+
+double GlobalParams::max_total_text_lenght_diff=-1;
+
+int GlobalParams::max_nfingerprint_distance=-1;
+
+bool GlobalParams::all_bitexts_in_one=true;
+
+bool GlobalParams::AllBitextInAFile()
+{
+	return all_bitexts_in_one;
+}
+
+int GlobalParams::GetMaxNumericFingerprintDistance()
+{
+	return max_nfingerprint_distance;
+}
+
+double GlobalParams::GetMaxTotalTextLengthDiff()
+{
+	return max_total_text_lenght_diff;
+}
 
 void GlobalParams::SetMaxEditDistance(const double &value)
 {
@@ -128,18 +143,6 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 			if(cur_node->type==XML_TEXT_NODE){
 				if (tagname == L"downloadModDest")
 					download_path=Config::xmlToWstring(cur_node->content);
-				/*else if (tagname == L"textCatConfigFile"){
-					textcat_config_file = Config::xmlToWstring(cur_node->content);
-				}*/
-				else if (tagname == L"fileSizePercent"){
-					file_size_difference_percent = atof(Config::toString(Config::xmlToWstring(cur_node->content)).c_str());
-				}
-				else if (tagname == L"maxEditDistance"){
-					max_edit_distance_length=atof(Config::toString(Config::xmlToWstring(cur_node->content)).c_str());
-				}
-				else if (tagname == L"directoryPathDistance"){
-					directory_depth_distance=atoi(Config::toString(Config::xmlToWstring(cur_node->content)).c_str());
-				}
 			}
 			else if(cur_node->type==XML_ELEMENT_NODE){
 				propPtr = cur_node->properties;
@@ -147,18 +150,25 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 					key = Config::xmlToWstring(propPtr->name);
 					node_prop=xmlGetProp( cur_node, propPtr->name);
 					value = Config::xmlToWstring(node_prop);
-					if(tagname==L"downloadModDest" && key==L"max_size"){
+					if(tagname==L"downloadModDest" && key==L"max_bytes"){
 						downloaded_size = atoi(Config::toString(value).c_str());
 					}
-					else if (tagname == L"maxEditDistance" && key==L"mode"){
-						if( value==L"percent" )
-							is_percentual_edmax=true;
-						else if( value==L"absolute" )
-							is_percentual_edmax=false;
+					else if (tagname == L"maxEditDistance"){
+						if(key==L"mode"){
+							if( value==L"percent" )
+								is_percentual_edmax=true;
+							else if( value==L"absolute" )
+								is_percentual_edmax=false;
+						}
+						else if(key==L"value"){
+							max_edit_distance_length=atof(Config::toString(value).c_str());
+						}
 					}
-					else if (tagname == L"textLengthDifferencePercents"){
-						if(key==L"default")
-							text_distance_percent_differenciator = atof(Config::toString(value).c_str());
+					else if (tagname == L"textLengthDifferencePercents" && key==L"default"){
+						text_distance_percent_differenciator = atof(Config::toString(value).c_str());
+					}
+					else if (tagname == L"directoryPathDistance" && key==L"value"){
+						directory_depth_distance=atoi(Config::toString(value).c_str());
 					}
 					else if (tagname == L"textLengthDifferencePercent"){
 						if(key==L"lang1")
@@ -174,24 +184,31 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 							}
 						}
 					}
-					else if(tagname == L"languages"){
-						if(key==L"dir"){
-							if(value[value.length()-1]!=L'/')
-								fingerprints_dir=value+L"/";
-							else
-								fingerprints_dir=value;
-						}
+					else if(tagname == L"languages" && key==L"dir"){
+						if(value[value.length()-1]!=L'/')
+							fingerprints_dir=value+L"/";
+						else
+							fingerprints_dir=value;
 					}
 					else if(tagname == L"language"){
 						if(key==L"fingerprint")
 							fingerprint=value;
-						else if(key==L"lang_code")
+						else if(key==L"code")
 							lang_code=value;
 						if(lang_code!=L"" && fingerprint!=L""){
 							fingerprints[lang_code]=fingerprints_dir+fingerprint;
 							lang_code=L"";
 							fingerprint=L"";
 						}
+					}
+					else if (tagname == L"fileSizePercent" && key==L"value"){
+						file_size_difference_percent = atof(Config::toString(value).c_str());
+					}
+					else if (tagname == L"maxTotalTextLengthPercent" && key==L"value"){
+						max_total_text_lenght_diff=atof(Config::toString(value).c_str())/100;
+					}
+					else if (tagname == L"numericFingerprintDistance" && key==L"value"){
+						max_nfingerprint_distance=atoi(Config::toString(value).c_str());
 					}
 					free(node_prop);
 					propPtr = propPtr->next;
@@ -243,7 +260,6 @@ bool GlobalParams::LoadGlobalParams(const string &path)
 	catch ( const std::exception& ex ) {
 		exit=false;
 	}
-
     return exit;
 }
 

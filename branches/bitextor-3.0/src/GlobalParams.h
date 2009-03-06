@@ -112,6 +112,12 @@ private:
 	 */
 	static wstring fingerprints_dir;
 	
+	static double max_total_text_lenght_diff;
+	
+	static int max_nfingerprint_distance;
+	
+	static bool all_bitexts_in_one;
+	
 	static void GenerateTextCatConfigFile();
 
 public:
@@ -306,6 +312,12 @@ public:
 	 * @return Retorna el percentatge de màxima diferència de longitud de blocs de text corresponent al parell d'idiomes.
 	 */
 	static double GetFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2);
+
+	static double GetMaxTotalTextLengthDiff();
+	
+	static int GetMaxNumericFingerprintDistance();
+	
+	static bool AllBitextInAFile();
 };
 
 #endif /*GLOBALPARAMS_H_*/

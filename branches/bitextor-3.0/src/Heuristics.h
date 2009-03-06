@@ -67,6 +67,12 @@ public:
 	 * @return Cost of the operation. 
 	 */
 	static double Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2);
+	
+	static bool DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result=NULL);
+	
+	static double CostNumbers(const short &op, const int &c1, const int &c2);
+	
+	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2);
 };
 
 #endif /*HEURISTICS_H_*/

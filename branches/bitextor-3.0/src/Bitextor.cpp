@@ -5,22 +5,9 @@
 #include "DownloadMod.h"
 #include <fstream>
 #include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 using namespace std;
 
-string
-GetFileName(string path)
-{
-	string exit;
-	size_t found;
-
-	found=path.find_last_of("/\\");
-	exit=path.substr(found+1);
-
-	return exit;
-}
 
 string
 GetFilePath(string path)
@@ -37,18 +24,17 @@ GetFilePath(string path)
 int
 main (int argc, char *const *argv)
 {
-	WebSite ws;
+	WebSite *ws;
 	vector<Bitext> results;
 	unsigned int n_results;
 	Bitext bitext;
 	ifstream file;
 	unsigned int i;
-	ostringstream *aux_sstream;
 	string file_name;
 	bool show_howtouse=false;
 	string dest_dir="";
 	string config_file="/usr/local/etc/bitextor/conf/config.xml";
-	bool download;
+	bool download, any_bitext;
 	struct stat my_stat;
 
 	setlocale(LC_CTYPE, "");
@@ -98,66 +84,27 @@ main (int argc, char *const *argv)
 			if(!GlobalParams::LoadGlobalParams(config_file))
 				wcerr<<L"Bitextor can't open the config file. Please, specifie it with the option -c or place it at /usr/local/etc/bitextor/conf/"<<endl;
 			else{
-				if(!download){
-					wcout<<L"Inicialising Bitextor's destination path..."<<endl;
-					if(dest_dir[dest_dir.length()-1]!='/')
-						dest_dir+="/";
-					if(!ws.Initialize(dest_dir))
-						wcerr<<L"There were an error while trying to load the files in the selected directory."<<endl;
-					else{
-						if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
-							mkdir((dest_dir+"bitexts/").c_str(),0777);
-						wcout<<L"Comparing the files..."<<endl;
-						results=ws.GetMatchedFiles();
-						for(n_results=0;n_results<results.size();n_results++){
-							bitext=results[n_results];
-							file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile()->GetPath())+"_"+GetFileName(bitext.GetSecondWebFile()->GetPath())+".tmx";
-							for(i=0, aux_sstream=new ostringstream(ios_base::out);stat(file_name.c_str(), &my_stat) == 0;i++){
-								delete aux_sstream;
-								aux_sstream=new ostringstream(ios_base::out);
-								*aux_sstream<<i;
-								file_name=dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile()->GetPath())+"_"+GetFileName(bitext.GetSecondWebFile()->GetPath())+aux_sstream->str()+".tmx";
-							}
-							delete aux_sstream;
-							bitext.GenerateBitext(file_name);
-							wcout<<L"\tThe bitext between "<<Config::toWstring(bitext.GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(bitext.GetSecondWebFile()->GetPath())<<L" has been created."<<endl;
-							wcout<<L"\tEdit distance: "<<bitext.GetEditDistance()<<L"%  Size difference:"<<bitext.GetSizeDistance()<<L"%"<<endl<<endl;
-						}
-						if(results.size()==0)
-							wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
-					}
-				}
-				else{
+				if(download){
 					DownloadMod mod;
-					wcout<<L"Downloading from "<<Config::toWstring(dest_dir)<<L" (this will take some time)..."<<endl;
 					mod.SetDestPath(GlobalParams::GetDownloadPath());
 					mod.StartDownload(Config::toWstring(dest_dir));
-	
-					wcout<<L"Inicialising Bitextor's destination path..."<<endl; 
-					if(!ws.Initialize(Config::toString(GlobalParams::GetDownloadPath())+dest_dir+"/"))
-						wcerr<<L"There were an error while trying to load the files in the selected directory."<<endl;
-					else{
-						if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
-							mkdir((Config::toString(GlobalParams::GetDownloadPath())+dest_dir+"/bitexts/").c_str(),0777);
-						wcout<<L"Comparing the files..."<<endl;
-						results=ws.GetMatchedFiles();
-						for(n_results=0;n_results<results.size();n_results++){
-							bitext=results[n_results];
-							file_name=Config::toString(GlobalParams::GetDownloadPath())+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile()->GetPath())+"_"+GetFileName(bitext.GetSecondWebFile()->GetPath())+".tmx";
-							for(i=0, aux_sstream=new ostringstream(ios_base::out);stat(file_name.c_str(), &my_stat) == 0;i++){
-								delete aux_sstream;
-								aux_sstream=new ostringstream(ios_base::out);
-								*aux_sstream<<i;
-								file_name=Config::toString(GlobalParams::GetDownloadPath())+dest_dir+"/bitexts/"+GetFileName(bitext.GetFirstWebFile()->GetPath())+"_"+GetFileName(bitext.GetSecondWebFile()->GetPath())+aux_sstream->str()+".tmx";
-							}
-							bitext.GenerateBitext(file_name);
-							wcout<<L"\tThe bitext between "<<Config::toWstring(bitext.GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(bitext.GetSecondWebFile()->GetPath())<<L" has been created."<<endl;
-							wcout<<L"\tEdit distance: "<<bitext.GetEditDistance()<<L"%  Size difference:"<<bitext.GetSizeDistance()<<L"%"<<endl<<endl;
-						}
-						if(results.size()==0)
-							wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
-					}
 				}
+				wcout<<L"Initializing Bitextor's destination path..."<<endl;
+				if(dest_dir[dest_dir.length()-1]!='/')
+					dest_dir+="/";
+				
+				if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
+					mkdir((dest_dir+"/bitexts/").c_str(),0777);
+				wcout<<L"Comparing files and generating bitexts..."<<endl;
+				ws=new WebSite(dest_dir);
+				try{
+					if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
+						wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+				}
+				catch(char const*e){
+					cout<<e<<endl;
+				}
+				delete ws;
 			}
 		}
 		catch(char* e){

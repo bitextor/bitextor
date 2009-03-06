@@ -20,8 +20,7 @@ WebSite.h \
 WebSite.cpp \
 Bitextor.cpp
 
-AM_CFLAGS = -g3 -Wall -Wunused \
--Wmissing-prototypes
+AM_CFLAGS = -g3 -Wall -Wunused -Wmissing-prototypes
 
 INCLUDES = $(BITEXTOR_CFLAGS) -I/usr/include/tidy -I/usr/include/libtextcat
 

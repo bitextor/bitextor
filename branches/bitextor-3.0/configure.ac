@@ -6,16 +6,16 @@ AC_PREREQ(2.61)
 m4_define([required_libtagaligner_version], [3.0.0])
 m4_define([required_libxml_version], [2.6.17])
 m4_define([required_libenca_version], [1.9])
-AC_INIT([bitextor], [2.1rc1], [miquelespla@gmail.com])
+AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
 AC_CONFIG_SRCDIR([src/Bitext.h])
 AC_CONFIG_HEADER([config.h])
 
 GENERIC_LIBRARY_NAME=bitextor
 
 # Release versioning
-GENERIC_MAJOR_VERSION=2
-GENERIC_MINOR_VERSION=1
-GENERIC_MICRO_VERSION=rc1
+GENERIC_MAJOR_VERSION=3
+GENERIC_MINOR_VERSION=0
+GENERIC_MICRO_VERSION=0
 
 # API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
 GENERIC_API_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION

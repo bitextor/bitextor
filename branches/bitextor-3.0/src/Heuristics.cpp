@@ -50,40 +50,47 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	double res;
 	double beam;
 	unsigned int vec1len, vec2len;
-	double aux_result;
-	
+	unsigned int max_diff;
+
 	tag_array1=wf1->GetTagArrayReference();
 	tag_array2=wf2->GetTagArrayReference();
 	vec1len=wf1->GetFragmentedFileReference()->getSize();
 	vec2len=wf2->GetFragmentedFileReference()->getSize();
+
 	//We calculate the maximal edit distance possible to accept the pair or not. 
-	if(Config::getDiagonalSize()==-1)
-		beam=0;
-	else
-		beam=Config::getDiagonalSize();
-
-	/*switch (Config::getMode()){
-		case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
-		default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
-	}*/
-	EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &EditDistanceTools::Cost_text_and_tags_l, true, 100, &res);
-	if(result!=NULL)
-		*result=res;
-
 	if(GlobalParams::IsPercentMaxEditDistance()){
 		if(vec1len>vec2len)
-			aux_result=res*100/((double)(vec1len));
+			max_diff=floor(vec1len*(GlobalParams::GetMaxEditDistance()/(double)100));
 		else
-			aux_result=res*100/((double)(vec2len));
+			max_diff=floor(vec2len*(GlobalParams::GetMaxEditDistance()/(double)100));
 	}
 	else
-		aux_result=res;
-	
-	if(aux_result<=GlobalParams::GetMaxEditDistance()){
-		return true;
-	}
-	else
+		max_diff=GlobalParams::GetMaxEditDistance();
+
+	if(abs((int)vec1len-(int)vec2len)>max_diff){
+		if(result!=NULL)
+			*result=abs((int)vec1len-(int)vec2len);
 		return false;
+	}
+	else{
+		if(Config::getDiagonalSize()==-1)
+			beam=0;
+		else
+			beam=Config::getDiagonalSize();
+	
+		/*switch (Config::getMode()){
+			case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
+			default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
+		}*/
+		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, true, 100, &res);
+		if(result!=NULL)
+			*result=res;
+
+		if(max_diff>res)
+			return true;
+		else
+			return false;
+	}
 }
 
 double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2){
@@ -91,11 +98,10 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 	Fragment* tag1=const_cast<Fragment*>(ctag1);
 	Fragment* tag2=const_cast<Fragment*>(ctag2);
 	wstring current_tag1, current_tag2;
-	double result=0;
+	double result=0, tmp;
 	Text *aux_text, *aux_text2;
 	Tag *aux_tag, *aux_tag2;
-	
-	
+
 	switch(op){
 		case SUBST:
 			aux_tag=dynamic_cast<Tag*>(tag1);
@@ -120,7 +126,18 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 						result=1;
 					else
 						result=0;*/
-					result=abs(aux_text->getLength()-aux_text2->getLength());
+					if(aux_text->getLength()>aux_text2->getLength())
+						tmp=abs(aux_text->getLength()-aux_text2->getLength())/aux_text->getLength();
+					else{
+						if(aux_text2->getLength()!=0)
+							tmp=abs(aux_text->getLength()-aux_text2->getLength())/aux_text2->getLength();
+						else
+							tmp=aux_text->getLength();
+					}
+					if(tmp>(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100))
+						result=1;
+					else
+						result=0;
 				}
 			}
 		break;
@@ -128,5 +145,56 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 			result=1;
 		break;
 	}
+	return result;
+}
+
+bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2){
+	unsigned int maj;
+
+	if(GlobalParams::GetMaxTotalTextLengthDiff()==-1)
+		return true;
+	else{
+		if(wf2.GetTextSize()>wf1.GetTextSize())
+			maj=wf2.GetTextSize();
+		else
+			maj=wf1.GetTextSize();
+		if(((double)maj*GlobalParams::GetMaxTotalTextLengthDiff())>abs((int)wf1.GetTextSize()-(int)wf2.GetTextSize()))
+			return true;
+		else
+			return false;
+	}
+}
+
+bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
+	double res;
+	unsigned int maj;
+
+	if(GlobalParams::GetMaxNumericFingerprintDistance() || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
+		if(result!=NULL)
+			*result=0;
+		return true;
+	}
+	else{
+		EditDistanceTools::EditDistanceBeam(*wf1.GetNumbersVector(), *wf2.GetNumbersVector(), &CostNumbers, false, 10, &res);
+
+		if(result!=NULL)
+			*result=res;
+		if(res<=1)
+			return true;
+		else
+			return false;
+	}
+}
+
+double Heuristics::CostNumbers(const short &op, const int &c1, const int &c2){
+	double result=0;
+
+	if(op==SUBST){
+		if(c1!=c2)
+			result = 1;
+	}
+	else
+		result=1;
+
 	return result;
 }

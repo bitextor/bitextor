@@ -3,9 +3,15 @@
 WebFile::WebFile()
 {
 	this->initialized=false;
+	numbers_vec=NULL;
+	text_size=0;
 }
 
-WebFile::~WebFile(){}
+WebFile::~WebFile()
+{
+	if(numbers_vec!=NULL)
+		delete numbers_vec;
+}
 
 /*typedef struct {
 
@@ -46,6 +52,45 @@ void *textcatInit(){
 	return h;
 }*/
 
+bool WebFile::IsAlphabetic(const wchar_t& car){
+	int status;
+
+	regex_t re;
+	wstring pattern = L"[0-9]";
+	wchar_t text[2];
+	text[0] = car;
+	text[1] = L'\0';
+
+	if (regcomp(&re, Config::toString(pattern).c_str(), REG_EXTENDED|REG_NOSUB) != 0)
+		return false;
+
+	status = regexec(&re, Config::toString(text).c_str(), (size_t) 0, NULL, 0);
+    regfree(&re);
+
+    if (status != 0) 
+       	return false;
+    else
+		return true;
+}
+
+vector<int>* WebFile::GetNonAplha(wstring text){
+	unsigned int i;
+	vector<int> *vec=new vector<int>;
+	wstring st=L"";
+
+	for(i=0;i<text.length();i++){
+		if(IsAlphabetic(text[i]))
+			st+=text[i];
+		else{
+			if(st!=L""){
+				vec->push_back(atoi(Config::toString(st).c_str()));
+				st=L"";
+			}
+		}
+	}
+	return vec;
+}
+
 bool WebFile::Initialize(const string &path)
 {
 	wstring str_temp;
@@ -60,6 +105,7 @@ bool WebFile::Initialize(const string &path)
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";
 	else{
 		try{
+			
 			//We clean the format and convert to UTF8
 			FilePreprocess::PreprocessFile(path);
 			//We set the file path
@@ -72,16 +118,23 @@ bool WebFile::Initialize(const string &path)
 				this->file_type="";
 			}
 			if(file.LoadFile(path)){
+				file.Compact();
+				text=file.getFullText(true);
+				if(numbers_vec!=NULL)
+					delete numbers_vec;
+				numbers_vec=GetNonAplha(text);
+				
+				text_size=text.size();
 				//We set the tag list
 				if(GlobalParams::GetGuessLanguage()){
 					//We gess the language and set it
 					void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
-					str_temp=Config::toWstring(textcat_Classify(h, Config::toString(file.getFullText(true)).c_str(), file.getFullText(true).length()));
+					str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
 					this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
 					if(str_temp[0]!='[')
 						exit=false;
 					textcat_Done(h);
-					delete in;
+					//delete in;
 					h=NULL;
 				}
 				else{
@@ -149,23 +202,12 @@ FragmentedFile* WebFile::GetFragmentedFileReference()
 		return &file;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+vector<int>* WebFile::GetNumbersVector()
+{
+	return numbers_vec;
+}
+	
+unsigned int WebFile::GetTextSize()
+{
+	return text_size;
+}

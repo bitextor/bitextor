@@ -9,11 +9,15 @@
 #include <libtagaligner/ConfigReader.h>
 #include <dirent.h> 
 #include <iostream>
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <map>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stack>
 
 
 
@@ -35,7 +39,7 @@ private:
 	/**
 	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
 	 */
-	bool initialized;
+	//bool initialized;
 
 	/**
 	 * Ruta del directori base on es troba descarregat el lloc web.
@@ -45,13 +49,13 @@ private:
 	/**
 	 * Llistat de fitxers continguts al directori web.
 	 */
-	vector< vector< WebFile* > > file_list;
+	//vector< vector< WebFile* > > file_list;
 
 public:
 	/**
 	 * Constructor per defecte de la classe.
 	 */
-	WebSite();
+	WebSite(const string &path);
 	
 	/**
 	 * Destructor de la classe.
@@ -65,6 +69,8 @@ public:
 	 */
 	string GetBasePath();
 	
+	string GetFileName(string path);
+	
 	/**
 	 * Mètode que retorna les dades del fitxer emmagatzemat a la llista segons l'índex passat per paràmetre.
 	 * @param pos Índex del fitxer a la llista de fitxers.
@@ -74,7 +80,7 @@ public:
 	 * @throw char* El mètode llança una excepció si s'intenta accedir a una posició del nivell especificat que no existeix mitjançant el paràmetre pos.
 	 * @return Retorna el WebFile emmagatzemat a la posició <code>pos</code> de la llista de WebFiles.
 	 */
-	WebFile* GetWebFile(const unsigned int &pos, const unsigned int &level);
+	//WebFile* GetWebFile(const unsigned int &pos, const unsigned int &level);
 	
 	/**
 	 * Mètode que retorna el nombre de fitxers continguts al directori inicialitzat.
@@ -82,20 +88,20 @@ public:
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna el nombre de fitxers continguts al directori inicialitzat.
 	 */
-	unsigned int WebFileCount(const unsigned int &level);
+	//unsigned int WebFileCount(const unsigned int &level);
 	
 	/**
 	 * Mètode que retorna el nombre de nivells de l'arbre de directoris representat.
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna el nombre de nivells de l'arbre de directoris representat.
 	 */
-	unsigned int LevelCount();
+	//unsigned int LevelCount();
 	
 	/**
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
 	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
 	 */
-	bool Initialize(const string &base_path);
+	bool GenerateBitexts(const string &dest_path);
 	
 	/**
 	 * Mètode que compara, segons els límits establerts als paràmetres globals, els fitxers web
@@ -105,7 +111,7 @@ public:
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 
 	 */
-	vector<Bitext> GetMatchedFiles();
+	bool GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout=NULL, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
 };
 
 #endif /*WEBSITE_H_*/

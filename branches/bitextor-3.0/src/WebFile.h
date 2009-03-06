@@ -56,6 +56,14 @@ private:
 	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
 	 */
 	bool initialized;
+	
+	vector<int> *numbers_vec;
+
+	unsigned int text_size;
+	
+	vector<int>* GetNonAplha(wstring text);
+
+	bool IsAlphabetic(const wchar_t& car);
 
 public:
 
@@ -119,6 +127,10 @@ public:
 	 * @return Retorna <code>true</code> si el fitxer es torba correctament inicialitzat i <code>false</code> en cas contrari.
 	 */
 	bool IsInitialized();
+	
+	vector<int>* GetNumbersVector();
+	
+	unsigned int GetTextSize();
 };
 
 #endif /*WEBFILE_H_*/

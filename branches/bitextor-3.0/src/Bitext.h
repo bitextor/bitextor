@@ -105,7 +105,7 @@ public:
 	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>
 	 * en cas contrari.
 	 */
-	bool GenerateBitext(const string &path);
+	bool GenerateBitext(FILE * main_fout, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
 	
 	/**
 	 * Mètode que retorna <code>true</code> si ambdós fitxers tenen la mateixa extensió

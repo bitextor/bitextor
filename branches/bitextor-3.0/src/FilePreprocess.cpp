@@ -3,7 +3,7 @@
 bool FilePreprocess::PreprocessFile(const string &file_path)
 {
 	fstream file;
-	wstring line,buff;
+	wstring line;
 	string encod;
 	TidyDoc tdoc;
 	int ok, rc;
@@ -13,8 +13,10 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 	EncaAnalyser analyser;
 	EncaEncoding encoding;
 	FILE* fin;
-	wint_t aux_car;
-	
+	unsigned char *buffer;
+	size_t buflen;
+	int length;
+
 	if(GlobalParams::GetTextCatConfigFile()!=L""){
 		//We detect the charset encode of the file.
 		try{	
@@ -24,21 +26,20 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 			if (!fin) {//There were errors opening the first input file
 				exit=false;
 			} else {
-				aux_car=getwc(fin);
-				while(aux_car!=WEOF){
-					buff+=(wchar_t)aux_car;
-					aux_car=getwc(fin);
-				}
+				fseek(fin,0,SEEK_END);
+				length=ftell(fin);
+				buffer = (unsigned char*)malloc((length+1)*sizeof(char));
+				rewind(fin);
+				buflen = fread(buffer, 1, (length+1), fin);
 				fclose(fin);
 
 				analyser=enca_analyser_alloc("__");
-				encoding = enca_analyse_const(analyser, (unsigned char*) buff.c_str(), buff.length());
+				encoding = enca_analyse_const(analyser, buffer, buflen);
 				encod = enca_charset_name(encoding.charset, ENCA_NAME_STYLE_ICONV);
 				if (enca_charset_name(encoding.charset, ENCA_NAME_STYLE_CSTOCS) != NULL)
-			      encod=enca_charset_name(encoding.charset, ENCA_NAME_STYLE_CSTOCS);
+			    	encod=enca_charset_name(encoding.charset, ENCA_NAME_STYLE_CSTOCS);
 			    else
-			      encod=enca_charset_name(ENCA_CS_UNKNOWN, ENCA_NAME_STYLE_CSTOCS);
-		
+			    	encod=enca_charset_name(ENCA_CS_UNKNOWN, ENCA_NAME_STYLE_CSTOCS);
 				file.close();
 				if(encod=="???")
 					encod="ascii";
