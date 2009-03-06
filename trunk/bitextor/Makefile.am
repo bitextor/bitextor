@@ -1,4 +1,4 @@
-sysconfdir = /usr/local/etc/bitextor/conf
+sysconfdir = $(prefix)/etc/bitextor/conf
 sysconf_DATA = conf/*
 
 SUBDIRS = src

@@ -3,16 +3,23 @@
 
 AC_PREREQ(2.61)
 
+<<<<<<< .working
+m4_define([required_libtagaligner_version], [3.0.0])
+m4_define([required_libxml_version], [2.6.17])
+m4_define([required_libenca_version], [1.9])
+AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
+=======
 AC_INIT([bitextor], [2.1rc1], [miquelespla@gmail.com])
+>>>>>>> .merge-right.r58
 AC_CONFIG_SRCDIR([src/Bitext.h])
 AC_CONFIG_HEADER([config.h])
 
 GENERIC_LIBRARY_NAME=bitextor
 
 # Release versioning
-GENERIC_MAJOR_VERSION=2
+GENERIC_MAJOR_VERSION=3
 GENERIC_MINOR_VERSION=1
-GENERIC_MICRO_VERSION=rc1
+GENERIC_MICRO_VERSION=0
 
 # API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
 GENERIC_API_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
@@ -63,6 +70,17 @@ if test "${WGET}" = false; then
 fi
 
 
+<<<<<<< .working
+dnl  
+dnl check libxml-2.0 and libtagaligner-3.0
+dnl
+PKG_CHECK_MODULES(BITEXTOR, [dnl
+                  libtagaligner-3.0 >= required_libtagaligner_version dnl
+                  enca >= required_libenca_version dnl
+                  libxml-2.0 >= required_libxml_version])
+
+=======
+>>>>>>> .merge-right.r58
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-ltextcat':
 AC_CHECK_LIB([textcat], [main], [], [AC_MSG_ERROR([
@@ -84,42 +102,13 @@ Try ``./configure --help'' for a help.
  
 ])])
 
-AC_CHECK_LIB([xml++-2.6], [main], [], [AC_MSG_ERROR([
- 
-Cannot find the C++ wrapper for XML 2 library libxml++-2.6.
-Did you specify the path with ``./configure --with-xml2pp=PATH''?
- 
-Install the C++ wrapper for ``libxml2'' and then re-run this configuration script.
-Try ``./configure --help'' for a help.
- 
-])])
-
-# FIXME: Replace `main' with a function in `-lenca':
-AC_CHECK_LIB([enca], [main], [], [AC_MSG_ERROR([
- 
-Cannot find the text charencode guesser LibEnca library.
- 
-Install the text charencode guesser LibEnca library and then re-run this configuration script.
-Try ``./configure --help'' for a help.
- 
-])])
-
-# FIXME: Replace `main' with a function in `-ltagaligner':
-AC_CHECK_LIB([tagaligner], [main], [], [AC_MSG_ERROR([
- 
-Cannot find the text bitext aligner LibTagAligner library.
- 
-Install the text bitext aligner LibTagAligner library and then re-run this configuration script.
-Try ``./configure --help'' for a help.
- 
-])])
-
 
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([inttypes.h stdlib.h unistd.h])
-# tagaligner/tagaligner2-1.h tagaligner/tagaligner2step-l.h tagaligner/tagaligner2step-ad.h dirent.h iostream.h sys/types.h sys/stat.h map.h vector.h libxml +/libxml++.h string.h fstream.h sstream.h exception.h stdexcept.h errno.h tidy/tidy.h tidy/buffio.h tidy/platform.h tidy/tidyenum.h enca.h
+AC_CHECK_HEADERS([stdio.h stdlib.h string.h stddef.h ctype.h time.h])
+
+AC_CHECK_HEADERS([tidy/tidy.h tidy/tidyenum.h tidy/buffio.h tidy/plataform.h textcat.h])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
