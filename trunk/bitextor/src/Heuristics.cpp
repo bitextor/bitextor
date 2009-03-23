@@ -1,5 +1,7 @@
 #include "Heuristics.h"
 
+#include <libtagaligner/EditDistanceTools.h>
+
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 {
 	return (wf1->GetFileType()==wf2->GetFileType());
@@ -152,8 +154,8 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 	return result;
 }
 
-bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2){
-	unsigned int maj;
+bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value){
+	unsigned int maj, diff;
 
 	if(GlobalParams::GetMaxTotalTextLengthDiff()==-1)
 		return true;
@@ -162,7 +164,10 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2){
 			maj=wf2.GetTextSize();
 		else
 			maj=wf1.GetTextSize();
-		if(((double)maj*GlobalParams::GetMaxTotalTextLengthDiff())>abs((int)wf1.GetTextSize()-(int)wf2.GetTextSize()))
+		diff=abs((int)wf1.GetTextSize()-(int)wf2.GetTextSize());
+		if(value!=NULL)
+			*value=diff;
+		if(((double)maj*GlobalParams::GetMaxTotalTextLengthDiff())>diff)
 			return true;
 		else
 			return false;

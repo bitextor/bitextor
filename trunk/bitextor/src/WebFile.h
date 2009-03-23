@@ -12,6 +12,7 @@
 #include <vector>
 #include <libtagaligner/FragmentedFile.h>
 #include <libtagaligner/Aligner.h>
+#include <pcre.h>
 
 extern "C"{
 #include <textcat.h>
@@ -131,6 +132,8 @@ public:
 	vector<int>* GetNumbersVector();
 	
 	unsigned int GetTextSize();
+	
+	wstring toXML();
 };
 
 #endif /*WEBFILE_H_*/

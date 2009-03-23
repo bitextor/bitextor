@@ -13,55 +13,16 @@ WebFile::~WebFile()
 		delete numbers_vec;
 }
 
-/*typedef struct {
-
-	void **fprint;
-	uint4 size;
-	uint4 maxsize;
-
-	char output[MAXOUTPUTSIZE];
-
-} textcat_t;
-
-void *textcatInit(){
-	textcat_t *h;
-	char line[1024];
-	FILE *fp;
-	map<wstring,wstring>::iterator it;
-	unsigned int i;
-
-	h = (textcat_t *)wg_malloc(sizeof(textcat_t));
-	h->size = GlobalParams::fingerprints.size();
-	h->maxsize = GlobalParams::fingerprints.size();
-	h->fprint = (void **)wg_malloc( sizeof(void*) * h->maxsize );
-
-	for(i=0,it=GlobalParams::fingerprints.begin();it!=fingerprints.end();i++,it++){
-		if ((h->fprint[i] = fp_Init( it->first ))!=NULL) {
-			if ( fp_Read( h->fprint[i], it->second, 400 ) == 0 ) {
-				textcat_Done(h);
-				return NULL;
-			}
-		}
-		else{
-			free (h->fprint);
-			free (h);
-			return NULL;
-		}
-	}
-	fclose(fp);
-	return h;
-}*/
-
 bool WebFile::IsAlphabetic(const wchar_t& car){
-	int status;
+	/*int status;
 
 	regex_t re;
-	wstring pattern = L"[0-9]";
+	wstring pattern = L"[0-9]";*/
 	wchar_t text[2];
 	text[0] = car;
 	text[1] = L'\0';
 
-	if (regcomp(&re, Config::toString(pattern).c_str(), REG_EXTENDED|REG_NOSUB) != 0)
+	/*if (regcomp(&re, Config::toString(pattern).c_str(), REG_EXTENDED|REG_NOSUB) != 0)
 		return false;
 
 	status = regexec(&re, Config::toString(text).c_str(), (size_t) 0, NULL, 0);
@@ -70,7 +31,23 @@ bool WebFile::IsAlphabetic(const wchar_t& car){
     if (status != 0) 
        	return false;
     else
-		return true;
+		return true;*/
+
+
+	const char *error;
+	int erroroffset;
+	int result[3];
+	int workspace[4096];
+	pcre *re = pcre_compile(Config::toString(L"[0-9]").c_str(), PCRE_DOTALL|PCRE_CASELESS|PCRE_EXTENDED|PCRE_UTF8, &error, &erroroffset, NULL);
+	if(re!=NULL){
+		int rc = pcre_dfa_exec(re, NULL, Config::toString(text).c_str(), Config::toString(text).length(), 0, PCRE_NO_UTF8_CHECK, result, 3, workspace, 4096);
+		if(rc==1)
+			return true;
+		else
+			return false;
+	}
+	else
+		return false;
 }
 
 vector<int>* WebFile::GetNonAplha(wstring text){
@@ -84,6 +61,7 @@ vector<int>* WebFile::GetNonAplha(wstring text){
 		else{
 			if(st!=L""){
 				vec->push_back(atoi(Config::toString(st).c_str()));
+				wcout<<st<<endl;
 				st=L"";
 			}
 		}
@@ -101,11 +79,11 @@ bool WebFile::Initialize(const string &path)
 	ifstream fin;
 	wstring text, content;
 	vector<int> tags;
+	time_t rawtime;
 	if(GlobalParams::GetTextCatConfigFile()==L"")
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";
 	else{
 		try{
-			
 			//We clean the format and convert to UTF8
 			FilePreprocess::PreprocessFile(path);
 			//We set the file path
@@ -131,10 +109,13 @@ bool WebFile::Initialize(const string &path)
 					void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
 					str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
 					this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
-					if(str_temp[0]!='[')
+					if(str_temp[0]!='['){
 						exit=false;
+						GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
+					}
+					else
+						GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
 					textcat_Done(h);
-					//delete in;
 					h=NULL;
 				}
 				else{
@@ -142,8 +123,10 @@ bool WebFile::Initialize(const string &path)
 					wcin>>this->lang;
 				}
 			}
-			else
+			else{
 				exit=false;
+				GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" couldn't be loaded.");
+			}
 		}
 		catch(...){
 			exit=false;
@@ -210,4 +193,32 @@ vector<int>* WebFile::GetNumbersVector()
 unsigned int WebFile::GetTextSize()
 {
 	return text_size;
+}
+
+wstring WebFile::toXML()
+{
+	unsigned int i;
+	wostringstream ss;
+	ss<<text_size;
+	wstring exit= L"<webfile path=\""+Config::toWstring(path)+L"\" lang=\""+lang+L"\" file_type=\""+Config::toWstring(file_type)+L"\" text_size=\""+ss.str()+L"\">";
+
+	ss.seekp(ios_base::beg);
+	if(numbers_vec!=NULL && numbers_vec->size()>0){
+		exit+=L"\n\t<numbervector>";
+		for(i=0;i<numbers_vec->size();i++){
+			ss<<numbers_vec->at(i);
+			exit+=L"\n\t\t<number value=\""+ss.str()+L"\">";
+			ss.seekp(ios_base::beg);
+		}
+		exit+=L"\n\t</numbervector>";
+	}
+	exit+=L"\n\t<fragmentedfile>";
+	for(i=0;i<file.getSize();i++){
+		if(file.isTag(i))
+			exit+=L"\n\t\t<tag>"+file.getTag(i)->getTagName()+L"</tag>";
+		else
+			exit+=L"\n\t\t<text>"+file.getText(i)->getString()+L"</text>";
+	}
+	exit+=L"\n\t</fragmentedfile>\n</webfile>";
+	return exit;
 }

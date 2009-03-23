@@ -9,6 +9,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <ctime>
 
 using namespace std;
 
@@ -114,6 +115,12 @@ private:
 	static int max_nfingerprint_distance;
 	
 	static bool all_bitexts_in_one;
+	
+	static wofstream log_file;
+	
+	static unsigned int min_array_size;
+	
+	static bool verbose;
 	
 	static void GenerateTextCatConfigFile();
 
@@ -317,6 +324,14 @@ public:
 	static int GetMaxNumericFingerprintDistance();
 	
 	static bool AllBitextInAFile();
+	
+	static unsigned int GetMinArraySize();
+	
+	static void WriteLog(const wstring &log_text);
+	
+	static bool OpenLog(const string &log_path);
+	
+	static void CloseLog();
 };
 
 #endif /*GLOBALPARAMS_H_*/

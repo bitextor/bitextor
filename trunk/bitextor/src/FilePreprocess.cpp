@@ -25,6 +25,7 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 			fin=fopen(file_path.c_str(),"r");
 			if (!fin) {//There were errors opening the first input file
 				exit=false;
+				GlobalParams::WriteLog(L"File "+Config::toWstring(file_path)+L" couldn't be opened.");
 			} else {
 				fseek(fin,0,SEEK_END);
 				length=ftell(fin);
@@ -41,6 +42,7 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 			    else
 			    	encod=enca_charset_name(ENCA_CS_UNKNOWN, ENCA_NAME_STYLE_CSTOCS);
 				file.close();
+				free(buffer);
 				if(encod=="???")
 					encod="ascii";
 				//Now we will clean the HTML file
@@ -66,6 +68,7 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 				file.close();
 				tidyRelease( tdoc );
 				enca_analyser_free(analyser);
+				GlobalParams::WriteLog(L"File "+Config::toWstring(file_path)+L" preprocessed correctly (CharSet Codification: "+Config::toWstring(encod.c_str())+L").");
 			}
 			
 			if(&output!=NULL)
@@ -75,6 +78,7 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 		}
 		catch(...){
 			exit=false;
+			GlobalParams::WriteLog(L"Unknown error while opening "+Config::toWstring(file_path));
 		}
 	}
 	else

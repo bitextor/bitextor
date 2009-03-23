@@ -32,6 +32,12 @@ int GlobalParams::max_nfingerprint_distance=-1;
 
 bool GlobalParams::all_bitexts_in_one=true;
 
+unsigned int GlobalParams::min_array_size=-1;
+
+wofstream GlobalParams::log_file;
+
+bool GlobalParams::verbose=false;
+
 bool GlobalParams::AllBitextInAFile()
 {
 	return all_bitexts_in_one;
@@ -207,6 +213,9 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 					else if (tagname == L"numericFingerprintDistance" && key==L"value"){
 						max_nfingerprint_distance=atoi(Config::toString(value).c_str());
 					}
+					else if (tagname == L"minArraySize" && key==L"value"){
+						min_array_size=atoi(Config::toString(value).c_str());
+					}
 					free(node_prop);
 					propPtr = propPtr->next;
 				}
@@ -294,4 +303,34 @@ void GlobalParams::SetGuessLanguage(const bool &value)
 bool GlobalParams::GetGuessLanguage()
 {
 	return guess_language;
+}
+
+unsigned int GlobalParams::GetMinArraySize()
+{
+	return min_array_size;
+}
+
+void GlobalParams::WriteLog(const wstring &log_text)
+{
+	time_t rtime;
+	time(&rtime);
+	struct tm* rawtime=localtime( &rtime );
+	if(log_file.is_open()){
+		log_file<<rawtime->tm_mday<<L"/"<<rawtime->tm_mon+1<<L"/"<<rawtime->tm_year<<L" "<<rawtime->tm_hour<<L":"<<rawtime->tm_min<<L":"<<rawtime->tm_sec<<L">> "<<log_text<<endl;
+	}
+	//delete rawtime;
+}
+
+bool GlobalParams::OpenLog(const string &log_path)
+{
+	if(log_file.is_open())
+		log_file.close();
+	log_file.open(log_path.c_str());
+	return log_file.is_open();
+}
+
+void GlobalParams::CloseLog()
+{
+	if(log_file.is_open())
+		log_file.close();
 }

@@ -56,6 +56,16 @@ private:
 	 * Ruta d'aliniament per als bitextos.
 	 */
 	string alignment_path;
+	
+	/**
+	 * Diferència de l'array de nombres trobats.
+	 */
+	unsigned int n_diff_numbers;
+	
+	/**
+	 * Diferència en el total de text.
+	 */
+	unsigned int text_difference;
 public:
 	/**
 	 * Constructor de la classe Bitext.
@@ -134,6 +144,8 @@ public:
 	 * d'ambdós fitxers.
 	 */
 	double GetEditDistance();
+	
+	bool isBestThan(Bitext &bitext);
 };
 
 #endif /*BITEXT_H_*/

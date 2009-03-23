@@ -24,6 +24,6 @@ AM_CFLAGS = -g3 -Wall -Wunused -Wmissing-prototypes
 
 INCLUDES = $(BITEXTOR_CFLAGS) -I/usr/include/tidy -I/usr/include/libtextcat
 
-LDADD = $(BITEXTOR_LIBS) $(LIBS)
+LDADD = $(BITEXTOR_LIBS) $(LIBS) -lpcre
 
 EXTRA_DIST = LM

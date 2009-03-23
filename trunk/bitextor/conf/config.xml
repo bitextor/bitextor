@@ -269,11 +269,11 @@
 				<ta:cost op="sub" in="content" out="content" value="999999999"/>
 				
 				<ta:cost op="sub" in="text" out="text" value="0.01"/>
-				
-				<ta:diagonal mode="percent" value="5" />
-				<ta:textsizemin value="20" />
-				<ta:textsizeminrelation value="0.6" />
 			</ta:costs>
+				
+			<ta:diagonal mode="percent" value="5" />
+			<ta:textsizemin value="20" />
+			<ta:textsizeminrelation value="0.6" />
 		</ta:edition_parameters>
 		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
 		<ta:mode value="l" />
@@ -302,10 +302,16 @@
 		<bi:maxTotalTextLengthPercent value="20" />
 		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
 		<bi:numericFingerprintDistance value="1" />
+		<!-- If, once the incoming file has been processed, if the length of the array composed by text and tags from the file is lower than this value, the file will not be processed.-->
+		<!--<bi:minArraySize value="20" />-->
 	</bi:criteria>
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
 		<bi:language fingerprint="es.utf8.lm" code="es" />
+		<bi:language fingerprint="da.utf8.lm" code="da" />
+		<bi:language fingerprint="fi.utf8.lm" code="fi" />
+		<bi:language fingerprint="no.utf8.lm" code="no" />
+		<bi:language fingerprint="sv.utf8.lm" code="sv" />
 		<bi:language fingerprint="ca.utf8.lm" code="ca" />
 		<bi:language fingerprint="fr.utf8.lm" code="fr" />
 		<bi:language fingerprint="an.utf8.lm" code="an" />

@@ -72,7 +72,7 @@ public:
 	
 	static double CostNumbers(const short &op, const int &c1, const int &c2);
 	
-	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2);
+	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value=NULL);
 };
 
 #endif /*HEURISTICS_H_*/

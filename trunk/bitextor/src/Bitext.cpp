@@ -14,6 +14,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	bool exit;
 
 	double aux_result;
+	unsigned int diff_length;
 	
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
@@ -24,32 +25,47 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
 					if(exit){
 						this->byte_size_distance=aux_result;
-						exit=Heuristics::NearTotalTextSize(*wf1,*wf2);
+						exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &diff_length);
+						this->text_difference=diff_length;
 						if(exit){
 							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
-							if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
-								aux_result=0;
-							else{
-								if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
-									aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
-								else
-									aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
-								this->edit_distance=aux_result;
-							}
 							if(exit){
-								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2);
+								if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
+									aux_result=0;
+								else{
+									if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
+										aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
+									else
+										aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
+									this->edit_distance=aux_result;
+								}
+								
+								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
+								if(!exit)
+									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
+								this->n_diff_numbers=aux_result;
 							}
+							else
+								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
 						}
+						else
+							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive.");
 					}
+					else
+						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
 				}
+				else
+					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
 				this->is_initialized=true;
 			}
 			catch(...){
 				exit=false;
 			}
 		}
-		else
+		else{
 			exit=false;
+			GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the both files have the same language ("+wf2->GetLang()+L").");
+		}
 	}
 	else
 		exit=false;
@@ -137,4 +153,20 @@ WebFile* Bitext::GetSecondWebFile()
 		return this->wf2;
 	else
 		throw "Bitext not initialized.";
+}
+
+bool Bitext::isBestThan(Bitext &bitext)
+{
+	if(bitext.edit_distance<edit_distance)
+		return true;
+	else if(bitext.edit_distance==edit_distance){
+		if(bitext.n_diff_numbers<n_diff_numbers)
+			return true;
+		else if(bitext.n_diff_numbers==n_diff_numbers){
+			if(bitext.text_difference<text_difference)
+				return true;
+			else
+				return false;
+		}
+	}
 }
