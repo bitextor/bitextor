@@ -6,6 +6,7 @@ AC_PREREQ(2.61)
 m4_define([required_libtagaligner_version], [3.0.0])
 m4_define([required_libxml_version], [2.6.17])
 m4_define([required_libenca_version], [1.9])
+m4_define([required_libtre_version], [0.7.5])
 AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
 AC_CONFIG_SRCDIR([src/Bitext.h])
 AC_CONFIG_HEADER([config.h])
@@ -91,6 +92,15 @@ AC_CHECK_LIB([tidy], [main], [], [AC_MSG_ERROR([
 Cannot find the HTML files cleaner LibTidyHTML library.
  
 Install the HTML files cleaner TidyHTML library and then re-run this configuration script.
+Try ``./configure --help'' for a help.
+ 
+])])
+
+AC_CHECK_LIB([tre], [main], [], [AC_MSG_ERROR([
+ 
+Cannot find the library TRE.
+ 
+Install this library and then re-run this configuration script.
 Try ``./configure --help'' for a help.
  
 ])])

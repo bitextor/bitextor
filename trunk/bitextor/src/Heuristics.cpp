@@ -1,5 +1,4 @@
 #include "Heuristics.h"
-
 #include <libtagaligner/EditDistanceTools.h>
 
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
@@ -35,9 +34,16 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 			f.close();
 			wf2_size=end-init;
 
-			exit=(((double)abs(wf1_size-wf2_size)/(double)(wf1_size+wf2_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
-			if(result!=NULL)
-				*result=((double)abs(wf1_size-wf2_size)/(double)(wf1_size+wf2_size))*100;
+			if(wf1_size>wf2_size){
+				exit=(((double)abs(wf1_size-wf2_size)/(double)(wf1_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
+				if(result!=NULL)
+					*result=((double)abs(wf1_size-wf2_size)/(double)(wf1_size))*100;
+			}
+			else{
+				exit=(((double)abs(wf1_size-wf2_size)/(double)(wf2_size))*100<=GlobalParams::GetFileSizeDifferencePercent());
+				if(result!=NULL)
+					*result=((double)abs(wf1_size-wf2_size)/(double)(wf2_size))*100;
+			}
 		}
 		catch(...){
 			exit=false;
@@ -48,16 +54,16 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 
 bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result=NULL)
 {
-	vector<Fragment*> *tag_array1, *tag_array2;
+	vector<int> *tag_array1, *tag_array2;
 	double res;
 	double beam;
 	unsigned int vec1len, vec2len;
 	unsigned int max_diff_abs, max_diff_percent;
 
-	tag_array1=wf1->GetTagArrayReference();
-	tag_array2=wf2->GetTagArrayReference();
-	vec1len=wf1->GetFragmentedFileReference()->getSize();
-	vec2len=wf2->GetFragmentedFileReference()->getSize();
+	tag_array1=wf1->GetTagArray();
+	tag_array2=wf2->GetTagArray();
+	vec1len=wf1->GetTagArray()->size();
+	vec2len=wf2->GetTagArray()->size();
 
 	//We calculate the maximal edit distance possible to accept the pair or not. 
 	if(GlobalParams::GetMaxEditDistancePercentual()==-1)
@@ -83,12 +89,9 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 			beam=0;
 		else
 			beam=Config::getDiagonalSize();
-	
-		/*switch (Config::getMode()){
-			case 2: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner2step_l::Cost_text_and_tags_l, Config::diagonalSizeIsPercent(), beam, &res);
-			default: TagAligner_generic::EditDistanceBeam(*tag_array1, *tag_array2, &TagAligner_dt::Cost_text_and_tags_dt, Config::diagonalSizeIsPercent(), beam, &res);
-		}*/
+		//EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
 		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, true, 100, &res);
+
 		if(result!=NULL)
 			*result=res;
 
@@ -99,7 +102,38 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	}
 }
 
-double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2){
+double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
+	unsigned int text_distance;
+	double result=0, tmp;
+
+	switch(op){
+		case SUBST:
+			if(ctag1>=0 && ctag2>=0){
+				text_distance=abs(ctag1-ctag2);
+				if(ctag1>ctag2)
+					tmp=text_distance/ctag1;
+				else{
+					if(ctag2!=0)
+						tmp=text_distance/ctag2;
+					else
+						tmp=ctag1;
+				}
+				if(tmp>(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100))
+					result=1;
+			}
+			else if(ctag1<0 && ctag2<0){
+				if(ctag1!=ctag2)
+					result=1;
+			}
+			else
+				result = numeric_limits<double>::max();
+		break;
+		default: result=1; break;
+	}
+	return result;
+}
+
+/*double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2){
 	unsigned int text_distance;
 	Fragment* tag1=const_cast<Fragment*>(ctag1);
 	Fragment* tag2=const_cast<Fragment*>(ctag2);
@@ -128,10 +162,6 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 					aux_text=dynamic_cast<Text*>(tag1);
 					aux_text2=dynamic_cast<Text*>(tag2);
 					text_distance=abs(aux_text2->getLength()-aux_text->getLength());
-					/*if(text_distance>(((double)(aux_text->getLength()+aux_text2->getLength())/2)*(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100)))
-						result=1;
-					else
-						result=0;*/
 					if(aux_text->getLength()>aux_text2->getLength())
 						tmp=abs(aux_text->getLength()-aux_text2->getLength())/aux_text->getLength();
 					else{
@@ -152,7 +182,7 @@ double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const Fragmen
 		break;
 	}
 	return result;
-}
+}*/
 
 bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value){
 	unsigned int maj, diff;

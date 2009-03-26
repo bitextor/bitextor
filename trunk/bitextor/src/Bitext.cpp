@@ -30,13 +30,13 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 						if(exit){
 							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&aux_result);
 							if(exit){
-								if(((*wf1->GetTagArrayReference()).size()==0) || (*wf2->GetTagArrayReference()).size()==0)
+								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 									aux_result=0;
 								else{
-									if((*wf1->GetTagArrayReference()).size()>(*wf2->GetTagArrayReference()).size())
-										aux_result=aux_result*100/((double)(*wf1->GetTagArrayReference()).size());
+									if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
+										aux_result=aux_result*100/((double)(*wf1->GetTagArray()).size());
 									else
-										aux_result=aux_result*100/((double)(*wf2->GetTagArrayReference()).size());
+										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());
 									this->edit_distance=aux_result;
 								}
 								
@@ -49,7 +49,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
 						}
 						else
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive.");
+							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive");
 					}
 					else
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
@@ -80,18 +80,21 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 	ifstream fin1, fin2;
 	wstring tagaligneroutput;
 	FILE* fout;
+	FragmentedFile ff1, ff2;
 
 	if(this->is_initialized){
 		aligner=new Aligner();
-		try{
-			switch (Config::getMode()) {
-				case 1:exit=aligner->Align2StepsTED(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
-				case 2: exit=aligner->Align2StepsL(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
-				case 3: exit=aligner->Align1Step(*wf1->GetFragmentedFileReference(),*wf2->GetFragmentedFileReference()); break;
+		if(ff1.LoadFile(wf1->GetPath()) && ff2.LoadFile(wf2->GetPath())){
+			try{
+				switch (Config::getMode()) {
+					case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
+					case 2: exit=aligner->Align2StepsL(ff1,ff2); break;
+					case 3: exit=aligner->Align1Step(ff1,ff2); break;
+				}
 			}
-		}
-		catch(char const* e){
-			cout<<e<<endl;
+			catch(char const* e){
+				cout<<e<<endl;
+			}
 		}
 		if (exit) {
 			try{

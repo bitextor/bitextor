@@ -1,72 +1,49 @@
 #include "WebFile.h"
+#include <tre/regex.h>
 
 WebFile::WebFile()
 {
 	this->initialized=false;
-	numbers_vec=NULL;
 	text_size=0;
 }
 
 WebFile::~WebFile()
 {
-	if(numbers_vec!=NULL)
-		delete numbers_vec;
 }
 
 bool WebFile::IsAlphabetic(const wchar_t& car){
-	/*int status;
+	int status;
 
 	regex_t re;
-	wstring pattern = L"[0-9]";*/
+	wstring pattern = L"[0-9]";
 	wchar_t text[2];
 	text[0] = car;
 	text[1] = L'\0';
 
-	/*if (regcomp(&re, Config::toString(pattern).c_str(), REG_EXTENDED|REG_NOSUB) != 0)
+	if (regwcomp(&re, pattern.c_str(), REG_EXTENDED|REG_NOSUB) != 0)
 		return false;
 
-	status = regexec(&re, Config::toString(text).c_str(), (size_t) 0, NULL, 0);
+	status = regwexec(&re, text, (size_t) 0, NULL, 0);
     regfree(&re);
 
-    if (status != 0) 
-       	return false;
-    else
-		return true;*/
-
-
-	const char *error;
-	int erroroffset;
-	int result[3];
-	int workspace[4096];
-	pcre *re = pcre_compile(Config::toString(L"[0-9]").c_str(), PCRE_DOTALL|PCRE_CASELESS|PCRE_EXTENDED|PCRE_UTF8, &error, &erroroffset, NULL);
-	if(re!=NULL){
-		int rc = pcre_dfa_exec(re, NULL, Config::toString(text).c_str(), Config::toString(text).length(), 0, PCRE_NO_UTF8_CHECK, result, 3, workspace, 4096);
-		if(rc==1)
-			return true;
-		else
-			return false;
-	}
-	else
-		return false;
+    return (status == 0);
 }
 
-vector<int>* WebFile::GetNonAplha(wstring text){
+void WebFile::GetNonAplha(wstring text){
 	unsigned int i;
-	vector<int> *vec=new vector<int>;
 	wstring st=L"";
 
 	for(i=0;i<text.length();i++){
-		if(IsAlphabetic(text[i]))
+		if(IsAlphabetic(text[i])){
 			st+=text[i];
+		}
 		else{
 			if(st!=L""){
-				vec->push_back(atoi(Config::toString(st).c_str()));
-				wcout<<st<<endl;
+				numbers_vec.push_back(atoi(Config::toString(st).c_str()));
 				st=L"";
 			}
 		}
 	}
-	return vec;
 }
 
 bool WebFile::Initialize(const string &path)
@@ -80,6 +57,7 @@ bool WebFile::Initialize(const string &path)
 	wstring text, content;
 	vector<int> tags;
 	time_t rawtime;
+	FragmentedFile ffile;
 	if(GlobalParams::GetTextCatConfigFile()==L"")
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";
 	else{
@@ -95,13 +73,19 @@ bool WebFile::Initialize(const string &path)
 			catch(std::out_of_range& e){
 				this->file_type="";
 			}
-			if(file.LoadFile(path)){
-				file.Compact();
-				text=file.getFullText(true);
-				if(numbers_vec!=NULL)
-					delete numbers_vec;
-				numbers_vec=GetNonAplha(text);
+			if(ffile.LoadFile(path)){
+				ffile.Compact();
 				
+				for(i=0;i<ffile.getSize();i++){
+					if(ffile.isTag(i))
+						file.push_back(ffile.getTag(i)->getCode()*(-1));
+					else
+						file.push_back(ffile.getText(i)->getLength());
+				}
+				
+				text=ffile.getFullText(true);
+				GetNonAplha(text);
+
 				text_size=text.size();
 				//We set the tag list
 				if(GlobalParams::GetGuessLanguage()){
@@ -164,30 +148,14 @@ string WebFile::GetFileType()
 		return this->file_type;
 }
 
-vector<Fragment*> * WebFile::GetTagArrayReference()
-{
-	if(this->initialized==false)
-		throw "Object not initialized.";
-	else
-		return file.getFragmentsVectorRefference();
-}
-
 bool WebFile::IsInitialized()
 {
 	return this->initialized;
 }
 
-FragmentedFile* WebFile::GetFragmentedFileReference()
-{
-	if(this->initialized==false)
-		throw "Object not initialized.";
-	else
-		return &file;
-}
-
 vector<int>* WebFile::GetNumbersVector()
 {
-	return numbers_vec;
+	return &numbers_vec;
 }
 	
 unsigned int WebFile::GetTextSize()
@@ -195,7 +163,7 @@ unsigned int WebFile::GetTextSize()
 	return text_size;
 }
 
-wstring WebFile::toXML()
+/*wstring WebFile::toXML()
 {
 	unsigned int i;
 	wostringstream ss;
@@ -212,13 +180,9 @@ wstring WebFile::toXML()
 		}
 		exit+=L"\n\t</numbervector>";
 	}
-	exit+=L"\n\t<fragmentedfile>";
-	for(i=0;i<file.getSize();i++){
-		if(file.isTag(i))
-			exit+=L"\n\t\t<tag>"+file.getTag(i)->getTagName()+L"</tag>";
-		else
-			exit+=L"\n\t\t<text>"+file.getText(i)->getString()+L"</text>";
-	}
-	exit+=L"\n\t</fragmentedfile>\n</webfile>";
 	return exit;
+}*/
+
+vector<int>* WebFile::GetTagArray(){
+	return &file;
 }

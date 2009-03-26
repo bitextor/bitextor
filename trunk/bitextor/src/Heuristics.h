@@ -66,7 +66,7 @@ public:
 	 * @param ctag2 Second operand.
 	 * @return Cost of the operation. 
 	 */
-	static double Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2);
+	static double Cost(const short &op, const int &ctag1, const int &ctag2);
 	
 	static bool DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result=NULL);
 	

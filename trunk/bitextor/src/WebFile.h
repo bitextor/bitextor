@@ -12,7 +12,7 @@
 #include <vector>
 #include <libtagaligner/FragmentedFile.h>
 #include <libtagaligner/Aligner.h>
-#include <pcre.h>
+
 
 extern "C"{
 #include <textcat.h>
@@ -51,18 +51,16 @@ private:
 	/**
 	 * Objecte que conté el fitxer HTML dividit en etiquetes i blocs de text.
 	 */
-	FragmentedFile file;
+	vector<int> file;
 
 	/**
 	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
 	 */
 	bool initialized;
 	
-	vector<int> *numbers_vec;
+	vector<int> numbers_vec;
 
 	unsigned int text_size;
-	
-	vector<int>* GetNonAplha(wstring text);
 
 	bool IsAlphabetic(const wchar_t& car);
 
@@ -114,26 +112,30 @@ public:
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @reutrn Retorna la llista d'etiquetes, codificades amb números enters, en un vector.
 	 */
-	vector<Fragment*> * GetTagArrayReference();
+	//vector<Fragment*> * GetTagArrayReference();
 	
 	/**
 	 * Mètode que retorna l'objecte FragmentedFile que conté el fitxer XHTML.
 	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
 	 * @reutrn Retorna l'objecte FragmentedFile que conté el fitxer XHTML.
 	 */
-	FragmentedFile* GetFragmentedFileReference();
+	//FragmentedFile* GetFragmentedFileReference();
 	
 	/**
 	 * Mètode que indica si el fitxer està inicialitzat correctament.
 	 * @return Retorna <code>true</code> si el fitxer es torba correctament inicialitzat i <code>false</code> en cas contrari.
 	 */
 	bool IsInitialized();
-	
+
 	vector<int>* GetNumbersVector();
-	
+
 	unsigned int GetTextSize();
-	
-	wstring toXML();
+
+	vector<int>* GetTagArray();
+
+	void GetNonAplha(wstring text);
+
+	//wstring toXML();
 };
 
 #endif /*WEBFILE_H_*/
