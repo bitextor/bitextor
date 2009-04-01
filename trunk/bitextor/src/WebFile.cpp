@@ -58,6 +58,8 @@ bool WebFile::Initialize(const string &path)
 	vector<int> tags;
 	time_t rawtime;
 	FragmentedFile ffile;
+	FILE *f;
+
 	if(GlobalParams::GetTextCatConfigFile()==L"")
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";
 	else{
@@ -75,6 +77,9 @@ bool WebFile::Initialize(const string &path)
 			}
 			if(ffile.LoadFile(path)){
 				ffile.Compact();
+				f=fopen((path+".xml").c_str(), "w");
+				fputws(ffile.toXML().c_str(),f);
+				fclose(f);
 				
 				for(i=0;i<ffile.getSize();i++){
 					if(ffile.isTag(i))
@@ -82,7 +87,7 @@ bool WebFile::Initialize(const string &path)
 					else
 						file.push_back(ffile.getText(i)->getLength());
 				}
-				
+
 				text=ffile.getFullText(true);
 				GetNonAplha(text);
 

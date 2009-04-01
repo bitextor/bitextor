@@ -30,7 +30,7 @@ double GlobalParams::max_total_text_lenght_diff=-1;
 
 int GlobalParams::max_nfingerprint_distance=-1;
 
-bool GlobalParams::all_bitexts_in_one=true;
+bool GlobalParams::all_bitexts_in_one=false;
 
 unsigned int GlobalParams::min_array_size=-1;
 
@@ -216,6 +216,12 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 					else if (tagname == L"minArraySize" && key==L"value"){
 						min_array_size=atoi(Config::toString(value).c_str());
 					}
+					else if (tagname == L"onlyBitextFile" && key==L"value"){
+						if(value==L"true")
+							all_bitexts_in_one=true;
+						else
+							all_bitexts_in_one=false;
+					}
 					free(node_prop);
 					propPtr = propPtr->next;
 				}
@@ -234,7 +240,7 @@ void GlobalParams::GenerateTextCatConfigFile()
 {
 	wofstream os;
 	map<wstring,wstring>::iterator it;
-	
+
 	os.open("/tmp/textcat_conf.txt",ios::out);
 	for(it=fingerprints.begin();it!=fingerprints.end();it++)
 		os<<it->second<<L" "<<it->first<<endl;

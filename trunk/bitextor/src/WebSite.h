@@ -37,19 +37,9 @@ class WebSite
 private:
 
 	/**
-	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
-	 */
-	//bool initialized;
-
-	/**
 	 * Ruta del directori base on es troba descarregat el lloc web.
 	 */
 	string base_path;
-
-	/**
-	 * Llistat de fitxers continguts al directori web.
-	 */
-	//vector< vector< WebFile* > > file_list;
 
 public:
 	/**

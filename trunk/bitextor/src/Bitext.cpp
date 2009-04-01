@@ -44,6 +44,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 								if(!exit)
 									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
 								this->n_diff_numbers=aux_result;
+								//wcout<<L"Candidate: "<<Config::toWstring(wf1->GetPath())<<L" + "<<Config::toWstring(wf2->GetPath())<<endl<<L"\tEditDist:"<<edit_distance<<L"  SizeDiff:"<<byte_size_distance<<L"  TextDiff:"<<text_difference<<L"  NumFingerprint:"<<aux_result<<endl<<endl;
 							}
 							else
 								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
@@ -71,7 +72,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 		exit=false;
 	return exit;
 }
-	
+
 bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigned int *last_tuid)
 {
 	Aligner *aligner;
@@ -84,7 +85,7 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 
 	if(this->is_initialized){
 		aligner=new Aligner();
-		if(ff1.LoadFile(wf1->GetPath()) && ff2.LoadFile(wf2->GetPath())){
+		if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 			try{
 				switch (Config::getMode()) {
 					case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
@@ -94,6 +95,7 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 			}
 			catch(char const* e){
 				cout<<e<<endl;
+				exit=false;
 			}
 		}
 		if (exit) {
@@ -106,9 +108,12 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 
 				if (tagaligneroutput!=L"")
 					fputws(tagaligneroutput.c_str(),main_fout);
+				else
+					exit=false;
 			}
 			catch(char const* e){
 				cout<<e<<endl;
+				exit=false;
 			}
 		}
 		delete aligner;
@@ -161,15 +166,15 @@ WebFile* Bitext::GetSecondWebFile()
 bool Bitext::isBestThan(Bitext &bitext)
 {
 	if(bitext.edit_distance<edit_distance)
-		return true;
+		return false;
 	else if(bitext.edit_distance==edit_distance){
 		if(bitext.n_diff_numbers<n_diff_numbers)
-			return true;
+			return false;
 		else if(bitext.n_diff_numbers==n_diff_numbers){
 			if(bitext.text_difference<text_difference)
-				return true;
-			else
 				return false;
+			else
+				return true;
 		}
 	}
 }

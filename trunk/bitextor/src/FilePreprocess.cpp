@@ -57,6 +57,8 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 				ok = tidyOptSetBool(tdoc, TidyLogicalEmphasis, yes);
 				ok = tidyOptSetBool(tdoc, TidyDropEmptyParas, yes);
 				ok = tidyOptSetBool(tdoc, TidyMakeBare, yes);
+				ok = tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
+				ok = tidyOptSetBool(tdoc, TidyPunctWrap, yes);
 				
 				rc = tidySetErrorBuffer(tdoc, &errbuf);
 				rc = tidyCleanAndRepair( tdoc );

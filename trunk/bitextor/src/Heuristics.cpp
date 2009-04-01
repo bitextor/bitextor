@@ -89,8 +89,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 			beam=0;
 		else
 			beam=Config::getDiagonalSize();
-		//EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
-		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, true, 100, &res);
+		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
 
 		if(result!=NULL)
 			*result=res;
@@ -132,57 +131,6 @@ double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 	}
 	return result;
 }
-
-/*double Heuristics::Cost(const short &op, const FragmentRef &ctag1, const FragmentRef &ctag2){
-	unsigned int text_distance;
-	Fragment* tag1=const_cast<Fragment*>(ctag1);
-	Fragment* tag2=const_cast<Fragment*>(ctag2);
-	wstring current_tag1, current_tag2;
-	double result=0, tmp;
-	Text *aux_text, *aux_text2;
-	Tag *aux_tag, *aux_tag2;
-
-	switch(op){
-		case SUBST:
-			aux_tag=dynamic_cast<Tag*>(tag1);
-			aux_tag2=dynamic_cast<Tag*>(tag2);
-			if(aux_tag!=NULL){
-				if(aux_tag2!=NULL){
-					if(aux_tag->getCode()!=aux_tag2->getCode())
-						result = 1;
-				}
-				else{
-					result = numeric_limits<double>::max();
-				}
-			} else {
-				if (aux_tag2!=NULL) {
-					result = numeric_limits<double>::max();
-				}
-				else {
-					aux_text=dynamic_cast<Text*>(tag1);
-					aux_text2=dynamic_cast<Text*>(tag2);
-					text_distance=abs(aux_text2->getLength()-aux_text->getLength());
-					if(aux_text->getLength()>aux_text2->getLength())
-						tmp=abs(aux_text->getLength()-aux_text2->getLength())/aux_text->getLength();
-					else{
-						if(aux_text2->getLength()!=0)
-							tmp=abs(aux_text->getLength()-aux_text2->getLength())/aux_text2->getLength();
-						else
-							tmp=aux_text->getLength();
-					}
-					if(tmp>(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100))
-						result=1;
-					else
-						result=0;
-				}
-			}
-		break;
-		default:
-			result=1;
-		break;
-	}
-	return result;
-}*/
 
 bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value){
 	unsigned int maj, diff;

@@ -42,7 +42,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 
 	try{
 		if(GlobalParams::AllBitextInAFile()){
-			fout=fopen((dest_path+"/bitext.tmx").c_str(),"a");
+			fout=fopen((dest_path+"/bitext.tmx").c_str(),"w");
 			fputws(Aligner::GetHeading().c_str(),fout);
 		}
 		else
@@ -65,32 +65,34 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		//Starting reading of directory by levels
 		while(dirs->size()+subdirs->size()>0){
 			while(dirs->size()!=0){
-				directorio = opendir((dirs->top()).c_str());
-				if(directorio!=NULL){
-					while ( (fichero=readdir(directorio)) != NULL ){
-						if ( strcmp(fichero->d_name, "..") != 0 && strcmp(fichero->d_name, ".") != 0 ){
-							file_name=dirs->top()+fichero->d_name;
-							if ( stat(file_name.c_str(), &fich)>=0 ){
-								//Subfiles are saved in the subdirs stack
-								if(S_ISDIR(fich.st_mode)){
-									file_name=file_name+"/";
-									subdirs->push(file_name);
-								}
-								//Files are processed and saved in the corresponding level in the levels structure of the directory
-								else
-								{
-									wf=new WebFile();
-									wf->Initialize(file_name);
-									if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (GlobalParams::GetMinArraySize()!=-1 && GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size())))){
-										file_list[level]->push_back(wf);
+				if(dirs->top()!=dest_path){
+					directorio = opendir((dirs->top()).c_str());
+					if(directorio!=NULL){
+						while ( (fichero=readdir(directorio)) != NULL ){
+							if ( strcmp(fichero->d_name, "..") != 0 && strcmp(fichero->d_name, ".") != 0){
+								file_name=dirs->top()+fichero->d_name;
+								if ( stat(file_name.c_str(), &fich)>=0 ){
+									//Subfiles are saved in the subdirs stack
+									if(S_ISDIR(fich.st_mode)){
+										file_name=file_name+"/";
+										subdirs->push(file_name);
 									}
+									//Files are processed and saved in the corresponding level in the levels structure of the directory
 									else
-										delete wf;
+									{
+										wf=new WebFile();
+										wf->Initialize(file_name);
+										if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (GlobalParams::GetMinArraySize()!=-1 && GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size())))){
+											file_list[level]->push_back(wf);
+										}
+										else
+											delete wf;
+									}
 								}
 							}
 						}
+						closedir(directorio);
 					}
-					closedir(directorio);
 				}
 				dirs->pop();
 			}
@@ -175,9 +177,8 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 				{
 					bb_it=best_bitexts.find(file_list[j]->at(k)->GetLang());
 					//If there isn't any candidate for this language we save it directly, in other case, we only save it if it's better than the actual saved candidate
-					if(bb_it==best_bitexts.end()){
+					if(bb_it==best_bitexts.end())
 						best_bitexts[file_list[j]->at(k)->GetLang()]=bitext;
-					}
 					else{
 						if(bitext->isBestThan((*bb_it->second))){
 							delete bb_it->second;
@@ -214,12 +215,22 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 						}
 						fout=fopen(file_name.c_str(),"w");
 						if(fout){
-							it->second->GenerateBitext(fout);
+							try{
+								if(!it->second->GenerateBitext(fout)){
+									fclose(fout);
+									remove(file_name.c_str());
+								}
+								else
+									fclose(fout);
+							}
+							catch(...){
+								fclose(fout);
+								remove(file_name.c_str());
+							}
 							wcout<<L"The bitext between "<<Config::toWstring(it->second->GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(it->second->GetSecondWebFile()->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<endl;
 							oss<<it->second->GetEditDistance();
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(it->second->GetFirstWebFile()->GetPath())+L" and "+Config::toWstring(it->second->GetSecondWebFile()->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> Edit distance: "+oss.str()+L"%.");
 							oss.seekp(ios_base::beg);
-							fclose(fout);
 						}
 					}
 					delete it->second;

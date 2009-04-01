@@ -41,7 +41,6 @@ main (int argc, char *const *argv)
 	unsigned short option; //Indicates if the user has introduced an option
 	extern char *optarg;
 
-
 	setlocale(LC_CTYPE, "");
 	
 	
@@ -124,7 +123,6 @@ main (int argc, char *const *argv)
 				wcout<<L"Initializing Bitextor's destination path..."<<endl;
 				if(dest_dir[dest_dir.length()-1]!='/')
 					dest_dir+="/";
-				
 				if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
 					mkdir((dest_dir+"/bitexts/").c_str(),0777);
 				wcout<<L"Comparing files and generating bitexts..."<<endl;

@@ -270,7 +270,6 @@
 				
 				<ta:cost op="sub" in="text" out="text" value="0.01"/>
 			</ta:costs>
-				
 			<ta:diagonal mode="percent" value="5" />
 			<ta:textsizemin value="20" />
 			<ta:textsizeminrelation value="0.6" />
@@ -280,6 +279,7 @@
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
 	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
+	<bi:onlyBitextFile value="true"/>
 	<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
 	<!--<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>-->
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
@@ -299,7 +299,7 @@
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. -->
 		<bi:directoryPathDistance value="1" />
-		<bi:maxTotalTextLengthPercent value="20" />
+		<bi:maxTotalTextLengthPercent value="1" />
 		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
 		<bi:numericFingerprintDistance value="1" />
 		<!-- If, once the incoming file has been processed, if the length of the array composed by text and tags from the file is lower than this value, the file will not be processed.-->
@@ -308,17 +308,17 @@
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
 		<bi:language fingerprint="es.utf8.lm" code="es" />
+		<bi:language fingerprint="ca.utf8.lm" code="ca" />
+		<bi:language fingerprint="fr.utf8.lm" code="fr" />
+		<bi:language fingerprint="an.utf8.lm" code="an" />
+		<bi:language fingerprint="gl.utf8.lm" code="gl" />
+		<bi:language fingerprint="eu.utf8.lm" code="eu" />
+		<!--<bi:language fingerprint="de.utf8.lm" code="de" />
 		<bi:language fingerprint="da.utf8.lm" code="da" />
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
 		<bi:language fingerprint="is.utf8.lm" code="is" />
-		<!-- <bi:language fingerprint="ca.utf8.lm" code="ca" />
-		<bi:language fingerprint="fr.utf8.lm" code="fr" />
-		<bi:language fingerprint="an.utf8.lm" code="an" />
-		<bi:language fingerprint="gl.utf8.lm" code="gl" />
-		<bi:language fingerprint="ga.utf8.lm" code="ga" />
-		<bi:language fingerprint="eu.utf8.lm" code="eu" />
-		<bi:language fingerprint="de.utf8.lm" code="de" />-->
+		<bi:language fingerprint="ga.utf8.lm" code="ga" />-->
 	</bi:languages>
 </bi:configuration>
