@@ -32,11 +32,15 @@ int GlobalParams::max_nfingerprint_distance=-1;
 
 bool GlobalParams::all_bitexts_in_one=false;
 
-unsigned int GlobalParams::min_array_size=-1;
+int GlobalParams::min_array_size=-1;
 
 wofstream GlobalParams::log_file;
 
 bool GlobalParams::verbose=false;
+
+bool GlobalParams::create_all_candidates=false;
+
+double GlobalParams::generate_ambiguous_bitexts=-1;
 
 bool GlobalParams::AllBitextInAFile()
 {
@@ -60,6 +64,29 @@ double GlobalParams::GetMaxTotalTextLengthDiff()
 	else
 		throw "The assigned value for the max. edit distance parameter is not valid.";
 }*/
+
+void GlobalParams::Clear()
+{
+	config_file="";
+	max_edit_distance_length_absolute=-1;
+	max_edit_distance_length_percentual=-1;
+	directory_depth_distance=0;
+	text_distance_percent_differenciator=-1;
+	file_size_diference_percents.clear();
+	file_size_difference_percent=-1;
+	textcat_config_file=L"/tmp/textcat_conf.txt";
+	downloaded_size=-1;
+	download_path=L"~/";
+	guess_language=true;
+	fingerprints_dir=L"";
+	max_total_text_lenght_diff=-1;
+	max_nfingerprint_distance=-1;
+	all_bitexts_in_one=true;
+	min_array_size=-1;
+	verbose=true;
+	create_all_candidates=true;
+	generate_ambiguous_bitexts=true;
+}
 
 double GlobalParams::GetMaxEditDistanceAbsolute()
 {
@@ -222,6 +249,21 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 						else
 							all_bitexts_in_one=false;
 					}
+					else if (tagname == L"generateAllCandidates" && key==L"value"){
+						if(value==L"true")
+							create_all_candidates=true;
+						else
+							create_all_candidates=false;
+					}
+					else if (tagname == L"verbose" && key==L"value"){
+						if(value==L"true")
+							verbose=true;
+						else
+							verbose=false;
+					}
+					else if (tagname==L"generateAmbiguousBitexts" && key==L"max_text_percent"){
+						generate_ambiguous_bitexts=atoi(Config::toString(value).c_str());
+					}
 					free(node_prop);
 					propPtr = propPtr->next;
 				}
@@ -283,7 +325,7 @@ void GlobalParams::AddFileSizeDiferencePercent(const wstring &lang1, const wstri
 
 double GlobalParams::GetFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2)
 {
-	map<wstring, double>::iterator iter = file_size_diference_percents.find(lang1+L""+lang2);
+	map<wstring, double>::iterator iter = file_size_diference_percents.find(lang1+L"_"+lang2);
 	
 	if (iter != file_size_diference_percents.end())
 		return iter->second;
@@ -308,10 +350,10 @@ void GlobalParams::SetGuessLanguage(const bool &value)
 
 bool GlobalParams::GetGuessLanguage()
 {
-	return guess_language;
+	return GlobalParams::guess_language;
 }
 
-unsigned int GlobalParams::GetMinArraySize()
+int GlobalParams::GetMinArraySize()
 {
 	return min_array_size;
 }
@@ -319,9 +361,11 @@ unsigned int GlobalParams::GetMinArraySize()
 void GlobalParams::WriteLog(const wstring &log_text)
 {
 	time_t rtime;
-	time(&rtime);
-	struct tm* rawtime=localtime( &rtime );
+	struct tm* rawtime;
+
 	if(log_file.is_open()){
+		time(&rtime);
+		rawtime=localtime( &rtime );
 		log_file<<rawtime->tm_mday<<L"/"<<rawtime->tm_mon+1<<L"/"<<rawtime->tm_year<<L" "<<rawtime->tm_hour<<L":"<<rawtime->tm_min<<L":"<<rawtime->tm_sec<<L">> "<<log_text<<endl;
 	}
 	//delete rawtime;
@@ -339,4 +383,23 @@ void GlobalParams::CloseLog()
 {
 	if(log_file.is_open())
 		log_file.close();
+}
+
+bool GlobalParams::GetCreateAllCandidates(){
+	return GlobalParams::create_all_candidates;
+}
+
+bool GlobalParams::IsVerbose()
+{
+	return GlobalParams::verbose;
+}
+
+void GlobalParams::SetVerbose()
+{
+	verbose=true;
+}
+
+double GlobalParams::GetGenerateAmbiguousBitexts()
+{
+	return generate_ambiguous_bitexts;
 }

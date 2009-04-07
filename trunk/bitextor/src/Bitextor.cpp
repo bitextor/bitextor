@@ -32,7 +32,7 @@ main (int argc, char *const *argv)
 	ifstream file;
 	unsigned int i;
 	string file_name;
-	bool show_howtouse=false, mode_set=false;
+	bool show_howtouse=false, mode_set=false, verbose=false;
 	string dest_dir="";
 	string config_file="/usr/local/etc/bitextor/conf/config.xml";
 	bool download, any_bitext;
@@ -42,11 +42,10 @@ main (int argc, char *const *argv)
 	extern char *optarg;
 
 	setlocale(LC_CTYPE, "");
-	
-	
+
 	//Short options
-	const char* const short_op = "d:w:hc:sl:";
-	
+	const char* const short_op = "d:w:hc:sl:v";
+
 	//Set of long options
 	const struct option long_op[] =
 	{
@@ -56,9 +55,10 @@ main (int argc, char *const *argv)
 		{ "help", 0, NULL, 'h'},
 		{ "config-file", 1, NULL, 'c'},
 		{ "log-file", 1, NULL, 'l'},
+		{ "verbose", 0, NULL, 'v'},
 		{ NULL, 0, NULL, 0}
 	};
-	
+
 	next_op = getopt_long (argc, argv, short_op, long_op, NULL);
 	for(option=0; next_op!=-1 && !show_howtouse; option++){
 		switch(next_op){
@@ -68,7 +68,7 @@ main (int argc, char *const *argv)
 					show_howtouse=true;
 				}
 				else{
-					dest_dir=optarg;// option++;
+					dest_dir=optarg;
 					download=false;
 					mode_set=true;
 					if(dest_dir==""){
@@ -83,7 +83,7 @@ main (int argc, char *const *argv)
 					show_howtouse=true;
 				}
 				else{
-					dest_dir=optarg;// option++;
+					dest_dir=optarg;
 					download=true;
 					mode_set=true;
 					if(dest_dir==""){
@@ -96,10 +96,11 @@ main (int argc, char *const *argv)
 				GlobalParams::SetGuessLanguage(false);
 			break;
 			case 'l':
-				GlobalParams::OpenLog(optarg); //option++;
+				GlobalParams::OpenLog(optarg);
 			break;
 			case 'h': show_howtouse=true; break;
-			case 'c': config_file=optarg; /*option++;*/ break;
+			case 'c': config_file=optarg; break;
+			case 'v': verbose=true; break;
 			default:
 				wcout<<"Unknown option "<<next_op<<"."<<endl;
 				show_howtouse=true;
@@ -115,6 +116,8 @@ main (int argc, char *const *argv)
 			if(!GlobalParams::LoadGlobalParams(config_file))
 				wcerr<<L"Bitextor can't open the config file. Please, specifie it with the option -c or place it at /usr/local/etc/bitextor/conf/"<<endl;
 			else{
+				if(verbose)
+					GlobalParams::SetVerbose();
 				if(download){
 					DownloadMod mod;
 					mod.SetDestPath(GlobalParams::GetDownloadPath());

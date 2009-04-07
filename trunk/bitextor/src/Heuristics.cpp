@@ -6,7 +6,7 @@ bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 	return (wf1->GetFileType()==wf2->GetFileType());
 }
 
-bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double* result=NULL)
+bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double *result)
 {
 	bool exit;
 	int init, end;
@@ -52,7 +52,7 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 	return exit;
 }
 
-bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result=NULL)
+bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result)
 {
 	vector<int> *tag_array1, *tag_array2;
 	double res;
@@ -64,7 +64,6 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	tag_array2=wf2->GetTagArray();
 	vec1len=wf1->GetTagArray()->size();
 	vec2len=wf2->GetTagArray()->size();
-
 	//We calculate the maximal edit distance possible to accept the pair or not. 
 	if(GlobalParams::GetMaxEditDistancePercentual()==-1)
 		max_diff_percent=numeric_limits<unsigned int>::max();
@@ -110,10 +109,10 @@ double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 			if(ctag1>=0 && ctag2>=0){
 				text_distance=abs(ctag1-ctag2);
 				if(ctag1>ctag2)
-					tmp=text_distance/ctag1;
+					tmp=(double)text_distance/(double)ctag1;
 				else{
 					if(ctag2!=0)
-						tmp=text_distance/ctag2;
+						tmp=(double)text_distance/(double)ctag2;
 					else
 						tmp=ctag1;
 				}
@@ -156,7 +155,7 @@ bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double
 	double res;
 	unsigned int maj;
 
-	if(GlobalParams::GetMaxNumericFingerprintDistance() || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
+	if(GlobalParams::GetMaxNumericFingerprintDistance()==-1 || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
 		if(result!=NULL)
 			*result=0;
 		return true;
@@ -166,7 +165,7 @@ bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double
 
 		if(result!=NULL)
 			*result=res;
-		if(res<=1)
+		if(res<=GlobalParams::GetMaxNumericFingerprintDistance())
 			return true;
 		else
 			return false;

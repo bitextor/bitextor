@@ -145,7 +145,7 @@ public:
 	 */
 	double GetEditDistance();
 	
-	bool isBestThan(Bitext &bitext);
+	bool isBetterThan(Bitext &bitext, bool *disabled=NULL);
 };
 
 #endif /*BITEXT_H_*/

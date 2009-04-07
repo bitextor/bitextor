@@ -37,10 +37,9 @@ private:
 	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
 	 */
 	static double max_edit_distance_length_absolute;
-	
-	
+
 	static double max_edit_distance_length_percentual;
-	
+
 	/**
 	 * Distància màxima de profunditat en l'arbre de directoris que poden tenir dos fitxers web a
 	 * comparar. Només es compararan els fitxers que es troben a una distància de profunditat a
@@ -48,7 +47,7 @@ private:
 	 * només es compararan els fitxers que estroben al mateix directori.
 	 */
 	static int directory_depth_distance;
-	
+
 	/**
 	 * Per al càlculs de la distància d'edició en de dos <code>WebFile</code> ens basem en dos elements,
 	 * les etiquetes HTML i la logitud del text contingut entre elles. Per a poder fer la comparativa
@@ -60,30 +59,30 @@ private:
 	 * El seu valor serà contingut en aquesta variable.
 	 */
 	static double text_distance_percent_differenciator;
-	
+
 	/**
 	 * Percentatges de diferència de tamany màxim que es permet entre dos fitxers escrits en dues llengües
 	 * concretes, de tal forma que si s'excedeix aquest percentatge, es consideraran fitxers diferents.
 	 */
 	static map<wstring,double> file_size_diference_percents;
-	
+
 	/**
 	 * Percentatge de diferència de tamany màxim que es permet entre dos fitxers, tal que si s'excedeix aquest
 	 * percentatge, es consideraran fitxers diferents. Aquest valor només és utilitzat en els parells de fitxers
 	 * escrits en llengües que no estiguen reflectides al map file_size_diference_percents.
 	 */
 	static double file_size_difference_percent;
-	
+
 	/**
 	 * Ruta del fitxer de configuració de la llibreria TagAligner.
 	 */
 	//static wstring tagaligner_config_file;
-	
+
 	/**
 	 * Ruta del fitxer de configuració de la llibreria TextCat.
 	 */
 	static wstring textcat_config_file;
-	
+
 	/**
 	 * Temps màxim de descàrrega.
 	 */
@@ -93,18 +92,17 @@ private:
 	 * Paràmetre que registra les extenssions dels fitxers objectius de la descàrrega.
 	 */
 	//static vector<wstring> accepted_extenssions;
-	
+
 	/**
 	 * Paràmetre que indica la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
 	 */
 	static wstring download_path;
-	
+
 	/**
 	 * Indicador que permet forçar a bitextor a consultar l'idioma de cada fitxer o permetre que ell mateix intente esbrinar-lo.
 	 */
 	static bool guess_language;
-	
-	
+
 	/**
 	 * Directori base on es troben els fingerprints.
 	 */
@@ -118,11 +116,15 @@ private:
 	
 	static wofstream log_file;
 	
-	static unsigned int min_array_size;
+	static int min_array_size;
 	
 	static bool verbose;
 	
+	static bool create_all_candidates;
+	
 	static void GenerateTextCatConfigFile();
+	
+	static double generate_ambiguous_bitexts;
 
 public:
 	/**
@@ -142,6 +144,7 @@ public:
 	 * @return Retorna <code>true</code> en cas que el valor de màxima distància d'edició siga percentual i <code>false</code> en cas que siga absolut.
 	 */
 	//static bool IsPercentMaxEditDistance();
+	static void Clear();
 	
 	/**
 	 * Mètode que permet obtenir la màxima distància d'edició entre fitxers web establerta.
@@ -325,13 +328,21 @@ public:
 	
 	static bool AllBitextInAFile();
 	
-	static unsigned int GetMinArraySize();
+	static int GetMinArraySize();
 	
 	static void WriteLog(const wstring &log_text);
 	
 	static bool OpenLog(const string &log_path);
 	
 	static void CloseLog();
+	
+	static bool GetCreateAllCandidates();
+	
+	static bool IsVerbose();
+	
+	static void SetVerbose();
+	
+	static double GetGenerateAmbiguousBitexts();
 };
 
 #endif /*GLOBALPARAMS_H_*/

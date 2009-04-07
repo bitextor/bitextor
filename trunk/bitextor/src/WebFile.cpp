@@ -44,6 +44,8 @@ void WebFile::GetNonAplha(wstring text){
 			}
 		}
 	}
+	if(st!=L"")
+		numbers_vec.push_back(atoi(Config::toString(st).c_str()));
 }
 
 bool WebFile::Initialize(const string &path)
@@ -78,39 +80,42 @@ bool WebFile::Initialize(const string &path)
 			if(ffile.LoadFile(path)){
 				ffile.Compact();
 				f=fopen((path+".xml").c_str(), "w");
-				fputws(ffile.toXML().c_str(),f);
-				fclose(f);
-				
-				for(i=0;i<ffile.getSize();i++){
-					if(ffile.isTag(i))
-						file.push_back(ffile.getTag(i)->getCode()*(-1));
-					else
-						file.push_back(ffile.getText(i)->getLength());
-				}
-
-				text=ffile.getFullText(true);
-				GetNonAplha(text);
-
-				text_size=text.size();
-				//We set the tag list
-				if(GlobalParams::GetGuessLanguage()){
-					//We gess the language and set it
-					void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
-					str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
-					this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
-					if(str_temp[0]!='['){
-						exit=false;
-						GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
+				if(f){
+					fputws(ffile.toXML().c_str(),f);
+					fclose(f);
+					
+					for(i=0;i<ffile.getSize();i++){
+						if(ffile.isTag(i))
+							file.push_back(ffile.getTag(i)->getCode()*(-1));
+						else
+							file.push_back(ffile.getText(i)->getLength());
 					}
-					else
-						GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
-					textcat_Done(h);
-					h=NULL;
+
+					text=ffile.getFullText(true);
+					GetNonAplha(text);
+					text_size=text.size();
+					//We set the tag list
+					if(GlobalParams::GetGuessLanguage()){
+						//We gess the language and set it
+						void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
+						str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
+						this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
+						if(str_temp[0]!='['){
+							exit=false;
+							GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
+						}
+						else
+							GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
+						textcat_Done(h);
+						h=NULL;
+					}
+					else{
+						cout<<"Set the language for the file "<<this->path<<" : ";
+						wcin>>this->lang;
+					}
 				}
-				else{
-					cout<<"Set the language for the file "<<this->path<<" : ";
-					wcin>>this->lang;
-				}
+				else
+					exit=false;
 			}
 			else{
 				exit=false;

@@ -86,6 +86,7 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 	if(this->is_initialized){
 		aligner=new Aligner();
 		if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
+		//if(ff1.LoadFile(wf1->GetPath()) && ff2.LoadFile(wf2->GetPath())){
 			try{
 				switch (Config::getMode()) {
 					case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
@@ -163,7 +164,7 @@ WebFile* Bitext::GetSecondWebFile()
 		throw "Bitext not initialized.";
 }
 
-bool Bitext::isBestThan(Bitext &bitext)
+bool Bitext::isBetterThan(Bitext &bitext, bool *disabled)
 {
 	if(bitext.edit_distance<edit_distance)
 		return false;
@@ -171,6 +172,16 @@ bool Bitext::isBestThan(Bitext &bitext)
 		if(bitext.n_diff_numbers<n_diff_numbers)
 			return false;
 		else if(bitext.n_diff_numbers==n_diff_numbers){
+			if(disabled!=NULL){
+				if(bitext.text_difference<text_difference)
+					*disabled=((abs((int)bitext.text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+				else{
+					if(bitext.text_difference>text_difference)
+						*disabled=((abs((int)bitext.text_difference-(int)text_difference)/bitext.text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+					else
+						*disabled=true;
+				}
+			}
 			if(bitext.text_difference<text_difference)
 				return false;
 			else
