@@ -9,7 +9,7 @@ void TestHeuristics::setUp()
 	wf2.Initialize("./test_files/WebFile2.html");
 	wf3.Initialize("./test_files/WebFile3.html");
 	wf4.Initialize("./test_files/WebFile4.html");
-	wf5.Initialize("./test_files/WebFile5.php");
+	wf5.Initialize("./test_files/WebFile7.php");
 	GlobalParams::LoadGlobalParams("./config.xml");
 }
 

@@ -133,6 +133,6 @@ AC_FUNC_STAT
 AC_CHECK_FUNCS([memset mkdir strndup])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 test/Makefile])
+				 test/Makefile
+                 src/Makefile])
 AC_OUTPUT

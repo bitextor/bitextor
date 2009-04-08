@@ -77,6 +77,8 @@ public:
 	 */
 	virtual ~Bitext();
 	
+	bool IsInitialized();
+	
 	/**
 	 * Mètode que incialitza la classe amb els fitxers web a partir dels quals es llegirà el text
 	 * del bitext. Seguidament comprova si la llengua dels fitxers és diferent i si ambdós fitxers

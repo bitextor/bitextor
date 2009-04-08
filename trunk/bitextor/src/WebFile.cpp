@@ -79,10 +79,10 @@ bool WebFile::Initialize(const string &path)
 			}
 			if(ffile.LoadFile(path)){
 				ffile.Compact();
-				f=fopen((path+".xml").c_str(), "w");
+				/*f=fopen((path+".xml").c_str(), "w");
 				if(f){
 					fputws(ffile.toXML().c_str(),f);
-					fclose(f);
+					fclose(f);*/
 					
 					for(i=0;i<ffile.getSize();i++){
 						if(ffile.isTag(i))
@@ -113,9 +113,9 @@ bool WebFile::Initialize(const string &path)
 						cout<<"Set the language for the file "<<this->path<<" : ";
 						wcin>>this->lang;
 					}
-				}
+				/*}
 				else
-					exit=false;
+					exit=false;*/
 			}
 			else{
 				exit=false;

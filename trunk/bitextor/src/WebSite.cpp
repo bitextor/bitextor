@@ -112,7 +112,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 				else
 					GetMatchedFiles(dest_path, file_list, level+1, fout);
 				for(i=0; i<file_list[0]->size();i++){
-					remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
+					//remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
 					delete file_list[0]->at(i);
 				}
 				delete file_list[0];

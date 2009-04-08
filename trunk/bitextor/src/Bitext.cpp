@@ -7,6 +7,11 @@ Bitext::Bitext()
 
 Bitext::~Bitext(){}
 
+bool Bitext::IsInitialized()
+{
+	return is_initialized;
+}
+
 bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 {
 	this->wf1=wf1;
@@ -44,7 +49,6 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 								if(!exit)
 									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
 								this->n_diff_numbers=aux_result;
-								//wcout<<L"Candidate: "<<Config::toWstring(wf1->GetPath())<<L" + "<<Config::toWstring(wf2->GetPath())<<endl<<L"\tEditDist:"<<edit_distance<<L"  SizeDiff:"<<byte_size_distance<<L"  TextDiff:"<<text_difference<<L"  NumFingerprint:"<<aux_result<<endl<<endl;
 							}
 							else
 								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
@@ -70,6 +74,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	}
 	else
 		exit=false;
+	is_initialized=exit;
 	return exit;
 }
 
@@ -85,8 +90,8 @@ bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigne
 
 	if(this->is_initialized){
 		aligner=new Aligner();
-		if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
-		//if(ff1.LoadFile(wf1->GetPath()) && ff2.LoadFile(wf2->GetPath())){
+		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
+		if(ff1.LoadFile(wf1->GetPath()) && ff2.LoadFile(wf2->GetPath())){
 			try{
 				switch (Config::getMode()) {
 					case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
@@ -166,26 +171,39 @@ WebFile* Bitext::GetSecondWebFile()
 
 bool Bitext::isBetterThan(Bitext &bitext, bool *disabled)
 {
-	if(bitext.edit_distance<edit_distance)
-		return false;
-	else if(bitext.edit_distance==edit_distance){
-		if(bitext.n_diff_numbers<n_diff_numbers)
-			return false;
-		else if(bitext.n_diff_numbers==n_diff_numbers){
-			if(disabled!=NULL){
-				if(bitext.text_difference<text_difference)
-					*disabled=((abs((int)bitext.text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
-				else{
-					if(bitext.text_difference>text_difference)
-						*disabled=((abs((int)bitext.text_difference-(int)text_difference)/bitext.text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+	bool exit=true;
+	
+	//wcout<<bitext.edit_distance<<L" "<<edit_distance<<endl;
+	if(this->is_initialized){
+		if(bitext.IsInitialized()){
+			if(bitext.edit_distance<edit_distance)
+				exit=false;
+			else if(bitext.edit_distance==edit_distance){
+				if(bitext.n_diff_numbers<n_diff_numbers)
+					exit= false;
+				else if(bitext.n_diff_numbers==n_diff_numbers){
+					if(disabled!=NULL){
+						if(bitext.text_difference<text_difference)
+							*disabled=((abs((int)bitext.text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+						else{
+							if(bitext.text_difference>text_difference)
+								*disabled=((abs((int)bitext.text_difference-(int)text_difference)/bitext.text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+							else
+								*disabled=true;
+						}
+					}
+					if(bitext.text_difference<text_difference)
+						exit= false;
 					else
-						*disabled=true;
+						exit= true;
 				}
 			}
-			if(bitext.text_difference<text_difference)
-				return false;
-			else
-				return true;
 		}
+		else
+			exit=false;
 	}
+	else
+		throw "Bitext not initialized.";
+
+	return exit;
 }

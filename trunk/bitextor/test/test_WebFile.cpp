@@ -37,19 +37,31 @@ void TestWebFile::testIsInitialized()
 void TestWebFile::testGetNumbersVector()
 {
 	vector<int>* v=wf.GetNumbersVector();
-	CPPUNIT_ASSERT_EQUAL((size_t)9,v->size());
-	CPPUNIT_ASSERT_EQUAL(5,v->at(0));
-	CPPUNIT_ASSERT_EQUAL(1818,v->at(1));
-	CPPUNIT_ASSERT_EQUAL(14,v->at(2));
-	CPPUNIT_ASSERT_EQUAL(1883,v->at(3));
+	CPPUNIT_ASSERT_EQUAL((size_t)21,v->size());
+	CPPUNIT_ASSERT_EQUAL(1,v->at(0));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(1));
+	CPPUNIT_ASSERT_EQUAL(2,v->at(2));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(3));
 	CPPUNIT_ASSERT_EQUAL(1,v->at(4));
-	CPPUNIT_ASSERT_EQUAL(1848,v->at(5));
+	CPPUNIT_ASSERT_EQUAL(22,v->at(5));
 	CPPUNIT_ASSERT_EQUAL(2008,v->at(6));
-	CPPUNIT_ASSERT_EQUAL(2008,v->at(7));
-	CPPUNIT_ASSERT_EQUAL(2008,v->at(8));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(7));
+	CPPUNIT_ASSERT_EQUAL(99,v->at(8));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(9));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(10));
+	CPPUNIT_ASSERT_EQUAL(2,v->at(11));
+	CPPUNIT_ASSERT_EQUAL(6,v->at(12));
+	CPPUNIT_ASSERT_EQUAL(2,v->at(13));
+	CPPUNIT_ASSERT_EQUAL(2,v->at(14));
+	CPPUNIT_ASSERT_EQUAL(6,v->at(15));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(16));
+	CPPUNIT_ASSERT_EQUAL(2,v->at(17));
+	CPPUNIT_ASSERT_EQUAL(0,v->at(18));
+	CPPUNIT_ASSERT_EQUAL(1,v->at(19));
+	CPPUNIT_ASSERT_EQUAL(2008,v->at(20));
 }
 
 void TestWebFile::testGetTextSize()
 {
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1340,wf.GetTextSize());
+	CPPUNIT_ASSERT_EQUAL((unsigned int)1629,wf.GetTextSize());
 }
