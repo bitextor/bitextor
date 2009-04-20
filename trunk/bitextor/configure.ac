@@ -23,7 +23,7 @@ GENERIC_API_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
 AC_SUBST(GENERIC_API_VERSION)
 
 # Shared library versioning
-GENERIC_LIBRARY_VERSION=2:0:0
+GENERIC_LIBRARY_VERSION=3:0:0
 #                       | | |
 #                +------+ | +---+
 #                |        |     |

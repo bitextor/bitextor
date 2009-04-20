@@ -172,8 +172,7 @@ WebFile* Bitext::GetSecondWebFile()
 bool Bitext::isBetterThan(Bitext &bitext, bool *disabled)
 {
 	bool exit=true;
-	
-	//wcout<<bitext.edit_distance<<L" "<<edit_distance<<endl;
+
 	if(this->is_initialized){
 		if(bitext.IsInitialized()){
 			if(bitext.edit_distance<edit_distance)

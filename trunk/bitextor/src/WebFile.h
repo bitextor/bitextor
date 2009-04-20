@@ -58,10 +58,21 @@ private:
 	 */
 	bool initialized;
 	
+	/**
+	 * Vector de nombres enters trobats al text
+	 */
 	vector<int> numbers_vec;
 
+	/**
+	 * Mida total del text (en caràcters) continguda al document.
+	 */
 	unsigned int text_size;
 
+	/**
+	 * Mètode que indica si un caràcter és alfabètic o no.
+	 * @param car Caràcter a analitzar
+	 * @return Retorna <code>true</code> si el caràcter és alfabètic i <code>false</code> en cas contrari.
+	 */
 	bool IsAlphabetic(const wchar_t& car);
 
 public:
@@ -108,34 +119,34 @@ public:
 	string GetFileType();
 	
 	/**
-	 * Mètode que retorna un array format per la cadena d'etiquetes contingudes al fitxer web.
-	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
-	 * @reutrn Retorna la llista d'etiquetes, codificades amb números enters, en un vector.
-	 */
-	//vector<Fragment*> * GetTagArrayReference();
-	
-	/**
-	 * Mètode que retorna l'objecte FragmentedFile que conté el fitxer XHTML.
-	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
-	 * @reutrn Retorna l'objecte FragmentedFile que conté el fitxer XHTML.
-	 */
-	//FragmentedFile* GetFragmentedFileReference();
-	
-	/**
 	 * Mètode que indica si el fitxer està inicialitzat correctament.
 	 * @return Retorna <code>true</code> si el fitxer es torba correctament inicialitzat i <code>false</code> en cas contrari.
 	 */
 	bool IsInitialized();
 
+	/**
+	 * Mètode que retorna un punter al vector d'enters continguts al text.
+	 * @return Retorna un punter al vector d'enters continguts al text.
+	 */
 	vector<int>* GetNumbersVector();
 
+	/**
+	 * Mètode que retorna la mida total en caràcters del text del document.
+	 * @return Retorna la mida total en caràcters del text del document.
+	 */
 	unsigned int GetTextSize();
 
+	/**
+	 * Mètode que retorna un punter a l'array d'etiquetes-blocs de text.
+	 * @return Retorna un punter a l'array d'etiquetes-blocs de text.
+	 */
 	vector<int>* GetTagArray();
 
+	/**
+	 * Mètode que carrega a l'array d'enters els números enters continguts al text.
+	 * @param text Text del qual s'hi volen extreure els números.
+	 */
 	void GetNonAplha(wstring text);
-
-	//wstring toXML();
 };
 
 #endif /*WEBFILE_H_*/

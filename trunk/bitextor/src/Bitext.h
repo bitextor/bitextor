@@ -76,7 +76,11 @@ public:
 	 * Destructor de la classe Bitext.
 	 */
 	virtual ~Bitext();
-	
+
+	/**
+	 * Mètode que retorna el valor del flag d'inicialització.
+	 * @return Retorna <code>true</code> si el bitext ha estat inicialitzat correctament i <code>false</code> en altre cas.
+	 */
 	bool IsInitialized();
 	
 	/**
@@ -146,7 +150,13 @@ public:
 	 * d'ambdós fitxers.
 	 */
 	double GetEditDistance();
-	
+
+	/**
+	 * Mètode que compara el bitext amb un altre i indica si el segon és millor.
+	 * @param bitext Bitext per comparar l'actual bitext.
+	 * @param disabled Si la diferència entre ambdós bitextos està per sota d'un detemrinat llindar, s'activa el flag disabled.
+	 * @return Retorna <code>true</code> si el segon bitext és millor que l'actual i <code>false</code> en cas contrari.
+	 */
 	bool isBetterThan(Bitext &bitext, bool *disabled=NULL);
 };
 

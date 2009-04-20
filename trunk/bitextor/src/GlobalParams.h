@@ -33,11 +33,15 @@ private:
 	static string config_file;
 
 	/**
-	 * Màxima distància d'edició permesa per a establir una possible correspondència entre fitxers HTML.
+	 * Màxima distància d'edició (en distància absoluta) permesa per a establir una possible correspondència entre fitxers HTML.
 	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
 	 */
 	static double max_edit_distance_length_absolute;
 
+	/**
+	 * Màxima distància d'edició (en distància percentual) permesa per a establir una possible correspondència entre fitxers HTML.
+	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
+	 */
 	static double max_edit_distance_length_percentual;
 
 	/**
@@ -74,11 +78,6 @@ private:
 	static double file_size_difference_percent;
 
 	/**
-	 * Ruta del fitxer de configuració de la llibreria TagAligner.
-	 */
-	//static wstring tagaligner_config_file;
-
-	/**
 	 * Ruta del fitxer de configuració de la llibreria TextCat.
 	 */
 	static wstring textcat_config_file;
@@ -87,11 +86,6 @@ private:
 	 * Temps màxim de descàrrega.
 	 */
 	static int downloaded_size;
-
-	/**
-	 * Paràmetre que registra les extenssions dels fitxers objectius de la descàrrega.
-	 */
-	//static vector<wstring> accepted_extenssions;
 
 	/**
 	 * Paràmetre que indica la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
@@ -108,22 +102,49 @@ private:
 	 */
 	static wstring fingerprints_dir;
 	
+	/**
+	 * Màxima distància entre text (total) permesa en percentatge.
+	 */
 	static double max_total_text_lenght_diff;
-	
+
+	/**
+	 * Màxima distància permesa entre els arrays d'enters, en valor absolut.
+	 */
 	static int max_nfingerprint_distance;
-	
+
+	/**
+	 * Flag que indica si s'han de guradrar tots els bitextos en un mateix fitxer.
+	 */
 	static bool all_bitexts_in_one;
-	
+
+	/**
+	 * Flag que indica si cal crear un quadern de bitàcora amb totes les operacions realitzades.
+	 */
 	static wofstream log_file;
-	
+
+	/**
+	 * Mida mínia de l'array d'etiquetes-blocs de text per a que la comparació siga realitzada.
+	 */
 	static int min_array_size;
-	
+
+	/**
+	 * Flag que indica si s'han de mostrar per pantalla les operacions realitzades.
+	 */
 	static bool verbose;
-	
+
+	/**
+	 * Flag que indica si s'han de crear tots els possibles candidats a bitext o només el millor aparellament per a cada fitxer.
+	 */
 	static bool create_all_candidates;
-	
+
+	/**
+	 * Mètode que genera el fitxer de configuració de LibTextCat.
+	 */
 	static void GenerateTextCatConfigFile();
-	
+
+	/**
+	 * Flag que indica si s'han de crear o no aquelles parelles per a les quals s'hi troben candidats molt semblants (candidats ambigus).
+	 */
 	static double generate_ambiguous_bitexts;
 
 public:
@@ -131,27 +152,22 @@ public:
 	 * Llista de fingerprints per a la detecció d'idiomes.
 	 */
 	static map<wstring,wstring> fingerprints;
+
 	/**
-	 * Mètode que permet establir la màxima distància d'eidició entre dos fiters web per a considerar
-	 * que són el mateix.
-	 * @param value Llindar que es preten establir com a màxima distància d'edició.
-	 * @throw char* El mètode llança una excepció si el valor a assignar no és major que 0.
+	 * Mètode que allibera tota la memòria reservada al fitxer de configuració.
 	 */
-	//static void SetMaxEditDistance(const double &value);
-	
-	/**
-	 * Mètode que indica si el valor de màxima distància d'edició és percentual o absolut.
-	 * @return Retorna <code>true</code> en cas que el valor de màxima distància d'edició siga percentual i <code>false</code> en cas que siga absolut.
-	 */
-	//static bool IsPercentMaxEditDistance();
 	static void Clear();
 	
 	/**
-	 * Mètode que permet obtenir la màxima distància d'edició entre fitxers web establerta.
+	 * Mètode que permet obtenir la màxima distància d'edició en percentatge entre fitxers web establerta.
 	 * @return Llindar que es establert com a màxima distància d'edició.
 	 */
 	static double GetMaxEditDistancePercentual();
 
+	/**
+	 * Mètode que permet obtenir la màxima distància d'edició en valor absolut entre fitxers web establerta.
+	 * @return Llindar que es establert com a màxima distància d'edició.
+	 */
 	static double GetMaxEditDistanceAbsolute();
 	
 	/**
@@ -160,22 +176,7 @@ public:
 	 * @return Percentatge de distància màxima de textos.
 	 */
 	static double GetTextDistancePercentDifferenciator();
-	
-	/**
-	 * Mètode que permet buscar l'enter que es correpon amb un etiqueta HMTL en el mapa d'etiquetes HMTL
-	 * "tag_map". Si l'etiqueta no es troba, s'introdueix al map fent servir el comptador "tag_map_counter".
-	 * @param tag Etiqueta de què es desitja saber el seu identificador enter.
-	 * @return Retorna l'identificador enter de l'etiqueta passada per paràmetre. Si l'identificador és
-	 * major que 0, significa que aquesta etiqueta no és rellevant.
-	 */
-	//static int GetHTMLTagValue(const wstring tag);
-	
-	/**
-	 * Mètode que afegix una nova etiqueta a la llista d'etiquetes irrelevants.
-	 * @param tag Etiqueta que es dessitja afegir a la llista.
-	 */
-	//static void AddIrrelevantTag(const wstring &tag);
-	
+
 	/**
 	 * Mètode que permet establir el límit de profunditat en l'arbre de directoris per a la comparació
 	 * de fitxers web.
@@ -183,8 +184,7 @@ public:
 	 * zero, només es comprovaran els fit xers que es troben en el mateix nivell de profunditat.
 	 */
 	static void SetDirectoryDepthDistance(const int &value);
-	
-	
+
 	/**
 	 * Mètode que permet establir el valor de la variable ja descrita <code>text_distance_percent_differenciator</code>.
 	 * @param value Valor que es vol establir.
@@ -236,47 +236,13 @@ public:
 	 * @return Retorna la ruta on es troba el fitxer.
 	 */
 	static wstring GetTextCatConfigFile();
-	
-	/**
-	 * Mètode que permet establir la ruta on es troba el fitxer de configuració de la llibreria Tagaligner.
-	 * @param path Ruta on es troba el fitxer.
-	 */
-	//static void SetTagAlignerConfigFile(const wstring &path);
-	
-	/**
-	 * Mètode que permet obtenir la ruta on es troba el fitxer de configuració de la llibreria Tagaligner.
-	 * @return Retorna la ruta on es troba el fitxer.
-	 */
-	//static wstring GetTagAlignerConfigFile();
-	
-	/**
-	 * Mètode que permet establir el mode d'aliniament de TagAligner.
-	 * @param mode Mode d'aliniament de TagAligner. Valors possibles:
-	 * 1-Aliniament en dos pasos amb comparació de distànciade d'aliniament text.
-	 * 2-Aliniament en dos pasos amb comparació de longitud de text.
-	 * 3-Aliniament directe de text i etiquetes en dos pasos.
-	 * @throw char* El mètode llança una excepció si el mode especificat per a TagAligner no és valid.
-	 */
-	//static void SetTagAlignerMode(const int &mode);
-	
-	/**
-	 * Mètode que permet obtenir el mode d'aliniament de TagAligner.
-	 * @return Retorna el mode d'aliniament de TagAligner.
-	 */
-	//static int GetTagAlignerMode();
-	
+
 	/**
 	 * Mètode que processa recursivament els nodes del fitxer XML de configuració.
 	 * @param node Node que es processarà.
 	 * @param indention
 	 */
 	static void ProcessNode(xmlNode* node, wstring tagname);
-	
-	/**
-	 * Mètode que permet obtenir la llista d'extensions acceptades per als fitxer a descarregar pel mòdul de descàrrega.
-	 * @return Retorna la llista d'extensions acceptades per als fitxer a descarregar pel mòdul de descàrrega.
-	 */
-	//static vector<wstring> GetAcceptedExtenssions();
 
 	/**
 	 * Mètode que permet obtenir el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
@@ -322,26 +288,66 @@ public:
 	 */
 	static double GetFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2);
 
+	/**
+	 * Mètode que retorna la màxima distància permesa entre el text total dels fitxers.
+	 * @return Retorna la màxima distància permesa entre el text total dels fitxers.
+	 */
 	static double GetMaxTotalTextLengthDiff();
-	
+
+	/**
+	 * Mètode que retorna el número màxim de diferències permeses entre els arrays d'enters de dos WebFile.
+	 * @return Retorna el número màxim de diferències permeses entre els arrays d'enters de dos WebFile.
+	 */
 	static int GetMaxNumericFingerprintDistance();
-	
+
+	/**
+	 * Mètode que retorna el flag que indica si tots els bitextos s'han de guardar en el mateix fitxer.
+	 * @return Retorna el flag que indica si tots els bitextos s'han de guardar en el mateix fitxer.
+	 */
 	static bool AllBitextInAFile();
-	
+
+	/**
+	 * Mètode que retorna la mínima mida requerida per a l'array d'etiquetes-blocs de text per a considerar el fitxer candidat.
+	 * @return Retorna la mínima mida requerida per a l'array d'etiquetes-blocs de text per a considerar el fitxer candidat.
+	 */
 	static int GetMinArraySize();
-	
+
+	/**
+	 * Mètode que escriu el text indicat en el fitxer de log. En cas de que no s'haja activat este fitxer, no s'hi fa res.
+	 * @param log_text Text que es vol escriure al fitxer de quadern de bitàcora.
+	 */
 	static void WriteLog(const wstring &log_text);
-	
+
+	/**
+	 * Mètode que obre el fitxer de quadern de bitàcora.
+	 * @param Adreça del fitxer de log.
+	 * @return Retorna <code>true</code> si s'ha creat correctament i <code>false</code> en cas contrari.
+	 */
 	static bool OpenLog(const string &log_path);
-	
+
+	/**
+	 * Mètode que tanca el fitxer de quadern de bitàcora.
+	 */
 	static void CloseLog();
-	
+
+	/**
+	 * 
+	 */
 	static bool GetCreateAllCandidates();
-	
+
+	/**
+	 * 
+	 */
 	static bool IsVerbose();
-	
+
+	/**
+	 * 
+	 */
 	static void SetVerbose();
-	
+
+	/**
+	 * 
+	 */
 	static double GetGenerateAmbiguousBitexts();
 };
 

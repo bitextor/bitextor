@@ -58,12 +58,18 @@ public:
 	 * @return Retorna la ruta on es localitza el directori base del que penja tot el lloc web descarregat.
 	 */
 	string GetBasePath();
-	
+
+	/**
+	 * Mètode que retorna el nom d'un fitxer a partir del seu path complet.
+	 * @param path Path del qual s'hi vol obtenir el nom del fitxer.
+	 * @return Retorna el nom del fitxer.
+	 */
 	string GetFileName(string path);
 	
 	/**
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
 	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
+	 * @return Retorna <code>true</code> si s'ha trobat alguna coincidència o <code>false</code> en cas contrari.
 	 */
 	bool GenerateBitexts(const string &dest_path);
 	
@@ -71,6 +77,10 @@ public:
 	 * Mètode que compara, segons els límits establerts als paràmetres globals, els fitxers web
 	 * continguts al lloc web per a obtenir una llista de conjunts de fitxers possibles candi-
 	 * dats a tractar-se del mateix fitxer en diferents idiomes.
+	 * @param dest_dir Directori de destinació per la generació dels bitextos.
+	 * @param file_list Llista de fitxers per nivells ja carregats.
+	 * @param size Nombre de nivells de la cerca.
+	 * @param main_fout Si s'estan creant tots els bitextos al mateix fitxer, el stream del fitxer on s'hi han de vessar.
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 
