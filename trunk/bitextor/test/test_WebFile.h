@@ -1,5 +1,5 @@
-#ifndef TEST_FRAGMENT_H_
-#define TEST_FRAGMENT_H_
+#ifndef TEST_WEBFILE_H_
+#define TEST_WEBFILE_H_
 
 #include <WebFile.h>
 #include <TestFixture.h>
@@ -32,4 +32,4 @@ public:
 	void testGetTextSize();
 };
 
-#endif /*TEST_FRAGMENT_H_*/
+#endif /*TEST_WEBFILE_H_*/

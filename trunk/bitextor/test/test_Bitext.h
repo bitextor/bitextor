@@ -1,5 +1,5 @@
-#ifndef TEST_FRAGMENT_H_
-#define TEST_FRAGMENT_H_
+#ifndef TEST_BITEXT_H_
+#define TEST_BITEXT_H_
 
 #include <Bitext.h>
 #include <TestFixture.h>

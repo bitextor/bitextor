@@ -310,11 +310,11 @@
 	</bi:criteria>
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
-		<bi:language fingerprint="da.utf8.lm" code="da" />
+		<!--<bi:language fingerprint="da.utf8.lm" code="da" />
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
-		<bi:language fingerprint="is.utf8.lm" code="is" />
+		<bi:language fingerprint="is.utf8.lm" code="is" />-->
 		<bi:language fingerprint="es.utf8.lm" code="es" />
 		<bi:language fingerprint="ca.utf8.lm" code="ca" />
 		<bi:language fingerprint="fr.utf8.lm" code="fr" />

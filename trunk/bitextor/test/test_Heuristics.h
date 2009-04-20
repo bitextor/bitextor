@@ -1,5 +1,5 @@
-#ifndef TEST_HEURISTIQUES_H_
-#define TEST_HEURISTIQUES_H_
+#ifndef TEST_HEURISTICS_H_
+#define TEST_HEURISTICS_H_
 
 #include <Heuristics.h>
 #include <TestFixture.h>
@@ -34,4 +34,4 @@ public:
 	void testNearTotalTextSize();
 };
 
-#endif /*TEST_HEURISTIQUES_H_*/
+#endif /*TEST_HEURISTICS_H_*/

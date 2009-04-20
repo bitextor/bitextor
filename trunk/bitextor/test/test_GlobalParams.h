@@ -1,5 +1,5 @@
-#ifndef TEST_FRAGMENT_H_
-#define TEST_FRAGMENT_H_
+#ifndef TEST_GLOBALPARAMS_H_
+#define TEST_GLOBALPARAMS_H_
 
 #include <GlobalParams.h>
 #include <TestFixture.h>
@@ -65,4 +65,4 @@ public:
 	void tearDown();
 };
 
-#endif /*TEST_FRAGMENT_H_*/
+#endif /*TEST_GLOBALPARAMS_H_*/

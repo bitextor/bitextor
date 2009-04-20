@@ -44,7 +44,9 @@ am__objects_2 = Bitext.$(OBJEXT) DownloadMod.$(OBJEXT) \
 	FilePreprocess.$(OBJEXT) GlobalParams.$(OBJEXT) \
 	Heuristics.$(OBJEXT) WebFile.$(OBJEXT) WebSite.$(OBJEXT) \
 	test_GlobalParams.$(OBJEXT) test_WebFile.$(OBJEXT) \
-	test_Heuristics.$(OBJEXT) test_Bitext.$(OBJEXT) main.$(OBJEXT)
+	test_Heuristics.$(OBJEXT) test_Bitext.$(OBJEXT) \
+	test_DownloadMod.$(OBJEXT) test_WebSite.$(OBJEXT) \
+	main.$(OBJEXT)
 am_bitextor_test_unit_OBJECTS = $(am__objects_1) $(am__objects_2)
 bitextor_test_unit_OBJECTS = $(am_bitextor_test_unit_OBJECTS)
 bitextor_test_unit_LDADD = $(LDADD)
@@ -67,12 +69,12 @@ DIST_SOURCES = $(bitextor_test_unit_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run aclocal-1.10
-AMTAR = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run tar
-AUTOCONF = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run automake-1.10
-AWK = mawk
+ACLOCAL = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run aclocal-1.10
+AMTAR = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run tar
+AUTOCONF = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run automake-1.10
+AWK = gawk
 BITEXTOR_CFLAGS = -I/usr/local/include/libtagaligner-3.0 -I/usr/local/lib/libtagaligner-3.0/include -I/usr/include/libxml2  
 BITEXTOR_LIBS = -L/usr/local/lib -ltagaligner3 -lenca -lm -lxml2  
 CC = gcc
@@ -97,7 +99,7 @@ GENERIC_LIBRARY_VERSION = 2:0:0
 GENERIC_RELEASE = 3.0.0
 GENERIC_VERSION = 3.0.0
 GREP = /bin/grep
-HTTRACK = httrack
+HTTRACK = false
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
@@ -107,7 +109,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = -ltre -ltidy -ltextcat 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/miquel/Bitextor/bitextor/trunk/bitextor/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/miquel/bitextor/trunk/bitextor/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = bitextor
@@ -122,10 +124,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 3.0.0
-abs_builddir = /home/miquel/Bitextor/bitextor/trunk/bitextor/test
-abs_srcdir = /home/miquel/Bitextor/bitextor/trunk/bitextor/test
-abs_top_builddir = /home/miquel/Bitextor/bitextor/trunk/bitextor
-abs_top_srcdir = /home/miquel/Bitextor/bitextor/trunk/bitextor
+abs_builddir = /home/miquel/bitextor/trunk/bitextor/test
+abs_srcdir = /home/miquel/bitextor/trunk/bitextor/test
+abs_top_builddir = /home/miquel/bitextor/trunk/bitextor
+abs_top_srcdir = /home/miquel/bitextor/trunk/bitextor
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -145,7 +147,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /home/miquel/Bitextor/bitextor/trunk/bitextor/install-sh
+install_sh = $(SHELL) /home/miquel/bitextor/trunk/bitextor/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -167,12 +169,12 @@ top_srcdir = ..
 h_sources_unit = ../src/Bitext.h ../src/DownloadMod.h \
             ../src/FilePreprocess.h ../src/GlobalParams.h ../src/Heuristics.h \
             ../src/WebFile.h ../src/WebSite.h \
-            test_GlobalParams.h test_WebFile.h test_Heuristics.h test_Bitext.h
+            test_GlobalParams.h test_WebFile.h test_Heuristics.h test_Bitext.h test_DownloadMod.h test_WebSite.h
 
 cc_sources_unit = ../src/Bitext.cpp ../src/DownloadMod.cpp \
             ../src/FilePreprocess.cpp ../src/GlobalParams.cpp ../src/Heuristics.cpp \
             ../src/WebFile.cpp ../src/WebSite.cpp \
-            test_GlobalParams.cpp test_WebFile.cpp test_Heuristics.cpp test_Bitext.cpp main.cpp
+            test_GlobalParams.cpp test_WebFile.cpp test_Heuristics.cpp test_Bitext.cpp test_DownloadMod.cpp test_WebSite.cpp main.cpp
 
 bitextor_testdir = $(prefix)/test
 bitextor_test_unit_SOURCES = $(h_sources_unit) $(cc_sources_unit)
@@ -234,9 +236,11 @@ include ./$(DEPDIR)/WebFile.Po
 include ./$(DEPDIR)/WebSite.Po
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/test_Bitext.Po
+include ./$(DEPDIR)/test_DownloadMod.Po
 include ./$(DEPDIR)/test_GlobalParams.Po
 include ./$(DEPDIR)/test_Heuristics.Po
 include ./$(DEPDIR)/test_WebFile.Po
+include ./$(DEPDIR)/test_WebSite.Po
 
 .cpp.o:
 	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
