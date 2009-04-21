@@ -1,4 +1,6 @@
 #include "GlobalParams.h"
+#include <libxml/xinclude.h>
+#include <libtagaligner/ConfigReader.h>
 
 double GlobalParams::max_edit_distance_length_absolute=-1;
 

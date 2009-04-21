@@ -1,5 +1,10 @@
 #include "WebFile.h"
+#include <fstream>
+#include <stdexcept>
 #include <tre/regex.h>
+#include <libtagaligner/ConfigReader.h>
+#include <libtagaligner/FragmentedFile.h>
+//#include <sstream>
 
 WebFile::WebFile()
 {

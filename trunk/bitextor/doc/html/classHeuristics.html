@@ -4,7 +4,7 @@
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
-<!-- Generat per Doxygen 1.5.5 -->
+<!-- Generat per Doxygen 1.5.6 -->
 <div class="navigation" id="top">
   <div class="tabs">
     <ul>
@@ -31,41 +31,47 @@
 <a href="classHeuristics-members.html">Llista de tots els membres.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Mètodes Públics Estàtics</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#75335578492b4c8844a4c22a42033a8c">HaveTheSameExtension</a> (<a class="el" href="classWebFile.html">WebFile</a> wf1, <a class="el" href="classWebFile.html">WebFile</a> wf2)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#241618dc271a49e85e830c16df310bb8">HaveTheSameExtension</a> (<a class="el" href="classWebFile.html">WebFile</a> *wf1, <a class="el" href="classWebFile.html">WebFile</a> *wf2)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#5fb96bd607445a17155978be64bce3d3">HaveAcceptableSizeDifference</a> (<a class="el" href="classWebFile.html">WebFile</a> wf1, <a class="el" href="classWebFile.html">WebFile</a> wf2, float *result)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#0985685e224f80af8935d53d67bea6f2">HaveAcceptableSizeDifference</a> (<a class="el" href="classWebFile.html">WebFile</a> *wf1, <a class="el" href="classWebFile.html">WebFile</a> *wf2, double *result=NULL)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#a1bb3b7737c63d699537ab4950c4879c">HaveAcceptableEditDistance</a> (<a class="el" href="classWebFile.html">WebFile</a> wf1, <a class="el" href="classWebFile.html">WebFile</a> wf2, float *result)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#4193c0cddc1c1de857d5aa16edc0ab27">HaveAcceptableEditDistance</a> (<a class="el" href="classWebFile.html">WebFile</a> *wf1, <a class="el" href="classWebFile.html">WebFile</a> *wf2, double *result=NULL)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">static int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#78282cde025c2a3c685d4751a85cb440">GetMinorValue</a> (int vl1, int vl2, int vl3, int infinite)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#5d9ed99d61e65b7543a1f1be5baba198">Cost</a> (const short &amp;op, const int &amp;ctag1, const int &amp;ctag2)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#88bfa7815e35c131e836fe98301bac9b">DistanceInNumericFingerprint</a> (<a class="el" href="classWebFile.html">WebFile</a> &amp;wf1, <a class="el" href="classWebFile.html">WebFile</a> &amp;wf2, double *result=NULL)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#5f3270fcd8394b403b4424703b2a37ca">CostNumbers</a> (const short &amp;op, const int &amp;c1, const int &amp;c2)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHeuristics.html#857d5d6b65957f98c241b5828bd666b5">NearTotalTextSize</a> (<a class="el" href="classWebFile.html">WebFile</a> &amp;wf1, <a class="el" href="classWebFile.html">WebFile</a> &amp;wf2, unsigned int *value=NULL)</td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Descripció Detallada</h2>
 Classe que que encapsula les heurístiques de l'aplicació. 
 <p>
-Classe estàtica que conté tots els mètodes necessaris per a aplicar les heurístiques especificades per a diferenciar els fitxers entre ells. Aquestes heurístiques són bàsicament: -La diferenciació per mitjan de la comparació de les etiquetes HTML, combinada amb la comparació de la longitud dels bloc de text inserits entre elles. -La comparació de la mida dels fitxers en bytes. -La comparació de les extensions dels fitxers. -La diferència en la profunditat en l'arbre de directoris (aquesta és la única heurística que no es troba implementada en esta classe, sinó en la classe <code><a class="el" href="classWebSite.html" title="Classe que conté els elements d&#39;un lloc web.">WebSite</a><code>, al mètode <code>GetMatchedFiles</code>.</code></code><p>
-<code><code> <dl class="author" compact><dt><b>Autor:</b></dt><dd>Miquel Esplà i Gomis </dd></dl>
-</code></code><hr><h2>Documentació de les Funcions Membre</h2>
-<a class="anchor" name="75335578492b4c8844a4c22a42033a8c"></a><!-- doxytag: member="Heuristics::HaveTheSameExtension" ref="75335578492b4c8844a4c22a42033a8c" args="(WebFile wf1, WebFile wf2)" -->
+Classe estàtica que conté tots els mètodes necessaris per a aplicar les heurístiques especificades per a diferenciar els fitxers entre ells. Aquestes heurístiques són bàsicament: -La diferenciació per mitjan de la comparació de les etiquetes HTML, combinada amb la comparació de la longitud dels bloc de text inserits entre elles. -La comparació de la mida dels fitxers en bytes. -La comparació de les extensions dels fitxers. -La diferència en la profunditat en l'arbre de directoris (aquesta és la única heurística que no es troba implementada en esta classe, sinó en la classe <code><a class="el" href="classWebSite.html" title="Classe que conté els elements d&#39;un lloc web.">WebSite</a></code>, al mètode <code>GetMatchedFiles</code>.<p>
+<dl class="author" compact><dt><b>Autor:</b></dt><dd>Miquel Esplà i Gomis </dd></dl>
+<hr><h2>Documentació de les Funcions Membre</h2>
+<a class="anchor" name="241618dc271a49e85e830c16df310bb8"></a><!-- doxytag: member="Heuristics::HaveTheSameExtension" ref="241618dc271a49e85e830c16df310bb8" args="(WebFile *wf1, WebFile *wf2)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">bool Heuristics::HaveTheSameExtension           </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf2</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td width="100%"><code> [static]</code></td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
@@ -82,32 +88,32 @@ Mètode que indica si dos fitxers web poden ser el mateix basant-se l'extensió.
 
 </div>
 </div><p>
-<a class="anchor" name="5fb96bd607445a17155978be64bce3d3"></a><!-- doxytag: member="Heuristics::HaveAcceptableSizeDifference" ref="5fb96bd607445a17155978be64bce3d3" args="(WebFile wf1, WebFile wf2, float *result)" -->
+<a class="anchor" name="0985685e224f80af8935d53d67bea6f2"></a><!-- doxytag: member="Heuristics::HaveAcceptableSizeDifference" ref="0985685e224f80af8935d53d67bea6f2" args="(WebFile *wf1, WebFile *wf2, double *result=NULL)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">bool Heuristics::HaveAcceptableSizeDifference           </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf2</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float *&nbsp;</td>
+          <td class="paramtype">double *&nbsp;</td>
           <td class="paramname"> <em>result</em> = <code>NULL</code></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td width="100%"><code> [static]</code></td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
@@ -125,32 +131,32 @@ Mètode que indica si dos fitxers web poden ser el mateix basant-se en la seua m
 
 </div>
 </div><p>
-<a class="anchor" name="a1bb3b7737c63d699537ab4950c4879c"></a><!-- doxytag: member="Heuristics::HaveAcceptableEditDistance" ref="a1bb3b7737c63d699537ab4950c4879c" args="(WebFile wf1, WebFile wf2, float *result)" -->
+<a class="anchor" name="4193c0cddc1c1de857d5aa16edc0ab27"></a><!-- doxytag: member="Heuristics::HaveAcceptableEditDistance" ref="4193c0cddc1c1de857d5aa16edc0ab27" args="(WebFile *wf1, WebFile *wf2, double *result=NULL)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">bool Heuristics::HaveAcceptableEditDistance           </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a>&nbsp;</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> *&nbsp;</td>
           <td class="paramname"> <em>wf2</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float *&nbsp;</td>
+          <td class="paramtype">double *&nbsp;</td>
           <td class="paramname"> <em>result</em> = <code>NULL</code></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td width="100%"><code> [static]</code></td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
@@ -168,61 +174,182 @@ Mètode que calcula la distància d'edició entre dues cadenes d'etiquetes HTML/
 
 </div>
 </div><p>
-<a class="anchor" name="78282cde025c2a3c685d4751a85cb440"></a><!-- doxytag: member="Heuristics::GetMinorValue" ref="78282cde025c2a3c685d4751a85cb440" args="(int vl1, int vl2, int vl3, int infinite)" -->
+<a class="anchor" name="5d9ed99d61e65b7543a1f1be5baba198"></a><!-- doxytag: member="Heuristics::Cost" ref="5d9ed99d61e65b7543a1f1be5baba198" args="(const short &amp;op, const int &amp;ctag1, const int &amp;ctag2)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int Heuristics::GetMinorValue           </td>
+          <td class="memname">double Heuristics::Cost           </td>
           <td>(</td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>vl1</em>, </td>
+          <td class="paramtype">const short &amp;&nbsp;</td>
+          <td class="paramname"> <em>op</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>vl2</em>, </td>
+          <td class="paramtype">const int &amp;&nbsp;</td>
+          <td class="paramname"> <em>ctag1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>vl3</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>infinite</em></td><td>&nbsp;</td>
+          <td class="paramtype">const int &amp;&nbsp;</td>
+          <td class="paramname"> <em>ctag2</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td width="100%"><code> [static]</code></td>
+          <td></td><td></td><td><code> [static]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
 
 <p>
-Mètode auxiliar que calcula el menor de tres enters. Si un dels paràmetres val -1 no serà tingut en compte. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag. <dl compact><dt><b>Paràmetres:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>v1</em>&nbsp;</td><td>Primer valor de la comparació. </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>v2</em>&nbsp;</td><td>Segon valor de la comparació. </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>v3</em>&nbsp;</td><td>Tercer valor de la comparació. </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>infinite</em>&nbsp;</td><td>Un enter que és major que qualsevol dels possibles valors passats pels altres tres paràmetres. Per tant, es pot utilitzar aquest com a valor d'infinit, ja que cap dels enters a evaluar el superaran mai. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>op</em>&nbsp;</td><td>Code of the operation wich will be performed (deletion, insertion, substitution). </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>ctag1</em>&nbsp;</td><td>First operand. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>ctag2</em>&nbsp;</td><td>Second operand. </td></tr>
   </table>
 </dl>
-<dl class="return" compact><dt><b>Retorna:</b></dt><dd>Valor escollit. Si tots tres paràmetres valen -1, es retorna -1, indicant que cap valor és acceptable per a la distància d'edició. </dd></dl>
+<dl class="return" compact><dt><b>Retorna:</b></dt><dd>Cost of the operation. </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="88bfa7815e35c131e836fe98301bac9b"></a><!-- doxytag: member="Heuristics::DistanceInNumericFingerprint" ref="88bfa7815e35c131e836fe98301bac9b" args="(WebFile &amp;wf1, WebFile &amp;wf2, double *result=NULL)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Heuristics::DistanceInNumericFingerprint           </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> &amp;&nbsp;</td>
+          <td class="paramname"> <em>wf1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> &amp;&nbsp;</td>
+          <td class="paramname"> <em>wf2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&nbsp;</td>
+          <td class="paramname"> <em>result</em> = <code>NULL</code></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que calcula la distància d'edició entre els dos arrays d'enters de dos fitxers web. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>wf1</em>&nbsp;</td><td>Primer fitxer web de la comparació. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>wf2</em>&nbsp;</td><td>Segon fitxer web de la comparació. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>result</em>&nbsp;</td><td>En cas què aquest paràmetre siga diferent de NULL, quan acaben els càlculs s'hi emmagatzemarà el resultat numeèric. </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna <code>true</code> en cas què la distància siga inferior al llindar establert i <code>false</code> en cas contrari. </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="5f3270fcd8394b403b4424703b2a37ca"></a><!-- doxytag: member="Heuristics::CostNumbers" ref="5f3270fcd8394b403b4424703b2a37ca" args="(const short &amp;op, const int &amp;c1, const int &amp;c2)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double Heuristics::CostNumbers           </td>
+          <td>(</td>
+          <td class="paramtype">const short &amp;&nbsp;</td>
+          <td class="paramname"> <em>op</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int &amp;&nbsp;</td>
+          <td class="paramname"> <em>c1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int &amp;&nbsp;</td>
+          <td class="paramname"> <em>c2</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que calcula el cost de cada operació en la distància d'edició entre els arrays d'enters de cada fitxer web. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>op</em>&nbsp;</td><td>Codi de l'operació [inserció-eliminació-inserció]. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>c1</em>&nbsp;</td><td>Primer element a comprarar. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>c2</em>&nbsp;</td><td>Segon element a comparar. </td></tr>
+  </table>
+</dl>
+
+</div>
+</div><p>
+<a class="anchor" name="857d5d6b65957f98c241b5828bd666b5"></a><!-- doxytag: member="Heuristics::NearTotalTextSize" ref="857d5d6b65957f98c241b5828bd666b5" args="(WebFile &amp;wf1, WebFile &amp;wf2, unsigned int *value=NULL)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Heuristics::NearTotalTextSize           </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> &amp;&nbsp;</td>
+          <td class="paramname"> <em>wf1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classWebFile.html">WebFile</a> &amp;&nbsp;</td>
+          <td class="paramname"> <em>wf2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&nbsp;</td>
+          <td class="paramname"> <em>value</em> = <code>NULL</code></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que calcula si dos fitxers són prou similars per la seua llargària en caràcters. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>wf1</em>&nbsp;</td><td>Primer fitxer web a comparar. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>wf2</em>&nbsp;</td><td>Segon fitxer web a comprar. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>En cas que aquest punter siga diferent a NULL, s'hi emmagatzemarà la diferència entre les longituds de text d'ambdós fitxers. </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Retorna:</b></dt><dd>En cas què la la diferència entre les longituds de text d'ambdós fitxers siga inferior al llindar establert retorna <code>true</code> i, en cas contrari, retorna <code>false</code>. </dd></dl>
 
 </div>
 </div><p>
 <hr>La documentació d'aquesta classe es va generar a partir dels següents fitxers:<ul>
 <li>src/<a class="el" href="Heuristics_8h-source.html">Heuristics.h</a><li>src/Heuristics.cpp</ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generat a Thu Oct 2 09:29:02 2008 per a Bitextor per&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
 <a href="http://www.doxygen.org/index.html">
-<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.5 </small></address>
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
 </html>

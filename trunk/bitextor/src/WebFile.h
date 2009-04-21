@@ -5,13 +5,7 @@
 #include "FilePreprocess.h"
 #include <string>
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <exception>
-#include <stdexcept>
 #include <vector>
-#include <libtagaligner/FragmentedFile.h>
-#include <libtagaligner/Aligner.h>
 
 
 extern "C"{

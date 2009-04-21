@@ -1,4 +1,12 @@
 #include "WebSite.h"
+#include <cstring>
+#include <stack>
+#include <map>
+#include <dirent.h> 
+#include <sstream>
+#include <sys/stat.h>
+#include <libtagaligner/ConfigReader.h>
+#include <libtagaligner/Aligner.h>
 
 WebSite::WebSite(const string &path)
 {

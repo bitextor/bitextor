@@ -1,17 +1,7 @@
 #ifndef FILEPREPROCESS_H_
 #define FILEPREPROCESS_H_
 
-#include <cstdio>
-#include <cerrno>
 #include <iostream>
-#include <tidy.h>
-#include <buffio.h>
-#include <platform.h>
-#include <tidyenum.h>
-#include <fstream>
-#include <enca.h>
-#include <libtagaligner/ConfigReader.h>
-#include "GlobalParams.h"
 
 using namespace std;
 

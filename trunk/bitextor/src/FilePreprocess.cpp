@@ -1,4 +1,8 @@
 #include "FilePreprocess.h"
+#include "GlobalParams.h"
+#include <buffio.h>
+#include <enca.h>
+#include <libtagaligner/ConfigReader.h>
 
 bool FilePreprocess::PreprocessFile(const string &file_path)
 {

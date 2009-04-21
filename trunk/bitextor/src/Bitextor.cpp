@@ -1,14 +1,11 @@
 #include "WebSite.h"
 #include "FilePreprocess.h"
-#include "Bitext.h"
 #include "GlobalParams.h"
 #include "DownloadMod.h"
-#include <fstream>
-#include <sstream>
 #include <getopt.h>
+#include <sys/stat.h>
 
 using namespace std;
-
 
 string
 GetFilePath(string path)

@@ -1,4 +1,6 @@
 #include "Heuristics.h"
+#include <limits>
+#include <math.h>
 #include <libtagaligner/EditDistanceTools.h>
 
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)

@@ -1,4 +1,8 @@
 #include "Bitext.h"
+#include "Heuristics.h"
+#include "GlobalParams.h"
+#include <libtagaligner/ConfigReader.h>
+#include <libtagaligner/Aligner.h>
 
 Bitext::Bitext()
 {

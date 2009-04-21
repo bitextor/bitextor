@@ -3,7 +3,6 @@
 
 #include "GlobalParams.h"
 #include "WebFile.h"
-#include <math.h>
 #include <libtagaligner/ConfigReader.h>
 #include <libtagaligner/EditDistanceTools.h>
 
@@ -18,7 +17,7 @@
  * -La comparació de la mida dels fitxers en bytes.
  * -La comparació de les extensions dels fitxers.
  * -La diferència en la profunditat en l'arbre de directoris (aquesta és la única heurística que no
- * es troba implementada en esta classe, sinó en la classe <code>WebSite<code>, al mètode <code>GetMatchedFiles</code>. 
+ * es troba implementada en esta classe, sinó en la classe <code>WebSite</code>, al mètode <code>GetMatchedFiles</code>. 
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -69,17 +68,28 @@ public:
 	static double Cost(const short &op, const int &ctag1, const int &ctag2);
 
 	/**
-	 * 
+	 * Mètode que calcula la distància d'edició entre els dos arrays d'enters de dos fitxers web.
+	 * @param wf1 Primer fitxer web de la comparació.
+	 * @param wf2 Segon fitxer web de la comparació.
+	 * @param result En cas què aquest paràmetre siga diferent de NULL, quan acaben els càlculs s'hi emmagatzemarà el resultat numeèric.
+	 * @return Retorna <code>true</code> en cas què la distància siga inferior al llindar establert i <code>false</code> en cas contrari.
 	 */
 	static bool DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result=NULL);
 
 	/**
-	 * 
+	 * Mètode que calcula el cost de cada operació en la distància d'edició entre els arrays d'enters de cada fitxer web.
+	 * @param op Codi de l'operació [inserció-eliminació-inserció].
+	 * @param c1 Primer element a comprarar.
+	 * @param c2 Segon element a comparar.
 	 */
 	static double CostNumbers(const short &op, const int &c1, const int &c2);
 
 	/**
-	 * 
+	 * Mètode que calcula si dos fitxers són prou similars per la seua llargària en caràcters.
+	 * @param wf1 Primer fitxer web a comparar.
+	 * @param wf2 Segon fitxer web a comprar.
+	 * @param value En cas que aquest punter siga diferent a NULL, s'hi emmagatzemarà la diferència entre les longituds de text d'ambdós fitxers.
+	 * @return En cas què la la diferència entre les longituds de text d'ambdós fitxers siga inferior al llindar establert retorna <code>true</code> i, en cas contrari, retorna <code>false</code>.
 	 */
 	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value=NULL);
 };

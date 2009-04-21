@@ -4,7 +4,7 @@
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
-<!-- Generat per Doxygen 1.5.5 -->
+<!-- Generat per Doxygen 1.5.6 -->
 <div class="navigation" id="top">
   <div class="tabs">
     <ul>
@@ -19,48 +19,57 @@
 <a name="l00004"></a>00004 <span class="preprocessor">#include "WebFile.h"</span>
 <a name="l00005"></a>00005 <span class="preprocessor">#include "Heuristics.h"</span>
 <a name="l00006"></a>00006 <span class="preprocessor">#include "GlobalParams.h"</span>
-<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;tagaligner/tagaligner2-1.h&gt;</span>
-<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;tagaligner/tagaligner2step-l.h&gt;</span>
-<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;tagaligner/tagaligner2step-ad.h&gt;</span>
-<a name="l00010"></a>00010 
-<a name="l00022"></a><a class="code" href="classBitext.html">00022</a> <span class="keyword">class </span><a class="code" href="classBitext.html" title="Classe que conté els elements dels bitextos.">Bitext</a>
-<a name="l00023"></a>00023 {
-<a name="l00024"></a>00024 <span class="keyword">private</span>:
-<a name="l00028"></a>00028          <span class="keywordtype">bool</span> is_initialized;
-<a name="l00029"></a>00029 
-<a name="l00033"></a>00033         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf1;
-<a name="l00034"></a>00034 
-<a name="l00038"></a>00038         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf2;
-<a name="l00039"></a>00039         
-<a name="l00044"></a>00044         <span class="keywordtype">bool</span> same_extension;
-<a name="l00045"></a>00045         
-<a name="l00049"></a>00049         <span class="keywordtype">float</span> byte_size_distance;
-<a name="l00050"></a>00050         
-<a name="l00054"></a>00054         <span class="keywordtype">float</span> edit_distance;
-<a name="l00055"></a>00055 <span class="keyword">public</span>:
-<a name="l00059"></a>00059         <a class="code" href="classBitext.html#1c6af4c09cdff1d2f2e07dfd13f5cb21">Bitext</a>();
-<a name="l00060"></a>00060 
-<a name="l00064"></a>00064         <span class="keyword">virtual</span> <a class="code" href="classBitext.html#cc306899182094b781a46ea34927b31a">~Bitext</a>();
-<a name="l00065"></a>00065         
-<a name="l00078"></a>00078         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#afb40cf06cf30ff700e45a99966cd3da">Initialize</a>(<a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf1, <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> wf2);
-<a name="l00079"></a>00079         
-<a name="l00086"></a>00086         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> <a class="code" href="classBitext.html#6c8051c1f9af7308ecec9929781b75f5">GetFirstWebFile</a>();
-<a name="l00087"></a>00087 
-<a name="l00094"></a>00094         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> <a class="code" href="classBitext.html#d90f8494c1241779baaa5af4da303ece">GetSecondWebFile</a>();
-<a name="l00095"></a>00095         
-<a name="l00104"></a>00104         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#372fa258d770ec0ce84c8858b227072d">GenerateBitext</a>(<span class="keywordtype">string</span> path);
-<a name="l00105"></a>00105         
-<a name="l00114"></a>00114         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#a72961ca1b4c098a66d9da44201a0bce">GetSameExtension</a>();
+<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;libtagaligner/Aligner.h&gt;</span>
+<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;libtagaligner/ConfigReader.h&gt;</span>
+<a name="l00009"></a>00009 
+<a name="l00021"></a><a class="code" href="classBitext.html">00021</a> <span class="keyword">class </span><a class="code" href="classBitext.html" title="Classe que conté els elements dels bitextos.">Bitext</a>
+<a name="l00022"></a>00022 {
+<a name="l00023"></a>00023 <span class="keyword">private</span>:
+<a name="l00027"></a>00027          <span class="keywordtype">bool</span> is_initialized;
+<a name="l00028"></a>00028 
+<a name="l00032"></a>00032         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> *wf1;
+<a name="l00033"></a>00033 
+<a name="l00037"></a>00037         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> *wf2;
+<a name="l00038"></a>00038         
+<a name="l00043"></a>00043         <span class="keywordtype">bool</span> same_extension;
+<a name="l00044"></a>00044         
+<a name="l00048"></a>00048         <span class="keywordtype">double</span> byte_size_distance;
+<a name="l00049"></a>00049         
+<a name="l00053"></a>00053         <span class="keywordtype">double</span> edit_distance;
+<a name="l00054"></a>00054         
+<a name="l00058"></a>00058         <span class="keywordtype">string</span> alignment_path;
+<a name="l00059"></a>00059         
+<a name="l00063"></a>00063         <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> n_diff_numbers;
+<a name="l00064"></a>00064         
+<a name="l00068"></a>00068         <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> text_difference;
+<a name="l00069"></a>00069 <span class="keyword">public</span>:
+<a name="l00073"></a>00073         <a class="code" href="classBitext.html#1c6af4c09cdff1d2f2e07dfd13f5cb21">Bitext</a>();
+<a name="l00074"></a>00074 
+<a name="l00078"></a>00078         <span class="keyword">virtual</span> <a class="code" href="classBitext.html#cc306899182094b781a46ea34927b31a">~Bitext</a>();
+<a name="l00079"></a>00079 
+<a name="l00084"></a>00084         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#975d781f29ff59519dce218c148d011a">IsInitialized</a>();
+<a name="l00085"></a>00085         
+<a name="l00098"></a>00098         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#65c39f0ef0582c1f9d9ae306113a5661">Initialize</a>(<a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> *wf1, <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a> *wf2);
+<a name="l00099"></a>00099         
+<a name="l00106"></a>00106         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a>* <a class="code" href="classBitext.html#a3492783170b7d662a69fb5223ca9a90">GetFirstWebFile</a>();
+<a name="l00107"></a>00107 
+<a name="l00114"></a>00114         <a class="code" href="classWebFile.html" title="Classe que conté els elements d&amp;#39;un fitxer web.">WebFile</a>* <a class="code" href="classBitext.html#2bc317aa1969282dfc35c7ff37497c60">GetSecondWebFile</a>();
 <a name="l00115"></a>00115         
-<a name="l00122"></a>00122         <span class="keywordtype">float</span> <a class="code" href="classBitext.html#05ba9eb256c647047c99f7d9f3c486aa">GetSizeDistance</a>();
-<a name="l00123"></a>00123         
-<a name="l00132"></a>00132         <span class="keywordtype">float</span> <a class="code" href="classBitext.html#c8257968decc648d33b20ed627d6033f">GetEditDistance</a>();
-<a name="l00133"></a>00133 };
-<a name="l00134"></a>00134 
-<a name="l00135"></a>00135 <span class="preprocessor">#endif </span><span class="comment">/*BITEXT_H_*/</span>
+<a name="l00126"></a>00126         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#341c8e413904036e2dba5e29f1026a5d">GenerateBitext</a>(FILE * main_fout, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> starting_tuid=0, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> *last_tuid=NULL);
+<a name="l00127"></a>00127         
+<a name="l00136"></a>00136         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#a72961ca1b4c098a66d9da44201a0bce">GetSameExtension</a>();
+<a name="l00137"></a>00137         
+<a name="l00144"></a>00144         <span class="keywordtype">double</span> <a class="code" href="classBitext.html#b0199c488a3e8581a692513638ca2250">GetSizeDistance</a>();
+<a name="l00145"></a>00145         
+<a name="l00154"></a>00154         <span class="keywordtype">double</span> <a class="code" href="classBitext.html#bda8668e6dd75adfcbd26f4defae435a">GetEditDistance</a>();
+<a name="l00155"></a>00155 
+<a name="l00162"></a>00162         <span class="keywordtype">bool</span> <a class="code" href="classBitext.html#483d75b08582b7892ed38ef212a0ccc4">isBetterThan</a>(<a class="code" href="classBitext.html" title="Classe que conté els elements dels bitextos.">Bitext</a> &amp;bitext, <span class="keywordtype">bool</span> *disabled=NULL);
+<a name="l00163"></a>00163 };
+<a name="l00164"></a>00164 
+<a name="l00165"></a>00165 <span class="preprocessor">#endif </span><span class="comment">/*BITEXT_H_*/</span>
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generat a Thu Oct 2 09:29:02 2008 per a Bitextor per&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
 <a href="http://www.doxygen.org/index.html">
-<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.5 </small></address>
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
 </html>

@@ -4,7 +4,7 @@
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
-<!-- Generat per Doxygen 1.5.5 -->
+<!-- Generat per Doxygen 1.5.6 -->
 <div class="navigation" id="top">
   <div class="tabs">
     <ul>
@@ -35,23 +35,29 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#5f54073d35a3485cf599a8434fcb84f4">~WebFile</a> ()</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#b7689a7ee5f131d98a2b0747df4714a8">Initialize</a> (string path)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#4d1120837d3049f8d3c4fdec817943c3">Initialize</a> (const string &amp;path)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#6cb8d69da150adef8701af3586cca2df">GetLang</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">wstring&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#b61345191bb53218ebbb28acdf7d8a2e">GetLang</a> ()</td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#eed6d1ff47b7ef916d0c0ca6d5736641">GetPath</a> ()</td></tr>
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#3e3230f76a3fd7724df9add1f4b49cf7">GetFileType</a> ()</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">vector&lt; int &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#14a625d9be8409570e1bfc58f31354c7">GetTagArray</a> ()</td></tr>
-
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#eb308a09682032110c9c6d974e143e93">IsInitialized</a> ()</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">vector&lt; int &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#1767014173dc36531f0bc21e4f6f4060">GetNumbersVector</a> ()</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#7e773a76bd1b15870a9a35e7cd4e5634">GetTextSize</a> ()</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">vector&lt; int &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#e3d1dedefa456fb064d5965fa1b089fd">GetTagArray</a> ()</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebFile.html#ae5a4142b25de21bdc2649c84c1698a3">GetNonAplha</a> (wstring text)</td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Descripció Detallada</h2>
 Classe que conté els elements d'un fitxer web. 
 <p>
-Classe que representa els elements continguts per un lloc web. Conté informació sobre els fitxers que pengen de l'arbre de directoris diferenciats per nivells, de forma que es pot ordenar, fàcilment, la informació dels fitxers descarregats pel DownloadMod.<p>
+Classe que representa els elements continguts per un lloc web. Conté informació sobre els fitxers que pengen de l'arbre de directoris diferenciats per nivells, de forma que es pot ordenar, fàcilment, la informació dels fitxers descarregats pel <a class="el" href="classDownloadMod.html" title="Mòdul de descàrrega web.">DownloadMod</a>.<p>
 <dl class="author" compact><dt><b>Autor:</b></dt><dd>Miquel Esplà i Gomis. </dd></dl>
 <hr><h2>Documentació del Constructor i el Destructor</h2>
 <a class="anchor" name="e5b8fc471ffcaf912b11b230f93622c0"></a><!-- doxytag: member="WebFile::WebFile" ref="e5b8fc471ffcaf912b11b230f93622c0" args="()" -->
@@ -63,7 +69,7 @@ Classe que representa els elements continguts per un lloc web. Conté informaci�
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -82,7 +88,7 @@ Constructor per defecte de la classe.
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -93,17 +99,17 @@ Destructor de la classe.
 </div>
 </div><p>
 <hr><h2>Documentació de les Funcions Membre</h2>
-<a class="anchor" name="b7689a7ee5f131d98a2b0747df4714a8"></a><!-- doxytag: member="WebFile::Initialize" ref="b7689a7ee5f131d98a2b0747df4714a8" args="(string path)" -->
+<a class="anchor" name="4d1120837d3049f8d3c4fdec817943c3"></a><!-- doxytag: member="WebFile::Initialize" ref="4d1120837d3049f8d3c4fdec817943c3" args="(const string &amp;path)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">bool WebFile::Initialize           </td>
           <td>(</td>
-          <td class="paramtype">string&nbsp;</td>
+          <td class="paramtype">const string &amp;&nbsp;</td>
           <td class="paramname"> <em>path</em>          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -123,16 +129,16 @@ Inicialitzador de la classe amb tots els paràmetres a partir de la ruta del fit
 
 </div>
 </div><p>
-<a class="anchor" name="6cb8d69da150adef8701af3586cca2df"></a><!-- doxytag: member="WebFile::GetLang" ref="6cb8d69da150adef8701af3586cca2df" args="()" -->
+<a class="anchor" name="b61345191bb53218ebbb28acdf7d8a2e"></a><!-- doxytag: member="WebFile::GetLang" ref="b61345191bb53218ebbb28acdf7d8a2e" args="()" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string WebFile::GetLang           </td>
+          <td class="memname">wstring WebFile::GetLang           </td>
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -157,7 +163,7 @@ Mètode que permet obtenir el paràmetre sobre l'idioma del fitxer. <dl compact>
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -182,7 +188,7 @@ Mètode que permet obtenir el paràmetre sobre la ruta on es troba el fitxer en 
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -198,30 +204,6 @@ Mètode que permet obtenir el valor del paràmetre sobre el tipus de contingut (
 
 </div>
 </div><p>
-<a class="anchor" name="14a625d9be8409570e1bfc58f31354c7"></a><!-- doxytag: member="WebFile::GetTagArray" ref="14a625d9be8409570e1bfc58f31354c7" args="()" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector&lt; int &gt; WebFile::GetTagArray           </td>
-          <td>(</td>
-          <td class="paramname">          </td>
-          <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>
-Mètode que retorna un array format per la cadena d'etiquetes contingudes al fitxer web. <dl compact><dt><b>Excepcions:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>char*</em>&nbsp;</td><td>El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.  Retorna la llista d'etiquetes, codificades amb números enters, en un vector. </td></tr>
-  </table>
-</dl>
-
-</div>
-</div><p>
 <a class="anchor" name="eb308a09682032110c9c6d974e143e93"></a><!-- doxytag: member="WebFile::IsInitialized" ref="eb308a09682032110c9c6d974e143e93" args="()" -->
 <div class="memitem">
 <div class="memproto">
@@ -231,7 +213,7 @@ Mètode que retorna un array format per la cadena d'etiquetes contingudes al fit
           <td>(</td>
           <td class="paramname">          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td width="100%"></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -242,11 +224,96 @@ Mètode que indica si el fitxer està inicialitzat correctament. <dl class="retu
 
 </div>
 </div><p>
+<a class="anchor" name="1767014173dc36531f0bc21e4f6f4060"></a><!-- doxytag: member="WebFile::GetNumbersVector" ref="1767014173dc36531f0bc21e4f6f4060" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt; int &gt; * WebFile::GetNumbersVector           </td>
+          <td>(</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que retorna un punter al vector d'enters continguts al text. <dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna un punter al vector d'enters continguts al text. </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="7e773a76bd1b15870a9a35e7cd4e5634"></a><!-- doxytag: member="WebFile::GetTextSize" ref="7e773a76bd1b15870a9a35e7cd4e5634" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int WebFile::GetTextSize           </td>
+          <td>(</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que retorna la mida total en caràcters del text del document. <dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna la mida total en caràcters del text del document. </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="e3d1dedefa456fb064d5965fa1b089fd"></a><!-- doxytag: member="WebFile::GetTagArray" ref="e3d1dedefa456fb064d5965fa1b089fd" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">vector&lt; int &gt; * WebFile::GetTagArray           </td>
+          <td>(</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que retorna un punter a l'array d'etiquetes-blocs de text. <dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna un punter a l'array d'etiquetes-blocs de text. </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="ae5a4142b25de21bdc2649c84c1698a3"></a><!-- doxytag: member="WebFile::GetNonAplha" ref="ae5a4142b25de21bdc2649c84c1698a3" args="(wstring text)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void WebFile::GetNonAplha           </td>
+          <td>(</td>
+          <td class="paramtype">wstring&nbsp;</td>
+          <td class="paramname"> <em>text</em>          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que carrega a l'array d'enters els números enters continguts al text. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>text</em>&nbsp;</td><td>Text del qual s'hi volen extreure els números. </td></tr>
+  </table>
+</dl>
+
+</div>
+</div><p>
 <hr>La documentació d'aquesta classe es va generar a partir dels següents fitxers:<ul>
 <li>src/<a class="el" href="WebFile_8h-source.html">WebFile.h</a><li>src/WebFile.cpp</ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generat a Thu Oct 2 09:29:02 2008 per a Bitextor per&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
 <a href="http://www.doxygen.org/index.html">
-<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.5 </small></address>
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
 </html>

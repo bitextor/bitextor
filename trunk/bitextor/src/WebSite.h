@@ -5,21 +5,8 @@
 #include "GlobalParams.h"
 #include "Heuristics.h"
 #include "Bitext.h"
-
-#include <libtagaligner/ConfigReader.h>
-#include <dirent.h> 
 #include <iostream>
-#include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <map>
 #include <vector>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stack>
-
-
 
 /**
  * @class WebSite
@@ -68,7 +55,7 @@ public:
 	
 	/**
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
-	 * @param base_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
+	 * @param dest_path Directori base del qual es llegeix la informació sobre els fitxers a procesar.
 	 * @return Retorna <code>true</code> si s'ha trobat alguna coincidència o <code>false</code> en cas contrari.
 	 */
 	bool GenerateBitexts(const string &dest_path);

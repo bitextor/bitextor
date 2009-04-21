@@ -4,7 +4,7 @@
 <link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
 </head><body>
-<!-- Generat per Doxygen 1.5.5 -->
+<!-- Generat per Doxygen 1.5.6 -->
 <div class="navigation" id="top">
   <div class="tabs">
     <ul>
@@ -16,30 +16,31 @@
 <h1>src/FilePreprocess.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="preprocessor">#ifndef FILEPREPROCESS_H_</span>
 <a name="l00002"></a>00002 <span class="preprocessor"></span><span class="preprocessor">#define FILEPREPROCESS_H_</span>
 <a name="l00003"></a>00003 <span class="preprocessor"></span>
-<a name="l00004"></a>00004 <span class="preprocessor">#include &lt;stdio.h&gt;</span>
-<a name="l00005"></a>00005 <span class="preprocessor">#include &lt;errno.h&gt;</span>
+<a name="l00004"></a>00004 <span class="preprocessor">#include &lt;cstdio&gt;</span>
+<a name="l00005"></a>00005 <span class="preprocessor">#include &lt;cerrno&gt;</span>
 <a name="l00006"></a>00006 <span class="preprocessor">#include &lt;iostream&gt;</span>
-<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;tidy/tidy.h&gt;</span>
-<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;tidy/buffio.h&gt;</span>
-<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;tidy/platform.h&gt;</span>
-<a name="l00010"></a>00010 <span class="preprocessor">#include &lt;tidy/tidyenum.h&gt;</span>
+<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;tidy.h&gt;</span>
+<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;buffio.h&gt;</span>
+<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;platform.h&gt;</span>
+<a name="l00010"></a>00010 <span class="preprocessor">#include &lt;tidyenum.h&gt;</span>
 <a name="l00011"></a>00011 <span class="preprocessor">#include &lt;fstream&gt;</span>
 <a name="l00012"></a>00012 <span class="preprocessor">#include &lt;enca.h&gt;</span>
-<a name="l00013"></a>00013 <span class="preprocessor">#include "GlobalParams.h"</span>
-<a name="l00014"></a>00014 
-<a name="l00015"></a>00015 <span class="keyword">using namespace </span>std;
-<a name="l00016"></a>00016 
-<a name="l00031"></a><a class="code" href="classFilePreprocess.html">00031</a> <span class="keyword">class </span><a class="code" href="classFilePreprocess.html" title="Mòdul de preprocessament de fitxers.">FilePreprocess</a>
-<a name="l00032"></a>00032 {
-<a name="l00033"></a>00033 <span class="keyword">public</span>:
-<a name="l00042"></a>00042         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classFilePreprocess.html#d5d3dcfb182cc683053ccd0cd09f31d4">PreprocessFile</a>(<span class="keywordtype">string</span> file_path);
-<a name="l00043"></a>00043 };
-<a name="l00044"></a>00044 
-<a name="l00045"></a>00045 <span class="preprocessor">#endif </span><span class="comment">/*FILEPREPROCESS_H_*/</span>
-<a name="l00046"></a>00046 
+<a name="l00013"></a>00013 <span class="preprocessor">#include &lt;libtagaligner/ConfigReader.h&gt;</span>
+<a name="l00014"></a>00014 <span class="preprocessor">#include "GlobalParams.h"</span>
+<a name="l00015"></a>00015 
+<a name="l00016"></a>00016 <span class="keyword">using namespace </span>std;
+<a name="l00017"></a>00017 
+<a name="l00032"></a><a class="code" href="classFilePreprocess.html">00032</a> <span class="keyword">class </span><a class="code" href="classFilePreprocess.html" title="Mòdul de preprocessament de fitxers.">FilePreprocess</a>
+<a name="l00033"></a>00033 {
+<a name="l00034"></a>00034 <span class="keyword">public</span>:
+<a name="l00043"></a>00043         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classFilePreprocess.html#56877623558f9a12ef4f06814436f24e">PreprocessFile</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;file_path);
+<a name="l00044"></a>00044 };
+<a name="l00045"></a>00045 
+<a name="l00046"></a>00046 <span class="preprocessor">#endif </span><span class="comment">/*FILEPREPROCESS_H_*/</span>
+<a name="l00047"></a>00047 
 </pre></div></div>
-<hr size="1"><address style="text-align: right;"><small>Generat a Thu Oct 2 09:29:02 2008 per a Bitextor per&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
 <a href="http://www.doxygen.org/index.html">
-<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.5 </small></address>
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
 </body>
 </html>

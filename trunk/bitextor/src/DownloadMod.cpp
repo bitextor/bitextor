@@ -1,4 +1,8 @@
 #include "DownloadMod.h"
+#include "GlobalParams.h"
+#include <sstream>
+#include <string>
+#include <libtagaligner/ConfigReader.h>
 
 DownloadMod::DownloadMod()
 {

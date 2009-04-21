@@ -1,15 +1,12 @@
 #ifndef GLOBALPARAMS_H_
 #define GLOBALPARAMS_H_
 
-#include <libtagaligner/ConfigReader.h>
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <string>
-#include <algorithm>
 #include <vector>
-#include <ctime>
+#include <libxml/parser.h>
 
 using namespace std;
 
@@ -240,7 +237,7 @@ public:
 	/**
 	 * Mètode que processa recursivament els nodes del fitxer XML de configuració.
 	 * @param node Node que es processarà.
-	 * @param indention
+	 * @param tagname Nom de la darrera etiqueta llegida a l'arbre d'etiquetes.
 	 */
 	static void ProcessNode(xmlNode* node, wstring tagname);
 
@@ -258,7 +255,7 @@ public:
 	
 	/**
 	 * Mètode que permet indicar a bitextor si ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
-	 * @param Valor que es preten donar a aquest paràmetre.
+	 * @param value Valor que es preten donar a aquest paràmetre.
 	 */
 	static void SetGuessLanguage(const bool &value);
 	
@@ -320,7 +317,7 @@ public:
 
 	/**
 	 * Mètode que obre el fitxer de quadern de bitàcora.
-	 * @param Adreça del fitxer de log.
+	 * @param log_path Adreça del fitxer de log.
 	 * @return Retorna <code>true</code> si s'ha creat correctament i <code>false</code> en cas contrari.
 	 */
 	static bool OpenLog(const string &log_path);
@@ -331,22 +328,25 @@ public:
 	static void CloseLog();
 
 	/**
-	 * 
+	 * Mètode que retorna el flag que indica si s'han de generar els bitextos amb tots els candidats dins dels paràmetres establerts per a cada fitxer web o només el millor candidat.
+	 * @return Retorna <code>true</code> si s'han de generar els bitextos amb tots els candidats dins dels paràmetres establerts per a cada fitxer web o <code>false</code> si només s'ha de generar el millor candidat.
 	 */
 	static bool GetCreateAllCandidates();
 
 	/**
-	 * 
+	 * Mètode que retorna el flag que indica si cal executar l'aplicació en mode verbose o no.
+	 * @return Retorna <code>true</code> si cal executar l'aplicació en mode verbose i <code>false</code> en cas contrari.
 	 */
 	static bool IsVerbose();
 
 	/**
-	 * 
+	 * Mètode que estableix l'execució a mode verbose.
 	 */
 	static void SetVerbose();
 
 	/**
-	 * 
+	 * Mètode que retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
+	 * @return Retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
 	 */
 	static double GetGenerateAmbiguousBitexts();
 };
