@@ -4,6 +4,7 @@
 #include <WebFile.h>
 #include <TestFixture.h>
 #include <extensions/HelperMacros.h>
+#include <libtagaligner/ConfigReader.h>
 
 using namespace std;
 

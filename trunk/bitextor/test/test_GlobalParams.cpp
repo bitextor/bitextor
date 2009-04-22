@@ -14,12 +14,12 @@ void TestGlobalParams::testGetMaxEditDistancePercentual()
 
 void TestGlobalParams::testGetMaxEditDistanceAbsolute()
 {
-	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetMaxEditDistanceAbsolute(),(double)10);
+	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetMaxEditDistanceAbsolute(),(double)12);
 }
 
 void TestGlobalParams::testGetTextDistancePercentDifferenciator()
 {
-	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetTextDistancePercentDifferenciator(),(double)30);
+	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetTextDistancePercentDifferenciator(),(double)50);
 }
 
 void TestGlobalParams::testSetTextDistancePercentDifferenciator()
@@ -87,7 +87,7 @@ void TestGlobalParams::testGetFileSizeDiferencePercent()
 	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetFileSizeDiferencePercent(L"es",L"fr"),(double)38);
 	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetFileSizeDiferencePercent(L"es",L"en"),(double)34);
 	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetFileSizeDiferencePercent(L"es",L"ca"),(double)40);
-	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetFileSizeDiferencePercent(L"noexisteix",L"tampocexisteix"),(double)30);
+	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetFileSizeDiferencePercent(L"noexisteix",L"tampocexisteix"),(double)50);
 }
 
 void TestGlobalParams::testAddFileSizeDiferencePercent()
@@ -103,7 +103,7 @@ void TestGlobalParams::testGetMaxTotalTextLengthDiff()
 
 void TestGlobalParams::testGetMaxNumericFingerprintDistance()
 {
-	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetMaxNumericFingerprintDistance(),(int)1);
+	CPPUNIT_ASSERT_EQUAL(GlobalParams::GetMaxNumericFingerprintDistance(),(int)5);
 }
 
 void TestGlobalParams::testAllBitextInAFile()

@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "Heuristics.h"
 #include <limits>
 #include <math.h>

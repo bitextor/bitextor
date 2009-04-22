@@ -275,7 +275,7 @@
 			<ta:textsizeminrelation value="0.6" />
 		</ta:edition_parameters>
 		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
-		<ta:mode value="l" />
+		<ta:mode value="a" />
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
 	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
@@ -315,13 +315,13 @@
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
 		<bi:language fingerprint="is.utf8.lm" code="is" />
-		<!--<bi:language fingerprint="es.utf8.lm" code="es" />
+		<bi:language fingerprint="es.utf8.lm" code="es" />
 		<bi:language fingerprint="ca.utf8.lm" code="ca" />
 		<bi:language fingerprint="fr.utf8.lm" code="fr" />
 		<bi:language fingerprint="an.utf8.lm" code="an" />
 		<bi:language fingerprint="gl.utf8.lm" code="gl" />
 		<bi:language fingerprint="eu.utf8.lm" code="eu" />
 		<bi:language fingerprint="de.utf8.lm" code="de" />
-		<bi:language fingerprint="ga.utf8.lm" code="ga" />-->
+		<bi:language fingerprint="ga.utf8.lm" code="ga" />
 	</bi:languages>
 </bi:configuration>

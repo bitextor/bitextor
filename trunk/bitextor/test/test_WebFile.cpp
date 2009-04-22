@@ -37,13 +37,13 @@ void TestWebFile::testIsInitialized()
 void TestWebFile::testGetNumbersVector()
 {
 	vector<int>* v=wf.GetNumbersVector();
-	CPPUNIT_ASSERT_EQUAL((size_t)21,v->size());
+	CPPUNIT_ASSERT_EQUAL((size_t)20,v->size());
 	CPPUNIT_ASSERT_EQUAL(1,v->at(0));
 	CPPUNIT_ASSERT_EQUAL(0,v->at(1));
 	CPPUNIT_ASSERT_EQUAL(2,v->at(2));
-	CPPUNIT_ASSERT_EQUAL(0,v->at(3));
+	CPPUNIT_ASSERT_EQUAL(1,v->at(3));
 	CPPUNIT_ASSERT_EQUAL(1,v->at(4));
-	CPPUNIT_ASSERT_EQUAL(22,v->at(5));
+	CPPUNIT_ASSERT_EQUAL(16,v->at(5));
 	CPPUNIT_ASSERT_EQUAL(2008,v->at(6));
 	CPPUNIT_ASSERT_EQUAL(0,v->at(7));
 	CPPUNIT_ASSERT_EQUAL(99,v->at(8));
@@ -58,10 +58,10 @@ void TestWebFile::testGetNumbersVector()
 	CPPUNIT_ASSERT_EQUAL(2,v->at(17));
 	CPPUNIT_ASSERT_EQUAL(0,v->at(18));
 	CPPUNIT_ASSERT_EQUAL(1,v->at(19));
-	CPPUNIT_ASSERT_EQUAL(2008,v->at(20));
+	//CPPUNIT_ASSERT_EQUAL(2008,v->at(20));
 }
 
 void TestWebFile::testGetTextSize()
 {
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1629,wf.GetTextSize());
+	CPPUNIT_ASSERT_EQUAL((unsigned int)2093,wf.GetTextSize());
 }

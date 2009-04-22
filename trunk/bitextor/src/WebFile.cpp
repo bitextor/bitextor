@@ -1,10 +1,14 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "WebFile.h"
 #include <fstream>
 #include <stdexcept>
 #include <tre/regex.h>
 #include <libtagaligner/ConfigReader.h>
 #include <libtagaligner/FragmentedFile.h>
-//#include <sstream>
 
 WebFile::WebFile()
 {

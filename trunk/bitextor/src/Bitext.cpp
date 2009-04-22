@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "Bitext.h"
 #include "Heuristics.h"
 #include "GlobalParams.h"
@@ -20,11 +25,10 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 {
 	this->wf1=wf1;
 	this->wf2=wf2;
-	bool exit;
+	bool exit=true;
 
 	double aux_result;
 	unsigned int diff_length;
-	
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
 			try{
@@ -50,21 +54,26 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 								}
 								
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
-								if(!exit)
+								if(!exit){
 									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
+								}
 								this->n_diff_numbers=aux_result;
 							}
-							else
+							else{
 								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
+							}
 						}
-						else
+						else{
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive");
+						}
 					}
-					else
+					else{
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
+					}
 				}
-				else
+				else{
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
+				}
 				this->is_initialized=true;
 			}
 			catch(...){
@@ -76,8 +85,9 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 			GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the both files have the same language ("+wf2->GetLang()+L").");
 		}
 	}
-	else
+	else{
 		exit=false;
+	}
 	is_initialized=exit;
 	return exit;
 }

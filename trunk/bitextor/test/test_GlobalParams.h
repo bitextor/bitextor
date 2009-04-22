@@ -3,6 +3,7 @@
 
 #include <GlobalParams.h>
 #include <TestFixture.h>
+#include <libtagaligner/ConfigReader.h>
 #include <extensions/HelperMacros.h>
 
 using namespace std;

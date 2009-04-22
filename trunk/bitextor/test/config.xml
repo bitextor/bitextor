@@ -291,30 +291,30 @@
 		<bi:fileSizePercent value="30" />
 		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
 		It's recommended that this percentage to be higger than 80%. -->
-		<bi:textLengthDifferencePercents default="30">
+		<bi:textLengthDifferencePercents default="50">
 			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="34" />
 			<bi:textLengthDifferencePercent lang1="es" lang2="fr" difference="38" />
 			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="40" />
 		</bi:textLengthDifferencePercents>
 		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
 		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
-		<bi:maxEditDistance percentual="20" absolute="10" />
+		<bi:maxEditDistance percentual="20" absolute="12" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. -->
 		<bi:directoryPathDistance value="1" />
-		<bi:maxTotalTextLengthPercent value="10" />
+		<bi:maxTotalTextLengthPercent value="20" />
 		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
-		<bi:numericFingerprintDistance value="1" />
+		<bi:numericFingerprintDistance value="5" />
 		<!-- If, once the incoming file has been processed, if the length of the array composed by text and tags from the file is lower than this value, the file will not be processed.-->
 		<!--<bi:minArraySize value="20" />-->
 	</bi:criteria>
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
-		<!--<bi:language fingerprint="da.utf8.lm" code="da" />
+		<bi:language fingerprint="da.utf8.lm" code="da" />
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
-		<bi:language fingerprint="is.utf8.lm" code="is" />-->
+		<bi:language fingerprint="is.utf8.lm" code="is" />
 		<bi:language fingerprint="es.utf8.lm" code="es" />
 		<bi:language fingerprint="ca.utf8.lm" code="ca" />
 		<bi:language fingerprint="fr.utf8.lm" code="fr" />

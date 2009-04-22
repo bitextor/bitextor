@@ -9,7 +9,7 @@ using namespace std;
 
 class TestHeuristics : public CPPUNIT_NS::TestFixture
 {
-	WebFile wf1, wf2, wf3, wf4, wf5;
+	WebFile wf1, wf2, wf3, wf4, wf5, wf6, wf7;
 	CPPUNIT_TEST_SUITE(TestHeuristics);
 	CPPUNIT_TEST(setUp);
 	CPPUNIT_TEST(testHaveTheSameExtension);

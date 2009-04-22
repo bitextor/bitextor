@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "GlobalParams.h"
 #include <libxml/xinclude.h>
 #include <libtagaligner/ConfigReader.h>

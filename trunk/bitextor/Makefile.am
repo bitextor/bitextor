@@ -1,7 +1,7 @@
 sysconfdir = $(prefix)/etc/bitextor/conf
 sysconf_DATA = conf/*
 
-SUBDIRS = src test
+SUBDIRS = src
 man1_MANS = man/bitextor.man
 dist_man_MANS = man/bitextor.man
 

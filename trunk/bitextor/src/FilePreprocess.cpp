@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "FilePreprocess.h"
 #include "GlobalParams.h"
 #include <buffio.h>

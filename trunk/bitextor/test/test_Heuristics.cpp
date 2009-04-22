@@ -9,7 +9,9 @@ void TestHeuristics::setUp()
 	wf2.Initialize("./test_files/WebFile2.html");
 	wf3.Initialize("./test_files/WebFile3.html");
 	wf4.Initialize("./test_files/WebFile4.html");
-	wf5.Initialize("./test_files/WebFile7.php");
+	wf5.Initialize("./test_files/WebFile5.php");
+	wf6.Initialize("./test_files/WebFile6.html");
+	wf7.Initialize("./test_files/WebFile7.html");
 	GlobalParams::LoadGlobalParams("./config.xml");
 }
 
@@ -26,13 +28,13 @@ void TestHeuristics::testHaveTheSameExtension()
 
 void TestHeuristics::testHaveAcceptableSizeDifference()
 {
-	CPPUNIT_ASSERT_EQUAL(true,Heuristics::HaveAcceptableSizeDifference(&wf4,&wf5));
+	CPPUNIT_ASSERT_EQUAL(true,Heuristics::HaveAcceptableSizeDifference(&wf6,&wf7));
 	CPPUNIT_ASSERT_EQUAL(false,Heuristics::HaveAcceptableSizeDifference(&wf4,&wf2));
 }
 
 void TestHeuristics::testHaveAcceptableEditDistance()
 {
-	CPPUNIT_ASSERT_EQUAL(true,Heuristics::HaveAcceptableEditDistance(&wf4,&wf5));
+	CPPUNIT_ASSERT_EQUAL(true,Heuristics::HaveAcceptableEditDistance(&wf6,&wf7));
 	CPPUNIT_ASSERT_EQUAL(false,Heuristics::HaveAcceptableEditDistance(&wf4,&wf2));
 }
 
@@ -61,6 +63,6 @@ void TestHeuristics::testCostNumbers()
 
 void TestHeuristics::testNearTotalTextSize()
 {
-	CPPUNIT_ASSERT_EQUAL(true,Heuristics::NearTotalTextSize(wf4,wf5));
+	CPPUNIT_ASSERT_EQUAL(true,Heuristics::NearTotalTextSize(wf6,wf7));
 	CPPUNIT_ASSERT_EQUAL(false,Heuristics::NearTotalTextSize(wf4,wf2));
 }

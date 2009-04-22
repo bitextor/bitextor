@@ -1,9 +1,15 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "WebSite.h"
 #include "FilePreprocess.h"
 #include "GlobalParams.h"
 #include "DownloadMod.h"
 #include <getopt.h>
 #include <sys/stat.h>
+#include <tre/regex.h>
 
 using namespace std;
 

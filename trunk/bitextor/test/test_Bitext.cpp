@@ -13,12 +13,10 @@ void TestBitext::setUp()
 	wf6.Initialize("./test_files/WebFile6.html");
 	wf7.Initialize("./test_files/WebFile7.html");
 	GlobalParams::LoadGlobalParams("./config.xml");
-	GlobalParams::OpenLog("/home/miquel/Escriptori/test.log");
 }
 
 void TestBitext::tearDown()
 {
-	GlobalParams::CloseLog();
 	GlobalParams::Clear();
 }
 
@@ -81,7 +79,7 @@ void TestBitext::testGetSizeDistance()
 	wf2_size=end-init;
 
 	b.Initialize(&wf6,&wf7);
-	CPPUNIT_ASSERT_EQUAL(((double)abs(wf1_size-wf2_size)/wf1_size)*100,b.GetSizeDistance());
+	CPPUNIT_ASSERT_EQUAL(((double)abs(wf1_size-wf2_size)/wf2_size)*100,b.GetSizeDistance());
 }
 
 void TestBitext::testGetEditDistance()

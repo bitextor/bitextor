@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "WebSite.h"
 #include <cstring>
 #include <stack>
@@ -231,6 +236,7 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 								}
 							}
 						}
+						delete bitext;
 					}
 					else{
 						bb_it=best_bitexts.find(file_list[j]->at(k)->GetLang());
@@ -298,6 +304,7 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 							}
 						}
 					}
+					delete it->second->first;
 					delete it->second;
 					it++;
 				}

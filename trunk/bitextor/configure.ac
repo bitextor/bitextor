@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.61)
 
-m4_define([required_libtagaligner_version], [3.0.0])
+m4_define([required_libtagaligner_version], [3.1.0])
 m4_define([required_libxml_version], [2.6.17])
 m4_define([required_libenca_version], [1.9])
 m4_define([required_libtre_version], [0.7.5])
@@ -71,7 +71,7 @@ dnl
 dnl check libxml-2.0 and libtagaligner-3.0
 dnl
 PKG_CHECK_MODULES(BITEXTOR, [dnl
-                  libtagaligner-3.0 >= required_libtagaligner_version dnl
+                  libtagaligner-3.1 >= required_libtagaligner_version dnl
                   enca >= required_libenca_version dnl
                   libxml-2.0 >= required_libxml_version])
 
@@ -133,6 +133,5 @@ AC_FUNC_STAT
 AC_CHECK_FUNCS([memset mkdir strndup])
 
 AC_CONFIG_FILES([Makefile
-				 test/Makefile
                  src/Makefile])
 AC_OUTPUT
