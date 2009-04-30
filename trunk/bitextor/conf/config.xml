@@ -275,14 +275,12 @@
 			<ta:textsizeminrelation value="0.6" />
 		</ta:edition_parameters>
 		<!-- There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement. -->
-		<ta:mode value="a" />
+		<ta:mode value="l" />
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
-	<bi:downloadModDest>/home/miquel/</bi:downloadModDest>
+	<bi:downloadModDest>/tmp/</bi:downloadModDest>
 	<bi:onlyBitextFile value="true"/>
-	<bi:generateAllCandidates value="false" />
 	<bi:verbose value="true" />
-	<bi:generateAmbiguousBitexts max_text_percent="1" />
 	<!-- Here you have to set the path were the system can find the configuration file of TextCat. -->
 	<!--<bi:textCatConfigFile>/home/miquel/LM/conf.txt</bi:textCatConfigFile>-->
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
@@ -290,7 +288,7 @@
 		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	
 		<bi:fileSizePercent value="30" />
 		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
-		It's recommended that this percentage to be higger than 80%. -->
+		If you don't this value for a concrete pair of languages, default value will be used. -->
 		<bi:textLengthDifferencePercents default="30">
 			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="30" />
 			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="30" />
@@ -300,14 +298,22 @@
 		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
 		<bi:maxEditDistance percentual="5" absolute="10" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
-		files with a difference of depth in the directory tree equal or lower than two. -->
+		files with a difference of depth in the directory tree equal or lower than two. If the value of this parametter is zero, only files in the same level will be compared.-->
 		<bi:directoryPathDistance value="1" />
+		<!-- This parametter defines the percentage of maximum total length beteween files. It is, the difference between the length of the whole plain text of the HTML file.-->
 		<bi:maxTotalTextLengthPercent value="10" />
 		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->
 		<bi:numericFingerprintDistance value="1" />
-		<!-- If, once the incoming file has been processed, if the length of the array composed by text and tags from the file is lower than this value, the file will not be processed.-->
-		<!--<bi:minArraySize value="20" />-->
+		<!-- Once the incoming file has been processed, if the length of the array composed by text and tags from the file is lower than this value, the file will not be processed.-->
+		<bi:minArraySize value="5" />
+		<!-- If the value of this parametter is true, all the candidates that passes all the active heuristics will be created. If it's false, only the best pairs will be created. -->
+		<bi:generateAllCandidates value="false" />
+		<!-- If this parametter is active, all the candidates of pair for a file will be compared. If they have the same results for the numeric fingerprint and tag-and-text array edit distance, their total text length will be
+		analysed. If it's under the percentage defined by max_text_percent, this file will be discarded because Bitextor will consider that it has ambiguous candidates. -->
+		<bi:generateAmbiguousBitexts max_text_percent="1" />
 	</bi:criteria>
+	<!-- In this section you can define the path of the LibTextCat fingerpint files for every language in the parametter "dir". Then, with every "language" element you will have to definine the name of the file ("fingerprint")
+	and the language that it represents ("code"). -->
 	<bi:languages dir="/usr/local/etc/bitextor/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
 		<bi:language fingerprint="da.utf8.lm" code="da" />

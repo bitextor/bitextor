@@ -244,9 +244,11 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_
 						if(bb_it==best_bitexts.end())
 							best_bitexts[file_list[j]->at(k)->GetLang()]=new pair<Bitext*,bool>(bitext,false);
 						else{
-							if(!bb_it->second->second && bitext->isBetterThan((*bb_it->second->first),&bb_it->second->second)){
-								delete bb_it->second->first;
-								bb_it->second->first=bitext;
+							if(bitext->isBetterThan((*bb_it->second->first),&bb_it->second->second)){
+								if(!bb_it->second->second){
+									delete bb_it->second->first;
+									bb_it->second->first=bitext;
+								}
 							}
 							else
 								delete bitext;

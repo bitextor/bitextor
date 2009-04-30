@@ -195,7 +195,7 @@ bool Bitext::isBetterThan(Bitext &bitext, bool *disabled)
 				if(bitext.n_diff_numbers<n_diff_numbers)
 					exit= false;
 				else if(bitext.n_diff_numbers==n_diff_numbers){
-					if(disabled!=NULL){
+					if(disabled!=NULL && GlobalParams::GetGenerateAmbiguousBitexts()!=-1){
 						if(bitext.text_difference<text_difference)
 							*disabled=((abs((int)bitext.text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
 						else{
