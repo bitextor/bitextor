@@ -129,19 +129,23 @@ main (int argc, char *const *argv)
 				wcout<<L"Initializing Bitextor's destination path..."<<endl;
 				if(dest_dir[dest_dir.length()-1]!='/')
 					dest_dir+="/";
-				if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
-					mkdir((dest_dir+"/bitexts/").c_str(),0777);
-				wcout<<L"Comparing files and generating bitexts..."<<endl;
-				ws=new WebSite(dest_dir);
-				try{
-					if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
-						wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+				if(stat(dest_dir.c_str(), &my_stat) != 0)
+					wcerr<<L"The specified directory doesn't exits."<<endl;
+				else{
+					if(stat((dest_dir+"bitexts/").c_str(), &my_stat) != 0)
+						mkdir((dest_dir+"/bitexts/").c_str(),0777);
+					wcout<<L"Comparing files and generating bitexts..."<<endl;
+					ws=new WebSite(dest_dir);
+					try{
+						if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
+							wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+					}
+					catch(char const*e){
+						cout<<e<<endl;
+					}
+					delete ws;
+					Config::CleanUpConfiguration();
 				}
-				catch(char const*e){
-					cout<<e<<endl;
-				}
-				delete ws;
-				Config::CleanUpConfiguration();
 			}
 		}
 		catch(char* e){

@@ -1,4 +1,4 @@
-.TH bitextor "2008 october" "2.0rc1"
+.TH bitextor "2009 may" "3.0.1"
 .SH NAME
 Bitextor \- The automatic bitext generator.
 .SH SYNOPSIS
@@ -13,6 +13,9 @@ Bitextor is an automatic bitext generator which obtains his base corpora from th
 The objective of this application is to provide a simple way to obtain bilingual corpora in a semi-supervised way to train automatic traducers.
 .SH OPTIONS
 .TP
+\-l path_of_log_file
+Create a log file with all the steps in the processment
+.TP
 \-h
 Print a help message describing all of Bitextor's command-line options.
 .TP
@@ -24,44 +27,50 @@ This option lets the user to set manually the language for every file.
 .SH THE CONFIGURATION FILE
 Bitextor needs a configuration file to work. This file contains all the options that Bitextor needs to do his job. Those are all the possible options in the configuration file:
 
-.B Section general:
+.B Section general: <bi:configuration>...</bi:configuration>
 .TP
-\<tagAlignerConfigFile></tagAlignerConfigFile>
-Here you have to set the path were the system can find the configuration file of TagAligner.
+\<xi:include href="/usr/local/etc/tagaligner/config.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+You can do an XMLInclude or write directly the parametters of configuration for LibTagAligner.
 .TP
-\<textCatConfigFile></textCatConfigFile>
-Here you have to set the path were the system can find the configuration file of TextCat.
+\<bi:downloadModDest max="10000">...</bi:downloadModDest>
+Destination path for the downloaded files with the download module. You can limit the bytes to download with the parametter max.
 .TP
-\<tagAlignerMode></tagAlignerMode>
-There are three modes for TagAligner aligning: 1-Two steps alignement for text distance comparation. 2-Two steps alignement for text length comparation. 3-Two steps direct text and tags alignement.
+\<bi:onlyBitextFile value="true"/>
+If the value of tis option is true, the traduction memories of every pair of files will be saved in an only TMX file. If the value is false, every traduction memory will be saved in a different file.
 .TP
-\<fileSizePercent></fileSizePercent>
-Maximum percentage of difference of size permited between the two texts of the bitext.
-.TP
-\<textLengthPercent></textLengthPercent>
-Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
-.TP
-\<editDistancePercent></editDistancePercent>
-To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance obtained in the comparation, the bitext is discarted.
-.TP
-\<directoryPathDistance></directoryPathDistance>
-This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare	files with a difference of depth in the directory tree equal or lower than two.
+\<bi:verbose value="true"/>
+If the value of the parametter value is true, it will be shown the notification of every translation memories created in the screen.
 .PP
-.B Section irrelevantTags:
+.B Section criteria:
 .TP
-\<tag>tag1</tag><tag>tag2</tag>...
-List of tags not analised because they are'nt signifficative.
+\<bi:fileSizePercent value="30" />
+This element lets to set the percentage of size difference between files in bytes. If this difference is higher than this percentage, files will be discarded as a candidate pair.
+.TP
+\<bi:textLengthDifferencePercents default="30"><bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="30" />...</bi:textLengthDifferencePercents>
+This block lets to define the difference between the length of two blocks of text to consider that they can contain the same information. This percentage is used in the edit distance calculation between two files. The parametter default lets to establish a percentual value which will be assigned to all the pairs of languages which value has not been established especifically. With the tag textLengthDifferencePercent you can define every of the percentages assigned to the language pairs.
+.TP
+\<bi:maxEditDistance percentual="5" absolute="10" />
+This element lets to define the acceptable limits in the edit distance to consider two files as candidates to be a correct bitext. It can be defined two parametters: percentual and absolute. With percentual you can define a percentual limit. Normally, this limit is aplyed to very little files where any absolute value would be too big. With the absolute value, it can be defined a maximum absolute value of difference.
+.TP
+\<bi:directoryPathDistance value="1" />
+This element lets to define a maximum distance between levels int the directory tree. This distance is used in the files comparation to limit that distance. The minimum value for this element is 0. With this value, a file is only compared with the files in the same level of the directory tree.
+.TP
+\<bi:maxTotalTextLengthPercent value="10" />
+This element lets to define a percentual limit of text length (for all the plain text in the file). If the percentage of difference between the total length of two files is higher than this value, the files will be discarded as candidates to be a bitext.
+.TP
+\<bi:numericFingerprintDistance value="1" />
+One of the elements to consider if tow files can be a correct bitext is using the numbers appeared in the both plain texts. Logically, this system has limitations and it's important to know when to use it. In any case, all the integers in a file are readden (if a fractionary number is found, it will be considered as two integers, one for the integer number and another for the fractionary number). Those numbers are stored in a list in the order that they appears in the text and the both lists are compared. This parametter lets to define the maximum distance between the lists.
+.TP
+\<bi:generateAllCandidates value="false"/>
+If the value of this option is true, all the candidates that pass the criteria parametters will be generated for every analysed file. If the value is false, only the pair that has the best results will be considered for the bitext of every file.
+.TP
+\<bi:generateAmbiguousBitexts max_text_percent="1"/>
+With this option, if Bitextor finds a file with more than one candidate to be the best peer with a very little difference, then this file will be descarded because it will be considered ambiguous. If this option is active, it will be considered that two candidates are too simillar basing on the value assigned to max_text_percent. This value represents the precentage of total text length difference. If it is less than this percentage, Bitextor will consider that is not possible to select one of the candidates and the file will be discarded.
 .PP
-.B Section downloadMod:
+.B Section languages:
 .TP
-\<downloadPath></downloadPath>
-Directory of destination for the downloads.
-.TP
-\<maxBytesToDownload></maxBytesToDownload>
-Maximum size to download in bytes.
-.TP
-\<extensions><acceptedExtension>ext1</acceptedExtension><acceptedExtension>ext2</acceptedExtension>...</extensions>
-List of extensions for the files to download.
+\<bi:languages dir="/usr/local/etc/bitextor/LM/"><bi:language fingerprint="en.utf8.lm" code="en" />...</bi:languages>
+The LibTextCat configuration has been included, in this version of Bitextor, in this configuration file. In this way, the section languages has been added. In this section you can set the path where all the fingerprint are stored using the parametter dir. Every element language defines a concret fingerprint. In the parametter fingerprint you can define the name of the file and in the parametter code you can define the code of the language.
 .PP
 Here you have an
 .B example
@@ -69,36 +78,33 @@ of a full configuration file:
 
 .nf
 <?xml version="1.0" encoding="UTF-8"?>
+<bi:configuration xmlns:bi="bitextor">
+    <xi:include href="/usr/local/etc/tagaligner/config.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <bi:downloadModDest>/tmp/</bi:downloadModDest>
+    <bi:onlyBitextFile value="true"/>
+    <bi:verbose value="true" />
+    <bi:criteria>
+        <bi:fileSizePercent value="30" />
+        <bi:textLengthDifferencePercents default="30">
+            <bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="25" />
+            <bi:textLengthDifferencePercent lang1="es" lang2="en" difference="35" />
+            <bi:textLengthDifferencePercent lang1="ca lang2="en" difference="35" />
+        </bi:textLengthDifferencePercents>
+        <bi:maxEditDistance percentual="5" absolute="6" />
+        <bi:directoryPathDistance value="1" />
+        <bi:maxTotalTextLengthPercent value="20" />
+        <bi:numericFingerprintDistance value="1" />
+        <bi:minArraySize value="5" />
+        <bi:generateAllCandidates value="false" />
+        <bi:generateAmbiguousBitexts max_text_percent="1" />
+    </bi:criteria>
+    <bi:languages dir="/usr/local/etc/bitextor/LM/">
+        <bi:language fingerprint="en.utf8.lm" code="en" />
+        <bi:language fingerprint="es.utf8.lm" code="es" />
+        <bi:language fingerprint="ca.utf8.lm" code="ca" />
+    </bi:languages>
+</bi:configuration>
 
-<!-- This configuration file will contain the set of tags that should be
-	 taken in account when comparing and aligning the two files. -->
-<configuration>
-	<general>
-		<tagAlignerConfigFile>/usr/local/etc/bitextor/conf/tagaligner_config.xml</tagAlignerConfigFile>
-		<textCatConfigFile>/usr/local/etc/bitextor/LM/conf.txt</textCatConfigFile>
-		<tagAlignerMode>1</tagAlignerMode>
-		<fileSizePercent>40</fileSizePercent>
-		<textLengthPercent>100</textLengthPercent>
-		<editDistancePercent>10</editDistancePercent>
-		<directoryPathDistance>2</directoryPathDistance>
-	</general>
-	<irrelevantTags>
-		<tag>br</tag>
-		<tag>meta</tag>
-	</irrelevantTags>
-	<downloadMod>
-		<downloadPath>/home/miquel/Desktop/</downloadPath>
-		<maxBytesToDownload>800000</maxBytesToDownload>
-		<extensions>
-			<acceptedExtension>php</acceptedExtension>
-			<acceptedExtension>asp</acceptedExtension>
-			<acceptedExtension>aspx</acceptedExtension>
-			<acceptedExtension>xml</acceptedExtension>
-			<acceptedExtension>html</acceptedExtension>
-			<acceptedExtension>htm</acceptedExtension>
-		</extensions>
-	</downloadMod>
-</configuration>
 .fi
 .SH EXAMPLES OF USAGE
 .TP
@@ -115,14 +121,8 @@ If you want to process the downloaded website, but you want to tell bitextor the
 .B bitextor --set_languages -d /home/my_website
 .SH FILES
 .TP
-/usr/local/etc/bitextor/conf/bitextor_config.xml
+/usr/local/etc/bitextor/conf/config.xml
 The configuration file for Bitextor.
-.TP
-/usr/local/etc/bitextor/conf/tagaligner_config.xml
-The configuration file for LibTagAligner library.
-.TP
-/usr/local/etc/bitextor/LM/conf.txt
-The configuration file for LibTextCat library.
 .TP
 /usr/local/etc/bitextor/LM/*.lm
 All the .lm files wich contains the trigram fingerprints for LibTextCat language identification.
@@ -130,12 +130,13 @@ All the .lm files wich contains the trigram fingerprints for LibTextCat language
 .TP
 This application depends on the following tools/libraries:
 .nf
+- LibTagAligner
 - LibTidy (packages 'libtidy-0.99-0' and 'libtidy-dev').
 - LibTextCat (packages 'libtextcat0', 'libtextcat-data' and 'libtextcat-dev').
-- LibXML++ (packages 'libxml++2.6c2a' and 'libxml++2.6-dev').
+- LibXML (packages 'libxml2' and 'libxml2-dev').
 - LibEnca (packages 'libenca0' and 'libenca-dev').
-- Flex (package 'flex').
-- Wget (package 'wget').
+- LibTRE (package 'libtre4' and 'libtre-dev').
+- HtTrack (package 'httrack').
 .fi
 .SH AUTHOR
 This version of bitextor has been developped originaly by Miquel Espla.
