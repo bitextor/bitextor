@@ -1,0 +1,21 @@
+Source: bitextor
+Section: misc
+Priority: extra
+Maintainer: miquel <miquel.espla@ua.es>
+Build-Depends: debhelper (>= 7), autotools-dev
+Standards-Version: 3.8.0
+Homepage: http://bitextor.sf.net
+
+Package: bitextor
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: An automatic bitext generator that uses multilingual websites as corus.
+ Bitextor is an automatic bitext generator which obtains his base corpora from
+ the Internet. It works downloading an entire website (applying a filter to
+ download only those files written in HTML) and comparing every pair of files.
+ It detects the language and, through a group of heuristics (file size, HTML
+ skeleton edit distance, format, etc.), it tries to guess witch files have the
+ same content in different languages. Once it has identified the pairs of files,
+ it generates a bitext file in TMX format.
+ The objective of this application is to provide a simple way to obtain bi-
+ lingual corpora in a semi-supervised way to train automatic traducers.

@@ -1,0 +1,5 @@
+bitextor (3.0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- miquel <miquel.espla@ua.es>  Mon, 11 May 2009 10:49:56 +0200
