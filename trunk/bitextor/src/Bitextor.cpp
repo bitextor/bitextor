@@ -7,6 +7,7 @@
 #include "FilePreprocess.h"
 #include "GlobalParams.h"
 #include "DownloadMod.h"
+#include "bitextor_config.h"
 #include <getopt.h>
 #include <sys/stat.h>
 #include <tre/regex.h>
@@ -25,6 +26,20 @@ GetFilePath(string path)
 	return exit;
 }
 
+string
+CorrectURLPathName(string path)
+{
+	string exit="";
+	unsigned int i;
+	wcout<<Config::toWstring(path.substr(0,7))<<endl;
+	
+	if(path.length()>6 && path.substr(0,7)=="http://")
+		exit=path.substr(7);
+	else
+		exit=path;
+	return exit;
+}
+
 int
 main (int argc, char *const *argv)
 {
@@ -37,7 +52,7 @@ main (int argc, char *const *argv)
 	string file_name;
 	bool show_howtouse=false, mode_set=false, verbose=false;
 	string dest_dir="";
-	string config_file="/usr/local/etc/bitextor/conf/config.xml";
+	string config_file=BASE_CONF;
 	bool download, any_bitext;
 	struct stat my_stat;
 	int next_op;
@@ -122,9 +137,11 @@ main (int argc, char *const *argv)
 				if(verbose)
 					GlobalParams::SetVerbose();
 				if(download){
+					wcout<<L"Downloading the website..."<<endl;
 					DownloadMod mod;
 					mod.SetDestPath(GlobalParams::GetDownloadPath());
 					mod.StartDownload(Config::toWstring(dest_dir));
+					dest_dir=Config::toString(GlobalParams::GetDownloadPath())+CorrectURLPathName(dest_dir);
 				}
 				wcout<<L"Initializing Bitextor's destination path..."<<endl;
 				if(dest_dir[dest_dir.length()-1]!='/')
