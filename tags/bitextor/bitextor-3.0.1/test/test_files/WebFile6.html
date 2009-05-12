@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Bitextor: el generador automàtic de bitextos</title>
+</head>
+<body>
+<h1>Bitextor: el generador automàtic de bitextos</h1>
+<hr />
+<h2>Què és Bitextor?</h2>
+Bitextor és un generador automàtic de bitextos que obté el seu
+corpus documental d'Internet. Bitextor treballa descarregant llocs
+web sencers (aplicant un filtre per descarregar només aquells
+fitxers escrits en HTML) i comparant cada parell de fitxers. En
+detecta l'idioma i, mitjanÃ§ant un conjunt d'heurístiques (mida del
+fitxer, distància d'edició dels esquelets HTML, format, etc.),
+intenta esbrinar quins fitxers tenen el mateix contingut en
+diferents idiomes. Una vegada ha identificat els parells de fitxers
+genera un bitext en format TMX.<br />
+<br />
+L'objectiu d'aquesta aplicació es proporcionar una forma simple
+d'obtenir corpus bilingüe d'una forma semi-supervisada per a
+entrenar sistemes de traducció automàtica.<br />
+<h2>qui desenvolupa Bitextor?</h2>
+Bitextor és un projecte del <a href=
+"http://www.dlsi.ua.es/">Departament de Llenguatges i Sistemes
+Informàtics (Universitat d'Alacant)</a> .Ha hagut dues versions
+diferents de Bitextor. La versió inicial (1.0) va ser desenvolupada
+per Enrique Sanchez Villamil. En la segona, Bitextor va ser
+re-dissenyat i desenvolupat des de zero mantenint només la idea
+original . Aquest segon desenvolupament ha estat realitzat per
+<a href="mailto:miquelespla@gmail.com">Miquel Esplà i
+Gomis</a><br />
+<br />
+Ambdues versions han estat supervisades per Mikel Forcada
+Zubizarreta, membre del grup d'investigació <a href=
+"http://transducens.dlsi.ua.es/">Transducens</a> a la <a href=
+"http://www.ua.es/">Universitat d'Alacant</a><br />
+<h2>Descàrregues</h2>
+La versió 2.0rc1 de Bitextor ha estat llanÃ§ada el 22 d'octubre de
+2008 mitjanÃ§ant la <a href=
+"https://sourceforge.net/projects/bitextor/">pàgina web de Bitextor
+en SourceForge</a> . Es pot seguir el desenvolupament al <a href=
+"https://bitextor.svn.sourceforge.net/viewvc/bitextor/">servidor
+SVN del projecte</a>
+<h2>Dependències de paquets/aplicacions</h2>
+Bitextor només ha estat provat sobre sistemes GNU/Linux. Per a
+fer-lo funcionar són necessaris tots els següents
+paquets/aplicacions:
+<ul>
+<li><a href="http://tidy.sourceforge.net/">LibTidy</a> (paquets
+'libtidy-0.99-0' i 'libtidy-dev').</li>
+<li><a href=
+"http://software.wise-guys.nl/libtextcat/">LibTextCat</a> ( paquets
+'libtextcat0', 'libtextcat-data' i 'libtextcat-dev').</li>
+<li><a href="http://libxmlplusplus.sourceforge.net/">LibXML++</a> (
+paquets 'libxml++2.6c2a' i 'libxml++2.6-dev').</li>
+<li>LibEnca ( paquets 'libenca0' i 'libenca-dev').</li>
+<li><a href="http://tag-aligner.sourceforge.net/">LibTagAligner</a>
+( paquet 'tag-aligner-2.0rc1' )</li>
+<li><a href="http://flex.sourceforge.net/">Flex</a> ( paquet
+'flex').</li>
+<li><a href="http://www.gnu.org/software/wget/">Wget</a> ( paquet
+'wget').</li>
+</ul>
+<h2>Construcció i instalÂ·lació</h2>
+<ul>
+<li>./configure</li>
+<li>make</li>
+<li>make install</li>
+</ul>
+<h2>Llicència</h2>
+<p>Aquesta aplicació ha estat llançada sota<a href=
+"http://www.gnu.org/licenses/gpl.txt">GNU Llicència Pública
+General</a></p>
+<hr />
+<table width="100%">
+<tr>
+<td><a href="http://validator.w3.org/check?uri=referer"><img src=
+"http://www.w3.org/Icons/valid-xhtml10" alt=
+"Valid XHTML 1.0 Transitional" height="31" width="88" border=
+"0" /></a></td>
+</tr>
+</table>
+</body>
+</html>

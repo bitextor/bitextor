@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>Bitextor: Fitxer de Codi src/DownloadMod.h</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- Generat per Doxygen 1.5.6 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>Pàgina&nbsp;principal</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li class="current"><a href="files.html"><span>Fitxers</span></a></li>
+    </ul>
+  </div>
+<h1>src/DownloadMod.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="preprocessor">#ifndef DOWNLOADMOD_</span>
+<a name="l00002"></a>00002 <span class="preprocessor"></span><span class="preprocessor">#define DOWNLOADMOD_</span>
+<a name="l00003"></a>00003 <span class="preprocessor"></span>
+<a name="l00004"></a>00004 <span class="preprocessor">#include &lt;cstdio&gt;</span>
+<a name="l00005"></a>00005 <span class="preprocessor">#include &lt;cstdlib&gt;</span>
+<a name="l00006"></a>00006 <span class="preprocessor">#include "GlobalParams.h"</span>
+<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;iostream&gt;</span>
+<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;string&gt;</span>
+<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;vector&gt;</span>
+<a name="l00010"></a>00010 <span class="preprocessor">#include &lt;sstream&gt;</span>
+<a name="l00011"></a>00011 <span class="preprocessor">#include &lt;sys/stat.h&gt;</span>
+<a name="l00012"></a>00012 <span class="preprocessor">#include &lt;libtagaligner/ConfigReader.h&gt;</span>
+<a name="l00013"></a>00013 
+<a name="l00014"></a>00014 <span class="keyword">using namespace </span>std;
+<a name="l00015"></a>00015 
+<a name="l00027"></a><a class="code" href="classDownloadMod.html">00027</a> <span class="keyword">class </span><a class="code" href="classDownloadMod.html" title="Mòdul de descàrrega web.">DownloadMod</a>
+<a name="l00028"></a>00028 {
+<a name="l00029"></a>00029 <span class="keyword">private</span>:
+<a name="l00031"></a>00031         <span class="keywordtype">long</span> max_downloaded_size;
+<a name="l00032"></a>00032          
+<a name="l00034"></a>00034         wstring dest_path;
+<a name="l00035"></a>00035 
+<a name="l00036"></a>00036 <span class="keyword">public</span>:  
+<a name="l00038"></a>00038         <a class="code" href="classDownloadMod.html#5c7e5285185d1462984c99d7c86f9b28">DownloadMod</a>();
+<a name="l00039"></a>00039            
+<a name="l00041"></a>00041         <a class="code" href="classDownloadMod.html#7ca2deebac96a5bf14e372b2fd9f00e2">~DownloadMod</a>();
+<a name="l00042"></a>00042         
+<a name="l00047"></a>00047         <span class="keywordtype">void</span> <a class="code" href="classDownloadMod.html#359d7422ffd39c10f874fc8daa0fb5b3">SetMaxDownloadedSize</a>(<span class="keyword">const</span> <span class="keywordtype">long</span> &amp;mdt);
+<a name="l00048"></a>00048 
+<a name="l00054"></a>00054         <span class="keywordtype">void</span> <a class="code" href="classDownloadMod.html#d09d4c9c72751ce03241baaa956febaa">SetDestPath</a>(<span class="keyword">const</span> wstring &amp;path);
+<a name="l00055"></a>00055 
+<a name="l00061"></a>00061         <span class="keywordtype">bool</span> <a class="code" href="classDownloadMod.html#1aefe670908024a16de46a4234e9c569">StartDownload</a>(<span class="keyword">const</span> wstring &amp;website);
+<a name="l00062"></a>00062 };
+<a name="l00063"></a>00063 
+<a name="l00064"></a>00064 <span class="preprocessor">#endif </span><span class="comment">/*DOWNLOADMOD_*/</span>
+</pre></div></div>
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+</body>
+</html>

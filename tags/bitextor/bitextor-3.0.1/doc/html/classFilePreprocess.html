@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>Bitextor: Referència de la Classe FilePreprocess</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- Generat per Doxygen 1.5.6 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>Pàgina&nbsp;principal</span></a></li>
+      <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
+      <li><a href="files.html"><span>Fitxers</span></a></li>
+    </ul>
+  </div>
+  <div class="tabs">
+    <ul>
+      <li><a href="annotated.html"><span>Llista&nbsp;de&nbsp;Classes</span></a></li>
+      <li><a href="functions.html"><span>Membres&nbsp;de&nbsp;Classes</span></a></li>
+    </ul>
+  </div>
+</div>
+<div class="contents">
+<h1>Referència de la Classe FilePreprocess</h1><!-- doxytag: class="FilePreprocess" -->Mòdul de preprocessament de fitxers.  
+<a href="#_details">Més...</a>
+<p>
+<code>#include &lt;<a class="el" href="FilePreprocess_8h-source.html">FilePreprocess.h</a>&gt;</code>
+<p>
+
+<p>
+<a href="classFilePreprocess-members.html">Llista de tots els membres.</a><table border="0" cellpadding="0" cellspacing="0">
+<tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Mètodes Públics Estàtics</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFilePreprocess.html#56877623558f9a12ef4f06814436f24e">PreprocessFile</a> (const string &amp;file_path)</td></tr>
+
+</table>
+<hr><a name="_details"></a><h2>Descripció Detallada</h2>
+Mòdul de preprocessament de fitxers. 
+<p>
+Classe que conté el mètode de preprocessament de fitxers. Es basa en les llibreries de TidyHTML i Enca. La primera s'encarrega de "netejar" l'etiquetatge del document HTML d'entrada, així com de la seua conversió a UTF-8. El se- gon s'encarrega de detectar la codificació de caracters del fitxer d'entrada per a poder realitzar l'esmentada conversió.<p>
+<dl class="author" compact><dt><b>Autor:</b></dt><dd>Miquel Esplà i Gomis. </dd></dl>
+<hr><h2>Documentació de les Funcions Membre</h2>
+<a class="anchor" name="56877623558f9a12ef4f06814436f24e"></a><!-- doxytag: member="FilePreprocess::PreprocessFile" ref="56877623558f9a12ef4f06814436f24e" args="(const string &amp;file_path)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool FilePreprocess::PreprocessFile           </td>
+          <td>(</td>
+          <td class="paramtype">const string &amp;&nbsp;</td>
+          <td class="paramname"> <em>file_path</em>          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que s'encarrega de realitzar el preprocessament dels fitxers d'entrada de l'aplicació. Després de l'execució d'aquest mètode, el fitxer d'entrada queda corregit, des d'un punt de vista de coherència de l'etiquetatge HTML, i convertit a UTF-8. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>file_path</em>&nbsp;</td><td>Aquest paràmetre indica la ruta del fitxer d'entrada en el sistema. </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Retorna:</b></dt><dd>El mètode retorna <code>true</code> si el preprocessament s'ha efectuat de forma satisfactòria o <code>false</code> en cas contrari. </dd></dl>
+<dl compact><dt><b>Excepcions:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>char*</em>&nbsp;</td><td>El mètode llança un missatge d'error si no s'ha especificat la ruta al fitxer de configuració de la llibreria TextCat. </td></tr>
+  </table>
+</dl>
+
+</div>
+</div><p>
+<hr>La documentació d'aquesta classe es va generar a partir dels següents fitxers:<ul>
+<li>src/<a class="el" href="FilePreprocess_8h-source.html">FilePreprocess.h</a><li>src/FilePreprocess.cpp</ul>
+</div>
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+</body>
+</html>

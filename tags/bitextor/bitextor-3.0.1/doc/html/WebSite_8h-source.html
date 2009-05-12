@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>Bitextor: Fitxer de Codi src/WebSite.h</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- Generat per Doxygen 1.5.6 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>Pàgina&nbsp;principal</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li class="current"><a href="files.html"><span>Fitxers</span></a></li>
+    </ul>
+  </div>
+<h1>src/WebSite.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="preprocessor">#ifndef WEBSITE_H_</span>
+<a name="l00002"></a>00002 <span class="preprocessor"></span><span class="preprocessor">#define WEBSITE_H_</span>
+<a name="l00003"></a>00003 <span class="preprocessor"></span>
+<a name="l00004"></a>00004 <span class="preprocessor">#include "WebFile.h"</span>
+<a name="l00005"></a>00005 <span class="preprocessor">#include "GlobalParams.h"</span>
+<a name="l00006"></a>00006 <span class="preprocessor">#include "Heuristics.h"</span>
+<a name="l00007"></a>00007 <span class="preprocessor">#include "Bitext.h"</span>
+<a name="l00008"></a>00008 
+<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;libtagaligner/ConfigReader.h&gt;</span>
+<a name="l00010"></a>00010 <span class="preprocessor">#include &lt;dirent.h&gt;</span> 
+<a name="l00011"></a>00011 <span class="preprocessor">#include &lt;iostream&gt;</span>
+<a name="l00012"></a>00012 <span class="preprocessor">#include &lt;sstream&gt;</span>
+<a name="l00013"></a>00013 <span class="preprocessor">#include &lt;sys/types.h&gt;</span>
+<a name="l00014"></a>00014 <span class="preprocessor">#include &lt;sys/stat.h&gt;</span>
+<a name="l00015"></a>00015 <span class="preprocessor">#include &lt;unistd.h&gt;</span>
+<a name="l00016"></a>00016 <span class="preprocessor">#include &lt;map&gt;</span>
+<a name="l00017"></a>00017 <span class="preprocessor">#include &lt;vector&gt;</span>
+<a name="l00018"></a>00018 <span class="preprocessor">#include &lt;sys/types.h&gt;</span>
+<a name="l00019"></a>00019 <span class="preprocessor">#include &lt;sys/stat.h&gt;</span>
+<a name="l00020"></a>00020 <span class="preprocessor">#include &lt;stack&gt;</span>
+<a name="l00021"></a>00021 
+<a name="l00022"></a>00022 
+<a name="l00023"></a>00023 
+<a name="l00035"></a><a class="code" href="classWebSite.html">00035</a> <span class="keyword">class </span><a class="code" href="classWebSite.html" title="Classe que conté els elements d&amp;#39;un lloc web.">WebSite</a>
+<a name="l00036"></a>00036 {
+<a name="l00037"></a>00037 <span class="keyword">private</span>:
+<a name="l00038"></a>00038 
+<a name="l00042"></a>00042         <span class="keywordtype">string</span> base_path;
+<a name="l00043"></a>00043 
+<a name="l00044"></a>00044 <span class="keyword">public</span>:
+<a name="l00048"></a>00048         <a class="code" href="classWebSite.html#aaf04576d05ae799a078f4f3655f3a15">WebSite</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;path);
+<a name="l00049"></a>00049         
+<a name="l00053"></a>00053         <a class="code" href="classWebSite.html#dfe93657f2ab894aa09d2e701985537c">~WebSite</a>();
+<a name="l00054"></a>00054         
+<a name="l00060"></a>00060         <span class="keywordtype">string</span> <a class="code" href="classWebSite.html#d333fe4c576ad7a40705bd0736b86773">GetBasePath</a>();
+<a name="l00061"></a>00061 
+<a name="l00067"></a>00067         <span class="keywordtype">string</span> <a class="code" href="classWebSite.html#b238d061d1623f798df5007e9b7d893b">GetFileName</a>(<span class="keywordtype">string</span> path);
+<a name="l00068"></a>00068         
+<a name="l00074"></a>00074         <span class="keywordtype">bool</span> <a class="code" href="classWebSite.html#f2e4e4929b0991e6c5ead1fa35f76504">GenerateBitexts</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;dest_path);
+<a name="l00075"></a>00075         
+<a name="l00088"></a>00088         <span class="keywordtype">bool</span> <a class="code" href="classWebSite.html#37118cd908402b432c8f186ee065dd33">GetMatchedFiles</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;dest_dir, vector&lt; WebFile* &gt; **file_list, <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> &amp;size, FILE * main_fout=NULL);
+<a name="l00089"></a>00089 };
+<a name="l00090"></a>00090 
+<a name="l00091"></a>00091 <span class="preprocessor">#endif </span><span class="comment">/*WEBSITE_H_*/</span>
+</pre></div></div>
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+</body>
+</html>

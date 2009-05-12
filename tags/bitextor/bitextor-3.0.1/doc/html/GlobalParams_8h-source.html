@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>Bitextor: Fitxer de Codi src/GlobalParams.h</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- Generat per Doxygen 1.5.6 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>Pàgina&nbsp;principal</span></a></li>
+      <li><a href="annotated.html"><span>Classes</span></a></li>
+      <li class="current"><a href="files.html"><span>Fitxers</span></a></li>
+    </ul>
+  </div>
+<h1>src/GlobalParams.h</h1><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 <span class="preprocessor">#ifndef GLOBALPARAMS_H_</span>
+<a name="l00002"></a>00002 <span class="preprocessor"></span><span class="preprocessor">#define GLOBALPARAMS_H_</span>
+<a name="l00003"></a>00003 <span class="preprocessor"></span>
+<a name="l00004"></a>00004 <span class="preprocessor">#include &lt;libtagaligner/ConfigReader.h&gt;</span>
+<a name="l00005"></a>00005 <span class="preprocessor">#include &lt;cstdlib&gt;</span>
+<a name="l00006"></a>00006 <span class="preprocessor">#include &lt;iostream&gt;</span>
+<a name="l00007"></a>00007 <span class="preprocessor">#include &lt;fstream&gt;</span>
+<a name="l00008"></a>00008 <span class="preprocessor">#include &lt;map&gt;</span>
+<a name="l00009"></a>00009 <span class="preprocessor">#include &lt;string&gt;</span>
+<a name="l00010"></a>00010 <span class="preprocessor">#include &lt;algorithm&gt;</span>
+<a name="l00011"></a>00011 <span class="preprocessor">#include &lt;vector&gt;</span>
+<a name="l00012"></a>00012 <span class="preprocessor">#include &lt;ctime&gt;</span>
+<a name="l00013"></a>00013 
+<a name="l00014"></a>00014 <span class="keyword">using namespace </span>std;
+<a name="l00015"></a>00015 
+<a name="l00016"></a>00016 <span class="preprocessor">#define IRRELEVANT 1</span>
+<a name="l00017"></a>00017 <span class="preprocessor"></span>
+<a name="l00026"></a><a class="code" href="classGlobalParams.html">00026</a> <span class="keyword">class </span><a class="code" href="classGlobalParams.html" title="Classe que conté els paràmetres globals de l&amp;#39;aplicació.">GlobalParams</a>
+<a name="l00027"></a>00027 {
+<a name="l00028"></a>00028 <span class="keyword">private</span>:
+<a name="l00029"></a>00029 
+<a name="l00033"></a>00033         <span class="keyword">static</span> <span class="keywordtype">string</span> config_file;
+<a name="l00034"></a>00034 
+<a name="l00039"></a>00039         <span class="keyword">static</span> <span class="keywordtype">double</span> max_edit_distance_length_absolute;
+<a name="l00040"></a>00040 
+<a name="l00045"></a>00045         <span class="keyword">static</span> <span class="keywordtype">double</span> max_edit_distance_length_percentual;
+<a name="l00046"></a>00046 
+<a name="l00053"></a>00053         <span class="keyword">static</span> <span class="keywordtype">int</span> directory_depth_distance;
+<a name="l00054"></a>00054 
+<a name="l00065"></a>00065         <span class="keyword">static</span> <span class="keywordtype">double</span> text_distance_percent_differenciator;
+<a name="l00066"></a>00066 
+<a name="l00071"></a>00071         <span class="keyword">static</span> map&lt;wstring,double&gt; file_size_diference_percents;
+<a name="l00072"></a>00072 
+<a name="l00078"></a>00078         <span class="keyword">static</span> <span class="keywordtype">double</span> file_size_difference_percent;
+<a name="l00079"></a>00079 
+<a name="l00083"></a>00083         <span class="keyword">static</span> wstring textcat_config_file;
+<a name="l00084"></a>00084 
+<a name="l00088"></a>00088         <span class="keyword">static</span> <span class="keywordtype">int</span> downloaded_size;
+<a name="l00089"></a>00089 
+<a name="l00093"></a>00093         <span class="keyword">static</span> wstring download_path;
+<a name="l00094"></a>00094 
+<a name="l00098"></a>00098         <span class="keyword">static</span> <span class="keywordtype">bool</span> guess_language;
+<a name="l00099"></a>00099 
+<a name="l00103"></a>00103         <span class="keyword">static</span> wstring fingerprints_dir;
+<a name="l00104"></a>00104         
+<a name="l00108"></a>00108         <span class="keyword">static</span> <span class="keywordtype">double</span> max_total_text_lenght_diff;
+<a name="l00109"></a>00109 
+<a name="l00113"></a>00113         <span class="keyword">static</span> <span class="keywordtype">int</span> max_nfingerprint_distance;
+<a name="l00114"></a>00114 
+<a name="l00118"></a>00118         <span class="keyword">static</span> <span class="keywordtype">bool</span> all_bitexts_in_one;
+<a name="l00119"></a>00119 
+<a name="l00123"></a>00123         <span class="keyword">static</span> wofstream log_file;
+<a name="l00124"></a>00124 
+<a name="l00128"></a>00128         <span class="keyword">static</span> <span class="keywordtype">int</span> min_array_size;
+<a name="l00129"></a>00129 
+<a name="l00133"></a>00133         <span class="keyword">static</span> <span class="keywordtype">bool</span> verbose;
+<a name="l00134"></a>00134 
+<a name="l00138"></a>00138         <span class="keyword">static</span> <span class="keywordtype">bool</span> create_all_candidates;
+<a name="l00139"></a>00139 
+<a name="l00143"></a>00143         <span class="keyword">static</span> <span class="keywordtype">void</span> GenerateTextCatConfigFile();
+<a name="l00144"></a>00144 
+<a name="l00148"></a>00148         <span class="keyword">static</span> <span class="keywordtype">double</span> generate_ambiguous_bitexts;
+<a name="l00149"></a>00149 
+<a name="l00150"></a>00150 <span class="keyword">public</span>:
+<a name="l00154"></a><a class="code" href="classGlobalParams.html#a2eb45e290c865d53b6c8c44ada8ffc7">00154</a>         <span class="keyword">static</span> map&lt;wstring,wstring&gt; <a class="code" href="classGlobalParams.html#a2eb45e290c865d53b6c8c44ada8ffc7">fingerprints</a>;
+<a name="l00155"></a>00155 
+<a name="l00159"></a>00159         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#74828805be865b55e379b5c93cfde26f">Clear</a>();
+<a name="l00160"></a>00160         
+<a name="l00165"></a>00165         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#57acce94bee6ccc7638d7beabdf5055f">GetMaxEditDistancePercentual</a>();
+<a name="l00166"></a>00166 
+<a name="l00171"></a>00171         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#ec2ba22a3cf78699d3e04ff5f5952049">GetMaxEditDistanceAbsolute</a>();
+<a name="l00172"></a>00172         
+<a name="l00178"></a>00178         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#debc06df62222c4b25c64de6bc9fad9d">GetTextDistancePercentDifferenciator</a>();
+<a name="l00179"></a>00179 
+<a name="l00186"></a>00186         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#5ae8de0dd110043a52d0427233bbb9f4">SetDirectoryDepthDistance</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> &amp;value);
+<a name="l00187"></a>00187 
+<a name="l00192"></a>00192         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#08a265774d76867d4f3a17e5cbc23e3d">SetTextDistancePercentDifferenciator</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> &amp;value);
+<a name="l00193"></a>00193         
+<a name="l00200"></a>00200         <span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code" href="classGlobalParams.html#657028a19334f009964300e1b38876fe">GetDirectoryDepthDistance</a>();
+<a name="l00201"></a>00201         
+<a name="l00212"></a>00212         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#abf6700e0d6cebabd41e336e8c8e8df9">LoadGlobalParams</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;path);
+<a name="l00213"></a>00213         
+<a name="l00220"></a>00220         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#0bc449c005567465f21dd3371ecc209f">GetFileSizeDifferencePercent</a>();
+<a name="l00221"></a>00221         
+<a name="l00226"></a>00226         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#7c889c6a25d14a313edf970d677035c8">SetFileSizeDifferencePercent</a>(<span class="keyword">const</span> <span class="keywordtype">double</span> &amp;value);
+<a name="l00227"></a>00227         
+<a name="l00232"></a>00232         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#6d38b0ba1f7e4e206889e6a65205962f">SetTextCatConfigFile</a>(<span class="keyword">const</span> wstring &amp;path);
+<a name="l00233"></a>00233         
+<a name="l00238"></a>00238         <span class="keyword">static</span> wstring <a class="code" href="classGlobalParams.html#78eda851eae048853555cf0d9bf87146">GetTextCatConfigFile</a>();
+<a name="l00239"></a>00239 
+<a name="l00245"></a>00245         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#9723d63562d80c412fa55d0a44d7ea71">ProcessNode</a>(xmlNode* node, wstring tagname);
+<a name="l00246"></a>00246 
+<a name="l00251"></a>00251         <span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code" href="classGlobalParams.html#9364a5e301f6f2e8bdc5c5516911cd35">GetMaxDownloadedSize</a>();
+<a name="l00252"></a>00252 
+<a name="l00257"></a>00257         <span class="keyword">static</span> wstring <a class="code" href="classGlobalParams.html#0e31ff71feebd3e6c0e9d5b1de53b68e">GetDownloadPath</a>();
+<a name="l00258"></a>00258         
+<a name="l00263"></a>00263         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#ad13fb241566270574f24a647eceeb71">SetGuessLanguage</a>(<span class="keyword">const</span> <span class="keywordtype">bool</span> &amp;value);
+<a name="l00264"></a>00264         
+<a name="l00269"></a>00269         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#66c191263c6c016ad1bd1c161568c7eb">GetGuessLanguage</a>();
+<a name="l00270"></a>00270         
+<a name="l00281"></a>00281         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#87f9662a4cbee65926dea15af4c1a14c">AddFileSizeDiferencePercent</a>(<span class="keyword">const</span> wstring &amp;lang1, <span class="keyword">const</span> wstring &amp;lang2, <span class="keyword">const</span> <span class="keywordtype">double</span> &amp;percent);
+<a name="l00282"></a>00282         
+<a name="l00289"></a>00289         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#16f901058e9858a187a905285caa5fe0">GetFileSizeDiferencePercent</a>(<span class="keyword">const</span> wstring &amp;lang1, <span class="keyword">const</span> wstring &amp;lang2);
+<a name="l00290"></a>00290 
+<a name="l00295"></a>00295         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#0b4e613e803963d7261a91caf75e5c8e">GetMaxTotalTextLengthDiff</a>();
+<a name="l00296"></a>00296 
+<a name="l00301"></a>00301         <span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code" href="classGlobalParams.html#1205a573a05d114f60b0713fd73db0d6">GetMaxNumericFingerprintDistance</a>();
+<a name="l00302"></a>00302 
+<a name="l00307"></a>00307         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#a9a8980fb7c7e8156ee0282119d5f79e">AllBitextInAFile</a>();
+<a name="l00308"></a>00308 
+<a name="l00313"></a>00313         <span class="keyword">static</span> <span class="keywordtype">int</span> <a class="code" href="classGlobalParams.html#aad3304f2ff145dc6966067be7349cfd">GetMinArraySize</a>();
+<a name="l00314"></a>00314 
+<a name="l00319"></a>00319         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#1372f144205809e26d6e0f5c647dea7a">WriteLog</a>(<span class="keyword">const</span> wstring &amp;log_text);
+<a name="l00320"></a>00320 
+<a name="l00326"></a>00326         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#72be62f676634efe0d92f765203a3fa4">OpenLog</a>(<span class="keyword">const</span> <span class="keywordtype">string</span> &amp;log_path);
+<a name="l00327"></a>00327 
+<a name="l00331"></a>00331         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#3c671586434d7ed37394e18fbd234e60">CloseLog</a>();
+<a name="l00332"></a>00332 
+<a name="l00337"></a>00337         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#18536880a714d781a6906609a9bb199f">GetCreateAllCandidates</a>();
+<a name="l00338"></a>00338 
+<a name="l00343"></a>00343         <span class="keyword">static</span> <span class="keywordtype">bool</span> <a class="code" href="classGlobalParams.html#1d7eb47e62c82a77a5395214cca94fad">IsVerbose</a>();
+<a name="l00344"></a>00344 
+<a name="l00348"></a>00348         <span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code" href="classGlobalParams.html#069b564690a2a6220c992c49cd653521">SetVerbose</a>();
+<a name="l00349"></a>00349 
+<a name="l00354"></a>00354         <span class="keyword">static</span> <span class="keywordtype">double</span> <a class="code" href="classGlobalParams.html#f1519b5866dd4b3d6eb7e9769a2bdd2b">GetGenerateAmbiguousBitexts</a>();
+<a name="l00355"></a>00355 };
+<a name="l00356"></a>00356 
+<a name="l00357"></a>00357 <span class="preprocessor">#endif </span><span class="comment">/*GLOBALPARAMS_H_*/</span>
+</pre></div></div>
+<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+</body>
+</html>
