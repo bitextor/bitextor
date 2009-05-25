@@ -94,6 +94,6 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 	}
 	else
 		throw "TextCat's configuration file has not been specified. Please, define it in the bitextor's configuration file in the section <textCatConfigFile>XXXXX</textCatConfigFile>.";
-	
+
 	return exit;
 }

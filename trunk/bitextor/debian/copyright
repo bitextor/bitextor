@@ -1,24 +1,35 @@
-This package was debianized by miquel <miquel.espla@ua.es> on
-Mon, 11 May 2009 10:49:56 +0200.
+This package was debianized by Miquel Esplà i Gomis <miquel.espla@ua.es> on
+Wed, 06 May 2009 09:37:12 +0200.
 
-It was downloaded from <url://example.com>
+It was downloaded from <www.sf.net/projects/bitextor>
 
-Upstream Author(s):
+Upstream Author:
 
-    <put author's name and email here>
-    <likewise for another author>
+    Miquel Esplà i Gomis <miquel.espla@ua.es>
 
 Copyright:
 
-    <Copyright (C) YYYY Name OfAuthor>
-    <likewise for another author>
+    Copyright (C) 2008-2009 - Universitat d'Alacant
 
 License:
 
-    <Put the license of the package here indented by 4 spaces>
+This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+ 
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-The Debian packaging is copyright 2009, miquel <miquel.espla@ua.es> and
-is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
 
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here.
+The Debian packaging is copyright 2009, Miquel Esplà i Gomis <miquel.espla@ua.es> and
+is licensed under the GPL, see above.
+

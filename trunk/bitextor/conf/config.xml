@@ -312,7 +312,7 @@
 	</bi:criteria>
 	<!-- In this section you can define the path of the LibTextCat fingerpint files for every language in the parametter "dir". Then, with every "language" element you will have to definine the name of the file ("fingerprint")
 	and the language that it represents ("code"). -->
-	<bi:languages dir="/usr/local/etc/bitextor/LM/">
+	<bi:languages dir="/usr/local/etc/bitextor3/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
 		<bi:language fingerprint="da.utf8.lm" code="da" />
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />

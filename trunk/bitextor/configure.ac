@@ -9,7 +9,6 @@ m4_define([required_libenca_version], [1.9])
 m4_define([required_libtre_version], [0.7.5])
 AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
 AC_CONFIG_SRCDIR([src/Bitext.h])
-AC_CONFIG_HEADER([config.h])
 
 GENERIC_LIBRARY_NAME=bitextor
 
@@ -132,7 +131,8 @@ AC_FUNC_REALLOC
 AC_FUNC_STAT
 AC_CHECK_FUNCS([memset mkdir strndup])
 
-AC_CONFIG_FILES([Makefile
+AC_CONFIG_FILES([
+				 Makefile
                  src/Makefile
-		 src/bitextor_config.h])
+				 ])
 AC_OUTPUT
