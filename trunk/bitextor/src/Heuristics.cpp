@@ -85,7 +85,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 	else
 		max_diff_abs=GlobalParams::GetMaxEditDistanceAbsolute();
 
-	if(abs((int)vec1len-(int)vec2len)>max_diff_abs || abs((int)vec1len-(int)vec2len)>max_diff_percent){
+	if((unsigned int)abs((int)vec1len-(int)vec2len)>max_diff_abs || (unsigned int)abs((int)vec1len-(int)vec2len)>max_diff_percent){
 		if(result!=NULL)
 			*result=abs((int)vec1len-(int)vec2len);
 		return false;
@@ -100,7 +100,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 		if(result!=NULL)
 			*result=res;
 
-		if(max_diff_abs>res && max_diff_percent>res)
+		if(max_diff_abs>=res && max_diff_percent>=res)
 			return true;
 		else
 			return false;
@@ -109,7 +109,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 
 double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 	unsigned int text_distance;
-	double result=0, tmp;
+	double result=0, tmp, difference;
 
 	switch(op){
 		case SUBST:
@@ -123,8 +123,13 @@ double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 					else
 						tmp=ctag1;
 				}
-				if(tmp>(GlobalParams::GetTextDistancePercentDifferenciator()/(double)100))
-					result=1;
+				difference=GlobalParams::GetTextDistancePercentDifferenciator()/(double)100;
+				if(difference>1){
+					if(tmp>difference)
+						result=1;
+				}
+				else
+					result=0;
 			}
 			else if(ctag1<0 && ctag2<0){
 				if(ctag1!=ctag2)
@@ -160,7 +165,6 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *val
 
 bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
 	double res;
-	unsigned int maj;
 
 	if(GlobalParams::GetMaxNumericFingerprintDistance()==-1 || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
 		if(result!=NULL)

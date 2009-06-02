@@ -30,8 +30,7 @@ string
 CorrectURLPathName(string path)
 {
 	string exit="";
-	unsigned int i;
-	wcout<<Config::toWstring(path.substr(0,7))<<endl;
+	//wcout<<Config::toWstring(path.substr(0,7))<<endl;
 	
 	if(path.length()>6 && path.substr(0,7)=="http://")
 		exit=path.substr(7);
@@ -45,15 +44,12 @@ main (int argc, char *const *argv)
 {
 	WebSite *ws;
 	vector<Bitext> results;
-	unsigned int n_results;
 	Bitext bitext;
 	ifstream file;
-	unsigned int i;
 	string file_name;
-	bool show_howtouse=false, mode_set=false, verbose=false;
+	bool show_howtouse=false, mode_set=false, verbose=false, download=false;
 	string dest_dir="";
 	string config_file=BASE_CONF;
-	bool download, any_bitext;
 	struct stat my_stat;
 	int next_op;
 	unsigned short option; //Indicates if the user has introduced an option

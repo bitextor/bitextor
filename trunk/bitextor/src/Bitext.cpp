@@ -8,6 +8,7 @@
 #include "GlobalParams.h"
 #include <libtagaligner/ConfigReader.h>
 #include <libtagaligner/Aligner.h>
+#include <sstream>
 
 Bitext::Bitext()
 {
@@ -26,6 +27,7 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 	this->wf1=wf1;
 	this->wf2=wf2;
 	bool exit=true;
+	wostringstream *oss;
 
 	double aux_result;
 	unsigned int diff_length;
@@ -60,11 +62,17 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 								this->n_diff_numbers=aux_result;
 							}
 							else{
-								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive.");
+								oss=new wostringstream();
+								*oss<<aux_result;
+								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
+								delete oss;
 							}
 						}
 						else{
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive");
+							oss=new wostringstream();
+							*oss<<aux_result;
+							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
+							delete oss;
 						}
 					}
 					else{
@@ -95,11 +103,9 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 bool Bitext::GenerateBitext(FILE *main_fout, unsigned int starting_tuid, unsigned int *last_tuid)
 {
 	Aligner *aligner;
-	bool correct_alignment;
 	bool exit=true;
 	ifstream fin1, fin2;
 	wstring tagaligneroutput;
-	FILE* fout;
 	FragmentedFile ff1, ff2;
 
 	if(this->is_initialized){

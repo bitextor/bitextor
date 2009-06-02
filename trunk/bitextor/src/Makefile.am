@@ -23,7 +23,7 @@ Bitextor.cpp
 
 
 
-AM_CPPFLAGS = -g3 -Wall -Wunused -Wmissing-prototypes -DBASE_CONF='"${sysconfdir}/config.xml"'
+AM_CPPFLAGS = -g3 -Wall -Wunused -DBASE_CONF='"${sysconfdir}/config.xml"'
 
 INCLUDES = $(BITEXTOR_CFLAGS) -I/usr/include/tidy -I/usr/include/libtextcat
 

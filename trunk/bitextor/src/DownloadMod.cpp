@@ -31,7 +31,6 @@ void DownloadMod::SetDestPath(const wstring &path)
 bool DownloadMod::StartDownload(const wstring &website)
 {
 	string command;
-	unsigned int i;
 	ostringstream ss;
 	bool exit;
 

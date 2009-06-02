@@ -159,12 +159,8 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 	xmlChar *node_prop;
 	wstring key, value;
 	xmlAttrPtr propPtr;
-	short op=EMPTY;
-	short in=EMPTY;
-	short out=EMPTY;
 	wstring before;
 	wstring after;
-	double dvalue;
 	map<wstring,short>::iterator iterator;
 	wstring tmp;
 	wstring lang1=L"", lang2=L"";

@@ -38,7 +38,7 @@ string WebSite::GetBasePath()
 
 bool WebSite::GenerateBitexts(const string &dest_path)
 {
-	DIR *directorio;
+	DIR *directorio=NULL;
 	struct dirent *fichero;
 	struct stat fich;
 	string dir, file_name;
@@ -72,7 +72,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		dirs=new stack<string>();
 		subdirs=new stack<string>();
 		dirs->push(this->base_path);
-		for(i=0;i<GlobalParams::GetDirectoryDepthDistance()+1;i++)
+		for(i=0;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
 			file_list[i]=new vector< WebFile* >();
 		
 		//Starting reading of directory by levels
@@ -96,7 +96,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 										if(file_name.length()<4 || file_name[file_name.length()-4]!=L'.' || file_name[file_name.length()-3]!=L'x' || file_name[file_name.length()-2]!=L'm' || file_name[file_name.length()-1]!=L'l'){
 											wf=new WebFile();
 											wf->Initialize(file_name);
-											if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (GlobalParams::GetMinArraySize()!=-1 && GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size())))){
+											if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (GlobalParams::GetMinArraySize()!=-1 && (unsigned int)GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size())))){
 												file_list[level]->push_back(wf);
 											}
 											else
@@ -116,7 +116,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			dirs=subdirs;
 			subdirs=new stack<string>();
 			//If we have not full the directory level structure, we follow loading files
-			if(level<GlobalParams::GetDirectoryDepthDistance())
+			if((int)level<GlobalParams::GetDirectoryDepthDistance())
 				level++;
 			//If the structure is full, we calculate the candidates for higher level files, delete this level and load a new lower level
 			else{
@@ -129,7 +129,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 					delete file_list[0]->at(i);
 				}
 				delete file_list[0];
-				for(i=1;i<GlobalParams::GetDirectoryDepthDistance()+1;i++)
+				for(i=1;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
 					file_list[i-1]=file_list[i];
 				file_list[i-1]=new vector< WebFile* >();
 			}
@@ -166,7 +166,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 bool WebSite::GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout)
 {
 	bool exit=false;
-	unsigned int i,j,k,l,m;
+	unsigned int i,j,k,l;
 	Bitext* bitext;
 	string file_name;
 	ostringstream *aux_sstream;

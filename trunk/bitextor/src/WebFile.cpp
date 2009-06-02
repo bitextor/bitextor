@@ -60,16 +60,12 @@ void WebFile::GetNonAplha(wstring text){
 bool WebFile::Initialize(const string &path)
 {
 	wstring str_temp;
-	filebuf *fb;
-	istream *in;
-	bool exit=true, found_ext;
-	int i;
+	bool exit=true;
+	unsigned int i;
 	ifstream fin;
 	wstring text, content;
 	vector<int> tags;
-	time_t rawtime;
 	FragmentedFile ffile;
-	FILE *f;
 
 	if(GlobalParams::GetTextCatConfigFile()==L"")
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";

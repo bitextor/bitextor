@@ -57,7 +57,7 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 				//Now we will clean the HTML file
 				tdoc = tidyCreate();
 				rc = -1;
-				
+
 				ok = tidyOptSetValue(tdoc, TidyInCharEncoding, encod.c_str());
 				ok = tidyOptSetValue(tdoc, TidyOutCharEncoding, "utf8");
 				ok = tidyOptSetBool(tdoc, TidyXhtmlOut, yes);
@@ -68,6 +68,8 @@ bool FilePreprocess::PreprocessFile(const string &file_path)
 				ok = tidyOptSetBool(tdoc, TidyMakeBare, yes);
 				ok = tidyOptSetBool(tdoc, TidyDropPropAttrs, yes);
 				ok = tidyOptSetBool(tdoc, TidyPunctWrap, yes);
+				ok = tidyOptSetBool(tdoc, TidyHideComments, yes);
+				ok = tidyOptSetValue(tdoc, TidyBodyOnly, "1");
 				
 				rc = tidySetErrorBuffer(tdoc, &errbuf);
 				rc = tidyCleanAndRepair( tdoc );
