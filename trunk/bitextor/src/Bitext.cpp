@@ -54,7 +54,6 @@ bool Bitext::Initialize(WebFile *wf1, WebFile *wf2)
 										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());
 									this->edit_distance=aux_result;
 								}
-								
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 								if(!exit){
 									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
@@ -202,8 +201,10 @@ bool Bitext::isBetterThan(Bitext &bitext, bool *disabled)
 					exit= false;
 				else if(bitext.n_diff_numbers==n_diff_numbers){
 					if(disabled!=NULL && GlobalParams::GetGenerateAmbiguousBitexts()!=-1){
-						if(bitext.text_difference<text_difference)
+						if(bitext.text_difference<text_difference){
 							*disabled=((abs((int)bitext.text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+							exit=false;
+						}
 						else{
 							if(bitext.text_difference>text_difference)
 								*disabled=((abs((int)bitext.text_difference-(int)text_difference)/bitext.text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
