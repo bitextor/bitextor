@@ -58,6 +58,9 @@ public:
 	 */
 	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result=NULL);
 
+	static wstring lang1;
+	static wstring lang2;
+
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
 	 * @param op Code of the operation wich will be performed (deletion, insertion, substitution).

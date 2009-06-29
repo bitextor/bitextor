@@ -8,6 +8,9 @@
 #include <math.h>
 #include <libtagaligner/EditDistanceTools.h>
 
+wstring Heuristics::lang1=L"";
+wstring Heuristics::lang2=L"";
+
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 {
 	return (wf1->GetFileType()==wf2->GetFileType());
@@ -95,6 +98,8 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 			beam=0;
 		else
 			beam=Config::getDiagonalSize();
+		lang1=wf1->GetLang();
+		lang2=wf2->GetLang();
 		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
 
 		if(result!=NULL)
@@ -123,13 +128,11 @@ double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 					else
 						tmp=ctag1;
 				}
-				difference=GlobalParams::GetTextDistancePercentDifferenciator()/(double)100;
-				if(difference>1){
+				difference=GlobalParams::GetFileSizeDiferencePercent(lang1,lang2)/(double)100;
+				if(difference>=0){
 					if(tmp>difference)
 						result=1;
 				}
-				else
-					result=0;
 			}
 			else if(ctag1<0 && ctag2<0){
 				if(ctag1!=ctag2)

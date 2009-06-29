@@ -30,7 +30,6 @@ string
 CorrectURLPathName(string path)
 {
 	string exit="";
-	//wcout<<Config::toWstring(path.substr(0,7))<<endl;
 	
 	if(path.length()>6 && path.substr(0,7)=="http://")
 		exit=path.substr(7);

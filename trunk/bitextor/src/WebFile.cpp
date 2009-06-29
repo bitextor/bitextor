@@ -84,6 +84,7 @@ bool WebFile::Initialize(const string &path)
 			}
 			if(ffile.LoadFile(path)){
 				ffile.Compact();
+				//ffile.SplitInSentences();
 				/*f=fopen((path+".xml").c_str(), "w");
 				if(f){
 					fputws(ffile.toXML().c_str(),f);
