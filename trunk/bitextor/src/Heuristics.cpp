@@ -62,13 +62,14 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 	return exit;
 }
 
-bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* result)
+bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result)
 {
 	vector<int> *tag_array1, *tag_array2;
 	double res;
 	double beam;
-	unsigned int vec1len, vec2len;
+	unsigned int vec1len, vec2len, i;
 	unsigned int max_diff_abs, max_diff_percent;
+	wstring pdistance;
 
 	tag_array1=wf1->GetTagArray();
 	tag_array2=wf2->GetTagArray();
@@ -100,13 +101,16 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, double* 
 			beam=Config::getDiagonalSize();
 		lang1=wf1->GetLang();
 		lang2=wf2->GetLang();
-		EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
+		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
 
 		if(result!=NULL)
 			*result=res;
+		if(pathdistance!=NULL)
+			*pathdistance=pdistance;
 
-		if(max_diff_abs>=res && max_diff_percent>=res)
+		if(max_diff_abs>=res && max_diff_percent>=res){
 			return true;
+		}
 		else
 			return false;
 	}
@@ -146,7 +150,7 @@ double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
 	return result;
 }
 
-bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *value){
+bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value){
 	unsigned int maj, diff;
 
 	if(GlobalParams::GetMaxTotalTextLengthDiff()==-1)
@@ -157,14 +161,138 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, unsigned int *val
 		else
 			maj=wf1.GetTextSize();
 		diff=abs((int)wf1.GetTextSize()-(int)wf2.GetTextSize());
+		
 		if(value!=NULL)
 			*value=diff;
+		
 		if(((double)maj*GlobalParams::GetMaxTotalTextLengthDiff())>diff)
 			return true;
 		else
 			return false;
 	}
 }
+
+double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &pathdistance){
+	unsigned int i,j,w;
+	unsigned int count;
+	double last, element, value, percent;
+
+	if(wf1.GetTagArray()->size()!=wf2.GetTagArray()->size() || wf1.GetTagArray()->size()==0){
+		value=numeric_limits<double>::max();
+	}
+	else{
+		percent=0;
+		count=0;
+		value=0;
+		last=0;
+		for(i=0,j=0,w=0;w<pathdistance.length();w++){
+			switch (pathdistance[w]){
+				case 'd':
+					if(wf1.GetTagArray()->at(i)>=0){
+						if(wf1.GetTagArray()->at(i)>0)
+							percent+=1;
+						count++;
+					}
+					i++;
+				break;
+				case 'i':
+					if(wf2.GetTagArray()->at(j)>=0){
+						if(wf2.GetTagArray()->at(j)>0)
+							percent+=1;
+						count++;
+					}
+					j++;
+				break;
+				default:
+					if(wf1.GetTagArray()->at(i)>=0 && wf2.GetTagArray()->at(j)>=0){
+						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j)){
+							percent+=abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf1.GetTagArray()->at(i);
+							count++;
+						}
+						else if(wf2.GetTagArray()->at(j)>0){
+							percent+=abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j);
+							count++;
+						}
+						else
+							count++;
+					}
+					i++;
+					j++;
+				break;
+			}
+		}
+		if(count==0)
+			value=numeric_limits<double>::max();
+		else
+			value=percent;
+	}
+	return value;
+}
+
+double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const wstring &pathdistance, const double &phrasevariance){
+	unsigned int i,j,w;
+	unsigned int count;
+	double last, element, value, percent;
+
+	//wcout<<phrasevariance<<endl;
+	if(wf1.GetTagArray()->size()!=wf2.GetTagArray()->size() || wf1.GetTagArray()->size()==0){
+		value=numeric_limits<double>::max();
+	}
+	else{
+		percent=0;
+		count=0;
+		value=0;
+		last=0;
+		
+		for(i=0,j=0,w=0;w<pathdistance.length();w++){
+			switch (pathdistance[w]){
+				case 'd':
+					if(wf1.GetTagArray()->at(i)>=0){
+						if(wf1.GetTagArray()->at(i)>0)
+							percent+=abs(phrasevariance-1);
+						else
+							percent+=phrasevariance;
+						count++;
+					}
+					i++;
+				break;
+				case 'i':
+					if(wf2.GetTagArray()->at(j)>=0){
+						if(wf2.GetTagArray()->at(j)>0)
+							percent+=abs(phrasevariance-1);
+						else
+							percent+=phrasevariance;
+						count++;
+					}
+					j++;
+				break;
+				default:
+					if(wf1.GetTagArray()->at(i)>=0 && wf2.GetTagArray()->at(j)>=0){
+						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j)){
+							percent+=abs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf1.GetTagArray()->at(i)));
+						}
+						else if(wf2.GetTagArray()->at(j)>0){
+							percent+=abs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j)));
+						}
+						else
+							percent+=1;
+						count++;
+					}
+					i++;
+					j++;
+				break;
+			}
+		}
+		if(count==0)
+			value=numeric_limits<double>::max();
+		else
+			value=percent/(double)count;
+	}
+	//wcout<<percent<<endl;
+	
+	return value;
+}
+
 
 bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
 	double res;

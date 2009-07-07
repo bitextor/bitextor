@@ -5,8 +5,8 @@ textcatconfdir = @sysconfdir@/bitextor3/LM
 textcatconf_DATA = LM/*
 
 bitextor_SOURCES = \
-Bitext.h \
-Bitext.cpp \
+BitextCandidates.h \
+BitextCandidates.cpp \
 DownloadMod.h \
 DownloadMod.cpp \
 FilePreprocess.h \

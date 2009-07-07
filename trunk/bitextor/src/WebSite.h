@@ -4,7 +4,7 @@
 #include "WebFile.h"
 #include "GlobalParams.h"
 #include "Heuristics.h"
-#include "Bitext.h"
+#include "BitextCandidates.h"
 #include <iostream>
 #include <vector>
 
@@ -51,7 +51,7 @@ public:
 	 * @param path Path del qual s'hi vol obtenir el nom del fitxer.
 	 * @return Retorna el nom del fitxer.
 	 */
-	string GetFileName(string path);
+	static string GetFileName(string path);
 	
 	/**
 	 * Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva.
@@ -72,7 +72,7 @@ public:
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 
 	 */
-	bool GetMatchedFiles(const string &dest_dir, vector< WebFile* > **file_list, const unsigned int &size, FILE * main_fout=NULL);
+	bool GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* > **file_list, const unsigned int &size, FILE * main_fout=NULL);
 };
 
 #endif /*WEBSITE_H_*/

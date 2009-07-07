@@ -279,7 +279,7 @@
 	</ta:configuration>
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
 	<bi:downloadModDest>/tmp/</bi:downloadModDest>
-	<bi:onlyBitextFile value="true"/>
+	<bi:onlyBitextFile value="false"/>
 	<bi:verbose value="true" />
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
 	<bi:criteria>
@@ -288,13 +288,13 @@
 		<!-- Maximum percentage of difference of length between two blocs of text (text contained between two HTML tags) to consider them as a possible coincidence.
 		If you don't this value for a concrete pair of languages, default value will be used. -->
 		<bi:textLengthDifferencePercents default="30">
-			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="25" />
+			<bi:textLengthDifferencePercent lang1="es" lang2="ca" difference="20" />
 			<bi:textLengthDifferencePercent lang1="es" lang2="en" difference="35" />
 			<bi:textLengthDifferencePercent lang1="ca" lang2="en" difference="35" />
 		</bi:textLengthDifferencePercents>
 		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
 		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
-		<bi:maxEditDistance percentual="5" absolute="6" />
+		<bi:maxEditDistance percentual="10" absolute="10" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. If the value of this parametter is zero, only files in the same level will be compared.-->
 		<bi:directoryPathDistance value="1" />
@@ -308,24 +308,24 @@
 		<bi:generateAllCandidates value="false" />
 		<!-- If this parametter is active, all the candidates of pair for a file will be compared. If they have the same results for the numeric fingerprint and tag-and-text array edit distance, their total text length will be
 		analysed. If it's under the percentage defined by max_text_percent, this file will be discarded because Bitextor will consider that it has ambiguous candidates. -->
-		<bi:generateAmbiguousBitexts max_text_percent="1" />
+		<!--<bi:generateAmbiguousBitexts max_text_percent="1" />-->
 	</bi:criteria>
 	<!-- In this section you can define the path of the LibTextCat fingerpint files for every language in the parametter "dir". Then, with every "language" element you will have to definine the name of the file ("fingerprint")
 	and the language that it represents ("code"). -->
 	<bi:languages dir="/usr/local/etc/bitextor3/LM/">
 		<bi:language fingerprint="en.utf8.lm" code="en" />
-		<bi:language fingerprint="da.utf8.lm" code="da" />
+		<!--<bi:language fingerprint="da.utf8.lm" code="da" />
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
-		<bi:language fingerprint="is.utf8.lm" code="is" />
+		<bi:language fingerprint="is.utf8.lm" code="is" />-->
 		<bi:language fingerprint="es.utf8.lm" code="es" />
 		<bi:language fingerprint="ca.utf8.lm" code="ca" />
-		<bi:language fingerprint="fr.utf8.lm" code="fr" />
+		<!--<bi:language fingerprint="fr.utf8.lm" code="fr" />
 		<bi:language fingerprint="an.utf8.lm" code="an" />
 		<bi:language fingerprint="gl.utf8.lm" code="gl" />
 		<bi:language fingerprint="eu.utf8.lm" code="eu" />
 		<bi:language fingerprint="de.utf8.lm" code="de" />
-		<bi:language fingerprint="ga.utf8.lm" code="ga" />
+		<bi:language fingerprint="ga.utf8.lm" code="ga" />-->
 	</bi:languages>
 </bi:configuration>
