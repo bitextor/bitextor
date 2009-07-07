@@ -175,16 +175,16 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value){
 double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &pathdistance){
 	unsigned int i,j,w;
 	unsigned int count;
-	double last, element, value, percent;
+	double value, percent;
 
-	if(wf1.GetTagArray()->size()!=wf2.GetTagArray()->size() || wf1.GetTagArray()->size()==0){
+	if(wf1.GetTagArray()->size()==0 || wf2.GetTagArray()->size()==0){
 		value=numeric_limits<double>::max();
 	}
 	else{
 		percent=0;
 		count=0;
 		value=0;
-		last=0;
+
 		for(i=0,j=0,w=0;w<pathdistance.length();w++){
 			switch (pathdistance[w]){
 				case 'd':
@@ -225,6 +225,7 @@ double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &
 			value=numeric_limits<double>::max();
 		else
 			value=percent;
+		//wcout<<percent<<endl;
 	}
 	return value;
 }
@@ -232,17 +233,15 @@ double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &
 double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const wstring &pathdistance, const double &phrasevariance){
 	unsigned int i,j,w;
 	unsigned int count;
-	double last, element, value, percent;
+	double value, percent;
 
-	//wcout<<phrasevariance<<endl;
-	if(wf1.GetTagArray()->size()!=wf2.GetTagArray()->size() || wf1.GetTagArray()->size()==0){
+	if(wf1.GetTagArray()->size()==0 || wf2.GetTagArray()->size()==0){
 		value=numeric_limits<double>::max();
 	}
 	else{
 		percent=0;
 		count=0;
 		value=0;
-		last=0;
 		
 		for(i=0,j=0,w=0;w<pathdistance.length();w++){
 			switch (pathdistance[w]){
@@ -275,7 +274,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 							percent+=abs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j)));
 						}
 						else
-							percent+=1;
+							percent+=phrasevariance;
 						count++;
 					}
 					i++;
@@ -289,7 +288,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 			value=percent/(double)count;
 	}
 	//wcout<<percent<<endl;
-	
+
 	return value;
 }
 

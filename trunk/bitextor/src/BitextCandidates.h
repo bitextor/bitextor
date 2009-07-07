@@ -48,6 +48,10 @@ class BitextData
 		 */
 		double text_difference;
 		
+		double percent_text_distance;
+		
+		double percent_text_distance_variation;
+		
 		BitextData(WebFile* wf1, WebFile* wf2);
 		
 		int UnRelate();
