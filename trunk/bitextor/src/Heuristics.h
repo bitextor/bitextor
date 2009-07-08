@@ -69,6 +69,9 @@ public:
 	 * @return Cost of the operation. 
 	 */
 	static double Cost(const short &op, const int &ctag1, const int &ctag2);
+	
+	
+	static double CostTextAlignment(const short &op, const int &ctag1, const int &ctag2);
 
 	/**
 	 * Mètode que calcula la distància d'edició entre els dos arrays d'enters de dos fitxers web.

@@ -4,6 +4,7 @@
 #include <libtagaligner/Aligner.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <math.h>
 
 BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 	bool exit=true;
@@ -14,32 +15,38 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 
 	double aux_result;
 
-
-
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
 			try{
 				exit=Heuristics::HaveTheSameExtension(wf1,wf2);
 				this->same_extension=exit;
 				if(exit){
-					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
+					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2);
 					if(exit){
 						this->byte_size_distance=aux_result;
 						exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);
-						//this->text_difference=aux_result;
+						this->text_difference=aux_result;
 						if(exit){
-							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,&pathdistance,&aux_result);
+							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
 							if(exit){
 								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 									aux_result=0;
 								else{
+									if(Config::getDiagonalSize()==-1)
+										pathdistance=EditDistanceTools::EditDistanceBeam(*wf1->GetNumbersVector(), *wf2->GetNumbersVector(), &Heuristics::CostTextAlignment, Config::diagonalSizeIsPercent(), 0, &aux_result);
+									else
+										pathdistance=EditDistanceTools::EditDistanceBeam(*wf1->GetNumbersVector(), *wf2->GetNumbersVector(), &Heuristics::CostTextAlignment, Config::diagonalSizeIsPercent(), Config::getDiagonalSize(), &aux_result);
+									
+									
 									if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
 										aux_result=aux_result*100/((double)(*wf1->GetTagArray()).size());
 									else
 										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());
 									this->edit_distance=aux_result;
-									double phrasevariance=Heuristics::GetPhraseVariance(*wf1,*wf2,pathdistance);
-									this->text_difference=Heuristics::GetPhraseVarianceDesviation(*wf1,*wf2,pathdistance,phrasevariance);
+									this->percent_text_distance=Heuristics::GetPhraseVariance(*wf1,*wf2,pathdistance);
+									this->percent_text_distance_variation=Heuristics::GetPhraseVarianceDesviation(*wf1,*wf2,pathdistance,this->percent_text_distance);
+									this->text_difference=this->percent_text_distance;
+									
 								}
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 								
@@ -294,8 +301,8 @@ bool BitextCandidates::GenerateBitexts(const string &dest_dir){
 
 					if (tagaligneroutput!=L""){
 						fputws(tagaligneroutput.c_str(),fout);
-						//if(GlobalParams::IsVerbose())
-						//	wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<endl;
+						if(GlobalParams::IsVerbose())
+							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<L"("<<it->second->second->percent_text_distance<<L" | "<<it->second->second->percent_text_distance_variation<<L")"<<endl;
 						oss<<L"Edit distance: "<<it->second->second->edit_distance<<L"% Size (bytes): "<<it->second->second->byte_size_distance<<L"% Size (characters): "<<it->second->second->text_difference;
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> "+oss.str());
 						oss.seekp(ios_base::beg);

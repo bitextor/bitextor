@@ -67,7 +67,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 	vector<int> *tag_array1, *tag_array2;
 	double res;
 	double beam;
-	unsigned int vec1len, vec2len, i;
+	unsigned int vec1len, vec2len;
 	unsigned int max_diff_abs, max_diff_percent;
 	wstring pdistance;
 
@@ -114,6 +114,35 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 		else
 			return false;
 	}
+}
+
+double Heuristics::CostTextAlignment(const short &op, const int &ctag1, const int &ctag2){
+	unsigned int text_distance;
+	double result=0, tmp, difference;
+
+	switch(op){
+		case SUBST:
+			if(ctag1>=0 && ctag2>=0){
+				text_distance=abs(ctag1-ctag2);
+				if(ctag1>ctag2)
+					result=(double)text_distance/(double)ctag1;
+				else{
+					if(ctag2!=0)
+						result=(double)text_distance/(double)ctag2;
+					else
+						result=ctag1;
+				}
+			}
+			else if(ctag1<0 && ctag2<0){
+				if(ctag1!=ctag2)
+					result=1;
+			}
+			else
+				result = numeric_limits<double>::max();
+		break;
+		default: result=1; break;
+	}
+	return result;
 }
 
 double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
@@ -163,7 +192,7 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value){
 		diff=abs((int)wf1.GetTextSize()-(int)wf2.GetTextSize());
 		
 		if(value!=NULL)
-			*value=diff;
+			*value=diff/(double)maj;
 		
 		if(((double)maj*GlobalParams::GetMaxTotalTextLengthDiff())>diff)
 			return true;
@@ -205,16 +234,11 @@ double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &
 				break;
 				default:
 					if(wf1.GetTagArray()->at(i)>=0 && wf2.GetTagArray()->at(j)>=0){
-						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j)){
+						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j))
 							percent+=abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf1.GetTagArray()->at(i);
-							count++;
-						}
-						else if(wf2.GetTagArray()->at(j)>0){
+						else if(wf2.GetTagArray()->at(j)>0)
 							percent+=abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j);
-							count++;
-						}
-						else
-							count++;
+						count++;
 					}
 					i++;
 					j++;
@@ -224,9 +248,9 @@ double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &
 		if(count==0)
 			value=numeric_limits<double>::max();
 		else
-			value=percent;
-		//wcout<<percent<<endl;
+			value=percent/(double)count;
 	}
+	//wcout<<value<<endl;
 	return value;
 }
 
@@ -248,7 +272,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 				case 'd':
 					if(wf1.GetTagArray()->at(i)>=0){
 						if(wf1.GetTagArray()->at(i)>0)
-							percent+=abs(phrasevariance-1);
+							percent+=fabs(phrasevariance-1);
 						else
 							percent+=phrasevariance;
 						count++;
@@ -258,7 +282,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 				case 'i':
 					if(wf2.GetTagArray()->at(j)>=0){
 						if(wf2.GetTagArray()->at(j)>0)
-							percent+=abs(phrasevariance-1);
+							percent+=fabs(phrasevariance-1);
 						else
 							percent+=phrasevariance;
 						count++;
@@ -267,12 +291,10 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 				break;
 				default:
 					if(wf1.GetTagArray()->at(i)>=0 && wf2.GetTagArray()->at(j)>=0){
-						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j)){
-							percent+=abs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf1.GetTagArray()->at(i)));
-						}
-						else if(wf2.GetTagArray()->at(j)>0){
-							percent+=abs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j)));
-						}
+						if(wf1.GetTagArray()->at(i)>wf2.GetTagArray()->at(j))
+							percent+=fabs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf1.GetTagArray()->at(i)));
+						else if(wf2.GetTagArray()->at(j)>0)
+							percent+=fabs(phrasevariance-(abs(wf1.GetTagArray()->at(i)-wf2.GetTagArray()->at(j))/(double)wf2.GetTagArray()->at(j)));
 						else
 							percent+=phrasevariance;
 						count++;
@@ -287,8 +309,6 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 		else
 			value=percent/(double)count;
 	}
-	//wcout<<percent<<endl;
-
 	return value;
 }
 
