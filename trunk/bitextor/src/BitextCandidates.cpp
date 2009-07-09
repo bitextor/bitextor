@@ -266,6 +266,7 @@ bool BitextCandidates::GenerateBitexts(const string &dest_dir){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 		if(it->second!=NULL
 				&& it->second->first!=NULL
+				&& it->second->second->RelatedFiles()==2
 				&& ff1.LoadFile(wf->GetPath())
 				&& ff2.LoadFile(it->second->first->GetPath())){
 			try{
