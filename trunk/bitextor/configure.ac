@@ -8,7 +8,7 @@ m4_define([required_libxml_version], [2.6.17])
 m4_define([required_libenca_version], [1.9])
 m4_define([required_libtre_version], [0.7.5])
 AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
-AC_CONFIG_SRCDIR([src/Bitext.h])
+AC_CONFIG_SRCDIR([src/BitextCandidates.h])
 
 GENERIC_LIBRARY_NAME=bitextor
 

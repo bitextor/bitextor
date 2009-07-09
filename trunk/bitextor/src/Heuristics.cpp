@@ -124,13 +124,11 @@ double Heuristics::CostTextAlignment(const short &op, const int &ctag1, const in
 		case SUBST:
 			if(ctag1>=0 && ctag2>=0){
 				text_distance=abs(ctag1-ctag2);
-				if(ctag1>ctag2)
-					result=(double)text_distance/(double)ctag1;
-				else{
-					if(ctag2!=0)
-						result=(double)text_distance/(double)ctag2;
+				if(text_distance!=0){
+					if(ctag1>ctag2)
+						result=(double)text_distance/(double)ctag1;
 					else
-						result=ctag1;
+						result=(double)text_distance/(double)ctag2;
 				}
 			}
 			else if(ctag1<0 && ctag2<0){

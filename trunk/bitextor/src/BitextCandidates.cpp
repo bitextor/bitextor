@@ -38,14 +38,14 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 										pathdistance=EditDistanceTools::EditDistanceBeam(*wf1->GetNumbersVector(), *wf2->GetNumbersVector(), &Heuristics::CostTextAlignment, Config::diagonalSizeIsPercent(), Config::getDiagonalSize(), &aux_result);
 									
 									
-									if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
+									/*if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
 										aux_result=aux_result*100/((double)(*wf1->GetTagArray()).size());
 									else
-										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());
+										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());*/
 									this->edit_distance=aux_result;
-									this->percent_text_distance=Heuristics::GetPhraseVariance(*wf1,*wf2,pathdistance);
-									this->percent_text_distance_variation=Heuristics::GetPhraseVarianceDesviation(*wf1,*wf2,pathdistance,this->percent_text_distance);
-									this->text_difference=this->percent_text_distance;
+									//this->percent_text_distance=Heuristics::GetPhraseVariance(*wf1,*wf2,pathdistance);
+									//this->percent_text_distance_variation=Heuristics::GetPhraseVarianceDesviation(*wf1,*wf2,pathdistance,this->percent_text_distance);
+									//this->text_difference=this->percent_text_distance;
 									
 								}
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
@@ -302,7 +302,7 @@ bool BitextCandidates::GenerateBitexts(const string &dest_dir){
 					if (tagaligneroutput!=L""){
 						fputws(tagaligneroutput.c_str(),fout);
 						if(GlobalParams::IsVerbose())
-							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<L"("<<it->second->second->percent_text_distance<<L" | "<<it->second->second->percent_text_distance_variation<<L")"<<endl;
+							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<L"("<<it->second->second->edit_distance<<L")"<<endl;
 						oss<<L"Edit distance: "<<it->second->second->edit_distance<<L"% Size (bytes): "<<it->second->second->byte_size_distance<<L"% Size (characters): "<<it->second->second->text_difference;
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> "+oss.str());
 						oss.seekp(ios_base::beg);
