@@ -65,10 +65,10 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result)
 {
 	vector<int> *tag_array1, *tag_array2;
-	double res;
-	double beam;
+	double res,beam,difference,tmp;
 	unsigned int vec1len, vec2len;
-	unsigned int max_diff_abs, max_diff_percent;
+	unsigned int max_diff_abs, max_diff_percent,text_distance;
+	unsigned int i,j,w;
 	wstring pdistance;
 
 	tag_array1=wf1->GetTagArray();
@@ -99,12 +99,56 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 			beam=0;
 		else
 			beam=Config::getDiagonalSize();
-		lang1=wf1->GetLang();
-		lang2=wf2->GetLang();
-		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &Cost, Config::diagonalSizeIsPercent(), beam, &res);
 
-		if(result!=NULL)
-			*result=res;
+		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &CostTextAlignment, Config::diagonalSizeIsPercent(), beam, result);
+
+		res=0;
+		for(i=0,j=0,w=0;w<pdistance.length();w++){
+			switch (pdistance[w]){
+				case 'd':
+					if(wf1->GetTagArray()->at(i)>=0){
+						if(wf1->GetTagArray()->at(i)>0)
+							res+=1;
+					}
+					else
+						res+=1;
+					i++;
+				break;
+				case 'i':
+					if(wf2->GetTagArray()->at(j)>=0){
+						if(wf2->GetTagArray()->at(j)>0)
+							res+=1;
+					}
+					else
+						res+=1;
+					j++;
+				break;
+				default:
+					if(wf1->GetTagArray()->at(i)>=0 && wf2->GetTagArray()->at(j)>=0){
+						difference=GlobalParams::GetFileSizeDiferencePercent(wf1->GetLang(),wf2->GetLang());
+						if(difference>=0){
+							text_distance=abs(wf1->GetTagArray()->at(i)-wf2->GetTagArray()->at(j));
+							if(text_distance>0){
+								if(wf1->GetTagArray()->at(i)>wf2->GetTagArray()->at(j))
+									tmp=(double)text_distance/(double)wf1->GetTagArray()->at(i);
+								else{
+									tmp=(double)text_distance/(double)wf2->GetTagArray()->at(j);
+								}
+							}
+							else
+								tmp=0;
+							if(tmp>(difference/(double)100))
+								res+=1;
+						}
+					}
+					else if(wf1->GetTagArray()->at(i) != wf2->GetTagArray()->at(j))
+						res+=1;
+					i++;
+					j++;
+				break;
+			}
+		}
+
 		if(pathdistance!=NULL)
 			*pathdistance=pdistance;
 
@@ -118,7 +162,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 
 double Heuristics::CostTextAlignment(const short &op, const int &ctag1, const int &ctag2){
 	unsigned int text_distance;
-	double result=0, tmp, difference;
+	double result=0;
 
 	switch(op){
 		case SUBST:
@@ -129,40 +173,6 @@ double Heuristics::CostTextAlignment(const short &op, const int &ctag1, const in
 						result=(double)text_distance/(double)ctag1;
 					else
 						result=(double)text_distance/(double)ctag2;
-				}
-			}
-			else if(ctag1<0 && ctag2<0){
-				if(ctag1!=ctag2)
-					result=1;
-			}
-			else
-				result = numeric_limits<double>::max();
-		break;
-		default: result=1; break;
-	}
-	return result;
-}
-
-double Heuristics::Cost(const short &op, const int &ctag1, const int &ctag2){
-	unsigned int text_distance;
-	double result=0, tmp, difference;
-
-	switch(op){
-		case SUBST:
-			if(ctag1>=0 && ctag2>=0){
-				text_distance=abs(ctag1-ctag2);
-				if(ctag1>ctag2)
-					tmp=(double)text_distance/(double)ctag1;
-				else{
-					if(ctag2!=0)
-						tmp=(double)text_distance/(double)ctag2;
-					else
-						tmp=ctag1;
-				}
-				difference=GlobalParams::GetFileSizeDiferencePercent(lang1,lang2)/(double)100;
-				if(difference>=0){
-					if(tmp>difference)
-						result=1;
 				}
 			}
 			else if(ctag1<0 && ctag2<0){

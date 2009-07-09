@@ -32,12 +32,6 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 									aux_result=0;
 								else{
-									if(Config::getDiagonalSize()==-1)
-										pathdistance=EditDistanceTools::EditDistanceBeam(*wf1->GetNumbersVector(), *wf2->GetNumbersVector(), &Heuristics::CostTextAlignment, Config::diagonalSizeIsPercent(), 0, &aux_result);
-									else
-										pathdistance=EditDistanceTools::EditDistanceBeam(*wf1->GetNumbersVector(), *wf2->GetNumbersVector(), &Heuristics::CostTextAlignment, Config::diagonalSizeIsPercent(), Config::getDiagonalSize(), &aux_result);
-									
-									
 									/*if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
 										aux_result=aux_result*100/((double)(*wf1->GetTagArray()).size());
 									else
@@ -303,7 +297,7 @@ bool BitextCandidates::GenerateBitexts(const string &dest_dir){
 					if (tagaligneroutput!=L""){
 						fputws(tagaligneroutput.c_str(),fout);
 						if(GlobalParams::IsVerbose())
-							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<L"("<<it->second->second->edit_distance<<L")"<<endl;
+							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<endl;
 						oss<<L"Edit distance: "<<it->second->second->edit_distance<<L"% Size (bytes): "<<it->second->second->byte_size_distance<<L"% Size (characters): "<<it->second->second->text_difference;
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> "+oss.str());
 						oss.seekp(ios_base::beg);
@@ -364,8 +358,8 @@ bool BitextCandidates::GenerateBitexts(FILE * main_fout, unsigned int starting_t
 				else
 					exit=false;
 					
-				//if(GlobalParams::IsVerbose())
-				//	wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created"<<endl;
+				if(GlobalParams::IsVerbose())
+					wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created"<<endl;
 				oss<<it->second->second->edit_distance;
 				GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
 				oss.seekp(ios_base::beg);
@@ -430,8 +424,8 @@ bool BitextCandidates::GenerateLastAddedBitext(FILE * main_fout, unsigned int st
 					if(main_fout){
 						if (tagaligneroutput!=L""){
 							fputws(tagaligneroutput.c_str(),main_fout);
-							//if(GlobalParams::IsVerbose())
-							//		wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(last_insertion->second->first->GetPath())<<L" has been created: "<<endl;
+							if(GlobalParams::IsVerbose())
+									wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(last_insertion->second->first->GetPath())<<L" has been created: "<<endl;
 							oss<<last_insertion->second->second->edit_distance;
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(last_insertion->second->first->GetPath())+L" has been created."+L">> Edit distance: "+oss.str()+L"%.");
 							oss.seekp(ios_base::beg);
