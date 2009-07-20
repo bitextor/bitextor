@@ -120,7 +120,7 @@ public:
 	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>
 	 * en cas contrari.
 	 */
-	bool GenerateBitexts(FILE * main_fout, unsigned int starting_tuid, unsigned int *last_tuid);
+	bool GenerateBitexts(map<wstring,FILE *> *main_fout, unsigned int starting_tuid, unsigned int *last_tuid);
 
 	bool GenerateBitexts(const string &dest_dir);
 	
@@ -130,7 +130,7 @@ public:
 	
 	void EraseLastAdded();
 	
-	bool GenerateLastAddedBitext(FILE * main_fout, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
+	bool GenerateLastAddedBitext(map<wstring,FILE *> *main_fout, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
 	
 	WebFile* GetWebFile(const wstring &lang);
 

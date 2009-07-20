@@ -280,7 +280,7 @@
 	<!--Download module destination path for the downloaded files. You can set the maximum size to download in bytes with the parameter max_size -->
 	<bi:downloadModDest>/tmp/</bi:downloadModDest>
 	<bi:onlyBitextFile value="false"/>
-	<bi:verbose value="true" />
+	<bi:verbose value="false" />
 	<!--Section where the parameters to discrimine pairs of webs are set. -->
 	<bi:criteria>
 		<!-- Maximum percentage of difference of size permited between the two texts of the bitext -->	

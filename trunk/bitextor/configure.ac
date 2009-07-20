@@ -134,5 +134,6 @@ AC_CHECK_FUNCS([memset mkdir strndup])
 AC_CONFIG_FILES([
 				 Makefile
                  src/Makefile
+				 src/bitextor_config.h
 				 ])
 AC_OUTPUT
