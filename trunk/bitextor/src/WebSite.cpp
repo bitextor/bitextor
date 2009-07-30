@@ -4,6 +4,7 @@
  */
 
 #include "WebSite.h"
+#include "TranslationMemory.h"
 #include <cstring>
 #include <stack>
 #include <map>
@@ -53,8 +54,10 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	unsigned int i;
 	map<wstring,FILE *> fouts;
 	map<wstring,FILE *>::iterator it_files;
+	
 
 	try{
+		TranslationMemory::SetDestPath(dest_path);
 		file_list=new vector< BitextCandidates* >*[GlobalParams::GetDirectoryDepthDistance()+1];
 		//Firstly, we prove that base_path is a valid directory.
 		if ( stat(this->base_path.c_str(), &fich)>=0 ){
@@ -115,12 +118,11 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			//If the structure is full, we calculate the candidates for higher level files, delete this level and load a new lower level
 			else{
 				if(!exit)
-					exit=GetMatchedFiles(dest_path, file_list, level+1, &fout);
+					exit=GetMatchedFiles(dest_path, file_list, level+1, &fouts);
 				else
-					GetMatchedFiles(dest_path, file_list, level+1, &fout);
+					GetMatchedFiles(dest_path, file_list, level+1, &fouts);
 				for(i=0; i<file_list[0]->size();i++){
 					//remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
-					wcout<<Config::toWstring(file_list[0]->at(i)->GetWebFile()->GetPath())<<endl;
 					delete file_list[0]->at(i);
 				}
 				delete file_list[0];
@@ -134,9 +136,9 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		delete subdirs;
 		for(level=GlobalParams::GetDirectoryDepthDistance()+1;level>=1;level--){
 			if(!exit)
-				exit=GetMatchedFiles(dest_path, file_list, level, &fout);
+				exit=GetMatchedFiles(dest_path, file_list, level, &fouts);
 			else
-				GetMatchedFiles(dest_path, file_list, level, &fout);
+				GetMatchedFiles(dest_path, file_list, level, &fouts);
 			for(i=0; i<file_list[0]->size();i++){
 				delete file_list[0]->at(i);
 			}
@@ -158,6 +160,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		if(directorio!=NULL)
 			closedir(directorio);
 	}
+	TranslationMemory::Reset();
 	return exit;
 }
 
@@ -193,40 +196,10 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* 
 				while(k<file_list[j]->size()){
 					if(main_bitext->Add(file_list[j]->at(k)))
 					{
-						if(GlobalParams::AllBitextInAFile()){
-							if(main_bitext->GenerateLastAddedBitext(main_fout, starting_tuid, &last_tuid)){
-								starting_tuid=last_tuid;
-								exit=true;
-							}
-							main_bitext->EraseLastAdded();
+						if(main_bitext->GenerateLastAddedBitext()){
+							exit=true;
 						}
-						else{
-							file_name=dest_dir+GetFileName(main_bitext->GetWebFile()->GetPath())+"_"+GetFileName(main_bitext->GetLastAddedWebFile()->GetPath())+".tmx";
-							for(l=0, aux_sstream=new ostringstream(ios_base::out);stat(file_name.c_str(), &my_stat) == 0;l++){
-								delete aux_sstream;
-								aux_sstream=new ostringstream(ios_base::out);
-								*aux_sstream<<l;
-								file_name=dest_dir+GetFileName(main_bitext->GetWebFile()->GetPath())+"_"+GetFileName(main_bitext->GetLastAddedWebFile()->GetPath())+aux_sstream->str()+".tmx";
-							}
-							fout=fopen(file_name.c_str(),"w");
-							if(fout){
-								try{
-									if(!main_bitext->GenerateLastAddedBitext(fout)){
-										fclose(fout);
-										remove(file_name.c_str());
-									}
-									else{
-										fclose(fout);
-										exit=true;
-									}
-								}
-								catch(...){
-									fclose(fout);
-									remove(file_name.c_str());
-								}
-								main_bitext->EraseLastAdded();
-							}
-						}
+						main_bitext->EraseLastAdded();
 					}
 					k++;
 				}
@@ -239,64 +212,12 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* 
 		}
 		if(!GlobalParams::GetCreateAllCandidates()){
 			if(GlobalParams::AllBitextInAFile()){
-				main_bitext->GenerateBitexts(main_fout, starting_tuid, &last_tuid);
+				main_bitext->GenerateBitexts();
 				starting_tuid=last_tuid;
 			}
 			else
-				main_bitext->GenerateBitexts(dest_dir);
+				main_bitext->GenerateBitexts();
 		}
-			
-		/*if(best_bitexts.size()>0){ //If we have any candidate...
-			exit=true;
-			it=best_bitexts.begin();
-			//We generate all the traduction memories for every pair of candidates
-			while(it!=best_bitexts.end()){
-				if(!it->second->active){
-					if(GlobalParams::AllBitextInAFile()){
-						if(it->second->bitext->GenerateBitext(main_fout, starting_tuid, &last_tuid)){
-							if(GlobalParams::IsVerbose())
-								wcout<<L"The bitext between "<<Config::toWstring(it->second->bitext->GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(it->second->bitext->GetSecondWebFile()->GetPath())<<L" has been created"<<endl;
-							oss<<it->second->bitext->GetEditDistance();
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(it->second->bitext->GetFirstWebFile()->GetPath())+L" and "+Config::toWstring(it->second->bitext->GetSecondWebFile()->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
-							oss.seekp(ios_base::beg);
-							starting_tuid=last_tuid;
-						}
-					}
-					else{
-						file_name=dest_dir+GetFileName(it->second->bitext->GetFirstWebFile()->GetPath())+"_"+GetFileName(it->second->bitext->GetSecondWebFile()->GetPath())+".tmx";
-						for(l=0, aux_sstream=new ostringstream(ios_base::out);stat(file_name.c_str(), &my_stat) == 0;l++){
-							delete aux_sstream;
-							aux_sstream=new ostringstream(ios_base::out);
-							*aux_sstream<<l;
-							file_name=dest_dir+GetFileName(it->second->bitext->GetFirstWebFile()->GetPath())+"_"+GetFileName(it->second->bitext->GetSecondWebFile()->GetPath())+aux_sstream->str()+".tmx";
-						}
-						fout=fopen(file_name.c_str(),"w");
-						if(fout){
-							try{
-								if(!it->second->bitext->GenerateBitext(fout)){
-									fclose(fout);
-									remove(file_name.c_str());
-								}
-								else{
-									fclose(fout);
-									if(GlobalParams::IsVerbose())
-										wcout<<L"The bitext between "<<Config::toWstring(it->second->bitext->GetFirstWebFile()->GetPath())<<L" and "<<Config::toWstring(it->second->bitext->GetSecondWebFile()->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<endl;
-									oss<<it->second->bitext->GetEditDistance();
-									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(it->second->bitext->GetFirstWebFile()->GetPath())+L" and "+Config::toWstring(it->second->bitext->GetSecondWebFile()->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> Edit distance: "+oss.str()+L"%.");
-									oss.seekp(ios_base::beg);
-								}
-							}
-							catch(...){
-								fclose(fout);
-								remove(file_name.c_str());
-							}
-						}
-					}
-				}
-				it++;
-			}
-			best_bitexts.clear();
-		}*/
 	}
 	return exit;
 }

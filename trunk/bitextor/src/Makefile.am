@@ -7,6 +7,8 @@ textcatconf_DATA = LM/*
 bitextor_SOURCES = \
 BitextCandidates.h \
 BitextCandidates.cpp \
+TranslationMemory.h \
+TranslationMemory.cpp \
 DownloadMod.h \
 DownloadMod.cpp \
 FilePreprocess.h \

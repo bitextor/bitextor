@@ -1,6 +1,7 @@
 #include "BitextCandidates.h"
 #include "Heuristics.h"
 #include "WebSite.h"
+#include "TranslationMemory.h"
 #include <libtagaligner/Aligner.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -237,272 +238,48 @@ BitextData* BitextCandidates::GetBitextData(const wstring &lang){
 		return NULL;
 }
 
-bool BitextCandidates::GenerateBitexts(const string &dest_dir){
+bool BitextCandidates::GenerateBitexts(){
+	
+	bool exit=true;
+	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
+
+	for(it=candidates.begin();it!=candidates.end();it++){
+		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
+		if(it->second!=NULL && it->second->first!=NULL){
+			TranslationMemory::WriteTM(wf,it->second->first);
+		}
+	}
+
+	return exit;					
+}
+
+bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout, const string &dest_path, unsigned int starting_tuid, unsigned int *last_tuid*/){
 	Aligner *aligner;
 	bool exit=true;
 	ifstream fin1, fin2;
 	wstring tagaligneroutput;
 	FragmentedFile ff1, ff2;
-	int l;
 	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
+	map<wstring,FILE*>::iterator it_files;
 	wostringstream oss;
-	string file_name;
-	ostringstream aux_sstream;
-	struct stat my_stat;
-	FILE* fout;
+	wstring lang_code;
 
 	aligner=new Aligner();
-	for(it=candidates.begin();it!=candidates.end();it++){
+	if(last_insertion!=candidates.end()){
 		aligner->Reset();
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
-		if(it->second!=NULL
-				&& it->second->first!=NULL
-				&& it->second->second->RelatedFiles()==2
-				&& ff1.LoadFile(wf->GetPath())
-				&& ff2.LoadFile(it->second->first->GetPath())){
-			try{
-				switch (Config::getMode()) {
-					case 1: exit=aligner->Align2StepsTED(ff1,ff2); break;
-					case 2: exit=aligner->Align2StepsL(ff1,ff2); break;
-					case 3: exit=aligner->Align1Step(ff1,ff2); break;
-				}
-			}
-			catch(char const* e){
-				cout<<e<<endl;
-				exit=false;
-			}
-		}
-		else
-			exit=false;
-		if (exit) {
-			file_name=dest_dir+WebSite::GetFileName(wf->GetPath())+
-				"_"+
-				WebSite::GetFileName(it->second->first->GetPath())+
-				".tmx";
-			for(l=0;stat(file_name.c_str(), &my_stat) == 0;l++){
-				aux_sstream.seekp(ios_base::beg);
-				aux_sstream<<l;
-				file_name=dest_dir+WebSite::GetFileName(wf->GetPath())+"_"+WebSite::GetFileName(it->second->first->GetPath())+aux_sstream.str()+".tmx";
-			}
-			fout=fopen(file_name.c_str(),"w");
-			if(fout){
-				try{
-					tagaligneroutput=aligner->GenerateTMX(wf->GetLang(), it->second->first->GetLang(), true, true, false);
-
-					if (tagaligneroutput!=L""){
-						fputws(tagaligneroutput.c_str(),fout);
-						if(GlobalParams::IsVerbose())
-							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created: "<<Config::toWstring(file_name)<<endl;
-						oss<<L"Edit distance: "<<it->second->second->edit_distance<<L"% Size (bytes): "<<it->second->second->byte_size_distance<<L"% Size (characters): "<<it->second->second->text_difference;
-						//GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created: "+Config::toWstring(file_name)+L">> "+oss.str());
-						oss.seekp(ios_base::beg);
-						exit=true;
-						fclose(fout);
-					}
-					else{
-						fclose(fout);
-						remove(file_name.c_str());
-						exit=false;
-					}
-				}
-				catch(...){
-					fclose(fout);
-					remove(file_name.c_str());
-					exit=false;
-				}
-			}
+		if(last_insertion->second->first!=NULL){
+			TranslationMemory::WriteTM(wf,last_insertion->second->first);
 		}
 	}
 	delete aligner;
 	return exit;
 }
 
-bool BitextCandidates::GenerateBitexts(map<wstring,FILE *> *main_fout, unsigned int starting_tuid, unsigned int *last_tuid){
-	Aligner *aligner;
-	bool exit=true;
-	ifstream fin1, fin2;
-	wstring tagaligneroutput;
-	FragmentedFile ff1, ff2;
-	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
-	wostringstream oss;
-	map<wstring,FILE*>::iterator it_files;
-	wstring lang_code;
-
-	aligner=new Aligner();
-	for(it=candidates.begin();it!=candidates.end();it++){
-		aligner->Reset();
-		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
-		if(it->second!=NULL && it->second->first!=NULL && ff1.LoadFile(wf->GetPath()) && ff2.LoadFile(it->second->first->GetPath())){
-			try{
-				lang_code=wf->GetLang()+L"_"+it->second->first->GetLang();
-
-				it_files=main_fout->find(lang_code);
-				if(it_files!=main_fout->end()){
-					try{
-						switch (Config::getMode()) {
-							case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
-							case 2: exit=aligner->Align2StepsL(ff1,ff2); break;
-							case 3: exit=aligner->Align1Step(ff1,ff2); break;
-						}
-						tagaligneroutput=aligner->GenerateTMX(wf->GetLang(), it->second->first->GetLang(), false, false, true, starting_tuid, last_tuid);
-						if (tagaligneroutput!=L""){
-							fputws(tagaligneroutput.c_str(),it_files->second);
-							if(GlobalParams::IsVerbose())
-								wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(it->second->first->GetPath())<<L" has been created"<<endl;
-							oss<<it->second->second->edit_distance;
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(it->second->first->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
-							oss.seekp(ios_base::beg);
-						}
-						else
-							exit=false;
-					}
-					catch(char const* e){
-						cout<<e<<endl;
-						exit=false;
-					}
-				} else{
-					lang_code=it->second->first->GetLang()+L"_"+wf->GetLang();
-					it_files=main_fout->find(lang_code);
-					if(it_files!=main_fout->end()){
-						try{
-							switch (Config::getMode()) {
-								case 1:exit=aligner->Align2StepsTED(ff2,ff1); break;
-								case 2: exit=aligner->Align2StepsL(ff2,ff1); break;
-								case 3: exit=aligner->Align1Step(ff2,ff1); break;
-							}
-							tagaligneroutput=aligner->GenerateTMX(it->second->first->GetLang(), wf->GetLang(), false, false, true, starting_tuid, last_tuid);
-							if (tagaligneroutput!=L""){
-								fputws(tagaligneroutput.c_str(),it_files->second);
-								if(GlobalParams::IsVerbose())
-									wcout<<L"The bitext between "<<Config::toWstring(it->second->first->GetPath())<<L" and "<<Config::toWstring(wf->GetPath())<<L" has been created"<<endl;
-								oss<<it->second->second->edit_distance;
-								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(it->second->first->GetPath())+L" and "+Config::toWstring(wf->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
-								oss.seekp(ios_base::beg);
-							}
-							else
-								exit=false;
-						}
-						catch(char const* e){
-							cout<<e<<endl;
-							exit=false;
-						}
-					}
-					else{
-						main_fout[lang_code]=fopen((dest_path+"/"+Config::toString(lang_code+L"_")+"bitext.tmx").c_str(),"w");
-						fputws(Aligner::GetHeading().c_str(),main_fout[lang_code);
-
-						if(it_files!=main_fout->end()){
-							try{
-								switch (Config::getMode()) {
-									case 1:exit=aligner->Align2StepsTED(ff2,ff1); break;
-									case 2: exit=aligner->Align2StepsL(ff2,ff1); break;
-									case 3: exit=aligner->Align1Step(ff2,ff1); break;
-								}
-								tagaligneroutput=aligner->GenerateTMX(it->second->first->GetLang(), wf->GetLang(), false, false, true, starting_tuid, last_tuid);
-								if (tagaligneroutput!=L""){
-									fputws(tagaligneroutput.c_str(),ain_fout[lang_code]);
-									if(GlobalParams::IsVerbose())
-										wcout<<L"The bitext between "<<Config::toWstring(it->second->first->GetPath())<<L" and "<<Config::toWstring(wf->GetPath())<<L" has been created"<<endl;
-									oss<<it->second->second->edit_distance;
-									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(it->second->first->GetPath())+L" and "+Config::toWstring(wf->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
-									oss.seekp(ios_base::beg);
-								}
-								else
-									exit=false;
-							}
-							catch(char const* e){
-								cout<<e<<endl;
-								exit=false;
-							}
-						}
-					}
-				}
-
-				starting_tuid=*last_tuid;
-			}
-			catch(char const* e){
-				cout<<e<<endl;
-				exit=false;
-			}
-		}
-	}
-	delete aligner;
-
-	return exit;					
-}
-
-bool BitextCandidates::GenerateLastAddedBitext(FILE * main_fout, unsigned int starting_tuid, unsigned int *last_tuid){
-	/*Aligner *aligner;
-	bool exit=true;
-	ifstream fin1, fin2;
-	wstring tagaligneroutput;
-	FragmentedFile ff1, ff2;
-	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
-	wostringstream oss;
-
-	aligner=new Aligner();
-	if(last_insertion!=candidates.end()){
-		aligner->Reset();
-		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
-		if(last_insertion->second->first!=NULL && ff1.LoadFile(wf->GetPath()) && ff2.LoadFile(last_insertion->second->first->GetPath())){
-			try{
-				switch (Config::getMode()) {
-					case 1:exit=aligner->Align2StepsTED(ff1,ff2); break;
-					case 2: exit=aligner->Align2StepsL(ff1,ff2); break;
-					case 3: exit=aligner->Align1Step(ff1,ff2); break;
-				}
-			}
-			catch(char const* e){
-				cout<<e<<endl;
-				exit=false;
-			}
-		}
-		if (exit) {
-			try{
-				if(GlobalParams::AllBitextInAFile()){
-					tagaligneroutput=aligner->GenerateTMX(wf->GetLang(), last_insertion->second->first->GetLang(), false, false, true, starting_tuid, last_tuid);
-					
-					if (tagaligneroutput!=L""){
-						fputws(tagaligneroutput.c_str(),main_fout);
-						if(GlobalParams::IsVerbose())
-							wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(last_insertion->second->first->GetPath())<<L" has been created"<<endl;
-						oss<<last_insertion->second->second->edit_distance;
-						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(last_insertion->second->first->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
-						oss.seekp(ios_base::beg);
-					}
-					else
-						exit=false;
-				}
-				else{
-					tagaligneroutput=aligner->GenerateTMX(wf->GetLang(), last_insertion->second->first->GetLang(), true, true, false);
-
-					if(main_fout){
-						if (tagaligneroutput!=L""){
-							fputws(tagaligneroutput.c_str(),main_fout);
-							if(GlobalParams::IsVerbose())
-								wcout<<L"The bitext between "<<Config::toWstring(wf->GetPath())<<L" and "<<Config::toWstring(last_insertion->second->first->GetPath())<<L" has been created: "<<endl;
-							oss<<last_insertion->second->second->edit_distance;
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf->GetPath())+L" and "+Config::toWstring(last_insertion->second->first->GetPath())+L" has been created."+L">> Edit distance: "+oss.str()+L"%.");
-							oss.seekp(ios_base::beg);
-							exit=true;
-						}
-					}
-					else
-						exit=false;
-				}
-			}
-			catch(char const* e){
-				cout<<e<<endl;
-				exit=false;
-			}
-		}
-	}
-	delete aligner;
-	return exit;*/return true;
-}
-
 void BitextCandidates::EraseLastAdded(){
 	if(last_insertion!=candidates.end()){
+		last_insertion->second->second->UnRelate();
+		delete last_insertion->second;
 		candidates.erase(last_insertion);
 		last_insertion=candidates.end();
 	}
