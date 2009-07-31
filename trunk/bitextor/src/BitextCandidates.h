@@ -5,16 +5,39 @@
 #include <map>
 #include "WebFile.h"
 
-
+/**
+ * @class BitextData
+ * @brief Classe que conté i calcula les dades per comparar dos fitxers web.
+ * 
+ * Aquesta classe obté i emmagatzema tota la informació resultant de la comparació entre dos fitxers web. A més, està
+ * dissenyada per a saber quants fitxers n'hi ha relacionats amb una instància. D'aquesta forma, es pot saber quan
+ * dos fitxers són els idonis per a ser considerats paral·lels i també quan una instància ja no està relacionada amb
+ * cap fitxer i, per tant, pot ser eliminada.
+ * 
+ * @author Miquel Esplà i Gomis
+ */
 class BitextData
 {
 	private:
+		/**
+		 * Nombre de fitxers relacionats a aquesta informació. Pot valdre:
+		 * 0: La informació ha de ser esborrada.
+		 * 1: Un fitxer té una parella òptima, però aquesta situació no és recíproca.
+		 * 2: Una parella de fitxers és òptima i, per tant, són candidats a ser fitxers paral·lels.
+		 */
 		int files_related;
-		
+
+		/**
+		 * Indicador que marca si els fitxerrs comparats han superat totes les heurístiques.
+		 */
 		bool passes;
 	
 	public:
 	
+		/**
+		 * Mètode que retorna el valor de l'indicador passes.
+		 * @return Retorna el valor de l'indicador passes.
+		 */
 		bool Passes();
 	
 		/**
@@ -48,27 +71,45 @@ class BitextData
 		 */
 		double text_difference;
 		
-		double percent_text_distance;
+		//double percent_text_distance;
 		
-		double percent_text_distance_variation;
+		//double percent_text_distance_variation;
 		
+		/**
+		 * Constructor de la classe que inicialitza els valors amb l'aplicació de les heurístiques als fitxers web passats.
+		 * @param wf1 Primer fitxer web a comparar.
+		 * @param wf2 Segon fitxer web a comparar.
+		 */
 		BitextData(WebFile* wf1, WebFile* wf2);
 		
+		/**
+		 * Mètode que desrelaciona un dels fitxers amb la informació, decrementant en ú la variable files_related.
+		 * @return Retorna el valor de la variable files_related actualitzat.
+		 */
 		int UnRelate();
 		
+		/**
+		 * Mètode que retorna el valor de la variable files_related actualitzat.
+		 * @return Retorna el valor de la variable files_related actualitzat.
+		 */
 		int RelatedFiles();
 
+		/**
+		 * Mètode que compara la informació de dues parelles de fitxers web.
+		 * @param bitext_data Objecte BitextData amb que es compararà.
+		 * @param disabled Variable que es preveu que s'active quan s'establisquen llindars de similitud excessiva.
+		 */
 		bool isBetterThan(BitextData* bitext_data, bool *disabled=NULL);
 };
 
 /**
  * @class BitextCandidates
- * @brief Classe que conté els elements dels bitextos.
+ * @brief Classe que representa un fitxer web i tots els candidats a ser traduccions del mateix a altres idiomes.
  * 
- * Classe que conté els elements derivats i necessaris d'un bitext. Açò són, molt ressumidament,
- * els dos textos a aparellar i la capacitat per a generar l'esmentat bitext. A més, en aquest
- * cas, també s'inclouen mètodes i paràmetres necessaris per a la comparació entre els fitxers
- * d'entrada.
+ * Aquesta classe conté un fitxer web, i l'enllaça amb tots els fitxers que són candidats a ser fitxers paral·lels en altres
+ * idiomes. Així mateix, es guarda, per a cadascun d'aquests candidats, la llista de dades de comparació entre fitxer en
+ * un objecte BitextData, mitjançant el qual es podran comparar els possibles mútiples candidats per a quedar-se només amb
+ * el millor.
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -78,16 +119,22 @@ private:
 	/**
 	 * Indicador que controla si el bitext ha estat inicialitzat correctament.
 	 */
-	 bool is_initialized;
+	bool is_initialized;
 
 	/**
 	 * El primer fitxer web del bitext.
 	 */
-	 WebFile *wf;
+	WebFile *wf;
 
-	 map <wstring, pair<WebFile*,BitextData*>* > candidates;
+	/**
+	 * Llista de candidats a ser la millor parella per a una llengua determinada.
+	 */
+	map <wstring, pair<WebFile*,BitextData*>* > candidates;
 
-	 map <wstring, pair<WebFile*,BitextData*>* >::iterator last_insertion;
+	/**
+	 * Apuntador a la última inserció en la llista.
+	 */
+	map <wstring, pair<WebFile*,BitextData*>* >::iterator last_insertion;
 
 public:
 	/**
@@ -108,6 +155,11 @@ public:
 	 */
 	WebFile* GetWebFile();
 	
+	/**
+	 * Mètode que retorna les dades de comparació del fitxer web principal amb el seu millor candidat per a una llengua donada.
+	 * @param lang Llengua del candidat que es busca.
+	 * @return Retorna l'objecte BitextData amb les dades de comparació.
+	 */
 	BitextData* GetBitextData(const wstring &lang);
 	
 	/**
@@ -120,22 +172,49 @@ public:
 	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>
 	 * en cas contrari.
 	 */
-	//bool GenerateBitexts(map<wstring,FILE *> *main_fout, const string &dest_path, unsigned int starting_tuid, unsigned int *last_tuid);
+	bool GenerateBitexts();
 
-	bool GenerateBitexts(/*const string &dest_dir*/);
-	
+	/**
+	 * Mètode que afegeix un candidat a la llista de millors candidats. Aquest només s'afegirà si no n'hi ha cap
+	 * candidat per a la llengua donada o si és millor que el candidat actual per a la mateixa llengua.
+	 * @param c Nou candidat a comparar.
+	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 */
 	bool Add(BitextCandidates* c);
 	
+	/**
+	 * Mètode que afegeix un candidat a la llista de millors candidats. Aquest només s'afegirà si no n'hi ha cap
+	 * candidat per a la llengua donada o si és millor que el candidat actual per a la mateixa llengua. En aquest cas
+	 * la comparació entre fitxers web ja està feta i es disposa de les dades. Per tant, no cal fer les operacions de
+	 * comparació entre fitxers.
+	 * @param lang Llengua del candidat.
+	 * @param d Dades de comparació entre fitxers web a afegir.
+	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 */
 	bool Add(const wstring &lang, BitextData* d);
 	
+	/**
+	 * Mètode que esborra el darrer candidat afegit.
+	 */
 	void EraseLastAdded();
 	
-	//bool GenerateLastAddedBitext(map<wstring,FILE *> *main_fout, const string &dest_path, unsigned int starting_tuid=0, unsigned int *last_tuid=NULL);
+	/**
+	 * Mètode que genera la memòria de traducció amb el darrer candidat afegit.
+	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 */
+	bool GenerateLastAddedBitext();
 	
-	bool GenerateLastAddedBitext(/*FILE* main_fout*/);
-	
+	/**
+	 * Mètode que retorna el fitxer web corresponent al candidat per a una llengua donada.
+	 * @param lang Llengua que identifica al fitxer web que es vol recuperar.
+	 * @return Retorna el fitxer web indicat.
+	 */
 	WebFile* GetWebFile(const wstring &lang);
 
+	/**
+	 * Mètode que retorna el fitxer web corresponent al darrer candidat afegit.
+	 * @return Retorna el fitxer web corresponent al darrer candidat afegit.
+	 */
 	WebFile* GetLastAddedWebFile();
 };
 

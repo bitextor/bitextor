@@ -208,7 +208,7 @@ bool Heuristics::NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value){
 			return false;
 	}
 }
-
+/*
 double Heuristics::GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &pathdistance){
 	unsigned int i,j,w;
 	unsigned int count;
@@ -319,7 +319,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 	}
 	return value;
 }
-
+*/
 
 bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
 	double res;

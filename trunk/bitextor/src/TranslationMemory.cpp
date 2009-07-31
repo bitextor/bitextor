@@ -1,6 +1,5 @@
 #include "TranslationMemory.h"
 #include "GlobalParams.h"
-#include "BitextCandidates.h"
 #include "WebSite.h"
 #include <sstream>
 #include <libtagaligner/ConfigReader.h>
@@ -16,7 +15,7 @@ void TranslationMemory::SetDestPath(const string &path){
 	dest_path=path;
 }
 
-bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2){
+bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2, BitextData* data){
 	wstring lang_code1, lang_code2;
 	map< wstring, pair< FILE*,int >* >::iterator it_files;
 	FragmentedFile ff1, ff2;
@@ -47,7 +46,7 @@ bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2){
 						fputws(tagaligneroutput.c_str(),it_files->second->first);
 						if(GlobalParams::IsVerbose())
 							wcout<<L"The bitext between "<<Config::toWstring(wf1->GetPath())<<L" and "<<Config::toWstring(wf2->GetPath())<<L" has been created"<<endl;
-						//oss<<it->second->second->edit_distance;
+						oss<<data->edit_distance;
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
 						oss.seekp(ios_base::beg);
 						uniq_files[lang_code1]->second=last_tuid;
@@ -74,7 +73,7 @@ bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2){
 							fputws(tagaligneroutput.c_str(),it_files->second->first);
 							if(GlobalParams::IsVerbose())
 								wcout<<L"The bitext between "<<Config::toWstring(wf2->GetPath())<<L" and "<<Config::toWstring(wf1->GetPath())<<L" has been created"<<endl;
-							//oss<<it->second->second->edit_distance;
+							oss<<data->edit_distance;
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf2->GetPath())+L" and "+Config::toWstring(wf1->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
 							oss.seekp(ios_base::beg);
 							uniq_files[lang_code2]->second=last_tuid;
@@ -103,7 +102,7 @@ bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2){
 							fputws(tagaligneroutput.c_str(),uniq_files[lang_code2]->first);
 							if(GlobalParams::IsVerbose())
 								wcout<<L"The bitext between "<<Config::toWstring(wf2->GetPath())<<L" and "<<Config::toWstring(wf1->GetPath())<<L" has been created"<<endl;
-							//oss<<it->second->second->edit_distance;
+							oss<<data->edit_distance;
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf2->GetPath())+L" and "+Config::toWstring(wf1->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
 							oss.seekp(ios_base::beg);
 							uniq_files[lang_code2]->second=last_tuid;
@@ -127,7 +126,7 @@ bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2){
 	return true;
 }
 
-bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2){
+bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2, BitextData* data){
 	wstring lang_code1, lang_code2;
 	map< wstring, pair< FILE*,int >* >::iterator it_files;
 	FragmentedFile ff1, ff2;
@@ -168,7 +167,7 @@ bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2){
 					fputws(tagaligneroutput.c_str(),fout);
 					if(GlobalParams::IsVerbose())
 						wcout<<L"The bitext between "<<Config::toWstring(wf1->GetPath())<<L" and "<<Config::toWstring(wf2->GetPath())<<L" has been created"<<endl;
-					//oss<<it->second->second->edit_distance;
+					oss<<data->edit_distance;
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" has been created>> Edit distance: "+oss.str()+L"%.");
 					oss.seekp(ios_base::beg);
 				}
@@ -191,13 +190,13 @@ bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2){
 	return true;
 }
 	
-bool TranslationMemory::WriteTM(WebFile* wf1, WebFile* wf2){
+bool TranslationMemory::WriteTM(WebFile* wf1, WebFile* wf2, BitextData* data){
 	bool exit;
 	
 	if(GlobalParams::AllBitextInAFile())
-		exit=WriteInSameFile(wf1, wf2);
+		exit=WriteInSameFile(wf1, wf2, data);
 	else
-		exit=WriteInDifferentFile(wf1, wf2);
+		exit=WriteInDifferentFile(wf1, wf2, data);
 	return exit;
 }
 

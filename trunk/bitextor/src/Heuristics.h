@@ -58,8 +58,8 @@ public:
 	 */
 	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result=NULL);
 
-	static wstring lang1;
-	static wstring lang2;
+	//static wstring lang1;
+	//static wstring lang2;
 
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
@@ -99,9 +99,9 @@ public:
 	 */
 	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value=NULL);
 	
-	static double GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &pathdistance);
+	//static double GetPhraseVariance(WebFile &wf1, WebFile &wf2, const wstring &pathdistance);
 	
-	static double GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const wstring &pathdistance, const double &prhasevariance);
+	//static double GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const wstring &pathdistance, const double &prhasevariance);
 };
 
 #endif /*HEURISTICS_H_*/

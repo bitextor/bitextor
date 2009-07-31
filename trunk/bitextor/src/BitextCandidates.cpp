@@ -1,3 +1,8 @@
+/*
+ * Autor: Miquel Esplà i Gomis [miquel.espla@ua.es]
+ * Any: 2009 
+ */
+
 #include "BitextCandidates.h"
 #include "Heuristics.h"
 #include "WebSite.h"
@@ -33,15 +38,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 									aux_result=0;
 								else{
-									/*if((*wf1->GetTagArray()).size()>(*wf2->GetTagArray()).size())
-										aux_result=aux_result*100/((double)(*wf1->GetTagArray()).size());
-									else
-										aux_result=aux_result*100/((double)(*wf2->GetTagArray()).size());*/
 									this->edit_distance=aux_result;
-									//this->percent_text_distance=Heuristics::GetPhraseVariance(*wf1,*wf2,pathdistance);
-									//this->percent_text_distance_variation=Heuristics::GetPhraseVarianceDesviation(*wf1,*wf2,pathdistance,this->percent_text_distance);
-									//this->text_difference=this->percent_text_distance;
-									
 								}
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 								
@@ -240,14 +237,15 @@ BitextData* BitextCandidates::GetBitextData(const wstring &lang){
 
 bool BitextCandidates::GenerateBitexts(){
 	
-	bool exit=true;
+	bool exit=false;
 	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
 
 	for(it=candidates.begin();it!=candidates.end();it++){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 		if(it->second!=NULL && it->second->first!=NULL){
-			TranslationMemory::WriteTM(wf,it->second->first);
+			TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
 		}
+		exit=true;
 	}
 
 	return exit;					
@@ -269,7 +267,7 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 		aligner->Reset();
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 		if(last_insertion->second->first!=NULL){
-			TranslationMemory::WriteTM(wf,last_insertion->second->first);
+			TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
 		}
 	}
 	delete aligner;

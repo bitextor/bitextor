@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include "WebFile.h"
+#include "BitextCandidates.h"
 
 class TranslationMemory
 {
@@ -13,13 +14,14 @@ class TranslationMemory
 		static map< wstring, pair< FILE*,int >* > uniq_files;
 	
 	public:
-		static bool WriteInSameFile(WebFile* wf1, WebFile* wf2);
-
-		static bool WriteInDifferentFile(WebFile* wf1, WebFile* wf2);
 	
 		static void SetDestPath(const string &path);
+
+		static bool WriteInSameFile(WebFile* wf1, WebFile* wf2, BitextData* data);
+
+		static bool WriteInDifferentFile(WebFile* wf1, WebFile* wf2, BitextData* data);
 	
-		static bool WriteTM(WebFile* wf1, WebFile* wf2);
+		static bool WriteTM(WebFile* wf1, WebFile* wf2, BitextData* data);
 		
 		static void Reset();
 };

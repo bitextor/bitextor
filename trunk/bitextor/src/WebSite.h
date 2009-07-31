@@ -72,7 +72,7 @@ public:
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 
 	 */
-	bool GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* > **file_list, const unsigned int &size, map<wstring,FILE *> *main_fout=NULL);
+	bool GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* > **file_list, unsigned int size);
 };
 
 #endif /*WEBSITE_H_*/

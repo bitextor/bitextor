@@ -126,7 +126,7 @@ main (int argc, char *const *argv)
 	else{
 		try{
 			if(!GlobalParams::LoadGlobalParams(config_file))
-				wcerr<<L"Bitextor can't open the config file. Please, specifie it with the option -c or place it at /usr/local/etc/bitextor/conf/"<<endl;
+				wcerr<<L"Bitextor can not open the config file. Please, specifie it with the option -c or place it at /usr/local/etc/bitextor/conf/"<<endl;
 			else{
 				if(verbose)
 					GlobalParams::SetVerbose();

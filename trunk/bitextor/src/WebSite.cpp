@@ -52,7 +52,6 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	vector< BitextCandidates* > **file_list;
 	stack<string> *dirs, *subdirs;
 	unsigned int i;
-	map<wstring,FILE *> fouts;
 	map<wstring,FILE *>::iterator it_files;
 	
 
@@ -118,9 +117,9 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			//If the structure is full, we calculate the candidates for higher level files, delete this level and load a new lower level
 			else{
 				if(!exit)
-					exit=GetMatchedFiles(dest_path, file_list, level+1, &fouts);
+					exit=GetMatchedFiles(dest_path, file_list, level+1);
 				else
-					GetMatchedFiles(dest_path, file_list, level+1, &fouts);
+					GetMatchedFiles(dest_path, file_list, level+1);
 				for(i=0; i<file_list[0]->size();i++){
 					//remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
 					delete file_list[0]->at(i);
@@ -136,9 +135,9 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		delete subdirs;
 		for(level=GlobalParams::GetDirectoryDepthDistance()+1;level>=1;level--){
 			if(!exit)
-				exit=GetMatchedFiles(dest_path, file_list, level, &fouts);
+				exit=GetMatchedFiles(dest_path, file_list, level);
 			else
-				GetMatchedFiles(dest_path, file_list, level, &fouts);
+				GetMatchedFiles(dest_path, file_list, level);
 			for(i=0; i<file_list[0]->size();i++){
 				delete file_list[0]->at(i);
 			}
@@ -147,13 +146,6 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 				file_list[i-1]=file_list[i];
 		}
 		delete[] file_list;
-
-		if(GlobalParams::AllBitextInAFile()){
-			for(it_files=fouts.begin();it_files!=fouts.end();it_files++){
-				fputws(Aligner::GetFoot().c_str(),it_files->second);
-				fclose(it_files->second);
-			}
-		}
 	}
 	catch(...){
 		exit=false;
@@ -164,16 +156,11 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	return exit;
 }
 
-bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* > **file_list, const unsigned int &size, map<wstring,FILE *> *main_fout)
+bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* > **file_list, unsigned int size)
 {
 	bool exit=false;
-	unsigned int i,j,k,l;
+	unsigned int i,j,k;
 	string file_name;
-	ostringstream *aux_sstream;
-	struct stat my_stat;
-	FILE* fout;
-	unsigned int starting_tuid=0;
-	unsigned int last_tuid=0;
 	map <wstring, BitextCandidates* > best_bitexts;
 	map <wstring, BitextCandidates* >::iterator bb_it, it;
 	vector<bool> enabled_bitexts;
@@ -212,11 +199,11 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* 
 		}
 		if(!GlobalParams::GetCreateAllCandidates()){
 			if(GlobalParams::AllBitextInAFile()){
-				main_bitext->GenerateBitexts();
-				starting_tuid=last_tuid;
+				if(!exit)
+					exit=main_bitext->GenerateBitexts();
+				else
+					main_bitext->GenerateBitexts();
 			}
-			else
-				main_bitext->GenerateBitexts();
 		}
 	}
 	return exit;
