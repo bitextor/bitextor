@@ -7,22 +7,22 @@ m4_define([required_libtagaligner_version], [3.1.0])
 m4_define([required_libxml_version], [2.6.17])
 m4_define([required_libenca_version], [1.9])
 m4_define([required_libtre_version], [0.7.5])
-AC_INIT([bitextor], [3.0], [miquelespla@gmail.com])
+AC_INIT([bitextor], [3.1], [miquel.espla@ua.com])
 AC_CONFIG_SRCDIR([src/BitextCandidates.h])
 
 GENERIC_LIBRARY_NAME=bitextor
 
 # Release versioning
 GENERIC_MAJOR_VERSION=3
-GENERIC_MINOR_VERSION=0
-GENERIC_MICRO_VERSION=1
+GENERIC_MINOR_VERSION=1
+GENERIC_MICRO_VERSION=0
 
 # API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
 GENERIC_API_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
 AC_SUBST(GENERIC_API_VERSION)
 
 # Shared library versioning
-GENERIC_LIBRARY_VERSION=3:0:1
+GENERIC_LIBRARY_VERSION=3:1:0
 #                       | | |
 #                +------+ | +---+
 #                |        |     |

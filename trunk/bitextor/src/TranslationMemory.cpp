@@ -161,8 +161,7 @@ bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2){
 				}
 				delete aux_sstream;
 				fout=fopen(file_name.c_str(),"w");
-				//fputws(Aligner::GetHeading().c_str(),fout);
-					
+
 				//fout=fopen((dest_path+"/"+WebSite::GetFileName(wf1->GetPath())+"_"+WebSite::GetFileName(wf2->GetPath())+".tmx").c_str(), "w");
 				tagaligneroutput=aligner->GenerateTMX(wf1->GetLang(), wf2->GetLang(), true, true, false);
 				if (tagaligneroutput!=L""){
@@ -175,8 +174,7 @@ bool TranslationMemory::WriteInDifferentFile(WebFile* wf1, WebFile* wf2){
 				}
 				else
 					exit=false;
-					
-				//fputws(Aligner::GetFoot().c_str(),fout);
+
 				fclose(fout);
 			}
 			catch(char const* e){

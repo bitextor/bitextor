@@ -278,7 +278,8 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 
 void BitextCandidates::EraseLastAdded(){
 	if(last_insertion!=candidates.end()){
-		last_insertion->second->second->UnRelate();
+		if(last_insertion->second->second->UnRelate()==0)
+			delete last_insertion->second->second;
 		delete last_insertion->second;
 		candidates.erase(last_insertion);
 		last_insertion=candidates.end();
