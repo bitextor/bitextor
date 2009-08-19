@@ -198,12 +198,10 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* 
 			}
 		}
 		if(!GlobalParams::GetCreateAllCandidates()){
-			if(GlobalParams::AllBitextInAFile()){
-				if(!exit)
-					exit=main_bitext->GenerateBitexts();
-				else
-					main_bitext->GenerateBitexts();
-			}
+			if(!exit)
+				exit=main_bitext->GenerateBitexts();
+			else
+				main_bitext->GenerateBitexts();
 		}
 	}
 	return exit;

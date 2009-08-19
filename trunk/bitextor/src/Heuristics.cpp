@@ -8,8 +8,8 @@
 #include <math.h>
 #include <libtagaligner/EditDistanceTools.h>
 
-wstring Heuristics::lang1=L"";
-wstring Heuristics::lang2=L"";
+//wstring Heuristics::lang1=L"";
+//wstring Heuristics::lang2=L"";
 
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 {
