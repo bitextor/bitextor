@@ -1,10 +1,10 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <title>Bitextor: Referència de la Classe WebSite</title>
-<link href="doxygen.css" rel="stylesheet" type="text/css">
 <link href="tabs.css" rel="stylesheet" type="text/css">
+<link href="doxygen.css" rel="stylesheet" type="text/css">
 </head><body>
-<!-- Generat per Doxygen 1.5.6 -->
+<!-- Generat per Doxygen 1.5.8 -->
 <div class="navigation" id="top">
   <div class="tabs">
     <ul>
@@ -37,11 +37,12 @@
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#d333fe4c576ad7a40705bd0736b86773">GetBasePath</a> ()</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#b238d061d1623f798df5007e9b7d893b">GetFileName</a> (string path)</td></tr>
-
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#f2e4e4929b0991e6c5ead1fa35f76504">GenerateBitexts</a> (const string &amp;dest_path)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#37118cd908402b432c8f186ee065dd33">GetMatchedFiles</a> (const string &amp;dest_dir, vector&lt; <a class="el" href="classWebFile.html">WebFile</a> * &gt; **file_list, const unsigned int &amp;size, FILE *main_fout=NULL)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#add0dfe967813241186f961ec6006369">GetMatchedFiles</a> (const string &amp;dest_dir, vector&lt; <a class="el" href="classBitextCandidates.html">BitextCandidates</a> * &gt; **file_list, unsigned int size)</td></tr>
+
+<tr><td colspan="2"><br><h2>Mètodes Públics Estàtics</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classWebSite.html#b238d061d1623f798df5007e9b7d893b">GetFileName</a> (string path)</td></tr>
 
 </table>
 <hr><a name="_details"></a><h2>Descripció Detallada</h2>
@@ -90,6 +91,32 @@ Destructor de la classe.
 </div>
 </div><p>
 <hr><h2>Documentació de les Funcions Membre</h2>
+<a class="anchor" name="f2e4e4929b0991e6c5ead1fa35f76504"></a><!-- doxytag: member="WebSite::GenerateBitexts" ref="f2e4e4929b0991e6c5ead1fa35f76504" args="(const string &amp;dest_path)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool WebSite::GenerateBitexts           </td>
+          <td>(</td>
+          <td class="paramtype">const string &amp;&nbsp;</td>
+          <td class="paramname"> <em>dest_path</em>          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva. <dl compact><dt><b>Paràmetres:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>dest_path</em>&nbsp;</td><td>Directori base del qual es llegeix la informació sobre els fitxers a procesar. </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna <code>true</code> si s'ha trobat alguna coincidència o <code>false</code> en cas contrari. </dd></dl>
+
+</div>
+</div><p>
 <a class="anchor" name="d333fe4c576ad7a40705bd0736b86773"></a><!-- doxytag: member="WebSite::GetBasePath" ref="d333fe4c576ad7a40705bd0736b86773" args="()" -->
 <div class="memitem">
 <div class="memproto">
@@ -125,7 +152,7 @@ Mètode que permet obtenir la ruta on es localitza el directori base del que pen
           <td class="paramtype">string&nbsp;</td>
           <td class="paramname"> <em>path</em>          </td>
           <td>&nbsp;)&nbsp;</td>
-          <td></td>
+          <td><code> [static]</code></td>
         </tr>
       </table>
 </div>
@@ -141,33 +168,7 @@ Mètode que retorna el nom d'un fitxer a partir del seu path complet. <dl compac
 
 </div>
 </div><p>
-<a class="anchor" name="f2e4e4929b0991e6c5ead1fa35f76504"></a><!-- doxytag: member="WebSite::GenerateBitexts" ref="f2e4e4929b0991e6c5ead1fa35f76504" args="(const string &amp;dest_path)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool WebSite::GenerateBitexts           </td>
-          <td>(</td>
-          <td class="paramtype">const string &amp;&nbsp;</td>
-          <td class="paramname"> <em>dest_path</em>          </td>
-          <td>&nbsp;)&nbsp;</td>
-          <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>
-Mètode que inicialitza la llista de fitxers continguts en el directori arrel proporcionat de forma recursiva. <dl compact><dt><b>Paràmetres:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>dest_path</em>&nbsp;</td><td>Directori base del qual es llegeix la informació sobre els fitxers a procesar. </td></tr>
-  </table>
-</dl>
-<dl class="return" compact><dt><b>Retorna:</b></dt><dd>Retorna <code>true</code> si s'ha trobat alguna coincidència o <code>false</code> en cas contrari. </dd></dl>
-
-</div>
-</div><p>
-<a class="anchor" name="37118cd908402b432c8f186ee065dd33"></a><!-- doxytag: member="WebSite::GetMatchedFiles" ref="37118cd908402b432c8f186ee065dd33" args="(const string &amp;dest_dir, vector&lt; WebFile * &gt; **file_list, const unsigned int &amp;size, FILE *main_fout=NULL)" -->
+<a class="anchor" name="add0dfe967813241186f961ec6006369"></a><!-- doxytag: member="WebSite::GetMatchedFiles" ref="add0dfe967813241186f961ec6006369" args="(const string &amp;dest_dir, vector&lt; BitextCandidates * &gt; **file_list, unsigned int size)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -180,20 +181,14 @@ Mètode que inicialitza la llista de fitxers continguts en el directori arrel pr
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">vector&lt; <a class="el" href="classWebFile.html">WebFile</a> * &gt; **&nbsp;</td>
+          <td class="paramtype">vector&lt; <a class="el" href="classBitextCandidates.html">BitextCandidates</a> * &gt; **&nbsp;</td>
           <td class="paramname"> <em>file_list</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const unsigned int &amp;&nbsp;</td>
-          <td class="paramname"> <em>size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">FILE *&nbsp;</td>
-          <td class="paramname"> <em>main_fout</em> = <code>NULL</code></td><td>&nbsp;</td>
+          <td class="paramtype">unsigned int&nbsp;</td>
+          <td class="paramname"> <em>size</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -210,7 +205,6 @@ Mètode que compara, segons els límits establerts als paràmetres globals, els 
     <tr><td valign="top"></td><td valign="top"><em>dest_dir</em>&nbsp;</td><td>Directori de destinació per la generació dels bitextos. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>file_list</em>&nbsp;</td><td>Llista de fitxers per nivells ja carregats. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>size</em>&nbsp;</td><td>Nombre de nivells de la cerca. </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>main_fout</em>&nbsp;</td><td>Si s'estan creant tots els bitextos al mateix fitxer, el stream del fitxer on s'hi han de vessar. </td></tr>
   </table>
 </dl>
 <dl compact><dt><b>Excepcions:</b></dt><dd>
@@ -225,8 +219,8 @@ Mètode que compara, segons els límits establerts als paràmetres globals, els 
 <hr>La documentació d'aquesta classe es va generar a partir dels següents fitxers:<ul>
 <li>src/<a class="el" href="WebSite_8h-source.html">WebSite.h</a><li>src/WebSite.cpp</ul>
 </div>
-<hr size="1"><address style="text-align: right;"><small>Generat a Tue Apr 21 08:49:13 2009 per a Bitextor per&nbsp;
+<hr size="1"><address style="text-align: right;"><small>Generat a Fri Sep 4 21:25:15 2009 per a Bitextor per&nbsp;
 <a href="http://www.doxygen.org/index.html">
-<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.8 </small></address>
 </body>
 </html>

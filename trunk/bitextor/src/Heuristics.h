@@ -53,6 +53,7 @@ public:
 	 * excedeixen el llindar establert. La amplada d'aquesta diagonal serà directament proporcional al propi llindar.
 	 * @param wf1 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre un dels fitxers web amb el qual hem de fer la comparació.
 	 * @param wf2 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre l'altre fitxer web amb el qual hem de fer la comparació.
+	 * @param pathdistance Paràmetre que conté el camí òptim per obtenir la distància resultant. S'utilitza per re-recorrer aquesta ruta i assignar les puntuacions adequades.
 	 * @param result Paràmetre que serveix per a obtenir la distància d'edició entre els vectors d'etiquetes HTML/Text dels dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
 	 * @return Retorna la distància d'edició calculada com a enter major o igual a zero. En cas que la distància excedisca el màxim establert, el mètode retornarà -1.
 	 */
@@ -68,9 +69,15 @@ public:
 	 * @param ctag2 Second operand.
 	 * @return Cost of the operation. 
 	 */
-	static double Cost(const short &op, const int &ctag1, const int &ctag2);
+	//static double Cost(const short &op, const int &ctag1, const int &ctag2);
 	
-	
+	/**
+	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
+	 * @param op Code of the operation wich will be performed (deletion, insertion, substitution).
+	 * @param ctag1 First operand.
+	 * @param ctag2 Second operand.
+	 * @return Cost of the operation. 
+	 */
 	static double CostTextAlignment(const short &op, const int &ctag1, const int &ctag2);
 
 	/**

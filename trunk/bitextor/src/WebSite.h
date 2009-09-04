@@ -67,7 +67,6 @@ public:
 	 * @param dest_dir Directori de destinació per la generació dels bitextos.
 	 * @param file_list Llista de fitxers per nivells ja carregats.
 	 * @param size Nombre de nivells de la cerca.
-	 * @param main_fout Si s'estan creant tots els bitextos al mateix fitxer, el stream del fitxer on s'hi han de vessar.
 	 * @throw char* El mètode llança una excepció si l'objecte no ha estat inicialitzat correctament.
 	 * @return Retorna una estructura <code>vector</code>. Cada node d'aquesta estructura és
 	 * un altre vector compost per les rutes dels fitxers candidats. 

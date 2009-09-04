@@ -164,9 +164,6 @@ public:
 	
 	/**
 	 * Mètode que crea el bitext a partir dels dos fiters web introduïts en la inicialització.
-	 * @param main_fout Fitxer on s'emmagatzemaran els bitextos generats.
-	 * @param starting_tuid TUID des de la qual s'han de començar a numerar els bitexts (TU's) generats.
-	 * @param last_tuid En cas què aquest punter siga diferent de NULL, s'hi emmagatzemarà la darrera tuid assignada a un TU.
 	 * @throw char* El mètode retorna una excepció en forma de cadena de text si l'objecte no ha
 	 * estat inicialitzat correctament.
 	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>

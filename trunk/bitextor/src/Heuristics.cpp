@@ -148,13 +148,13 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 				break;
 			}
 		}
+		
 
 		if(pathdistance!=NULL)
 			*pathdistance=pdistance;
 
-		if(max_diff_abs>=res && max_diff_percent>=res){
+		if(max_diff_abs>=res && max_diff_percent>=res)
 			return true;
-		}
 		else
 			return false;
 	}
