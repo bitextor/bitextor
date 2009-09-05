@@ -196,7 +196,6 @@ bool TranslationMemory::WriteTM(WebFile* wf1, WebFile* wf2, BitextData* data){
 	if(GlobalParams::AllBitextInAFile())
 		exit=WriteInSameFile(wf1, wf2, data);
 	else{
-		wcout<<L"ACI SI"<<endl;
 		exit=WriteInDifferentFile(wf1, wf2, data);
 	}
 	return exit;
