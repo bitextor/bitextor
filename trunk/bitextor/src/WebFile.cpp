@@ -66,6 +66,7 @@ bool WebFile::Initialize(const string &path)
 	wstring text, content;
 	vector<int> tags;
 	FragmentedFile ffile;
+	unsigned int pos_aux;
 
 	if(GlobalParams::GetTextCatConfigFile()==L"")
 		throw "TextCat's configuration file has not been specified. Please, define it in the Bitextor's configuration file.";
@@ -77,7 +78,11 @@ bool WebFile::Initialize(const string &path)
 			this->path=path;
 			//We set the extension of the file
 			try{
-				this->file_type=path.substr(path.find_last_of('.')+1);
+				pos_aux=path.find_last_of('.')+1;
+				if(path[pos_aux]!=L'/')
+					this->file_type=path.substr(pos_aux);
+				else
+					this->file_type="";
 			}
 			catch(std::out_of_range& e){
 				this->file_type="";
