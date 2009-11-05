@@ -13,7 +13,8 @@
 
 bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
 {
-	return (wf1->GetFileType()==wf2->GetFileType());
+	//return (wf1->GetFileType()==wf2->GetFileType());
+	return true;
 }
 
 bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double *result)

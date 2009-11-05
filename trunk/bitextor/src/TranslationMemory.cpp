@@ -114,6 +114,7 @@ bool TranslationMemory::WriteInSameFile(WebFile* wf1, WebFile* wf2, BitextData* 
 						cout<<e<<endl;
 						exit=false;
 					}
+					fputws(Aligner::GetFoot().c_str(),uniq_files[lang_code2]->first);
 				}
 			}
 		}
