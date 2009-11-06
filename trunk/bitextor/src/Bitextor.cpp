@@ -56,7 +56,7 @@ main (int argc, char *const *argv)
 	setlocale(LC_CTYPE, "");
 
 	//Short options
-	const char* const short_op = "d:w:hc:sl:v";
+	const char* const short_op = "d:w:hc:sl:vp:";
 
 	//Set of long options
 	const struct option long_op[] =
@@ -66,6 +66,7 @@ main (int argc, char *const *argv)
 		{ "set-languages", 0, NULL, 's'}, //Execution in 2-setps mode with alignment distance text comparison
 		{ "help", 0, NULL, 'h'},
 		{ "config-file", 1, NULL, 'c'},
+		{ "paired-files", 1, NULL, 'p'},
 		{ "log-file", 1, NULL, 'l'},
 		{ "verbose", 0, NULL, 'v'},
 		{ NULL, 0, NULL, 0}
@@ -109,6 +110,10 @@ main (int argc, char *const *argv)
 			break;
 			case 'l':
 				GlobalParams::OpenLog(optarg);
+			break;
+			case 'p':
+				GlobalParams::OpenResults(optarg);
+				GlobalParams::GenerateTMX(false);
 			break;
 			case 'h': show_howtouse=true; break;
 			case 'c': config_file=optarg; break;
@@ -164,6 +169,7 @@ main (int argc, char *const *argv)
 		}
 	}
 	GlobalParams::CloseLog();
+	GlobalParams::CloseResults();
 
 	return 0; 
 }

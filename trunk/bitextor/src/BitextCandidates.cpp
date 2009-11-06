@@ -243,7 +243,10 @@ bool BitextCandidates::GenerateBitexts(){
 	for(it=candidates.begin();it!=candidates.end();it++){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 		if(it->second!=NULL && it->second->first!=NULL){
-			TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
+			if(GlobalParams::GetGenerateTMX())
+				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
+			else
+				GlobalParams::WriteResults(Config::toWstring(wf->GetPath()+" >> "+it->second->first->GetPath()));
 		}
 		exit=true;
 	}
@@ -267,7 +270,10 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 		aligner->Reset();
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
 		if(last_insertion->second->first!=NULL){
-			TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
+			if(GlobalParams::GetGenerateTMX())
+				TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
+			else
+				GlobalParams::WriteResults(Config::toWstring(wf->GetPath()+" >> "+last_insertion->second->first->GetPath()));
 		}
 	}
 	delete aligner;

@@ -143,6 +143,18 @@ private:
 	 * Flag que indica si s'han de crear o no aquelles parelles per a les quals s'hi troben candidats molt semblants (candidats ambigus).
 	 */
 	static double generate_ambiguous_bitexts;
+	
+	
+	/**
+	 *
+	 */
+	static bool generate_tmx;
+	
+	
+	/**
+	 * Flag que indica si cal crear un un fitxer en què escriure les parelles generades.
+	 */
+	static wofstream results_file;
 
 public:
 	/**
@@ -349,6 +361,26 @@ public:
 	 * @return Retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
 	 */
 	static double GetGenerateAmbiguousBitexts();
+	
+	/**
+	 * 
+	 */
+	static void GenerateTMX(bool generate);
+	
+	
+	/**
+	 * 
+	 */
+	static bool GetGenerateTMX();
+	
+	static void WriteResults(const wstring &result_text);
+	
+	static bool OpenResults(const string &results_path);
+	
+	/**
+	 * Mètode que tanca el fitxer de resultats.
+	 */
+	static void CloseResults();
 };
 
 #endif /*GLOBALPARAMS_H_*/

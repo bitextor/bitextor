@@ -49,6 +49,18 @@ bool GlobalParams::create_all_candidates=false;
 
 double GlobalParams::generate_ambiguous_bitexts=-1;
 
+bool GlobalParams::generate_tmx=false;
+
+wofstream GlobalParams::results_file;
+
+void GlobalParams::GenerateTMX(bool generate){
+	generate_tmx=generate;
+}
+
+bool GlobalParams::GetGenerateTMX(){
+	return generate_tmx;
+}
+
 bool GlobalParams::AllBitextInAFile()
 {
 	return all_bitexts_in_one;
@@ -371,7 +383,13 @@ void GlobalParams::WriteLog(const wstring &log_text)
 		rawtime=localtime( &rtime );
 		log_file<<rawtime->tm_mday<<L"/"<<rawtime->tm_mon+1<<L"/"<<rawtime->tm_year<<L" "<<rawtime->tm_hour<<L":"<<rawtime->tm_min<<L":"<<rawtime->tm_sec<<L">> "<<log_text<<endl;
 	}
-	//delete rawtime;
+}
+
+void GlobalParams::WriteResults(const wstring &result_text)
+{
+	if(results_file.is_open()){
+		results_file<<result_text<<endl;
+	}
 }
 
 bool GlobalParams::OpenLog(const string &log_path)
@@ -380,6 +398,14 @@ bool GlobalParams::OpenLog(const string &log_path)
 		log_file.close();
 	log_file.open(log_path.c_str());
 	return log_file.is_open();
+}
+
+bool GlobalParams::OpenResults(const string &results_path)
+{
+	if(results_file.is_open())
+		results_file.close();
+	results_file.open(results_path.c_str());
+	return results_file.is_open();
 }
 
 void GlobalParams::CloseLog()
@@ -405,4 +431,10 @@ void GlobalParams::SetVerbose()
 double GlobalParams::GetGenerateAmbiguousBitexts()
 {
 	return generate_ambiguous_bitexts;
+}
+
+void GlobalParams::CloseResults()
+{
+	if(results_file.is_open())
+		results_file.close();
 }
