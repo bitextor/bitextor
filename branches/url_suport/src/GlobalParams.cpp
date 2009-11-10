@@ -49,7 +49,7 @@ bool GlobalParams::create_all_candidates=false;
 
 double GlobalParams::generate_ambiguous_bitexts=-1;
 
-bool GlobalParams::generate_tmx=false;
+bool GlobalParams::generate_tmx=true;
 
 wofstream GlobalParams::results_file;
 

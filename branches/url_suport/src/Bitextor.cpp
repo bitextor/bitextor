@@ -42,7 +42,6 @@ int
 main (int argc, char *const *argv)
 {
 	WebSite *ws;
-	//Bitext bitext;
 	ifstream file;
 	string file_name;
 	bool show_howtouse=false, mode_set=false, verbose=false, download=false;

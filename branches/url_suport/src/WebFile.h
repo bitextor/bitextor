@@ -3,6 +3,7 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
+#include "Url.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -62,7 +63,7 @@ private:
 	 */
 	unsigned int text_size;
 	
-	wstring url;
+	Url *url;
 
 	/**
 	 * Mètode que indica si un caràcter és alfabètic o no.
@@ -70,6 +71,12 @@ private:
 	 * @return Retorna <code>true</code> si el caràcter és alfabètic i <code>false</code> en cas contrari.
 	 */
 	bool IsAlphabetic(const wchar_t& car);
+	
+	/**
+	 * Method wich obtains the url of the webfile from a comment in the HTML code (if it has been downloaded by using
+	 * HTTrack)
+	 */
+	void ObtainURL();
 
 public:
 
@@ -143,8 +150,8 @@ public:
 	 * @param text Text del qual s'hi volen extreure els números.
 	 */
 	void GetNonAplha(wstring text);
-	
-	void ObtainURL();
+
+	Url* GetURL();
 };
 
 #endif /*WEBFILE_H_*/

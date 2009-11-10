@@ -143,14 +143,12 @@ private:
 	 * Flag que indica si s'han de crear o no aquelles parelles per a les quals s'hi troben candidats molt semblants (candidats ambigus).
 	 */
 	static double generate_ambiguous_bitexts;
-	
-	
+
 	/**
 	 *
 	 */
 	static bool generate_tmx;
-	
-	
+
 	/**
 	 * Flag que indica si cal crear un un fitxer en què escriure les parelles generades.
 	 */

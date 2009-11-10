@@ -13,6 +13,7 @@
 WebFile::WebFile()
 {
 	this->initialized=false;
+	this->url=NULL;
 	text_size=0;
 }
 
@@ -228,8 +229,7 @@ void WebFile::ObtainURL(){
 				found=aux.find(L"<!-- Mirrored from ");
 				if (found!=string::npos){
 					found=aux.find_first_of(L' ',20);
-					url=aux.substr(19,found-19);
-					wcout<<url<<endl;
+					url=new Url(aux.substr(19,found-19));
 					aux_car=WEOF;
 				}
 				else
@@ -243,4 +243,8 @@ void WebFile::ObtainURL(){
 		}
 		fclose(fin);
 	}
+}
+
+Url* WebFile::GetURL(){
+	return url;
 }

@@ -39,6 +39,11 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 									aux_result=0;
 								else{
 									this->edit_distance=aux_result;
+									if(wf1->GetURL()!=NULL && wf2->GetURL()){
+										//wcout<<wf1->GetURL()->GetCompleteURL()<<L" vs. "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->ComparisonPoints(wf2->GetURL())<<endl;
+										this->edit_distance+=(this->edit_distance*wf1->GetURL()->ComparisonPoints(wf2->GetURL()));
+									}
+		
 								}
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 								
@@ -242,6 +247,7 @@ bool BitextCandidates::GenerateBitexts(){
 
 	for(it=candidates.begin();it!=candidates.end();it++){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
+
 		if(it->second!=NULL && it->second->first!=NULL){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);

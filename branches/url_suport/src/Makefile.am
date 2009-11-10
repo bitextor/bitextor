@@ -17,6 +17,8 @@ GlobalParams.h \
 GlobalParams.cpp \
 Heuristics.h \
 Heuristics.cpp \
+Url.h \
+Url.cpp \
 WebFile.h \
 WebFile.cpp \
 WebSite.h \
