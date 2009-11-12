@@ -53,6 +53,8 @@ bool GlobalParams::generate_tmx=true;
 
 wofstream GlobalParams::results_file;
 
+int GlobalParams::url_comparison_values[3]={0,0,0};
+
 void GlobalParams::GenerateTMX(bool generate){
 	generate_tmx=generate;
 }
@@ -437,4 +439,17 @@ void GlobalParams::CloseResults()
 {
 	if(results_file.is_open())
 		results_file.close();
+}
+
+void GlobalParams::SetURLComparisonValues(int difference_in_name, int difference_in_dirorvar, int more_than_one_difference){
+	url_comparison_values[0]=difference_in_name;
+	url_comparison_values[1]=difference_in_dirorvar;
+	url_comparison_values[2]=more_than_one_difference;
+}
+	
+int GlobalParams::GetURLComparisonValue(unsigned int index){
+	if(index>0 && index<=2)
+		return url_comparison_values[index];
+	else
+		return 0;
 }

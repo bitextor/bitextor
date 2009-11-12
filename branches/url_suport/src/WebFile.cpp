@@ -216,7 +216,6 @@ void WebFile::ObtainURL(){
 	FILE* fin;
 	wstring aux=L"";
 	wint_t aux_car;
-	unsigned int i;
 	unsigned int found;
 
 	fin=fopen(path.c_str(),"r");
@@ -227,7 +226,7 @@ void WebFile::ObtainURL(){
 		while(aux_car!=WEOF){
 			if(aux_car==L'\n'){
 				found=aux.find(L"<!-- Mirrored from ");
-				if (found!=string::npos){
+				if (found<aux.length()){
 					found=aux.find_first_of(L' ',20);
 					url=new Url(aux.substr(19,found-19));
 					aux_car=WEOF;

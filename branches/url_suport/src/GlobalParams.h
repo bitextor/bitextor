@@ -153,6 +153,8 @@ private:
 	 * Flag que indica si cal crear un un fitxer en què escriure les parelles generades.
 	 */
 	static wofstream results_file;
+	
+	static int url_comparison_values[3];
 
 public:
 	/**
@@ -379,6 +381,10 @@ public:
 	 * Mètode que tanca el fitxer de resultats.
 	 */
 	static void CloseResults();
+	
+	static void SetURLComparisonValues(int difference_in_name, int difference_in_dirorvar, int more_than_one_difference);
+	
+	static int GetURLComparisonValue(unsigned int index);
 };
 
 #endif /*GLOBALPARAMS_H_*/
