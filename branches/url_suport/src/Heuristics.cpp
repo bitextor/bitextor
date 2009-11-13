@@ -66,7 +66,7 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result)
 {
 	vector<int> *tag_array1, *tag_array2;
-	double res,beam,difference,tmp;
+	double res,beam,difference,tmp, index_url;
 	unsigned int vec1len, vec2len;
 	unsigned int max_diff_abs, max_diff_percent,text_distance;
 	unsigned int i,j,w;
@@ -102,7 +102,13 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 			beam=Config::getDiagonalSize();
 
 		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &CostTextAlignment, Config::diagonalSizeIsPercent(), beam, result);
-
+		
+		if(wf1->GetURL()!=NULL && wf2->GetURL()){
+			//wcout<<wf1->GetURL()->GetCompleteURL()<<L" vs. "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->ComparisonPoints(wf2->GetURL())<<endl;
+			index_url=wf1->GetURL()->ComparisonPoints(wf2->GetURL());
+			*result+=index_url*(*result);
+		}
+		
 		res=0;
 		for(i=0,j=0,w=0;w<pdistance.length();w++){
 			switch (pdistance[w]){
@@ -149,7 +155,6 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 				break;
 			}
 		}
-		
 
 		if(pathdistance!=NULL)
 			*pathdistance=pdistance;

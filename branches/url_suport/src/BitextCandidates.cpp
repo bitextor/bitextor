@@ -39,10 +39,6 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 									aux_result=0;
 								else{
 									this->edit_distance=aux_result;
-									if(wf1->GetURL()!=NULL && wf2->GetURL()){
-										//wcout<<wf1->GetURL()->GetCompleteURL()<<L" vs. "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->ComparisonPoints(wf2->GetURL())<<endl;
-										this->edit_distance+=(this->edit_distance*wf1->GetURL()->ComparisonPoints(wf2->GetURL()));
-									}
 		
 								}
 								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
@@ -252,7 +248,7 @@ bool BitextCandidates::GenerateBitexts(){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
 			else
-				GlobalParams::WriteResults(Config::toWstring(wf->GetPath()+" >> "+it->second->first->GetPath()));
+				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+it->second->first->GetURL()->GetCompleteURL());
 		}
 		exit=true;
 	}
@@ -279,7 +275,7 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
 			else
-				GlobalParams::WriteResults(Config::toWstring(wf->GetPath()+" >> "+last_insertion->second->first->GetPath()));
+				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+last_insertion->second->first->GetURL()->GetCompleteURL());
 		}
 	}
 	delete aligner;
