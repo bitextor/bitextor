@@ -165,33 +165,33 @@ bool Url::ProcessHTtrackLogFile(string &file_path){
 	bool exit;
 	int status;
 	FILE* fin;
-	wstring aux=L"";
-	wint_t aux_car;
-	unsigned int found, i;
+	string aux="";
+	char aux_car;
+	unsigned int i;
 	regex_t re1, re2, re3, re4;
 	regmatch_t matches1[1], matches2[1];
-	wstring tmp_str, url_and_filename;
+	string tmp_str, url_and_filename;
 	wofstream fout;
+	string aux_conv_char;
 	
-	
-	if (regwcomp(&re1, L"[^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]+\t+[ae]", REG_EXTENDED) != 0)
+	if (regcomp(&re1, "[^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]+\t+[ae]", REG_EXTENDED) != 0)
 		return false;
-	if (regwcomp(&re2, L"^[a-z]+", REG_EXTENDED) != 0)
+	if (regcomp(&re2, "^[a-z]+", REG_EXTENDED) != 0)
 		return false;
-	if (regwcomp(&re3, L" [^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]", REG_EXTENDED) != 0)
+	if (regcomp(&re3, " [^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]", REG_EXTENDED) != 0)
 		return false;
-	if (regwcomp(&re4, L"[^\t\n ]+\t+[^\t\n ]+", REG_EXTENDED) != 0)
+	if (regcomp(&re4, "[^\t\n ]+\t+[^\t\n ]+", REG_EXTENDED) != 0)
 		return false;
 
 	fin=fopen(file_path.c_str(),"r");
 	fout.open("/home/miquel/URLList.xml");
 	if(fin){
 		if(fout.is_open()){
-			fout<<L"<?xml version=\"1.0\" encoding='UTF-8'?>"<<endl<<L"\t<urlsAndFiles>"<<endl;
+			fout<<L"<?xml version=\"1.0\" encoding='UTF-8'?>"<<endl<<L"<urlsAndFiles>"<<endl;
 
-			aux_car=getwc(fin);
-			while(aux_car!=WEOF){
-				if(aux_car==L'\n'){
+			aux_car=getc(fin);
+			while(aux_car!=EOF){
+				if(aux_car=='\n'){
 					/*found=aux.find(L"<!-- Mirrored from ");
 					if (found<aux.length()){
 						found=aux.find_first_of(L' ',20);
@@ -200,21 +200,23 @@ bool Url::ProcessHTtrackLogFile(string &file_path){
 					}
 					else
 						aux_car=getwc(fin);*/
-					status = regwexec(&re1, aux.c_str(), (size_t) 1, matches1, 0);
+					status = regexec(&re1, aux.c_str(), (size_t) 1, matches1, 0);
 					if(status==0){
-						status = regwexec(&re2, aux.substr(matches1[0].rm_eo-1).c_str(), (size_t) 1, matches2, 0);
-						if(status==0 && aux.substr(matches1[0].rm_eo-1,matches2[0].rm_eo)==L"added"){
+						status = regexec(&re2, aux.substr(matches1[0].rm_eo-1).c_str(), (size_t) 1, matches2, 0);
+						if(status==0 && aux.substr(matches1[0].rm_eo-1,matches2[0].rm_eo)=="added"){
 							tmp_str=aux.substr(matches1[0].rm_eo-1+matches2[0].rm_eo);
-							status = regwexec(&re3, tmp_str.c_str(), (size_t) 1, matches1, 0);
+							status = regexec(&re3, tmp_str.c_str(), (size_t) 1, matches1, 0);
 							if(status==0){
-								status = regwexec(&re4, tmp_str.substr(matches1[0].rm_eo).c_str(), (size_t) 1, matches2, 0);
+								status = regexec(&re4, tmp_str.substr(matches1[0].rm_eo).c_str(), (size_t) 1, matches2, 0);
 								if(status==0){
 									url_and_filename=tmp_str.substr(matches1[0].rm_eo-1,matches2[0].rm_eo);
-									fout<<L"\t\t<file><url>";
+									fout<<L"\t<file><url>";
 									for(i=0;i<url_and_filename.length();i++){
 										if(url_and_filename[i]!='\t'){
-											if(url_and_filename[i]!='&')
-												fout<<url_and_filename[i];
+											if(url_and_filename[i]!='&'){
+												aux_conv_char=url_and_filename[i];
+												fout<<Config::toWstring(aux_conv_char);
+											}
 											else
 												fout<<L"&amp;";
 										}
@@ -226,13 +228,13 @@ bool Url::ProcessHTtrackLogFile(string &file_path){
 							}
 						}
 					}
-					aux=L"";
+					aux="";
 				}
 				else
-					aux+=(wchar_t)aux_car;
-				aux_car=getwc(fin);
+					aux+=(char)aux_car;
+				aux_car=getc(fin);
 			}
-			fout<<L"\t</urlsAndFiles>"<<endl;
+			fout<<"</urlsAndFiles>"<<endl;
 			fout.close();
 			exit=true;
 		}
