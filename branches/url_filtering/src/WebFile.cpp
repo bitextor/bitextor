@@ -13,7 +13,7 @@
 WebFile::WebFile()
 {
 	this->initialized=false;
-	this->url=NULL;
+	//this->url=NULL;
 	text_size=0;
 }
 
@@ -244,9 +244,9 @@ vector<int>* WebFile::GetTagArray(){
 	}
 }*/
 
-Url* WebFile::GetURL(){
+/*Url* WebFile::GetURL(){
 	if(url!=NULL)
 		return url;
 	else
 		return new Url(L"");
-}
+}*/

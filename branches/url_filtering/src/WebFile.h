@@ -3,7 +3,7 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
-#include "Url.h"
+//#include "Url.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -63,7 +63,7 @@ private:
 	 */
 	unsigned int text_size;
 	
-	Url *url;
+	//Url *url;
 
 	/**
 	 * Mètode que indica si un caràcter és alfabètic o no.
@@ -151,7 +151,7 @@ public:
 	 */
 	void GetNonAplha(wstring text);
 
-	Url* GetURL();
+	//Url* GetURL();
 };
 
 #endif /*WEBFILE_H_*/

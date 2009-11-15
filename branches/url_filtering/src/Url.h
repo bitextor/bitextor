@@ -4,8 +4,9 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include "WebSite.h"
 
-using namespace std; 
+//using namespace std; 
 
 //#define DEBUG_URL_INIT
 //#define DEBUG_URL_CMP
@@ -30,6 +31,8 @@ class Url
 		wstring filename;
 		
 		map<wstring,wstring> variables;
+		
+		static bool GetUrlAndFilename(xmlNode *cur_node, wstring &filename, wstring &url);
 	
 	public:
 	
@@ -49,9 +52,11 @@ class Url
 		
 		bool VariableExists(wstring &var_name);
 		
-		double ComparisonPoints(Url *url);
+		unsigned int Differences(Url *url);
 		
-		static bool ProcessHTtrackLogFile(string &file_path);
+		static bool ProcessHTtrackLogFile(string &file_path, string &dest_dir);
+		
+		static bool FilterWebFilesFromUrls(string &dest_path, WebSite &ws);
 };
 
 /*class UrlLanguageRule

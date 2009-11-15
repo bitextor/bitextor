@@ -316,7 +316,7 @@ bool GlobalParams::LoadGlobalParams(const string &path)
 	try{
 		doc = xmlReadFile(path.c_str(), NULL, 0);
 		if(doc==NULL)
-			throw "The specified configuration file does'nt exists.";
+			throw "The specified configuration file doesn't exists.";
 		else{
 			xmlXIncludeProcess(doc);
 			Config::buildTagSet(doc);
