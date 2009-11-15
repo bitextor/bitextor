@@ -46,7 +46,7 @@ main (int argc, char *const *argv)
 	ifstream file;
 	string file_name;
 	string tmp;
-	bool show_howtouse=false, mode_set=false, verbose=false, download=false;
+	bool show_howtouse=false, mode_set=false, verbose=false, download=false, filter_url=false;
 	string dest_dir="";
 	string config_file=BASE_CONF;
 	struct stat my_stat;
@@ -119,6 +119,7 @@ main (int argc, char *const *argv)
 			break;
 			case 'u':
 				tmp=optarg;
+				filter_url=true;
 			break;
 			case 'h': show_howtouse=true; break;
 			case 'c': config_file=optarg; break;
@@ -130,10 +131,6 @@ main (int argc, char *const *argv)
 		}
 		next_op = getopt_long (argc, argv, short_op, long_op, NULL);
 	}
-
-	
-	Url::ProcessHTtrackLogFile(tmp, dest_dir);
-	//exit(0);
 
 	if(show_howtouse || !mode_set)
 		wcout<<L"The correct way to call Bitextor is:"<<endl<<L"\tbitextor [options] -w url"<<endl<<L"\tbitextor [options] -d local_directory_with_html_files"<<endl<<endl<<L"OPTIONS"<<endl<<L"\tTo see this use instructions, use the option -h"<<endl<<L"\tTo especify the path of the configuration file use the option -c path_of_configuration_file"<<endl<<L"\tTo set manually the language of every file, use the option --set_languages"<<endl<<L"\tTo create a log file with all the information of the process, use the option -l path_of_log_file"<<endl<<L"To see all the bitexts generated, use the option -v"<<endl;
@@ -161,12 +158,18 @@ main (int argc, char *const *argv)
 						mkdir((dest_dir+"/bitexts/").c_str(),0777);
 					wcout<<L"Comparing files and generating bitexts..."<<endl;
 					ws=new WebSite(dest_dir);
-					try{
-						if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
-							wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+					if(filter_url){
+						Url::ProcessHTtrackLogFile(tmp, dest_dir);
+						Url::FilterWebFilesFromUrls(dest_dir);
 					}
-					catch(char const*e){
-						cout<<e<<endl;
+					else{
+						try{
+							if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
+								wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+						}
+						catch(char const*e){
+							cout<<e<<endl;
+						}
 					}
 					delete ws;
 					Config::CleanUpConfiguration();

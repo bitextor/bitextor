@@ -5,6 +5,7 @@
 
 #include "WebFile.h"
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <tre/regex.h>
 #include <libtagaligner/ConfigReader.h>
@@ -13,7 +14,7 @@
 WebFile::WebFile()
 {
 	this->initialized=false;
-	//this->url=NULL;
+	this->url=NULL;
 	text_size=0;
 }
 
@@ -58,7 +59,7 @@ void WebFile::GetNonAplha(wstring text){
 		numbers_vec.push_back(atoi(Config::toString(st).c_str()));
 }
 
-bool WebFile::Initialize(const string &path)
+bool WebFile::Initialize(const string &path, Url *url)
 {
 	wstring str_temp;
 	bool exit=true;
@@ -77,6 +78,7 @@ bool WebFile::Initialize(const string &path)
 			FilePreprocess::PreprocessFile(path);
 			//We set the file path
 			this->path=path;
+			this->url=url;
 			
 			
 			//ObtainURL();
@@ -188,25 +190,27 @@ unsigned int WebFile::GetTextSize()
 	return text_size;
 }
 
-/*wstring WebFile::toXML()
+wstring WebFile::toXML()
 {
 	unsigned int i;
-	wostringstream ss;
-	ss<<text_size;
-	wstring exit= L"<webfile path=\""+Config::toWstring(path)+L"\" lang=\""+lang+L"\" file_type=\""+Config::toWstring(file_type)+L"\" text_size=\""+ss.str()+L"\">";
-
-	ss.seekp(ios_base::beg);
-	if(numbers_vec!=NULL && numbers_vec->size()>0){
-		exit+=L"\n\t<numbervector>";
-		for(i=0;i<numbers_vec->size();i++){
-			ss<<numbers_vec->at(i);
-			exit+=L"\n\t\t<number value=\""+ss.str()+L"\">";
-			ss.seekp(ios_base::beg);
+	wostringstream *ss=new wostringstream();
+	*ss<<text_size;
+	wstring exit= L"<file url=\""+url->GetCompleteURL()+L"\" lang=\""+lang+L"\" >";
+	exit+=L"<text_size=\""+ss->str()+L"\" >";
+	delete ss;
+	if(file.size()>0){
+		exit+=L"\n\t<fingerprint>";
+		for(i=0;i<file.size();i++){
+			ss=new wostringstream();
+			*ss<<file.at(i);
+			exit+=L"\n\t\t<fragment value=\""+ss->str()+L"\" >";
+			delete ss;
 		}
-		exit+=L"\n\t</numbervector>";
+		exit+=L"\n\t</fingerprint>\n</file>";
 	}
+	wcout<<exit<<endl;
 	return exit;
-}*/
+}
 
 vector<int>* WebFile::GetTagArray(){
 	return &file;
@@ -244,9 +248,9 @@ vector<int>* WebFile::GetTagArray(){
 	}
 }*/
 
-/*Url* WebFile::GetURL(){
+Url* WebFile::GetURL(){
 	if(url!=NULL)
 		return url;
 	else
 		return new Url(L"");
-}*/
+}

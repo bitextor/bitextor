@@ -3,7 +3,7 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
-//#include "Url.h"
+#include "Url.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -63,7 +63,7 @@ private:
 	 */
 	unsigned int text_size;
 	
-	//Url *url;
+	Url *url;
 
 	/**
 	 * Mètode que indica si un caràcter és alfabètic o no.
@@ -98,7 +98,7 @@ public:
 	 * @param path Ruta del fitxer a què fa referència la classe.
 	 * @throw char* El mètode llança una excepció si no s'ha especificat el fitxer de configuració de TextCat.
 	 */
-	bool Initialize(const string &path);
+	bool Initialize(const string &path, Url *url=NULL);
 	
 	/**
 	 * Mètode que permet obtenir el paràmetre sobre l'idioma del fitxer.
@@ -151,7 +151,9 @@ public:
 	 */
 	void GetNonAplha(wstring text);
 
-	//Url* GetURL();
+	Url* GetURL();
+	
+	wstring toXML();
 };
 
 #endif /*WEBFILE_H_*/

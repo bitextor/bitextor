@@ -6,6 +6,7 @@
 #include <libtagaligner/ConfigReader.h>
 #include "Url.h"
 #include "GlobalParams.h"
+#include "BitextCandidates.h"
 #include "TranslationMemory.h"
 #include <cmath>
 #include <tre/regex.h>
@@ -214,7 +215,7 @@ bool Url::ProcessHTtrackLogFile(string &file_path, string &dest_dir){
 							if(status==0){
 								status = regexec(&re4, tmp_str.substr(matches1[0].rm_eo).c_str(), (size_t) 1, matches2, 0);
 								if(status==0){
-									url_and_filename=tmp_str.substr(matches1[0].rm_eo-1,matches2[0].rm_eo);
+									url_and_filename=tmp_str.substr(matches1[0].rm_eo-1,matches2[0].rm_eo+1);
 									fout<<L"\t<file><url>";
 									for(i=0;i<url_and_filename.length();i++){
 										if(url_and_filename[i]!='\t'){
@@ -262,20 +263,17 @@ bool Url::ProcessHTtrackLogFile(string &file_path, string &dest_dir){
 	return exit;
 }
 
-bool Url::FilterWebFilesFromUrls(string &dest_path, WebSite &ws){
+bool Url::FilterWebFilesFromUrls(string &dest_path){
 	xmlDoc *doc = NULL;
 	xmlNode *root_element = NULL, *cur_node = NULL, *cur_comparing_node;
 	string path=dest_path+"URLList.xml";
 	bool exit;
-	vector<BitextCandidates*> **file_list;
+	BitextCandidates *bitext;
 	wstring url1, filename1, url2, filename2;
 	Url *original_url, *comparing_url;
-	unsigned int i;
 	WebFile *wf;
 
 	TranslationMemory::SetDestPath(dest_path);
-	file_list=new vector< BitextCandidates* >*[1];
-	file_list[0]=new vector< BitextCandidates* >();
 	
 	try{
 		doc = xmlReadFile(path.c_str(), NULL, 0);
@@ -283,35 +281,41 @@ bool Url::FilterWebFilesFromUrls(string &dest_path, WebSite &ws){
 			throw "The URL list file doesn't exists.";
 		else{
 			root_element = xmlDocGetRootElement(doc);
-			
-			for (cur_node = root_element->xmlChildrenNode; cur_node; cur_node = cur_node->next) {
+			for (cur_node = root_element->xmlChildrenNode; cur_node/* && aux_eixida<2*/; cur_node = cur_node->next) {
 				if(cur_node->type==XML_ELEMENT_NODE && cur_node->name!=NULL && Config::xmlToWstring((xmlChar*)cur_node->name)==L"file"){
 					if(GetUrlAndFilename(cur_node,filename1,url1)){
 						wf=new WebFile();
-						if(wf->Initialize(Config::toString(filename1))){
-							file_list[0]->push_back(new BitextCandidates(wf));
+						original_url=new Url(url1);
+
+						if(wf->Initialize(Config::toString(filename1), original_url)){
+						wf->toXML();
+							bitext=new BitextCandidates(wf);
+							
 							for(cur_comparing_node = cur_node->next; cur_comparing_node; cur_comparing_node = cur_comparing_node->next) {
-								if(cur_node->type==XML_ELEMENT_NODE && cur_node->name!=NULL && Config::xmlToWstring((xmlChar*)cur_node->name)==L"file"){
-									if(GetUrlAndFilename(cur_node,filename2,url2)){
-										original_url=new Url(url1);
+								if(cur_comparing_node->type==XML_ELEMENT_NODE && cur_comparing_node->name!=NULL && Config::xmlToWstring((xmlChar*)cur_comparing_node->name)==L"file"){
+									if(GetUrlAndFilename(cur_comparing_node,filename2,url2)){
 										comparing_url=new Url(url2);
 										if(original_url->Differences(comparing_url)==1){
 											wf=new WebFile();
-											if(wf->Initialize(Config::toString(filename2)))
-												file_list[0]->push_back(new BitextCandidates(wf));
+											if(wf->Initialize(Config::toString(filename2), comparing_url)){
+												if(bitext->Add(new BitextCandidates(wf))){
+													if(GlobalParams::GetCreateAllCandidates())
+														bitext->GenerateLastAddedBitext();
+												}
+											}
 										}
 									}
 								}
 							}
+							if(!GlobalParams::GetCreateAllCandidates()){
+								bitext->GenerateBitexts();
+							}
+							delete bitext;
 						}
-						ws.GetMatchedFiles(dest_path, file_list, 1);
-						for(i=0;i<file_list[0]->size();i++){
-							delete file_list[0]->at(i);
-						}
+						//ws->GetMatchedFiles(dest_path, file_list, 1);
 					}
 				}
 			}
-			delete file_list[0];
 
 			xmlFreeDoc(doc);
 			xmlCleanupParser();
@@ -319,6 +323,7 @@ bool Url::FilterWebFilesFromUrls(string &dest_path, WebSite &ws){
 	    exit=true;
 	}
 	catch ( const std::exception& ex ) {
+		wcout<<ex.what()<<endl;
 		exit=false;
 	}
 	TranslationMemory::Reset();
@@ -333,12 +338,12 @@ bool Url::GetUrlAndFilename(xmlNode *cur_node, wstring &filename, wstring &url){
 	for (node = cur_node->xmlChildrenNode; node; node = node->next) {
 		if(node->type==XML_ELEMENT_NODE && node->name!=NULL && Config::xmlToWstring((xmlChar*)node->name)==L"filename"){
 			for (child_node=node->xmlChildrenNode; child_node; child_node = child_node->next) {
-				if(cur_node->type==XML_TEXT_NODE)
+				if(child_node->type==XML_TEXT_NODE)
 					filename=Config::xmlToWstring(child_node->content);
 			}
 		} else if(node->type==XML_ELEMENT_NODE && node->name!=NULL && Config::xmlToWstring((xmlChar*)node->name)==L"url"){
 			for (child_node=node->xmlChildrenNode; child_node; child_node = child_node->next) {
-				if(cur_node->type==XML_TEXT_NODE)
+				if(child_node->type==XML_TEXT_NODE)
 					url=Config::xmlToWstring(child_node->content);
 			}
 		}

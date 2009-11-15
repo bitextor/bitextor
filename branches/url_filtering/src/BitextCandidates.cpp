@@ -248,7 +248,7 @@ bool BitextCandidates::GenerateBitexts(){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
 			else
-				GlobalParams::WriteResults(Config::toWstring(wf->GetPath())+L" >> "+Config::toWstring(it->second->first->GetPath()));
+				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+it->second->first->GetURL()->GetCompleteURL());
 		}
 		exit=true;
 	}
@@ -275,7 +275,7 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
 			else
-				GlobalParams::WriteResults(Config::toWstring(wf->GetPath())+L" >> "+Config::toWstring(last_insertion->second->first->GetPath()));
+				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+last_insertion->second->first->GetURL()->GetCompleteURL());
 		}
 	}
 	delete aligner;

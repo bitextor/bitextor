@@ -4,9 +4,9 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include "WebSite.h"
+#include <libxml/parser.h>
 
-//using namespace std; 
+using namespace std; 
 
 //#define DEBUG_URL_INIT
 //#define DEBUG_URL_CMP
@@ -56,7 +56,7 @@ class Url
 		
 		static bool ProcessHTtrackLogFile(string &file_path, string &dest_dir);
 		
-		static bool FilterWebFilesFromUrls(string &dest_path, WebSite &ws);
+		static bool FilterWebFilesFromUrls(string &dest_path);
 };
 
 /*class UrlLanguageRule
