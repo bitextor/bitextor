@@ -196,7 +196,8 @@ wstring WebFile::toXML()
 	wostringstream *ss=new wostringstream();
 	*ss<<text_size;
 	wstring exit= L"<file url=\""+url->GetCompleteURL()+L"\" lang=\""+lang+L"\" >";
-	exit+=L"<text_size=\""+ss->str()+L"\" >";
+	exit+=L"\n\t<path>"+path+"</path>";
+	exit+=L"\n\t<text_size value=\""+ss->str()+L"\" >";
 	delete ss;
 	if(file.size()>0){
 		exit+=L"\n\t<fingerprint>";
@@ -208,7 +209,6 @@ wstring WebFile::toXML()
 		}
 		exit+=L"\n\t</fingerprint>\n</file>";
 	}
-	wcout<<exit<<endl;
 	return exit;
 }
 

@@ -170,6 +170,9 @@ bool Url::ProcessHTtrackLogFile(string &file_path, string &dest_dir){
 	string tmp_str, url_and_filename;
 	wofstream fout;
 	string aux_conv_char;
+	WebFile wf;
+	string url, filename;
+	bool reading_url;
 
 	if (regcomp(&re1, "[^\t\n ]+\t+[^\t\n ]+\t+[^\t\n ]+\t+[ae]", REG_EXTENDED) != 0)
 		return false;
@@ -216,20 +219,30 @@ bool Url::ProcessHTtrackLogFile(string &file_path, string &dest_dir){
 								status = regexec(&re4, tmp_str.substr(matches1[0].rm_eo).c_str(), (size_t) 1, matches2, 0);
 								if(status==0){
 									url_and_filename=tmp_str.substr(matches1[0].rm_eo-1,matches2[0].rm_eo+1);
-									fout<<L"\t<file><url>";
+									//fout<<L"\t<file><url>";
+									filename=url="";
+									reading_url=true;
 									for(i=0;i<url_and_filename.length();i++){
 										if(url_and_filename[i]!='\t'){
 											if(url_and_filename[i]!='&'){
-												aux_conv_char=url_and_filename[i];
-												fout<<Config::toWstring(aux_conv_char);
+												//aux_conv_char=url_and_filename[i];
+												//fout<<Config::toWstring(aux_conv_char);
+												if(reading_url)
+													url+=url_and_filename[i];
+												else
+													filename+=url_and_filename[i];
 											}
-											else
-												fout<<L"&amp;";
+											//else
+											//	fout<<L"&amp;";
 										}
 										else
-											fout<<L"</url><filename>";
+											//fout<<L"</url><filename>";
+											reading_url=false;
 									}
-									fout<<L"</filename></file>"<<endl;
+									wf=new WebFile();
+									wf->Initialize(filename, new Url(Config::toWstring(url)));
+									fout<<wf->toXML()<<endl;
+									//fout<<L"</filename></file>"<<endl;
 								}
 							}
 						}
@@ -288,7 +301,7 @@ bool Url::FilterWebFilesFromUrls(string &dest_path){
 						original_url=new Url(url1);
 
 						if(wf->Initialize(Config::toString(filename1), original_url)){
-						wf->toXML();
+
 							bitext=new BitextCandidates(wf);
 							
 							for(cur_comparing_node = cur_node->next; cur_comparing_node; cur_comparing_node = cur_comparing_node->next) {
