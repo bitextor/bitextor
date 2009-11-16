@@ -213,6 +213,8 @@ public:
 	 * @return Retorna el fitxer web corresponent al darrer candidat afegit.
 	 */
 	WebFile* GetLastAddedWebFile();
+	
+	bool OptimizeResults(const string &incoming_file);
 };
 
 #endif /*BITEXT_H_*/

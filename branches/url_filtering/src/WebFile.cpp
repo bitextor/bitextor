@@ -196,20 +196,56 @@ wstring WebFile::toXML()
 	wostringstream *ss=new wostringstream();
 	*ss<<text_size;
 	wstring exit= L"<file url=\""+url->GetCompleteURL()+L"\" lang=\""+lang+L"\" >";
-	exit+=L"\n\t<path>"+path+"</path>";
-	exit+=L"\n\t<text_size value=\""+ss->str()+L"\" >";
+	exit+=L"\n\t<path>"+Config::toWstring(path)+L"</path>";
+	exit+=L"\n\t<text_size value=\""+ss->str()+L"\" />";
 	delete ss;
 	if(file.size()>0){
 		exit+=L"\n\t<fingerprint>";
 		for(i=0;i<file.size();i++){
 			ss=new wostringstream();
 			*ss<<file.at(i);
-			exit+=L"\n\t\t<fragment value=\""+ss->str()+L"\" >";
+			exit+=L"\n\t\t<fragment value=\""+ss->str()+L"\" />";
 			delete ss;
 		}
 		exit+=L"\n\t</fingerprint>\n</file>";
 	}
 	return exit;
+}
+
+bool WebFile::loadXML(xmlNode* node, Url *url){
+	xmlNode *cur_node, *fragment_node, *txt_node;
+	xmlChar * url_att= xmlCharStrdup("url"), *lang_att=xmlCharStrdup("lang"), *value_att=xmlCharStrdup("value");
+	
+	if(url!=NULL)
+		this->url=url;
+	else
+		this->url=new Url(Config::xmlToWstring(xmlGetProp(node, url_att)));
+
+	this->lang=Config::xmlToWstring(xmlGetProp(node, lang_att));
+
+	
+	for(cur_node = node->xmlChildrenNode; cur_node; cur_node = cur_node->next) {
+		if(cur_node->type==XML_ELEMENT_NODE && cur_node->name!=NULL){
+			if(Config::xmlToWstring((xmlChar*)cur_node->name)==L"path"){
+				for (txt_node=cur_node->xmlChildrenNode; txt_node; txt_node = txt_node->next) {
+					if(txt_node->type==XML_TEXT_NODE)
+						this->path=Config::toString(Config::xmlToWstring(txt_node->content));
+				}
+			} else if(Config::xmlToWstring((xmlChar*)cur_node->name)==L"text_size"){
+				this->text_size=atoi(Config::toString(Config::xmlToWstring(xmlGetProp(cur_node, value_att))).c_str());
+			} else if(Config::xmlToWstring((xmlChar*)cur_node->name)==L"fingerprint"){
+				for (fragment_node=cur_node->xmlChildrenNode; fragment_node; fragment_node = fragment_node->next) {
+					if(fragment_node->type==XML_ELEMENT_NODE && fragment_node->name!=NULL && Config::xmlToWstring((xmlChar*)fragment_node->name)==L"fragment")
+						this->file.push_back(atoi(Config::toString(Config::xmlToWstring(xmlGetProp(fragment_node, value_att))).c_str()));
+				}
+			}
+		}
+	}
+	delete url_att;
+	delete lang_att;
+	delete value_att;
+	this->initialized=true;
+	return true;
 }
 
 vector<int>* WebFile::GetTagArray(){

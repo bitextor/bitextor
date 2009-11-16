@@ -154,6 +154,8 @@ public:
 	Url* GetURL();
 	
 	wstring toXML();
+	
+	bool loadXML(xmlNode* node, Url* url=NULL);
 };
 
 #endif /*WEBFILE_H_*/

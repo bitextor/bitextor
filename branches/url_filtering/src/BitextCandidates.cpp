@@ -248,7 +248,8 @@ bool BitextCandidates::GenerateBitexts(){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
 			else
-				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+it->second->first->GetURL()->GetCompleteURL());
+				//GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+it->second->first->GetURL()->GetCompleteURL());
+				GlobalParams::WriteResults(L"<result><webfile url=\""+wf->GetURL()->GetCompleteURL()+L"\">"+Config::toWstring(wf->GetPath())+L"</webfile><bestCandidate url=\""+it->second->first->GetURL()->GetCompleteURL()+L"\">"+Config::toWstring(it->second->first->GetPath())+L"</bestCandidate></result>");
 		}
 		exit=true;
 	}
@@ -256,7 +257,7 @@ bool BitextCandidates::GenerateBitexts(){
 	return exit;					
 }
 
-bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout, const string &dest_path, unsigned int starting_tuid, unsigned int *last_tuid*/){
+bool BitextCandidates::GenerateLastAddedBitext(){
 	Aligner *aligner;
 	bool exit=true;
 	ifstream fin1, fin2;
@@ -275,7 +276,8 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
 			else
-				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+last_insertion->second->first->GetURL()->GetCompleteURL());
+				//GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+last_insertion->second->first->GetURL()->GetCompleteURL());
+				GlobalParams::WriteResults(L"<result><webfile url=\""+wf->GetURL()->GetCompleteURL()+L"\">"+Config::toWstring(wf->GetPath())+L"</webfile><bestCandidate url=\""+last_insertion->second->first->GetURL()->GetCompleteURL()+L"\">"+Config::toWstring(last_insertion->second->first->GetPath())+L"</bestCandidate></result>");
 		}
 	}
 	delete aligner;
@@ -300,11 +302,4 @@ WebFile* BitextCandidates::GetWebFile(const wstring &lang){
 		return NULL;
 	else
 		return it->second->first;
-}
-
-WebFile* BitextCandidates::GetLastAddedWebFile(){
-	if(last_insertion==candidates.end())
-		return NULL;
-	else
-		return last_insertion->second->first;
 }

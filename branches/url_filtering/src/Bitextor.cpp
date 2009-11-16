@@ -159,6 +159,7 @@ main (int argc, char *const *argv)
 					wcout<<L"Comparing files and generating bitexts..."<<endl;
 					ws=new WebSite(dest_dir);
 					if(filter_url){
+						
 						Url::ProcessHTtrackLogFile(tmp, dest_dir);
 						Url::FilterWebFilesFromUrls(dest_dir);
 					}

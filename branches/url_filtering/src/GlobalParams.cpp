@@ -390,7 +390,7 @@ void GlobalParams::WriteLog(const wstring &log_text)
 void GlobalParams::WriteResults(const wstring &result_text)
 {
 	if(results_file.is_open()){
-		results_file<<result_text<<endl;
+		results_file<<L"\t"<<result_text<<endl;
 	}
 }
 
@@ -407,6 +407,7 @@ bool GlobalParams::OpenResults(const string &results_path)
 	if(results_file.is_open())
 		results_file.close();
 	results_file.open(results_path.c_str());
+	results_file<<L"<?xml version=\"1.0\" encoding='UTF-8'?>"<<endl<<L"<bitextorResults>"<<endl;
 	return results_file.is_open();
 }
 
@@ -437,8 +438,10 @@ double GlobalParams::GetGenerateAmbiguousBitexts()
 
 void GlobalParams::CloseResults()
 {
-	if(results_file.is_open())
+	if(results_file.is_open()){
+		results_file<<L"</bitextorResults>"<<endl;
 		results_file.close();
+	}
 }
 
 void GlobalParams::SetURLComparisonValues(int difference_in_name, int difference_in_dirorvar, int more_than_one_difference){
