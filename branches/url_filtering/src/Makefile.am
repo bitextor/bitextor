@@ -23,6 +23,8 @@ WebFile.h \
 WebFile.cpp \
 WebSite.h \
 WebSite.cpp \
+SaxParser.h \
+SaxParser.cpp \
 Bitextor.cpp
 
 AM_CPPFLAGS = -g3 -Wall -Wunused -DBASE_CONF='"${sysconfdir}/config.xml"'
