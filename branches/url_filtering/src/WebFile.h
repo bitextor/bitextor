@@ -155,7 +155,9 @@ public:
 	
 	wstring toXML();
 	
-	bool loadXML(xmlNode* node, Url* url=NULL);
+	WebFile(string &path, wstring &lang, vector<int> &file, Url* url=NULL);
+	
+	bool loadXML(xmlNode* node, Url *url);
 };
 
 #endif /*WEBFILE_H_*/

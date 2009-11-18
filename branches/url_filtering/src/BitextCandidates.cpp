@@ -28,6 +28,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 				this->same_extension=exit;
 				if(exit){
 					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
+					//wcout<<exit<<L":"<<aux_result<<endl;
 					if(exit){
 						this->byte_size_distance=aux_result;
 						exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);

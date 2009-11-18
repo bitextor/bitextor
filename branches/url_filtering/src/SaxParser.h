@@ -2,7 +2,10 @@
 #define SAXPARSER_H_
 
 #include <iostream>
+#include <stack>
 #include <libxml/parser.h>
+#include "Url.h"
+#include "BitextCandidates.h"
 
 using namespace std;
 
@@ -20,38 +23,45 @@ typedef struct userData_t
 class SaxParser
 {
 	private:
-		xmlSAXHandler saxHandler;
+		static xmlSAXHandler saxHandler;
 
-		stack<wstring> readen_tags;
+		static xmlSAXHandler saxHandlerCompare;
 
-		Url *url;
+		static stack<wstring> readen_tags;
 
-		string path;
+		static Url *url;
 
-		BitextCandidates *bitext;
+		static string path;
+
+		static BitextCandidates *bitext;
 		
-		bool reading_tag;
+		static bool reading_tag;
 		
-		string readen_path;
+		static string readen_path;
 		
-		int readen_size;
+		static int readen_size;
 		
-		wstring readen_lang;
+		static wstring readen_lang;
 		
-		Url *readen_url;
+		static Url *readen_url;
 		
-		vector<int> readen_fingerprint;
+		static vector<int> readen_fingerprint;
+		
+		static WebFile *wf;
 
 	public:
-		SaxParser();
 	
-		void startElement(void *data, const xmlChar *fullname, const xmlChar **ats);
+		static void startElement(void *data, const xmlChar *fullname, const xmlChar **ats);
 
-		void endElement(void *data, const xmlChar *fullname);
+		static void endElement(void *data, const xmlChar *fullname);
 
-		void characters(void *data, const xmlChar *ch, int len);
+		static void endElementCompare(void *data, const xmlChar *fullname);
 
-		void ProcessURLListXML(char *path);
+		static void characters(void *data, const xmlChar *ch, int len);
+
+		static void ProcessURLListXML(const char *path);
+		
+		static void FindCandidatesInURLListXML();
 };
 
 #endif /*BITEXT_H_*/

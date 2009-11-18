@@ -1,21 +1,48 @@
 #include "SaxParser.h"
 #include <libtagaligner/ConfigReader.h>
 #include <stack>
+#include <memory.h>
 
-SaxParser::SaxParser(){
-	url=NULL;
-	bitext=NULL;
-	reading_tag=false;
-}
+xmlSAXHandler SaxParser::saxHandler;
+
+xmlSAXHandler SaxParser::saxHandlerCompare;
+
+stack<wstring> SaxParser::readen_tags;
+
+Url *SaxParser::url=NULL;
+
+string SaxParser::path;
+
+BitextCandidates *SaxParser::bitext=NULL;
+
+bool SaxParser::reading_tag=false;
+
+string SaxParser::readen_path;
+
+int SaxParser::readen_size;
+
+wstring SaxParser::readen_lang;
+
+vector<int> SaxParser::readen_fingerprint;
+
+WebFile *SaxParser::wf;
 
 void SaxParser::startElement(void *data, const xmlChar *fullname, const xmlChar **ats)
 {
+	unsigned int i;
 	wstring tag_name=Config::xmlToWstring(fullname);
-	readen_tag.push(tag_name);
-	if(tag_name==L"file")
-		reading_tag=true;
-	else if(reading_tag){
-		if(tag_name==L"path")
+	readen_tags.push(tag_name);
+	if(tag_name==L"file"){
+		for(i=0;ats[i];i++){
+			if(Config::xmlToWstring(ats[i])==L"url" && ats[i+1]!=NULL)
+				SaxParser::url=new Url(Config::xmlToWstring(ats[i+1]));
+			else if(Config::xmlToWstring(ats[i])==L"lang" && ats[i+1]!=NULL)
+				SaxParser::readen_lang=Config::xmlToWstring(ats[i+1]);
+		}
+	} else if(tag_name==L"fragment"){
+		SaxParser::readen_fingerprint.push_back(atoi(Config::toString(Config::xmlToWstring(ats[1])).c_str()));
+	} else if(readen_tags.top()==L"text_size"){
+		SaxParser::readen_size=atoi(Config::toString(Config::xmlToWstring(ats[1])).c_str());
 	}
 }
 
@@ -23,27 +50,53 @@ void SaxParser::endElement(void *data, const xmlChar *fullname)
 {
 	wstring tag_name=Config::xmlToWstring(fullname);
 	if(tag_name==L"file"){
-		this->bitext=new BitextCandidates(this->wf);
+		wf=new WebFile(SaxParser::readen_path, SaxParser::readen_lang, SaxParser::readen_fingerprint, SaxParser::url);
+		SaxParser::readen_fingerprint.clear();
+		SaxParser::bitext=new BitextCandidates(SaxParser::wf);
 		FindCandidatesInURLListXML();
+		SaxParser::bitext->GenerateBitexts();
+		delete bitext;
 	}
+	if(tag_name==readen_tags.top())
+		readen_tags.pop();
+}
+
+void SaxParser::endElementCompare(void *data, const xmlChar *fullname)
+{
+	wstring tag_name=Config::xmlToWstring(fullname);
+	if(tag_name==L"file"){
+		wf=new WebFile(SaxParser::readen_path, SaxParser::readen_lang, SaxParser::readen_fingerprint, SaxParser::url);
+		/*for(unsigned int j=0;j<wf->GetTagArray()->size();j++)
+			wcout<<wf->GetTagArray()->at(j)<<L";";
+		wcout<<endl<<endl<<endl;*/
+		//wcout<<L" PATH: "<<Config::toWstring(wf->GetPath())<<L" SIZE: "<<wf->GetTextSize()<<L" LANG: "<<wf->GetLang()<<endl<<endl<<endl;
+		if(!SaxParser::bitext->Add(new BitextCandidates(wf)))
+			delete wf;
+		SaxParser::readen_fingerprint.clear();
+	}
+	if(tag_name==readen_tags.top())
+		readen_tags.pop();
 }
 
 void SaxParser::characters(void *data, const xmlChar *ch, int len)
 {
-
+	if(readen_tags.top()==L"path"){
+		SaxParser::readen_path=Config::toString(Config::xmlToWstring(xmlStrsub(ch,0,len)));
+	}
 }
 
-void SaxParser::ProcessURLListXML(char *path)
+void SaxParser::ProcessURLListXML(const char *path)
 {
-	this->path=path;
-	//memset(&saxHandler, ‘\0′, sizeof(xmlSAXHandler));
+	SaxParser::path=path;
+	memset(&saxHandler, 0, sizeof(xmlSAXHandler));
+	saxHandler.initialized = XML_SAX2_MAGIC;
 	saxHandler.endElement = SaxParser::endElement;
 	saxHandler.startElement = SaxParser::startElement;
 	saxHandler.characters = SaxParser::characters;
 
 	try{
-		if (!xmlSAXUserParseFile(&saxHandler, NULL, path))
-			throw "XML file could not be processed";
+		/*if (!*/xmlSAXUserParseFile(&saxHandler, NULL, path)/*)*/;
+			//throw "XML file could not be processed";
 	}
 	catch(...){
 		throw "XML file could not be processed";
@@ -52,14 +105,14 @@ void SaxParser::ProcessURLListXML(char *path)
 
 void SaxParser::FindCandidatesInURLListXML()
 {
-	//memset(&saxHandler, ‘\0′, sizeof(xmlSAXHandler));
-	saxHandler.endElement = SaxParser::endElement;
-	saxHandler.startElement = SaxParser::startElement;
-	saxHandler.characters = SaxParser::characters;
-
 	try{
-		if (!xmlSAXUserParseFile(&saxHandler, NULL, this->path))
-			throw "XML file could not be processed";
+		saxHandlerCompare._private=saxHandler._private;
+		saxHandlerCompare.endElement = SaxParser::endElementCompare;
+		saxHandlerCompare.startElement = SaxParser::startElement;
+		saxHandlerCompare.characters = SaxParser::characters;
+		saxHandlerCompare.setDocumentLocatorSAXFunc=saxHandler.setDocumentLocatorSAXFunc;
+		xmlSAXUserParseFile(&saxHandlerCompare, NULL, SaxParser::path.c_str());
+/*			throw "XML file could not be processed";*/
 	}
 	catch(...){
 		throw "XML file could not be processed";

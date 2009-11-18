@@ -20,6 +20,7 @@ WebFile::WebFile()
 
 WebFile::~WebFile()
 {
+	delete url;
 }
 
 bool WebFile::IsAlphabetic(const wchar_t& car){
@@ -246,6 +247,14 @@ bool WebFile::loadXML(xmlNode* node, Url *url){
 	delete value_att;
 	this->initialized=true;
 	return true;
+}
+
+WebFile::WebFile(string &path, wstring &lang, vector<int> &file, Url* url){
+	this->path=path;
+	this->lang=lang;
+	this->file=file;
+	this->url=url;
+	this->initialized=true;
 }
 
 vector<int>* WebFile::GetTagArray(){

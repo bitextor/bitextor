@@ -3,6 +3,8 @@
  * Any: 2009 
  */
 
+#include "TranslationMemory.h"
+#include "SaxParser.h"
 #include "Url.h"
 #include "WebSite.h"
 #include "FilePreprocess.h"
@@ -53,6 +55,7 @@ main (int argc, char *const *argv)
 	int next_op;
 	unsigned short option; //Indicates if the user has introduced an option
 	extern char *optarg;
+
 
 	setlocale(LC_CTYPE, "");
 
@@ -161,7 +164,9 @@ main (int argc, char *const *argv)
 					if(filter_url){
 						
 						Url::ProcessHTtrackLogFile(tmp, dest_dir);
-						Url::FilterWebFilesFromUrls(dest_dir);
+						TranslationMemory::SetDestPath(dest_dir+"/bitexts/");
+						SaxParser::ProcessURLListXML((dest_dir+"URLList.xml").c_str());
+						TranslationMemory::Reset();
 					}
 					else{
 						try{
