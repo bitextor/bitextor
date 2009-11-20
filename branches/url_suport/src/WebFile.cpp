@@ -19,6 +19,7 @@ WebFile::WebFile()
 
 WebFile::~WebFile()
 {
+	delete url;
 }
 
 bool WebFile::IsAlphabetic(const wchar_t& car){
@@ -114,13 +115,18 @@ bool WebFile::Initialize(const string &path)
 						//We gess the language and set it
 						void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
 						str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
-						this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
-						if(str_temp[0]!='['){
-							exit=false;
-							GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
-						}
+						//if(str_temp.find_first_of(L"]")==str_temp.length()-1){
+							this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
+							if(str_temp[0]!='['){
+								exit=false;
+								GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
+							}
+							else
+								GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
+						/*}
 						else
-							GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
+							exit=false;*/
+						//wcout<<str_temp<<endl;
 						textcat_Done(h);
 						h=NULL;
 					}

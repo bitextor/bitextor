@@ -30,12 +30,14 @@ class SaxParser
 		static stack<wstring> readen_tags;
 
 		static Url *url;
+		
+		static wstring lang;
 
 		static string path;
 
 		static BitextCandidates *bitext;
 		
-		static bool reading_tag;
+		static bool correct_tag;
 		
 		static string readen_path;
 		
@@ -48,16 +50,22 @@ class SaxParser
 		static vector<int> readen_fingerprint;
 		
 		static WebFile *wf;
+		
+		static vector<Bitext> bitext_vector;
 
 	public:
 	
 		static void startElement(void *data, const xmlChar *fullname, const xmlChar **ats);
+
+		static void startElementCompare(void *data, const xmlChar *fullname, const xmlChar **ats);
 
 		static void endElement(void *data, const xmlChar *fullname);
 
 		static void endElementCompare(void *data, const xmlChar *fullname);
 
 		static void characters(void *data, const xmlChar *ch, int len);
+		
+		static void charactersCompare(void *data, const xmlChar *ch, int len);
 
 		static void ProcessURLListXML(const char *path);
 		

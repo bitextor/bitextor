@@ -22,7 +22,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 	double aux_result;
 
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
-		if(wf1->GetLang()!=wf2->GetLang()){
+		if(wf1->GetLang()!=wf2->GetLang() && wf1->GetURL()!=NULL && wf1->GetURL()->Differences(wf2->GetURL())==1){
 			try{
 				exit=Heuristics::HaveTheSameExtension(wf1,wf2);
 				this->same_extension=exit;
@@ -75,6 +75,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 			}
 		}
 		else{
+			//wcout<<wf1->GetURL()->GetCompleteURL()<<L" >> "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->Differences(wf2->GetURL())<<endl;
 			exit=false;
 			GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the both files have the same language ("+wf2->GetLang()+L").");
 		}

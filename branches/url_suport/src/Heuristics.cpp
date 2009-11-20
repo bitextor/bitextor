@@ -103,12 +103,6 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 
 		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &CostTextAlignment, Config::diagonalSizeIsPercent(), beam, result);
 		
-		if(wf1->GetURL()!=NULL && wf2->GetURL()){
-			//wcout<<wf1->GetURL()->GetCompleteURL()<<L" vs. "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->ComparisonPoints(wf2->GetURL())<<endl;
-			index_url=wf1->GetURL()->ComparisonPoints(wf2->GetURL());
-			*result+=index_url*(*result);
-		}
-		
 		res=0;
 		for(i=0,j=0,w=0;w<pdistance.length();w++){
 			switch (pdistance[w]){

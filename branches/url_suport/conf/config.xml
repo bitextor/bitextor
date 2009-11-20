@@ -294,7 +294,7 @@
 		</bi:textLengthDifferencePercents>
 		<!-- To compare files, Bitextor codifies them with a text-and-tags array (reppresented with a numeric array). This percentage is applied on text-and-tags arrays to compare. If it's greather than the distance
 		obtained in the comparation, the bitext is discarted. The parameter mode can take two values: absolute or percentual-->
-		<bi:maxEditDistance percentual="15" absolute="20" />
+		<bi:maxEditDistance percentual="10" absolute="10" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. If the value of this parametter is zero, only files in the same level will be compared.-->
 		<bi:directoryPathDistance value="1" />

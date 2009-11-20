@@ -124,7 +124,7 @@ unsigned int Url::Differences(Url* url){
 	else
 		max_len=directories.size();
 
-	for(i=0;i<directories.size();i++){
+	for(i=0;i<max_len;i++){
 		if(directories[i]!=url->directories[i])
 			not_coincident_dirs++;
 	}
@@ -152,7 +152,7 @@ unsigned int Url::Differences(Url* url){
 		not_coincident_names++;
 	
 	#ifdef DEBUG_URL_CMP
-		wcout<<L"DIFFERENCES IN "<<url<<L": "<<not_coincident_vars+not_coincident_dirs<<endl;
+		wcout<<L"DIFFERENCES IN "<<url->GetCompleteURL()<<L": "<<not_coincident_vars+not_coincident_dirs<<endl;
 	#endif
 
 	return (not_coincident_vars+not_coincident_dirs+not_coincident_names);
@@ -247,8 +247,8 @@ bool Url::ProcessHTtrackLogFile(string &file_path, string &dest_dir){
 													else
 														filename+=url_and_filename[i];
 												}
-												//else
-												//	fout<<L"&amp;";
+												else if(reading_url)
+													url+="&amp;";
 											}
 											else
 												//fout<<L"</url><filename>";
