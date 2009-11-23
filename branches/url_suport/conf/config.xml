@@ -318,11 +318,11 @@
 		<bi:language fingerprint="fi.utf8.lm" code="fi" />
 		<bi:language fingerprint="no.utf8.lm" code="no" />
 		<bi:language fingerprint="sv.utf8.lm" code="sv" />
-		<bi:language fingerprint="is.utf8.lm" code="is" />
+		<bi:language fingerprint="is.utf8.lm" code="is" />-->
 		<bi:language fingerprint="es.utf8.lm" code="es" />
-		<bi:language fingerprint="ca.utf8.lm" code="ca" />-->
-		<bi:language fingerprint="fr.utf8.lm" code="fr" />
-		<!--<bi:language fingerprint="pt.utf8.lm" code="pt" />
+		<bi:language fingerprint="ca.utf8.lm" code="ca" />
+		<!--<bi:language fingerprint="fr.utf8.lm" code="fr" />
+		<bi:language fingerprint="pt.utf8.lm" code="pt" />
 		<bi:language fingerprint="it.utf8.lm" code="it" />
 		<bi:language fingerprint="an.utf8.lm" code="an" />
 		<bi:language fingerprint="gl.utf8.lm" code="gl" />

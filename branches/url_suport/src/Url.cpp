@@ -142,28 +142,44 @@ unsigned int Url::Differences(Url* url){
 		if(variables.size()<url->variables.size()){
 			it=url->variables.begin();
 			it_fin=url->variables.end();
+			while(it!=it_fin){
+				if(variables.find(it->first)!=variables.end()){
+					if(it->second!=variables[it->first]){
+						not_coincident_vars++;
+						#ifdef DEBUG_URL_CMP
+							wcout<<L"\tVARIABLE "<<it->first<<": "<<it->second<<L" -- "<<variables[it->first]<<endl;
+						#endif
+					}
+						#ifdef DEBUG_URL_CMP
+							else wcout<<L"\tVARIABLES IGUALS "<<it->first<<": "<<it->second<<L" -- "<<variables[it->first]<<endl;
+						#endif
+				}
+				else
+					not_coincident_vars++;
+				
+				it++;
+			}
 		}
 		else{
 			it=variables.begin();
 			it_fin=variables.end();
-		}
-
-		while(it!=it_fin){
-			if(url->variables.find(it->first)!=url->variables.end()){
-				if(it->second!=url->variables[it->first]){
-					not_coincident_vars++;
-					#ifdef DEBUG_URL_CMP
-						wcout<<L"\tVARIABLE "<<it->first<<": "<<it->second<<L" -- "<<url->variables[it->first]<<endl;
-					#endif
+			while(it!=it_fin){
+				if(url->variables.find(it->first)!=url->variables.end()){
+					if(it->second!=url->variables[it->first]){
+						not_coincident_vars++;
+						#ifdef DEBUG_URL_CMP
+							wcout<<L"\tVARIABLE "<<it->first<<": "<<it->second<<L" -- "<<url->variables[it->first]<<endl;
+						#endif
+					}
+						#ifdef DEBUG_URL_CMP
+							else wcout<<L"\tVARIABLES IGUALS "<<it->first<<": "<<it->second<<L" -- "<<url->variables[it->first]<<endl;
+						#endif
 				}
-					#ifdef DEBUG_URL_CMP
-						else wcout<<L"\tVARIABLES IGUALS "<<it->first<<": "<<it->second<<L" -- "<<url->variables[it->first]<<endl;
-					#endif
+				else
+					not_coincident_vars++;
+				
+				it++;
 			}
-			else
-				not_coincident_vars++;
-			
-			it++;
 		}
 		//wcout<<L"MIDA VARIABLES: "<<(int)variables.size()<<L"-"<<(int)url->variables.size()<<L"="<<(((int)variables.size())-((int)(url->variables.size())))<<endl;
 		//not_coincident_vars+=abs(((int)variables.size())-((int)(url->variables.size())));
