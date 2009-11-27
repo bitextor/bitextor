@@ -53,7 +53,7 @@ bool GlobalParams::generate_tmx=true;
 
 wofstream GlobalParams::results_file;
 
-int GlobalParams::url_comparison_values[3]={0,0,0};
+map<UrlLangRule, pair<unsigned int, unsigned int> > GlobalParams::url_lang_rules;
 
 void GlobalParams::GenerateTMX(bool generate){
 	generate_tmx=generate;
@@ -390,7 +390,7 @@ void GlobalParams::WriteLog(const wstring &log_text)
 void GlobalParams::WriteResults(const wstring &result_text)
 {
 	if(results_file.is_open()){
-		results_file<<result_text<<endl;
+		results_file<<L"\t"<<result_text<<endl;
 	}
 }
 
@@ -407,6 +407,8 @@ bool GlobalParams::OpenResults(const string &results_path)
 	if(results_file.is_open())
 		results_file.close();
 	results_file.open(results_path.c_str());
+	if(results_file.is_open())
+		results_file<<"<?xml version=\"1.0\" econding=\"UTF-8\" ?>"<<L"<bitextcandidates>"<<endl;
 	return results_file.is_open();
 }
 
@@ -437,19 +439,19 @@ double GlobalParams::GetGenerateAmbiguousBitexts()
 
 void GlobalParams::CloseResults()
 {
-	if(results_file.is_open())
+	if(results_file.is_open()){
+		results_file<<L"</bitextcandidates>";
 		results_file.close();
+	}
 }
 
-void GlobalParams::SetURLComparisonValues(int difference_in_name, int difference_in_dirorvar, int more_than_one_difference){
-	url_comparison_values[0]=difference_in_name;
-	url_comparison_values[1]=difference_in_dirorvar;
-	url_comparison_values[2]=more_than_one_difference;
-}
-	
-int GlobalParams::GetURLComparisonValue(unsigned int index){
-	if(index>0 && index<=2)
-		return url_comparison_values[index];
-	else
-		return 0;
+unsigned int GlobalParams::AddUrlLangRule(UrlLangRule *rule){
+	if(url_lang_rules.find(*rule)!=url_lang_rules.end()){
+		url_lang_rules[*rule].second+=1;
+	}
+	else{
+		url_lang_rules[*rule].first=url_lang_rules.size();
+		url_lang_rules[*rule].second=1;
+	}
+	return url_lang_rules[*rule].second;
 }

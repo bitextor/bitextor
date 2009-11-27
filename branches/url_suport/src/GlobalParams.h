@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <libxml/parser.h>
+#include "Url.h"
 
 using namespace std;
 
@@ -154,7 +155,9 @@ private:
 	 */
 	static wofstream results_file;
 	
-	static int url_comparison_values[3];
+	static map<UrlLangRule, pair<unsigned int, unsigned int> > url_lang_rules;
+	
+	
 
 public:
 	/**
@@ -361,30 +364,27 @@ public:
 	 * @return Retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
 	 */
 	static double GetGenerateAmbiguousBitexts();
-	
+
 	/**
 	 * 
 	 */
 	static void GenerateTMX(bool generate);
-	
-	
+
 	/**
 	 * 
 	 */
 	static bool GetGenerateTMX();
-	
+
 	static void WriteResults(const wstring &result_text);
-	
+
 	static bool OpenResults(const string &results_path);
-	
+
 	/**
 	 * Mètode que tanca el fitxer de resultats.
 	 */
 	static void CloseResults();
-	
-	static void SetURLComparisonValues(int difference_in_name, int difference_in_dirorvar, int more_than_one_difference);
-	
-	static int GetURLComparisonValue(unsigned int index);
+
+	static unsigned int AddUrlLangRule(UrlLangRule *rule);
 };
 
 #endif /*GLOBALPARAMS_H_*/

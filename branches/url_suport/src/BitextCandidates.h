@@ -31,6 +31,10 @@ class BitextData
 		 * Indicador que marca si els fitxerrs comparats han superat totes les heurístiques.
 		 */
 		bool passes;
+		
+		
+		static void CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream &results_file, vector<unsigned int> &freq_rules, bool write);
+
 	
 	public:
 	
@@ -71,9 +75,7 @@ class BitextData
 		 */
 		double text_difference;
 		
-		//double percent_text_distance;
-		
-		//double percent_text_distance_variation;
+		unsigned int url_lang_rule;
 		
 		/**
 		 * Constructor de la classe que inicialitza els valors amb l'aplicació de les heurístiques als fitxers web passats.
@@ -100,6 +102,10 @@ class BitextData
 		 * @param disabled Variable que es preveu que s'active quan s'establisquen llindars de similitud excessiva.
 		 */
 		bool isBetterThan(BitextData* bitext_data, bool *disabled=NULL);
+		
+		static bool CleanUnfrequentCases(const string &filename);
+		
+
 };
 
 /**

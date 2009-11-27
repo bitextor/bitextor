@@ -11,63 +11,74 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <math.h>
+#include <algorithm>
+
 
 BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 	bool exit=true;
 	wostringstream *oss;
 	wstring pathdistance;
+	vector<UrlLangRule*> *rules=new vector<UrlLangRule*>();
 	
 	passes=false;
 
 	double aux_result;
 
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
-		if(wf1->GetLang()!=wf2->GetLang() && wf1->GetURL()!=NULL && wf1->GetURL()->Differences(wf2->GetURL())==1){
+		if(wf1->GetLang()!=wf2->GetLang()){
 			try{
-				exit=Heuristics::HaveTheSameExtension(wf1,wf2);
-				this->same_extension=exit;
+				exit=(wf1->GetURL()!=NULL && wf1->GetURL()->Differences(wf2->GetURL(),rules)==1);
 				if(exit){
-					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
+					exit=Heuristics::HaveTheSameExtension(wf1,wf2);
+					this->same_extension=exit;
 					if(exit){
-						this->byte_size_distance=aux_result;
-						exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);
-						this->text_difference=aux_result;
+						exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
 						if(exit){
-							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
+							this->byte_size_distance=aux_result;
+							exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);
+							this->text_difference=aux_result;
 							if(exit){
-								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
-									aux_result=0;
+								exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
+								if(exit){
+									this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
+									if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
+										aux_result=0;
+									else{
+										//this->edit_distance=aux_result;
+										this->edit_distance=aux_result+(10/this->url_lang_rule);
+									}
+									exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
+
+									if(!exit){
+										GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
+									}
+									this->n_diff_numbers=aux_result;
+								}
 								else{
-									this->edit_distance=aux_result;
-		
+									oss=new wostringstream();
+									*oss<<aux_result;
+									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
+									delete oss;
 								}
-								exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
-								
-								if(!exit){
-									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
-								}
-								this->n_diff_numbers=aux_result;
 							}
 							else{
 								oss=new wostringstream();
 								*oss<<aux_result;
-								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
+								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
 								delete oss;
 							}
 						}
 						else{
-							oss=new wostringstream();
-							*oss<<aux_result;
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
-							delete oss;
+							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
 						}
 					}
 					else{
-						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
+						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
 					}
 				}
-				else{
-					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
+				else
+				{
+					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: their URLs are too different.");
 				}
 			}
 			catch(...){
@@ -75,7 +86,6 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 			}
 		}
 		else{
-			//wcout<<wf1->GetURL()->GetCompleteURL()<<L" >> "<<wf2->GetURL()->GetCompleteURL()<<L": "<<wf1->GetURL()->Differences(wf2->GetURL())<<endl;
 			exit=false;
 			GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the both files have the same language ("+wf2->GetLang()+L").");
 		}
@@ -241,6 +251,7 @@ bool BitextCandidates::GenerateBitexts(){
 	
 	bool exit=false;
 	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
+	wostringstream s;
 
 	for(it=candidates.begin();it!=candidates.end();it++){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
@@ -248,8 +259,10 @@ bool BitextCandidates::GenerateBitexts(){
 		if(it->second!=NULL && it->second->first!=NULL){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
-			else
-				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+it->second->first->GetURL()->GetCompleteURL());
+			else{
+				s<<it->second->second->url_lang_rule;
+				GlobalParams::WriteResults(L"<bitext urllangrule=\""+s.str()+L"\"><lwebpage url=\""+Url::ReplaceAmp(wf->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(wf->GetPath())+L"</lwebpage><rwebpage url=\""+Url::ReplaceAmp(it->second->first->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(it->second->first->GetPath())+L"</rwebpage></bitext>");
+			}
 		}
 		exit=true;
 	}
@@ -257,7 +270,7 @@ bool BitextCandidates::GenerateBitexts(){
 	return exit;					
 }
 
-bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout, const string &dest_path, unsigned int starting_tuid, unsigned int *last_tuid*/){
+bool BitextCandidates::GenerateLastAddedBitext(){
 	Aligner *aligner;
 	bool exit=true;
 	ifstream fin1, fin2;
@@ -267,6 +280,7 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 	map<wstring,FILE*>::iterator it_files;
 	wostringstream oss;
 	wstring lang_code;
+	wostringstream s;
 
 	aligner=new Aligner();
 	if(last_insertion!=candidates.end()){
@@ -275,8 +289,10 @@ bool BitextCandidates::GenerateLastAddedBitext(/*map<wstring,FILE *> *main_fout,
 		if(last_insertion->second->first!=NULL){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,last_insertion->second->first,last_insertion->second->second);
-			else
-				GlobalParams::WriteResults(wf->GetURL()->GetCompleteURL()+L" >> "+last_insertion->second->first->GetURL()->GetCompleteURL());
+			else{
+				s<<last_insertion->second->second->url_lang_rule;
+				GlobalParams::WriteResults(L"<bitext urllangrule=\""+s.str()+L"\"><lwebpage url=\""+Url::ReplaceAmp(wf->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(wf->GetPath())+L"</lwebpage><rwebpage url=\""+Url::ReplaceAmp(last_insertion->second->first->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(last_insertion->second->first->GetPath())+L"</rwebpage></bitext>");
+			}
 		}
 	}
 	delete aligner;
@@ -308,4 +324,112 @@ WebFile* BitextCandidates::GetLastAddedWebFile(){
 		return NULL;
 	else
 		return last_insertion->second->first;
+}
+
+bool BitextCandidates::CleanUnfrequentCases(const string &filename){
+	xmlDoc *doc = NULL;
+	xmlNode *root_element = NULL;
+	bool exit;
+	
+	try{
+		doc = xmlReadFile(filename.c_str(), NULL, 0);
+		if(doc==NULL)
+			exit=false;
+		else{
+			root_element = xmlDocGetRootElement(doc);
+			CleanUnfrequentCasesProcessNode(root_element, L"");
+			xmlFreeDoc(doc);
+			xmlCleanupParser();
+			GenerateTextCatConfigFile();
+		}	
+	    exit=true;
+	}
+	catch ( const std::exception& ex ) {
+		exit=false;
+	}
+    return exit;
+}
+
+
+void BitextCandidates::CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream &results_file, vector<unsigned int> &freq_rules, bool write){
+	xmlNode *cur_node = NULL;
+	xmlChar *node_prop;
+	wstring key, value;
+	xmlAttrPtr propPtr;
+	wstring before;
+	wstring after;
+	map<wstring,short>::iterator iterator;
+	wstring tmp;
+	wstring lang1=L"", lang2=L"";
+	double percent;
+	wstring fingerprint=L"", lang_code=L"";
+	
+
+	for (cur_node = node; cur_node; cur_node = cur_node->next) {
+		if(!(cur_node->type==XML_TEXT_NODE && xmlIsBlankNode(cur_node))){
+			if(cur_node->type==XML_TEXT_NODE){
+				if (write)
+					results_file<<Config::xmlToWstring(cur_node->content);
+			}
+			else if(cur_node->type==XML_ELEMENT_NODE){
+				tagname=Config::xmlToWstring((xmlChar*)cur_node->name);
+				if(tagname==L"bitext"){
+					propPtr = cur_node->properties;
+					while(propPtr) {
+						key = Config::xmlToWstring(propPtr->name);
+						node_prop=xmlGetProp( cur_node, propPtr->name);
+						value = Config::xmlToWstring(node_prop);
+						if(key==L"urllangrule"){
+							if(find(freq_rules.begin(),freq_rules.end(),atoi(Config::toString(value).c_str()))){
+								write=true;
+								results_file<<L"<bitext>";
+							}
+							else
+								write=false;
+						}
+						free(node_prop);
+						propPtr = propPtr->next;
+					}
+				}
+				else if(write){
+					if(tagname==L"lwebpage"){
+						propPtr = cur_node->properties;
+						while(propPtr) {
+							key = Config::xmlToWstring(propPtr->name);
+							node_prop=xmlGetProp( cur_node, propPtr->name);
+							value = Config::xmlToWstring(node_prop);
+							if(key==L"url"){
+								results_file<<L"<lwebpage url=\""+value+L"\">";
+							}
+							free(node_prop);
+							propPtr = propPtr->next;
+						}
+					}else if(tagname==L"rwebpage"){
+						propPtr = cur_node->properties;
+						while(propPtr) {
+							key = Config::xmlToWstring(propPtr->name);
+							node_prop=xmlGetProp( cur_node, propPtr->name);
+							value = Config::xmlToWstring(node_prop);
+							if(key==L"url"){
+								results_file<<L"<rwebpage url=\""+value+L"\">";
+							}
+							free(node_prop);
+							propPtr = propPtr->next;
+						}
+					}
+					else if(tagname==L"/lwebpage")
+						results_file<<L"</lwebpage>";
+					else if(tagname==L"/rwebpage")
+						results_file<<L"</rwebpage>";
+					else if(tagname==L"/bitext")
+						results_file<<L"</bitext>";
+				}
+			}
+			if(!xmlIsBlankNode(cur_node) && continue_loop)
+			{
+				//Recurse through child nodes:
+				ProcessNode(cur_node->children, results_file, freq_rules, write);
+			}
+		}
+	}
 }

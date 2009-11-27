@@ -10,6 +10,33 @@ using namespace std;
 //#define DEBUG_URL_INIT
 //#define DEBUG_URL_CMP
 
+class UrlLangRule
+{
+	public: enum LangRuleType{DIRECTORY, FILENAME, VARIABLE};
+	
+	private:
+		
+		LangRuleType rule_type;
+		
+		wstring value1;
+
+		wstring value2;
+	
+	public:
+	
+		UrlLangRule(const LangRuleType &type, const wstring &val1, const wstring &val2);
+		
+		LangRuleType GetRuleType();
+		
+		wstring GetValue1();
+		
+		wstring GetValue2();
+
+		bool operator==(const UrlLangRule &rule);
+		
+		bool operator<(const UrlLangRule &rule) const;
+};
+
 /**
  * @class URL
  * @brief Classe que representa una URL i es capaç d'operar sobre els elements que la componen
@@ -49,34 +76,9 @@ class Url
 		
 		bool VariableExists(wstring &var_name);
 		
-		unsigned int Differences(Url *url);
+		unsigned int Differences(Url *url, vector<UrlLangRule*> *rules=NULL);
+		
+		static wstring ReplaceAmp(wstring url);
 };
-
-/*class UrlLanguageRule
-{
-	public enum LangRuleType{DIRECTORY, FILENAME, VARIABLE};
-	
-	private:
-		
-		LangRuleType rule_type;
-		
-		wstring value;
-	
-	public:
-	
-		Url(wstring url);
-		
-		wstring GetDirectoriy(unsigned int &index);
-		
-		wstring GetVariableValue(wstring &var_name);
-		
-		wstring GetFilename();
-		
-		unsigned int GetNumberDirectories();
-		
-		unsigned int GetNumberVariables();
-		
-		bool VariableExists(wstring &var_name);
-};*/
 
 #endif /*URL_H_*/
