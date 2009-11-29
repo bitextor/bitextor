@@ -45,7 +45,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 										aux_result=0;
 									else{
 										//this->edit_distance=aux_result;
-										this->edit_distance=aux_result+(10/this->url_lang_rule);
+										this->edit_distance=aux_result;//+(10/this->url_lang_rule);
 									}
 									exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 
@@ -251,7 +251,7 @@ bool BitextCandidates::GenerateBitexts(){
 	
 	bool exit=false;
 	map< wstring,pair<WebFile*,BitextData*>* >::iterator it;
-	wostringstream s;
+	wostringstream *s;
 
 	for(it=candidates.begin();it!=candidates.end();it++){
 		//if(ff1.fromXML(wf1->GetPath()+".xml") && ff2.fromXML(wf2->GetPath()+".xml")){
@@ -260,8 +260,10 @@ bool BitextCandidates::GenerateBitexts(){
 			if(GlobalParams::GetGenerateTMX())
 				TranslationMemory::WriteTM(wf,it->second->first, it->second->second);
 			else{
-				s<<it->second->second->url_lang_rule;
-				GlobalParams::WriteResults(L"<bitext urllangrule=\""+s.str()+L"\"><lwebpage url=\""+Url::ReplaceAmp(wf->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(wf->GetPath())+L"</lwebpage><rwebpage url=\""+Url::ReplaceAmp(it->second->first->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(it->second->first->GetPath())+L"</rwebpage></bitext>");
+				s=new wostringstream();
+				*s<<it->second->second->url_lang_rule;
+				GlobalParams::WriteResults(L"<bitext urllangrule=\""+s->str()+L"\"><lwebpage url=\""+Url::ReplaceAmp(wf->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(wf->GetPath())+L"</lwebpage><rwebpage url=\""+Url::ReplaceAmp(it->second->first->GetURL()->GetCompleteURL())+L"\">"+Config::toWstring(it->second->first->GetPath())+L"</rwebpage></bitext>");
+				delete s;
 			}
 		}
 		exit=true;
@@ -330,23 +332,34 @@ bool BitextCandidates::CleanUnfrequentCases(const string &filename){
 	xmlDoc *doc = NULL;
 	xmlNode *root_element = NULL;
 	bool exit;
-	
+	wofstream results_file;
+	vector<unsigned int> *freq_rules=GlobalParams::GetFreqRules(3);
+	unsigned int i;
+	string new_file_name;
+
 	try{
 		doc = xmlReadFile(filename.c_str(), NULL, 0);
-		if(doc==NULL)
+		if(doc==NULL){
 			exit=false;
+		}
 		else{
+			for(i=0;i<filename.length() && filename[i]!='.';i++)
+				new_file_name+=filename[i];
+			new_file_name+="_clear.xml";
+			results_file.open(new_file_name.c_str());
 			root_element = xmlDocGetRootElement(doc);
-			CleanUnfrequentCasesProcessNode(root_element, L"");
+			CleanUnfrequentCasesProcessNode(root_element, results_file, *freq_rules, false);
 			xmlFreeDoc(doc);
 			xmlCleanupParser();
-			GenerateTextCatConfigFile();
+			results_file.close();
 		}	
 	    exit=true;
 	}
 	catch ( const std::exception& ex ) {
 		exit=false;
 	}
+	
+	delete freq_rules;
     return exit;
 }
 
@@ -361,28 +374,36 @@ void BitextCandidates::CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream 
 	map<wstring,short>::iterator iterator;
 	wstring tmp;
 	wstring lang1=L"", lang2=L"";
-	double percent;
 	wstring fingerprint=L"", lang_code=L"";
+	wstring tagname;
 	
 
 	for (cur_node = node; cur_node; cur_node = cur_node->next) {
 		if(!(cur_node->type==XML_TEXT_NODE && xmlIsBlankNode(cur_node))){
 			if(cur_node->type==XML_TEXT_NODE){
 				if (write)
-					results_file<<Config::xmlToWstring(cur_node->content);
+					results_file<<Url::ReplaceAmp(Config::xmlToWstring(cur_node->content));
 			}
 			else if(cur_node->type==XML_ELEMENT_NODE){
 				tagname=Config::xmlToWstring((xmlChar*)cur_node->name);
-				if(tagname==L"bitext"){
+				if(tagname==L"bitextcandidates"){
+					results_file<<"<?xml version='1.0' encoding='UTF-8'?>"<<endl<<L"<bitextcandidates>"<<endl;
+					CleanUnfrequentCasesProcessNode(cur_node->children, results_file, freq_rules, write);
+					results_file<<L"</bitextcandidates>";
+				}
+				else if(tagname==L"bitext"){
 					propPtr = cur_node->properties;
 					while(propPtr) {
 						key = Config::xmlToWstring(propPtr->name);
 						node_prop=xmlGetProp( cur_node, propPtr->name);
 						value = Config::xmlToWstring(node_prop);
 						if(key==L"urllangrule"){
-							if(find(freq_rules.begin(),freq_rules.end(),atoi(Config::toString(value).c_str()))){
+							//wcout<<value<<endl;
+							if(find(freq_rules.begin(),freq_rules.end(),atoi(Config::toString(value).c_str()))!=freq_rules.end()){
 								write=true;
-								results_file<<L"<bitext>";
+								results_file<<L"\t<bitext>";
+								CleanUnfrequentCasesProcessNode(cur_node->children, results_file, freq_rules, write);
+								results_file<<L"</bitext>"<<endl;
 							}
 							else
 								write=false;
@@ -399,7 +420,9 @@ void BitextCandidates::CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream 
 							node_prop=xmlGetProp( cur_node, propPtr->name);
 							value = Config::xmlToWstring(node_prop);
 							if(key==L"url"){
-								results_file<<L"<lwebpage url=\""+value+L"\">";
+								results_file<<L"<lwebpage url=\""+Url::ReplaceAmp(value)+L"\">";
+								CleanUnfrequentCasesProcessNode(cur_node->children, results_file, freq_rules, write);
+								results_file<<L"</lwebpage>";
 							}
 							free(node_prop);
 							propPtr = propPtr->next;
@@ -411,24 +434,15 @@ void BitextCandidates::CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream 
 							node_prop=xmlGetProp( cur_node, propPtr->name);
 							value = Config::xmlToWstring(node_prop);
 							if(key==L"url"){
-								results_file<<L"<rwebpage url=\""+value+L"\">";
+								results_file<<L"<rwebpage url=\""+Url::ReplaceAmp(value)+L"\">";
+								CleanUnfrequentCasesProcessNode(cur_node->children, results_file, freq_rules, write);
+								results_file<<L"</rwebpage>";
 							}
 							free(node_prop);
 							propPtr = propPtr->next;
 						}
 					}
-					else if(tagname==L"/lwebpage")
-						results_file<<L"</lwebpage>";
-					else if(tagname==L"/rwebpage")
-						results_file<<L"</rwebpage>";
-					else if(tagname==L"/bitext")
-						results_file<<L"</bitext>";
 				}
-			}
-			if(!xmlIsBlankNode(cur_node) && continue_loop)
-			{
-				//Recurse through child nodes:
-				ProcessNode(cur_node->children, results_file, freq_rules, write);
 			}
 		}
 	}

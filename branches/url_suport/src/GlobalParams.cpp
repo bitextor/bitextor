@@ -408,7 +408,7 @@ bool GlobalParams::OpenResults(const string &results_path)
 		results_file.close();
 	results_file.open(results_path.c_str());
 	if(results_file.is_open())
-		results_file<<"<?xml version=\"1.0\" econding=\"UTF-8\" ?>"<<L"<bitextcandidates>"<<endl;
+		results_file<<"<?xml version='1.0' encoding='UTF-8'?>"<<endl<<L"<bitextcandidates xmlns=\"http://bitextor.sf.net\">"<<endl;
 	return results_file.is_open();
 }
 
@@ -453,5 +453,16 @@ unsigned int GlobalParams::AddUrlLangRule(UrlLangRule *rule){
 		url_lang_rules[*rule].first=url_lang_rules.size();
 		url_lang_rules[*rule].second=1;
 	}
-	return url_lang_rules[*rule].second;
+	return url_lang_rules[*rule].first;
+}
+
+vector<unsigned int> * GlobalParams::GetFreqRules(unsigned int min_count){
+	map<UrlLangRule, pair<unsigned int, unsigned int> >::iterator it;
+	vector<unsigned int>* eixida=new vector<unsigned int>();
+	
+	for(it=url_lang_rules.begin();it!=url_lang_rules.end();it++){
+		if(it->second.second>=min_count)
+			eixida->push_back(it->second.first);
+	}
+	return eixida;
 }

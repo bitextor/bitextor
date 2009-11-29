@@ -385,6 +385,8 @@ public:
 	static void CloseResults();
 
 	static unsigned int AddUrlLangRule(UrlLangRule *rule);
+	
+	static vector<unsigned int> * GetFreqRules(unsigned int min_freq);
 };
 
 #endif /*GLOBALPARAMS_H_*/

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <map>
+#include <libxml/parser.h>
 #include "WebFile.h"
 
 /**
@@ -31,9 +32,6 @@ class BitextData
 		 * Indicador que marca si els fitxerrs comparats han superat totes les heurístiques.
 		 */
 		bool passes;
-		
-		
-		static void CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream &results_file, vector<unsigned int> &freq_rules, bool write);
 
 	
 	public:
@@ -102,10 +100,6 @@ class BitextData
 		 * @param disabled Variable que es preveu que s'active quan s'establisquen llindars de similitud excessiva.
 		 */
 		bool isBetterThan(BitextData* bitext_data, bool *disabled=NULL);
-		
-		static bool CleanUnfrequentCases(const string &filename);
-		
-
 };
 
 /**
@@ -141,6 +135,8 @@ private:
 	 * Apuntador a la última inserció en la llista.
 	 */
 	map <wstring, pair<WebFile*,BitextData*>* >::iterator last_insertion;
+		
+	static void CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream &results_file, vector<unsigned int> &freq_rules, bool write);
 
 public:
 	/**
@@ -219,6 +215,8 @@ public:
 	 * @return Retorna el fitxer web corresponent al darrer candidat afegit.
 	 */
 	WebFile* GetLastAddedWebFile();
+	
+	static bool CleanUnfrequentCases(const string &filename);
 };
 
 #endif /*BITEXT_H_*/
