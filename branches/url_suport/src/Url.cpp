@@ -117,7 +117,7 @@ bool Url::VariableExists(wstring &var_name){
 }
 
 unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
-	unsigned int i, j, max_len, len_diff;
+	int i, j, max_len, len_diff;
 	unsigned int not_coincident_dirs=0, not_coincident_vars=0, not_coincident_names=0;
 	map<wstring,wstring>::iterator it, it_fin;
 	
