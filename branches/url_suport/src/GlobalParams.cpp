@@ -11,7 +11,7 @@ double GlobalParams::max_edit_distance_length_absolute=-1;
 
 double GlobalParams::max_edit_distance_length_percentual=-1;
 
-int GlobalParams::directory_depth_distance=0;
+int GlobalParams::directory_depth_distance=-1;
 
 double GlobalParams::text_distance_percent_differenciator=-1;
 
@@ -54,6 +54,8 @@ bool GlobalParams::generate_tmx=true;
 wofstream GlobalParams::results_file;
 
 map<UrlLangRule, pair<unsigned int, unsigned int> > GlobalParams::url_lang_rules;
+
+map<wstring,unsigned int> GlobalParams::url_directories_code;
 
 void GlobalParams::GenerateTMX(bool generate){
 	generate_tmx=generate;
@@ -465,4 +467,11 @@ vector<unsigned int> * GlobalParams::GetFreqRules(unsigned int min_count){
 			eixida->push_back(it->second.first);
 	}
 	return eixida;
+}
+
+unsigned int GlobalParams::GetURLDirectoryCode(const wstring &dir_name){
+	if(url_directories_code.find(dir_name)==url_directories_code.end()){
+		url_directories_code[dir_name]=url_directories_code.size();
+	}
+	return url_directories_code[dir_name];
 }

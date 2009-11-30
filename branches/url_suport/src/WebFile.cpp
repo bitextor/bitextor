@@ -222,7 +222,7 @@ void WebFile::ObtainURL(){
 	FILE* fin;
 	wstring aux=L"";
 	wint_t aux_car;
-	unsigned int found;
+	unsigned int found1, found2;
 
 	fin=fopen(path.c_str(),"r");
 
@@ -231,10 +231,10 @@ void WebFile::ObtainURL(){
 		aux_car=getwc(fin);
 		while(aux_car!=WEOF){
 			if(aux_car==L'\n'){
-				found=aux.find(L"<!-- Mirrored from ");
-				if (found<aux.length()){
-					found=aux.find_first_of(L' ',20);
-					url=new Url(aux.substr(19,found-19));
+				found1=aux.find(L"<!-- Mirrored from ");
+				if (found1<aux.length()){
+					found2=aux.find_first_of(L' ',found1+20);
+					url=new Url(aux.substr(found1+19,found2-(found1+19)));
 					aux_car=WEOF;
 				}
 				else

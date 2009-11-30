@@ -44,7 +44,6 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 									this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
 									for(i=0;i<rules->size();i++)
 										delete rules->at(i);
-									delete rules;
 									if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 										aux_result=0;
 									else{
@@ -59,6 +58,8 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 									this->n_diff_numbers=aux_result;
 								}
 								else{
+									for(i=0;i<rules->size();i++)
+										delete rules->at(i);
 									oss=new wostringstream();
 									*oss<<aux_result;
 									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
@@ -66,6 +67,8 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 								}
 							}
 							else{
+								for(i=0;i<rules->size();i++)
+									delete rules->at(i);
 								oss=new wostringstream();
 								*oss<<aux_result;
 								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
@@ -73,10 +76,14 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 							}
 						}
 						else{
+							for(i=0;i<rules->size();i++)
+								delete rules->at(i);
 							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
 						}
 					}
 					else{
+						for(i=0;i<rules->size();i++)
+							delete rules->at(i);
 						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
 					}
 				}
@@ -84,11 +91,12 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 				{
 					for(i=0;i<rules->size();i++)
 						delete rules->at(i);
-					delete rules;
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: their URLs are too different.");
 				}
 			}
 			catch(...){
+				for(i=0;i<rules->size();i++)
+					delete rules->at(i);
 				exit=false;
 			}
 		}
@@ -105,6 +113,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 		files_related=2;
 	else
 		files_related=0;
+	delete rules;
 }
 
 bool BitextData::Passes(){

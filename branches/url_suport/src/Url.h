@@ -26,6 +26,8 @@ class UrlLangRule
 	
 		UrlLangRule(const LangRuleType &type, const wstring &val1, const wstring &val2);
 		
+		UrlLangRule(const LangRuleType &type, const unsigned int &val1, const unsigned int &val2);
+		
 		LangRuleType GetRuleType();
 		
 		wstring GetValue1();
@@ -52,7 +54,7 @@ class Url
 	private:
 		wstring url;
 	
-		vector<wstring> directories;
+		vector<unsigned int> directories;
 		
 		wstring filename;
 		
@@ -64,7 +66,7 @@ class Url
 		
 		wstring GetCompleteURL();
 		
-		wstring GetDirectoriy(unsigned int &index);
+		unsigned int GetDirectoriy(unsigned int &index);
 		
 		wstring GetVariableValue(wstring &var_name);
 		
@@ -79,6 +81,8 @@ class Url
 		unsigned int Differences(Url *url, vector<UrlLangRule*> *rules=NULL);
 		
 		static wstring ReplaceAmp(wstring url);
+		
+		static double CostCompareDirectories(const short &op, const unsigned int &dir1, const unsigned int &dir2);
 };
 
 #endif /*URL_H_*/

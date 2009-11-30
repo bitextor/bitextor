@@ -149,6 +149,8 @@ private:
 	 *
 	 */
 	static bool generate_tmx;
+	
+	static map<wstring,unsigned int> url_directories_code;
 
 	/**
 	 * Flag que indica si cal crear un un fitxer en què escriure les parelles generades.
@@ -387,6 +389,8 @@ public:
 	static unsigned int AddUrlLangRule(UrlLangRule *rule);
 	
 	static vector<unsigned int> * GetFreqRules(unsigned int min_freq);
+	
+	static unsigned int GetURLDirectoryCode(const wstring &dir_name);
 };
 
 #endif /*GLOBALPARAMS_H_*/

@@ -297,7 +297,7 @@
 		<bi:maxEditDistance percentual="10" absolute="10" />
 		<!-- This parammeter is used to determine the distance between levels of the directory tree for the comparation of files. In example, if we deffine this parammeter whit the value 2, Bitextor will only compare
 		files with a difference of depth in the directory tree equal or lower than two. If the value of this parametter is zero, only files in the same level will be compared.-->
-		<bi:directoryPathDistance value="1" />
+		<!--<bi:directoryPathDistance value="1" />-->
 		<!-- This parametter defines the percentage of maximum total length beteween files. It is, the difference between the length of the whole plain text of the HTML file.-->
 		<bi:maxTotalTextLengthPercent value="20" />
 		<!-- In a text is possible to get a "numerc fingerprint", a vector with all the numbers in the text. This parameter lets to define te maximum distance between two numeric fingerprints. -->

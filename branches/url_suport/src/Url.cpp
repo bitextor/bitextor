@@ -6,6 +6,11 @@
 #include "Url.h"
 #include <cstdlib>
 #include <climits>
+#include <libtagaligner/ConfigReader.h>
+#include <libtagaligner/EditDistanceTools.h>
+#include <sstream>
+#include "Heuristics.h"
+#include "GlobalParams.h"
 //#include <cmath>
 
 Url::Url(wstring url){
@@ -44,7 +49,7 @@ Url::Url(wstring url){
 				#ifdef DEBUG_URL_INIT
 					wcout<<L"\tDIRECTORY: "<<str_tmp<<endl;
 				#endif
-				this->directories.push_back(str_tmp);
+				this->directories.push_back(GlobalParams::GetURLDirectoryCode(str_tmp));
 				str_tmp=L"";
 			}
 			else{
@@ -83,9 +88,9 @@ wstring Url::GetCompleteURL(){
 	return url;
 }
 	
-wstring Url::GetDirectoriy(unsigned int &index){
+unsigned int Url::GetDirectoriy(unsigned int &index){
 	if(index>directories.size())
-		return L"";
+		return -1;
 	else
 		return directories[index];
 }
@@ -116,29 +121,37 @@ bool Url::VariableExists(wstring &var_name){
 	return(variables.find(var_name)!=variables.end());
 }
 
+//wstring EditDistanceTools::EditDistanceBeam<unsigned int>(vector<unsigned int>&, vector<unsigned int>&, double (*)(short const&, unsigned int const&, unsigned int const&), bool const&, double const&, double*);
+
 unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 	int i, j, max_len, len_diff;
 	unsigned int not_coincident_dirs=0, not_coincident_vars=0, not_coincident_names=0;
 	map<wstring,wstring>::iterator it, it_fin;
+	double tmp_distance;
+	wstring path;
 	
 	if(url!=NULL){
 		//Calculating differences between directories
-		if(directories.size()>url->directories.size())
-			max_len=url->directories.size();
-		else
-			max_len=directories.size();
+		//not_coincident_dirs+=abs(((int)directories.size())-((int)url->directories.size()));
+		//path=EditDistanceTools::EditDistanceBeam(directories, url->directories, &CostCompareDirectories, true, 100);
+		EditDistanceTools::EditDistanceBeam(directories, url->directories, &CostCompareDirectories, true, 100, &tmp_distance);
+		if(tmp_distance==1){
+			if(directories.size()>url->directories.size())
+				max_len=url->directories.size();
+			else
+				max_len=directories.size();
 
-		for(i=0;i<max_len;i++){
-			if(directories[i]!=url->directories[i]){
-				not_coincident_dirs++;
-				if(rules!=NULL)
-					rules->push_back(new UrlLangRule(UrlLangRule::DIRECTORY, directories[i], directories[i]));
+			for(i=0;i<max_len;i++){
+				if(directories[i]!=url->directories[i]){
+					not_coincident_dirs++;
+					if(rules!=NULL)
+						rules->push_back(new UrlLangRule(UrlLangRule::DIRECTORY, directories[i], directories[i]));
+				}
+				#ifdef DEBUG_URL_CMP
+					wcout<<L"\tDIRECTORIES: "<<directories[i]<<L" -- "<<url->directories[i]<<endl;
+				#endif
 			}
-			#ifdef DEBUG_URL_CMP
-				//wcout<<L"\tDIRECTORIES: "<<directories[i]<<L" -- "<<url->directories[i]<<endl;
-			#endif
 		}
-		not_coincident_dirs+=abs(((int)directories.size())-((int)url->directories.size()));
 		
 		//Calculating differences between variables
 		if(variables.size()<url->variables.size()){
@@ -191,10 +204,12 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 		//
 		//Calculating if filename is different
 		if(filename!=url->filename){
-			if(filename==L"")
-				rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename, L""));
-			else if(url->filename==L"")
-				rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, L"", url->filename));
+			if(rules!=NULL){
+				if(filename==L"")
+					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename, L""));
+				else if(url->filename==L"")
+					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, L"", url->filename));
+			}
 			else{
 				not_coincident_names++;	
 				for(i=0;filename[i]==url->filename[i];i++);
@@ -245,6 +260,18 @@ wstring Url::ReplaceAmp(wstring url){
 	return eixida;
 }
 
+double Url::CostCompareDirectories(const short &op, const unsigned int &dir1, const unsigned int &dir2){
+	double result;
+
+	switch(op){
+		case INSERT: result=1; break;
+		case DELETE: result=1; break;
+		default: if(dir1==dir2) result=0; else result=1; break;
+	}
+
+	return result;
+}
+
 UrlLangRule::UrlLangRule(const LangRuleType &type, const wstring &val1, const wstring &val2){
 	this->rule_type=type;
 	if(val1<val2){
@@ -254,6 +281,24 @@ UrlLangRule::UrlLangRule(const LangRuleType &type, const wstring &val1, const ws
 	else{
 		this->value1=val2;
 		this->value2=val1;
+	}
+}
+
+UrlLangRule::UrlLangRule(const LangRuleType &type, const unsigned int &val1, const unsigned int &val2){
+	this->rule_type=type;
+	wstring wval1, wval2;
+	wostringstream wss1, wss2;
+	wss1<<val1;
+	wss2<<val2;
+	wval1=wss1.str();
+	wval2=wss2.str();
+	if(wval1<wval2){
+		this->value1=wval1;
+		this->value2=wval2;
+	}
+	else{
+		this->value1=wval2;
+		this->value2=wval1;
 	}
 }
 		
