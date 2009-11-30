@@ -163,8 +163,8 @@ main (int argc, char *const *argv)
 						cout<<e<<endl;
 					}
 					delete ws;
-					Config::CleanUpConfiguration();
 				}
+				Config::CleanUpConfiguration();
 			}
 		}
 		catch(char* e){

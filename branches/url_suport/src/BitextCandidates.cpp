@@ -19,6 +19,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 	wostringstream *oss;
 	wstring pathdistance;
 	vector<UrlLangRule*> *rules=new vector<UrlLangRule*>();
+	unsigned int i;
 	
 	passes=false;
 
@@ -41,6 +42,9 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 								exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
 								if(exit){
 									this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
+									for(i=0;i<rules->size();i++)
+										delete rules->at(i);
+									delete rules;
 									if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 										aux_result=0;
 									else{
@@ -78,6 +82,9 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 				}
 				else
 				{
+					for(i=0;i<rules->size();i++)
+						delete rules->at(i);
+					delete rules;
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: their URLs are too different.");
 				}
 			}
