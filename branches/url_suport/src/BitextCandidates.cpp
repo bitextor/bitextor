@@ -27,7 +27,7 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
-			try{
+			//try{
 				exit=(wf1->GetURL()!=NULL && wf1->GetURL()->Differences(wf2->GetURL(),rules)==1);
 				if(exit){
 					exit=Heuristics::HaveTheSameExtension(wf1,wf2);
@@ -41,21 +41,23 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 							if(exit){
 								exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
 								if(exit){
-									this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
-									for(i=0;i<rules->size();i++)
-										delete rules->at(i);
+									if(rules->size()>0 && rules->at(0)!=NULL){
+										this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
+										for(i=0;i<rules->size();i++)
+											delete rules->at(i);
+									}
 									if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
 										aux_result=0;
 									else{
-										//this->edit_distance=aux_result;
-										this->edit_distance=aux_result;//+(10/this->url_lang_rule);
+										this->edit_distance=aux_result;
+										//this->edit_distance=aux_result+(5/this->url_lang_rule);
 									}
-									exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
+									/*exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
 
 									if(!exit){
 										GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
-									}
-									this->n_diff_numbers=aux_result;
+									}*/
+									//this->n_diff_numbers=aux_result;
 								}
 								else{
 									for(i=0;i<rules->size();i++)
@@ -93,12 +95,12 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 						delete rules->at(i);
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: their URLs are too different.");
 				}
-			}
+			/*}
 			catch(...){
 				for(i=0;i<rules->size();i++)
 					delete rules->at(i);
 				exit=false;
-			}
+			}*/
 		}
 		else{
 			exit=false;

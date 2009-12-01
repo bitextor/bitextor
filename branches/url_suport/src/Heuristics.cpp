@@ -107,20 +107,12 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 		for(i=0,j=0,w=0;w<pdistance.length();w++){
 			switch (pdistance[w]){
 				case 'd':
-					if(wf1->GetTagArray()->at(i)>=0){
-						if(wf1->GetTagArray()->at(i)>0)
-							res+=1;
-					}
-					else
+					if(wf1->GetTagArray()->at(i)!=0)
 						res+=1;
 					i++;
 				break;
 				case 'i':
-					if(wf2->GetTagArray()->at(j)>=0){
-						if(wf2->GetTagArray()->at(j)>0)
-							res+=1;
-					}
-					else
+					if(wf2->GetTagArray()->at(j)!=0)
 						res+=1;
 					j++;
 				break;

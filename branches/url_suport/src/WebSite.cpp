@@ -54,7 +54,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	unsigned int i;
 	map<wstring,FILE *>::iterator it_files;
 
-	try{
+	//try{
 		TranslationMemory::SetDestPath(dest_path);
 		if(GlobalParams::GetDirectoryDepthDistance()!=-1){
 			file_list=new vector< BitextCandidates* >*[GlobalParams::GetDirectoryDepthDistance()+1];
@@ -109,6 +109,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 							}
 						}
 						closedir(directorio);
+						directorio=NULL;
 					}
 				}
 				dirs->pop();
@@ -163,12 +164,12 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			delete file_list[0];
 		}
 		delete[] file_list;
-	}
+	/*}
 	catch(...){
 		exit=false;
 		if(directorio!=NULL)
 			closedir(directorio);
-	}
+	}*/
 	TranslationMemory::Reset();
 	return exit;
 }

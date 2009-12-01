@@ -143,17 +143,16 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 
 			for(i=0;i<max_len;i++){
 				if(directories[i]!=url->directories[i]){
-					not_coincident_dirs++;
 					if(rules!=NULL)
-						rules->push_back(new UrlLangRule(UrlLangRule::DIRECTORY, directories[i], directories[i]));
+						rules->push_back(new UrlLangRule(UrlLangRule::DIRECTORY, directories[i], url->directories[i]));
 				}
 				#ifdef DEBUG_URL_CMP
 					wcout<<L"\tDIRECTORIES: "<<directories[i]<<L" -- "<<url->directories[i]<<endl;
 				#endif
 			}
+			
 		}
-		else
-			not_coincident_dirs=tmp_distance;
+		not_coincident_dirs=tmp_distance;
 		
 		//Calculating differences between variables
 		if(variables.size()<url->variables.size()){
@@ -205,7 +204,10 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 		//not_coincident_vars+=abs(((int)variables.size())-((int)(url->variables.size())));
 		//
 		//Calculating if filename is different
+		wstring::iterator it_ini1, it_ini2, it_end1, it_end2;
+		wstring filename_tmp1=L"", filename_tmp2=L"";
 		if(filename!=url->filename){
+			not_coincident_names++;	
 			if(filename==L""){
 				if(rules!=NULL)
 					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename, L""));
@@ -215,24 +217,18 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, L"", url->filename));
 			}
 			else{
-				not_coincident_names++;	
-				for(i=0;filename[i]==url->filename[i];i++);
-				if(filename.length()<url->filename.length()){
-					len_diff=url->filename.length()-filename.length();
-					for(j=url->filename.length()-1;j-(int)len_diff>=0 && filename[j-(int)len_diff]==url->filename[j];j--);
-					if(rules!=NULL)
-						rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename.substr(i,(j-len_diff)-i+1), url->filename.substr(i,j-i+1)));
-				}else if(url->filename.length()<filename.length()){
-					len_diff=filename.length()-url->filename.length();
-					//wcout<<filename<<L" >> "<<url->filename<<endl;
-					for(j=filename.length()-1;j-(int)len_diff>=0 && filename[j]==url->filename[j-(int)len_diff];j--);// wcout<<j;
-					//wcout<<endl;
-					if(rules!=NULL)
-						rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename.substr(i,j-i+1), url->filename.substr(i,(j-len_diff)-i+1)));
-				}else{
-					for(j=filename.length()-1;filename[j]==url->filename[j];j--);
-					if(rules!=NULL)
-						rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename.substr(i,j-(int)i+1), url->filename.substr(i,j-i+1)));
+				for(it_ini1=filename.begin(),it_ini2=url->filename.begin();it_ini1!=filename.end() && it_ini2!=url->filename.end() && (*it_ini1)==(*it_ini2);it_ini1++,it_ini2++);
+				for(it_end1=filename.end(),it_end2=url->filename.end();it_end1!=filename.begin() && it_end2!=url->filename.begin() && (*it_end1)==(*it_end2);it_end1--,it_end2--);
+				if(rules!=NULL){
+					while(it_ini1<=it_end1){
+						filename_tmp1+=*it_ini1;
+						it_ini1++;
+					}
+					while(it_ini2<=it_end2){
+						filename_tmp2+=*it_ini2;
+						it_ini2++;
+					}
+					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename_tmp1, filename_tmp2));
 				}
 			}
 		}
