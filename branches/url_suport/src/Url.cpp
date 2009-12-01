@@ -152,6 +152,8 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 				#endif
 			}
 		}
+		else
+			not_coincident_dirs=tmp_distance;
 		
 		//Calculating differences between variables
 		if(variables.size()<url->variables.size()){
@@ -204,10 +206,12 @@ unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
 		//
 		//Calculating if filename is different
 		if(filename!=url->filename){
-			if(rules!=NULL){
-				if(filename==L"")
+			if(filename==L""){
+				if(rules!=NULL)
 					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, filename, L""));
-				else if(url->filename==L"")
+			}
+			else if(url->filename==L""){
+				if(rules!=NULL)
 					rules->push_back(new UrlLangRule(UrlLangRule::FILENAME, L"", url->filename));
 			}
 			else{

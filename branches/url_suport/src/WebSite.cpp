@@ -53,7 +53,6 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	stack<string> *dirs, *subdirs;
 	unsigned int i;
 	map<wstring,FILE *>::iterator it_files;
-	
 
 	try{
 		TranslationMemory::SetDestPath(dest_path);
@@ -98,6 +97,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 										if(file_name.length()<4 || file_name[file_name.length()-4]!=L'.' || file_name[file_name.length()-3]!=L'x' || file_name[file_name.length()-2]!=L'm' || file_name[file_name.length()-1]!=L'l'){
 											wf=new WebFile();
 											wf->Initialize(file_name);
+											//wcout<<Config::toWstring(file_name)<<endl;
 											if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (unsigned int)GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size()))){
 												file_list[level]->push_back(new BitextCandidates(wf));
 											}
