@@ -27,66 +27,57 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 
 	if(wf1->IsInitialized() && wf2->IsInitialized()){
 		if(wf1->GetLang()!=wf2->GetLang()){
-			//try{
+			try{
 				exit=(wf1->GetURL()!=NULL && wf1->GetURL()->Differences(wf2->GetURL(),rules)==1);
 				if(exit){
-					exit=Heuristics::HaveTheSameExtension(wf1,wf2);
-					this->same_extension=exit;
+					exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
 					if(exit){
-						exit=Heuristics::HaveAcceptableSizeDifference(wf1,wf2,&aux_result);
+						this->byte_size_distance=aux_result;
+						exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);
+						this->text_difference=aux_result;
 						if(exit){
-							this->byte_size_distance=aux_result;
-							exit=Heuristics::NearTotalTextSize(*wf1,*wf2, &aux_result);
-							this->text_difference=aux_result;
+							exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
 							if(exit){
-								exit=Heuristics::HaveAcceptableEditDistance(wf1,wf2,NULL,&aux_result);
-								if(exit){
-									if(rules->size()>0 && rules->at(0)!=NULL){
-										this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
-										for(i=0;i<rules->size();i++)
-											delete rules->at(i);
-									}
-									if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
-										aux_result=0;
-									else{
-										this->edit_distance=aux_result;
-										//this->edit_distance=aux_result+(5/this->url_lang_rule);
-									}
-									/*exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
-
-									if(!exit){
-										GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
-									}*/
-									//this->n_diff_numbers=aux_result;
-								}
-								else{
+								if(rules->size()>0 && rules->at(0)!=NULL){
+									this->url_lang_rule=GlobalParams::AddUrlLangRule(rules->at(0));
 									for(i=0;i<rules->size();i++)
 										delete rules->at(i);
-									oss=new wostringstream();
-									*oss<<aux_result;
-									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
-									delete oss;
 								}
+								if(((*wf1->GetTagArray()).size()==0) || (*wf2->GetTagArray()).size()==0)
+									aux_result=0;
+								else{
+									this->edit_distance=aux_result;
+									//this->edit_distance=aux_result+(5/this->url_lang_rule);
+								}
+								/*exit=Heuristics::DistanceInNumericFingerprint(*wf1, *wf2, &aux_result);
+
+								if(!exit){
+									GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its \"numeic fingerprint\" is too different.");
+								}*/
+								//this->n_diff_numbers=aux_result;
 							}
 							else{
 								for(i=0;i<rules->size();i++)
 									delete rules->at(i);
 								oss=new wostringstream();
 								*oss<<aux_result;
-								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
+								GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they edit distance is excesive ("+oss->str()+L").");
 								delete oss;
 							}
 						}
 						else{
 							for(i=0;i<rules->size();i++)
 								delete rules->at(i);
-							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
+							oss=new wostringstream();
+							*oss<<aux_result;
+							GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: the differente in the total text lenght is excesive ("+oss->str()+L").");
+							delete oss;
 						}
 					}
 					else{
 						for(i=0;i<rules->size();i++)
 							delete rules->at(i);
-						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: they have different file extensions.");
+						GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: its size is too different.");
 					}
 				}
 				else
@@ -95,12 +86,12 @@ BitextData::BitextData(WebFile* wf1, WebFile* wf2){
 						delete rules->at(i);
 					GlobalParams::WriteLog(L"The bitext between "+Config::toWstring(wf1->GetPath())+L" and "+Config::toWstring(wf2->GetPath())+L" will not be created: their URLs are too different.");
 				}
-			/*}
+			}
 			catch(...){
 				for(i=0;i<rules->size();i++)
 					delete rules->at(i);
 				exit=false;
-			}*/
+			}
 		}
 		else{
 			exit=false;
@@ -136,38 +127,38 @@ int BitextData::RelatedFiles(){
 bool BitextData::isBetterThan(BitextData* bitext_data, bool *disabled){
 	bool exit=true;
 
-	if(this->files_related>0){
-		if(bitext_data->Passes() && bitext_data->RelatedFiles()>0){
+	if(this->files_related>0 && bitext_data->RelatedFiles()>0){
+		if(bitext_data->Passes() && this->Passes()){
 			if(bitext_data->edit_distance<edit_distance)
 				exit=false;
 			else if(bitext_data->edit_distance==edit_distance){
-				if(bitext_data->n_diff_numbers<n_diff_numbers)
-					exit= false;
-				else if(bitext_data->n_diff_numbers==n_diff_numbers){
-					if(disabled!=NULL && GlobalParams::GetGenerateAmbiguousBitexts()!=-1){
-						if(bitext_data->text_difference<text_difference){
-							*disabled=((abs((int)bitext_data->text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
-							exit=false;
-						}
-						else{
-							if(bitext_data->text_difference>text_difference)
-								*disabled=((abs((int)bitext_data->text_difference-(int)text_difference)/bitext_data->text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
-							else
-								*disabled=true;
-						}
+				if(disabled!=NULL && GlobalParams::GetGenerateAmbiguousBitexts()!=-1){
+					if(bitext_data->text_difference<text_difference){
+						*disabled=((abs((int)bitext_data->text_difference-(int)text_difference)/text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+						exit=false;
 					}
-					if(bitext_data->text_difference<text_difference)
-						exit= false;
-					else
-						exit= true;
+					else{
+						if(bitext_data->text_difference>text_difference)
+							*disabled=((abs((int)bitext_data->text_difference-(int)text_difference)/bitext_data->text_difference)<GlobalParams::GetGenerateAmbiguousBitexts()/100);
+						else
+							*disabled=true;
+					}
 				}
+				if(bitext_data->text_difference<text_difference)
+					exit= false;
+				else
+					exit= true;
 			}
 		}
-		else
+		else if(this->Passes())
 			exit=true;
+		else
+			exit=false;
 	}
+	else if(this->files_related>0)
+		exit=true;
 	else
-		throw "BitextData object is not related with any WebFile.";
+		exit=false;
 
 	return exit;
 }

@@ -8,12 +8,11 @@
 
 /**
  * @class BitextData
- * @brief Classe que conté i calcula les dades per comparar dos fitxers web.
+ * @brief This class contains the data obtained from the comparison of a pair of files.
  * 
- * Aquesta classe obté i emmagatzema tota la informació resultant de la comparació entre dos fitxers web. A més, està
- * dissenyada per a saber quants fitxers n'hi ha relacionats amb una instància. D'aquesta forma, es pot saber quan
- * dos fitxers són els idonis per a ser considerats paral·lels i també quan una instància ja no està relacionada amb
- * cap fitxer i, per tant, pot ser eliminada.
+ * This class obtains and saves all the information resulting from the process of comparing a pair of files. In addition,
+ * it is designed to know how many files are related with an instance of this class. In this way, the system can contorl
+ * when there is no file related with an instance and it can be freed.
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -21,15 +20,12 @@ class BitextData
 {
 	private:
 		/**
-		 * Nombre de fitxers relacionats a aquesta informació. Pot valdre:
-		 * 0: La informació ha de ser esborrada.
-		 * 1: Un fitxer té una parella òptima, però aquesta situació no és recíproca.
-		 * 2: Una parella de fitxers és òptima i, per tant, són candidats a ser fitxers paral·lels.
+		 * Number of files related with an instance of the class: 0, 1 or 2.
 		 */
 		int files_related;
 
 		/**
-		 * Indicador que marca si els fitxerrs comparats han superat totes les heurístiques.
+		 * This flag indicates if both files have passed all the heuristics in comparison process.
 		 */
 		bool passes;
 
@@ -37,66 +33,66 @@ class BitextData
 	public:
 	
 		/**
-		 * Mètode que retorna el valor de l'indicador passes.
-		 * @return Retorna el valor de l'indicador passes.
+		 * This method returns the value of the flag passes.
+		 * @return Returns the value of the flag passes.
 		 */
 		bool Passes();
-	
-		/**
-		 * Variable que es troba a <code>true</code> si ambdós fitxers tenen la mateixa extensió i
-		 * <code>false</code> en cas contrari.
-		 */
-		bool same_extension;
 		
 		/**
-		 * Percentatge de diferència de mida en bytes entre ambdós fitxers.
+		 * Percentage of difference between files measured in bytes.
 		 */
 		double byte_size_distance;
 		
 		/**
-		 * Percentatge de distància d'edició entre els arrays d'etiquetes/text d'ambdós fitxers.
+		 * Edit distance between files (calculated from their fingerprints).
 		 */
 		double edit_distance;
 		
 		/**
-		 * Ruta d'aliniament per als bitextos.
+		 * Resulting alignment path obtained from edit distance algorithm.
 		 */
-		string alignment_path;
+		//string alignment_path;
 		
 		/**
 		 * Diferència de l'array de nombres trobats.
 		 */
-		unsigned int n_diff_numbers;
+		//unsigned int n_diff_numbers;
 		
 		/**
-		 * Diferència en el total de text.
+		 * Percentage of difference between files measured in characters.
 		 */
 		double text_difference;
 		
+		/**
+		 * Code of the difference between the urls.
+		 */
 		unsigned int url_lang_rule;
 		
 		/**
-		 * Constructor de la classe que inicialitza els valors amb l'aplicació de les heurístiques als fitxers web passats.
-		 * @param wf1 Primer fitxer web a comparar.
-		 * @param wf2 Segon fitxer web a comparar.
+		 * Class constructor. This class compares the bitext and obtains the resulting
+		 * parametters from the comparison process. The number of related files is set
+		 * to 2 if the files pass the heuristics and the obtained resulta are the best
+		 * results obtained for both files.
+		 * @param wf1 First web file to compare.
+		 * @param wf2 Second web file to compare.
 		 */
 		BitextData(WebFile* wf1, WebFile* wf2);
 		
 		/**
-		 * Mètode que desrelaciona un dels fitxers amb la informació, decrementant en ú la variable files_related.
-		 * @return Retorna el valor de la variable files_related actualitzat.
+		 * This method decrements the files_related counter of related files.
+		 * @return Returns the new value of the variable files_related.
 		 */
 		int UnRelate();
 		
 		/**
-		 * Mètode que retorna el valor de la variable files_related actualitzat.
-		 * @return Retorna el valor de la variable files_related actualitzat.
+		 * This method returns the new value of the variable files_related.
+		 * @return Returns the new value of the variable files_related.
 		 */
 		int RelatedFiles();
 
 		/**
-		 * Mètode que compara la informació de dues parelles de fitxers web.
-		 * @param bitext_data Objecte BitextData amb que es compararà.
+		 * This method compares the information obtained from the comparison of a pair of files.
+		 * @param bitext_data BitextData to comare with.
 		 * @param disabled Variable que es preveu que s'active quan s'establisquen llindars de similitud excessiva.
 		 */
 		bool isBetterThan(BitextData* bitext_data, bool *disabled=NULL);
