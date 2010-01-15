@@ -7,48 +7,55 @@ using namespace std;
 
 /**
  * @class DownloadMod
- * @brief Mòdul de descàrrega web.
+ * @brief Downloading module.
  * 
- * Mòdul encarregat de la descàrrega de les diverses pàgines descarregades. Està basat en l'aplicació
- * Wget, de la qual pren les funcionalitats que permeten la descàrrega de fitxers. La cridada a aquesta
- * aplicació es fa mitjançant un <code>system</code> i s'hi permet la incorporació de diversos paràmetres
- * per a refinar la cerca.
+ * 
+ * This class manages the website downloading process. It uses the application HTTrack (www.httrack.com) to download
+ * the websites filtering only the html files. The application is called with a <code>system</code> command and 
+ * somme parametters can be modiffied to improve the downloading process.
  * 
  * @author Miquel Esplà i Gomis
  */
 class DownloadMod
 {
 private:
-	/** Paràmetre que conté la duració màxima (en segons) de la descàrrega de fitxers. */
+	/**
+	 * This parametter set the maximum downloading size in bytes.
+	 */
 	long max_downloaded_size;
 	 
-	/** Directori de destí en què es guardaran els fitxers descarregats. */
+	/**
+	 * Directory where the website will be downloaded.
+	 */
 	wstring dest_path;
 
 public:  
-	/** Constructor per defecte de la classe. Quan es construeix l'objecte, tant la llista d'extenssions admeses com el nombre màxim de bytes a descarregar són presos del fitxer de configuració. Posteriorment poden ser modificats. */
+	/**
+	 * Default costructor of the class.
+	 */
 	DownloadMod();
 	   
-	/** Destructor de la classe. */
+	/**
+	 * Default destructor of the class.
+	 */
 	~DownloadMod();
 	
 	/**
-	 * Mètode que permet establir la mida màxima del conjunt d'elements descarregats.
-	 * @param mdt Valor de la mida màxima de descàrrega.
+	 * This method sets the maximum download size in bytes.
+	 * @param mdt Maximum bytes to download.
 	 */
 	void SetMaxDownloadedSize(const long &mdt);
 
 	/**
-	 * Mètode que permet definir el directori on es realitzaran les descàrregues dels llocs web.
-	 * @param path Ruta que defineix el directori on es descarregaran els llocs web.
-	 * @return El mètode retorna <code>true</code> quan el directori existeix i <code>false</code> si no (en aquest segon cas, l'assignació de l'adresa no es realitzarà). 
+	 * Method to set the destinantion path where the website will be downloaded.
+	 * @param path Path where the website will be downloaded.
 	 */
 	void SetDestPath(const wstring &path);
 
 	/**
-	 * Mètode que realitza la descàrrega de webs mitjançant els paràmetres inclosos a la classe.
-	 * @param website Adreça URL del lloc web que es vol descarregar.
-	 * @return El mètode retorna <code>true</code> si el mètode ha funcionat correctament i <code>false</code> en cas contrari.
+	 * This method performs the download of the website with the specified parametters.
+	 * @param website URL of the website to download.
+	 * @return Returns <code>true</code> if the downloading is performed successfuly and <code>false</code> in other case.
 	 */
 	bool StartDownload(const wstring &website);
 };

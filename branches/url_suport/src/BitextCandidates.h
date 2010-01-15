@@ -100,12 +100,12 @@ class BitextData
 
 /**
  * @class BitextCandidates
- * @brief Classe que representa un fitxer web i tots els candidats a ser traduccions del mateix a altres idiomes.
+ * @brief This class represents a web file and all the candidates to a translation in another language.
  * 
- * Aquesta classe conté un fitxer web, i l'enllaça amb tots els fitxers que són candidats a ser fitxers paral·lels en altres
- * idiomes. Així mateix, es guarda, per a cadascun d'aquests candidats, la llista de dades de comparació entre fitxer en
- * un objecte BitextData, mitjançant el qual es podran comparar els possibles mútiples candidats per a quedar-se només amb
- * el millor.
+ * This class contains a web file (main file of the class) and the related files which are cnadidates to be a
+ * translation in another language. In addition, for each candidate this class saves the data resulting from the
+ * comparison between the file and the main file and the candidate in a BitextData object. This object is used to
+ * compare the possibe candidates to discard the unlike ones and keep only the best candidate.
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -113,105 +113,126 @@ class BitextCandidates
 {
 private:
 	/**
-	 * Indicador que controla si el bitext ha estat inicialitzat correctament.
+	 * Flag which indicates if the object has been initialized (default=false).
 	 */
 	bool is_initialized;
 
 	/**
-	 * El primer fitxer web del bitext.
+	 * Main web file of the class.
 	 */
 	WebFile *wf;
 
 	/**
-	 * Llista de candidats a ser la millor parella per a una llengua determinada.
+	 * List of the best candidates to be translations in each language. The information is structured in a map in which
+	 * the left element of each entry is the language code and the rigth element is a pair
+	 * web-file-candidate/comparison-information. 
 	 */
 	map <wstring, pair<WebFile*,BitextData*>* > candidates;
 
 	/**
-	 * Apuntador a la última inserció en la llista.
+	 * This iterator points to the last insertion in the candidates structure.
 	 */
 	map <wstring, pair<WebFile*,BitextData*>* >::iterator last_insertion;
-		
+
+	/**
+	 * 
+	 */
 	static void CleanUnfrequentCasesProcessNode(xmlNode* node, wofstream &results_file, vector<unsigned int> &freq_rules, bool write);
 
 public:
 	/**
-	 * Constructor de la classe Bitext.
+	 * Default class constructor.
+	 * @param wf Main web file of the class.
 	 */
 	BitextCandidates(WebFile* wf);
 
 	/**
-	 * Destructor de la classe Bitext.
+	 * Class destructor.
 	 */
 	virtual ~BitextCandidates();
 	
 	/**
-	 * Mètode que retorna el primer fitxer web del bitext.
-	 * @throw char* El mètode retorna una excepció en forma de cadena de text si l'objecte no ha
-	 * estat inicialitzat correctament.
-	 * @return Retorna el primer fitxer web del bitext.
+	 * This method returns the main web file of the class.
+	 * @throw char* The method throws an exception when the method is called and the class has not been initialised.
+	 * @return Main web file of the class.
 	 */
 	WebFile* GetWebFile();
 	
 	/**
-	 * Mètode que retorna les dades de comparació del fitxer web principal amb el seu millor candidat per a una llengua donada.
-	 * @param lang Llengua del candidat que es busca.
-	 * @return Retorna l'objecte BitextData amb les dades de comparació.
+	 * This method returns the comparison data between a the main web file and its candidate for a given language.
+	 * @param lang Language of the searched candidate.
+	 * @return Returns the comparison data between a the main web file and its candidate for a given language. If there
+	 * is no candidate for the given language, the method returns NULL.
 	 */
 	BitextData* GetBitextData(const wstring &lang);
 	
 	/**
-	 * Mètode que crea el bitext a partir dels dos fiters web introduïts en la inicialització.
-	 * @throw char* El mètode retorna una excepció en forma de cadena de text si l'objecte no ha
-	 * estat inicialitzat correctament.
-	 * @return Retorna <code>true</code> si s'ha pogut generar el bitext i <code>false</code>
-	 * en cas contrari.
+	 * This method generates the corresponding translation memory (TM) for the main web file and each candidate of
+	 * translation in the class. The results will be saved in individual TM or in an only TM memory (for each language
+	 * pairs) deppending on the choosen options in the configuration file.
+	 * @throw char* The method throws an exception when the method is called and the class has not been initialised.
+	 * @return Returns <code>true</code> if the TMs are generated successfuly and <code>false</code> in other case.
 	 */
 	bool GenerateBitexts();
 
 	/**
-	 * Mètode que afegeix un candidat a la llista de millors candidats. Aquest només s'afegirà si no n'hi ha cap
-	 * candidat per a la llengua donada o si és millor que el candidat actual per a la mateixa llengua.
-	 * @param c Nou candidat a comparar.
-	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 * This method adds a new candidate in the translation candidates list. The candiate will only be added if it is
+	 * a better candidate than the previous assigned candidate for the corresponding language. If ther is no candidate
+	 * for the corresponding language, it will be added if it passes all the defined heuristics.
+	 * @param c New candidate to add.
+	 * @return Returns <code>true</code> if the candidate has been added and <code>false</code> if not.
 	 */
 	bool Add(BitextCandidates* c);
 	
 	/**
-	 * Mètode que afegeix un candidat a la llista de millors candidats. Aquest només s'afegirà si no n'hi ha cap
-	 * candidat per a la llengua donada o si és millor que el candidat actual per a la mateixa llengua. En aquest cas
-	 * la comparació entre fitxers web ja està feta i es disposa de les dades. Per tant, no cal fer les operacions de
-	 * comparació entre fitxers.
-	 * @param lang Llengua del candidat.
-	 * @param d Dades de comparació entre fitxers web a afegir.
-	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 * This method compares a given BitextData object with the assigned BitextData object assigned to an object language
+	 * pair. If it is higher (or if there is no BitextData object assigned to this language) the existing candidate will
+	 * be removed but the BitextData will be assigned as the better comparison data obtained for any candidate and the
+	 * main web file for that language. This system is used to avoid the generation of non optimal bitexts. For
+	 * example, if we are comparing two files A and B for a language pair and we assign the file B as the best candidate
+	 * to be a translation of A, but in the process of comparison we realize that C is a better candidate for B for the
+	 * same language pair, we must remove B from the candidates list of A. To do this, we use this method with the
+	 * BitextData object generated in the comparison between B and C.
+	 * @param lang BitextData corresponding language.
+	 * @param d Given comparison data for comparison.
+	 * @return Returns <code>true</code> if the candidate is added to the list (and, in consequence, it is better than the existing
+	 * BitextCandidate assigned for the given language) and <code>false</code> if not.
 	 */
 	bool Add(const wstring &lang, BitextData* d);
 	
 	/**
-	 * Mètode que esborra el darrer candidat afegit.
+	 * This method removes the last added candidate in the list of candidates.
 	 */
 	void EraseLastAdded();
 	
 	/**
-	 * Mètode que genera la memòria de traducció amb el darrer candidat afegit.
-	 * @return Retorna <code>true</code> si el candidat és afegit i <code>false</code> en cas contrari.
+	 * This method generates the translation memory corresponding to the main web file of the class and the last added
+	 * candidate to the candidates list.
+	 * @return Returns <code>true</code> if the candidate has been added and <code>false</code> if not.
 	 */
 	bool GenerateLastAddedBitext();
 	
 	/**
-	 * Mètode que retorna el fitxer web corresponent al candidat per a una llengua donada.
-	 * @param lang Llengua que identifica al fitxer web que es vol recuperar.
-	 * @return Retorna el fitxer web indicat.
+	 * This method returns the web file corresponding to the language specified by the argument lang from the candidates
+	 * list.
+	 * @param lang Language of the file which the method will return.
+	 * @return The candidate file returns the web file corresponding to the specified language. If there is no candidate
+	 * for that language, the method returns NULL.
 	 */
 	WebFile* GetWebFile(const wstring &lang);
 
 	/**
-	 * Mètode que retorna el fitxer web corresponent al darrer candidat afegit.
-	 * @return Retorna el fitxer web corresponent al darrer candidat afegit.
+	 * This method returns the last added web file in the candidates list.
+	 * @return Returns the last added web file in the candidates list. If there is no added file, the method returns
+	 * NULL.
 	 */
 	WebFile* GetLastAddedWebFile();
 	
+	/**
+	 * EXEPEIMENTAL!!!
+	 * Method which removes those pairs that doesn't correspond with the most repeated URL language rules.
+	 * @param filename Name of the file where the 
+	 */
 	static bool CleanUnfrequentCases(const string &filename);
 };
 

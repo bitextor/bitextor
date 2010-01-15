@@ -9,8 +9,8 @@ using namespace std;
  * @class FilePreprocess
  * @brief Mòdul de preprocessament de fitxers.
  * 
- * Classe que conté el mètode de preprocessament de fitxers.
- * Es basa en les llibreries de TidyHTML i Enca. La primera
+ * This class contains the method to preprocess the input files. It is based on the LibTidyHTML and LibEnca libraries .
+ * The firstone converts the HTML file to XHTML and converts the character encoding to UTF-8.
  * s'encarrega de "netejar" l'etiquetatge del document HTML
  * d'entrada, així com de la seua conversió a UTF-8. El se-
  * gon s'encarrega de detectar la codificació de caracters
