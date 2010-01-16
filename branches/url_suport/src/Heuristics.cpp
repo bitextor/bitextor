@@ -102,7 +102,6 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 			beam=Config::getDiagonalSize();
 
 		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &CostTextAlignment, Config::diagonalSizeIsPercent(), beam, result);
-		
 		res=0;
 		for(i=0,j=0,w=0;w<pdistance.length();w++){
 			switch (pdistance[w]){
@@ -144,6 +143,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 
 		if(pathdistance!=NULL)
 			*pathdistance=pdistance;
+		wcout<<Config::toWstring(wf1->GetPath())<<L" - "<<Config::toWstring(wf2->GetPath())<<L": "<<*result<<L" , "<<res<<endl<<endl;
 
 		if(max_diff_abs>=res && max_diff_percent>=res)
 			return true;

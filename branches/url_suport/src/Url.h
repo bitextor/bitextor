@@ -7,8 +7,8 @@
 
 using namespace std; 
 
-#define DEBUG_URL_INIT
-#define DEBUG_URL_CMP
+//#define DEBUG_URL_INIT
+//#define DEBUG_URL_CMP
 
 class UrlLangRule
 {
