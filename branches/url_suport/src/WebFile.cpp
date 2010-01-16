@@ -184,14 +184,17 @@ bool WebFile::IsInitialized()
 	return this->initialized;
 }
 
-vector<int>* WebFile::GetNumbersVector()
+/*vector<int>* WebFile::GetNumbersVector()
 {
 	return &numbers_vec;
-}
+}*/
 	
 unsigned int WebFile::GetTextSize()
 {
-	return text_size;
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return text_size;
 }
 
 /*wstring WebFile::toXML()
@@ -215,7 +218,10 @@ unsigned int WebFile::GetTextSize()
 }*/
 
 vector<int>* WebFile::GetTagArray(){
-	return &file;
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return &file;
 }
 
 void WebFile::ObtainURL(){
@@ -251,5 +257,8 @@ void WebFile::ObtainURL(){
 }
 
 Url* WebFile::GetURL(){
-	return url;
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return url;
 }
