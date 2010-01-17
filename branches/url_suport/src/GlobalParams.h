@@ -15,9 +15,10 @@ using namespace std;
 
 /**
  * @class GlobalParams
- * @brief Classe que conté els paràmetres globals de l'aplicació.
+ * @brief This class contains the global parameters of the application.
  * 
- * Classe estàtica que conté tots els paràmetres globals necessaris per a l'execució de l'aplicació. 
+ * Static class that contains all the necessary global parameters for
+ * the application.
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -26,31 +27,40 @@ class GlobalParams
 private:
 
 	/**
-	 * Variable que conté la ruta on es troba el fitxer de configuració de l'aplicació.
+	 * Variable that contains the path where the configuration file is
+	 * placed in the system.
 	 */
 	static string config_file;
 
 	/**
-	 * Màxima distància d'edició (en distància absoluta) permesa per a establir una possible correspondència entre fitxers HTML.
-	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
+	 * Maximum edit distance (in absolute terms) allowed to determine if
+	 * two web-file fingerpints (see documentation about WebFile) can be
+	 * the same or not. The value of this variable is, by default, -1,
+	 * and this means that there is no maximum absolute edit distance.
 	 */
 	static double max_edit_distance_length_absolute;
 
 	/**
-	 * Màxima distància d'edició (en distància percentual) permesa per a establir una possible correspondència entre fitxers HTML.
-	 * Si aquest paràmetre val -1, s'assumira que no existeix una distància d'edició màxima en la comparació. 
+	 * Maximum edit distance (in percentual terms) allowed to determine
+	 * if two web-file fingerpints (see documentation about WebFile) can
+	 * be the same or not. To compare this parameter with the resulting
+	 * value of the edit distance, it is applied the formula:
+	 * edit_distance_result/MAX(LENGTH(fingerprint1),LENGTH(fingerprint2)
+	 * The value of this variable is, by default, -1, and this means that
+	 * there is no maximum percentual edit distance.
 	 */
 	static double max_edit_distance_length_percentual;
 
 	/**
-	 * Distància màxima de profunditat en l'arbre de directoris que poden tenir dos fitxers web a
-	 * comparar. Només es compararan els fitxers que es troben a una distància de profunditat a
-	 * l'arbre de directoris igual o major que la indicada per aquest paràmetre. Si el valor és 0
-	 * només es compararan els fitxers que estroben al mateix directori.
+	 * Maximum difference between the depth in the directory tree of a
+	 * pair of files in the website. 
+	 * The value of this variable is, by default, -1, and this means that
+	 * there is no maximum directory depth distance.
 	 */
 	static int directory_depth_distance;
 
 	/**
+	 * 
 	 * Per al càlculs de la distància d'edició en de dos <code>WebFile</code> ens basem en dos elements,
 	 * les etiquetes HTML i la logitud del text contingut entre elles. Per a poder fer la comparativa
 	 * entre ambdós paràmetres, cal conèixer la relació o l'impacte que produeix en la comparació la di-
