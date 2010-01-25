@@ -3,6 +3,7 @@
 
 #include "GlobalParams.h"
 #include "FilePreprocess.h"
+#include "Url.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -15,12 +16,10 @@ using namespace std;
 
 /**
  * @class WebFile
- * @brief Classe que conté els elements d'un fitxer web.
+ * @brief This class represents a web file (HTML file).
  * 
- * Classe que representa els elements continguts per un lloc web.
- * Conté informació sobre els fitxers que pengen de l'arbre de
- * directoris diferenciats per nivells, de forma que es pot ordenar,
- * fàcilment, la informació dels fitxers descarregats pel DownloadMod.
+ * This class contains the relevant elements from a web file downloaded
+ * from a website with the DownloadModule.
  * 
  * @author Miquel Esplà i Gomis. 
  */
@@ -28,93 +27,120 @@ class WebFile
 {
 private:
 	/**
-	 * Adreça on es troba el fitxer.
+	 * Path where the file is placed in the system.
 	 */
 	string path;
 	
 	/**
-	 * Lengua en què està escrit el text contingut pel fitxer.
+	 * Language in which the plain text of the file is written.
 	 */
 	wstring lang;
 	
 	/**
-	 * Tipus de dades contingudes al fitxer.
+	 * Data save in the file.
 	 */
 	string file_type;
 	
 	/**
-	 * Objecte que conté el fitxer HTML dividit en etiquetes i blocs de text.
+	 * File's fingerprint. These fingerprints are strings of integers
+	 * which represents the content of a file. The negative integers
+	 * respresents the XHTML tags. In the class GlobalParams there is a
+	 * HashMap with the correspondence between XHTML tag names and their
+	 * integer code. The positive numbers represents text bloks
+	 * (concretly, the positive numbers - included the 0 - reperesnts
+	 * the length of these text bloks in characters). 
 	 */
 	vector<int> file;
 
 	/**
-	 * Indicador que assenyala si la classe ha estat inicialitzada correctament (si està a <code>true</code>).
+	 * Flag which determines if the object has been initialized or not.
 	 */
 	bool initialized;
 	
 	/**
 	 * Vector de nombres enters trobats al text
 	 */
-	vector<int> numbers_vec;
+	//vector<int> numbers_vec;
 
 	/**
-	 * Mida total del text (en caràcters) continguda al document.
+	 * Length of the plain text (in characters).
 	 */
 	unsigned int text_size;
+	
+	/**
+	 * URL of the file.
+	 */
+	Url *url;
 
 	/**
-	 * Mètode que indica si un caràcter és alfabètic o no.
-	 * @param car Caràcter a analitzar
-	 * @return Retorna <code>true</code> si el caràcter és alfabètic i <code>false</code> en cas contrari.
+	 * This method can detect if a given character is alphabetic or not
+	 * by using the regular expressions defined by the user in the
+	 * configuration file.
+	 * @param car Character to analyze.
+	 * @return Returns <code>true</code> if the character is alphabetic
+	 * and <code>false</code> if it is not.
 	 */
 	bool IsAlphabetic(const wchar_t& car);
+	
+	/**
+	 * This method obtains the webfile's url from a comment in the HTML
+	 * code (if it has been downloaded by using HTTrack).
+	 */
+	void ObtainURL();
 
 public:
 
 	/**
-	 * Constructor per defecte de la classe.
+	 * Default constructor.
 	 */
 	WebFile();
 	
 	/**
-	 * Destructor de la classe.
+	 * Class destructor.
 	 */
 	~WebFile();
 	
 	/**
-	 * Inicialitzador de la classe amb tots els paràmetres a partir de la ruta del fitxer.
-	 * El mètode fa servir l'analitzador lèxic fet en Flex per a crear un vector d'etique-
-	 * tes i guardar el text net (sense etiquetes) en una variable, a partir de la qual es
-	 * detectarà l'idioma en què està escrit el text.
-	 * @param path Ruta del fitxer a què fa referència la classe.
-	 * @throw char* El mètode llança una excepció si no s'ha especificat el fitxer de configuració de TextCat.
+	 * This method initializes the class. It processes the file to
+	 * obtain the language, size (in bytes), length (in characters), URL
+	 * and the file's fingerprint.
+	 * @param path Path where the file is placed in the system.
+	 * @throw char* This method throws an exception if it can not find
+	 * the LibTextCat configuration file path.
 	 */
 	bool Initialize(const string &path);
 	
 	/**
-	 * Mètode que permet obtenir el paràmetre sobre l'idioma del fitxer.
-	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
-	 * @return Retorna el codi d'idioma en què està escrit el text del fitxer.
+	 * This method returns the file language.
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
+	 * @return Returns the language code corresponding to the plain text
+	 * of the file (obtained with LibTextCat).
 	 */
 	wstring GetLang();
 	
 	/**
-	 * Mètode que permet obtenir el paràmetre sobre la ruta on es troba el fitxer en el sistema de directoris.
-	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
-	 * @return Retorna la ruta on es troba el fitxer en el sistema de directoris.
+	 * This method returns the file path in the system.
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
+	 * @return Returns the file path in the system.
 	 */
 	string GetPath();
 	
 	/**
-	 * Mètode que permet obtenir el valor del paràmetre sobre el tipus de contingut (extensió) del fitxer.
-	 * @throw char* El mètode llança una excepció si no s'ha inicialitzat correctament l'objecte.
+	 * Mètode que permet obtenir el valor del paràmetre sobre el tipus
+	 * de contingut (extensió) del fitxer.
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
 	 * @return Retorna l'extensió del fitxer.
 	 */
-	string GetFileType();
+	//string GetFileType();
 	
 	/**
-	 * Mètode que indica si el fitxer està inicialitzat correctament.
-	 * @return Retorna <code>true</code> si el fitxer es torba correctament inicialitzat i <code>false</code> en cas contrari.
+	 * This method indicates if the object has been initialized
+	 * successfuly.
+	 * @return Return <code>true</code> if the file has been initialized
+	 * succesfuly and <code>false</code> if not.
 	 */
 	bool IsInitialized();
 
@@ -122,25 +148,39 @@ public:
 	 * Mètode que retorna un punter al vector d'enters continguts al text.
 	 * @return Retorna un punter al vector d'enters continguts al text.
 	 */
-	vector<int>* GetNumbersVector();
+	//vector<int>* GetNumbersVector();
 
 	/**
-	 * Mètode que retorna la mida total en caràcters del text del document.
-	 * @return Retorna la mida total en caràcters del text del document.
+	 * This method returns the file size (in bytes).
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
+	 * @return Returns the file size (in bytes).
 	 */
 	unsigned int GetTextSize();
 
 	/**
-	 * Mètode que retorna un punter a l'array d'etiquetes-blocs de text.
-	 * @return Retorna un punter a l'array d'etiquetes-blocs de text.
+	 * This method returns the file's fingerprint.
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
+	 * @return Returns the file's fingerprint.
 	 */
 	vector<int>* GetTagArray();
 
-	/**
-	 * Mètode que carrega a l'array d'enters els números enters continguts al text.
+	/*
+	 * This method Mètode que carrega a l'array d'enters els números
+	 * enters continguts al text.
 	 * @param text Text del qual s'hi volen extreure els números.
 	 */
-	void GetNonAplha(wstring text);
+	//void GetNonAplha(wstring text);
+
+	/**
+	 * This method returns the URL from where the file has been
+	 * downloaded.
+	 * @throw char* This method throws an exception if it is called and
+	 * the object has not been initialized.
+	 * @return Returns the URL from where the file has been downloaded.
+	 */
+	Url* GetURL();
 };
 
 #endif /*WEBFILE_H_*/

@@ -8,14 +8,6 @@
 #include <math.h>
 #include <libtagaligner/EditDistanceTools.h>
 
-//wstring Heuristics::lang1=L"";
-//wstring Heuristics::lang2=L"";
-
-bool Heuristics::HaveTheSameExtension(WebFile *wf1, WebFile *wf2)
-{
-	//return (wf1->GetFileType()==wf2->GetFileType());
-	return true;
-}
 
 bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double *result)
 {
@@ -102,31 +94,22 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 			beam=Config::getDiagonalSize();
 
 		pdistance=EditDistanceTools::EditDistanceBeam(*tag_array1, *tag_array2, &CostTextAlignment, Config::diagonalSizeIsPercent(), beam, result);
-
 		res=0;
 		for(i=0,j=0,w=0;w<pdistance.length();w++){
 			switch (pdistance[w]){
 				case 'd':
-					if(wf1->GetTagArray()->at(i)>=0){
-						if(wf1->GetTagArray()->at(i)>0)
-							res+=1;
-					}
-					else
+					if(wf1->GetTagArray()->at(i)!=0)
 						res+=1;
 					i++;
 				break;
 				case 'i':
-					if(wf2->GetTagArray()->at(j)>=0){
-						if(wf2->GetTagArray()->at(j)>0)
-							res+=1;
-					}
-					else
+					if(wf2->GetTagArray()->at(j)!=0)
 						res+=1;
 					j++;
 				break;
 				default:
 					if(wf1->GetTagArray()->at(i)>=0 && wf2->GetTagArray()->at(j)>=0){
-						difference=GlobalParams::GetFileSizeDiferencePercent(wf1->GetLang(),wf2->GetLang());
+						difference=GlobalParams::GetTextLengthDiferencePercent(wf1->GetLang(),wf2->GetLang());
 						if(difference>=0){
 							text_distance=abs(wf1->GetTagArray()->at(i)-wf2->GetTagArray()->at(j));
 							if(text_distance>0){
@@ -149,10 +132,10 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 				break;
 			}
 		}
-		
 
 		if(pathdistance!=NULL)
 			*pathdistance=pdistance;
+		wcout<<Config::toWstring(wf1->GetPath())<<L" - "<<Config::toWstring(wf2->GetPath())<<L": "<<*result<<L" , "<<res<<endl<<endl;
 
 		if(max_diff_abs>=res && max_diff_percent>=res)
 			return true;
@@ -322,7 +305,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 }
 */
 
-bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
+/*bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
 	double res;
 
 	if(GlobalParams::GetMaxNumericFingerprintDistance()==-1 || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
@@ -340,7 +323,7 @@ bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double
 		else
 			return false;
 	}
-}
+}*/
 
 double Heuristics::CostNumbers(const short &op, const int &c1, const int &c2){
 	double result=0;

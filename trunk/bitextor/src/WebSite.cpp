@@ -53,11 +53,18 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 	stack<string> *dirs, *subdirs;
 	unsigned int i;
 	map<wstring,FILE *>::iterator it_files;
-	
 
-	try{
+	//try{
 		TranslationMemory::SetDestPath(dest_path);
-		file_list=new vector< BitextCandidates* >*[GlobalParams::GetDirectoryDepthDistance()+1];
+		if(GlobalParams::GetDirectoryDepthDistance()!=-1){
+			file_list=new vector< BitextCandidates* >*[GlobalParams::GetDirectoryDepthDistance()+1];
+			for(i=0;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
+				file_list[i]=new vector< BitextCandidates* >();
+		}
+		else{
+			file_list=new vector< BitextCandidates* >*[1];
+			file_list[0]=new vector< BitextCandidates* >();
+		}
 		//Firstly, we prove that base_path is a valid directory.
 		if ( stat(this->base_path.c_str(), &fich)>=0 ){
 			if(!S_ISDIR(fich.st_mode))
@@ -68,8 +75,6 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 		dirs=new stack<string>();
 		subdirs=new stack<string>();
 		dirs->push(this->base_path);
-		for(i=0;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
-			file_list[i]=new vector< BitextCandidates* >();
 		
 		//Starting reading of directory by levels
 		while(dirs->size()+subdirs->size()>0){
@@ -92,6 +97,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 										if(file_name.length()<4 || file_name[file_name.length()-4]!=L'.' || file_name[file_name.length()-3]!=L'x' || file_name[file_name.length()-2]!=L'm' || file_name[file_name.length()-1]!=L'l'){
 											wf=new WebFile();
 											wf->Initialize(file_name);
+											//wcout<<Config::toWstring(file_name)<<endl;
 											if(wf->IsInitialized() && (GlobalParams::GetMinArraySize()==-1 || (unsigned int)GlobalParams::GetMinArraySize()<=(wf->GetTagArray()->size()))){
 												file_list[level]->push_back(new BitextCandidates(wf));
 											}
@@ -103,6 +109,7 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 							}
 						}
 						closedir(directorio);
+						directorio=NULL;
 					}
 				}
 				dirs->pop();
@@ -112,46 +119,57 @@ bool WebSite::GenerateBitexts(const string &dest_path)
 			dirs=subdirs;
 			subdirs=new stack<string>();
 			//If we have not full the directory level structure, we follow loading files
-			if((int)level<GlobalParams::GetDirectoryDepthDistance())
-				level++;
-			//If the structure is full, we calculate the candidates for higher level files, delete this level and load a new lower level
-			else{
-				if(!exit)
-					exit=GetMatchedFiles(dest_path, file_list, level+1);
-				else
-					GetMatchedFiles(dest_path, file_list, level+1);
-				for(i=0; i<file_list[0]->size();i++){
-					//remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
-					delete file_list[0]->at(i);
+			if(GlobalParams::GetDirectoryDepthDistance()!=-1){
+				if((int)level<GlobalParams::GetDirectoryDepthDistance())
+					level++;
+				//If the structure is full, we calculate the candidates for higher level files, delete this level and load a new lower level
+				else{
+					if(!exit)
+						exit=GetMatchedFiles(dest_path, file_list, level+1);
+					else
+						GetMatchedFiles(dest_path, file_list, level+1);
+					for(i=0; i<file_list[0]->size();i++){
+						//remove((file_list[0]->at(i)->GetPath()+".xml").c_str());
+						delete file_list[0]->at(i);
+					}
+					delete file_list[0];
+					for(i=1;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
+						file_list[i-1]=file_list[i];
+					file_list[i-1]=new vector< BitextCandidates* >();
 				}
-				delete file_list[0];
-				for(i=1;i<(unsigned int)GlobalParams::GetDirectoryDepthDistance()+1;i++)
-					file_list[i-1]=file_list[i];
-				file_list[i-1]=new vector< BitextCandidates* >();
 			}
 		}
 		//We delete the dirs and subdirs list and process all the resting files in the level files structure
 		delete dirs;
 		delete subdirs;
-		for(level=GlobalParams::GetDirectoryDepthDistance()+1;level>=1;level--){
-			if(!exit)
-				exit=GetMatchedFiles(dest_path, file_list, level);
-			else
-				GetMatchedFiles(dest_path, file_list, level);
+		if(GlobalParams::GetDirectoryDepthDistance()!=-1){
+			for(level=GlobalParams::GetDirectoryDepthDistance()+1;level>=1;level--){
+				if(!exit)
+					exit=GetMatchedFiles(dest_path, file_list, level);
+				else
+					GetMatchedFiles(dest_path, file_list, level);
+				for(i=0; i<file_list[0]->size();i++){
+					delete file_list[0]->at(i);
+				}
+				delete file_list[0];
+				for(i=1;i<level;i++)
+					file_list[i-1]=file_list[i];
+			}
+		}
+		else{
+			exit=GetMatchedFiles(dest_path, file_list, 1);
 			for(i=0; i<file_list[0]->size();i++){
 				delete file_list[0]->at(i);
 			}
 			delete file_list[0];
-			for(i=1;i<level;i++)
-				file_list[i-1]=file_list[i];
 		}
 		delete[] file_list;
-	}
+	/*}
 	catch(...){
 		exit=false;
 		if(directorio!=NULL)
 			closedir(directorio);
-	}
+	}*/
 	TranslationMemory::Reset();
 	return exit;
 }
@@ -193,6 +211,7 @@ bool WebSite::GetMatchedFiles(const string &dest_dir, vector< BitextCandidates* 
 			}
 			else{
 				for(;k<file_list[j]->size();k++){
+					//wcout<<main_bitext->GetWebFile()->GetURL()->GetCompleteURL()<<L"  "<<file_list[j]->at(k)->GetWebFile()->GetURL()->GetCompleteURL()<<endl;
 					main_bitext->Add(file_list[j]->at(k));
 				}
 			}

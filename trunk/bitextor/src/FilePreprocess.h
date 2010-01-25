@@ -9,13 +9,9 @@ using namespace std;
  * @class FilePreprocess
  * @brief Mòdul de preprocessament de fitxers.
  * 
- * Classe que conté el mètode de preprocessament de fitxers.
- * Es basa en les llibreries de TidyHTML i Enca. La primera
- * s'encarrega de "netejar" l'etiquetatge del document HTML
- * d'entrada, així com de la seua conversió a UTF-8. El se-
- * gon s'encarrega de detectar la codificació de caracters
- * del fitxer d'entrada per a poder realitzar l'esmentada
- * conversió.
+ * This class contains the method to preprocess the input files. It is based on the LibTidyHTML and LibEnca libraries .
+ * The firstone converts the HTML file to XHTML and converts the character encoding to UTF-8. The second one detects
+ * the character encoding to perform the conversion. Once all these things 
  * 
  * @author Miquel Esplà i Gomis. 
  */
@@ -23,12 +19,10 @@ class FilePreprocess
 {
 public:
 	/**
-	 * Mètode que s'encarrega de realitzar el preprocessament dels fitxers d'entrada de l'aplicació.
-	 * Després de l'execució d'aquest mètode, el fitxer d'entrada queda corregit, des d'un punt de
-	 * vista de coherència de l'etiquetatge HTML, i convertit a UTF-8.
-	 * @param file_path Aquest paràmetre indica la ruta del fitxer d'entrada en el sistema.
-	 * @return El mètode retorna <code>true</code> si el preprocessament s'ha efectuat de forma satisfactòria o <code>false</code> en cas contrari.
-	 * @throw char* El mètode llança un missatge d'error si no s'ha especificat la ruta al fitxer de configuració de la llibreria TextCat.
+	 * This method performs the web files pre-processing. Before this runing this method, the input file
+	 * the file will be in correct XHTML format and encoded with UTF-8.
+	 * @param file_path The path of the file to process in the system.
+	 * @return Return <code>true</code> if the process is performed successfuly and <code>false</code> in other case.
 	 */
 	static bool PreprocessFile(const string &file_path);
 };

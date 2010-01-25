@@ -42,11 +42,10 @@ int
 main (int argc, char *const *argv)
 {
 	WebSite *ws;
-	//Bitext bitext;
 	ifstream file;
 	string file_name;
 	bool show_howtouse=false, mode_set=false, verbose=false, download=false;
-	string dest_dir="";
+	string dest_dir="", results_file_path="";
 	string config_file=BASE_CONF;
 	struct stat my_stat;
 	int next_op;
@@ -112,6 +111,7 @@ main (int argc, char *const *argv)
 				GlobalParams::OpenLog(optarg);
 			break;
 			case 'p':
+				results_file_path=optarg;
 				GlobalParams::OpenResults(optarg);
 				GlobalParams::GenerateTMX(false);
 			break;
@@ -155,13 +155,16 @@ main (int argc, char *const *argv)
 					try{
 						if(!ws->GenerateBitexts(dest_dir+"bitexts/"))
 							wcout<<L"No correspondences were found between the files in the specified directory."<<endl;
+						GlobalParams::CloseResults();
+						if(results_file_path!="")
+							BitextCandidates::CleanUnfrequentCases(results_file_path);
 					}
 					catch(char const*e){
 						cout<<e<<endl;
 					}
 					delete ws;
-					Config::CleanUpConfiguration();
 				}
+				Config::CleanUpConfiguration();
 			}
 		}
 		catch(char* e){
@@ -169,7 +172,6 @@ main (int argc, char *const *argv)
 		}
 	}
 	GlobalParams::CloseLog();
-	GlobalParams::CloseResults();
 
 	return 0; 
 }

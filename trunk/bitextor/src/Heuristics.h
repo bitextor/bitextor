@@ -8,16 +8,14 @@
 
 /**
  * @class Heuristics
- * @brief Classe que que encapsula les heurístiques de l'aplicació.
+ * @brief This class contains all the heuristics of the application.
  * 
- * Classe estàtica que conté tots els mètodes necessaris per a aplicar les heurístiques especificades
- * per a diferenciar els fitxers entre ells. Aquestes heurístiques són bàsicament:
- * -La diferenciació per mitjan de la comparació de les etiquetes HTML, combinada amb la comparació
- * de la longitud dels bloc de text inserits entre elles.
- * -La comparació de la mida dels fitxers en bytes.
- * -La comparació de les extensions dels fitxers.
- * -La diferència en la profunditat en l'arbre de directoris (aquesta és la única heurística que no
- * es troba implementada en esta classe, sinó en la classe <code>WebSite</code>, al mètode <code>GetMatchedFiles</code>. 
+ * Static class which contains all the methods related with the heurisitcs used by the applicaiton to
+ * find bitexts in a website. These heuristics are:
+ * -Edit distance between web page fingerprints (strings composed by XHTML tags and lengths of text bloks).
+ * -File sizes comparison (in bytes).
+ * -Plane text length (in characters).
+ * -Differences in the URL of the files.
  * 
  * @author Miquel Esplà i Gomis
  */
@@ -25,42 +23,52 @@ class Heuristics
 {
 public:
 	/**
-	 * Mètode que indica si dos fitxers web poden ser el mateix basant-se l'extensió.
-	 * @param wf1 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre un dels fitxers web amb el qual hem de fer la comparació.
-	 * @param wf2 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre l'altre fitxer web amb el qual hem de fer la comparació.
-	 * @return Retorna <code>true</code> si l'extensió d'ambdós fitxers és la mateixa, o <code>false</code> en cas contrari. 
+	 * This method indicates if two files have the same filename extenssion.
+	 * @param wf1 First web file to compare.
+	 * @param wf2 Second web files to compare.
+	 * @return Returns <code>true</code> if the filename extension is the same and <code>false</code> if is different.
 	 */
 	static bool HaveTheSameExtension(WebFile *wf1, WebFile *wf2);
 	
 	/**
-	 * Mètode que indica si dos fitxers web poden ser el mateix basant-se en la seua mida en bytes. Per a activar aquest mètode cal donar un percentatge
-	 * llindar per a la diferència de mida als paràmetres globals. Si no s'activa aquest llindar, el mètode retornarà sempre <code>true</code>.
-	 * @param wf1 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre un dels fitxers web amb el qual hem de fer la comparació.
-	 * @param wf2 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre l'altre fitxer web amb el qual hem de fer la comparació.
-	 * @param result Paràmetre que serveix per a obtenir el percentatge de diferència de mida entre els dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
-	 * @return Retorna <code>true</code> si la diferència de mida dels fitxers és acceptable segons els paràmetres establerts, o <code>false</code> en cas contrari. 
+	 * This method compares the size of a pair of files. If the propotion between the file sizes is higher than the
+	 * one defined in the configuration file, the method will return false and, in other case, it will return true. The
+	 * proportion between sizes is calculated with the expression ABS(SIZE(wf1)-SIZE(wf2))/MAX(SIZE(wf1),SIZE(wf2)).
+	 * @param wf1 First web file to compare.
+	 * @param wf2 Second web files to compare.
+	 * @param result This is an output parametter which returns the proportion between the file sizes.
+	 * @return Returns <code>true</code> if the proportion of difference is lower than the set threshold in the configu-
+	 * ration file, or <code>false</code> if it is higher. If the threshold is not defined in the configuration file,
+	 * the method returns <code>true</code> for any pair of files.
 	 */
 	static bool HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2=NULL, double* result=NULL);
 	
 	/**
-	 * Mètode que calcula la distància d'edició entre dues cadenes d'etiquetes HTML/Text tal com s'estableixen a la classe WebFile.
-	 * Aquest mètode es basa en dos paràmetres globals. D'una banda, utilitza el llindar de percentatge de diferència entre longituds
-	 * de text. Quan es calcula la distància d'edició entre dos blocs de text, si superen aquest percentatge, es consideren diferents
-	 * i, en cas contrari, iguals. En cas que el paràmetre es trobe desactivat, es consideraran tots els blocs de text iguals.
-	 * El segon paràmetre global és el del llindar de màxim percentatge de distància d'edició entre dos vectors d'etiquetes HTML/Text.
-	 * Si aquest llindar està activat, la distància d'edició es limita, de tal forma que, en comptes de calcular-se tota la taula,
-	 * es calcula només una diagonal determinada, basant-se en què tots els valors fora d'aquesta diagonal condueixen a resultats que
-	 * excedeixen el llindar establert. La amplada d'aquesta diagonal serà directament proporcional al propi llindar.
-	 * @param wf1 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre un dels fitxers web amb el qual hem de fer la comparació.
-	 * @param wf2 Paràmetre de tipus <code>WebFile</code> que conté la informació sobre l'altre fitxer web amb el qual hem de fer la comparació.
-	 * @param pathdistance Paràmetre que conté el camí òptim per obtenir la distància resultant. S'utilitza per re-recorrer aquesta ruta i assignar les puntuacions adequades.
-	 * @param result Paràmetre que serveix per a obtenir la distància d'edició entre els vectors d'etiquetes HTML/Text dels dos fitxers. Si no es defineix el paràmetre, aquest adopta el valor NULL per defecte.
-	 * @return Retorna la distància d'edició calculada com a enter major o igual a zero. En cas que la distància excedisca el màxim establert, el mètode retornarà -1.
+	 * This method applies the Levheinstein's edit distance algorithm on a pair of web file fingerprints. These
+	 * fingerprints are strings of integers which represents the content of a file. The negative integers respresents
+	 * the XHTML tags. In the class GlobalParams there is a HashMap with the correspondence between XHTML tag names and
+	 * their integer code. The positive numbers represents text bloks (concretly, the positive numbers - included the 0 -
+	 * reperesnts the length of these text bloks in characters). The edit distance algorithm applied assigns 1 as the
+	 * cost of insertion, deletion and substitution for XHTML tags. For text bloks, the cost of insertion and deletion
+	 * is 1 and the cost of substitution is MIN(LENGTH(text_blok1), LENGTH(text_blok2))/MAX(LENGTH(text_blok1), LENGTH(text_blok2)).
+	 * This value of edit distance is returned to use it as a comparison value, but for the comparison of files in the
+	 * method, another method is calculated. The user can define a maximum permited difference of text-bloks differnece
+	 * of length. This parameter is defined in the configuration file and is used to determine if a pair of text bloks
+	 * can be parallel (a tranlation) or not. So, the value used for comparsion between fingerprint is this. In this way,
+	 * if the substitution cost between text bloks is higher than this threshold, the assigned cost is 1 and, if it is
+	 * lower, the cost is 0. The resultaign value of this process is compared with the maximum edit-distance value set
+	 * by the user in the configuration file. If the result is lower or equal than this value, the method returns true
+	 * and, if it is not, the method returns false.
+	 * @param wf1 First web file to compare.
+	 * @param wf2 Second web files to compare.
+	 * @param pathdistance This is an output parameter which returns the optimal path in the edit-distance algorithm
+	 * grid.
+	 * @param result Value of edit-distance using the difference proportion in text-bloks substitution operation.
+	 * @return Returns <code>true</code> if the edit distance is lower than the threshold defined in the configuration
+	 * file and <code>false</code> in other case. If there is no threshold defined in the configuration file, the method
+	 * will return always <code>true</code>.
 	 */
 	static bool HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result=NULL);
-
-	//static wstring lang1;
-	//static wstring lang2;
 
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
@@ -73,7 +81,7 @@ public:
 	
 	/**
 	 * Method wich calculates the cost in the edit distance function HTML tag vs. HTML tag.
-	 * @param op Code of the operation wich will be performed (deletion, insertion, substitution).
+	 * @param op Code of the operation which will be performed (deletion, insertion, substitution).
 	 * @param ctag1 First operand.
 	 * @param ctag2 Second operand.
 	 * @return Cost of the operation. 
@@ -81,28 +89,34 @@ public:
 	static double CostTextAlignment(const short &op, const int &ctag1, const int &ctag2);
 
 	/**
-	 * Mètode que calcula la distància d'edició entre els dos arrays d'enters de dos fitxers web.
-	 * @param wf1 Primer fitxer web de la comparació.
-	 * @param wf2 Segon fitxer web de la comparació.
-	 * @param result En cas què aquest paràmetre siga diferent de NULL, quan acaben els càlculs s'hi emmagatzemarà el resultat numeèric.
-	 * @return Retorna <code>true</code> en cas què la distància siga inferior al llindar establert i <code>false</code> en cas contrari.
+	 * Method which calculates the edit distance between two arrays of integers (web file fingerprints).
+	 * @param wf1 First web file to compare.
+	 * @param wf2 Second web files to compare.
+	 * @param result Resulting numeric value of the algorithm of edit distance.
+	 * @return Returns <code>true</code> if edit distance si lower than the set threshold and <code>false</code> if not.
 	 */
 	static bool DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result=NULL);
 
 	/**
-	 * Mètode que calcula el cost de cada operació en la distància d'edició entre els arrays d'enters de cada fitxer web.
-	 * @param op Codi de l'operació [inserció-eliminació-inserció].
-	 * @param c1 Primer element a comprarar.
-	 * @param c2 Segon element a comparar.
+	 * Method which calculates the cost of an operation in the edit distance algorithm for a pair of integers.
+	 * @param op Code of the operation which will be performed (deletion, insertion, substitution).
+	 * @param c1 First operand.
+	 * @param c2 Second operand.
+	 * @return Cost of the operation.
 	 */
 	static double CostNumbers(const short &op, const int &c1, const int &c2);
 
 	/**
-	 * Mètode que calcula si dos fitxers són prou similars per la seua llargària en caràcters.
-	 * @param wf1 Primer fitxer web a comparar.
-	 * @param wf2 Segon fitxer web a comprar.
-	 * @param value En cas que aquest punter siga diferent a NULL, s'hi emmagatzemarà la diferència entre les longituds de text d'ambdós fitxers.
-	 * @return En cas què la la diferència entre les longituds de text d'ambdós fitxers siga inferior al llindar establert retorna <code>true</code> i, en cas contrari, retorna <code>false</code>.
+	 * This method compares the length of the plain text of a pair of web files. It uses a threshold defined by the user
+	 * in the configuration file and compares it with the differene between the compared files:
+	 * ABS(SIZE(wf1)-SIZE(wf2))/MAX(SIZE(wf1),SIZE(wf2)). If the threshold is highter, the method considers that the
+	 * files are similar enougth.
+	 * @param wf1 First web file to compare.
+	 * @param wf2 Second web files to compare.
+	 * @param value This method returns the difference proportion between the compared files.
+	 * @return If the between the compared files is lower or equal than the threshold deffined in the configuration file, the
+	 * method returns <code>true</code> and it returns <code>false</code> if it is not. If the threshold is not deffined,
+	 * this method will return <code>true</code> always.
 	 */
 	static bool NearTotalTextSize(WebFile &wf1, WebFile &wf2, double *value=NULL);
 	

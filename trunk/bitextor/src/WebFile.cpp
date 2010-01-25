@@ -13,11 +13,13 @@
 WebFile::WebFile()
 {
 	this->initialized=false;
+	this->url=NULL;
 	text_size=0;
 }
 
 WebFile::~WebFile()
 {
+	delete url;
 }
 
 bool WebFile::IsAlphabetic(const wchar_t& car){
@@ -38,7 +40,7 @@ bool WebFile::IsAlphabetic(const wchar_t& car){
     return (status == 0);
 }
 
-void WebFile::GetNonAplha(wstring text){
+/*void WebFile::GetNonAplha(wstring text){
 	unsigned int i;
 	wstring st=L"";
 
@@ -55,7 +57,7 @@ void WebFile::GetNonAplha(wstring text){
 	}
 	if(st!=L"")
 		numbers_vec.push_back(atoi(Config::toString(st).c_str()));
-}
+}*/
 
 bool WebFile::Initialize(const string &path)
 {
@@ -76,6 +78,9 @@ bool WebFile::Initialize(const string &path)
 			FilePreprocess::PreprocessFile(path);
 			//We set the file path
 			this->path=path;
+			
+			
+			ObtainURL();
 			//We set the extension of the file
 			try{
 				pos_aux=path.find_last_of('.')+1;
@@ -103,20 +108,25 @@ bool WebFile::Initialize(const string &path)
 					}
 
 					text=ffile.getFullText(true);
-					GetNonAplha(text);
+					//GetNonAplha(text);
 					text_size=text.size();
 					//We set the tag list
 					if(GlobalParams::GetGuessLanguage()){
 						//We gess the language and set it
 						void *h = textcat_Init(Config::toString(GlobalParams::GetTextCatConfigFile()).c_str());
 						str_temp=Config::toWstring(textcat_Classify(h, Config::toString(text).c_str(), text.length()));
-						this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
-						if(str_temp[0]!='['){
-							exit=false;
-							GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
-						}
+						//if(str_temp.find_first_of(L"]")==str_temp.length()-1){
+							this->lang=str_temp.substr(1,str_temp.find_first_of(L"]")-1);
+							if(str_temp[0]!='['){
+								exit=false;
+								GlobalParams::WriteLog(L"Language of "+Config::toWstring(path)+L" couldn't be guessed.");
+							}
+							else
+								GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
+						/*}
 						else
-							GlobalParams::WriteLog(L"File "+Config::toWstring(path)+L" loaded correctly (Language: "+this->lang+L").");
+							exit=false;*/
+						//wcout<<str_temp<<endl;
 						textcat_Done(h);
 						h=NULL;
 					}
@@ -161,27 +171,30 @@ string WebFile::GetPath()
 		return this->path;
 }
 
-string WebFile::GetFileType()
+/*string WebFile::GetFileType()
 {
 	if(this->initialized==false)
 		throw "Object not initialized";
 	else
 		return this->file_type;
-}
+}*/
 
 bool WebFile::IsInitialized()
 {
 	return this->initialized;
 }
 
-vector<int>* WebFile::GetNumbersVector()
+/*vector<int>* WebFile::GetNumbersVector()
 {
 	return &numbers_vec;
-}
+}*/
 	
 unsigned int WebFile::GetTextSize()
 {
-	return text_size;
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return text_size;
 }
 
 /*wstring WebFile::toXML()
@@ -205,5 +218,47 @@ unsigned int WebFile::GetTextSize()
 }*/
 
 vector<int>* WebFile::GetTagArray(){
-	return &file;
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return &file;
+}
+
+void WebFile::ObtainURL(){
+	FILE* fin;
+	wstring aux=L"";
+	wint_t aux_car;
+	unsigned int found1, found2;
+
+	fin=fopen(path.c_str(),"r");
+
+	
+	if(fin){
+		aux_car=getwc(fin);
+		while(aux_car!=WEOF){
+			if(aux_car==L'\n'){
+				found1=aux.find(L"<!-- Mirrored from ");
+				if (found1<aux.length()){
+					found2=aux.find_first_of(L' ',found1+20);
+					url=new Url(aux.substr(found1+19,found2-(found1+19)));
+					aux_car=WEOF;
+				}
+				else
+					aux_car=getwc(fin);
+				aux=L"";
+			}
+			else{
+				aux+=(wchar_t)aux_car;
+				aux_car=getwc(fin);
+			}
+		}
+		fclose(fin);
+	}
+}
+
+Url* WebFile::GetURL(){
+	if(this->initialized==false)
+		throw "Object not initialized";
+	else
+		return url;
 }
