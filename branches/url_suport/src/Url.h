@@ -117,7 +117,7 @@ class UrlLangRule
 };
 
 /**
- * @class URL
+ * @class Url
  * @brief This class represents a URL and it is able to perform some
  * operations on it.
  * 

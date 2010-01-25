@@ -152,7 +152,7 @@ double GlobalParams::GetFileSizeDifferencePercent()
 	return file_size_difference_percent;
 }	
 
-void GlobalParams::SetFileSizeDiferencePercent(const double &value)
+void GlobalParams::SetFileSizeDifferencePercent(const double &value)
 {
 	if(value>=0)
 		file_size_difference_percent=value;
@@ -447,7 +447,7 @@ void GlobalParams::CloseResults()
 	}
 }
 
-unsigned int GlobalParams::(UrlLangRule *rule){
+unsigned int GlobalParams::AddUrlLangRule(UrlLangRule *rule){
 	if(url_lang_rules.find(*rule)!=url_lang_rules.end()){
 		url_lang_rules[*rule].second+=1;
 	}

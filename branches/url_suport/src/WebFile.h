@@ -166,7 +166,7 @@ public:
 	 */
 	vector<int>* GetTagArray();
 
-	/**
+	/*
 	 * This method Mètode que carrega a l'array d'enters els números
 	 * enters continguts al text.
 	 * @param text Text del qual s'hi volen extreure els números.

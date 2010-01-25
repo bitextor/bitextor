@@ -117,7 +117,7 @@ bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring*
 				break;
 				default:
 					if(wf1->GetTagArray()->at(i)>=0 && wf2->GetTagArray()->at(j)>=0){
-						difference=GlobalParams::GetFileSizeDiferencePercent(wf1->GetLang(),wf2->GetLang());
+						difference=GlobalParams::GetTextLengthDiferencePercent(wf1->GetLang(),wf2->GetLang());
 						if(difference>=0){
 							text_distance=abs(wf1->GetTagArray()->at(i)-wf2->GetTagArray()->at(j));
 							if(text_distance>0){

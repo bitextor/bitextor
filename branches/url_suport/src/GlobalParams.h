@@ -242,7 +242,7 @@ public:
 	/**
 	 * This method allows to set the maximum difference between the depth in the directory tree
 	 * of a pair of files in the website. 
-	 * @param New value of maximum directory distance.
+	 * @param value New value of maximum directory distance.
 	 */
 	static void SetDirectoryDepthDistance(const int &value);
 	
@@ -312,7 +312,7 @@ public:
 	/**
 	 * Method which returns the mode in which Bitextor detects the language in which analysed files
 	 * is guessed: manually of authomatically.
-	 * @param value Returns <code>true</code> if language of files is guessed authomatically,
+	 * @return Returns <code>true</code> if language of files is guessed authomatically,
 	 * and <code>false</code> if Bitextor asks the user for the language of each analysed
 	 * file.
 	 */
@@ -334,7 +334,7 @@ public:
 	 * important when getting a language pair value.
 	 * @param lang1 First language's code.
 	 * @param lang2 Second language's code.
-	 * @param percent Returns the value of maximum ratio of difference between text block lengths for the language pair.
+	 * @return Returns the value of maximum ratio of difference between text block lengths for the language pair.
 	 */
 	 static double GetTextLengthDiferencePercent(const wstring &lang1, const wstring &lang2);
 
@@ -423,7 +423,7 @@ public:
 	/**
 	 * Method which returns the value for the flag that indicates if TMX files must be generated
 	 * or not.
-	 * @param generate Returns the value for the flag that indicates if TMX files must be generated
+	 * @return Returns the value for the flag that indicates if TMX files must be generated
 	 * or not.
 	 */
 	static bool GetGenerateTMX();
