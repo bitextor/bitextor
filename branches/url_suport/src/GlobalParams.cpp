@@ -15,7 +15,7 @@ int GlobalParams::directory_depth_distance=-1;
 
 double GlobalParams::text_distance_percent_differenciator=-1;
 
-map<wstring,double> GlobalParams::file_size_diference_percents;
+map<wstring,double> GlobalParams::text_distance_diference_percents;
 
 double GlobalParams::file_size_difference_percent=-1;
 
@@ -35,7 +35,7 @@ map<wstring,wstring> GlobalParams::fingerprints;
 
 double GlobalParams::max_total_text_lenght_diff=-1;
 
-int GlobalParams::max_nfingerprint_distance=-1;
+//int GlobalParams::max_nfingerprint_distance=-1;
 
 bool GlobalParams::all_bitexts_in_one=false;
 
@@ -70,10 +70,10 @@ bool GlobalParams::AllBitextInAFile()
 	return all_bitexts_in_one;
 }
 
-int GlobalParams::GetMaxNumericFingerprintDistance()
+/*int GlobalParams::GetMaxNumericFingerprintDistance()
 {
 	return max_nfingerprint_distance;
-}
+}*/
 
 double GlobalParams::GetMaxTotalTextLengthDiff()
 {
@@ -95,7 +95,7 @@ void GlobalParams::Clear()
 	max_edit_distance_length_percentual=-1;
 	directory_depth_distance=0;
 	text_distance_percent_differenciator=-1;
-	file_size_diference_percents.clear();
+	text_distance_diference_percents.clear();
 	file_size_difference_percent=-1;
 	textcat_config_file=L"/tmp/textcat_conf.txt";
 	downloaded_size=-1;
@@ -103,7 +103,7 @@ void GlobalParams::Clear()
 	guess_language=true;
 	fingerprints_dir=L"";
 	max_total_text_lenght_diff=-1;
-	max_nfingerprint_distance=-1;
+	//max_nfingerprint_distance=-1;
 	all_bitexts_in_one=true;
 	min_array_size=-1;
 	verbose=true;
@@ -152,7 +152,7 @@ double GlobalParams::GetFileSizeDifferencePercent()
 	return file_size_difference_percent;
 }	
 
-void GlobalParams::SetFileSizeDifferencePercent(const double &value)
+void GlobalParams::SetFileSizeDiferencePercent(const double &value)
 {
 	if(value>=0)
 		file_size_difference_percent=value;
@@ -227,7 +227,7 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 						else if(key==L"difference"){
 							percent=atof(Config::toString(value).c_str());
 							if(lang1!=L"" && lang2!=L""){
-								AddFileSizeDiferencePercent(lang1,lang2,percent);
+								AddTextLengthDiferencePercent(lang1,lang2,percent);
 								lang1=L"";
 								lang2=L"";
 							}
@@ -256,9 +256,9 @@ void GlobalParams::ProcessNode(xmlNode* node, wstring tagname){
 					else if (tagname == L"maxTotalTextLengthPercent" && key==L"value"){
 						max_total_text_lenght_diff=atof(Config::toString(value).c_str())/100;
 					}
-					else if (tagname == L"numericFingerprintDistance" && key==L"value"){
+					/*else if (tagname == L"numericFingerprintDistance" && key==L"value"){
 						max_nfingerprint_distance=atoi(Config::toString(value).c_str());
-					}
+					}*/
 					else if (tagname == L"minArraySize" && key==L"value"){
 						min_array_size=atoi(Config::toString(value).c_str());
 					}
@@ -336,17 +336,17 @@ bool GlobalParams::LoadGlobalParams(const string &path)
     return exit;
 }
 
-void GlobalParams::AddFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2, const double &percent)
+void GlobalParams::AddTextLengthDiferencePercent(const wstring &lang1, const wstring &lang2, const double &percent)
 {
-	file_size_diference_percents[lang1+L"_"+lang2]=percent;
-	file_size_diference_percents[lang2+L"_"+lang1]=percent;
+	text_distance_diference_percents[lang1+L"_"+lang2]=percent;
+	text_distance_diference_percents[lang2+L"_"+lang1]=percent;
 }
 
-double GlobalParams::GetFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2)
+double GlobalParams::GetTextLengthDiferencePercent(const wstring &lang1, const wstring &lang2)
 {
-	map<wstring, double>::iterator iter = file_size_diference_percents.find(lang1+L"_"+lang2);
+	map<wstring, double>::iterator iter = text_distance_diference_percents.find(lang1+L"_"+lang2);
 	
-	if (iter != file_size_diference_percents.end())
+	if (iter != text_distance_diference_percents.end())
 		return iter->second;
 	else
 		return text_distance_percent_differenciator;
@@ -447,7 +447,7 @@ void GlobalParams::CloseResults()
 	}
 }
 
-unsigned int GlobalParams::AddUrlLangRule(UrlLangRule *rule){
+unsigned int GlobalParams::(UrlLangRule *rule){
 	if(url_lang_rules.find(*rule)!=url_lang_rules.end()){
 		url_lang_rules[*rule].second+=1;
 	}

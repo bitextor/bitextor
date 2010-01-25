@@ -40,7 +40,7 @@ bool WebFile::IsAlphabetic(const wchar_t& car){
     return (status == 0);
 }
 
-void WebFile::GetNonAplha(wstring text){
+/*void WebFile::GetNonAplha(wstring text){
 	unsigned int i;
 	wstring st=L"";
 
@@ -57,7 +57,7 @@ void WebFile::GetNonAplha(wstring text){
 	}
 	if(st!=L"")
 		numbers_vec.push_back(atoi(Config::toString(st).c_str()));
-}
+}*/
 
 bool WebFile::Initialize(const string &path)
 {
@@ -108,7 +108,7 @@ bool WebFile::Initialize(const string &path)
 					}
 
 					text=ffile.getFullText(true);
-					GetNonAplha(text);
+					//GetNonAplha(text);
 					text_size=text.size();
 					//We set the tag list
 					if(GlobalParams::GetGuessLanguage()){
@@ -171,13 +171,13 @@ string WebFile::GetPath()
 		return this->path;
 }
 
-string WebFile::GetFileType()
+/*string WebFile::GetFileType()
 {
 	if(this->initialized==false)
 		throw "Object not initialized";
 	else
 		return this->file_type;
-}
+}*/
 
 bool WebFile::IsInitialized()
 {

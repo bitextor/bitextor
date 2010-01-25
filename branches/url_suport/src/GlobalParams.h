@@ -60,261 +60,287 @@ private:
 	static int directory_depth_distance;
 
 	/**
-	 * 
-	 * Per al càlculs de la distància d'edició en de dos <code>WebFile</code> ens basem en dos elements,
-	 * les etiquetes HTML i la logitud del text contingut entre elles. Per a poder fer la comparativa
-	 * entre ambdós paràmetres, cal conèixer la relació o l'impacte que produeix en la comparació la di-
-	 * ferència entre una etiqueta i la diferència del nombre de caràcters del text contingut. És a dir,
-	 * necessitem saber quants caràcters de diferència entre dos textos del fitxer web es poden equiparar
-	 * amb el fet què tinguen una etiqueta diferent. Aquest paràmetre no el messurarem directament com un
-	 * nombre de caràcters, sinó com un percentatge sobre la mitjana del total de caracters d'ambdós textos.
-	 * El seu valor serà contingut en aquesta variable.
+	 * During fingerprints comparison, text blocks leght in the XHTML file are compared. To do
+	 * this, the ratio of difference between lengths is used. This ratio can be limited for a
+	 * concrete pair of languages by the user, but if there is no restriction for a given pair
+	 * of languages, a default trheshold is applied. This parametter reesents that percentual
+	 * threshold.
 	 */
 	static double text_distance_percent_differenciator;
 
 	/**
-	 * Percentatges de diferència de tamany màxim que es permet entre dos fitxers escrits en dues llengües
-	 * concretes, de tal forma que si s'excedeix aquest percentatge, es consideraran fitxers diferents.
+	 * List of thresholds for difference ratio between text blocks lenths for a given pair of
+	 * languages.
 	 */
-	static map<wstring,double> file_size_diference_percents;
+	static map<wstring,double> text_distance_diference_percents;
 
 	/**
-	 * Percentatge de diferència de tamany màxim que es permet entre dos fitxers, tal que si s'excedeix aquest
-	 * percentatge, es consideraran fitxers diferents. Aquest valor només és utilitzat en els parells de fitxers
-	 * escrits en llengües que no estiguen reflectides al map file_size_diference_percents.
+	 * Percentual threshold which limits the maximum difference of size ratio between files.
 	 */
 	static double file_size_difference_percent;
 
 	/**
-	 * Ruta del fitxer de configuració de la llibreria TextCat.
+	 * Path where the configuration file of LibTextCat is placed.
 	 */
 	static wstring textcat_config_file;
 
 	/**
-	 * Temps màxim de descàrrega.
+	 * Maximum size (in bites) allowed to download from the target website.
 	 */
 	static int downloaded_size;
 
 	/**
-	 * Paràmetre que indica la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
+	 * Path where websites will be downloaded.
 	 */
 	static wstring download_path;
 
 	/**
-	 * Indicador que permet forçar a bitextor a consultar l'idioma de cada fitxer o permetre que ell mateix intente esbrinar-lo.
+	 * If this parametter is true, bitextor will try to guess the language in which a XHMLT file
+	 * is written. If it is false, it will ask the user the language of the file fore each file
+	 * in the website.
 	 */
 	static bool guess_language;
 
 	/**
-	 * Directori base on es troben els fingerprints.
+	 * Path where the language model files used by LibTextCat are placed.
 	 */
 	static wstring fingerprints_dir;
 	
 	/**
-	 * Màxima distància entre text (total) permesa en percentatge.
+	 * Threshold which limits the maxumum ratio of plain text length difference .
 	 */
 	static double max_total_text_lenght_diff;
 
-	/**
+	/*
+	** 
 	 * Màxima distància permesa entre els arrays d'enters, en valor absolut.
-	 */
-	static int max_nfingerprint_distance;
+	 *
+	static int max_nfingerprint_distance;*/
 
 	/**
-	 * Flag que indica si s'han de guradrar tots els bitextos en un mateix fitxer.
+	 * If this variable is set to <code>true</code> all the translation units (TU) generated
+	 * from the XHTML files comparison will be saved in an only translation memory (TM)
+	 * (corresponding to the language pair). If it is set to <code>false</code>, a TM will be
+	 * generated for each XHTML file pair compared.
+	 * 
 	 */
 	static bool all_bitexts_in_one;
 
 	/**
-	 * Flag que indica si cal crear un quadern de bitàcora amb totes les operacions realitzades.
+	 * File where the log information will be saved. If it is set to null, no log file will be
+	 * generated.
 	 */
 	static wofstream log_file;
 
 	/**
-	 * Mida mínia de l'array d'etiquetes-blocs de text per a que la comparació siga realitzada.
+	 * Threshold which limits the minimum number of elements in a XHTML file fingerprint to be
+	 * compared with the otherones.
 	 */
 	static int min_array_size;
 
 	/**
-	 * Flag que indica si s'han de mostrar per pantalla les operacions realitzades.
+	 * Variable with determines if the system will run in versbose mode or not.
 	 */
 	static bool verbose;
 
 	/**
-	 * Flag que indica si s'han de crear tots els possibles candidats a bitext o només el millor aparellament per a cada fitxer.
+	 * If this variable is set to <code>true</code>, all the pairs of files which pass the
+	 * comparison heuristics will be accepted and, in consequence, will be aligned and included
+	 * in the resulting TM or TMs. If it is set to <code>false</code>, only the best pairs of
+	 * files will be included in the TM generation process. In this case, if we have two files,
+	 * A and B, they will a good candidate if the lowest edit distance for A is obtained in
+	 * comparison with B between all the compared files, and viceversa.
 	 */
 	static bool create_all_candidates;
 
 	/**
-	 * Mètode que genera el fitxer de configuració de LibTextCat.
+	 * This method generates the LibTextCat configuration file from the parameters defined in
+	 * the configuration file of Bitextor.
 	 */
 	static void GenerateTextCatConfigFile();
 
 	/**
-	 * Flag que indica si s'han de crear o no aquelles parelles per a les quals s'hi troben candidats molt semblants (candidats ambigus).
+	 * Threshold which determines if translation memories should be generated in case that a
+	 * file have very similar edit distances in comparison to two (or more) different files.
 	 */
 	static double generate_ambiguous_bitexts;
 
 	/**
-	 *
+	 * This variable determines if translation memories must be generated or only a list of
+	 * pair candidates must be generated.
 	 */
 	static bool generate_tmx;
 	
+	/**
+	 * Map of directories-integers in the website.
+	 */
 	static map<wstring,unsigned int> url_directories_code;
 
 	/**
-	 * Flag que indica si cal crear un un fitxer en què escriure les parelles generades.
+	 * File where the list of choosen pairs of files are saved (if this option is on).
 	 */
 	static wofstream results_file;
 	
+	/**
+	 * Map which contains found URL language rules, an integer identificator and the number of
+	 * times that that rule have appeared.
+	 */
 	static map<UrlLangRule, pair<unsigned int, unsigned int> > url_lang_rules;
 	
 	
 
 public:
 	/**
-	 * Llista de fingerprints per a la detecció d'idiomes.
+	 * List of language model files path (used by LibTextCat).
 	 */
 	static map<wstring,wstring> fingerprints;
 
 	/**
-	 * Mètode que allibera tota la memòria reservada al fitxer de configuració.
+	 * Method which cleans up all the reserved dynamic memory reserved by the class and rsets
+	 * the parameters to the default values.
 	 */
 	static void Clear();
 	
 	/**
-	 * Mètode que permet obtenir la màxima distància d'edició en percentatge entre fitxers web establerta.
-	 * @return Llindar que es establert com a màxima distància d'edició.
+	 * This method returns the maximum edit distance (in percentual terms)
+	 * allowed to determine if two web-file fingerpints (see documentation
+	 * about WebFile) can be the same or not.
+	 * @return Returns maximum edit distance threshold. If no value is defined, it returns -1.
 	 */
 	static double GetMaxEditDistancePercentual();
 
 	/**
-	 * Mètode que permet obtenir la màxima distància d'edició en valor absolut entre fitxers web establerta.
-	 * @return Llindar que es establert com a màxima distància d'edició.
+	 * This method returns the maximum edit distance (in absolute terms)
+	 * allowed to determine if two web-file fingerpints (see documentation
+	 * about WebFile) can be the same or not.
+	 * @return Returns maximum edit distance threshold. If no value is defined, it returns -1.
 	 */
 	static double GetMaxEditDistanceAbsolute();
 	
 	/**
-	 * Mètode que permet obtenir el precentatge de màxima distància entre textos per a
-	 * considerar-los iguals.
-	 * @return Percentatge de distància màxima de textos.
+	 * This method returns the default limit of the ratio of difference between lengths of text
+	 * blocks for edit distance comparison between fingerprints of files.
+	 * @return Returns the default limit of the ratio of difference between lengths of text blocks.
 	 */
 	static double GetTextDistancePercentDifferenciator();
 
 	/**
-	 * Mètode que permet establir el límit de profunditat en l'arbre de directoris per a la comparació
-	 * de fitxers web.
-	 * @param value Valor del límit que es vol establir. Si el valor que es passa és igual o menor a
-	 * zero, només es comprovaran els fit xers que es troben en el mateix nivell de profunditat.
-	 */
-	static void SetDirectoryDepthDistance(const int &value);
-
-	/**
-	 * Mètode que permet establir el valor de la variable ja descrita <code>text_distance_percent_differenciator</code>.
+	 * This method returns the default limit of the ratio of difference between lengths of text
+	 * blocks for edit distance comparison between fingerprints of files.
 	 * @param value Valor que es vol establir.
 	 */
 	static void SetTextDistancePercentDifferenciator(const double &value);
 	
 	/**
-	 * Mètode que permet obtenir el límit de profunditat en l'arbre de directoris per a la comparació
-	 * de fitxers web establert.
-	 * @return Retorna el valor del límit de profunditat en l'arbre de directoris per a la comparació
-	 * de fitxers web establert.
+	 * This method returns the maximum difference between the depth in the directory tree
+	 * of a pair of files in the website. 
+	 * @return Returns the maximum difference between the depth in the directory tree
+	 * of a pair of files in the website.
 	 */
 	static int GetDirectoryDepthDistance();
+
+	/**
+	 * This method allows to set the maximum difference between the depth in the directory tree
+	 * of a pair of files in the website. 
+	 * @param New value of maximum directory distance.
+	 */
+	static void SetDirectoryDepthDistance(const int &value);
 	
 	/**
-	 * Mètode que permet carregar els paràmetres globals des d'un fitxer XML.
-	 * @param path Ruta del fitxer XML que conté la configuració dels paràmetres globals.
-	 * @throw char* El mètode llança una excepció si el fitxer de configuració de TextCat especificat
-	 * no existeix.
-	 * @throw char* El mètode llança una excepció si el fitxer de configuració de TagAligner especificat
-	 * no existeix.
-	 * @return bool Retorna <code>true</code> si la càrrega s'ha realitzat de forma satisfactòria i
-	 * <code>false</code> en cas contrari.
+	 * This method loads all the configuration parameters from a XML configuration file.
+	 * @param path Path where the configuation file is placed in the system.
+	 * @throw char* The method throws an exception fi the specified file cannot be oppened.
+	 * @return Returns <code>true</code> if file is correctly loaded and <code>false</code> in other case.
 	 */
 	static bool LoadGlobalParams(const string &path);
 	
 	/**
-	 * Mètode que permet obtenir el percentatge màxim de diferència de mida de dos fitxers per a ser
-	 * considerats el mateix fitxer.
-	 * @return Retorna el valor del percentatge màxim de diferència de mida de dos fitxers per a ser
-	 * considerats el mateix fitxer.
+	 * Method which returns the percentual threshold which limits the maximum difference of
+	 * size ratio between files.
+	 * @return Returns the percentual threshold which limits the maximum difference of
+	 * size ratio between files.
 	 */
 	static double GetFileSizeDifferencePercent();
 	
 	/**
-	 * Mètode que permet establir el valor de la variable ja descrita <code>file_size_difference_percent</code>.
-	 * @param value Valor que es vol establir.
+	 * Method which sets the percentual threshold which limits the maximum difference of
+	 * size ratio between files.
+	 * @param value New value for the parametter
 	 */
 	static void SetFileSizeDifferencePercent(const double &value);
 	
 	/**
-	 * Mètode que permet establir la ruta on es troba el fitxer de configuració de la llibreria TextCat.
-	 * @param path Ruta on es troba el fitxer.
+	 * Method which sets the path where the LibTextCat configuration path is placed in the system.
+	 * @param path Path of the LibTextCat configuration file in the system.
 	 */
 	static void SetTextCatConfigFile(const wstring &path);
 	
 	/**
-	 * Mètode que permet obtenir la ruta on es troba el fitxer de configuració de la llibreria TextCat.
-	 * @return Retorna la ruta on es troba el fitxer.
+	 * Method which returns the path where the LibTextCat configuration path is placed in the system.
+	 * @return Returns the path where the LibTextCat configuration path is placed in the system.
 	 */
 	static wstring GetTextCatConfigFile();
 
 	/**
-	 * Mètode que processa recursivament els nodes del fitxer XML de configuració.
-	 * @param node Node que es processarà.
-	 * @param tagname Nom de la darrera etiqueta llegida a l'arbre d'etiquetes.
+	 * Auxiliar method to read the configuration file.
+	 * @param node Processed node.
+	 * @param tagname Name of the last tag readden.
 	 */
 	static void ProcessNode(xmlNode* node, wstring tagname);
 
 	/**
-	 * Mètode que permet obtenir el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
-	 * @return Retorna el nombre màxim de bytes que es descarregaran quan s'engegue el mòdul de descàrrega web.
+	 * Method which returns the maximum total size which Bitextor can download from a website.
+	 * @return Returns the path where the LibTextCat configuration path is placed in the system.
 	 */
 	static int GetMaxDownloadedSize();
 
 	/**
-	 * Mètode que permet obtenir la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
-	 * @return Retorna la ruta en què s'ha de guardar les pàgines descarregades amb el mòdul de descàrrega.
+	 * Method which returns the path where downloaded files are saved.
+	 * @return Returns the path where downloaded files are saved.
 	 */
 	static wstring GetDownloadPath();
 	
 	/**
-	 * Mètode que permet indicar a bitextor si ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
-	 * @param value Valor que es preten donar a aquest paràmetre.
+	 * Method which sets the mode in which Bitextor detects the language in which analysed files
+	 * is guessed: manually of authomatically.
+	 * @param value If value is <code>true</code>, language of files will be guessed authomatically,
+	 * and if it is <code>false</code>, Bitextor will ask the user for the language of each analysed
+	 * file.
 	 */
 	static void SetGuessLanguage(const bool &value);
 	
 	/**
-	 * Mètode que permet saber si bitextor ha d'esbrinar l'idioma dels fitxers o ha d'intentar consultar-lo a l'usuari.
-	 * @return Retorna true en cas que bitextor siga qui esbrina l'idioma i false si l'ha de consultar a l'usuari.
+	 * Method which returns the mode in which Bitextor detects the language in which analysed files
+	 * is guessed: manually of authomatically.
+	 * @param value Returns <code>true</code> if language of files is guessed authomatically,
+	 * and <code>false</code> if Bitextor asks the user for the language of each analysed
+	 * file.
 	 */
 	static bool GetGuessLanguage();
 	
 	/**
-	 * Mètode que permet afegir un percentatge a la llista de percentatges de distància de longitud entre blocs de text.
-	 * El mètode pren com a clau les dues llengües indicades (els seus codis, que han de ser iguals que els del fitxer
-	 * de configuració de LibTextCat) i els hi assigna un percentatge. Les entrades són duplicades de forma que l'ordre
-	 * de les llengües no tinga importància. Això vol dir que per a una entrada dels idiomes català (ca) i esukera (eu)
-	 * a la llista s'introduiria dues vegades el percentatge, amb clau "ca_eu" i "eu_ca".
-	 * @param lang1 Codi que representa una de les llengües.
-	 * @param lang2 Codi que representa l'altra llengua.
-	 * @param percent Màxim percentatge permés com a diferència entre blocs de text de les dues llengües.
+	 * Method which adds an element to the list of language-pairs limit of ratio of difference
+	 * between text block lengths. It is important to know that the order of languages is not
+	 * important when adding a new language pair value.
+	 * @param lang1 First language's code.
+	 * @param lang2 Second language's code.
+	 * @param percent Value of maximum ratio of difference between text block lengths for the language pair.
 	 */
-	static void AddFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2, const double &percent);
+	static void AddTextLengthDiferencePercent(const wstring &lang1, const wstring &lang2, const double &percent);
 	
 	/**
-	 * Mètode que permet prendre, a partir dels codis de dues llengües, el percentatge de màxima diferència establert per
-	 * al parell d'idiomes. Si el parell no té assignat un màxim de diferència específic, se li assigna el percentatge per
-	 * defecte.
-	 * @return Retorna el percentatge de màxima diferència de longitud de blocs de text corresponent al parell d'idiomes.
+	 * Method which returns an element of the list of language-pairs limit of ratio of difference
+	 * between text block lengths. It is important to know that the order of languages is not
+	 * important when getting a language pair value.
+	 * @param lang1 First language's code.
+	 * @param lang2 Second language's code.
+	 * @param percent Returns the value of maximum ratio of difference between text block lengths for the language pair.
 	 */
-	static double GetFileSizeDiferencePercent(const wstring &lang1, const wstring &lang2);
+	 static double GetTextLengthDiferencePercent(const wstring &lang1, const wstring &lang2);
 
 	/**
-	 * Mètode que retorna la màxima distància permesa entre el text total dels fitxers.
-	 * @return Retorna la màxima distància permesa entre el text total dels fitxers.
+	 * Method which returns the maximum ratio of difference between plain text allowed by Bitextor.
+	 * @return Returns the maximum ratio of difference between plain text allowed by Bitextor.
 	 */
 	static double GetMaxTotalTextLengthDiff();
 
@@ -322,84 +348,125 @@ public:
 	 * Mètode que retorna el número màxim de diferències permeses entre els arrays d'enters de dos WebFile.
 	 * @return Retorna el número màxim de diferències permeses entre els arrays d'enters de dos WebFile.
 	 */
-	static int GetMaxNumericFingerprintDistance();
+	//static int GetMaxNumericFingerprintDistance();
 
 	/**
-	 * Mètode que retorna el flag que indica si tots els bitextos s'han de guardar en el mateix fitxer.
-	 * @return Retorna el flag que indica si tots els bitextos s'han de guardar en el mateix fitxer.
+	 * Method which indicates if all the translation memories resulting of the processment of
+	 * found bitexts will be saved in a same file or in separated files.
+	 * @return Returns <code>true</code> if all the translation memories resulting of the processment of
+	 * found bitexts will be saved in a same file or <code>false</code> if they will be saved
+	 * in separated files.
 	 */
 	static bool AllBitextInAFile();
 
 	/**
-	 * Mètode que retorna la mínima mida requerida per a l'array d'etiquetes-blocs de text per a considerar el fitxer candidat.
-	 * @return Retorna la mínima mida requerida per a l'array d'etiquetes-blocs de text per a considerar el fitxer candidat.
+	 * Method which returns the minimum length which must have a XHTML file fingerprint to be
+	 * processed by Bitextot in comparisson process.
+	 * @return Returns the minimum length which must have a XHTML file fingerprint to be
+	 * processed by Bitextot in comparisson process.
 	 */
 	static int GetMinArraySize();
 
 	/**
-	 * Mètode que escriu el text indicat en el fitxer de log. En cas de que no s'haja activat este fitxer, no s'hi fa res.
-	 * @param log_text Text que es vol escriure al fitxer de quadern de bitàcora.
+	 * Method which writtes a line in the file log. If there is not any log file, nothing is done.
+	 * @param log_text Text which must be written in the log file.
 	 */
 	static void WriteLog(const wstring &log_text);
 
 	/**
-	 * Mètode que obre el fitxer de quadern de bitàcora.
-	 * @param log_path Adreça del fitxer de log.
-	 * @return Retorna <code>true</code> si s'ha creat correctament i <code>false</code> en cas contrari.
+	 * Method which opens the log file to start writting.
+	 * @param log_path Path where log file is placed in the system.
+	 * @return Returns <code>true</code> si file has been succesfuly oppened and <code>false</code> if not.
 	 */
 	static bool OpenLog(const string &log_path);
 
 	/**
-	 * Mètode que tanca el fitxer de quadern de bitàcora.
+	 * Method which closes the log file.
 	 */
 	static void CloseLog();
 
 	/**
-	 * Mètode que retorna el flag que indica si s'han de generar els bitextos amb tots els candidats dins dels paràmetres establerts per a cada fitxer web o només el millor candidat.
-	 * @return Retorna <code>true</code> si s'han de generar els bitextos amb tots els candidats dins dels paràmetres establerts per a cada fitxer web o <code>false</code> si només s'ha de generar el millor candidat.
+	 * Method which indicates if translation memorie must be created for each candidate bitext or
+	 * if it must be only done with best candidates.
+	 * @return Returns <code>true</code> if translation memorie must be created for each candidate bitext
+	 * and <code>false</code> if it must be only done with best candidates.
 	 */
 	static bool GetCreateAllCandidates();
 
 	/**
-	 * Mètode que retorna el flag que indica si cal executar l'aplicació en mode verbose o no.
-	 * @return Retorna <code>true</code> si cal executar l'aplicació en mode verbose i <code>false</code> en cas contrari.
+	 * Method which indicates if Bitextor is been runed in verbose mode or not.
+	 * @return Returns <code>true</code> if Bitextor is been runed in verbose mode and <code>false</code> if not.
 	 */
 	static bool IsVerbose();
 
 	/**
-	 * Mètode que estableix l'execució a mode verbose.
+	 * Method which sets the verbose mode.
 	 */
 	static void SetVerbose();
 
 	/**
-	 * Mètode que retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
-	 * @return Retorna el llindar de proximitat en número de caràcters per establir si dos fitxers són tan pareguts a un tercer que provoquen una generació ambígua.
+	 * Method which indicates if translation memories should be generated in case that a file
+	 * have very similar edit distances in comparison to two (or more) different files.
+	 * 
+	 * @return Reteturns <code>true</code> if translation memory should be created and <code>false</code> if not.
 	 */
 	static double GetGenerateAmbiguousBitexts();
 
 	/**
-	 * 
+	 * Method which sets the value for the flag that indicates if TMX files must be generated
+	 * or not.
+	 * @param generate Value for the flag that indicates if TMX files must be generated
+	 * or not.
 	 */
 	static void GenerateTMX(bool generate);
 
 	/**
-	 * 
+	 * Method which returns the value for the flag that indicates if TMX files must be generated
+	 * or not.
+	 * @param generate Returns the value for the flag that indicates if TMX files must be generated
+	 * or not.
 	 */
 	static bool GetGenerateTMX();
 
+	/**
+	 * Method which writtes a line in the results file, in which information about found bitexts
+	 * is saved.
+	 * @param result_text Text which must be written in the results file.
+	 */
 	static void WriteResults(const wstring &result_text);
 
+	/**
+	 * Method which opens the results file, in which information about found bitexts
+	 * is saved.
+	 * @param results_path Path where the results file is placed in the system.
+	 * @return Returns <code>true</code> if file has been oppened succesfuly and <code>false</code> if not.
+	 */
 	static bool OpenResults(const string &results_path);
 
 	/**
-	 * Mètode que tanca el fitxer de resultats.
+	 * Method which closes the results file.
 	 */
 	static void CloseResults();
 
+	/**
+	 * Method which adds a new URL rule to a list. These rules are substrings of difference between URLs.
+	 * @param rule The rule which is added to the list.
+	 * @return It returns the integer code mapped to the rule.
+	 */
 	static unsigned int AddUrlLangRule(UrlLangRule *rule);
 	
+	/**
+	 * This method returns all the rules which have appeared more than a given number of times.
+	 * @param min_freq Minimum number of times which the rule has to have appeared to be returned.
+	 * @return Returns all the rules which have appeared more than a given number of times.
+	 */
 	static vector<unsigned int> * GetFreqRules(unsigned int min_freq);
 	
+	/**
+	 * Method which returns the numeric code for a given directory in the path of the URL.
+	 * @param dir_name Name of the directory for which the code will be returned.
+	 * @return Returns the numeric code for the given directory in the path of a URL.
+	 */
 	static unsigned int GetURLDirectoryCode(const wstring &dir_name);
 };
 

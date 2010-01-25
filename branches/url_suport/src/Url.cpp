@@ -124,7 +124,7 @@ bool Url::VariableExists(wstring &var_name){
 //wstring EditDistanceTools::EditDistanceBeam<unsigned int>(vector<unsigned int>&, vector<unsigned int>&, double (*)(short const&, unsigned int const&, unsigned int const&), bool const&, double const&, double*);
 
 unsigned int Url::Differences(Url* url, vector<UrlLangRule*> *rules){
-	int i, j, max_len, len_diff;
+	int i, max_len;
 	unsigned int not_coincident_dirs=0, not_coincident_vars=0, not_coincident_names=0;
 	map<wstring,wstring>::iterator it, it_fin;
 	double tmp_distance;

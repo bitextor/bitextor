@@ -66,7 +66,7 @@ bool Heuristics::HaveAcceptableSizeDifference(WebFile *wf1, WebFile *wf2, double
 bool Heuristics::HaveAcceptableEditDistance(WebFile *wf1, WebFile *wf2, wstring* pathdistance, double* result)
 {
 	vector<int> *tag_array1, *tag_array2;
-	double res,beam,difference,tmp, index_url;
+	double res,beam,difference,tmp;
 	unsigned int vec1len, vec2len;
 	unsigned int max_diff_abs, max_diff_percent,text_distance;
 	unsigned int i,j,w;
@@ -313,7 +313,7 @@ double Heuristics::GetPhraseVarianceDesviation(WebFile &wf1, WebFile &wf2, const
 }
 */
 
-bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
+/*bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double *result){
 	double res;
 
 	if(GlobalParams::GetMaxNumericFingerprintDistance()==-1 || (wf1.GetNumbersVector()->size()==0 && wf2.GetNumbersVector()->size()==0)){
@@ -331,7 +331,7 @@ bool Heuristics::DistanceInNumericFingerprint(WebFile &wf1, WebFile &wf2, double
 		else
 			return false;
 	}
-}
+}*/
 
 double Heuristics::CostNumbers(const short &op, const int &c1, const int &c2){
 	double result=0;
