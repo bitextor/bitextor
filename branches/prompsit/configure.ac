@@ -209,7 +209,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- python-utidylib:   install with \'sudo apt-get install python-utidylib\'
+- python-utidylib:   Please, install v0.2 and try again. http://utidylib.berlios.de/
 ])
   fi
 

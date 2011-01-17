@@ -29,8 +29,8 @@ do
 done
 
 case $# in
-#  0)
-#    ;; ## cuidado con esto
+  0)
+    ;;
   1)
     INPUT="$1"
     ;;
@@ -87,9 +87,8 @@ class Parser(HTMLParser):
         palabras = contar_palabras(data)
         if palabras > 0:
           #sys.stdout.write(str(palabras))
-          #for j in range(int(2*math.log(palabras, 2))):
-          #  sys.stdout.write("_")
-          sys.stdout.write("_")
+          for j in range(int(math.log(palabras, 2))):
+            sys.stdout.write("_")
 
   def handle_endtag( self, tag ):
     if tag == "script" or tag == "noscript":

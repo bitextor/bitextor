@@ -99,8 +99,8 @@ if len(sys.argv) == 3:
       doc = campos[j].split(":")
       if float(doc[1]) > 0.10:
         dist = distanciaEdicion(documentos[int(campos[0])], documentos[int(doc[0])], 0)
-        port = longitud / float(longitud + dist)
-	##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
+        ##port = longitud / float(longitud + dist)
+	port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
         new_per = float(doc[1]) * port
         parecidos[doc[0]] = new_per
     parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)

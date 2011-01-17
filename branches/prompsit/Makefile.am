@@ -49,7 +49,8 @@ bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__BASH__!$(BASH)!g" | \
 	sed "s!__GAWK__!$(GAWK)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__PERL__!$(PERL)!g" >$@
 
 bitextor-idx2ridx: bitextor-idx2ridx.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \

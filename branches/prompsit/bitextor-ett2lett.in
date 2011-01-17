@@ -86,7 +86,7 @@ for i in sys.stdin:
   e = base64.b64decode(i)
   Parser().feed(e)
 ' 2>> $LOG | \
-__PREFIX__/bin/text_cat -d __PREFIX__/share/bitextor/text_cat 2>> $LOG
+__PERL__ __PREFIX__/bin/text_cat -d __PREFIX__/share/bitextor/text_cat 2>> $LOG
 }
 
 # Se recorren las líneas del fichero de entrada y se detecta su idioma para cada una de
