@@ -1,0 +1,107 @@
+#!__BASH__
+
+INPUT=/dev/stdin
+OUTPUT=/dev/stdout
+LOG=$(mktemp /tmp/logbitextorett2lett.XXXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 file"
+  echo "WHERE"
+  echo "   file   file with extension .ett (encoded and typed text)"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  1)
+    INPUT="$1"
+    ;;
+  0)
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+#
+# 1. Leer .ett línea a línea
+# 2. Llama a la función detectar_idioma_linea
+# 3. Se decodifica el campo base64 y se quita HTML
+# 4. Detectar idioma con text_cat, si hay error -> (log)
+# 5. Crea .lett, si no detecta idioma -> (log)
+#
+# Formato final del documento:
+# language	encoding	mimetype	url	content(base_64)
+#
+# Genera .lett -> language encoded and typed text
+#
+
+detectar_idioma_linea()
+{
+  # Se coge el base64
+  __GAWK__ '{print $4}' | \
+  # Se decodifica el base64
+  __PYTHON__ -c '
+import sys
+import base64
+from HTMLParser import HTMLParser
+
+class Parser(HTMLParser):
+
+  def __init__( self ):
+    HTMLParser.__init__( self )
+    self.script = 0
+
+  def handle_starttag( self, tag, attrs ):
+    if tag == "script" or tag == "noscript":
+      self.script = 1
+
+  def handle_data( self, data ):
+    if self.script == 0:
+      sys.stdout.write(data)
+
+  def handle_endtag( self, tag ):
+    if tag == "script" or tag == "noscript":
+      self.script = 0
+
+for i in sys.stdin:
+  e = base64.b64decode(i)
+  Parser().feed(e)
+' 2>> $LOG | \
+__PREFIX__/bin/text_cat -d __PREFIX__/share/bitextor/text_cat 2>> $LOG
+}
+
+# Se recorren las líneas del fichero de entrada y se detecta su idioma para cada una de
+# ellas en la función detectar_idioma_linea.
+cat $INPUT | \
+while read line;
+do
+  # Llamamos a detectar idioma con cada línea y luego extraemos el primer idioma de la lista de posible.
+  IDIOMA="$(echo "$line" | detectar_idioma_linea | __GAWK__ '{print $1;}')"
+  #El fichero quedará: idioma   encoding   formato   url   base64
+  if !(test -z $IDIOMA);
+  then
+    echo -e "$IDIOMA\t$line" >> $OUTPUT
+  else
+    echo -e "ERROR : $IDIOMA\t$line" >> $LOG
+  fi
+done
+

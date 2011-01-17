@@ -1,0 +1,49 @@
+#!/bin/bash
+
+INPUT=/dev/stdin
+OUTPUT=/dev/stdout
+
+exit_program()
+{
+  echo "USAGE: $1 file [dirname]"
+  echo "WHERE"
+  echo "   file     web addresses to crawl (one per line)"
+  echo "   dirname  folder to store downloaded directories (web/ by default)"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  2)
+    URL="$1"
+    PATH="-O $2"
+    ;;
+  1)
+    URL="$1"
+    PATH="-O web"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+cat 
+__HTTRACK__ --skeleton -Q -q -%i0 -I0 $URL $PATH
+

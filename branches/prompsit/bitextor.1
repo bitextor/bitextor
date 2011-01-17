@@ -1,0 +1,40 @@
+.\" Manpage for bitextor.
+.\" Contact jorgeferrandez@gmail.com to correct errors or typos.
+.TH bitextor-aligner 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor
+url lang1 lang2 dictionary [-d dirname] [-l file] [-i index]
+
+.SH DESCRIPTION
+.B bitextor
+is an automatic bitext generator which obtains his base corpora
+from the Internet. It works downloading websites (applying a filter to download
+only those files written in HTML) and comparing every pair of files. It detects
+the language and, through a group of heuristics (index, HTML skeleton edit
+distance, etc.), it tries to guess which files have the same content in
+different languages. Once it has identified the pairs of files, it generates a
+bitext file.
+
+.SH OPTIONS
+-d dirname    
+.PP
+-l file       
+.PP
+-i index      
+
+
+.SH SEE ALSO
+bitextor-aligner(1), bitextor-downloadweb(1), bitextor-webdir2ett(1),
+bitextor-ett2lett(1), bitextor-lett2idx(1), bitextor-idx2ridx(1),
+bitextor-lett2lettr(1), bitextor-distancefilter(1), bitextor-cleantextalign(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Jorge Ferrández Tordera (jorgeferrandez@gmail.com)

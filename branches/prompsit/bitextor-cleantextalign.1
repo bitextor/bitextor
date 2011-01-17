@@ -1,0 +1,34 @@
+.\" Manpage for bitextor-cleantextalign.
+.\" Contact jorgeferrandez@gmail.com to correct errors or typos.
+.TH bitextor-cleantextalign 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-cleantextalign \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-cleantextalign
+align [-m max_lines] [-q min_quality]
+
+.SH DESCRIPTION
+.B bitextor-cleantextalign
+is shell program that filters aligned text by lines or by text.
+.PP
+Receives a file with format .align and the output is a file with all bitexts found.
+
+.SH OPTIONS
+-m max_lines      clean texts (clean lines by default) and specify maximum number
+of lines out of alignment (5 by default)
+.PP
+-q min_quality    minimum quality required for each line (0 by default)
+
+.SH SEE ALSO
+bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
+bitextor-distancefilter(1), bitextor-aligner(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Jorge Ferrández Tordera (jorgeferrandez@gmail.com)

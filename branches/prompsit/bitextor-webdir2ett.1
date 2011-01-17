@@ -1,0 +1,30 @@
+.\" Manpage for bitextor-webdir2ett.
+.\" Contact jorgeferrandez@gmail.com to correct errors or typos.
+.TH bitextor-webdir2ett 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-webdir2ett \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-webdir2ett
+webdir
+
+.SH DESCRIPTION
+.B bitextor-webdir2ett
+is shell program to process the files downloaded from a web directory.
+Extracts encoding, mimetype, url and content in base64 for each file.
+Fix HTML errors using Tidy and convert non-UTF-8 to UTF-8.
+.PP
+Receives a web directory and the output is a file with format .ett
+
+.SH SEE ALSO
+bitextor(1), bitextor-downloadweb(1), bitextor-ett2lett(1), bitextor-lett2idx(1),
+bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
+bitextor-aligner(1), bitextor-cleantextalign(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHOR
+Jorge Ferrández Tordera (jorgeferrandez@gmail.com)

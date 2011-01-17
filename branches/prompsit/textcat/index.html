@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+  <HEAD>
+    <TITLE>TextCat Language Guesser</TITLE>
+<link rel=stylesheet href="/~vannoord/vn.css" type="text/css">
+
+  </HEAD>
+  <BODY>
+
+    <H1>TextCat</H1>
+
+TextCat is an implementation of the text categorization algorithm
+presented in Cavnar, W. B. and J. M. Trenkle, ``N-Gram-Based Text
+Categorization'' In Proceedings of Third Annual Symposium on Document
+Analysis and Information Retrieval, Las Vegas, NV, UNLV
+Publications/Reprographics, pp. 161-175, 11-13 April
+1994. 
+
+This paper was available at:
+<ol>
+<li><a href="http://msen.com/~wei/JT-homepage.html">http://msen.com/~wei/JT-homepage.html</a>
+<li><a href="http://spd.erim.org/jt_papers/">http://spd.erim.org/jt_papers/</a>
+</ol>
+<p><b>
+It now is available from <a
+	  href="http://www.nonlineardynamics.com/trenkle/">John
+	  Trenkle's homepage.</a>,  as <a href="http://www.nonlineardynamics.com/trenkle/papers/sdr94ps.gz">papers/sdr94ps.gz</a>.
+
+</b><p>
+I have applied the technique to implement a written language
+    identification program. At the moment, the system knows about 69
+    natural languages (counting Esperanto as a natural language). 
+
+<p>
+The textcat programme is not any langer actively maintained by me. However, the
+SpamAssassin spam filter programme includes a version of TextCat. They have
+been working on it some more, so perhaps you want to get their version from <a
+href="http://spamassassin.apache.org">http://spamassassin.apache.org</a>.
+
+
+
+<h2>Local links</h2>
+<UL>
+
+<LI>  The <a href="Demo/">demo</a>
+<LI>  The <a href="text_cat.tgz">sources</a>, cf. <a href="COPYING">COPYING</a>
+and <a href="Copyright">Copyright</a>
+<LI>  The <a href="list.html">list of languages supported</a>
+<LI>  List of <a href="competitors.html">competitors</a>
+
+</UL>
+
+<h3>Installation</h3>
+
+Edit the text_cat script to have the first line point to your Perl binary.
+Edit the text_cat script to have $opt_d point to the LM directory.
+
+<h3>Usage</h3>
+
+<kbd>text_cat -h</kbd> displays usage information.
+
+
+<h3>Remotely related links</h3>
+
+<ul>
+
+<li><a href="http://www.cse.ogi.edu/CSLU/HLTsurvey/HLTsurvey.html">Survey
+on the State of the Art in Human Language Technology</a> contains a
+	chapter on language identification (both for spoken and
+	written language).
+
+<li><a href="http://www.c3.lanl.gov/~judithh/LIFI/main.shtml"> LIFI:
+Language Identification From Images</a>. Quote: The Language
+Identification From Images project (LIFI) is concerned with the
+automated identification of the script (alphabet) used in a document
+image. Our initial phase, from 1994 to 1995, focused on
+machine-printed documents. The second phase, from 1997 to 1998,
+focused on handwritten documents. We will soon begin a new project
+concerning how to use our script identification techniques to segment
+multi-script document images.
+
+<li>Bibliography on <a
+href="http://speech.inesc.pt/~dcaseiro/html/bibliografia.html">Automatic
+Spoken Language Identification Bibliography</a>. This bibliography
+lists research in Automatic Identification of Spoken Language. There
+	are also some links for language identification of written
+	language. 
+
+<li><a href="http://babel.alis.com:8080/langues/grandes.htm">The
+	  World's Main Languages</a>. Lots of information on languages 
+	and the internet.
+<li><a href="http://borel.slu.edu/crubadan/">Corpus building for minority languages</a>
+</ul>
+<h3>Interesting test cases</h3>
+
+<ul>
+<li><i>Staat men perplex, wil men eerst wat thee, of direct
+op visite in een bastion (erg vitaal detail: is er
+concreet theatraal of eerder absurd, abstract
+amusement)?</i> (Hilverd Reker)
+</ul>
+
+
+    
+</BODY>
+</HTML>

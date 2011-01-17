@@ -1,0 +1,147 @@
+#!__BASH__
+
+OUTPUT=/dev/stdout
+LOG=$(mktemp /tmp/logbitextorwebdir2ett.XXXXXX)
+TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 webdir"
+  echo "WHERE"
+  echo "   webdir   folder downloaded directories"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  1)
+    WEBDIR="$1"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+#
+# 1. Eliminar ficheros repetidos -> (log)
+# 2. Obtener tipo y codificación de ficheros
+# 3. Quedarse solo con los que tengan tipo html
+# 4. Convertir [no UTF-8 -> UTF-8], si hay error -> (log)
+# 5. Corregir errores HTML usando Tidy y eliminar las cabeceras HTML
+# 6. Incluir el contenido del fichero en base64
+#
+# Formato final del documento:
+# encoding	mimetype	url	content(base_64)
+#
+# Genera .ett -> encoded and typed text
+#
+
+# Se busca en todo el directorio dado
+find "$WEBDIR" | \
+# Se pasan a md5
+__PYTHON__ -c 'import sys
+import hashlib
+import os
+
+for i in sys.stdin: 
+  if os.path.isdir(i.strip()):
+    continue
+  file = open(i.strip(), "r")  # la i es el nombre del fichero
+  c = hashlib.md5()
+  for j in file:
+    c.update(j)
+  file.close()
+  print "{0}\t{1}".format(c.hexdigest(), i.strip())' 2>> $LOG | \
+# md5_fichero	nombre_fichero
+# Se ordenan y se eliminan los repetidos
+sort | __GAWK__ -v logfile="$LOG" '{
+  if(var != $1)
+    print $2;    # nombre_fichero
+  else 
+    print "Eliminando repetido:\t"$0 >> logfile;
+  var = $1;}' | \
+# Se muestra el formato y tipo de todos los ficheros
+xargs file --mime-type --mime-encoding | grep text/html | \
+__GAWK__ '{
+  printf substr($1,1,length($1)-1);    # nombre_fichero
+  printf "\t";
+  printf substr($2,1,length($2)-1);    # formato: text/html etc.
+  printf "\t"; 
+  print substr($3,9,length($3));       # encoding
+}' | __GAWK__ -v filetemp="$TEMPCONV" -v logfile="$LOG" '{
+
+  retval = 0;
+  if($3 != "utf-8")
+  { # Se cambia la codificación a utf-8 y se copian en la carpeta original
+    if($3 != "unknown-8bit"){
+      retval = system("iconv -f " $3 " -t utf-8 " $1 " >" filetemp " && mv " filetemp " " $1);
+    }
+    else{
+      retval = -1;
+    }
+  }
+  
+  if(retval == 0)
+  {
+    print $1 "\t" $2 "\tutf-8";    # nombre_fichero   formato   encoding
+  }
+  else
+  {
+    print "Fichero sin codificación UTF-8:\t"$0 >> logfile;
+  }
+}' | \
+#Se codifica el fichero en bas64 y se almacena.
+__PYTHON__ -c '
+import sys
+import os
+import base64
+import tidy
+
+# Elegimos las opciones del tidy a aplicar.
+options = dict(char_encoding="utf8",
+		output_xhtml=1,
+		uppercase_tags=1,
+		escape_cdata=1,
+		hide_comments=1,
+		logical_emphasis=1,
+		drop_empty_paras=1,
+		bare=1,
+		drop_proprietary_attributes=1,
+		wrap_script_literals=1,
+		wrap_sections=1,
+		wrap=0,
+		punctuation_wrap=1,
+		show_body_only=1)
+
+# Para cada fichero le pasamos el tidy y lo convertimos en base64
+
+for i in sys.stdin:
+  campos = i.split("\t")
+  file = open(campos[0], "r")
+  e = base64.b64encode(str(tidy.parseString(file.read(),**options)))
+  file.close()
+
+  #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+  print "{0}\t{1}\t{2}\t{3}".format(campos[2].strip(),campos[1],os.path.relpath(campos[0],sys.argv[1]),e)' $WEBDIR > $OUTPUT 2>> $LOG
+
+rm $TEMPCONV 2>> $LOG
+
+
+

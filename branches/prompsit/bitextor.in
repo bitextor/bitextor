@@ -1,0 +1,139 @@
+#!__BASH__
+
+INPUT=/dev/stdin
+OUTPUT=/dev/stdout
+URL=
+DIRNAME="web"
+LETT=$(mktemp /tmp/lett.XXXXXX)
+LETTR=$(mktemp /tmp/lettr.XXXXXX)
+RINDEX=$(mktemp /tmp/ridx.XXXXXX)
+LANG1=""
+LANG2=""
+#DIC=""
+#ETT="temp.ett"
+#ALIGN="temp.align"
+INDEX=$(mktemp /tmp/idx.XXXXXX)
+#RINDEX2="temp.ridx2"
+#MAXLINES=5
+#MINQUALITY=0
+#BYTEXT=0
+
+exit_program()
+{
+  #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
+  #echo "          [-q min_quality] [url] lang1 lang2"
+  echo "USAGE: $1 [-d dirname] [-l file] [-t lettr] [-r revindex] [url] lang1 lang2"
+  echo "WHERE"
+  echo "  -d dirname      folder to store downloaded directories (web/ by default)"
+  echo "  -l file         file with extension .lett (language encoded and typed data)"
+  echo "                  (/tmp/lett.XXXXXX by default)"
+  echo "  -t lettr        file with extension .lettr (language encoded and typed data"
+  echo "                  with \'raspa\') (/tmp/lettr.XXXXXX by default)"
+  #echo "  -i index        file with extenxion .idx (index document) (temp.idx by default)"
+  echo "  -r revindex     file with extension .ridx (reverse index) (/tmp/lettr.XXXXXX"
+  echo "                  by default)"
+  #echo "  -m max_lines    clean texts (clean lines by default) and specify"
+  #echo "                  maximum number of lines out of alignment (5 by default)"
+  #echo "  -q min_quality  minimum quality required for each line (0 by default)"
+  echo "  url             web address to crawl. If this parameter is not specified,"
+  echo "                  it runs over the directory."
+  echo "  lang1           selected language with two letters code: en, es, fr, de ..."
+  echo "  lang2           selected language with two letters code: en, es, fr, de ..."
+  #echo "  dictionary      file with extension .dic (dictionary with pair of selected"
+  #echo "                  languages)"
+  exit 1
+}
+
+ARGS=$(getopt "d:l:i:r:m:q:h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+     -d)
+      shift
+      DIRNAME=$1
+      shift
+      ;;
+    -l)
+      shift
+      LETT=$1
+      shift
+      ;;
+#    -i)
+#      shift
+#      INDEX=$1
+#      shift
+#      ;;
+    -t)
+      shift
+      LETTR=$1
+      shift
+      ;;
+    -r)
+      shift
+      RINDEX=$1
+      shift
+      ;;
+#    -m)
+#      shift
+#      MAXLINES=$1
+#      BYTEXT=1
+#      shift
+#      ;;
+#    -q)
+#      shift
+#      MINQUALITY=$1
+#      shift
+#      ;;
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  3)
+    URL="$1"
+    LANG1="$2"
+    LANG2="$3"
+    ;;
+  2)
+    LANG1="$1"
+    LANG2="$2"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+if !(test -z $URL);
+then
+  __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+fi
+__PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
+__PREFIX__/bin/bitextor-ett2lett > $LETT
+__PREFIX__/bin/bitextor-lett2idx $LETT | \
+__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 > $RINDEX
+__PREFIX__/bin/bitextor-lett2lettr $LETT > $LETTR
+__PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
+__PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
+__PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
+
+rm $LETT $LETTR $RINDEX
+
+#__PREFIX__/bitextor-downloadweb $URL $DIRNAME
+#__PREFIX__/bitextor-webdir2ett $DIRNAME > $ETT
+#__PREFIX__/bitextor-ett2lett $ETT > $LETT
+#__PREFIX__/bitextor-lett2idx $LETT > $INDEX
+#__PREFIX__/bitextor-idx2ridx $INDEX $DIC $LANG1 $LANG2 > $RINDEX
+#__PREFIX__/bitextor-lett2lettr $LETT > $LETTR
+#__PREFIX__/bitextor-distancefilter $LETTR $RINDEX > $RINDEX2
+#__PREFIX__/bitextor-aligner $LETTR $RINDEX2 $LANG1 $LANG2 > $ALIGN
+#__PREFIX__/bitextor-cleantextalign $ALIGN -m $MAXLINES -q $MINQUALITY > $OUTPUT

@@ -1,0 +1,210 @@
+#!__ENV__ __PYTHON__
+
+#
+# 1. Leer .idx extrayendo palabras en las dos lenguas
+# 2. Traducir palabras en los segundos documentos
+# 3. Hacer interseccion entre cada par de documentos
+# 4. Se muestran los 10 documentos de la segunda lengua mas parecidos a cada
+#    uno de la primera
+#
+# Formato final del documento:
+# num_doc_lang1    [num_doc_lang2:frequency]+
+#
+# Genera .ridx -> reverse index
+#
+
+import sys
+import getopt
+from operator import itemgetter
+
+def usage():
+  # Parametros: .idx .dic lang1 lang2
+  error = "USAGE: " + sys.argv[0] + " [-d dictionary] lang1 lang2 [index]\n"
+  error += "WHERE\n"
+  error += "   -d dictionary   file with extension .dic Dictionary with pair of selected\n"
+  error += "                   languages. (installed dictionary at\n"
+  error += "                   __PREFIX__/share/bitextor/diccionario.dic by default)\n"
+  error += "   lang1           selected language with two letters code: en, es, fr, de ...\n"
+  error += "   lang2           selected language with two letters code: en, es, fr, de ...\n"
+  error += "   index           file with extenxion .idx (index document)\n"
+  error += "                   (standard input by default)\n"
+  sys.exit(error)
+
+#
+# Se rellenan los indices de palabras en las dos lenguas a partir del
+# .idx de la entrada.
+#
+def rellenarIndex(palabras, lang1, lang2, index1, index2):
+  file = open(palabras, "r")
+  for i in file:
+    campos = i.split("\t")
+    if len(campos) == 3:
+      if campos[0] == lang1 or campos[0] == lang2:
+        documentos = campos[2].split(":")
+        documentos[-1] = documentos[-1].replace("\n","")
+        acum = 1
+
+        for j in documentos:
+          acum += int(j)
+          if campos[0] == lang1:
+            if acum in index1:
+              index1[acum].append(campos[1])
+            else:
+              index1[acum] = [campos[1]]
+          else:
+            if acum in index2:
+              index2[acum].append(campos[1])
+            else:
+              index2[acum] = [campos[1]]
+  file.close()
+
+def rellenarIndexSO(lang1, lang2, index1, index2):
+  for i in sys.stdin:
+    campos = i.split("\t")
+    if len(campos) == 3:
+      if campos[0] == lang1 or campos[0] == lang2:
+        documentos = campos[2].split(":")
+        documentos[-1] = documentos[-1].replace("\n","")
+        acum = 1
+
+        for j in documentos:
+          acum += int(j)
+          if campos[0] == lang1:
+            if acum in index1:
+              index1[acum].append(campos[1])
+            else:
+              index1[acum] = [campos[1]]
+          else:
+            if acum in index2:
+              index2[acum].append(campos[1])
+            else:
+              index2[acum] = [campos[1]]
+
+#
+# Se cargan los dos diccionarios en las dos lenguas a partir del .dic de la entrada.
+#
+def cargarDiccionarios(diccionario, lang1, lang2, dic1, dic2):
+  col_dic1 = -1
+  col_dic2 = -1
+  file = open(diccionario, "r")
+  primera = True
+  for i in file:
+    campos = i.split("\t")
+    if primera:
+      ind = 0
+      for j in campos:
+        if j == lang1:
+          col_dic1 = ind
+        if j == lang2:
+          col_dic2 = ind
+        ind += 1
+      primera = False
+    else:
+      dic1.append(campos[col_dic1])
+      dic2.append(campos[col_dic2])
+
+#
+# En el segundo documento, se traducen las palabras encontradas en el
+# diccionario de su idioma por las equivalentes en el otro idioma.
+# Esto se hace para todos los documentos encontrados en el segundo idioma.
+#
+def traducirPalabras(index, list1, list2, dictp):
+  for i in index:
+    contador = 0
+    for j in range(len(index[i])):
+      for k in range(len(list2)):
+        if index[i][j] == list2[k]:
+          contador += 1
+          index[i][j] = index[i][j].replace(list2[k],list1[k])
+    dictp[i] = contador
+
+
+####
+## Aqui empieza el script.
+####
+## Ruta para el diccionario
+diccionario = "/usr/local/share/bitextor/diccionario.dic"
+
+# Manejando las opciones con getopt
+try:
+  opts, args = getopt.getopt(sys.argv[1:], "d:h", [])
+except getopt.GetoptError, err:
+  # print help information and exit:
+  print str(err) # will print something like "option -a not recognized"
+  usage()
+  sys.exit(2)
+
+# -d .dic
+for o, a in opts:
+  if o == "-d":
+    diccionario = a
+  elif o == "-h":
+    usage()
+  else:
+    sys.error("Unhandled option")
+    usage()
+
+# Parametros: lang1 lang2 [.idx]
+if (len(args) == 2 or len(args) == 3):
+
+  index_text1 = {}
+  index_text2 = {}
+  list_dic1 = []
+  list_dic2 = []
+  lista_palabras = []
+  encontrados = {}
+  dict_palabras = {}
+
+  # Manejando los argumentos
+  lang1 = args[0]
+  lang2 = args[1]
+  if len(args) == 3:
+    index_palabras = args[2]
+    rellenarIndex(index_palabras, lang1,lang2,index_text1,index_text2)
+  else:
+    rellenarIndexSO(lang1, lang2, index_text1, index_text2)
+
+  cargarDiccionarios(diccionario, lang1, lang2, list_dic1, list_dic2)
+
+  #
+  # Para cada par de documentos, tras llamar a traducirPalabras, se realiza una
+  # interseccion entre ellos y se divide por el numero de palabras traducidas en
+  # ese documento en la funcion traducirPalabras. El resultado de la interseccion
+  # entre el numero de palabras traducidas en traducirPalabras dara un
+  # porcentaje de cuanto se parecen eso documentos. Se muestra una lista con
+  # los 10 documentos mas parecidos a cada uno de ellos.
+  #
+  traducirPalabras(index_text2, list_dic1, list_dic2, dict_palabras)
+
+  for i in index_text1:
+    parecidos = {}
+    for j in index_text2:
+      c3 = filter(lambda x: x in index_text1[i], index_text2[j])
+      if len(c3) > 0:
+        parecidos[j] = float((min(len(index_text1[i]),len(index_text2[j]))/float(max(len(index_text1[i]),len(index_text2[j]))))*(len(c3)/float(dict_palabras[j])))
+
+    if len(parecidos) > 0:
+      parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+    encontrados[i] = []
+    for j in parecidos:
+      encontrados[i].append(str(j[0]) + ":" + str(j[1]))
+
+  # Se saca el numero de documento y sus 10 mas parecidos.
+  for i in encontrados:
+    if len(encontrados[i]) > 10:
+      contador = 10
+    else:
+      contador = len(encontrados[i])
+    primera = True
+    cadena = str(i) + "\t"
+    for j in range(contador):
+      if primera == True:
+        cadena += str(encontrados[i][j])
+        primera = False
+      else:
+        cadena += "\t" + str(encontrados[i][j])
+    print cadena
+
+else:
+  usage()
+

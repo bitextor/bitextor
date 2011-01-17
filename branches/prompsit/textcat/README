@@ -1,0 +1,29 @@
+This is a simple Perl program which implements
+the technique described in
+
+Cavnar, W. B. and J. M. Trenkle, ``N-Gram-Based Text Categorization'' 
+In Proceedings of Third Annual Symposium on Document Analysis and 
+Information Retrieval, Las Vegas, NV, UNLV Publications/Reprographics, 
+pp. 161-175, 11-13 April 1994. cf. http://msen.com/~wei/JT-homepage.html.
+
+to categorize texts. A simple directory with language models is provided to
+implement a language guesser. 
+
+INSTALLATION
+
+Edit the text_cat script to have the first line point to your Perl binary.
+Edit the text_cat script to have $opt_d point to the LM directory.
+
+USAGE
+
+text_cat -h displays usage information.
+
+
+Gertjan van Noord
+vannoord@let.rug.nl
+ftp://ftp.let.rug.nl/pub/vannoord/TextCat/
+http://www.let.rug.nl/~vannoord/TextCat/
+
+
+for list of languages, cf LM subdirectory
+

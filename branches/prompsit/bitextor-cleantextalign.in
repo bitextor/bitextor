@@ -1,0 +1,130 @@
+#!__BASH__
+
+INPUT=/dev/stdin
+OUTPUT=/dev/stdout
+MAXLINES=5
+MINQUALITY=0
+BYTEXT=0
+LOG=$(mktemp /tmp/logbitextorcleantextalign.XXXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 [align] [-m max_lines] [-q min_quality]"
+  echo "WHERE"
+  echo "  align           file with extension .align (alignment) (standard input"
+  echo "                  by default)"
+  echo "  -m max_lines    clean texts (clean lines by default) and specify"
+  echo "                  maximum number of lines out of alignment (5 by default)"
+  echo "  -q min_quality  minimum quality required for each line (0 by default)"
+  exit 1
+}
+
+ARGS=$(getopt "m:q:h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -m)
+      shift
+      MAXLINES=$1
+      BYTEXT=1
+      shift
+      ;;
+    -q)
+      shift
+      MINQUALITY=$1
+      shift
+      ;;
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  1)
+    INPUT="$1"
+    ;;
+  0)
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+#
+# 1. Se recorre el .align y según se haya escogido limpiar:
+#    líneas: se muestra cada línea por encima de min_quality (resto -> LOG)
+#    textos: se muestra cada texto que tenga menos de 5 líneas mal (resto -> LOG)
+# 2. Se muestra todo el alineamiento filtrado por la salida estándar
+#
+# Formato final del documento:
+# url1    url2    text1    text2
+#
+
+if (test $BYTEXT -eq 0);
+then
+  cat $INPUT | \
+  __PYTHON__ -c '
+import sys
+
+minq = sys.argv[1]
+
+for i in sys.stdin:
+  campos = i.split("\t")
+  if len(campos) == 5 and campos[-1] != "\n":
+    if float(campos[-1]) > float(minq):
+      print campos[0] + "\t" + campos[1] + "\t" + campos[2] + "\t" + campos[3]
+    else:
+      sys.stderr.write("LINEA MAL ALINEADA: " + i)
+  else:
+    sys.stderr.write("LINEA MAL ALINEADA: " + i)
+' $MINQUALITY >$OUTPUT 2>> $LOG
+else
+  cat $INPUT | \
+  __PYTHON__ -c '
+import sys
+
+minq = sys.argv[1]
+maxl = int(sys.argv[2])
+anterior = ""
+cadena = ""
+lineas = 0
+
+for i in sys.stdin:
+  campos = i.split("\t")
+  
+  if anterior == "":
+    anterior = campos[0]
+  if anterior == campos[0]:
+    if len(campos) == 5 and campos[-1] != "\n":
+      if float(campos[-1]) > float(minq):
+        cadena += campos[0] + "\t" + campos[1] + "\t" + campos[2] + "\t" + campos[3] + "\n"
+      else:
+        lineas += 1
+        sys.stderr.write("LINEA MAL ALINEADA: " + i)
+    else:
+      lineas += 1
+      sys.stderr.write("LINEA MAL ALINEADA: " + i)
+  else:
+    if maxl >= lineas:
+      sys.stdout.write(cadena)
+    else:
+      sys.stderr.write("TEXTO MAL ALINEADO: " + cadena)
+    anterior = ""
+    cadena = ""
+    lineas = 0
+if maxl >= lineas:
+  sys.stdout.write(cadena)
+else:
+  sys.stderr.write("TEXTO MAL ALINEADO: " + cadena)
+' $MINQUALITY $MAXLINES >$OUTPUT 2>> $LOG
+fi
+

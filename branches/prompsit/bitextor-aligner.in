@@ -1,0 +1,125 @@
+#!__BASH__
+
+INPUT=/dev/stdin
+OUTPUT=/dev/stdout
+LOG=$(mktemp /tmp/logbitextoraligner.XXXXXX)
+TEMP1=$(mktemp /tmp/texto1.XXXXXX)
+TEMP2=$(mktemp /tmp/texto2.XXXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 file [index] lang1 lang2"
+  echo "WHERE"
+  echo "   file     file with extension .lett (language encoded and typed text)"
+  echo "            or .lettr (language encoded and typed text with raspa)"
+  echo "   index    file with extension .ridx (reverse index) (standard input"
+  echo "            by default)"
+  echo "   lang1    selected language with two letters code: en, es, fr, de ..."
+  echo "   lang2    selected language with two letters code: en, es, fr, de ..."
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  4)
+    LISTADO="$1"
+    INPUT="$2"
+    LANG1="$3"
+    LANG2="$4"
+    ;;
+  3)
+    LISTADO="$1"
+    LANG1="$2"
+    LANG2="$3"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+#
+# 1. Se recorre el .ridx y se cogen cada uno y su más parecido
+# 2. Sobre el .lett se coge el base64 y la url de los dos documentos
+# 3. Se limpia el texto de ambos documentos y se separa por frases
+# 4. Se aplica hunalign
+# 5. Se unifica todo el alineamiento en un fichero .align
+#
+# Formato final del documento:
+# url1    url2    text1    text2    quality
+#
+# Genera .align -> aligment
+#
+
+#
+# Se coge el primero de los más parecidos.
+# Al coger los dos documentos, se les pasa simplereader.sh y split-sentences.perl y se aplica hunalign.
+#
+cat $INPUT | \
+__GAWK__ '{print $1 "\t" substr($2,1,index($2,":")-1)}' | \
+__PYTHON__ -c '
+import sys
+import base64
+
+indices = {}
+documentos = {}
+
+for i in sys.stdin:
+  campos = i.split("\t")
+  indices[int(campos[0])] = int(campos[1].strip())
+
+contador = 1
+file = open(sys.argv[1],"r")
+for j in file:
+  campos = j.split()
+  documentos[contador] = campos[3] + "\t" + campos[4]
+
+  if contador in indices.keys():
+    if indices[contador] in documentos.keys():
+      print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
+      del documentos[contador] # se deben borrar los que ya han sido alineados
+#      del documentos[indices[contador]]
+#      del indices[contador]
+  contador += 1
+
+for k in indices:
+  if indices[k] in documentos.keys():
+    print str(k) + "\t" + str(indices[k]) + "\t" + documentos[k] + "\t" + documentos[indices[k]]
+    del documentos[k] # se deben borrar los que ya han sido alineados
+#    del documentos[indices[k]]
+
+' $LISTADO 2>> $LOG | \
+while read line;
+do
+  echo $line | __GAWK__ '{print $4}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 > $TEMP1 2>> $LOG
+  echo $line | __GAWK__ '{print $6}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 > $TEMP2 2>> $LOG
+  
+  __PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 2>> $LOG | \
+  while read biline;
+  do
+    ALINEADA="$(echo "$biline" | __GAWK__ '{if(NF>1) split($0,campos,"\t"); print campos[1] "\t" campos[2] "\t" campos[3];}')"
+    if !(test "$ALINEADA" == "		"); # Cuidado: Entre comillas hay dos tabuladores (pero no es \t\t).
+    then
+      echo "$(echo $line | __GAWK__ '{print $3 "\t" $5 "\t"}')" "$ALINEADA" >> $OUTPUT
+    fi
+  done
+done
+

@@ -1,0 +1,32 @@
+1.09  . set -f default to 0
+      . help message improved
+
+1.08  . remove singletons before sorting for speed-up. This feature can
+        be influenced by using the -f (for fast) option: larger value
+        for -f is faster (but possibly less accurate); a value of 0
+        is equivalent to previous version of text_cat.
+
+1.07: . moved `my' declaration from for-loop in order that script works
+        for older versions of Perl.
+
+1.06: . -l option if you want to pass on text on the command line:
+        text_cat -l "this is English text"
+
+1.05: . tiny improvements in the code, based on reading the Perl
+        Cookbook.
+
+1.04: . -a option to determine the value of the feature introduced in
+        1.01 (if you don't like 10).
+      . reads directory before input is read (useful if something is wrong)
+      . warning if no language models in directory (before input is read)
+      . comments in .lm files are gone. This was only useful for my
+        couse last year anyway :-)
+
+1.03: added $! to error messages
+
+1.02: rumantsch
+
+1.01: system reports unknown language if more than 10 candidate solutions.
+      why 10? Why not? Who knows?
+
+
