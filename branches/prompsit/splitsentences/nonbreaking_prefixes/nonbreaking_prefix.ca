@@ -1,3 +1,5 @@
+#Algunes abreviatures son copiades del espanyol. Es poden afegir encara més en català: http://www.uoc.edu/serveilinguistic/criteris/convencions/abreviacions6.html
+
 #any single upper case letter  followed by a period is not a sentence ender (excluding I occasionally, but we leave it in)
 #usually upper case letters are initials in a name
 A
@@ -53,7 +55,7 @@ x
 y
 z
 
-#Números romanos. Agregar más si hace falta.
+#Nombres romans. Afegir més si fa falta.
 I
 II
 III
@@ -95,7 +97,44 @@ xviii
 xix
 xx
 
+#Mesos de l'any
+gen
+febr
+abr
+jul
+ag
+set
+oct
+nov
+des
+
 #Titles and Honorifics
+Emm
+Emma
+Exc
+Excm
+Excma
+Hble
+Il·ltre
+Il·lm
+Il·lma
+Im
+Ima
+Mgfc
+Mgfca
+M.Exc
+M.E
+M.Hble
+M.H
+M.Il·ltre
+M.I
+Mons
+Mn
+pvre
+Rnd
+Rvdm	  	 	 
+st
+sta
 aa. vv
 AA. VV
 Abg
@@ -117,12 +156,12 @@ Bco
 Bibl
 Brig
 Bto
-C. A
+C.A
 CC. AA
 CC.AA
 Cap
 Cap. Fed
-C. F
+C.F
 Cía
 Cmdt
 Cmte
@@ -133,7 +172,10 @@ Comp
 Comte
 Contralmte
 Cte
+EE
+UU
 EE. UU
+EE.UU
 Em
 Emmo
 Exc
@@ -408,8 +450,51 @@ W.C
 WC
 incl
 pub
-st
-sta
+apmt
+àt
+av
+bda
+bxs
+bnc
+bl
+cant
+cró
+crta
+cas
+cint
+com
+distr
+drec
+dta
+entl
+esc
+esq
+fca
+hab
+núm
+parc
+pdís
+ptge
+pg
+pav
+pl
+pcta
+pobl
+pol
+pta
+ptal
+pral
+prov
+pda
+rbla
+ra
+rda
+tel
+t.m
+trav
+trv
+urb
+viad
 
 #Numbers only. These should only induce breaks when followed by a numeric sequence
 # add NUMERIC_ONLY after the word for this function
@@ -420,12 +505,12 @@ num
 Num
 Núm
 nro
-máx
+màx
 max
 mín
 min
-Máx
-MÁX
+Màx
+MÀX
 Max
 Mín
 Min
@@ -436,9 +521,9 @@ art
 Art
 pág
 pag
-PÁG
+PÀG
 PAG
-Pág
+Pàg
 Pag
 párr
 parr
@@ -446,10 +531,58 @@ pg
 PG
 Nr
 col
-pp
+N.B
 n.b
 
-#Ordinals are done with . in Spanish - "1." = "1st" in English
+#Numerals Ordinals. Completar si fa falta.
+1r
+1a
+1rs
+1es
+2n
+2a
+2ns
+2es
+3r
+3a
+3rs
+3es
+4t
+4a
+4ts
+4es
+5è
+5a
+5ns
+5es
+6è
+6a
+6ns
+6es
+7è
+7a
+7ns
+7es
+8è
+8a
+8ns
+8es
+9è
+9a
+9ns
+9es
+10è
+10a
+10ns
+10es
+43è
+43a
+43ns
+43es
+100è
+100a
+100ns
+100es
 1
 2
 3

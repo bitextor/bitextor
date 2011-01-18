@@ -17,6 +17,7 @@
 
 import sys
 from operator import itemgetter
+import Levenshtein
 
 #
 # Funcion Distancia de Edicion de cadenas de Damerau Levenshtein
@@ -63,13 +64,14 @@ def distanciaEdicion(s1,s2,caracteres):
     while fin != True:
       if n >= len(max(s1,s2)):
         fin = True
-      distancia += DamerauLevenshteinDistance(s1[n:n+caracteres],s2[n:n+caracteres])
+      #distancia += DamerauLevenshteinDistance(s1[n:n+caracteres],s2[n:n+caracteres])
+      distancia += Levenshtein.distance(s1[n:n+caracteres],s2[n:n+caracteres])
       n += caracteres
 
     return distancia
   else:
   #print "Maximo de las dos cadenas: " + str(len(max(s1,s2)))
-    return DamerauLevenshteinDistance(s1,s2)
+    return Levenshtein.distance(s1,s2)
 
 
 def rellenarDocumentos(fich, documentos):
@@ -99,9 +101,11 @@ if len(sys.argv) == 3:
       doc = campos[j].split(":")
       if float(doc[1]) > 0.10:
         dist = distanciaEdicion(documentos[int(campos[0])], documentos[int(doc[0])], 0)
-        ##port = longitud / float(longitud + dist)
-	port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
-        new_per = float(doc[1]) * port
+        port = longitud / float(longitud + dist)
+	##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
+        new_per = (float(doc[1]) + port)/2.0
+        #new_per = port
+        #new_per = float(doc[1]) * port
         parecidos[doc[0]] = new_per
     parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
     for k in parecidos:

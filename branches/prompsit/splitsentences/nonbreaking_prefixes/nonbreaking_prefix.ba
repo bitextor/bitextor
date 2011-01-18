@@ -1,8 +1,3 @@
-# This is a copy of nonbreaking_prefix.en. In arabic, only ordinals are necessary.
-
-#Anything in this file, followed by a period (and an upper-case word), does NOT indicate an end-of-sentence marker.
-#Special cases are included for prefixes that ONLY appear before 0-9 numbers.
-
 #any single upper case letter  followed by a period is not a sentence ender (excluding I occasionally, but we leave it in)
 #usually upper case letters are initials in a name
 A
@@ -31,8 +26,34 @@ W
 X
 Y
 Z
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
 
-#Roman Numerals. Not usual in Arabic :-)
+#Números romanos. Agregar más si hace falta.
 I
 II
 III
@@ -74,83 +95,94 @@ xviii
 xix
 xx
 
-#List of titles. These are often followed by upper-case names, but do not indicate sentence breaks
-Adj
-Adm
-Adv
-Asst
-Bart
-Bldg
-Brig
-Bros
-Capt
-Cmdr
-Col
-Comdr
-Con
-Corp
-Cpl
-DR
-Dr
-Drs
-Ens
-Gen
-Gov
-Hon
-Hr
-Hosp
-Insp
-Lt
-MM
-MR
-MRS
-MS
-Maj
-Messrs
-Mlle
-Mme
-Mr
-Mrs
-Ms
-Msgr
-Op
-Ord
-Pfc
-Ph
-Prof
-Pvt
-Rep
-Reps
-Res
-Rev
-Rt
-Sen
-Sens
-Sfc
-Sgt
-Sr
-St
-Supt
-Surg
+#Titles and Honorifics
+
 
 #misc - odd period-ending items that NEVER indicate breaks (p.m. does NOT fall into this category - it sometimes ends a sentence)
-v
+m
+Km
+m2
+cm
+mm
+g
+Kg
+l
+cl
+ml
+seg
+min
+h
+pzta
+adib
+aip
+bibliog
+e.b
+etab
+e.a
+or
+orr
+ik
+lab
+pzta
+pta
+zenb
+zk
+zbko
+tel
+tf
+jn
+and
+año
+G.b
+esk
+ezk
+aptu
+sol
+eskra
+z.g
+pl
+pas
+enp
+etorb
+ibde
+zum
+prob
+P.-B
+P.-K
+P.-Ku
+P.D
+izpta
+stua
+sin
+ztua
+h / or
+min
+seg
+p.m
+a.m
+K.a
+K.o
+al
+as
+az
+og
+or
+lr
+ig
 vs
-i.e
-rev
-e.g
+p.s
+P.S
+N.B
+n.b
+R.I.P
 
 #Numbers only. These should only induce breaks when followed by a numeric sequence
 # add NUMERIC_ONLY after the word for this function
 #This case is mostly for the english "No." which can either be a sentence of its own, or
 #if followed by a number, a non-breaking prefix
-No #NUMERIC_ONLY# 
-Nos
-Art #NUMERIC_ONLY#
-Nr
-pp #NUMERIC_ONLY#
 
-#Ordinals are done with . in Arabic - "1." = "1st" in English
+
+#Ordinals are done with .
 1
 2
 3

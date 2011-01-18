@@ -30,11 +30,11 @@ done
 
 case $# in
   2)
-    URL="$1"
+    FILE="$1"
     PATH="-O $2"
     ;;
   1)
-    URL="$1"
+    FILE="$1"
     PATH="-O web"
     ;;
   *)
@@ -44,6 +44,9 @@ esac
 
 # Código aquí
 
-cat 
-__HTTRACK__ --skeleton -Q -q -%i0 -I0 $URL $PATH
+cat $FILE | \
+while read line;
+do
+  __HTTRACK__ --skeleton -Q -q -%i0 -I0 $URL $PATH
+done
 
