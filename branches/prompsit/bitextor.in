@@ -13,7 +13,7 @@ LANG2=""
 #DIC=""
 #ETT="temp.ett"
 #ALIGN="temp.align"
-INDEX=$(mktemp /tmp/idx.XXXXXX)
+#INDEX=$(mktemp /tmp/idx.XXXXXX)
 #RINDEX2="temp.ridx2"
 #MAXLINES=5
 #MINQUALITY=0
@@ -149,7 +149,7 @@ __PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
 __PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
 __PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
 
-#rm $LETT $LETTR $RINDEX
+rm $LETT $LETTR $RINDEX
 
 #__PREFIX__/bitextor-downloadweb $URL $DIRNAME
 #__PREFIX__/bitextor-webdir2ett $DIRNAME > $ETT

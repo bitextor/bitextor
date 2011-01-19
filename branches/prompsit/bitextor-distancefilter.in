@@ -19,61 +19,6 @@ import sys
 from operator import itemgetter
 import Levenshtein
 
-#
-# Funcion Distancia de Edicion de cadenas de Damerau Levenshtein
-#
-def DamerauLevenshteinDistance(s1, s2):
-    d = {}
-    lenstr1 = len(s1)
-    lenstr2 = len(s2)
-    for i in xrange(-1,lenstr1+1):
-        d[(i,-1)] = i+1
-    for j in xrange(-1,lenstr2+1):
-        d[(-1,j)] = j+1
- 
-    for i in xrange(0,lenstr1):
-        for j in xrange(0,lenstr2):
-            if s1[i] == s2[j]:
-                cost = 0
-            else:
-                cost = 1
-            d[(i,j)] = min(
-                           d[(i-1,j)] + 1, # deletion
-                           d[(i,j-1)] + 1, # insertion
-                           d[(i-1,j-1)] + cost, # substitution
-                          )
-            if i>1 and j>1 and s1[i]==s2[j-1] and s1[i-1] == s2[j]:
-                d[(i,j)] = min (d[(i,j)], d[i-2,j-2] + cost) # transposition
- 
-    return d[lenstr1-1,lenstr2-1]
-
-#
-# Funcion que prepara las cadenas para hacer Distancia de Edicion. Parte la cadena
-# en trozos y va sumando los resultados parciales, devolviendo la distancia de
-# edicion aproximada entre las dos cadenas pasadas como parametros.
-#
-# parametro caracteres: numero que sirve para cortar la cadena por trozos para
-#     calcular aproximadamente la distancia de edicion. Si no se indica este
-#     parametro, se hace la distancia de edicion de la cadena completa.
-#
-def distanciaEdicion(s1,s2,caracteres):
-  if caracteres > 0:
-    fin = False
-    n = 0
-    distancia = 0
-    while fin != True:
-      if n >= len(max(s1,s2)):
-        fin = True
-      #distancia += DamerauLevenshteinDistance(s1[n:n+caracteres],s2[n:n+caracteres])
-      distancia += Levenshtein.distance(s1[n:n+caracteres],s2[n:n+caracteres])
-      n += caracteres
-
-    return distancia
-  else:
-  #print "Maximo de las dos cadenas: " + str(len(max(s1,s2)))
-    return Levenshtein.distance(s1,s2)
-
-
 def rellenarDocumentos(fich, documentos):
   file = open(fich, "r")
   contador = 1
@@ -100,7 +45,7 @@ if len(sys.argv) == 3:
     for j in range(1,len(campos)-1):
       doc = campos[j].split(":")
       if float(doc[1]) > 0.10:
-        dist = distanciaEdicion(documentos[int(campos[0])], documentos[int(doc[0])], 0)
+        dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
         port = longitud / float(longitud + dist)
 	##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
         new_per = (float(doc[1]) + port)/2.0

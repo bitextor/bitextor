@@ -198,6 +198,21 @@ AC_PROG_PERL_VERSION([5.0], , [AC_MSG_ERROR([You don't have Perl 5.0 or later in
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([2.6], , [AC_MSG_ERROR([You don't have Python 2.6 or later installed.])])
 
+  AC_MSG_CHECKING([for Levenshtein for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import Levenshtein; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- python-Levenshtein:   Please, install v0.2 or later and try again. http://pypi.python.org/pypi/python-Levenshtein/
+])
+  fi
+
   AC_MSG_CHECKING([for utidylib for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import tidy; \
@@ -209,7 +224,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- python-utidylib:   Please, install v0.2 and try again. http://utidylib.berlios.de/
+- python-utidylib:   Please, install v0.2 or later and try again. http://utidylib.berlios.de/
 ])
   fi
 
