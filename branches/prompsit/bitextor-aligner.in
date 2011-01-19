@@ -90,10 +90,10 @@ for j in file:
   campos = j.split()
   documentos[contador] = campos[3] + "\t" + campos[4]
 
-  if contador in indices.keys():
-    if indices[contador] in documentos.keys():
-      print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
-      del documentos[contador] # se deben borrar los que ya han sido alineados
+#  if contador in indices.keys():
+#    if indices[contador] in documentos.keys():
+#      print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
+#      del documentos[contador] # se deben borrar los que ya han sido alineados
 #      del documentos[indices[contador]]
 #      del indices[contador]
   contador += 1
@@ -102,7 +102,7 @@ for k in indices:
   if indices[k] in documentos.keys():
     print str(k) + "\t" + str(indices[k]) + "\t" + documentos[k] + "\t" + documentos[indices[k]]
     del documentos[k] # se deben borrar los que ya han sido alineados
-#    del documentos[indices[k]]
+    del documentos[indices[k]]
 
 ' $LISTADO 2>> $LOG | \
 while read line;
@@ -123,3 +123,4 @@ do
   done
 done
 
+rm -Rf $TEMP1 $TEMP2

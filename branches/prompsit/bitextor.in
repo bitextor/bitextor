@@ -149,7 +149,7 @@ __PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
 __PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
 __PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
 
-rm $LETT $LETTR $RINDEX
+rm -Rf $LETT $LETTR $RINDEX
 
 #__PREFIX__/bitextor-downloadweb $URL $DIRNAME
 #__PREFIX__/bitextor-webdir2ett $DIRNAME > $ETT
