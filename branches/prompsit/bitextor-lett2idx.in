@@ -8,9 +8,10 @@ CONT=0    # Contador para el número de documento.
 
 exit_program()
 {
-  echo "USAGE: $1 file"
+  echo "USAGE: $1 [file]"
   echo "WHERE"
-  echo "   file   file with extension .lett (language encoded and typed data)"
+  echo "   file   file with extension .lett (language encoded and typed data) (standard"
+  echo "          input by default)"
   exit 1
 }
 

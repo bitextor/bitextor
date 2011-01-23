@@ -6,9 +6,10 @@ LOG=$(mktemp /tmp/logbitextorett2lett.XXXXXX)
 
 exit_program()
 {
-  echo "USAGE: $1 file"
+  echo "USAGE: $1 [file]"
   echo "WHERE"
-  echo "   file   file with extension .ett (encoded and typed text)"
+  echo "   file   file with extension .ett (encoded and typed text) (standard"
+  echo "          input by default)"
   exit 1
 }
 
