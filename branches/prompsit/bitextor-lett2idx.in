@@ -158,3 +158,4 @@ for i in sys.stdin:
   acum = acum + numdoc
 ' > $OUTPUT 2>> $LOG
 
+rm -Rf $TEMP

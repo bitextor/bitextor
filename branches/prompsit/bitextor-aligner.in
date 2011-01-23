@@ -102,7 +102,7 @@ for k in indices:
   if indices[k] in documentos.keys():
     print str(k) + "\t" + str(indices[k]) + "\t" + documentos[k] + "\t" + documentos[indices[k]]
     del documentos[k] # se deben borrar los que ya han sido alineados
-    del documentos[indices[k]]
+#    del documentos[indices[k]]
 
 ' $LISTADO 2>> $LOG | \
 while read line;
