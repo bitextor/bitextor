@@ -5,7 +5,7 @@ OUTPUT=/dev/stdout
 FILE=""
 URL=""
 DIRNAME="web"
-LETT=$(mktemp /tmp/lett.XXXXXX)
+#LETT=$(mktemp /tmp/lett.XXXXXX)
 LETTR=$(mktemp /tmp/lettr.XXXXXX)
 RINDEX=$(mktemp /tmp/ridx.XXXXXX)
 LANG1=""
@@ -27,8 +27,8 @@ exit_program()
   echo "WHERE"
   echo "  -f file         web addresses to crawl (one per line)"
   echo "  -d dirname      folder to store downloaded directories (web/ by default)"
-  echo "  -l lett         file with extension .lett (language encoded and typed data)"
-  echo "                  (/tmp/lett.XXXXXX by default)"
+#  echo "  -l lett         file with extension .lett (language encoded and typed data)"
+#  echo "                  (/tmp/lett.XXXXXX by default)"
   echo "  -t lettr        file with extension .lettr (language encoded and typed data"
   echo "                  with \'raspa\') (/tmp/lettr.XXXXXX by default)"
   #echo "  -n index        file with extenxion .idx (index document) (temp.idx by default)"
@@ -65,11 +65,11 @@ do
       DIRNAME=$1
       shift
       ;;
-    -l)
-      shift
-      LETT=$1
-      shift
-      ;;
+#    -l)
+#      shift
+#      LETT=$1
+#      shift
+#      ;;
 #    -n)
 #      shift
 #      INDEX=$1
@@ -141,15 +141,15 @@ then
   done
 fi
 __PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
-__PREFIX__/bin/bitextor-ett2lett > $LETT
-__PREFIX__/bin/bitextor-lett2idx $LETT | \
+__PREFIX__/bin/bitextor-ett2lett | \
+__PREFIX__/bin/bitextor-lett2lettr > $LETTR
+__PREFIX__/bin/bitextor-lett2idx $LETTR | \
 __PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 > $RINDEX
-__PREFIX__/bin/bitextor-lett2lettr $LETT > $LETTR
 __PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
 __PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
 __PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
 
-rm -Rf $LETT $LETTR $RINDEX
+rm -Rf $LETTR $RINDEX
 
 #__PREFIX__/bitextor-downloadweb $URL $DIRNAME
 #__PREFIX__/bitextor-webdir2ett $DIRNAME > $ETT
@@ -160,3 +160,13 @@ rm -Rf $LETT $LETTR $RINDEX
 #__PREFIX__/bitextor-distancefilter $LETTR $RINDEX > $RINDEX2
 #__PREFIX__/bitextor-aligner $LETTR $RINDEX2 $LANG1 $LANG2 > $ALIGN
 #__PREFIX__/bitextor-cleantextalign $ALIGN -m $MAXLINES -q $MINQUALITY > $OUTPUT
+
+#__PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
+#__PREFIX__/bin/bitextor-ett2lett > $LETT
+#__PREFIX__/bin/bitextor-lett2idx $LETT | \
+#__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 > $RINDEX
+#__PREFIX__/bin/bitextor-lett2lettr $LETT > $LETTR
+#__PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
+#__PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
+#__PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
+

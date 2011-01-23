@@ -141,7 +141,7 @@ for i in sys.stdin:
   #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
   print "{0}\t{1}\t{2}\t{3}".format(campos[2].strip(),campos[1],os.path.relpath(campos[0],sys.argv[1]),e)' $WEBDIR > $OUTPUT 2>> $LOG
 
-rm $TEMPCONV 2>> $LOG
+rm -Rf $TEMPCONV 2>> $LOG
 
 
 

@@ -10,14 +10,22 @@
 # 4. Se muestran los 10 documentos con los porcentajes actualizados
 #
 # Formato final del documento:
-# num_doc_lang1    [num_doc_lang2:frequency]+
+# num_doc_lang1    [num_doc_lang2:ratio]+
 #
 # Genera .ridx -> reverse index
 #
 
 import sys
+import getopt
 from operator import itemgetter
 import Levenshtein
+
+def usage():
+  error = "USAGE: " + sys.argv[0] + " file index\n"
+  error += "WHERE\n"
+  error += "   file   file with extension .lettr (language encoded and typed data with \'raspa\' -HTML skeleton-)\n"
+  error += "   index  file with extension .ridx (reverse index)\n"
+  sys.exit(error)
 
 def rellenarDocumentos(fich, documentos):
   file = open(fich, "r")
@@ -29,11 +37,31 @@ def rellenarDocumentos(fich, documentos):
     contador += 1
   file.close()
 
-if len(sys.argv) == 3:
+####
+## Aqui empieza el script.
+####
+
+# Manejando las opciones con getopt
+try:
+  opts, args = getopt.getopt(sys.argv[1:], "h", [])
+except getopt.GetoptError, err:
+  # print help information and exit:
+  print str(err) # will print something like "option -a not recognized"
+  usage()
+  sys.exit(2)
+
+for o, a in opts:
+  if o == "-h":
+    usage()
+  else:
+    sys.error("Unhandled option")
+    usage()
+
+if (len(args) == 2):
   index = {}
   documentos = {}
-  fich = sys.argv[1]
-  ridx = sys.argv[2]
+  fich = args[0]
+  ridx = args[1]
   rellenarDocumentos(fich, documentos)
 
   file = open(ridx, "r")
@@ -48,9 +76,9 @@ if len(sys.argv) == 3:
         dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
         port = longitud / float(longitud + dist)
 	##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
-        new_per = (float(doc[1]) + port)/2.0
+        #new_per = (float(doc[1]) + port)/2.0
         #new_per = port
-        #new_per = float(doc[1]) * port
+        new_per = float(doc[1]) * port
         parecidos[doc[0]] = new_per
     parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
     for k in parecidos:
@@ -58,9 +86,5 @@ if len(sys.argv) == 3:
     print cadena
 
 else:
-  error = "USAGE: " + sys.argv[0] + " file index\n"
-  error += "WHERE\n"
-  error += "   file   file with extension .lettr (language encoded and typed data with \'raspa\' -HTML skeleton-)\n"
-  error += "   index  file with extension .ridx (reverse index)\n"
-  sys.exit(error)
+  usage()
 

@@ -31,6 +31,8 @@ do
 done
 
 case $# in
+  0)
+    ;;
   1)
     INPUT="$1"
     ;;
