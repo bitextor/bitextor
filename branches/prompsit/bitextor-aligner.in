@@ -80,22 +80,29 @@ import base64
 indices = {}
 documentos = {}
 
+# Se coge el fichero de la fila y su primero más parecido.
 for i in sys.stdin:
   campos = i.split("\t")
-  indices[int(campos[0])] = int(campos[1].strip())
+  if len(campos) == 2:
+    try:
+      indices[int(campos[0])] = int(campos[1].strip())
+    except:
+      pass
 
+# Se lee el fichero .lett extrayendo la url y el base64
 contador = 1
 file = open(sys.argv[1],"r")
 for j in file:
   campos = j.split()
-  documentos[contador] = campos[3] + "\t" + campos[4]
+  if len(campos) > 4:
+    documentos[contador] = campos[3] + "\t" + campos[4] # url base64
 
-#  if contador in indices.keys():
-#    if indices[contador] in documentos.keys():
-#      print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
-#      del documentos[contador] # se deben borrar los que ya han sido alineados
-#      del documentos[indices[contador]]
-#      del indices[contador]
+#    if contador in indices.keys():
+#      if indices[contador] in documentos.keys():
+#        print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
+#        del documentos[contador] # se deben borrar los que ya han sido alineados
+#        del documentos[indices[contador]]
+#        del indices[contador]
   contador += 1
 
 for k in indices:

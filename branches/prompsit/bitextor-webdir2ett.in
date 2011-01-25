@@ -73,9 +73,9 @@ for i in sys.stdin:
 # Se ordenan y se eliminan los repetidos
 sort | __GAWK__ -v logfile="$LOG" '{
   if(var != $1)
-    print $2;    # nombre_fichero
+    printf "\"" $2 "\"\n";    # nombre_fichero
   else 
-    print "Eliminando repetido:\t"$0 >> logfile;
+    print "Eliminando repetido:\t" $0 >> logfile;
   var = $1;}' | \
 # Se muestra el formato y tipo de todos los ficheros
 xargs file --mime-type --mime-encoding | grep text/html | \
@@ -91,7 +91,7 @@ __GAWK__ '{
   if($3 != "utf-8")
   { # Se cambia la codificación a utf-8 y se copian en la carpeta original
     if($3 != "unknown-8bit"){
-      retval = system("iconv -f " $3 " -t utf-8 " $1 " >" filetemp " && mv " filetemp " " $1);
+      retval = system("iconv -f " $3 " -t utf-8 " $1 " >" filetemp " 2>>" logfile " && mv " filetemp " " $1);
     }
     else{
       retval = -1;

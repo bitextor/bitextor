@@ -180,7 +180,7 @@ if (len(args) == 2 or len(args) == 3):
     parecidos = {}
     for j in index_text2:
       c3 = filter(lambda x: x in index_text1[i], index_text2[j])
-      if len(c3) > 0:
+      if len(c3) > 0 and float(dict_palabras[j]) > 0:
         parecidos[j] = float((min(len(index_text1[i]),len(index_text2[j]))/float(max(len(index_text1[i]),len(index_text2[j]))))*(len(c3)/float(dict_palabras[j])))
 
     if len(parecidos) > 0:

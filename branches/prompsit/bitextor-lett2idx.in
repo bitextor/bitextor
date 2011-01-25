@@ -118,7 +118,7 @@ __GAWK__ -v cont=$CONT -v idioma=$IDIOMA '{
 if($2 != ""){
   printf idioma "\t" $2 "\t"
   printf "%05d\n", cont}
-}' >> $TEMP
+}' >> $TEMP 2>> $LOG
 
   ## Contador para el número de documento.
   ((CONT++))
