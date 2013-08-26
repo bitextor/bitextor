@@ -55,21 +55,22 @@ esac
 # Genera .lett -> language encoded and typed text
 #
 
-detectar_idioma_linea()
-{
-  # Se coge el base64
-  __GAWK__ '{print $4}' | \
-  # Se decodifica el base64
+# Se recorren las líneas del fichero de entrada y se detecta su idioma para cada una de
+# ellas.
+cat $INPUT | \
   __PYTHON__ -c '
 import sys
 import base64
 from HTMLParser import HTMLParser
+import langid
 
+#Class for parsing the XHTML files
 class Parser(HTMLParser):
 
   def __init__( self ):
     HTMLParser.__init__( self )
     self.script = 0
+    self.output = []
 
   def handle_starttag( self, tag, attrs ):
     if tag == "script" or tag == "noscript":
@@ -77,32 +78,21 @@ class Parser(HTMLParser):
 
   def handle_data( self, data ):
     if self.script == 0:
-      sys.stdout.write(data)
+      self.output.append(data)
 
   def handle_endtag( self, tag ):
     if tag == "script" or tag == "noscript":
       self.script = 0
 
-for i in sys.stdin:
-  e = base64.b64decode(i)
-  Parser().feed(e)
-' 2>> $LOG | \
-__PERL__ __PREFIX__/bin/text_cat -d __PREFIX__/share/bitextor/text_cat 2>> $LOG
-}
+#Reading line by line from the standard output
+for line in sys.stdin:
+  linefields=line.split()
+  #decoding the b64 original webpage
+  e = base64.b64decode(linefields[3]).replace("\n", " ")
+  p=Parser()
+  p.feed(e)
+  #detecting language
+  lang, conf = langid.classify(" ".join(p.output))
+  sys.stdout.write("{0}\t{1}".format(lang, line))
 
-# Se recorren las líneas del fichero de entrada y se detecta su idioma para cada una de
-# ellas en la función detectar_idioma_linea.
-cat $INPUT | \
-while read line;
-do
-  # Llamamos a detectar idioma con cada línea y luego extraemos el primer idioma de la lista de posible.
-  IDIOMA="$(echo "$line" | detectar_idioma_linea | __GAWK__ '{print $1;}')"
-  #El fichero quedará: idioma   encoding   formato   url   base64
-  if !(test -z $IDIOMA);
-  then
-    echo -e "$IDIOMA\t$line" >> $OUTPUT
-  else
-    echo -e "ERROR : $IDIOMA\t$line" >> $LOG
-  fi
-done
-
+' 2>> $LOG >> $OUTPUT

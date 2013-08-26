@@ -37,7 +37,7 @@ def usage():
 def rellenarIndex(palabras, lang1, lang2, index1, index2):
   file = open(palabras, "r")
   for i in file:
-    campos = i.split("\t")
+    campos = i.strip().split("\t")
     if len(campos) == 3:
       if campos[0] == lang1 or campos[0] == lang2:
         documentos = campos[2].split(":")
@@ -60,7 +60,7 @@ def rellenarIndex(palabras, lang1, lang2, index1, index2):
 
 def rellenarIndexSO(lang1, lang2, index1, index2):
   for i in sys.stdin:
-    campos = i.split("\t")
+    campos = i.strip().split("\t")
     if len(campos) == 3:
       if campos[0] == lang1 or campos[0] == lang2:
         documentos = campos[2].split(":")
@@ -89,7 +89,7 @@ def cargarDiccionarios(diccionario, lang1, lang2, dic1, dic2):
   file = open(diccionario, "r")
   primera = True
   for i in file:
-    campos = i.split("\t")
+    campos = i.strip().split("\t")
     if primera:
       ind = 0
       for j in campos:

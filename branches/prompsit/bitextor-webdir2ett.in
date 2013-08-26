@@ -37,6 +37,13 @@ case $# in
     ;;
 esac
 
+tika_port=10000
+while [ $(__LSOF__ -i :$tika_port | __WC__ -l) -ne 0 ]; do
+    let tika_port=$tika_port+1;
+done
+__JAVA__ -jar __TIKA__ --xml -s $tika_port &
+tika_pid=$!
+
 # Código aquí
 
 #
@@ -78,64 +85,46 @@ sort | __GAWK__ -v logfile="$LOG" '{
     print "Eliminando repetido:\t" $0 >> logfile;
   var = $1;}' | \
 # Se muestra el formato y tipo de todos los ficheros
-xargs file --mime-type --mime-encoding | grep text/html | \
+xargs file --mime-type --mime-encoding | \
+#grep text/html | \
 __GAWK__ '{
   printf substr($1,1,length($1)-1);    # nombre_fichero
   printf "\t";
   printf substr($2,1,length($2)-1);    # formato: text/html etc.
   printf "\t"; 
   print substr($3,9,length($3));       # encoding
-}' | __GAWK__ -v filetemp="$TEMPCONV" -v logfile="$LOG" '{
-
-  retval = 0;
-  if($3 != "utf-8")
-  { # Se cambia la codificación a utf-8 y se copian en la carpeta original
-    if($3 != "unknown-8bit"){
-      retval = system("iconv -f " $3 " -t utf-8 " $1 " >" filetemp " 2>>" logfile " && mv " filetemp " " $1);
-    }
-    else{
-      retval = -1;
-    }
-  }
-  
-  if(retval == 0)
-  {
-    print $1 "\t" $2 "\tutf-8";    # nombre_fichero   formato   encoding
-  }
-  else
-  {
-    print "Fichero sin codificación UTF-8:\t"$0 >> logfile;
-  }
 }' | \
 #Se codifica el fichero en bas64 y se almacena.
 __PYTHON__ -c '
 import sys
 import os
 import base64
-import tidy
-
-# Elegimos las opciones del tidy a aplicar.
-options = dict(char_encoding="utf8",
-		output_xhtml=1,
-		uppercase_tags=1,
-		escape_cdata=1,
-		hide_comments=1,
-		logical_emphasis=1,
-		drop_empty_paras=1,
-		bare=1,
-		drop_proprietary_attributes=1,
-		wrap_script_literals=1,
-		wrap_sections=1,
-		wrap=0,
-		punctuation_wrap=1,
-		show_body_only=1)
+import socket
+from boilerpipe.extract import Extractor
 
 # Para cada fichero le pasamos el tidy y lo convertimos en base64
 
 for i in sys.stdin:
   campos = i.split("\t")
   file = open(campos[0], "r")
-  e = base64.b64encode(str(tidy.parseString(file.read(),**options)))
+  file_output=""
+
+  extractor = Extractor(extractor="ArticleExtractor", html=file.read())
+  sys.stderr.write(extractor.getHTML().encode("utf-8"))
+
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.connect(("localhost", '$tika_port'))
+  s.sendall(extractor.getHTML().encode("utf-8"))
+  s.shutdown(socket.SHUT_WR)
+  while 1:
+    data = s.recv(1024)
+    if data == "":
+      break
+    else:
+      file_output=file_output+data
+  s.close()
+
+  e = base64.b64encode(file_output)
   file.close()
 
   #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
@@ -143,5 +132,4 @@ for i in sys.stdin:
 
 rm -Rf $TEMPCONV 2>> $LOG
 
-
-
+__KILL__ $tika_pid

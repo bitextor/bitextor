@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 bitextor_DATA = diccionario.dic
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign simpleHTMLreader \
-         splitsentences textcat
+         splitsentences tika
 
 bin_SCRIPTS=bitextor bitextor-aligner bitextor-cleantextalign \
             bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett \
@@ -17,7 +17,7 @@ man_MANS=bitextor.1 bitextor-aligner.1 bitextor-cleantextalign.1 \
          bitextor-webdir2ett.1
 
 EXTRA_DIST= $(man_MANS) $(bin_SCRIPTS) $(bitextor_DATA) simpleHTMLreader \
-            splitsentences textcat DocumentacionBitextor-4.odt
+            splitsentences DocumentacionBitextor-4.odt tika
 
 CLEANFILES=$(bin_SCRIPTS)
 
@@ -70,5 +70,10 @@ bitextor-lett2lettr: bitextor-lett2lettr.in
 bitextor-webdir2ett: bitextor-webdir2ett.in
 	sed "s!__BASH__!$(BASH)!g" $< | \
 	sed "s!__GAWK__!$(GAWK)!g" | \
+	sed "s!__KILL__!$(KILL)!g" | \
+	sed "s!__JAVA__!$(JAVA)!g" | \
+	sed "s!__LSOF__!$(LSOF)!g" | \
+	sed "s!__WC__!$(WC)!g" | \
+	sed "s!__TIKA__!$(prefix)/share/java/tika-app-1.4.jar!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 

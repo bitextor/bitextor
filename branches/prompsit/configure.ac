@@ -165,6 +165,46 @@ then
   AC_MSG_ERROR([You don't have gawk installed.])
 fi
 
+AC_PATH_PROG(KILL, kill, no)
+if test x$ac_cv_path_KILL = x
+then
+  AC_MSG_ERROR([You don't have kill installed.])
+fi
+if test x$ac_cv_path_KILL = xno
+then
+  AC_MSG_ERROR([You don't have kill installed.])
+fi
+
+AC_PATH_PROG(WC, wc, no)
+if test x$ac_cv_path_WC = x
+then
+  AC_MSG_ERROR([You don't have wc installed.])
+fi
+if test x$ac_cv_path_WC = xno
+then
+  AC_MSG_ERROR([You don't have wc installed.])
+fi
+
+AC_PATH_PROG(LSOF, lsof, no)
+if test x$ac_cv_path_LSOF = x
+then
+  AC_MSG_ERROR([You don't have lsof installed.])
+fi
+if test x$ac_cv_path_LSOF = xno
+then
+  AC_MSG_ERROR([You don't have lsof installed.])
+fi
+
+AC_PATH_PROG(JAVA, java, no)
+if test x$ac_cv_path_JAVA = x
+then
+  AC_MSG_ERROR([You don't have java installed.])
+fi
+if test x$ac_cv_path_JAVA = xno
+then
+  AC_MSG_ERROR([You don't have java installed.])
+fi
+
 AC_DEFUN([AC_PROG_PERL_VERSION],[dnl
 # Make sure we have perl
 if test -z "$PERL"; then
@@ -210,6 +250,34 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
 - python-Levenshtein:   Please, install v0.2 or later and try again. http://pypi.python.org/pypi/python-Levenshtein/
+])
+  fi
+
+  AC_MSG_CHECKING([for LangID for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import langid; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again. https://github.com/saffsd/langid.py
+])
+  fi
+
+  AC_MSG_CHECKING([for boilerpipe for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import boilerpipe; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires boilerpipe for Python. Please, install v1.2 or later and try again. http://code.google.com/p/boilerpipe
 ])
   fi
 
@@ -349,4 +417,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile simpleHTMLreader/Makefile splitsentences/nonbreaking_prefixes/Makefile splitsentences/Makefile textcat/Makefile])
+AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile simpleHTMLreader/Makefile splitsentences/nonbreaking_prefixes/Makefile splitsentences/Makefile tika/Makefile])
