@@ -175,6 +175,46 @@ then
   AC_MSG_ERROR([You don't have kill installed.])
 fi
 
+AC_PATH_PROG(COMM, comm, no)
+if test x$ac_cv_path_COMM = x
+then
+  AC_MSG_ERROR([You don't have comm installed.])
+fi
+if test x$ac_cv_path_COMM = xno
+then
+  AC_MSG_ERROR([You don't have comm installed.])
+fi
+
+AC_PATH_PROG(CUT, cut, no)
+if test x$ac_cv_path_CUT = x
+then
+  AC_MSG_ERROR([You don't have cut installed.])
+fi
+if test x$ac_cv_path_CUT = xno
+then
+  AC_MSG_ERROR([You don't have cut installed.])
+fi
+
+AC_PATH_PROG(GREP, grep, no)
+if test x$ac_cv_path_GREP = x
+then
+  AC_MSG_ERROR([You don't have grep installed.])
+fi
+if test x$ac_cv_path_GREP = xno
+then
+  AC_MSG_ERROR([You don't have grep installed.])
+fi
+
+AC_PATH_PROG(SORT, sort, no)
+if test x$ac_cv_path_SORT = x
+then
+  AC_MSG_ERROR([You don't have sort installed.])
+fi
+if test x$ac_cv_path_SORT = xno
+then
+  AC_MSG_ERROR([You don't have sort installed.])
+fi
+
 AC_PATH_PROG(WC, wc, no)
 if test x$ac_cv_path_WC = x
 then

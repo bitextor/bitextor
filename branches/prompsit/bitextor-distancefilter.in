@@ -21,10 +21,9 @@ from operator import itemgetter
 import Levenshtein
 
 def usage():
-  error = "USAGE: " + sys.argv[0] + " file index\n"
+  error = "USAGE: " + sys.argv[0] + " file\n"
   error += "WHERE\n"
   error += "   file   file with extension .lettr (language encoded and typed data with \'raspa\' -HTML skeleton-)\n"
-  error += "   index  file with extension .ridx (reverse index)\n"
   sys.exit(error)
 
 def rellenarDocumentos(fich, documentos):
@@ -57,15 +56,13 @@ for o, a in opts:
     sys.error("Unhandled option")
     usage()
 
-if (len(args) == 2):
+if (len(args) == 1):
   index = {}
   documentos = {}
   fich = args[0]
-  ridx = args[1]
   rellenarDocumentos(fich, documentos)
 
-  file = open(ridx, "r")
-  for i in file:
+  for i in sys.stdin:
     campos = i.split("\t")
     longitud = len(documentos[int(campos[0])])
     parecidos = {}

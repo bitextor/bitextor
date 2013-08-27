@@ -144,9 +144,9 @@ __PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
 __PREFIX__/bin/bitextor-ett2lett | \
 __PREFIX__/bin/bitextor-lett2lettr > $LETTR
 __PREFIX__/bin/bitextor-lett2idx $LETTR | \
-__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 > $RINDEX
-__PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
-__PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
+__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 | \
+__PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX
+__PREFIX__/bin/bitextor-aligner $LETTR $RINDEX $LANG1 $LANG2 | \
 __PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
 
 rm -Rf $LETTR $RINDEX

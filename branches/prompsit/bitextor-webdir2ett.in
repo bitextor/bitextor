@@ -44,6 +44,14 @@ done
 __JAVA__ -jar __TIKA__ --xml -s $tika_port &
 tika_pid=$!
 
+check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+timecounter=0
+while [ $check_running_tika -eq 0 ]; do
+  sleep 1s;
+  check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+  let timecounter=$timecounter+1
+done
+
 # Código aquí
 
 #

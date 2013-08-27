@@ -1,6 +1,6 @@
 #!__BASH__
 
-INPUT=/dev/stdin
+RINDEX=/dev/stdin
 OUTPUT=/dev/stdout
 LOG=$(mktemp /tmp/logbitextoraligner.XXXXXX)
 TEMP1=$(mktemp /tmp/texto1.XXXXXX)
@@ -38,14 +38,9 @@ done
 case $# in
   4)
     LISTADO="$1"
-    INPUT="$2"
+    RINDEX="$2"
     LANG1="$3"
     LANG2="$4"
-    ;;
-  3)
-    LISTADO="$1"
-    LANG1="$2"
-    LANG2="$3"
     ;;
   *)
     exit_program $(basename $0)
@@ -71,7 +66,7 @@ esac
 # Se coge el primero de los más parecidos.
 # Al coger los dos documentos, se les pasa simplereader.sh y split-sentences.perl y se aplica hunalign.
 #
-cat $INPUT | \
+cat $RINDEX | \
 __GAWK__ '{print $1 "\t" substr($2,1,index($2,":")-1)}' | \
 __PYTHON__ -c '
 import sys
@@ -80,7 +75,7 @@ import base64
 indices = {}
 documentos = {}
 
-# Se coge el fichero de la fila y su primero más parecido.
+# Se lee el .ridx y coge el fichero de la fila y su primero más parecido.
 for i in sys.stdin:
   campos = i.split("\t")
   if len(campos) == 2:
