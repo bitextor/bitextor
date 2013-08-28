@@ -1,0 +1,55 @@
+#!__ENV__ __PYTHON__
+
+#
+# 1. Read two .ridx files which were obtained from the same website in both language
+# directions (l1 to l2 and l2 to l1).
+# 2. Load the second file (l2 to l1) and keep the best candidate for every file in l2.
+# 3. Load the first file (l1 to l2) and print only those lines for which the prediction
+# of the best candidate for every file in l1 is the same than the one obtained in the
+# second file.
+#
+# output format:
+# num_doc_l1    [num_doc_l2:frequency]+
+#
+# Generate .ridx -> reverse index
+#
+
+import sys
+import getopt
+from operator import itemgetter
+
+def usage():
+  # Parametros: .ridx_l1 .ridx_l2
+  error = "USAGE: " + sys.argv[0] + " index_l1 index_l2\n"
+  error += "WHERE\n"
+  error += "   index_l1           file with extenxion .ridx (reverse index document) for the document alignment from language 1 (l1) to language 2 (l2)\n"
+  error += "   index_l2           file with extenxion .ridx (reverse index document) for the document alignment from language 2 (l2) to language 1 (l1)\n"
+  sys.exit(error)
+
+# Parametros: ridx1 ridx2
+if (len(sys.argv) == 3):
+
+  best_ridx2_inv = {}
+  
+  file_ridx2 = open(sys.argv[2], "r")
+  for line_ridx2 in file_ridx2:
+    fields=line_ridx2.strip().split("\t");
+    if len(fields) >= 2:
+      field1=fields[1].split(":")
+      if len(field1) == 2:
+        best_ridx2_inv[int(field1[0])]=int(fields[0])
+  file_ridx2.close()
+
+  file_ridx1 = open(sys.argv[1], "r")
+  for line_ridx1 in file_ridx1:
+    fields=line_ridx1.strip().split("\t");
+    if len(fields) >= 2:
+      field1=fields[1].split(":")
+      if len(field1) == 2:
+        if int(fields[0]) in best_ridx2_inv and  best_ridx2_inv[int(fields[0])] == int(field1[0]):
+          print line_ridx1.strip()
+  file_ridx1.close()
+
+else:
+  usage()
+
