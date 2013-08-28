@@ -118,7 +118,6 @@ for i in sys.stdin:
   file_output=""
 
   extractor = Extractor(extractor="ArticleExtractor", html=file.read())
-  sys.stderr.write(extractor.getHTML().encode("utf-8"))
 
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.connect(("localhost", '$tika_port'))

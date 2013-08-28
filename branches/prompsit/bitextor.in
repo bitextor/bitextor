@@ -23,7 +23,7 @@ exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
   #echo "          [-q min_quality] [url] lang1 lang2"
-  echo "USAGE: $1 [-f file] [-d dirname] [-l lett] [-t lettr] [-r revindex] [url] lang1 lang2"
+  echo "USAGE: $1 [-f file] [-d dirname] [-l lett] [-t lettr] [-r revindex] [-b] [-v vocabulary] [url] lang1 lang2"
   echo "WHERE"
   echo "  -f file         web addresses to crawl (one per line)"
   echo "  -d dirname      folder to store downloaded directories (web/ by default)"
@@ -34,6 +34,8 @@ exit_program()
   #echo "  -n index        file with extenxion .idx (index document) (temp.idx by default)"
   echo "  -r revindex     file with extension .ridx (reverse index) (/tmp/lettr.XXXXXX"
   echo "                  by default)"
+  echo "  -b              if this option is enabled, the document alignment is run in both directions and only those documents been chosen as first option mutually are accepted"
+  echo "  -v vocabulary   option for using a custom multilingual vocabulary for preliminar document alignment. The vocabulary must be a tab-separated file, in which the first line containains the names of the languages corresponding to each column, and the rest of the lines must contain the same word translated to all these languages."
   #echo "  -i dictionary   file with extension .dic Dictionary with pair of selected"
   #echo "                  languages. (installed dictionary at"
   #echo "                  /usr/local/share/bitextor/diccionario.dic by default)"
@@ -49,7 +51,9 @@ exit_program()
   exit 1
 }
 
-ARGS=$(getopt "f:d:l:t:r:h" $*)
+BIDIDOCALIGN=0
+
+ARGS=$(getopt "f:d:l:t:r:h:b" $*)
 
 set -- $ARGS
 for i
@@ -89,6 +93,14 @@ do
       shift
       RINDEX=$1
       shift
+      ;;
+    -v)
+      shift
+      VOCABULARY=$1
+      shift
+      ;;
+    -b)
+      BIDIDOCALIGN=1
       ;;
 #    -m)
 #      shift
@@ -143,9 +155,44 @@ fi
 __PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
 __PREFIX__/bin/bitextor-ett2lett | \
 __PREFIX__/bin/bitextor-lett2lettr > $LETTR
-__PREFIX__/bin/bitextor-lett2idx $LETTR | \
-__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 | \
-__PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX
+
+if [ $BIDIDOCALIGN -eq 1 ]; then
+  #Named pipe for paralelising obtaining the initial index for the ridx 1
+  index_pipe1=$(mktemp /tmp/index_pipe.XXXXXX)
+  rm $index_pipe1
+  mkfifo $index_pipe1
+
+  #Named pipe for paralelising obtaining the initial index for the ridx 2
+  index_pipe2=$(mktemp /tmp/index_pipe.XXXXXX)
+  rm $index_pipe2
+  mkfifo $index_pipe2
+
+  __PREFIX__/bin/bitextor-lett2idx $LETTR | \
+  tee $index_pipe1 > $index_pipe2 &
+
+  RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
+  RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
+
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 < $index_pipe1 | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX1 &
+
+  rindex1_pid=$!
+
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG2 $LANG1 < $index_pipe2 | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX2
+
+  wait $rindex1_pid
+
+  rm $index_pipe1 $index_pipe2
+
+  __PREFIX__/bin/bitextor-combineridx $RINDEX1 $RINDEX2 > $RINDEX
+  rm $RINDEX1 $RINDEX2
+else
+  __PREFIX__/bin/bitextor-lett2idx $LETTR | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX
+fi
+
 __PREFIX__/bin/bitextor-aligner $LETTR $RINDEX $LANG1 $LANG2 | \
 __PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
 
