@@ -35,6 +35,10 @@ bitextor-aligner: bitextor-aligner.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__BASH__!$(BASH)!g" | \
 	sed "s!__GAWK__!$(GAWK)!g" | \
+	sed "s!__CUT__!$(CUT)!g" | \
+	sed "s!__WC__!$(WC)!g" | \
+	sed "s!__SED__!$(SED)!g" | \
+	sed "s!__GREP__!$(GREP)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__PERL__!$(PERL)!g" >$@
 

@@ -109,20 +109,32 @@ for k in indices:
 ' $LISTADO 2>> $LOG | \
 while read line;
 do
+  echo "<p>" >> $TEMP1
+  echo $line | __GAWK__ '{print "<file lang=\"'$LANG1'\">"$3"</file>"}' >> $TEMP1
+  echo "<p>" >> $TEMP1
   echo $line | __GAWK__ '{print $4}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 > $TEMP1 2>> $LOG
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 >> $TEMP1 2>> $LOG
+  echo "<p>" >> $TEMP2
+  echo $line | __GAWK__ '{print "<file lang=\"'$LANG2'\">"$5"</file>"}' >> $TEMP2
+  echo "<p>" >> $TEMP2
   echo $line | __GAWK__ '{print $6}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 > $TEMP2 2>> $LOG
-  
-  __PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 2>> $LOG | \
-  while read biline;
-  do
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 >> $TEMP2 2>> $LOG
+done
+__PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 2>> $LOG | \
+__GREP__ -v '<p>' | \
+while read biline;
+do
+  if [ $(echo "$biline" | __GREP__ -E '<file [^>]+>[^<]+</file>\s+<file [^>]+>[^<]+</file>' | __WC__ -l) -gt 0 ]; then
+    biline_nohtml=$(echo "$biline" | __SED__ 's/<[^>]*>//g')
+    file1=$(echo "$biline_nohtml" | __CUT__ -f 1)
+    file2=$(echo "$biline_nohtml" | __CUT__ -f 2)
+  else
     ALINEADA="$(echo "$biline" | __GAWK__ '{if(NF>1) split($0,campos,"\t"); print campos[1] "\t" campos[2] "\t" campos[3];}')"
     if !(test "$ALINEADA" == "		"); # Cuidado: Entre comillas hay dos tabuladores (pero no es \t\t).
     then
-      echo "$(echo $line | __GAWK__ '{print $3 "\t" $5 "\t"}')" "$ALINEADA" >> $OUTPUT
+      echo -e "$file1\t$file2\t$ALINEADA" >> $OUTPUT
     fi
-  done
+  fi
 done
 
 rm -Rf $TEMP1 $TEMP2

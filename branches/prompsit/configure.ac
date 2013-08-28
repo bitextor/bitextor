@@ -185,6 +185,16 @@ then
   AC_MSG_ERROR([You don't have comm installed.])
 fi
 
+AC_PATH_PROG(SED, sed, no)
+if test x$ac_cv_path_SED = x
+then
+  AC_MSG_ERROR([You don't have sed installed.])
+fi
+if test x$ac_cv_path_SED = xno
+then
+  AC_MSG_ERROR([You don't have sed installed.])
+fi
+
 AC_PATH_PROG(CUT, cut, no)
 if test x$ac_cv_path_CUT = x
 then
