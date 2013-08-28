@@ -53,7 +53,7 @@ exit_program()
 
 BIDIDOCALIGN=0
 
-ARGS=$(getopt "f:d:l:t:r:h:b" $*)
+ARGS=$(getopt "v:f:d:l:t:r:h:b" $*)
 
 set -- $ARGS
 for i
@@ -101,6 +101,7 @@ do
       ;;
     -b)
       BIDIDOCALIGN=1
+      shift
       ;;
 #    -m)
 #      shift
