@@ -5,6 +5,8 @@ OUTPUT=/dev/stdout
 FILE=""
 URL=""
 DIRNAME="web"
+#Path to default dictionary: it can be replaced by using option -v
+VOCABULARY="__PREFIX__/share/bitextor/diccionario.dic"
 #LETT=$(mktemp /tmp/lett.XXXXXX)
 LETTR=$(mktemp /tmp/lettr.XXXXXX)
 RINDEX=$(mktemp /tmp/ridx.XXXXXX)

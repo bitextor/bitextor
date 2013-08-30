@@ -117,7 +117,6 @@ for i in sys.stdin:
       else:
         file_output=file_output+data
     s.close()
-    extractor = Extractor(extractor="ArticleExtractor", html=file_output)
 
     e = base64.b64encode(file_output)
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64

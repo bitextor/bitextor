@@ -10,7 +10,7 @@ bin_SCRIPTS=bitextor bitextor-aligner bitextor-cleantextalign \
             bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr \
             bitextor-webdir2ett bitextor-documentaligner \
-            bitextor-combineridx
+            bitextor-combineridx bitextor-ridx2filenames
             
 man_MANS=bitextor.1 bitextor-aligner.1 bitextor-cleantextalign.1 \
          bitextor-distancefilter.1 bitextor-downloadweb.1 bitextor-ett2lett.1 \
@@ -27,6 +27,11 @@ bitextor: bitextor.in
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-combineridx: bitextor-combineridx.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__ENV__!$(ENV)!g" >$@
+
+bitextor-ridx2filenames: bitextor-ridx2filenames.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
