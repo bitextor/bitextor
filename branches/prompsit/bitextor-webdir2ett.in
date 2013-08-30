@@ -68,75 +68,64 @@ done
 # Genera .ett -> encoded and typed text
 #
 
-# Se busca en todo el directorio dado
-find "$WEBDIR" | \
+# Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
+find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | \
+/usr/bin/gawk '{
+  if ( match($2, "text/.*") != 0 ){
+    printf substr($1,1,length($1)-1);    # nombre_fichero
+    printf "\t";
+    printf substr($2,1,length($2)-1);    # formato: text/html etc.
+    printf "\t";
+    print substr($3,9,length($3));       # encoding
+  }
+}' | \
 # Se pasan a md5
 __PYTHON__ -c 'import sys
 import hashlib
-import os
-
-for i in sys.stdin: 
-  if os.path.isdir(i.strip()):
-    continue
-  file = open(i.strip(), "r")  # la i es el nombre del fichero
-  c = hashlib.md5()
-  for j in file:
-    c.update(j)
-  file.close()
-  print "{0}\t{1}".format(c.hexdigest(), i.strip())' 2>> $LOG | \
-# md5_fichero	nombre_fichero
-# Se ordenan y se eliminan los repetidos
-sort | __GAWK__ -v logfile="$LOG" '{
-  if(var != $1)
-    printf "\"" $2 "\"\n";    # nombre_fichero
-  else 
-    print "Eliminando repetido:\t" $0 >> logfile;
-  var = $1;}' | \
-# Se muestra el formato y tipo de todos los ficheros
-xargs file --mime-type --mime-encoding | \
-#grep text/html | \
-__GAWK__ '{
-  printf substr($1,1,length($1)-1);    # nombre_fichero
-  printf "\t";
-  printf substr($2,1,length($2)-1);    # formato: text/html etc.
-  printf "\t"; 
-  print substr($3,9,length($3));       # encoding
-}' | \
-#Se codifica el fichero en bas64 y se almacena.
-__PYTHON__ -c '
-import sys
 import os
 import base64
 import socket
 from boilerpipe.extract import Extractor
 
-# Para cada fichero le pasamos el tidy y lo convertimos en base64
+reload(sys)
+sys.setdefaultencoding("UTF-8")
 
+seen_md5=[]
 for i in sys.stdin:
-  campos = i.split("\t")
-  file = open(campos[0], "r")
-  file_output=""
-
-  extractor = Extractor(extractor="ArticleExtractor", html=file.read())
-
-  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  s.connect(("localhost", '$tika_port'))
-  s.sendall(extractor.getHTML().encode("utf-8"))
-  s.shutdown(socket.SHUT_WR)
-  while 1:
-    data = s.recv(1024)
-    if data == "":
-      break
-    else:
-      file_output=file_output+data
-  s.close()
-
-  e = base64.b64encode(file_output)
+  fields = i.split()
+  file = open(fields[0], "r")  # la i es el nombre del fichero
+  c = hashlib.md5()
+  #Computing md5 for the file
+  for j in file:
+    c.update(j)
   file.close()
+  #Checking for duplicates
+  if c.hexdigest() in seen_md5:
+    sys.stderr.write("Eliminando repetido:\t"+fields[0]+"\n")
+  else:
+    file = open(fields[0], "r")
+    extractor = Extractor(extractor="ArticleExtractor", html=file.read())
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(("localhost", '$tika_port'))
+    s.sendall(extractor.getHTML())
+    s.shutdown(socket.SHUT_WR)
+    file_output=""
+    while 1:
+      data = s.recv(1024)
+      if data == "":
+        break
+      else:
+        file_output=file_output+data
+    s.close()
+    extractor = Extractor(extractor="ArticleExtractor", html=file_output)
 
-  #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
-  print "{0}\t{1}\t{2}\t{3}".format(campos[2].strip(),campos[1],os.path.relpath(campos[0],sys.argv[1]),e)' $WEBDIR > $OUTPUT 2>> $LOG
+    e = base64.b64encode(file_output)
+    #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+    print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
+    file.close()
+' $WEBDIR > $OUTPUT 2>> $LOG
 
 rm -Rf $TEMPCONV 2>> $LOG
 
 __KILL__ $tika_pid
+
