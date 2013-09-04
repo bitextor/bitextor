@@ -1,7 +1,6 @@
 #!__BASH__
 
 OUTPUT=/dev/stdout
-LOG=$(mktemp /tmp/logbitextorwebdir2ett.XXXXXX)
 TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
 
 exit_program()
@@ -122,9 +121,9 @@ for i in sys.stdin:
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
     file.close()
-' $WEBDIR > $OUTPUT 2>> $LOG
+' $WEBDIR > $OUTPUT
 
-rm -Rf $TEMPCONV 2>> $LOG
+rm -Rf $TEMPCONV
 
 __KILL__ $tika_pid
 

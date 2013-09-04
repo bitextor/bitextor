@@ -1,76 +1,33 @@
-#!__BASH__
-
-INPUT=/dev/stdin
-OUTPUT=/dev/stdout
-LOG=$(mktemp /tmp/logbitextorlett2idx.XXXXXX)
-TEMP=$(mktemp /tmp/bitextorlett2idx.XXXXXX)
-CONT=0    # Contador para el número de documento.
-
-exit_program()
-{
-  echo "USAGE: $1 [file]"
-  echo "WHERE"
-  echo "   file   file with extension .lett (language encoded and typed data) (standard"
-  echo "          input by default)"
-  exit 1
-}
-
-ARGS=$(getopt "h" $*)
-
-set -- $ARGS
-for i
-do
-  case "$i" in
-    -h)
-      exit_program $(basename $0)
-      ;;
-    --)
-      shift
-      break
-      ;;
-  esac
-done
-
-case $# in
-  0)
-    ;;
-  1)
-    INPUT="$1"
-    ;;
-  *)
-    exit_program $(basename $0)
-    ;;
-esac
-
-# Código aquí
+#!__ENV__ __PYTHON__
 
 #
-# 1. Leer .lett línea a línea
-# 2. Llama a la función limpiar_texto para quitar HTML
-# 3. Se separa el texto por palabras y se ordenan en minúsculas
-# 4. Se saca cada palabra en un temporal con formato: language	word    num_doc
-# 5. Se unifican palabras iguales que aparecen en distintos documentos
+# 1. Read every line from .lett file
+# 2. For each of them, clean the text and split it in words
+# 3. Lowercase and create a bag of words
+# 4. Creating a list with the words corresponding to every language and a list of the documents in which these words appear
 #
-# Formato final del documento:
+# Output format:
 # language      word    num_doc[:inc(num_doc)]*
 #
-# Genera .idx -> index
+# Generates .idx -> index
 #
 
-limpiar_texto(){
-  # Se coge el base64
-  __GAWK__ '{print $5}' | \
-  # Se decodifica el base64 y se limpia el texto con HTMLParser
-  __PYTHON__ -c '
 import sys
+import string
 import base64
+import re
 from HTMLParser import HTMLParser
+from optparse import OptionParser
+
+reload(sys)
+sys.setdefaultencoding("UTF-8")
 
 class Parser(HTMLParser):
 
   def __init__( self ):
     HTMLParser.__init__( self )
     self.script = 0
+    self.output = []
 
   def handle_starttag( self, tag, attrs ):
     if tag == "script" or tag == "noscript":
@@ -78,87 +35,59 @@ class Parser(HTMLParser):
 
   def handle_data( self, data ):
     if self.script == 0:
-      sys.stdout.write(data)
+      self.output.append(data)
 
   def handle_endtag( self, tag ):
     if tag == "script" or tag == "noscript":
       self.script = 0
 
-for i in sys.stdin:
-  e = base64.b64decode(i)
-  Parser().feed(e)
-' 2>> $LOG
-}
+oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .lett (language encoded and typed text) (standard input is used if this argument is not provided)")
 
-# Para cada fichero
-cat $INPUT | \
-# Inicio while
-while read line;
-do
-  # Se limpia el texto
-  TEXTO=$(echo "$line" | limpiar_texto)
-  # Se extrae su idioma
-  IDIOMA=$(echo "$line" | __GAWK__ '{print $1}')
-  # Se extraen las palabras, se ordenan y se muestran junto con el número de documento en el que aparecen.
-  echo $TEXTO | \
-  __GAWK__ '{print $0}' | \
-__PYTHON__ -c '
-import sys
+(options, args) = oparser.parse_args()
 
-for i in sys.stdin:
-  campos = i.split()
-  for j in campos:
-    # Quito 0123456789 del filtro.
-    print j.strip(",;.:-_+*\"<>|)(»«][}{?¿¡!/\\").lower()  # Hay más caracteres raros que no se pueden quitar.
-' 2>> $LOG | \
-# Se realiza un sort sin hacer caso del locale.
-LC_COLLATE=C sort | uniq -c | \
-# Se sacan a un temporal todas las palabras junto con su idioma y el número de documento en el que aparecen.
-__GAWK__ -v cont=$CONT -v idioma=$IDIOMA '{
-if($2 != ""){
-  printf idioma "\t" $2 "\t"
-  printf "%05d\n", cont}
-}' >> $TEMP 2>> $LOG
+if len(args) > 0:
+  reader = open(args[0],"r")
+else:
+  reader = sys.stdin
 
-  ## Contador para el número de documento.
-  ((CONT++))
-# Fin while
-done
+docnumber = 0
+word_map = {}
+for line in reader:
+  ##################
+  #Parsing the text:
+  ##################
+  fields=line.strip().split("\t")
+  lang=fields[0]
+  #Decoding base 64:
+  e = base64.b64decode(fields[4])
+  p=Parser()
+  p.feed(e)
+  text=" ".join(p.output)
+  #Removing non-aplphanumerics:
+  clean_text=re.sub(r"\s+", " ", text.lower())
+  clean_text=re.sub(r"([^"+string.punctuation+"])["+string.punctuation+"]+(\s)", r"\1\2", clean_text)
+  clean_text=re.sub(r"(\s)["+string.punctuation+"]+([^"+string.punctuation+"])", r"\1\2", clean_text)
+  clean_text.strip(string.punctuation)
+  #Getting the bag of words in the document
+  sorted_uniq_wordlist = set(clean_text.split())
 
-# Ordenar las palabras.
-cat $TEMP | LC_COLLATE=C sort | __PYTHON__ -c '
-import sys
-
-anterior_id = ""
-anterior_p = ""
-acum = 0
-
-for i in sys.stdin:
-  campos = i.split()
-  numdoc = int(campos[2])
-
-  if anterior_id == "":
-    anterior_id = campos[0]
-  if campos[0] == anterior_id:
-    if anterior_p == "":
-      sys.stdout.write(campos[0] + "\t" + campos[1] + "\t")
-      anterior_p = campos[1].lower()
-      primero = True
-    if campos[1].lower() == anterior_p:
-      numdoc = numdoc - acum
-      if primero == True:
-        sys.stdout.write(campos[2])
-        primero = False
+  for word in sorted_uniq_wordlist:
+    if lang in word_map:
+      if word in word_map[lang]:
+        word_map[lang][word].append(docnumber)
       else:
-        sys.stdout.write(":" + str(numdoc))
+        word_map[lang][word] = []
+        word_map[lang][word].append(docnumber)
     else:
-      acum = 0
-      sys.stdout.write("\n" + campos[0] + "\t" + campos[1] + "\t" + str(numdoc))
-      anterior_p = campos[1].lower()
-      primero = False
-  else:
-    anterior_id = ""
-  acum = acum + numdoc
-' > $OUTPUT 2>> $LOG
+      word_map[lang] = {}
+      word_map[lang][word] = []
+      word_map[lang][word].append(docnumber)
+  docnumber=docnumber+1
 
-rm -Rf $TEMP
+for map_lang, map_vocabulary in word_map.items():
+  for map_word, map_doc in map_vocabulary.items():
+    sorted_docs=sorted(word_map[map_lang][map_word], reverse=True)
+    for doc_list_idx in range(0, len(sorted_docs)-1):
+      sorted_docs[doc_list_idx]=str(sorted_docs[doc_list_idx]-sorted_docs[doc_list_idx+1])
+    sorted_docs[len(sorted_docs)-1]=str(sorted_docs[len(sorted_docs)-1])
+    print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))

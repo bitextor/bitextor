@@ -331,21 +331,6 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-  AC_MSG_CHECKING([for utidylib for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import tidy; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- python-utidylib:   Please, install v0.2 or later and try again. http://utidylib.berlios.de/
-])
-  fi
-
   AC_MSG_CHECKING([for itemgetter for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 from operator import itemgetter; \

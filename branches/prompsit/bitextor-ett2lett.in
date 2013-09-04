@@ -1,68 +1,19 @@
-#!__BASH__
-
-INPUT=/dev/stdin
-OUTPUT=/dev/stdout
-LOG=$(mktemp /tmp/logbitextorett2lett.XXXXXX)
-
-exit_program()
-{
-  echo "USAGE: $1 [file]"
-  echo "WHERE"
-  echo "   file   file with extension .ett (encoded and typed text) (standard"
-  echo "          input by default)"
-  exit 1
-}
-
-ARGS=$(getopt "h" $*)
-
-set -- $ARGS
-for i
-do
-  case "$i" in
-    -h)
-      exit_program $(basename $0)
-      ;;
-    --)
-      shift
-      break
-      ;;
-  esac
-done
-
-case $# in
-  1)
-    INPUT="$1"
-    ;;
-  0)
-    ;;
-  *)
-    exit_program $(basename $0)
-    ;;
-esac
-
-# Código aquí
+#!__ENV__ __PYTHON__
 
 #
-# 1. Leer .ett línea a línea
-# 2. Llama a la función detectar_idioma_linea
-# 3. Se decodifica el campo base64 y se quita HTML
-# 4. Detectar idioma con text_cat, si hay error -> (log)
-# 5. Crea .lett, si no detecta idioma -> (log)
+# 1. Read lines from .ett file
+# 2. For eac line, the HTML is cleaned and the language is detected for the raw text
+# 3. Output is printed following the format:
 #
-# Formato final del documento:
 # language	encoding	mimetype	url	content(base_64)
 #
-# Genera .lett -> language encoded and typed text
 #
 
-# Se recorren las líneas del fichero de entrada y se detecta su idioma para cada una de
-# ellas.
-cat $INPUT | \
-  __PYTHON__ -c '
 import sys
 import base64
 from HTMLParser import HTMLParser
 import langid
+from optparse import OptionParser
 
 #Class for parsing the XHTML files
 class Parser(HTMLParser):
@@ -84,8 +35,21 @@ class Parser(HTMLParser):
     if tag == "script" or tag == "noscript":
       self.script = 0
 
+oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .ett (language encoded and typed text) (standard input is used if this argument is not provided)")
+oparser.add_option("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
+(options, args) = oparser.parse_args()
+
+lags=[]
+if options.langlist != None:
+  langs=options.langlist.strip().split(",")
+
+if len(args) > 0:
+  reader = open(args[0],"r")
+else:
+  reader = sys.stdin
+
 #Reading line by line from the standard output
-for line in sys.stdin:
+for line in reader:
   linefields=line.split()
   #decoding the b64 original webpage
   e = base64.b64decode(linefields[3]).replace("\n", " ")
@@ -93,6 +57,5 @@ for line in sys.stdin:
   p.feed(e)
   #detecting language
   lang, conf = langid.classify(" ".join(p.output))
-  sys.stdout.write("{0}\t{1}".format(lang, line))
-
-' 2>> $LOG >> $OUTPUT
+  if len(langs)>0 and lang in langs:
+    sys.stdout.write("{0}\t{1}".format(lang, line))

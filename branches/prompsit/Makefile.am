@@ -73,10 +73,8 @@ bitextor-downloadweb: bitextor-downloadweb.in
 
 bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
-	sed "s!__BASH__!$(BASH)!g" | \
-	sed "s!__GAWK__!$(GAWK)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" | \
-	sed "s!__PERL__!$(PERL)!g" >$@
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-idx2ridx: bitextor-idx2ridx.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
@@ -85,13 +83,13 @@ bitextor-idx2ridx: bitextor-idx2ridx.in
 
 bitextor-lett2idx: bitextor-lett2idx.in
 	sed "s!__BASH__!$(BASH)!g" $< | \
-	sed "s!__GAWK__!$(GAWK)!g" | \
+	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-lett2lettr: bitextor-lett2lettr.in
-	sed "s!__BASH__!$(BASH)!g" $< | \
-	sed "s!__GAWK__!$(GAWK)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__ENV__!$(ENV)!g" >$@
 
 bitextor-webdir2ett: bitextor-webdir2ett.in
 	sed "s!__BASH__!$(BASH)!g" $< | \

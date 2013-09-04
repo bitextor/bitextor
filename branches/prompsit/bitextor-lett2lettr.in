@@ -1,120 +1,63 @@
-#!__BASH__
-
-INPUT=/dev/stdin
-OUTPUT=/dev/stdout
-LOG=$(mktemp /tmp/logbitextorlett2lettr.XXXXXX)
-
-exit_program()
-{
-  echo "USAGE: $1 [file]"
-  echo "WHERE"
-  echo "   file   file with extension .lett (language encoded and typed text) (standard"
-  echo "          input by default)"
-  exit 1
-}
-
-ARGS=$(getopt "h" $*)
-
-set -- $ARGS
-for i
-do
-  case "$i" in
-    -h)
-      exit_program $(basename $0)
-      ;;
-    --)
-      shift
-      break
-      ;;
-  esac
-done
-
-case $# in
-  0)
-    ;;
-  1)
-    INPUT="$1"
-    ;;
-  *)
-    exit_program $(basename $0)
-    ;;
-esac
-
-
-
-# Código aquí
+#!__ENV__ __PYTHON__
 
 #
-# 1. Se recorre el .lett y se llama a raspa
-# 2. Sobre el .lett se coge el base64 y se saca una cadena formada sólo por
-#    las etiquetas HTML que forman el documento
-# 3. Se modifica el .lett añadiendo el campo raspa
+# 1. File .lett is processed to obtain a representation of the structure formatted as a string (here called 'raspa'), containing both html tags and the number of words in the text blocks
+# 2. The final represetntation is added to the output together with the input elements
 #
-# Formato final del documento:
+# Final output format:
 # language	encoding	mimetype	url	content(base_64)	raspa
 #
-# Genera .lettr -> language encoded and typed text with raspa
+# Generates a .lettr -> language encoded and typed text with raspa
 #
 
-raspa()
-{
-  # Se coge el base64
-  __GAWK__ '{print $5}' | \
   # Se decodifica el base64
-  __PYTHON__ -c '
 import sys
 import base64
 import math
+import fileinput
 from HTMLParser import HTMLParser
-
-def contar_palabras( data ):
-  return len(data.split())
+from optparse import OptionParser
 
 class Parser(HTMLParser):
 
   def __init__( self ):
     HTMLParser.__init__( self )
     self.script = 0
+    self.output = []
 
   def handle_starttag( self, tag, attrs ):
     if tag == "script" or tag == "noscript":
       self.script = 1
     else:
-      sys.stdout.write("_" + tag + "_")
+      self.output.append("_" + tag + "_")
 
   def handle_data( self, data ):
     if self.script == 0:
       if data != "":
-        palabras = contar_palabras(data)
-        if palabras > 0:
-          #sys.stdout.write(str(palabras))
-          for j in range(int(math.log(palabras, 2))):
-            sys.stdout.write("_")
+        nwords=len(data.split())
+        if nwords > 0:
+          #Replacing every word in text by a "_" symbol
+          self.output.append("_"*int(math.log(nwords, 2)))
 
   def handle_endtag( self, tag ):
     if tag == "script" or tag == "noscript":
       self.script = 0
     else:
-      sys.stdout.write("_" + tag + "_")
+      self.output.append("_" + tag + "_")
 
-for i in sys.stdin:
-  e = base64.b64decode(i)
+oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .lett (language encoded and typed text) (standard input is used if this argument is not provided)")
+#oparser.add_option("-h", "--help", help="Shows this help message", default=True)
+(options, args) = oparser.parse_args()
+
+if len(args) > 0:
+  reader = open(args[0],"r")
+else:
+  reader = sys.stdin
+
+for line in reader:
+  content=line.strip().split("\t")
+  e = base64.b64decode(content[4])
   if e != "":
-    Parser().feed(e)
-' 2>> $LOG
-}
-
-# Se recorren las líneas del fichero de entrada y, en la función raspa, pasa cada fichero a un
-# formato preparado para distancia de edición.
-cat $INPUT | \
-while read line;
-do
-  RASPA="$(echo "$line" | raspa)"
-  if !(test -z $RASPA);
-  then
-    echo $line | __GAWK__ -v raspa="$RASPA" '{print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" raspa;}' >> $OUTPUT
-  else
-    echo "ERROR: RASPA VACÍA - $RASPA	$line" >> $LOG
-  fi
-done
-
+    p=Parser()
+    p.feed(e)
+    print line.strip()+"\t"+"".join(p.output)

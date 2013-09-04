@@ -10,6 +10,7 @@ VOCABULARY="__PREFIX__/share/bitextor/diccionario.dic"
 #LETT=$(mktemp /tmp/lett.XXXXXX)
 LETTR=$(mktemp /tmp/lettr.XXXXXX)
 RINDEX=$(mktemp /tmp/ridx.XXXXXX)
+LOGDIR=$(mktemp -d /tmp/bitextorlogs.XXXXXX)
 LANG1=""
 LANG2=""
 #DIC=""
@@ -55,7 +56,7 @@ exit_program()
 
 BIDIDOCALIGN=0
 
-ARGS=$(getopt "v:f:d:l:t:r:h:b" $*)
+ARGS=$(getopt "v:f:d:l:t:r:h:b:" $*)
 
 set -- $ARGS
 for i
@@ -102,7 +103,8 @@ do
       shift
       ;;
     -b)
-      BIDIDOCALIGN=1
+      shift
+      BIDIDOCALIGN=$1
       shift
       ;;
 #    -m)
@@ -155,11 +157,11 @@ then
     __PREFIX__/bin/bitextor-downloadweb $line $DIRNAME
   done
 fi
-__PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
-__PREFIX__/bin/bitextor-ett2lett | \
-__PREFIX__/bin/bitextor-lett2lettr > $LETTR
+__PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $LOGDIR/bitextorwebdir2ett.log | \
+__PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $LOGDIR/bitextorett2lett.log | \
+__PREFIX__/bin/bitextor-lett2lettr > $LETTR 2> $LOGDIR/bitextorlett2lettr.log
 
-if [ $BIDIDOCALIGN -eq 1 ]; then
+if !(test -z $BIDIDOCALIGN); then
   #Named pipe for paralelising obtaining the initial index for the ridx 1
   index_pipe1=$(mktemp /tmp/index_pipe.XXXXXX)
   rm $index_pipe1
@@ -170,34 +172,34 @@ if [ $BIDIDOCALIGN -eq 1 ]; then
   rm $index_pipe2
   mkfifo $index_pipe2
 
-  __PREFIX__/bin/bitextor-lett2idx $LETTR | \
+  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | \
   tee $index_pipe1 > $index_pipe2 &
 
   RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
   RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
 
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 < $index_pipe1 | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX1 &
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 < $index_pipe1 2> $LOGDIR/bitextoridx2ridx_$LANG1-$LANG2.log | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG1-$LANG2.log > $RINDEX1 &
 
   rindex1_pid=$!
 
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG2 $LANG1 < $index_pipe2 | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX2
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG2 $LANG1 < $index_pipe2 2> $LOGDIR/bitextoridx2ridx_$LANG2-$LANG1.log | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG2-$LANG1.log > $RINDEX2
 
   wait $rindex1_pid
 
   rm $index_pipe1 $index_pipe2
 
-  __PREFIX__/bin/bitextor-combineridx $RINDEX1 $RINDEX2 > $RINDEX
+  __PREFIX__/bin/bitextor-combineridx -1 $RINDEX1 -2 $RINDEX2 -m $BIDIDOCALIGN > $RINDEX 2> $LOGDIR/bitextorcombineridx.log
   rm $RINDEX1 $RINDEX2
 else
-  __PREFIX__/bin/bitextor-lett2idx $LETTR | \
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR > $RINDEX
+  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> /tmp/bitextorlett2idx.log | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> /tmp/bitextoridx2ridx.log | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> /tmp/bitextordistancefilter.log > $RINDEX
 fi
 
-__PREFIX__/bin/bitextor-aligner $LETTR $RINDEX $LANG1 $LANG2 | \
-__PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
+__PREFIX__/bin/bitextor-aligner $LETTR $RINDEX $LANG1 $LANG2 2> /tmp/bitextoraligner.log | \
+__PREFIX__/bin/bitextor-cleantextalign 2> /tmp/bitextorcleantextalign.log > $OUTPUT
 
 rm -Rf $LETTR $RINDEX
 

@@ -5,7 +5,6 @@ OUTPUT=/dev/stdout
 MAXLINES=5
 MINQUALITY=0
 BYTEXT=0
-LOG=$(mktemp /tmp/logbitextorcleantextalign.XXXXXX)
 
 exit_program()
 {
@@ -86,7 +85,7 @@ for i in sys.stdin:
       sys.stderr.write("LINEA MAL ALINEADA: " + i)
   else:
     sys.stderr.write("LINEA MAL ALINEADA: " + i)
-' $MINQUALITY >$OUTPUT 2>> $LOG
+' $MINQUALITY >$OUTPUT
 else
   cat $INPUT | \
   __PYTHON__ -c '
@@ -125,6 +124,6 @@ if maxl >= lineas:
   sys.stdout.write(cadena)
 else:
   sys.stderr.write("TEXTO MAL ALINEADO: " + cadena)
-' $MINQUALITY $MAXLINES >$OUTPUT 2>> $LOG
+' $MINQUALITY $MAXLINES >$OUTPUT
 fi
 

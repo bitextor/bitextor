@@ -2,7 +2,6 @@
 
 RINDEX=/dev/stdin
 OUTPUT=/dev/stdout
-LOG=$(mktemp /tmp/logbitextoraligner.XXXXXX)
 TEMP1=$(mktemp /tmp/texto1.XXXXXX)
 TEMP2=$(mktemp /tmp/texto2.XXXXXX)
 
@@ -106,21 +105,21 @@ for k in indices:
     del documentos[k] # se deben borrar los que ya han sido alineados
 #    del documentos[indices[k]]
 
-' $LISTADO 2>> $LOG | \
+' $LISTADO | \
 while read line;
 do
   echo "<p>" >> $TEMP1
   echo $line | __GAWK__ '{print "<file lang=\"'$LANG1'\">"$3"</file>"}' >> $TEMP1
   echo "<p>" >> $TEMP1
-  echo $line | __GAWK__ '{print $4}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 >> $TEMP1 2>> $LOG
+  echo $line | __GAWK__ '{print $4}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py | \
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 >> $TEMP1
   echo "<p>" >> $TEMP2
   echo $line | __GAWK__ '{print "<file lang=\"'$LANG2'\">"$5"</file>"}' >> $TEMP2
   echo "<p>" >> $TEMP2
-  echo $line | __GAWK__ '{print $6}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py 2>>$LOG | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 >> $TEMP2 2>> $LOG
+  echo $line | __GAWK__ '{print $6}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py | \
+  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 >> $TEMP2
 done
-__PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 2>> $LOG | \
+__PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 | \
 __GREP__ -v '<p>' | \
 while read biline;
 do
