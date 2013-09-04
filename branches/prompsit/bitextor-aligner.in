@@ -1,139 +1,151 @@
-#!__BASH__
-
-RINDEX=/dev/stdin
-OUTPUT=/dev/stdout
-TEMP1=$(mktemp /tmp/texto1.XXXXXX)
-TEMP2=$(mktemp /tmp/texto2.XXXXXX)
-
-exit_program()
-{
-  echo "USAGE: $1 file [index] lang1 lang2"
-  echo "WHERE"
-  echo "   file     file with extension .lett (language encoded and typed text)"
-  echo "            or .lettr (language encoded and typed text with raspa)"
-  echo "   index    file with extension .ridx (reverse index) (standard input"
-  echo "            by default)"
-  echo "   lang1    selected language with two letters code: en, es, fr, de ..."
-  echo "   lang2    selected language with two letters code: en, es, fr, de ..."
-  exit 1
-}
-
-ARGS=$(getopt "h" $*)
-
-set -- $ARGS
-for i
-do
-  case "$i" in
-    -h)
-      exit_program $(basename $0)
-      ;;
-    --)
-      shift
-      break
-      ;;
-  esac
-done
-
-case $# in
-  4)
-    LISTADO="$1"
-    RINDEX="$2"
-    LANG1="$3"
-    LANG2="$4"
-    ;;
-  *)
-    exit_program $(basename $0)
-    ;;
-esac
-
-# Código aquí
+#!__ENV__ __PYTHON__
 
 #
-# 1. Se recorre el .ridx y se cogen cada uno y su más parecido
-# 2. Sobre el .lett se coge el base64 y la url de los dos documentos
-# 3. Se limpia el texto de ambos documentos y se separa por frases
-# 4. Se aplica hunalign
-# 5. Se unifica todo el alineamiento en un fichero .align
-#
-# Formato final del documento:
-# url1    url2    text1    text2    quality
-#
-# Genera .align -> aligment
+# 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a dictionary
+# 2. For every file (corresponding to the indexes) the text encoded in b64 is decoed and cleaned
+# 3. Text is cleaned and, for every aligned pair, both texts are dumped, in the same order in two temporary files. Every text block is sepparated to the previous one by a block:
+#    <p>
+#    <file lang="lang_id">file_name</file>
+#    <p>
+# With this separation, hungalign will only try to align lines for between the same pair of files and it will be possible to recover the name of the files from which the segments were obtained
+# 4. The name of the temporary files are passed to the next script
+# 
+# Output format:
+#   tmp_file_lang1	tmp_file_lang2
 #
 
 #
-# Se coge el primero de los más parecidos.
-# Al coger los dos documentos, se les pasa simplereader.sh y split-sentences.perl y se aplica hunalign.
 #
-cat $RINDEX | \
-__GAWK__ '{print $1 "\t" substr($2,1,index($2,":")-1)}' | \
-__PYTHON__ -c '
 import sys
+import os
 import base64
+import subprocess
+from optparse import OptionParser
+import tempfile
+from operator import itemgetter
+
+oparser = OptionParser(usage="usage: %prog [options] [ridx_file]\n is a file with extension .ridx (reverse index) (standard input by default)")
+oparser.add_option("-1", "--language1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
+oparser.add_option("-2", "--language2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
+oparser.add_option("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", default=None)
+oparser.add_option("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file when performing bidirectional document alignment. This parameter is set by default to 1, which means that only documents being mutualy the best alignment option will be aligned. Note that this option is only used when two ridx files are provided", type="int", dest="candidate_num", default=1)
+
+(options, args) = oparser.parse_args()
+
+if options.lang1 == None:
+  sys.stderr.write("Undefined value for language 1. Set this value by using the parameter '-1'")
+  sys.exit(-1)
+
+if options.lang2 == None:
+  sys.stderr.write("Undefined value for language 2. Set this value by using the parameter '-2'")
+  sys.exit(-1)
+
+if options.lettr == None:
+  sys.stderr.write("Undefined value for path to *.lettr file. Set this value by using the parameter '-l'")
+  sys.exit(-1)
+
+combine=False
+if len(args) == 0:
+  reader = sys.stdin
+elif len(args) == 1:
+  reader = open(args[0],"r")
+elif len(args) >= 2:
+  combine = True
+  reader1 = open(args[0],"r")
+  reader2 = open(args[1],"r")
 
 indices = {}
-documentos = {}
 
-# Se lee el .ridx y coge el fichero de la fila y su primero más parecido.
-for i in sys.stdin:
-  campos = i.split("\t")
-  if len(campos) == 2:
-    try:
-      indices[int(campos[0])] = int(campos[1].strip())
-    except:
-      pass
+tmp_file1=tempfile.NamedTemporaryFile(dir="/tmp", delete=False)
+tmp_file2=tempfile.NamedTemporaryFile(dir="/tmp", delete=False)
+
+if combine == False:
+  for i in reader:
+    fields = i.split("\t")
+    if len(fields) >= 2:
+      try:
+        indices[int(fields[0])] = int(fields[1].strip().split(":")[0])
+      except:
+        pass
+  reader.close()
+else:
+  if options.candidate_num ==1:
+
+    best_ridx2_inv = {}
+    for line_ridx2 in reader2:
+      fields=line_ridx2.strip().split("\t")
+      if len(fields) >= 2:
+        field1=fields[1].split(":")
+        if len(field1) == 2:
+          best_ridx2_inv[int(field1[0])]=int(fields[0])
+    reader2.close()
+
+    for line_ridx1 in reader1:
+      fields=line_ridx1.strip().split("\t")
+      if len(fields) >= 2:
+        field1=fields[1].split(":")
+        if len(field1) == 2:
+          if int(fields[0]) in best_ridx2_inv and best_ridx2_inv[int(fields[0])] == int(field1[0]):
+            indices[int(fields[0])] = int(field1[0])
+    reader1.close()
+
+  elif options.candidate_num > 1:
+    best_ridx2_inv = {}
+
+    for line_ridx2 in reader2:
+      fields=line_ridx2.strip().split("\t");
+      if len(fields) >= 2:
+        for candidate_idx in range(1,len(fields)):
+          field_n=fields[candidate_idx].split(":")
+          if len(field_n) == 2:
+            if int(field_n[0]) not in best_ridx2_inv:
+              best_ridx2_inv[int(field_n[0])]={}
+            best_ridx2_inv[int(field_n[0])][int(fields[0])]=field_n[1]
+    reader2.close()
+
+    for line_ridx1 in reader1:
+      new_candidate_list = {}
+      fields=line_ridx1.strip().split("\t")
+      if len(fields) >= 2:
+        for candidate_idx in range(1,len(fields)):
+          field_n=fields[candidate_idx].split(":")
+          if len(field_n) == 2:
+            if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
+              average=(float(best_ridx2_inv[int(fields[0])][int(field_n[0])])+float(field_n[1]))/2
+              new_candidate_list[field_n[0]]=average
+            else:
+              new_candidate_list[field_n[0]]=float(field_n[1])/2
+      if len(new_candidate_list) >= 1:
+        sorted_candidates = sorted(new_candidate_list.iteritems(), key=itemgetter(1), reverse=True)
+        indices[int(fields[0])] = int(sorted_candidates[0][0])
+    reader1.close()
+
+documentos = {}
 
 # Se lee el fichero .lett extrayendo la url y el base64
 contador = 1
-file = open(sys.argv[1],"r")
+file = open(options.lettr,"r")
 for j in file:
   campos = j.split()
   if len(campos) > 4:
-    documentos[contador] = campos[3] + "\t" + campos[4] # url base64
-
-#    if contador in indices.keys():
-#      if indices[contador] in documentos.keys():
-#        print str(contador) + "\t" + str(indices[contador]) + "\t" + documentos[contador] + "\t" + documentos[indices[contador]]
-#        del documentos[contador] # se deben borrar los que ya han sido alineados
-#        del documentos[indices[contador]]
-#        del indices[contador]
+    documentos[contador] = (campos[3], campos[5]) # file_path parsed_text_base64
   contador += 1
 
 for k in indices:
   if indices[k] in documentos.keys():
-    print str(k) + "\t" + str(indices[k]) + "\t" + documentos[k] + "\t" + documentos[indices[k]]
+    tmp_file1.write("<p>\n<file lang=\""+options.lang1+"\">"+documentos[k][0]+"</file>\n<p>\n")
+    pipe1 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+    parsed_text, errout = pipe1.communicate(base64.b64decode(documentos[k][1]))
+    tmp_file1.write(parsed_text)
+
+    tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+documentos[indices[k]][0]+"</file>\n<p>\n")
+    pipe2 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+    parsed_text, errout = pipe2.communicate(base64.b64decode(documentos[indices[k]][1]))
+    tmp_file2.write(parsed_text)
+
     del documentos[k] # se deben borrar los que ya han sido alineados
-#    del documentos[indices[k]]
 
-' $LISTADO | \
-while read line;
-do
-  echo "<p>" >> $TEMP1
-  echo $line | __GAWK__ '{print "<file lang=\"'$LANG1'\">"$3"</file>"}' >> $TEMP1
-  echo "<p>" >> $TEMP1
-  echo $line | __GAWK__ '{print $4}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG1 >> $TEMP1
-  echo "<p>" >> $TEMP2
-  echo $line | __GAWK__ '{print "<file lang=\"'$LANG2'\">"$5"</file>"}' >> $TEMP2
-  echo "<p>" >> $TEMP2
-  echo $line | __GAWK__ '{print $6}' | __PYTHON__ __PREFIX__/share/bitextor/simpleHTMLreader/simpleHTMLreader.py | \
-  __PERL__ __PREFIX__/share/bitextor/splitsentences/split-sentences.perl -l $LANG2 >> $TEMP2
-done
-__PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 | \
-__GREP__ -v '<p>' | \
-while read biline;
-do
-  if [ $(echo "$biline" | __GREP__ -E '<file [^>]+>[^<]+</file>\s+<file [^>]+>[^<]+</file>' | __WC__ -l) -gt 0 ]; then
-    biline_nohtml=$(echo "$biline" | __SED__ 's/<[^>]*>//g')
-    file1=$(echo "$biline_nohtml" | __CUT__ -f 1)
-    file2=$(echo "$biline_nohtml" | __CUT__ -f 2)
-  else
-    ALINEADA="$(echo "$biline" | __GAWK__ '{if(NF>1) split($0,campos,"\t"); print campos[1] "\t" campos[2] "\t" campos[3];}')"
-    if !(test "$ALINEADA" == "		"); # Cuidado: Entre comillas hay dos tabuladores (pero no es \t\t).
-    then
-      echo -e "$file1\t$file2\t$ALINEADA" >> $OUTPUT
-    fi
-  fi
-done
+print "{0}\t{1}".format(tmp_file1.name, tmp_file2.name)
 
-rm -Rf $TEMP1 $TEMP2
+tmp_file1.close()
+tmp_file2.close()
