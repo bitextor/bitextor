@@ -15,31 +15,55 @@ from HTMLParser import HTMLParser
 import langid
 from optparse import OptionParser
 
-#Class for parsing the XHTML files
 class Parser(HTMLParser):
 
   def __init__( self ):
     HTMLParser.__init__( self )
+    self.contains1 = ("h1", "h2", "h3", "h4")
+    self.contains2 = ("p", "li", "a")
     self.script = 0
+    self.include1 = 0
+    self.include2 = 0
     self.output = []
 
   def handle_starttag( self, tag, attrs ):
     if tag == "script" or tag == "noscript":
       self.script = 1
+    if self.script == 0:
+      if tag in self.contains1:
+        self.include1 = 1
+      elif tag in self.contains2:
+        self.include2 += 1
 
   def handle_data( self, data ):
     if self.script == 0:
-      self.output.append(data)
+      if self.include1 == 1:
+        if data[-1] == ".":
+          self.output.append(data + "\n")
+        else:
+          self.output.append(data + ".\n")
+      elif self.include2 > 0:
+        palabras = len(data.split())
+        if palabras > 4:
+          if data[-1] == ".":
+            self.output.append(data + "\n")
+          else:
+            self.output.append(data + ".\n")
 
   def handle_endtag( self, tag ):
     if tag == "script" or tag == "noscript":
       self.script = 0
+    if self.script == 0:
+      if tag in self.contains1:
+        self.include1 = 0
+      elif tag in self.contains2:
+        self.include2 -= 1
 
 oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .ett (language encoded and typed text) (standard input is used if this argument is not provided)")
 oparser.add_option("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
 (options, args) = oparser.parse_args()
 
-lags=[]
+langs=[]
 if options.langlist != None:
   langs=options.langlist.strip().split(",")
 
@@ -50,12 +74,18 @@ else:
 
 #Reading line by line from the standard output
 for line in reader:
-  linefields=line.split()
+  linefields=line.strip().split()
   #decoding the b64 original webpage
   e = base64.b64decode(linefields[3]).replace("\n", " ")
   p=Parser()
   p.feed(e)
-  #detecting language
-  lang, conf = langid.classify(" ".join(p.output))
-  if len(langs)>0 and lang in langs:
-    sys.stdout.write("{0}\t{1}".format(lang, line))
+  parsed_text=" ".join(p.output)
+  if len(parsed_text)>0:
+    #detecting language
+    lang, conf = langid.classify(parsed_text)
+    if len(langs)==0 or lang in langs:
+      linefields.insert(0,lang)
+      e = base64.b64encode(parsed_text)
+      linefields.append(e)
+      print "\t".join(linefields)
+      #sys.stdout.write("{0}\t{1}\t{2}\n".format(lang, "\t".join(linefields), e))

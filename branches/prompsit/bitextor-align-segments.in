@@ -1,0 +1,127 @@
+#!__BASH__
+
+OUTPUT="/dev/stdout"
+TEMP1=$(mktemp /tmp/texto1.XXXXXX)
+TEMP2=$(mktemp /tmp/texto2.XXXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 lang1 lang2"
+  echo "WHERE"
+  echo "   lang1    selected language with two letters code: en, es, fr, de ..."
+  echo "   lang2    selected language with two letters code: en, es, fr, de ..."
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  2)
+    LANG1="$1"
+    LANG2="$2"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+# Código aquí
+
+# 1. Reading from STDIN a set of aligned documents. The input format is:
+#   filename1	filename2	clean_text1_in_base64	clean_text2_in_base64
+# 2. Text is cleaned and, for every aligned pair, both texts are dumped, in the same order in two temporary files. Every text block is sepparated to the previous one by a block:
+#    <p>
+#    <file lang="lang_id">file_name</file>
+#    <p>
+# 3. Running hunalign on the two temporary files
+# 4. Removing unaligned segments and <p> mark
+# 5. Identifying the filenames for every block of segments, and printing everything to the output
+#
+# Output format:
+#   filename1    filename2    segment1    segment2    quality
+#
+
+__PYTHON__ -c 'import sys
+import os
+from optparse import OptionParser
+import base64
+import subprocess
+
+oparser = OptionParser(usage="usage: %prog [options] [ridx_file] [ridx_file]\n where [ridx_file] is a file with extension .ridx (reverse index) (standard input by default). If two ridx files are provided, a bidirectional alignment is performed between them.")
+oparser.add_option("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
+oparser.add_option("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
+oparser.add_option("--tmp1", help="Path to the temporary file for text in language 1", dest="tmp_file1_path", default=None)
+oparser.add_option("--tmp2", help="Path to the temporary file for text in language 2", dest="tmp_file2_path", default=None)
+
+(options, args) = oparser.parse_args()
+
+if options.lang1 == None:
+  sys.stderr.write("Undefined value for language 1. Set this value by using the parameter \"--lang1\"")
+  sys.exit(-1)
+
+if options.lang2 == None:
+  sys.stderr.write("Undefined value for language 2. Set this value by using the parameter \"--lang2\"")
+  sys.exit(-1)
+
+if options.tmp_file1_path == None:
+  sys.stderr.write("Undefined path to temporary file 1. Set this value by using the parameter \"--tmp1\"")
+  sys.exit(-1)
+else:
+  tmp_file1=open(options.tmp_file1_path, "w")
+
+if options.tmp_file2_path == None:
+  sys.stderr.write("Undefined path to temporary file 2. Set this value by using the parameter \"--tmp2\"")
+  sys.exit(-1)
+else:
+  tmp_file2=open(options.tmp_file2_path, "w")
+
+if len(args) == 0:
+  reader = sys.stdin
+elif len(args) == 1:
+  reader = open(args[0],"r")
+
+for line in reader:
+  fields=line.strip().split("\t")
+  filename1=fields[0]
+  filename2=fields[1]
+  encodedtext1=fields[2]
+  encodedtext2=fields[3]
+  tmp_file1.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
+  pipe1 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  parsed_text, errout = pipe1.communicate(base64.b64decode(encodedtext1))
+  tmp_file1.write(parsed_text)
+
+  tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
+  pipe2 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  parsed_text, errout = pipe2.communicate(base64.b64decode(encodedtext2))
+  tmp_file2.write(parsed_text)
+' --lang1 $LANG1 --lang2 $LANG2 --tmp1 $TEMP1 --tmp2 $TEMP2
+
+__PREFIX__/bin/hunalign -realign -text /dev/null $TEMP1 $TEMP2 | \
+__GREP__ -v '<p>' | /bin/grep -P '\t[^\t]+\t[^\t]' | \
+__PYTHON__ -c 'import sys
+import re
+
+for hun_line in sys.stdin:
+  if hun_line.find("<file") >= 0:
+    plain=re.sub("<[^>]*>", "", hun_line.strip())
+    filenames=plain.split("\t")
+  else:
+    print "{0}\t{1}\t{2}".format(filenames[0], filenames[1], hun_line.strip())
+' > $OUTPUT
+
+rm -Rf $TEMP1 $TEMP2

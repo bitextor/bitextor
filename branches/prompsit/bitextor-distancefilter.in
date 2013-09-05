@@ -31,8 +31,8 @@ def rellenarDocumentos(fich, documentos):
   contador = 1
   for i in file:
     campos = i.split("\t")
-    if len(campos) == 6:
-      documentos[contador] = campos[5]
+    if len(campos) == 7:
+      documentos[contador] = campos[6]
     contador += 1
   file.close()
 
@@ -64,14 +64,15 @@ if (len(args) == 1):
 
   for i in sys.stdin:
     campos = i.split("\t")
-    longitud = len(documentos[int(campos[0])])
+    longitud_s = len(documentos[int(campos[0])])
     parecidos = {}
     cadena = str(campos[0])
     for j in range(1,len(campos)-1):
       doc = campos[j].split(":")
       if float(doc[1]) > 0.10:
+        longitud_t = len(documentos[int(doc[0])])
         dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
-        port = longitud / float(longitud + dist)
+        port = 1 - (dist / float(max(longitud_s, longitud_t)))
 	##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
         #new_per = (float(doc[1]) + port)/2.0
         #new_per = port

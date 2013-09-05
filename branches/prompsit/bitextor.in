@@ -35,9 +35,10 @@ exit_program()
   echo "  -t lettr        file with extension .lettr (language encoded and typed data"
   echo "                  with \'raspa\') (/tmp/lettr.XXXXXX by default)"
   #echo "  -n index        file with extenxion .idx (index document) (temp.idx by default)"
-  echo "  -r revindex     file with extension .ridx (reverse index) (/tmp/lettr.XXXXXX"
+  echo "  -r revindex     file with extension .ridx (reverse index) (/tmp/rindex.XXXXXX"
   echo "                  by default)"
   echo "  -b              if this option is enabled, the document alignment is run in both directions and only those documents been chosen as first option mutually are accepted"
+  echo "  -s              if this option is enabled, all the intermediate files are stored in the directory specified for this"
   echo "  -v vocabulary   option for using a custom multilingual vocabulary for preliminar document alignment. The vocabulary must be a tab-separated file, in which the first line containains the names of the languages corresponding to each column, and the rest of the lines must contain the same word translated to all these languages."
   #echo "  -i dictionary   file with extension .dic Dictionary with pair of selected"
   #echo "                  languages. (installed dictionary at"
@@ -56,7 +57,7 @@ exit_program()
 
 BIDIDOCALIGN=0
 
-ARGS=$(getopt "v:f:d:l:t:r:h:b:" $*)
+ARGS=$(getopt "v:f:d:l:t:r:h:b:s:" $*)
 
 set -- $ARGS
 for i
@@ -105,6 +106,11 @@ do
     -b)
       shift
       BIDIDOCALIGN=$1
+      shift
+      ;;
+    -s)
+      shift
+      INTERMEDIATE_DUMP=$1
       shift
       ;;
 #    -m)
@@ -161,7 +167,7 @@ __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $LOGDIR/bitextorwebdir2ett.log | 
 __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $LOGDIR/bitextorett2lett.log | \
 __PREFIX__/bin/bitextor-lett2lettr > $LETTR 2> $LOGDIR/bitextorlett2lettr.log
 
-if !(test -z $BIDIDOCALIGN); then
+if [ $BIDIDOCALIGN -ge 1 ]; then
   #Named pipe for paralelising obtaining the initial index for the ridx 1
   index_pipe1=$(mktemp /tmp/index_pipe.XXXXXX)
   rm $index_pipe1
@@ -190,16 +196,19 @@ if !(test -z $BIDIDOCALIGN); then
 
   rm $index_pipe1 $index_pipe2
 
-  __PREFIX__/bin/bitextor-combineridx -1 $RINDEX1 -2 $RINDEX2 -m $BIDIDOCALIGN > $RINDEX 2> $LOGDIR/bitextorcombineridx.log
+  __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN $RINDEX1 $RINDEX2 2> $LOGDIR/bitextoraligndocuments.log | \
+  __PREFIX__/bin/bitextor-align-segments $LANG1 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
+  __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
+
   rm $RINDEX1 $RINDEX2
 else
-  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> /tmp/bitextorlett2idx.log | \
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> /tmp/bitextoridx2ridx.log | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> /tmp/bitextordistancefilter.log > $RINDEX
+  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
+  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
+  __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $LOGDIR/bitextoraligndocuments.log | \
+  __PREFIX__/bin/bitextor-align-segments $LANG1 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
+  __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
 fi
-
-__PREFIX__/bin/bitextor-aligner $LETTR $RINDEX $LANG1 $LANG2 2> /tmp/bitextoraligner.log | \
-__PREFIX__/bin/bitextor-cleantextalign 2> /tmp/bitextorcleantextalign.log > $OUTPUT
 
 rm -Rf $LETTR $RINDEX
 
