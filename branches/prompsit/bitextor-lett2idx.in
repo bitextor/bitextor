@@ -22,25 +22,6 @@ from optparse import OptionParser
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
-class Parser(HTMLParser):
-
-  def __init__( self ):
-    HTMLParser.__init__( self )
-    self.script = 0
-    self.output = []
-
-  def handle_starttag( self, tag, attrs ):
-    if tag == "script" or tag == "noscript":
-      self.script = 1
-
-  def handle_data( self, data ):
-    if self.script == 0:
-      self.output.append(data)
-
-  def handle_endtag( self, tag ):
-    if tag == "script" or tag == "noscript":
-      self.script = 0
-
 oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .lett (language encoded and typed text) (standard input is used if this argument is not provided)")
 
 (options, args) = oparser.parse_args()
@@ -59,10 +40,7 @@ for line in reader:
   fields=line.strip().split("\t")
   lang=fields[0]
   #Decoding base 64:
-  e = base64.b64decode(fields[4])
-  p=Parser()
-  p.feed(e)
-  text=" ".join(p.output)
+  text = base64.b64decode(fields[4])
   #Removing non-aplphanumerics:
   clean_text=re.sub(r"\s+", " ", text.lower())
   clean_text=re.sub(r"([^"+string.punctuation+"])["+string.punctuation+"]+(\s)", r"\1\2", clean_text)

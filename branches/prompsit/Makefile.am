@@ -32,9 +32,8 @@ bitextor-ridx2filenames: bitextor-ridx2filenames.in
 
 bitextor-align-segments: bitextor-align-segments.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
-	sed "s!__BASH__!$(BASH)!g" | \
-	sed "s!__GREP__!$(GREP)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__ENV__!$(ENV)!g" >$@
 
 bitextor-align-documents: bitextor-align-documents.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \

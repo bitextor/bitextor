@@ -163,9 +163,10 @@ then
     __PREFIX__/bin/bitextor-downloadweb $line $DIRNAME
   done
 fi
+
 __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $LOGDIR/bitextorwebdir2ett.log | \
 __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $LOGDIR/bitextorett2lett.log | \
-__PREFIX__/bin/bitextor-lett2lettr > $LETTR 2> $LOGDIR/bitextorlett2lettr.log
+__PREFIX__/bin/bitextor-lett2lettr 2> $LOGDIR/bitextorlett2lettr.log > $LETTR
 
 if [ $BIDIDOCALIGN -ge 1 ]; then
   #Named pipe for paralelising obtaining the initial index for the ridx 1
@@ -197,7 +198,7 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
   rm $index_pipe1 $index_pipe2
 
   __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN $RINDEX1 $RINDEX2 2> $LOGDIR/bitextoraligndocuments.log | \
-  __PREFIX__/bin/bitextor-align-segments $LANG1 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
+  __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
   __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
 
   rm $RINDEX1 $RINDEX2
@@ -206,7 +207,7 @@ else
   __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
   __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
   __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $LOGDIR/bitextoraligndocuments.log | \
-  __PREFIX__/bin/bitextor-align-segments $LANG1 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
+  __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
   __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
 fi
 
