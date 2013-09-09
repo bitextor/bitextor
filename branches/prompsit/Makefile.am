@@ -52,7 +52,7 @@ bitextor-documentaligner: bitextor-documentaligner.in
 	sed "s!__PERL__!$(PERL)!g" >$@
 
 bitextor-cleantextalign: bitextor-cleantextalign.in
-	sed "s!__BASH__!$(BASH)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-distancefilter: bitextor-distancefilter.in
