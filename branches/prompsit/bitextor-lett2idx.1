@@ -1,6 +1,6 @@
 .\" Manpage for bitextor-lett2idx.
 .\" Contact jorgeferrandez@gmail.com to correct errors or typos.
-.TH bitextor-lett2idx 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.TH bitextor-lett2idx 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
 bitextor-lett2idx \- This application is part of
 .B bitextor
@@ -12,8 +12,17 @@ file
 
 .SH DESCRIPTION
 .B bitextor-lett2idx
-is shell program that performs an orderer index with all words of the files
-with their language and their appearances.
+is a python script that obtains an index indicating, for every word in a
+crawled website, which files contain, at least, one occurrence of the word.
+The script uses as an imput the output of the script bitextor-ett2lett
+A different list of words are built for every language detected in the website.
+The output of this script is a tab-sepparated file containing, in teh first
+field, a language code, in the second, a word, and in the third, a list of
+document indexes, sepparated by a collon, in which the word appears.
+To reduce the size of the output, the file indexes is presented as an incremental
+shifting. In this way, the first file in the list is the one with the lower index.
+Then, the next identifiers are only the increment to add to the former index in order
+to obtain the real file code.
 .PP
 Receives a file with format .lett and the output is a file with format .idx
 

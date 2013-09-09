@@ -1,6 +1,6 @@
 .\" Manpage for bitextor-idx2ridx.
 .\" Contact jorgeferrandez@gmail.com to correct errors or typos.
-.TH bitextor-idx2ridx 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.TH bitextor-idx2ridx 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
 bitextor-idx2ridx \- This application is part of
 .B bitextor
@@ -8,13 +8,31 @@ bitextor-idx2ridx \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-idx2ridx
-index dictionary lang1 lang2
+[-d dictionary] [idx] lang1 lang2
 
 .SH DESCRIPTION
 .B bitextor-idx2ridx
-is Python program to identify which files have the same content in both languages.
+is a python script that takes a .idx file produced by bitextor-lett2idx
+(weather from a file or from the standard input) and produces a list of
+the 10 most promising files in lang2 to be aligned for every file in 
+lang1. The output format is a tab-sepparated file; for each line in this
+file, the first field corresponds to the code of the file in lang1 for which
+the candidates will be presented. The next 10 fields are a list of tuples
+separated by a colon, in which the left field is the code of a candidate in
+lang2, and the right field is the confidence score asigned to the candidate.
+
+The candidates detection is peformed by: a) getting the list of words for every
+file, b) using the dictionary for translating the words in every file in lang2
+into lang1, and c) computing a matching score between the words in every pair
+of documents. A default dictionary is distributed with bitextor for English,
+Spanish, Catalan, Croatian, and Basque. However, it is possible to provide
+a custom dictionary by using the option -d to determine the path to the dictionry
+field. A dictionary must follow the following format:
+- it must be a tab-sepparated file;
+- the first line must contain the language code for the words in every language included in the dictionary;
+- the rest of the lines must contain translations of a word into each of the languages specified in the first line;
 .PP
-Receives a files with formats .idx and .dic. Also, two languages.
+Receives a .idx file and the code of two languages.
 The output is a file with format .ridx
 
 .SH SEE ALSO
@@ -27,3 +45,4 @@ No known bugs.
 
 .SH AUTHOR
 Jorge Ferrández Tordera (jorgeferrandez@gmail.com)
+Miquel Esplà-Gomis (mespla@dlsi.ua.es)

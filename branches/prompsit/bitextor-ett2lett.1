@@ -12,8 +12,11 @@ file
 
 .SH DESCRIPTION
 .B bitextor-ett2lett
-is shell program to detect language of the files.
-Detects language using TextCat for each line and add column with this in output file.
+is python script to detect language of the files. The script reads the output
+of bitextor-webdir2ett and produces a new tab-sepparated output containing the same
+fields that the one produced by bitextor-webdir2ett, but concatenating the detected
+language for every file. The language identification is performed by using the python
+library LangID.py.
 .PP
 Receives a file with format .ett and the output is a file with format .lett
 
@@ -27,3 +30,4 @@ No known bugs.
 
 .SH AUTHOR
 Jorge Ferrández Tordera (jorgeferrandez@gmail.com)
+Miquel Esplà-Gomis (mespla@dlsi.ua.es)

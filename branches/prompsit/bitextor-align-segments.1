@@ -1,22 +1,31 @@
-.\" Manpage for bitextor-aligner.
+.\" Manpage for bitextor-align-segments
 .\" Contact jorgeferrandez@gmail.com to correct errors or typos.
-.TH bitextor-aligner 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.TH bitextor-align-segments 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
-bitextor-aligner \- This application is part of
+bitextor-align-segments \- This application is part of
 .B bitextor
 ( the automatic bitext generator )
 
 .SH SYNOPSIS
-.B bitextor-aligner
-file index lang1 lang2
+.B bitextor-align-segments
+--lang1 lang1_code --lang2 lang2_code [aligned_documents_file]
 
 .SH DESCRIPTION
-.B bitextor-aligner
-is shell program that for each pair of detected documents, extracts the text
-in phrases and aligns using hunalign.
-.PP
-Receives a files with formats .lett (or .lettr) and .ridx. Also, two languages.
-The output is a file with format .align.
+.B bitextor-align-segments
+is a shell program that produces the list of aligned segments from
+the list of aligned documents in the rindex files. To call this tool
+it is necessary to provide the language of the two file sets to be aligned
+(this is used to choose the sentence-splitting rule set) by using the
+parameters --lang1 and --lang2. The list of aligned documents can be provided
+through a file or through the standard input. The expected format is the one
+produced by the script bitextor-align-documents. This script concatenates
+produces two files with the concaenation of all the files of the same language
+from the list of aligned documents. The files are aligned following the same
+order for the two languages. Then, hunalign is used to align all the segments
+in the pair of files. It is worth noting that the concatenated files are sepparated
+by the mark <p>, which ensures that only documents belonging to the same pair
+of files will be aligned. The concatenation is performed to ensure a reasonable
+ammount of text to be aligned, in order to build a better dictionary for hunalign.
 
 .SH SEE ALSO
 bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
@@ -28,3 +37,4 @@ No known bugs.
 
 .SH AUTHOR
 Jorge Ferrández Tordera (jorgeferrandez@gmail.com)
+Miquel Esplà-Gomis (mespla@dlsi.ua.es)
