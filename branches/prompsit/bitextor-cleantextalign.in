@@ -1,129 +1,44 @@
-#!__BASH__
-
-INPUT=/dev/stdin
-OUTPUT=/dev/stdout
-MAXLINES=5
-MINQUALITY=0
-BYTEXT=0
-
-exit_program()
-{
-  echo "USAGE: $1 [align] [-m max_lines] [-q min_quality]"
-  echo "WHERE"
-  echo "  align           file with extension .align (alignment) (standard input"
-  echo "                  by default)"
-  echo "  -m max_lines    clean texts (clean lines by default) and specify"
-  echo "                  maximum number of lines out of alignment (5 by default)"
-  echo "  -q min_quality  minimum quality required for each line (0 by default)"
-  exit 1
-}
-
-ARGS=$(getopt "m:q:h" $*)
-
-set -- $ARGS
-for i
-do
-  case "$i" in
-    -m)
-      shift
-      MAXLINES=$1
-      BYTEXT=1
-      shift
-      ;;
-    -q)
-      shift
-      MINQUALITY=$1
-      shift
-      ;;
-    -h)
-      exit_program $(basename $0)
-      ;;
-    --)
-      shift
-      break
-      ;;
-  esac
-done
-
-case $# in
-  1)
-    INPUT="$1"
-    ;;
-  0)
-    ;;
-  *)
-    exit_program $(basename $0)
-    ;;
-esac
-
-# Código aquí
+#!__ENV__ __PYTHON__
 
 #
-# 1. Se recorre el .align y según se haya escogido limpiar:
-#    líneas: se muestra cada línea por encima de min_quality (resto -> LOG)
-#    textos: se muestra cada texto que tenga menos de 5 líneas mal (resto -> LOG)
-# 2. Se muestra todo el alineamiento filtrado por la salida estándar
+# 1. All the alignments produced by hunalign are checked and those with a confidence score lower than a given threshold are discarded (also those unaligned segments are discarded)
+# 2. If, for a same document pair, a worng-alignment threshold is reached, the whole document pair is discarded
 #
 # Formato final del documento:
 # url1    url2    text1    text2
 #
 
-if (test $BYTEXT -eq 0);
-then
-  cat $INPUT | \
-  __PYTHON__ -c '
 import sys
+from optparse import OptionParser
 
-minq = sys.argv[1]
+oparser = OptionParser(usage="usage: %prog [options] [filename]\nwhere filename is the path to the file with the output of bitextor-align-segments (hunalign) (standard input is used if this argument is not provided)")
+oparser.add_option("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type="int" dest="minq", default=0)
+oparser.add_option("-m", "--max-lines", help="Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded", type="int", dest="maxl", default=-1)
+(options, args) = oparser.parse_args()
 
-for i in sys.stdin:
-  campos = i.split("\t")
-  if len(campos) == 5 and campos[-1] != "\n":
-    if float(campos[-1]) > float(minq):
-      print campos[0] + "\t" + campos[1] + "\t" + campos[2] + "\t" + campos[3]
-    else:
-      sys.stderr.write("LINEA MAL ALINEADA: " + i)
-  else:
-    sys.stderr.write("LINEA MAL ALINEADA: " + i)
-' $MINQUALITY >$OUTPUT
-else
-  cat $INPUT | \
-  __PYTHON__ -c '
-import sys
-
-minq = sys.argv[1]
-maxl = int(sys.argv[2])
-anterior = ""
-cadena = ""
-lineas = 0
-
-for i in sys.stdin:
-  campos = i.split("\t")
-  
-  if anterior == "":
-    anterior = campos[0]
-  if anterior == campos[0]:
-    if len(campos) == 5 and campos[-1] != "\n":
-      if float(campos[-1]) > float(minq):
-        cadena += campos[0] + "\t" + campos[1] + "\t" + campos[2] + "\t" + campos[3] + "\n"
-      else:
-        lineas += 1
-        sys.stderr.write("LINEA MAL ALINEADA: " + i)
-    else:
-      lineas += 1
-      sys.stderr.write("LINEA MAL ALINEADA: " + i)
-  else:
-    if maxl >= lineas:
-      sys.stdout.write(cadena)
-    else:
-      sys.stderr.write("TEXTO MAL ALINEADO: " + cadena)
-    anterior = ""
-    cadena = ""
-    lineas = 0
-if maxl >= lineas:
-  sys.stdout.write(cadena)
+if len(args) > 0:
+  reader = open(args[0],"r")
 else:
-  sys.stderr.write("TEXTO MAL ALINEADO: " + cadena)
-' $MINQUALITY $MAXLINES >$OUTPUT
-fi
+  reader = sys.stdin
 
+last_filepair=(None,None)
+error_count=0
+segment_list=[]
+for i in reader:
+  campos = i.strip().split("\t")
+  if len(campos) == 5:
+    if last_filepair[0]!=campos[0] or last_filepair[1]!=campos[1]:
+      if maxl==-1 or error_count<maxl:
+        print "\n".join(segment_list)
+      error_count=0
+      last_filepair=(campos[0],campos[1])
+      segment_list=[]
+    if float(campos[-1]) > float(minq):
+      campos.pop()
+      segment_list.append("\t".join(campos))
+    else:
+      sys.stderr.write("CONFIDENCE SCORE TO LOW FOR PAIR OF SEGMENTS: " + i)
+      error_count=error_count+1
+  else:
+    sys.stderr.write("UNALIGNED SEGMENT: " + i)
+reader.close()

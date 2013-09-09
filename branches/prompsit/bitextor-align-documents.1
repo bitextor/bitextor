@@ -8,32 +8,78 @@ bitextor-align-documents \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-align-documents
--l lettr_file [-n number_of_accepted_candidates] [rindex1] [rindex2]
+.RI [ OPTIONS ]
+.br
+.B bitextor-align-documents
+.RI [ OPTIONS ]
+.I RINDEX
+.br
+.B bitextor-align-documents
+.RI [ OPTIONS ]
+.I RINDEX
+.I RINDEX
 
 .SH DESCRIPTION
 .B bitextor-align-documents
-is a shell program that produces the list of aligned documents from
-the list of candidate alignments in the rindex files. It is possible
-to provide one rindex file as the last argument or through the standard
-input. It is also possible to provide two rindex files, one obtained when
-looking for candidates from l1 to l2, and one from l2 to l1. Then, candidates
-tables are crossed and candidates are re-ranked. If option -n is used, it is
-possible to define the number of candidates to be taken into account. It is
-worth noting that the maximum number of candidates used in any rindx file
-is 10. The output of the script is a tab-sepparated list of aligned documents
-with the name of the files in the first two columns and the content of both
-files encoded in base64 in the two final fields of each line.
-.PP
-Receives files with formats .lett (or .lettr) and .ridx.
+is a Python script that produces a list of aligned documents
+from an
+.I RINDEX
+file which is produced by
+.B bitextor-distancefilter
+. It is possible to provide only one
+.I RINDEX
+file, or to provide two (both obtained from the same website,
+but one of them computed from
+.B LANG1
+to
+.B LANG2
+, and the other 
+computed from
+.B LANG2
+to
+.B LANG1
+). In the first case, the content of the
+.I RINDEX
+, which can be read from the standard input, the tool
+only aligns every file in
+.B LANG1
+with the first candidate in
+.B LANG2. When two
+.I RINDEX
+files are provided, the candidate list is re-ranked by obtaining
+the average score for every candidate pair in both directions.
+It is worth noting that, if a candidate pair only exists in one
+of the
+.I RINDEX
+files, it is removed from the list. Finally, the best candidate
+pairs are used for document alignment.
+
+SH OPTIONS
+.BI \-l " FILE"
+path to the
+.I LETTR 
+file to be used as a list of documents to align.
+.TP
+.BI \-n " NUM"
+Number of candidates to be taken into account when using two 
+.I RINDEX
+files. If no number is set for this option, all the available
+candidates in the 
+.I RINDEX
+files are used.
 
 .SH SEE ALSO
-bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-align-segments(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
 bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
 bitextor-distancefilter(1), bitextor-cleantextalign(1)
 
 .SH BUGS
 No known bugs.
 
-.SH AUTHOR
-Jorge Ferrández Tordera (jorgeferrandez@gmail.com)
-Miquel Esplà-Gomis (mespla@dlsi.ua.es)
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R < jorgeferrandez@gmail.com >
+
+.B Miquel Esplà-Gomis
+.R < mespla@dlsi.ua.es >

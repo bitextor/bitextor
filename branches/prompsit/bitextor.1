@@ -1,6 +1,6 @@
 .\" Manpage for bitextor.
 .\" Contact jorgeferrandez@gmail.com to correct errors or typos.
-.TH bitextor-aligner 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.TH bitextor 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
 bitextor \- This application is part of
 .B bitextor
@@ -8,33 +8,104 @@ bitextor \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor
-url lang1 lang2 dictionary [-d dirname] [-l file] [-i index]
+.RI [ OPTIONS ]
+.I URL
+.I LANG1
+.I LANG2
+.br
+.B bitextor
+.RI [ OPTIONS ]
+.B \-f
+.I FILE
+.I LANG1
+.I LANG2
+.B bitextor
+.RI [ OPTIONS ]
+.B \-d
+.I DIRECTORY
+.I LANG1
+.I LANG2
 
 .SH DESCRIPTION
 .B bitextor
-is an automatic bitext generator which obtains his base corpora
-from the Internet. It works downloading websites (applying a filter to download
-only those files written in HTML) and comparing every pair of files. It detects
-the language and, through a group of heuristics (index, HTML skeleton edit
-distance, etc.), it tries to guess which files have the same content in
-different languages. Once it has identified the pairs of files, it generates a
-bitext file.
+is an automatic bitext detector which produces, from a multilingual crawled website,
+a list of aligned documents. The tool works following these steps:
+1) Downloads a website by using the tool httrack: see bitextor-downloadweb (optional step);
+2) The files in the website are analysed, cleaned and standarised: see bitextor-webdir2ett;
+3) The language of every webpage is detected: see bitextor-ett2lett;
+4) The HTML structure is analysed to create a representation which is used to compare the different webpages: see bitextor-lett2lettr;
+5) The a preliminar list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see bitextor-idx2ridx(1);
+6) The candidates are checked by using the HTML structure: see bitextor-distancefilter;
+7) The documents are aligned: see bitextor-align-documents;
+8) A set of aligned documents is obtained from the aligned documents: see bitextor-align-segments.
 
 .SH OPTIONS
--d dirname    
-.PP
--l file       
-.PP
--i index      
+.SS "Website sources"
+.TP
+.B \-f
+Path to a file containing a list of URLs to be crawled and processed (one per line).
+.TP
+.BR \-d
+Path to a directory containing a crawled website
+.SS "Other options"
+.TP
+.BI \-t " FILE"
+Target path where the
+.I LETTR 
+will be stored in during bitext processing
+.TP
+.BI \-r " FILE"
+Target path where the
+.I RINDEX
+will be stored in during bitext processing
+.TP
+.BI \-b " NUM"
+When this option is enabled, only the first
+.I NUM
+candidates from the
+.I RINDEX
+candidate list are taken into account when
+computing the bidirectional document alignment.
+.TP
+.BI \-v " FILE"
+Option defining the dictionary
+.I FILE
+which relates words in two or more languages
+to be processed in the website.
 
+.SH DEPENDENCES
+Bitextor depends on the following external tools and libraries
+which must be installed in advance:
+.TP
+.B LangID.py
+Python library that detects the language of a text file
+.TP
+.B python-Levenshtein
+Python library that implements the Levenshtein edit distance between two strings
+.TP
+.B python-boilerpipe
+Python library which provide a Python interface to use the Java package
+boilerpipe, which cleans those parts of an HTML file which contain useless
+information, such as menus, adds, etc. 
+.TP
+.B httrack
+External tool used for crawling a website (this tool is not necessary to install Bitextor)
+.TP
+.B LangID.py
+Python library that detects the language of a text file
 
 .SH SEE ALSO
-bitextor-aligner(1), bitextor-downloadweb(1), bitextor-webdir2ett(1),
-bitextor-ett2lett(1), bitextor-lett2idx(1), bitextor-idx2ridx(1),
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor-downloadweb(1),
+bitextor-webdir2ett(1), bitextor-ett2lett(1), bitextor-lett2idx(1), bitextor-idx2ridx(1),
 bitextor-lett2lettr(1), bitextor-distancefilter(1), bitextor-cleantextalign(1)
 
 .SH BUGS
 No known bugs.
 
-.SH AUTHOR
-Jorge Ferrández Tordera (jorgeferrandez@gmail.com)
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R < jorgeferrandez@gmail.com >
+
+.B Miquel Esplà-Gomis
+.R < mespla@dlsi.ua.es >

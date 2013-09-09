@@ -34,7 +34,7 @@ def runAligner(filename1, filename2):
     yield line.decode("utf-8")
   return
 
-oparser = OptionParser(usage="usage: %prog [options] [ridx_file] [ridx_file]\n where [ridx_file] is a file with extension .ridx (reverse index) (standard input by default). If two ridx files are provided, a bidirectional alignment is performed between them.")
+oparser = OptionParser(usage="usage: %prog [options] [doc_aligned_file]\n where [doc_aligned_file] is a file contining the list of aligned files provided by bitextor-align-documents.")
 oparser.add_option("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
 oparser.add_option("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
 
