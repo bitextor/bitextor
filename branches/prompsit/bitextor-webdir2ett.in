@@ -103,11 +103,12 @@ for i in sys.stdin:
     sys.stderr.write("Eliminando repetido:\t"+fields[0]+"\n")
   else:
     file = open(fields[0], "r")
+#    extractor = Extractor(extractor="ArticleExtractor", html=file.read())
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(("localhost", '$tika_port'))
     s.sendall(file.read())
-    s.shutdown(socket.SHUT_WR)
     file.close()
+    s.shutdown(socket.SHUT_WR)
     file_output=""
     while 1:
       data = s.recv(1024)
@@ -116,10 +117,14 @@ for i in sys.stdin:
       else:
         file_output=file_output+data
     s.close()
-    extractor = Extractor(extractor="ArticleExtractor", html=file_output)
-    e = base64.b64encode(extractor.getHTML())
-    #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
-    print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
+    try:
+      extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
+
+      e = base64.b64encode(extractor.getHTML().encode("utf-8"))
+      #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+      print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
+    except:
+      pass
 ' $WEBDIR > $OUTPUT
 
 rm -Rf $TEMPCONV

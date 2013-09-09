@@ -15,6 +15,9 @@ from HTMLParser import HTMLParser
 import langid
 from optparse import OptionParser
 
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
 class Parser(HTMLParser):
 
   def __init__( self ):
