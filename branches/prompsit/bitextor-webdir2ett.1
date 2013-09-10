@@ -1,5 +1,5 @@
 .\" Manpage for bitextor-webdir2ett.
-.\" Contact jorgeferrandez@gmail.com or mespla@dlsi.ua.es to correct errors or typos.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
 .TH bitextor-webdir2ett 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
 bitextor-webdir2ett \- This application is part of
@@ -23,11 +23,20 @@ Receives the path to a crawled web directory and the output is a file
 tab-sepparated file containing the name of the original encoding, the
 mimetype, and the base64-encoded text.
 
+.SH DEPENDENCES
+.B bitextor-webdir2ett
+depends on the Python library
+.B python-boilerpipe
+which provide a Python interface to use the Java package
+boilerpipe for cleaning those parts of an HTML file that contain useless
+information, such as menus, adds, etc. This library must be installed
+in advance to use this scipt.
+
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
 bitextor-downloadweb(1), bitextor-ett2lett(1), bitextor-lett2idx(1),
 bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
-bitextor-aligner(1), bitextor-cleantextalign(1)
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
 
 .SH BUGS
 No known bugs.
@@ -36,6 +45,6 @@ No known bugs.
 .PD 0
 .B Jorge Ferrández Tordera
 .R < jorgeferrandez@gmail.com >
-
+.P
 .B Miquel Esplà-Gomis
 .R < mespla@dlsi.ua.es >

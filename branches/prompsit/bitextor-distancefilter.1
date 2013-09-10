@@ -1,5 +1,5 @@
 .\" Manpage for bitextor-distancefilter.
-.\" Contact jorgeferrandez@gmail.com to correct errors or typos.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
 .TH bitextor-distancefilter 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
 .SH NAME
 bitextor-distancefilter \- This application is part of
@@ -19,11 +19,18 @@ the HTML structure of two candidates.
 Receives two files: a .lettr file and .ridx file.
 The output is a file with format .ridx but with the re-ranked candidates.
 
+.SH DEPENDENCES
+.B bitextor-distancefilter
+depends on the
+.B python-Levenshtein
+Python library, which must be isntalled in advance. This library implements the Levenshtein edit distance between two strings
+.TP
+
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
 bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
 bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
-bitextor-aligner(1), bitextor-cleantextalign(1)
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
 
 .SH BUGS
 No known bugs.
@@ -32,6 +39,6 @@ No known bugs.
 .PD 0
 .B Jorge Ferrández Tordera
 .R < jorgeferrandez@gmail.com >
-
+.P
 .B Miquel Esplà-Gomis
 .R < mespla@dlsi.ua.es >
