@@ -8,56 +8,63 @@ DIRNAME="web"
 #Path to default dictionary: it can be replaced by using option -v
 VOCABULARY="__PREFIX__/share/bitextor/diccionario.dic"
 #LETT=$(mktemp /tmp/lett.XXXXXX)
-LETTR=$(mktemp /tmp/lettr.XXXXXX)
-RINDEX=$(mktemp /tmp/ridx.XXXXXX)
+TMPLETTR=$(mktemp /tmp/lettr.XXXXXX)
+LETTR=$TMPLETTR
+TMPRINDEX=$(mktemp /tmp/ridx.XXXXXX)
+RINDEX=$TMPRINDEX
 LOGDIR=$(mktemp -d /tmp/bitextorlogs.XXXXXX)
 LANG1=""
 LANG2=""
-#DIC=""
-#ETT="temp.ett"
-#ALIGN="temp.align"
-#INDEX=$(mktemp /tmp/idx.XXXXXX)
-#RINDEX2="temp.ridx2"
-#MAXLINES=5
-#MINQUALITY=0
-#BYTEXT=0
+BIDIDOCALIGN=0
+FORMAT="PLAIN"
+INDEX=""
+MAXLINES=5
+MINQUALITY=0
 
 exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
   #echo "          [-q min_quality] [url] lang1 lang2"
-  echo "USAGE: $1 [-f file] [-d dirname] [-l lett] [-t lettr] [-r revindex] [-b] [-v vocabulary] [url] lang1 lang2"
-  echo "WHERE"
-  echo "  -f file         web addresses to crawl (one per line)"
-  echo "  -d dirname      folder to store downloaded directories (web/ by default)"
-#  echo "  -l lett         file with extension .lett (language encoded and typed data)"
-#  echo "                  (/tmp/lett.XXXXXX by default)"
-  echo "  -t lettr        file with extension .lettr (language encoded and typed data"
-  echo "                  with \'raspa\') (/tmp/lettr.XXXXXX by default)"
-  #echo "  -n index        file with extenxion .idx (index document) (temp.idx by default)"
-  echo "  -r revindex     file with extension .ridx (reverse index) (/tmp/rindex.XXXXXX"
-  echo "                  by default)"
-  echo "  -b              if this option is enabled, the document alignment is run in both directions and only those documents been chosen as first option mutually are accepted"
-  echo "  -s              if this option is enabled, all the intermediate files are stored in the directory specified for this"
-  echo "  -v vocabulary   option for using a custom multilingual vocabulary for preliminar document alignment. The vocabulary must be a tab-separated file, in which the first line containains the names of the languages corresponding to each column, and the rest of the lines must contain the same word translated to all these languages."
-  #echo "  -i dictionary   file with extension .dic Dictionary with pair of selected"
-  #echo "                  languages. (installed dictionary at"
-  #echo "                  /usr/local/share/bitextor/diccionario.dic by default)"
-  #echo "  -m max_lines    clean texts (clean lines by default) and specify"
-  #echo "                  maximum number of lines out of alignment (5 by default)"
-  #echo "  -q min_quality  minimum quality required for each line (0 by default)"
-  echo "  url             web address to crawl. If this parameter is not specified,"
-  echo "                  it runs over the directory."
-  echo "  lang1           selected language with two letters code: en, es, fr, de ..."
-  echo "  lang2           selected language with two letters code: en, es, fr, de ..."
-  #echo "  dictionary      file with extension .dic (dictionary with pair of selected"
-  #echo "                  languages)"
+  echo "USAGE: $1 [OPTIONS]    URL                 LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -d DIRECTORY           LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -f FILE directory_path LANG1 LANG2"
+  echo ""
+  echo "WHERE:"
+  echo "  URL             web address to crawl (this option requieres to have the HTTrack external tool installed)."
+  echo "  -f FILE         file contining a list of web addresses to crawl (one per line)."
+  echo "  -d DIRECTORY    folder containing a crawled website (web/ by default)."
+  echo "  LANG1           selected language with two letters code: en, es, fr, de ..."
+  echo "  LANG2           selected language with two letters code: en, es, fr, de ..."
+  echo ""
+  echo "OPTIONS:"
+  echo "  -l LETTR        custom path where the file with extension .lettr (language encoded and typed data"
+  echo "                  with 'raspa') will be created (/tmp/lettr.XXXXXX by default)."
+  echo "  -i INDEX        custom path where the file with extenxion .idx (index document) will be created"
+  echo "                  (/tmp/temp.idx by default)."
+  echo "  -r RINDEX       custom path where the file with extension .ridx (reverse index) will be created"
+  echo "                  (/tmp/rindex.XXXXXX by default)."
+  echo "  -b NUM          if this option is enabled, the document alignment process is run in both"
+  echo "                  directions and only the first NUM candidates in every direction will be taken"
+  echo "                  into account. With this, the list of final candidates will be obtained computing"
+  echo "                  the average of every pair of candidates in both directions. This option should"
+  echo "                  improve precision and drop recall, since those candidates in a position lower than"
+  echo "                  NUM will be discarded for the alignment (NUM must be in [1,10])"
+  echo "  -v VOCABULARY   option for using a custom multilingual vocabulary for preliminar"
+  echo "                  document alignment. The vocabulary must be a tab-separated file, in"
+  echo "                  which the first line containains the names of the languages corresponding"
+  echo "                  to each column, and the rest of the lines must contain the same word translated"
+  echo "                  to all these languages (by default, __PREFIX__/share/bitextor/diccionario.dic)."
+  echo "  -m MAX_LINES    maximum number or wrong segment alignments tolerated to accept a"
+  echo "                  pair of documents as a valid document alignment. If this number is"
+  echo "                  reached, the whole document pair is discarded (5 by default)."
+  echo "  -q MIN_QUALITY  threshold for Hunalign confidence score; those pairs of segments with a score"
+  echo "                  lower than MIN_QUALITY will be considered wrong and they will be removed (0 by default)."
+  echo "  -t              if this option is enabled, the output of the tool will be formated in"
+  echo "                  the standard XML-based format TMX."
   exit 1
 }
 
-BIDIDOCALIGN=0
-
-ARGS=$(getopt "v:f:d:l:t:r:h:b:s:" $*)
+ARGS=$(getopt "tq:m:v:b:r:i:l:f:d:" $*)
 
 set -- $ARGS
 for i
@@ -73,24 +80,18 @@ do
       DIRNAME=$1
       shift
       ;;
-#    -l)
-#      shift
-#      LETT=$1
-#      shift
-#      ;;
-#    -n)
-#      shift
-#      INDEX=$1
-#      shift
-#      ;;
-#    -i)
-#      shift
-#      DIC=$1
-#      shift
-#      ;;
-    -t)
+    -l)
       shift
       LETTR=$1
+      shift
+      ;;
+    -i)
+      shift
+      INDEX=$1
+      shift
+      ;;
+    -t)
+      FORMAT="TMX"
       shift
       ;;
     -r)
@@ -108,22 +109,17 @@ do
       BIDIDOCALIGN=$1
       shift
       ;;
-    -s)
+    -m)
       shift
-      INTERMEDIATE_DUMP=$1
+      MAXLINES=$1
+      BYTEXT=1
       shift
       ;;
-#    -m)
-#      shift
-#      MAXLINES=$1
-#      BYTEXT=1
-#      shift
-#      ;;
-#    -q)
-#      shift
-#      MINQUALITY=$1
-#      shift
-#      ;;
+    -q)
+      shift
+      MINQUALITY=$1
+      shift
+      ;;
     -h)
       exit_program $(basename $0)
       ;;
@@ -149,8 +145,6 @@ case $# in
     ;;
 esac
 
-# Código aquí
-
 if !(test -z $URL);
 then
   __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
@@ -168,6 +162,10 @@ __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $LOGDIR/bitextorwebdir2ett.log | 
 __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $LOGDIR/bitextorett2lett.log | \
 __PREFIX__/bin/bitextor-lett2lettr 2> $LOGDIR/bitextorlett2lettr.log > $LETTR
 
+output_pipe=$(mktemp /tmp/output_pipe.XXXXXX)
+rm $output_pipe
+mkfifo $output_pipe
+
 if [ $BIDIDOCALIGN -ge 1 ]; then
   #Named pipe for paralelising obtaining the initial index for the ridx 1
   index_pipe1=$(mktemp /tmp/index_pipe.XXXXXX)
@@ -179,7 +177,7 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
   rm $index_pipe2
   mkfifo $index_pipe2
 
-  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | \
+  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log |  tee $INDEX | \
   tee $index_pipe1 > $index_pipe2 &
 
   RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
@@ -197,38 +195,23 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
 
   rm $index_pipe1 $index_pipe2
 
-  __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN $RINDEX1 $RINDEX2 2> $LOGDIR/bitextoraligndocuments.log | \
+  __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $RINDEX $RINDEX1 $RINDEX2 2> $LOGDIR/bitextoraligndocuments.log | \
   __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
-  __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
-
-  rm $RINDEX1 $RINDEX2
+  __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $LOGDIR/bitextorcleantextalign.log > $output_pipe &
 else
-  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | \
+  __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | tee $INDEX | \
   __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
   __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
-  __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $LOGDIR/bitextoraligndocuments.log | \
+  __PREFIX__/bin/bitextor-align-documents -l $LETTR -r $RINDEX 2> $LOGDIR/bitextoraligndocuments.log | \
   __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
-  __PREFIX__/bin/bitextor-cleantextalign 2> $LOGDIR/bitextorcleantextalign.log > $OUTPUT
+  __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $LOGDIR/bitextorcleantextalign.log > $output_pipe &
 fi
 
-rm -Rf $LETTR $RINDEX
+if [ $FORMAT == "TMX" ]; then
+  __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 < $output_pipe > $OUTPUT
+else
+  cat < $output_pipe > $OUTPUT
+fi
 
-#__PREFIX__/bitextor-downloadweb $URL $DIRNAME
-#__PREFIX__/bitextor-webdir2ett $DIRNAME > $ETT
-#__PREFIX__/bitextor-ett2lett $ETT > $LETT
-#__PREFIX__/bitextor-lett2idx $LETT > $INDEX
-#__PREFIX__/bitextor-idx2ridx $INDEX $DIC $LANG1 $LANG2 > $RINDEX
-#__PREFIX__/bitextor-lett2lettr $LETT > $LETTR
-#__PREFIX__/bitextor-distancefilter $LETTR $RINDEX > $RINDEX2
-#__PREFIX__/bitextor-aligner $LETTR $RINDEX2 $LANG1 $LANG2 > $ALIGN
-#__PREFIX__/bitextor-cleantextalign $ALIGN -m $MAXLINES -q $MINQUALITY > $OUTPUT
-
-#__PREFIX__/bin/bitextor-webdir2ett $DIRNAME | \
-#__PREFIX__/bin/bitextor-ett2lett > $LETT
-#__PREFIX__/bin/bitextor-lett2idx $LETT | \
-#__PREFIX__/bin/bitextor-idx2ridx $LANG1 $LANG2 > $RINDEX
-#__PREFIX__/bin/bitextor-lett2lettr $LETT > $LETTR
-#__PREFIX__/bin/bitextor-distancefilter $LETTR $RINDEX | \
-#__PREFIX__/bin/bitextor-aligner $LETTR $LANG1 $LANG2 | \
-#__PREFIX__/bin/bitextor-cleantextalign > $OUTPUT
+rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 

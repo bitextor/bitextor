@@ -12,7 +12,7 @@ import sys
 from optparse import OptionParser
 
 oparser = OptionParser(usage="usage: %prog [options] [filename]\nwhere filename is the path to the file with the output of bitextor-align-segments (hunalign) (standard input is used if this argument is not provided)")
-oparser.add_option("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type="int" dest="minq", default=0)
+oparser.add_option("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type="int", dest="minq", default=0)
 oparser.add_option("-m", "--max-lines", help="Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded", type="int", dest="maxl", default=-1)
 (options, args) = oparser.parse_args()
 
@@ -28,16 +28,16 @@ for i in reader:
   campos = i.strip().split("\t")
   if len(campos) == 5:
     if last_filepair[0]!=campos[0] or last_filepair[1]!=campos[1]:
-      if maxl==-1 or error_count<maxl:
+      if options.maxl==-1 or error_count<options.maxl:
         print "\n".join(segment_list)
       error_count=0
       last_filepair=(campos[0],campos[1])
       segment_list=[]
-    if float(campos[-1]) > float(minq):
+    if float(campos[-1]) > float(options.minq):
       campos.pop()
       segment_list.append("\t".join(campos))
     else:
-      sys.stderr.write("CONFIDENCE SCORE TO LOW FOR PAIR OF SEGMENTS: " + i)
+      sys.stderr.write("CONFIDENCE SCORE TOO LOW FOR PAIR OF SEGMENTS: " + i)
       error_count=error_count+1
   else:
     sys.stderr.write("UNALIGNED SEGMENT: " + i)

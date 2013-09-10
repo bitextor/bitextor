@@ -1,0 +1,52 @@
+#!__ENV__ __PYTHON__
+
+#
+# 1. The tool reads as an imput the output of bitextor-cleanalignments and formats it in TMX format
+#
+# Input format:
+# uri1    uri2    text1    text2
+#
+
+import sys
+from optparse import OptionParser
+import time
+
+oparser = OptionParser(usage="usage: %prog [options] [filename]\nwhere filename is the path to the file with the output of bitextor-align-segments (hunalign) (standard input is used if this argument is not provided)")
+oparser.add_option("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
+oparser.add_option("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
+(options, args) = oparser.parse_args()
+
+if len(args) > 0:
+  reader = open(args[0],"r")
+else:
+  reader = sys.stdin
+print "<?xml version=\"1.0\"?>"
+print "<tmx version=\"1.4\">"
+print " <header"
+print "   creationtool=\"bitextor\""
+print "   creationtoolversion=\"4.0\""
+print "   datatype=\"PlainText\""
+print "   segtype=\"sentence\""
+print "   creationdate=\""+time.strftime("%Y-%m-%dT%H:%M:%S%Z")+"\""
+print "   o-encoding=\"utf-8\">"
+print " </header>"
+print " <body>"
+
+tuid_counter=1
+for line in reader:
+  fields = line.strip().split("\t")
+  if len(fields) == 4:
+    print "   <tu tuid="+str(tuid_counter)+" datatype=\"Text\">"
+    print "    <tuv xml:lang=\""+options.lang1+"\">"
+    print "     <prop type=\"source-document\">"+fields[0]+"</prop>"
+    print "     <seg>"+fields[2]+"</seg>"
+    print "    </tuv>"
+    print "    <tuv xml:lang=\""+options.lang2+"\">"
+    print "     <prop type=\"source-document\">"+fields[1]+"</prop>"
+    print "     <seg>"+fields[3]+"</seg>"
+    print "    </tuv>"
+    print "   </tu>"
+    tuid_counter=tuid_counter+1
+print " </body>"
+print "</tmx>"
+reader.close()

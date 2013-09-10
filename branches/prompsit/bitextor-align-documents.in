@@ -15,6 +15,7 @@ from operator import itemgetter
 oparser = OptionParser(usage="usage: %prog [options] [ridx_file] [ridx_file]\n where [ridx_file] is a file with extension .ridx (reverse index) (standard input by default). If two ridx files are provided, a bidirectional alignment is performed between them.")
 oparser.add_option("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", default=None)
 oparser.add_option("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file when performing bidirectional document alignment. This parameter is set by default to 1, which means that only documents being mutualy the best alignment option will be aligned. Note that this option is only used when two ridx files are provided", type="int", dest="candidate_num", default=1)
+oparser.add_option("-r", "--ridx", help="If this option is defined, the rinal ridx file used for aligning the documents will be saved in the path specified (when two ridx files are provided, the ridx obtained when merging both files will be used)", dest="oridxpath", default=None)
 
 (options, args) = oparser.parse_args()
 
@@ -29,6 +30,9 @@ oparser.add_option("-n", "--num_candidates", help="Amount of alignment candidate
 if options.lettr == None:
   sys.stderr.write("Undefined value for path to *.lettr file. Set this value by using the parameter '-l'")
   sys.exit(-1)
+
+if options.oridxpath != None:
+  oridx=open(options.oridxpath, "w")
 
 combine=False
 if len(args) == 0:
@@ -57,11 +61,14 @@ if combine == False:
   for i in reader:
     fields = i.split("\t")
     if len(fields) >= 2:
+      if options.oridxpath != None:
+        oridx.write(i)
       try:
         indices[int(fields[0])] = int(fields[1].strip().split(":")[0])
       except:
         pass
   reader.close()
+  oridx.close()
 else:
   best_ridx2_inv = {}
 
@@ -91,7 +98,11 @@ else:
     if len(new_candidate_list) >= 1:
       sorted_candidates = sorted(new_candidate_list.iteritems(), key=itemgetter(1), reverse=True)
       indices[int(fields[0])] = int(sorted_candidates[0][0])
+      if options.oridxpath != None:
+        elements=map(lambda candidate_tuple: "{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]), sorted_candidates)
+        oridx.write("{0}\t{1}\n".format(fields[0], "\t".join(elements)))
   reader1.close()
+  oridx.close()
 
 for k in indices:
   if indices[k] in documentos.keys():
