@@ -8,32 +8,54 @@ bitextor-idx2ridx \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-idx2ridx
-[-d dictionary] [idx] lang1 lang2
+-RI [ OPTIONS ]
+-RI [ FILE ]
+-I LANG1
+-I LANG2
 
 .SH DESCRIPTION
 .B bitextor-idx2ridx
-is a python script that takes a .idx file produced by bitextor-lett2idx
-(weather from a file or from the standard input) and produces a list of
-the 10 most promising files in lang2 to be aligned for every file in 
-lang1. The output format is a tab-sepparated file; for each line in this
-file, the first field corresponds to the code of the file in lang1 for which
-the candidates will be presented. The next 10 fields are a list of tuples
-separated by a colon, in which the left field is the code of a candidate in
-lang2, and the right field is the confidence score asigned to the candidate.
-
-The candidates detection is peformed by: a) getting the list of words for every
-file, b) using the dictionary for translating the words in every file in lang2
-into lang1, and c) computing a matching score between the words in every pair
-of documents. A default dictionary is distributed with bitextor for English,
-Spanish, Catalan, Croatian, and Basque. However, it is possible to provide
-a custom dictionary by using the option -d to determine the path to the dictionry
-field. A dictionary must follow the following format:
+is a Python script that takes a the output of
+.B bitextor-lettr2idx
+as an imput, either from the standard imput or from a 
+.IR FILE ,
+and produce a list with the 10 most promising documents in
+.I LANG2
+to be parallel to each document in
+.IR LANG1.
+The method uses the bag of words contained in every document and a dictionary
+relating words in 
+.I LANG1
+and
+.I LANG2
+to compute an overlapping score between the documents in both languages.
+The output format is a tab-sepparated file; for each line in this file,
+the first field corresponds to the code of a file in
+.IR LANG1 ;
+the following 10 fields are a list of tuples separated by a colon, in which
+the left field is the ID of a candidate in
+.I LANG2
+and the right field is the score assigned to the candidate.
+.br
+A default dictionary is distributed with
+.B bitextor
+for English, Spanish, Catalan, Croatian, and Basque, for computing the overlapping
+scores. However, it is possible to provide a custom dictionary by using the option
+.BI -d " FILE"
+to determine the path to a dictionary. A dictionary must follow the following format:
+.br
 - it must be a tab-sepparated file;
+.br
 - the first line must contain the language code for the words in every language included in the dictionary;
+.br
 - the rest of the lines must contain translations of a word into each of the languages specified in the first line;
-.PP
-Receives a .idx file and the code of two languages.
-The output is a file with format .ridx
+
+SH OPTIONS
+.TP
+.BI \-d " FILE"
+Path to the
+.I FILE
+containing the custom dictionary to be used.
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

@@ -30,7 +30,15 @@ bitextor \- This application is part of
 .PD 0
 .B bitextor
 is an automatic bitext detector which produces, from a multilingual crawled website,
-a list of aligned documents. The tool works following a sequence of steps.
+a list of aligned documents. The user must provide a
+.IR URL ,
+a list of URLs in a
+.I FILE
+(one per line), or the path to a
+.I DIRECTORY
+containing a crawled website. It is also necessary to specify the two languages on which
+the user is interested by setting the language IDs followint the ISO 639-1. The tool
+works following a sequence of steps.
 .SS STEPS
 .P
 .B 1-

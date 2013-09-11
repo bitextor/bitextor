@@ -8,19 +8,25 @@ bitextor-downloadweb \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-downloadweb
-url [dirname]
+.I URL
+.RI [ PATH ]
 
 .SH DESCRIPTION
 .B bitextor-downloadweb
-is shell program for download an entire website.
+is shell program which downloads all the text/HTML/XML files from a website,
+keeping the folder structure. To run the script, it is necessary to provide
+a valid
+.I URL
+from where to download the website. Additionally, it is possible to specify a
+.I PATH
+where to download the website (by default, the website is downloaded to 
+.BR ./web )
 
 .SH DEPENDENCES
-.B bitextor
-depends on the following external tools and libraries
-which must be installed in advance:
-.TP
-.B httrack
-External tool used for crawling a website (this tool is not necessary to install Bitextor)
+.B bitextor-downloadweb
+depends on the external tool
+.BR httrack ,
+used for crawling a website.
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

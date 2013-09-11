@@ -8,25 +8,30 @@ bitextor-ett2lett \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-ett2lett
-file
+.RI [ OPTIONS ]
+.RI [ FILE ]
 
 .SH DESCRIPTION
 .B bitextor-ett2lett
-is python script to detect language of the files. The script reads the output
-of bitextor-webdir2ett and produces a new tab-sepparated output containing the same
-fields that the one produced by bitextor-webdir2ett, but concatenating the detected
-language for every file. The language identification is performed by using the python
-library LangID.py.
-.PP
-Receives a file with format .ett and the output is a file with format .lett
+is a Python script that detects the language of the documents in a crawled website.
+This script takes as an input the output of
+.B bitextor-webdir2ett
+and, for every document, identifies the language and appends this information as a
+new field of the file. The language identification is performed by using the python
+library
+.BR LangID.py .
+
+SH OPTIONS
+.TP
+.BI \-l " LANGLIST"
+List of comma separated valid language ID's (ISO 639-1); those documents which are identified
+to be written in a language which is not in the list are discarded.
 
 .SH DEPENDENCES
-.B bitextor
-depends on the following external tools and libraries
-which must be installed in advance:
-.TP
-.B LangID.py
-Python library that detects the language of a text file
+.B bitextor-ett2lett
+depends on the Python library
+.BR LangID.py ,
+which detects the language of a text file.
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

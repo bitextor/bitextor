@@ -8,23 +8,28 @@ bitextor-lett2idx \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-lett2idx
-file
+.RI FILE
 
 .SH DESCRIPTION
 .B bitextor-lett2idx
-is a python script that obtains an index indicating, for every word in a
+is a Python script that obtains an index containing, for every word in a
 crawled website, which files contain, at least, one occurrence of the word.
-The script uses as an imput the output of the script bitextor-ett2lett
-A different list of words are built for every language detected in the website.
-The output of this script is a tab-sepparated file containing, in teh first
+The script may use, as an input, the output of the scripts
+.B bitextor-ett2lett
+or
+.BR bitextor-lett2lettr ,
+, either from the standard input or from a 
+.IR FILE .
+Separated lists of words are built for every language detected in the website.
+The output of this script is a tab-separated file containing, in the first
 field, a language code, in the second, a word, and in the third, a list of
-document indexes, sepparated by a collon, in which the word appears.
-To reduce the size of the output, the file indexes is presented as an incremental
-shifting. In this way, the first file in the list is the one with the lower index.
-Then, the next identifiers are only the increment to add to the former index in order
-to obtain the real file code.
-.PP
-Receives a file with format .lett and the output is a file with format .idx
+document colon-separated IDs of the documents in which the word appears.
+Since the document IDs correspond to the line number where they appear in the
+.LETT
+file, the list of IDs is presented as sequence of incremental shifts. In this
+way, the first document ID in the list is the one with the lower line number.
+Then, the next identifiers correspond to the number of lines to be added to the
+previous shift to obtain the next ID.
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
