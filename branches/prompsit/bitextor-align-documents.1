@@ -39,20 +39,23 @@ computed from
 to
 .BR LANG1 ).
 In the first case, the content of the
-.I RINDEX
-, which can be read from the standard input, the tool
+.IR RINDEX ,
+which can be read either from the standard input or from a
+.IR FILE ,
+the tool
 only aligns every file in
 .B LANG1
 with the first candidate in
-.B LANG2. When two
+.BR LANG2 .
+When two
 .I RINDEX
 files are provided, the candidate list is re-ranked by obtaining
 the average score for every candidate pair in both directions.
 It is worth noting that, if a candidate pair only exists in one
 of the
 .I RINDEX
-files, it is removed from the list. Finally, the best candidate
-pairs are used for document alignment.
+files (i.e. in only one direction), it is removed from the list.
+Finally, the best candidate pairs are used for document alignment.
 
 .SH OPTIONS
 .TP
@@ -68,6 +71,7 @@ files. If no number is set for this option, all the available
 candidates in the 
 .I RINDEX
 files are used.
+.TP
 .BI \-r " FILE"
 path to the file where the
 .I RINDEX 

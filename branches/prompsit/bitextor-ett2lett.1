@@ -13,13 +13,16 @@ bitextor-ett2lett \- This application is part of
 
 .SH DESCRIPTION
 .B bitextor-ett2lett
-is a Python script that detects the language of the documents in a crawled website.
-This script takes as an input the output of
-.B bitextor-webdir2ett
+is a Python script that detects the language of the documents in a crawled website
+and provides the corresponding language ID following the ISO 639-1.
+This script reads the output of
+.BR bitextor-webdir2ett ,
+either from the standard input or from a
+.IR FILE ,
 and, for every document, identifies the language and appends this information as a
 new field of the file. The language identification is performed by using the python
 library
-.BR LangID.py .
+.BR langid .
 
 SH OPTIONS
 .TP
@@ -30,7 +33,7 @@ to be written in a language which is not in the list are discarded.
 .SH DEPENDENCES
 .B bitextor-ett2lett
 depends on the Python library
-.BR LangID.py ,
+.BR langid ,
 which detects the language of a text file.
 
 .SH SEE ALSO

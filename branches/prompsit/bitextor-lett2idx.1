@@ -8,28 +8,31 @@ bitextor-lett2idx \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-lett2idx
-.RI FILE
+.RI [ FILE ]
 
 .SH DESCRIPTION
 .B bitextor-lett2idx
-is a Python script that obtains an index containing, for every word in a
-crawled website, which files contain, at least, one occurrence of the word.
-The script may use, as an input, the output of the scripts
-.B bitextor-ett2lett
-or
-.BR bitextor-lett2lettr ,
-, either from the standard input or from a 
-.IR FILE .
-Separated lists of words are built for every language detected in the website.
-The output of this script is a tab-separated file containing, in the first
-field, a language code, in the second, a word, and in the third, a list of
-document colon-separated IDs of the documents in which the word appears.
-Since the document IDs correspond to the line number where they appear in the
-.LETT
-file, the list of IDs is presented as sequence of incremental shifts. In this
-way, the first document ID in the list is the one with the lower line number.
-Then, the next identifiers correspond to the number of lines to be added to the
-previous shift to obtain the next ID.
+is a Python script which reads the output of bitextor-ett2lett(1) (although
+it can also use the output of bitextor-lett2lettr(1)), either from the standard
+input or from a 
+.IR FILE ,
+and obtains an index containing, for every word in a crawled website,
+which files contain, at least, one occurrence of this word. 
+Separated word indexes are built for every language detected in the website.
+The output of this script is a tab-separated file containing, for each line,
+a language code in the first field, a word in the second, and, in the third
+field, a list of document colon-separated IDs of the documents in which the
+word appears. Since the document IDs correspond to the line number where they
+appear in the
+.I FILE
+provided by bitextor-ett2lett(1), the list of IDs is presented as sequence of
+incremental shifts. In this way, the first document ID in the list is the one
+with the lower line number. Then, the next identifiers correspond to the number
+of lines to be added to the previous shift to obtain the next ID. For instance,
+if we have the word \'house\' in English, which appears in documents 12, 17, 30, and 42,
+the line would look like:
+.P
+.B 	en	house	12:5:13:12
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

@@ -11,9 +11,8 @@ bitextor-webdir2ett \- This application is part of
 .I PATH
 
 .SH DESCRIPTION
-.B bitextor-webdir2ett
-is a bash/Python script that processes the documents of a crawled website.
-This script processes all the files in the directory in
+bitextor-webdir2ett is a bash/Python script that processes the documents of a
+crawled website. This script processes all the files in the directory in
 .IR PATH ,
 and extracts the
 .BR encoding ,
@@ -22,7 +21,7 @@ the
 and the base64-encoded
 .B content
 of each file. This script uses the library
-.B BoilerPipe
+.B boilerpipe
 to remove menus and unuseful parts of the HTML files. Then,
 the tool
 .B Apache-Tika
@@ -34,9 +33,8 @@ to a document.
 .SH DEPENDENCES
 .B bitextor-webdir2ett
 depends on the Python library
-.B python-boilerpipe
-which provide a Python interface to use the Java package
-boilerpipe for cleaning those parts of an HTML file that contain useless
+.B boilerpipe
+for cleaning those parts of an HTML file that contain useless
 information, such as menus, adds, etc. This library must be installed
 in advance to use this scipt. This script also deppends on
 .BR Apache-Tika ,

@@ -12,20 +12,19 @@ bitextor-lett2lettr \- This application is part of
 
 .SH DESCRIPTION
 .B bitextor-lett2lettr
-is a Python script that takes a the output of
-.B bitextor-ett2lett
-as an imput, either from the standard imput or from a 
+is a Python script that reads the output of bitextor-ett2lett(1), either
+from the standard input or from a
 .IR FILE ,
 and builds a representation (henceforth called \'raspa\') of the content
 of each file in a string format. In this representation, the text in the
 HTML is replaced by sequences of the symbol \'_\'. Actually, every text
 piece in the file is replaced by
 .B log2(len(TEXT))
-'_' characters, where
+\'_\' characters, where
 .B len(TEXT)
-is the number of words in the text. The text also keeps the name of the HTML
-tags found in the document. This string is used by
-.B bitextor-distancefilter
+is the number of words in the text. The \'raspa\' also keeps the name of
+the HTML tags found in the document. This string is used by
+bitextor-distancefilter(1)
 to compute the fuzzy-matching-score used to rank the parallel document candidates.
 Once this representation is computed, it is concatenated to the sequence of
 tab-separated fields received as an input.

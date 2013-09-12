@@ -13,33 +13,26 @@ bitextor-align-segments \- This application is part of
 .I LANG1
 .B \-\-lang2
 .I LANG2
-.br
-.B bitextor-align-segments
-.RI [ OPTIONS ]
-.B \-\-lang1
-.I LANG1
-.B \-\-lang2
-.I LANG2
-.I FILE
+.RI [ FILE ]
 
 .SH DESCRIPTION
 .B bitextor-align-segments
 is a Python script that produces a list of aligned segments from
-a list of aligned documents in the rindex files. This script processes
-the list of aligned files produced by
-.B bitextor-align-documents
-, which can be read from the standard input and from a file. In a
-first step, all the aligned documents are concatenated and stored
-in two different files, one for
+a list of aligned documents in the rindex files. This script reads
+the list of aligned files produced by bitextor-align-documents(1),
+either from the standard input or from a 
+.IR FILE .
+In a first step, all the aligned documents are concatenated
+and stored in two different files, one for
 .I LANG1
 and another for
 .IR LANG2 .
 The files are concatenated following the same order, for both
-languages, that the one provided
-.BR bitextor-align-documents .
-The external tool hunalign (
-.B http://mokk.bme.hu/resources/hunalign/
-) is then used to align the segments in the pair of files. It is worth
+languages, that the one provided bitextor-align-documents(1).
+The external tool
+.B hunalign
+.RB ( http://mokk.bme.hu/resources/hunalign/ )
+is then used to align the segments in the pair of files. It is worth
 noting that the concatenated files are sepparated by the mark
 .BR <p> ,
 which ensures that only segments belonging to an aligned pair of
@@ -50,11 +43,11 @@ dictionary for
 
 .SH OPTIONS
 .TP
-.BI \-\-lang " LANG1"
-first language in the bitext
+.BI \-\-lang1 " LANG1"
+ID of the first language in the bitext (following the ISO 639-1)
 .TP
-.BI \-\-lang " LANG2"
-second language in the bitext
+.BI \-\-lang2 " LANG2"
+ID of the second language in the bitext (following the ISO 639-1)
 
 
 .SH SEE ALSO

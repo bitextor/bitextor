@@ -14,14 +14,13 @@ bitextor-cleantextalign \- This application is part of
 .SH DESCRIPTION
 .B bitextor-cleantextalign
 is a Python script that filters unreliable pairs of aligned segments.
-The script processes the output of the script
-.B bitextor-align-segments,
-which can be read from the standard input or from a 
-.I FILE.
-Then, the script removes unaligned segments and segments with a confidence
-score (see hunalign(1)) under a specified threshold. In addition, the tool can
-be configured to remove the aligned pairs of segments coming from an aligned
-pair of documents with too many wrong segment alignments.
+The script reads the output of the script
+bitextor-align-segments(1), either from the standard input or from a 
+.IR FILE .
+Then, the script removes unaligned segments and aligned segments with a
+confidence score under a specified threshold. In addition, the tool can
+be configured to remove the aligned pairs of segments coming from an
+aligned pair of documents with too many wrong segment alignments.
 
 .SH OPTIONS
 .TP
@@ -39,7 +38,9 @@ in
 .B bitextor-align-segments
 is lower than
 .IR NUM ,
-it is discarded (0 by default)
+it is discarded (0 by default);
+.I NUM
+must be in [1,-1]
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

@@ -8,29 +8,31 @@ bitextor-distancefilter \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-distancefilter
-.RI [ OPTIONS ]
+.BI \-l " LETTR"
 .RI [ FILE ]
 
 .SH DESCRIPTION
-.BR bitextor-distancefilter ,
-which computes, for every document in
+.B bitextor-distancefilter
+is a Python script
+which reads the output of bitextor-idx2ridx(1), either
+from the standard input or from a 
+.IR FILE ,
+and computes, for every document in
 .IR LANG1 ,
 the set of the 10-best candidate documents to be parallel in
 .I LANG2
 by using a metric computed on the bag of words of every document.
 The re-scoring is performed by multiplying the score of every candidate
-by the fuzzy-matching-score between the document and the candidates.
-The fuzzy-matching-score is based on the Levenshtein's edit distance
-between the documents, which is computed by means of the library
+by the fuzzy-matching-score between the \'raspa\' (see bitextor-lett2lettr(1))
+of the document and the one of the candidates. Option
+.b -l
+allows to specify the path to the file 
+.I LETTR
+which contains the pre-computed \'raspa\' of all the processed documents.
+The fuzzy-matching-score compares two sequences and is based on the
+Levenshtein's edit distance between the \'raspa\'. The library
 .BR python-Levenshtein ,
-which must be installed in advance.
-
-.SH OPTIONS
-.TP
-.BI \-l " FILE"
-path to the
-.I LETTR 
-file containing the information about the processed documents in the website.
+is used to compute this metric.
 
 .SH DEPENDENCES
 .TP

@@ -19,6 +19,7 @@ bitextor \- This application is part of
 .I FILE
 .I LANG1
 .I LANG2
+.br
 .B bitextor
 .RI [ OPTIONS ]
 .B \-d
@@ -37,7 +38,7 @@ a list of URLs in a
 (one per line), or the path to a
 .I DIRECTORY
 containing a crawled website. It is also necessary to specify the two languages on which
-the user is interested by setting the language IDs followint the ISO 639-1. The tool
+the user is interested by setting the language IDs following the ISO 639-1. The tool
 works following a sequence of steps.
 .SS STEPS
 .P
@@ -45,7 +46,7 @@ works following a sequence of steps.
 Downloads a website by using the tool httrack: see bitextor-downloadweb(1) (optional step);
 .P
 .B 2-
-The files in the website are analysed, cleaned and standardised: see bitextor-webdir2ett(1);
+The files in the website are analysed, cleaned and standardised (XHTML): see bitextor-webdir2ett(1);
 .P
 .B 3-
 The language of every webpage is detected: see bitextor-ett2lett(1);
@@ -54,16 +55,16 @@ The language of every webpage is detected: see bitextor-ett2lett(1);
 The HTML structure is analysed to create a representation which is used to compare the different webpages: see bitextor-lett2lettr(1);
 .P
 .B 5-
-The a preliminar list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see bitextor-idx2ridx(1);
+The a preliminary list of aligned-document candidates is obtained by computing overlapping metrics on bags-of-words: see bitextor-idx2ridx(1);
 .P
--B 6-
-The candidates are checked by using the HTML structure: see bitextor-distancefilter(1);
+.B 6-
+The candidates are checked by using the XHTML structure computed in : see bitextor-distancefilter(1);
 .P
 .B 7-
 The documents are aligned: see bitextor-align-documents(1);
 .P
 .B 8-
-A set of aligned documents is obtained from the aligned documents: see bitextor-align-segments(1) and bitextor-cleantextalign(1);
+The aligned documents are segmented and aligned: see bitextor-align-segments(1) and bitextor-cleantextalign(1);
 .P
 .B 9-
 The aligned segments are formatted into TMX standard format: see bitextor-buildTMX(1) (optional step).
@@ -73,27 +74,31 @@ The aligned segments are formatted into TMX standard format: see bitextor-buildT
 .PD 1
 .SS "Website sources"
 .TP
-.B \-f
-Path to a file containing a list of URLs to be crawled and processed (one per line).
+.BI \-f " FILE"
+Path to a
+.I FILE
+containing a list of URLs to be crawled and processed (one per line).
 .TP
-.BR \-d
-Path to a directory containing a crawled website
+.BI \-d " DIRECTORY"
+Path to a
+.I DIRECTORY
+containing a crawled website
 .SS "Other options"
 .TP
 .BI \-l " FILE"
 Target path where the
 .I LETTR 
-will be stored in during bitext processing
+will be stored in during bitext processing (see bitextor-lett2lettr(1))
 .TP
 .BI \-r " FILE"
 Target path where the
 .I RINDEX
-will be stored in during bitext processing
+will be stored in during bitext processing (see bitextor-idx2ridx(1) and bitextor-distancefilter(1))
 .TP
 .BI \-i " FILE"
 Target path where the
 .I INDEX
-will be stored in during bitext processing
+will be stored in during bitext processing (see bitextor-lett2idx(1))
 .TP
 .BI \-b " NUM"
 When this option is enabled, only the first
@@ -101,7 +106,7 @@ When this option is enabled, only the first
 candidates from the
 .I RINDEX
 candidate list are taken into account when
-computing the bidirectional document alignment.
+computing the bidirectional document alignment (see bitextor-distancefilter(1))
 .TP
 .BI \-v " FILE"
 Option defining the dictionary
@@ -111,23 +116,18 @@ to be processed in the website.
 .TP
 .BI \-m " NUM"
 if the number of wrong alignments in a pair of documents processed by
-.B bitextor-align-segments
-is higher than
+bitextor-align-segments(1) is higher than
 .IR NUM ,
 the pair of documents is discarded (5 by default)
 .TP
 .BI \-q " NUM"
-if the confidence score for a pair of segments aligned by 
-.B hunalign
-in
-.B bitextor-align-segments
+if the confidence score for a pair of segments aligned by bitextor-align-segments(1)
 is lower than
 .IR NUM ,
 it is discarded (0 by default)
 .TP
 .B \-t
-if this option is enabled, the output of 
-.B bitextor
+if this option is enabled, the output of bitextor
 will be formatted as a standard TMX translation memory
 
 .SH DEPENDENCES
@@ -135,13 +135,13 @@ will be formatted as a standard TMX translation memory
 depends on the following external tools and libraries
 which must be installed in advance:
 .TP
-.B LangID.py
+.B langid
 Python library that detects the language of a text file
 .TP
 .B python-Levenshtein
 Python library that implements the Levenshtein edit distance between two strings
 .TP
-.B python-boilerpipe
+.B boilerpipe
 Python library providing a Python interface to use the Java package
 boilerpipe for cleaning those parts of an HTML file that contain useless
 information, such as menus, adds, etc.
