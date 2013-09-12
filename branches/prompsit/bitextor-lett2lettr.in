@@ -16,7 +16,7 @@ import base64
 import math
 import fileinput
 from HTMLParser import HTMLParser
-from optparse import OptionParser
+import argparse
 
 class Parser(HTMLParser):
 
@@ -45,12 +45,12 @@ class Parser(HTMLParser):
     else:
       self.output.append("_" + tag + "_")
 
-oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .lett (language encoded and typed text) (standard input is used if this argument is not provided)")
-#oparser.add_option("-h", "--help", help="Shows this help message", default=True)
-(options, args) = oparser.parse_args()
+oparser = argparse.ArgumentParser(description="Script that obtains an abstract representation of every file in a crawled website. The script reads the output from bitextor-ett2lett, reads the content of each file, and produces the representation, which is later used by bitextor-distancefilter to rank the aligned-document candidates.")
+oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
+options = oparser.parse_args()
 
-if len(args) > 0:
-  reader = open(args[0],"r")
+if options.lett != None:
+  reader = open(options.lett,"r")
 else:
   reader = sys.stdin
 

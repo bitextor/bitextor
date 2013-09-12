@@ -13,7 +13,7 @@ import sys
 import base64
 from HTMLParser import HTMLParser
 import langid
-from optparse import OptionParser
+import argparse
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -62,16 +62,17 @@ class Parser(HTMLParser):
       elif tag in self.contains2:
         self.include2 -= 1
 
-oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .ett (language encoded and typed text) (standard input is used if this argument is not provided)")
-oparser.add_option("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
-(options, args) = oparser.parse_args()
+oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
+oparser.add_argument('ett_path', metavar='FILE', nargs='?', help='File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)', default=None)
+oparser.add_argument("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
+options = oparser.parse_args()
 
 langs=[]
 if options.langlist != None:
   langs=options.langlist.strip().split(",")
 
-if len(args) > 0:
-  reader = open(args[0],"r")
+if options.ett_path != None:
+  reader = open(options.ett_path,"r")
 else:
   reader = sys.stdin
 

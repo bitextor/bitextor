@@ -9,15 +9,16 @@
 #
 
 import sys
-from optparse import OptionParser
+import argparse
 
-oparser = OptionParser(usage="usage: %prog [options] [filename]\nwhere filename is the path to the file with the output of bitextor-align-segments (hunalign) (standard input is used if this argument is not provided)")
-oparser.add_option("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type="int", dest="minq", default=0)
-oparser.add_option("-m", "--max-lines", help="Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded", type="int", dest="maxl", default=-1)
-(options, args) = oparser.parse_args()
+oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-align-segments and cleans unaligned segments and segments with a confidence score too low")
+oparser.add_argument('aligned_seg', metavar='FILE', nargs='?', help='File containing the set of aliged segments provided by the script bitextor-align-segments (if undefined, the script reads from the standard input)', default=None)
+oparser.add_argument("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type=int, dest="minq", default=0)
+oparser.add_argument("-m", "--max-lines", help="Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded", type=int, dest="maxl", default=-1)
+options = oparser.parse_args()
 
-if len(args) > 0:
-  reader = open(args[0],"r")
+if options.aligned_seg != None:
+  reader = open(options.aligned_seg,"r")
 else:
   reader = sys.stdin
 

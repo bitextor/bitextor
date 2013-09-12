@@ -8,16 +8,17 @@
 #
 
 import sys
-from optparse import OptionParser
+import argparse
 import time
 
-oparser = OptionParser(usage="usage: %prog [options] [filename]\nwhere filename is the path to the file with the output of bitextor-align-segments (hunalign) (standard input is used if this argument is not provided)")
-oparser.add_option("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
-oparser.add_option("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
-(options, args) = oparser.parse_args()
+oparser = argparse.ArgumentParser(description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX translation memory.")
+oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, the script will read from standard input)', default=None)
+oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
+oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+options = oparser.parse_args()
 
-if len(args) > 0:
-  reader = open(args[0],"r")
+if options.clean_alignments != None:
+  reader = open(options.clean_alignments,"r")
 else:
   reader = sys.stdin
 print "<?xml version=\"1.0\"?>"

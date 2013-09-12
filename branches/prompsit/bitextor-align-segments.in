@@ -17,7 +17,7 @@
 
 import sys
 import os
-from optparse import OptionParser
+import argparse
 import base64
 import subprocess
 import re
@@ -34,27 +34,20 @@ def runAligner(filename1, filename2):
     yield line.decode("utf-8")
   return
 
-oparser = OptionParser(usage="usage: %prog [options] [doc_aligned_file]\n where [doc_aligned_file] is a file contining the list of aligned files provided by bitextor-align-documents.")
-oparser.add_option("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", default=None)
-oparser.add_option("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", default=None)
+oparser = argparse.ArgumentParser(description="Tool that reads the output of bitextor-align-documents and aligns the segments of the aligned documents")
+oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
+oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
+oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
 
-(options, args) = oparser.parse_args()
-
-if options.lang1 == None:
-  sys.stderr.write("Undefined value for language 1. Set this value by using the parameter \"--lang1\"")
-  sys.exit(-1)
-
-if options.lang2 == None:
-  sys.stderr.write("Undefined value for language 2. Set this value by using the parameter \"--lang2\"")
-  sys.exit(-1)
+options = oparser.parse_args()
 
 tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
 tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
 
-if len(args) == 0:
+if options.aligned_docs == None:
   reader = sys.stdin
-elif len(args) == 1:
-  reader = open(args[0],"r")
+else:
+  reader = open(options.aligned_docs,"r")
 
 for line in reader:
   fields=line.strip().split("\t")

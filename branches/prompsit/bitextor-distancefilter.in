@@ -16,7 +16,7 @@
 #
 
 import sys
-import getopt
+import argparse
 from operator import itemgetter
 import Levenshtein
 
@@ -30,22 +30,19 @@ def rellenarDocumentos(fich, documentos):
     contador += 1
   file.close()
 
-oparser = OptionParser(usage="usage: %prog [filename]\nwhere filename is the path to the file with extension .ridx (reverse index of documents) (standard input is used if this argument is not provided)")
-oparser.add_option("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", default=None)
-(options, args) = oparser.parse_args()
+oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
+oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
+oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+options = oparser.parse_args()
 
-if options.lettr != None:
-  sys.stderr.write("Error: it is necessary to specify the path to the LETTR file containing the information about the processed documents.")
-  sys.exit(-1)
-
-if len(args) > 0:
-  reader = open(args[0],"r")
-else:
+if options.ridx == None:
   reader = sys.stdin
+else:
+  reader = open(options.ridx,"r")
 
 index = {}
 documentos = {}
-rellenarDocumentos(fich, documentos)
+rellenarDocumentos(options.lettr, documentos)
 
 for i in reader:
   campos = i.split("\t")
