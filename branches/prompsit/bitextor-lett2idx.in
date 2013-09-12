@@ -157,7 +157,7 @@ for line in reader:
   #Decoding base 64:
   text = base64.b64decode(fields[5])
   #Getting the bag of words in the document
-  sorted_uniq_wordlist = set(text.split())
+  sorted_uniq_wordlist = set(text.lower().split())
   #Trimming non-aplphanumerics:
   clean_sorted_uniq_wordlist = [w.strip(punctuation) for w in sorted_uniq_wordlist]
   sorted_uniq_wordlist=clean_sorted_uniq_wordlist
