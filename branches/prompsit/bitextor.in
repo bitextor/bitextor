@@ -184,12 +184,12 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
   RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
 
   __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 < $index_pipe1 2> $LOGDIR/bitextoridx2ridx_$LANG1-$LANG2.log | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG1-$LANG2.log > $RINDEX1 &
+  __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG1-$LANG2.log > $RINDEX1 &
 
   rindex1_pid=$!
 
   __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG2 $LANG1 < $index_pipe2 2> $LOGDIR/bitextoridx2ridx_$LANG2-$LANG1.log | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG2-$LANG1.log > $RINDEX2
+  __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG2-$LANG1.log > $RINDEX2
 
   wait $rindex1_pid
 
@@ -201,7 +201,7 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
 else
   __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | tee $INDEX | \
   __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
-  __PREFIX__/bin/bitextor-distancefilter $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
+  __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
   __PREFIX__/bin/bitextor-align-documents -l $LETTR -r $RINDEX 2> $LOGDIR/bitextoraligndocuments.log | \
   __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \
   __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $LOGDIR/bitextorcleantextalign.log > $output_pipe &
