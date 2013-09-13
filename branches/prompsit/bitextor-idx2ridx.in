@@ -14,23 +14,10 @@
 #
 
 import sys
-import getopt
+import argparse
 from sets import Set
 from collections import defaultdict
 from operator import itemgetter
-
-def usage():
-  # Parametros: .idx .dic lang1 lang2
-  error = "USAGE: " + sys.argv[0] + " [-d dictionary] lang1 lang2 [index]\n"
-  error += "WHERE\n"
-  error += "   -d dictionary   file with extension .dic Dictionary with pair of selected\n"
-  error += "                   languages. (installed dictionary at\n"
-  error += "                   /home/espla/local/share/bitextor/diccionario.dic by default)\n"
-  error += "   lang1           selected language with two letters code: en, es, fr, de ...\n"
-  error += "   lang2           selected language with two letters code: en, es, fr, de ...\n"
-  error += "   index           file with extenxion .idx (index document)\n"
-  error += "                   (standard input by default)\n"
-  sys.exit(error)
 
 #
 # Se rellenan los indices de palabras en las dos lenguas a partir del
@@ -87,95 +74,70 @@ def traducirPalabras(index, dic, dictp, translatedindex):
     dictp[i] = contador
 
 
-####
-## Aqui empieza el script.
-####
-# Manejando las opciones con getopt
-try:
-  opts, args = getopt.getopt(sys.argv[1:], "d:h", [])
-except getopt.GetoptError, err:
-  # print help information and exit:
-  print str(err) # will print something like "option -a not recognized"
-  usage()
-  sys.exit(2)
+oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
+oparser.add_argument('idx', metavar='FILE', nargs='?', help='File produced by bitextor-lett2idx containing an index of the different words for every language in the website and the list of documents in which they appear (if undefined, the script will read from the standard input)', default=None)
+oparser.add_argument('-d', help='Dictionary containing translations of words for the languages of the website; it is used to compute the overlapping scores which allow to relate documents in both languages)', dest="diccionario", required=True)
+oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
+oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+options = oparser.parse_args()
 
-# -d .dic
-for o, a in opts:
-  if o == "-d":
-    diccionario = a
-  elif o == "-h":
-    usage()
-  else:
-    sys.error("Unhandled option")
-    usage()
+index_text1 = defaultdict(set)
+index_text2 = defaultdict(set)
+dic = defaultdict(list)
+lista_palabras = []
+encontrados = {}
+dict_palabras = {}
+translated_index_text2 = {}
 
-# Parametros: lang1 lang2 [.idx]
-if (len(args) == 2 or len(args) == 3):
+cargarDiccionarios(options.diccionario, options.lang1, options.lang2, dic)
 
-  index_text1 = defaultdict(set)
-  index_text2 = defaultdict(set)
-  dic = defaultdict(list)
-  lista_palabras = []
-  encontrados = {}
-  dict_palabras = {}
-  translated_index_text2 = {}
-
-  # Manejando los argumentos
-  lang1 = args[0]
-  lang2 = args[1]
-
-  cargarDiccionarios(diccionario, lang1, lang2, dic)
-
-  if len(args) == 3:
-    index_palabras = args[2]
-    rellenarIndex(open(index_palabras, "r"), lang1, lang2, index_text1, index_text2)
-  else:
-    rellenarIndex(sys.stdin, lang1, lang2, index_text1, index_text2)
-
-  #
-  # Para cada par de documentos, tras llamar a traducirPalabras, se realiza una
-  # interseccion entre ellos y se divide por el numero de palabras traducidas en
-  # ese documento en la funcion traducirPalabras. El resultado de la interseccion
-  # entre el numero de palabras traducidas en traducirPalabras dara un
-  # porcentaje de cuanto se parecen eso documentos. Se muestra una lista con
-  # los 10 documentos mas parecidos a cada uno de ellos.
-  #
-  traducirPalabras(index_text2, dic, dict_palabras, translated_index_text2)
-
-  for i in index_text1:
-    parecidos = {}
-    for j in index_text2:
-#      c3 = filter(lambda x: x in translated_index_text2[j], index_text1[i])
-      c3 = index_text1[i].intersection(translated_index_text2[j])
-      if len(c3) > 0 and int(dict_palabras[j]) > 0:
-        max_vocab=max(len(index_text1[i]),len(index_text2[j]))
-        min_vocab=min(len(index_text1[i]),len(index_text2[j]))
-        num_intersect_words=len(c3)
-        num_trans_words_text2=dict_palabras[j]
-        parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
-
-    if len(parecidos) > 0:
-      parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
-    encontrados[i] = []
-    for j in parecidos:
-      encontrados[i].append(str(j[0]) + ":" + str(j[1]))
-
-  # Se saca el numero de documento y sus 10 mas parecidos.
-  for i in encontrados:
-    if len(encontrados[i]) > 10:
-      contador = 10
-    else:
-      contador = len(encontrados[i])
-    primera = True
-    cadena = str(i) + "\t"
-    for j in range(contador):
-      if primera == True:
-        cadena += str(encontrados[i][j])
-        primera = False
-      else:
-        cadena += "\t" + str(encontrados[i][j])
-    print cadena
-
+if options.idx == None:
+  reader = sys.stdin;
 else:
-  usage()
+  reader = open(options.idx, "r")
 
+rellenarIndex(reader, options.lang1, options.lang2, index_text1, index_text2)
+
+#
+# Para cada par de documentos, tras llamar a traducirPalabras, se realiza una
+# interseccion entre ellos y se divide por el numero de palabras traducidas en
+# ese documento en la funcion traducirPalabras. El resultado de la interseccion
+# entre el numero de palabras traducidas en traducirPalabras dara un
+# porcentaje de cuanto se parecen eso documentos. Se muestra una lista con
+# los 10 documentos mas parecidos a cada uno de ellos.
+#
+traducirPalabras(index_text2, dic, dict_palabras, translated_index_text2)
+
+for i in index_text1:
+  parecidos = {}
+  for j in index_text2:
+#     c3 = filter(lambda x: x in translated_index_text2[j], index_text1[i])
+    c3 = index_text1[i].intersection(translated_index_text2[j])
+    if len(c3) > 0 and int(dict_palabras[j]) > 0:
+      max_vocab=max(len(index_text1[i]),len(index_text2[j]))
+      min_vocab=min(len(index_text1[i]),len(index_text2[j]))
+      num_intersect_words=len(c3)
+      num_trans_words_text2=dict_palabras[j]
+      parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
+
+  if len(parecidos) > 0:
+    parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+  encontrados[i] = []
+  for j in parecidos:
+    encontrados[i].append(str(j[0]) + ":" + str(j[1]))
+
+# Se saca el numero de documento y sus 10 mas parecidos.
+for i in encontrados:
+  if len(encontrados[i]) > 10:
+    contador = 10
+  else:
+    contador = len(encontrados[i])
+  primera = True
+  cadena = str(i) + "\t"
+  for j in range(contador):
+    if primera == True:
+      cadena += str(encontrados[i][j])
+      primera = False
+    else:
+      cadena += "\t" + str(encontrados[i][j])
+  print cadena
