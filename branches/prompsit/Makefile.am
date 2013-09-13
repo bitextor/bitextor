@@ -54,7 +54,6 @@ bitextor-distancefilter: bitextor-distancefilter.in
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-downloadweb: bitextor-downloadweb.in
-	sed "s!__HTTRACK__!$(HTTRACK)!g" $< | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-ett2lett: bitextor-ett2lett.in

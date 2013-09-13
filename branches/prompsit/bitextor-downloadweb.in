@@ -42,7 +42,9 @@ case $# in
     ;;
 esac
 
-# Código aquí
-
-__HTTRACK__ --skeleton -Q -q -%i0 -I0 $URL $PATH
+if [ $(whcih httrack|wc -l) -eq 0 ]; then
+  echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script."
+else
+  httrack --skeleton -Q -q -%i0 -I0 $URL $PATH
+fi
 

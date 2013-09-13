@@ -145,16 +145,6 @@ then
   AC_MSG_ERROR([You don't have pkg-config installed.])
 fi
 
-AC_PATH_PROG(HTTRACK, httrack, no)
-if test x$ac_cv_path_HTTRACK = x
-then
-  AC_MSG_ERROR([You don't have httrack installed.])
-fi
-if test x$ac_cv_path_HTTRACK = xno
-then
-  AC_MSG_ERROR([You don't have httrack installed.])
-fi
-
 AC_PATH_PROG(GAWK, gawk, no)
 if test x$ac_cv_path_GAWK = x
 then
@@ -183,46 +173,6 @@ fi
 if test x$ac_cv_path_COMM = xno
 then
   AC_MSG_ERROR([You don't have comm installed.])
-fi
-
-AC_PATH_PROG(SED, sed, no)
-if test x$ac_cv_path_SED = x
-then
-  AC_MSG_ERROR([You don't have sed installed.])
-fi
-if test x$ac_cv_path_SED = xno
-then
-  AC_MSG_ERROR([You don't have sed installed.])
-fi
-
-AC_PATH_PROG(CUT, cut, no)
-if test x$ac_cv_path_CUT = x
-then
-  AC_MSG_ERROR([You don't have cut installed.])
-fi
-if test x$ac_cv_path_CUT = xno
-then
-  AC_MSG_ERROR([You don't have cut installed.])
-fi
-
-AC_PATH_PROG(GREP, grep, no)
-if test x$ac_cv_path_GREP = x
-then
-  AC_MSG_ERROR([You don't have grep installed.])
-fi
-if test x$ac_cv_path_GREP = xno
-then
-  AC_MSG_ERROR([You don't have grep installed.])
-fi
-
-AC_PATH_PROG(SORT, sort, no)
-if test x$ac_cv_path_SORT = x
-then
-  AC_MSG_ERROR([You don't have sort installed.])
-fi
-if test x$ac_cv_path_SORT = xno
-then
-  AC_MSG_ERROR([You don't have sort installed.])
 fi
 
 AC_PATH_PROG(WC, wc, no)
@@ -255,39 +205,8 @@ then
   AC_MSG_ERROR([You don't have java installed.])
 fi
 
-AC_DEFUN([AC_PROG_PERL_VERSION],[dnl
-# Make sure we have perl
-if test -z "$PERL"; then
-AC_CHECK_PROG(PERL,perl,perl)
-fi
-
-# Check if version of Perl is sufficient
-ac_perl_version="$1"
-
-if test "x$PERL" != "x"; then
-  AC_MSG_CHECKING(for perl version greater than or equal to $ac_perl_version)
-  # NB: It would be nice to log the error if there is one, but we cannot rely
-  # on autoconf internals
-  $PERL -e "use $ac_perl_version;" 2> /dev/null
-  if test $? -ne 0; then
-    AC_MSG_RESULT(no);
-    $3
-  else
-    AC_MSG_RESULT(yes);
-    $2
-  fi
-else
-  AC_MSG_ERROR([You don't have Perl 5.0 or later installed.])
-fi
-])dnl
-
-#AC_PROG_PERL_VERSION(VERSION, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
-AC_PROG_PERL_VERSION([5.0], , [AC_MSG_ERROR([You don't have Perl 5.0 or later installed.])])
-
-
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-AM_PATH_PYTHON([2.6], , [AC_MSG_ERROR([You don't have Python 2.6 or later installed.])])
-
+AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import Levenshtein; \
@@ -328,51 +247,6 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires boilerpipe for Python. Please, install v1.2 or later and try again. http://code.google.com/p/boilerpipe
-])
-  fi
-
-  AC_MSG_CHECKING([for itemgetter for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-from operator import itemgetter; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- itemgetter:           installed with Python 2.2 or later.
-])
-  fi
-
-  AC_MSG_CHECKING([for hashlib for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import hashlib; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- hashlib:           installed with Python 2.5 or later.
-])
-  fi
-
-  AC_MSG_CHECKING([for HTMLParser for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import HTMLParser; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:.
-- HTMLParser:        installed with Python 2.2 or later.
 ])
   fi
 

@@ -147,15 +147,25 @@ esac
 
 if !(test -z $URL);
 then
-  __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+  if [ $(whcih httrack|wc -l) -eq 0 ]; then
+    echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
+    exit
+  else
+    __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+  fi
 fi
 if !(test -z $FILE);
 then
-  cat $FILE | \
-  while read line;
-  do
-    __PREFIX__/bin/bitextor-downloadweb $line $DIRNAME
-  done
+  if [ $(whcih httrack|wc -l) -eq 0 ]; then
+    echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
+    exit
+  else
+    cat $FILE | \
+    while read line;
+    do
+      __PREFIX__/bin/bitextor-downloadweb $line $DIRNAME
+    done
+  fi
 fi
 
 __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $LOGDIR/bitextorwebdir2ett.log | \

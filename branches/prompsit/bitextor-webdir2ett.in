@@ -69,7 +69,7 @@ done
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | \
-/usr/bin/gawk '{
+__GAWK__ '{
   if ( match($2, "text/.*") != 0 ){
     printf substr($1,1,length($1)-1);    # nombre_fichero
     printf "\t";
