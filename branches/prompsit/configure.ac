@@ -452,4 +452,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile splitsentences/nonbreaking_prefixes/Makefile splitsentences/Makefile tika/Makefile])
+AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile splitsentences/nonbreaking_prefixes/Makefile splitsentences/Makefile tika/Makefile utils/Makefile])

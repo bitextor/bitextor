@@ -3,7 +3,7 @@ bitextordir = $(prefix)/share/bitextor
 
 bitextor_DATA = diccionario.dic
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign splitsentences tika
+SUBDIRS= hunalign-src hunalign-src/src/hunalign splitsentences tika utils
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign \
             bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett \
@@ -15,7 +15,7 @@ man_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
          bitextor-webdir2ett.1 bitextor-buildTMX.1
 
-EXTRA_DIST= $(man_MANS) $(bin_SCRIPTS) $(bitextor_DATA) \
+EXTRA_DIST= $(man_MANS) $(bin_SCRIPTS) $(bitextor_DATA) utils \
             splitsentences DocumentacionBitextor-4.odt tika
 
 CLEANFILES=$(bin_SCRIPTS)
@@ -68,7 +68,7 @@ bitextor-idx2ridx: bitextor-idx2ridx.in
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-lett2idx: bitextor-lett2idx.in
-	sed "s!__BASH__!$(BASH)!g" $< | \
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
