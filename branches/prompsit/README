@@ -24,12 +24,6 @@ The easiest way to install these libraries is using the tool pip. For installing
 
  user@pc:~$ sudo pip install boilerpipe langid python-Levenshtein
 
-In case you do not have sudoer privileges or you only want to do a local installation, it is possible to specify a different target directory for the installation:
-
- user@pc:~$ pip install -t LOCALDIR boilerpipe langid python-Levenshtein
-
-where LOCALDIR can be any directory where you have writing permision, such as ~/local.
-
 In addition to these Python libraries, the tool HTTrack may be necessary if you plan to use bitextor to download multilingual websites. This tool is not a requirement for installing bitextor, but, if it is not installed, you will only be able to process websites which have been already installed (starting the process in the second step).
 
 
