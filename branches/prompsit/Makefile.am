@@ -22,6 +22,7 @@ CLEANFILES=$(bin_SCRIPTS)
 
 bitextor: bitextor.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-buildTMX: bitextor-buildTMX.in
@@ -54,7 +55,8 @@ bitextor-distancefilter: bitextor-distancefilter.in
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-downloadweb: bitextor-downloadweb.in
-	sed "s!__BASH__!$(BASH)!g;" >$@
+	sed "s!__BASH__!$(BASH)!g;" < $< | \
+	sed "s!__WC__!$(WC)!g" >$@
 
 bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \

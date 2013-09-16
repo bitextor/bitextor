@@ -147,7 +147,7 @@ esac
 
 if !(test -z $URL);
 then
-  if [ $(whcih httrack|wc -l) -eq 0 ]; then
+  if [ $(which httrack|__WC__ -l) -eq 0 ]; then
     echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
     exit
   else
@@ -156,7 +156,7 @@ then
 fi
 if !(test -z $FILE);
 then
-  if [ $(whcih httrack|wc -l) -eq 0 ]; then
+  if [ $(which httrack|__WC__ -l) -eq 0 ]; then
     echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
     exit
   else
@@ -193,12 +193,12 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
   RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
   RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
 
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 < $index_pipe1 2> $LOGDIR/bitextoridx2ridx_$LANG1-$LANG2.log | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $LOGDIR/bitextoridx2ridx_$LANG1-$LANG2.log | \
   __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG1-$LANG2.log > $RINDEX1 &
 
   rindex1_pid=$!
 
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG2 $LANG1 < $index_pipe2 2> $LOGDIR/bitextoridx2ridx_$LANG2-$LANG1.log | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $LOGDIR/bitextoridx2ridx_$LANG2-$LANG1.log | \
   __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter_$LANG2-$LANG1.log > $RINDEX2
 
   wait $rindex1_pid
@@ -210,7 +210,7 @@ if [ $BIDIDOCALIGN -ge 1 ]; then
   __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $LOGDIR/bitextorcleantextalign.log > $output_pipe &
 else
   __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LOGDIR/bitextorlett2idx.log | tee $INDEX | \
-  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY $LANG1 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
+  __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoridx2ridx.log | \
   __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $LOGDIR/bitextordistancefilter.log | \
   __PREFIX__/bin/bitextor-align-documents -l $LETTR -r $RINDEX 2> $LOGDIR/bitextoraligndocuments.log | \
   __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $LOGDIR/bitextoralignsegments.log | \

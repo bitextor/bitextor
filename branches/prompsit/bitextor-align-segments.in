@@ -56,12 +56,12 @@ for line in reader:
   encodedtext1=fields[2]
   encodedtext2=fields[3]
   tmp_file1.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
-  pipe1 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  pipe1 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/splitsentences/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   parsed_text, errout = pipe1.communicate(base64.b64decode(encodedtext1))
   tmp_file1.write(parsed_text)
 
   tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
-  pipe2 = subprocess.Popen(["perl", "/home/espla/local/share/bitextor/splitsentences/split-sentences.perl"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  pipe2 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/splitsentences/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   parsed_text, errout = pipe2.communicate(base64.b64decode(encodedtext2))
   tmp_file2.write(parsed_text)
 tmp_file1.close()

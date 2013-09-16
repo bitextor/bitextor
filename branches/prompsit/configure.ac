@@ -262,22 +262,6 @@ fi
 
 AC_CHECK_FUNCS(strcasecmp)
 
-if test x$(uname) != xDarwin;
-then 
-AC_CHECK_HEADER(pcreposix.h,
-  AC_CHECK_LIB(pcre, pcre_info,[
-  LIBS="$LIBS -lpcreposix -lpcre"
-  no_comp_check=yes],
-  AC_MSG_ERROR([*** unable to locate pcre library ***])),
-  AC_MSG_ERROR([*** unable to locate pcreposix.h include file ***]))
-
-AC_CHECK_HEADER(pcrecpp.h,
-  AC_CHECK_LIB(pcrecpp,pcre_compile,[
-  LIBS="$LIBS -lpcrecpp"
-  no_comp_check=yes],
-  AC_MSG_ERROR([*** unable to locate pcrecpp library ***])),
-  AC_MSG_ERROR([*** unable to locate pcrecpp.h include file ***])) 
-fi
 
 
 #PKG_CHECK_MODULES(APERTIUM, [dnl
