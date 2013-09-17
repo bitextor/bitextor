@@ -205,6 +205,24 @@ then
   AC_MSG_ERROR([You don't have java installed.])
 fi
 
+AC_ARG_WITH([httrack],
+            [AS_HELP_STRING([--without-httrack],
+              [disable support for httrack; if this option is enabled, you will not be able to download new websites (but you will be able to process already downloaded websites)])],
+            [],
+            [with_httrack=yes])
+          
+AS_IF([test "x$with_httrack" != xno],
+  [AC_PATH_PROG(HTTRACK, httrack, no)
+     if test x$ac_cv_path_HTTRACK = x
+     then
+       AC_MSG_ERROR([You don't have httrack installed: try to install it or run this script with option --without-httrack.])
+     fi
+     if test x$ac_cv_path_HTTRACK = xno
+     then
+       AC_MSG_ERROR([You don't have httrack installed: try to install it or run this script with option --without-httrack.])
+     fi
+])
+
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])

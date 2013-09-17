@@ -41,8 +41,8 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 
 options = oparser.parse_args()
 
-tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
-tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
+tmp_file1=NamedTemporaryFile(dir="/tmp")
+tmp_file2=NamedTemporaryFile(dir="/tmp")
 
 if options.aligned_docs == None:
   reader = sys.stdin

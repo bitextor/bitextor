@@ -24,7 +24,7 @@ The easiest way to install these libraries is using the tool pip. For installing
 
  user@pc:~$ sudo pip install boilerpipe langid python-Levenshtein
 
-In addition to these Python libraries, the tool HTTrack may be necessary if you plan to use bitextor to download multilingual websites. This tool is not a requirement for installing bitextor, but, if it is not installed, you will only be able to process websites which have been already installed (starting the process in the second step).
+In addition to these Python libraries, the tool HTTrack may be necessary if you plan to use bitextor to download multilingual websites. When installing bitextor, you can specify that you do not want to use these tool, but, in this case, you will only be able to process websites which have been already installed (starting the process in the second step).
 
 
 
@@ -42,7 +42,7 @@ In case you do not have sudoer privileges, it is possible to install the tool lo
  user@pc:~$ make
  user@pc:~$ make install
 
-where LOCALDIR can be any directory where you have writing permission, such as ~/local.
+where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
 
 Two more tools are included in bitextor package and will be installed together with bitextor:
  - hunalign: a software for sentence alignment (http://mokk.bme.hu/resources/hunalign/)
