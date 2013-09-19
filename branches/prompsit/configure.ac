@@ -185,6 +185,16 @@ then
   AC_MSG_ERROR([You don't have wc installed.])
 fi
 
+AC_PATH_PROG(GREP, grep, no)
+if test x$ac_cv_path_GREP = x
+then
+  AC_MSG_ERROR([You don't have grep installed.])
+fi
+if test x$ac_cv_path_GREP = xno
+then
+  AC_MSG_ERROR([You don't have grep installed.])
+fi
+
 AC_PATH_PROG(LSOF, lsof, no)
 if test x$ac_cv_path_LSOF = x
 then
@@ -237,6 +247,22 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
 - python-Levenshtein:   Please, install v0.2 or later and try again. http://pypi.python.org/pypi/python-Levenshtein/
+])
+  fi
+
+AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+  AC_MSG_CHECKING([for numpy for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import numpy; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- numpy:   Please, install v1.7 or later and try again. http://www.numpy.org/
 ])
   fi
 

@@ -2,6 +2,8 @@ sources = alignerTool.cpp alignment.cpp bloom.cpp bookToMatrix.cpp cooccurrence.
 
 headers = alignment.h bloom.h bookToMatrix.h cooccurrence.h dictionary.h dicTree.h help.h networkFlow.h quasiDiagonal.h similarityEvaluator.h TEIReader.h trailPostprocessors.h translate.h wordAlignment.h words.h
 
+EXTRA_DIST=../include
+
 CXXFLAGS = -O9 -ffast-math -funroll-loops -I ../include
 
 hunalign_SOURCES = $(sources) $(headers)

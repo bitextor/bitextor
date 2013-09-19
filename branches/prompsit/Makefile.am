@@ -5,17 +5,23 @@ bitextor_DATA = diccionario.dic
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign splitsentences tika utils
 
+bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
+            bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
+            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in \
+            bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in \
+            bitextor-buildTMX.in
+
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign \
             bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr \
             bitextor-webdir2ett bitextor-ridx2filenames bitextor-buildTMX
             
-man_MANS=bitextor.1 bitextor-cleantextalign.1 \
+bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-distancefilter.1 bitextor-downloadweb.1 bitextor-ett2lett.1 \
          bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
          bitextor-webdir2ett.1 bitextor-buildTMX.1
 
-EXTRA_DIST= $(man_MANS) $(bin_SCRIPTS) $(bitextor_DATA) utils \
+EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) $(bitextor_DATA) utils \
             splitsentences DocumentacionBitextor-4.odt tika
 
 CLEANFILES=$(bin_SCRIPTS)
@@ -23,6 +29,7 @@ CLEANFILES=$(bin_SCRIPTS)
 bitextor: bitextor.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
+	sed "s!__GREP__!$(GREP)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-buildTMX: bitextor-buildTMX.in

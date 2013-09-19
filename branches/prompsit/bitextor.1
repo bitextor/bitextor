@@ -9,13 +9,16 @@ bitextor \- This application is part of
 .SH SYNOPSIS
 .B bitextor
 .RI [ OPTIONS ]
+.B \-u
 .I URL
+.B \-d
+.I DIRECTORY
 .I LANG1
 .I LANG2
 .br
 .B bitextor
 .RI [ OPTIONS ]
-.B \-f
+.B \-U
 .I FILE
 .I LANG1
 .I LANG2
@@ -24,6 +27,13 @@ bitextor \- This application is part of
 .RI [ OPTIONS ]
 .B \-d
 .I DIRECTORY
+.I LANG1
+.I LANG2
+.br
+.B bitextor
+.RI [ OPTIONS ]
+.B \-D
+.I FILE
 .I LANG1
 .I LANG2
 
@@ -35,9 +45,12 @@ a list of aligned documents. The user must provide a
 .IR URL ,
 a list of URLs in a
 .I FILE
-(one per line), or the path to a
+(one per line), the path to a
 .I DIRECTORY
-containing a crawled website. It is also necessary to specify the two languages on which
+containing a crawled website, or the path to a
+.I FILE
+containing a list of previously downloaded websites.
+It is also necessary to specify the two languages on which
 the user is interested by setting the language IDs following the ISO 639-1. The tool
 works following a sequence of steps.
 .SS STEPS
@@ -73,16 +86,31 @@ The aligned segments are formatted into TMX standard format: see bitextor-buildT
 .SH OPTIONS
 .PD 1
 .SS "Website sources"
+
 .TP
-.BI \-f " FILE"
+.BI \-u " URL"
+URL of a website to be crawled and processed.
+.TP
+.BI \-U " FILE"
 Path to a
 .I FILE
-containing a list of URLs to be crawled and processed (one per line).
+containing a list of URLs to be crawled and processed (one per line)
+and the path to their corresponding target directory (where each of
+them will be stored) separated by a tab.
 .TP
 .BI \-d " DIRECTORY"
 Path to a
 .I DIRECTORY
-containing a crawled website
+containing a crawled website. If option
+.B \-u
+is also enabled, then the
+.I DIRECTORY
+is used to store the website crawled.
+.TP
+.BI \-D " FILE"
+Path to a
+.I FILE
+containing a list of directories to be processed (one per line).
 .SS "Other options"
 .TP
 .BI \-l " FILE"
@@ -129,6 +157,9 @@ it is discarded (0 by default)
 .B \-t
 if this option is enabled, the output of bitextor
 will be formatted as a standard TMX translation memory
+.TP
+.BI \-L " DIRECTORY"
+Target path where the log files produced by the modules of bitextor will be stored 
 
 .SH DEPENDENCES
 .B bitextor

@@ -1,7 +1,3 @@
 * Check the edit distance: it is using edit distance at the level of characters, which could be wrong when checking names of tags.
 * Change the configure.ac to avoid HTTrack as a requierement. Also change bitextor-downloadweb to check if httrack exists before adding anything
 * Evaluate if it would be interesting to remove words appearing in too many documents in idx file
-* Adding a new option to specify where to save the logs
-* Force user to set the name of the path to download the website and also for the name of the path where the logs are stored
-* Add an option -u for specifying the URL to download
-* Add --without-httrack to configure.ac
