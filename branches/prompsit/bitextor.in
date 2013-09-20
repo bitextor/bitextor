@@ -9,8 +9,6 @@ VOCABULARY="__PREFIX__/share/bitextor/diccionario.dic"
 #LETT=$(mktemp /tmp/lett.XXXXXX)
 TMPLETTR=$(mktemp /tmp/lettr.XXXXXX)
 LETTR=$TMPLETTR
-TMPRINDEX=$(mktemp /tmp/ridx.XXXXXX)
-RINDEX=$TMPRINDEX
 LANG1=""
 LANG2=""
 BIDIDOCALIGN=0
@@ -34,6 +32,19 @@ ALIGNDOCUMENTSLOG=/dev/null
 ALIGNSEGMENTSLOG=/dev/null
 CLEANTEXTLOG=/dev/null
 
+WEBDIR2ETTOUT=""
+ETT2LETTOUT=""
+LETT2LETTROUT=""
+LETT2IDXOUT=""
+IDX2RIDXOUT=""
+IDX2RIDX12OUT=""
+IDX2RIDX21OUT=""
+DISTANCEFILTEROUT="/dev/null"
+DISTANCEFILTER12OUT=""
+DISTANCEFILTER21OUT=""
+ALIGNDOCUMENTSOUT=""
+ALIGNSEGMENTSOUT=""
+
 exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
@@ -42,6 +53,7 @@ exit_program()
   echo "USAGE: $1 [OPTIONS] -d DIRECTORY           LANG1 LANG2"
   echo "USAGE: $1 [OPTIONS] -U FILE                LANG1 LANG2"
   echo "USAGE: $1 [OPTIONS] -D FILE                LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -e FILE                LANG1 LANG2"
   echo ""
   echo "WHERE:"
   echo "  -u URL          URL of a website to crawl (one per line); if option -d is also" 
@@ -53,6 +65,7 @@ exit_program()
   echo "                  the website is first downloaded and then processed)."
   echo "  -D FILE         file containing a list of URIs to folders containing crawled"
   echo "                  websites."
+  echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
   echo "  LANG1           selected language with two letters code: en, es, fr, de ..."
   echo "  LANG2           selected language with two letters code: en, es, fr, de ..."
   echo ""
@@ -62,10 +75,8 @@ exit_program()
   echo "  -l LETTR        custom path where the file with extension .lettr (language"
   echo "                  encoded and typed data with 'raspa') will be created"
   echo "                  (/tmp/lettr.XXXXXX by default)."
-  echo "  -i INDEX        custom path where the file with extenxion .idx (index document)"
-  echo "                  will be created (/tmp/temp.idx by default)."
-  echo "  -r RINDEX       custom path where the file with extension .ridx (reverse index)"
-  echo "                   will be created (/tmp/rindex.XXXXXX by default)."
+  echo "  -I PATH         custom path where the output of the intermediate files produced"
+  echo "                  by the modules of bitextor will be stored."
   echo "  -b NUM          if this option is enabled, the document alignment process is"
   echo "                  run in both directions and only the first NUM candidates in"
   echo "                  every direction will be taken into account. With this, the list"
@@ -92,12 +103,25 @@ exit_program()
   exit 1
 }
 
+run_bitextor_ett(){
+
+  cat $1 | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+ align_segments $LETTR
+}
+
 run_bitextor(){
   local DIRNAME=$1
 
-  __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | \
-  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG > $LETTR
+  __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+  align_segments $LETTR
+}
+
+align_segments(){
+  local LETTR=$1
 
   output_pipe=$(mktemp /tmp/output_pipe.XXXXXX)
   rm $output_pipe
@@ -114,33 +138,33 @@ run_bitextor(){
     rm $index_pipe2
     mkfifo $index_pipe2
 
-    __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $INDEX | \
+    __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $index_pipe1 > $index_pipe2 &
 
     RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
     RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
 
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG > $RINDEX1 &
+    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
 
     rindex1_pid=$!
 
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG > $RINDEX2
+    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTEROUT > $RINDEX2
 
     wait $rindex1_pid
 
     rm $index_pipe1 $index_pipe2
 
-    __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $RINDEX $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | \
-    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | \
+    __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
     __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
   else
-    __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $INDEX | \
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | \
-    __PREFIX__/bin/bitextor-align-documents -l $LETTR -r $RINDEX 2> $ALIGNDOCUMENTSLOG | \
-    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | \
+    __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXOUT | \
+    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+    __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
     __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
   fi
 
@@ -153,12 +177,30 @@ run_bitextor(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "tq:m:v:b:r:i:l:u:U:d:D:L:D:" $*)
+ARGS=$(getopt "tq:m:v:b:l:u:U:d:D:L:D:e:I:" $*)
 
 set -- $ARGS
 for i
 do
   case "$i" in
+     -I)
+      shift
+      INTERMEDIATEFILE=$1
+      mkdir -p $INTERMEDIATEFILE
+      WEBDIR2ETTOUT=$INTERMEDIATEFILE/webdir2ett
+      ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
+      LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
+      LETT2IDXOUT=$INTERMEDIATEFILE/lett2idx
+      IDX2RIDXOUT=$INTERMEDIATEFILE/idx2ridx
+      IDX2RIDX12OUT=$INTERMEDIATEFILE/idx2ridx-lang1-lang2
+      IDX2RIDX21OUT=$INTERMEDIATEFILE/idx2ridx-lang2-lang1
+      DISTANCEFILTEROUT=$INTERMEDIATEFILE/distancefilter
+      DISTANCEFILTER12OUT=$INTERMEDIATEFILE/distancefilter-lang1-lang2
+      DISTANCEFILTER21OUT=$INTERMEDIATEFILE/distancefilter-lang2-lang1
+      ALIGNDOCUMENTSOUT=$INTERMEDIATEFILE/aligndocuments
+      ALIGNSEGMENTSOUT=$INTERMEDIATEFILE/alignsegments
+      shift
+      ;;
      -L)
       shift
       LOGDIR=$1
@@ -174,6 +216,12 @@ do
       ALIGNDOCUMENTSLOG=$LOGDIR/bitextoraligndocuments.log
       ALIGNSEGMENTSLOG=$LOGDIR/bitextoralignsegments.log
       CLEANTEXTLOG=$LOGDIR/bitextorcleantextalign.log
+      shift
+      ;;
+     -e)
+      shift
+      ETT=$1
+      INPUTMODE=5
       shift
       ;;
      -u)
@@ -207,18 +255,8 @@ do
       LETTR=$1
       shift
       ;;
-    -i)
-      shift
-      INDEX=$1
-      shift
-      ;;
     -t)
       FORMAT="TMX"
-      shift
-      ;;
-    -r)
-      shift
-      RINDEX=$1
       shift
       ;;
     -v)
@@ -302,6 +340,9 @@ case $INPUTMODE in
     do
       run_bitextor $line
     done < $DIRFILE
+    ;;
+  5)
+    run_bitextor_ett $ETT
     ;;
   *)
     exit_program $(basename $0)
