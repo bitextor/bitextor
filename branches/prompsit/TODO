@@ -1,3 +1,1 @@
-* Check the edit distance: it is using edit distance at the level of characters, which could be wrong when checking names of tags.
-* Change the configure.ac to avoid HTTrack as a requierement. Also change bitextor-downloadweb to check if httrack exists before adding anything
 * Evaluate if it would be interesting to remove words appearing in too many documents in idx file
