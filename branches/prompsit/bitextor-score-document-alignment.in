@@ -67,6 +67,9 @@ for line in reader:
   p = subprocess.Popen(hunalign, stdout= open(os.devnull, "w"), stderr = subprocess.PIPE)
   parsed_alignment, errout = p.communicate()
   quality=errout.split("\n")
-  print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[35].split(' ')[1])
-  os.unlink(filename1)
-  os.unlink(filename2)
+  if len(quality) < 37:
+    sys.stderr.write("Error: files "+fields[0]+" and "+fields[1]+" cannot be aligned; hunalign says:\n"+"\n".join(quality))
+  else:
+    print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[35].split(' ')[1])
+    os.unlink(filename1)
+    os.unlink(filename2)

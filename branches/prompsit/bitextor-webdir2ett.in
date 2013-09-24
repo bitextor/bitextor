@@ -69,15 +69,6 @@ done
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | \
-__GAWK__ '{
-  if ( match($2, "text/.*") != 0 ){
-    printf substr($1,1,length($1)-1);    # nombre_fichero
-    printf "\t";
-    printf substr($2,1,length($2)-1);    # formato: text/html etc.
-    printf "\t";
-    print substr($3,9,length($3));       # encoding
-  }
-}' | \
 # Se pasan a md5
 __PYTHON__ -c 'import sys
 import hashlib
@@ -89,19 +80,14 @@ from boilerpipe.extract import Extractor
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
-seen_md5=[]
+seen_md5={}
 for i in sys.stdin:
-  fields = i.split()
-  file = open(fields[0], "r")  # la i es el nombre del fichero
-  c = hashlib.md5()
-  #Computing md5 for the file
-  for j in file:
-    c.update(j)
-  file.close()
-  #Checking for duplicates
-  if c.hexdigest() in seen_md5:
-    sys.stderr.write("Eliminando repetido:\t"+fields[0]+"\n")
-  else:
+  fields = i.split(" ")
+  if "text/" in fields[1]:
+    fields[0]=fields[0][:len(fields[0])-1]
+    fields[1]=fields[1][:len(fields[1])-1]
+    fields[2]=fields[2][:len(fields[2])-1]
+    #Checking for duplicates
     file = open(fields[0], "r")
     try:
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,15 +103,20 @@ for i in sys.stdin:
         else:
           file_output=file_output+data
       s.close()
-      try:
-        extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
-
-        e = base64.b64encode(extractor.getHTML().encode("utf-8"))
-        #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+      extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
+  
+      e = base64.b64encode(extractor.getHTML().encode("utf-8"))
+      #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+      c = hashlib.md5()
+      c.update(e)
+      #checking for duplicate content (duplicates are discarded)
+      if c.hexdigest() in seen_md5:
+        sys.stderr.write("Repeated file:\t"+fields[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+      else:
+        seen_md5[c.hexdigest()]=fields[0]
         print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
-      except:
-        pass
-    except:
+    except Exception,e:
+      sys.stderr.write(str(e)+"\n")
       pass
 ' $WEBDIR > $OUTPUT
 

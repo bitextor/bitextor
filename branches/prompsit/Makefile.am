@@ -92,7 +92,6 @@ bitextor-lett2lettr: bitextor-lett2lettr.in
 
 bitextor-webdir2ett: bitextor-webdir2ett.in
 	sed "s!__BASH__!$(BASH)!g" $< | \
-	sed "s!__GAWK__!$(GAWK)!g" | \
 	sed "s!__KILL__!$(KILL)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
 	sed "s!__LSOF__!$(LSOF)!g" | \
