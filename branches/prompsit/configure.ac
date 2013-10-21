@@ -38,8 +38,8 @@ esac
 if test x$ARCH = xppc
 then
   AC_MSG_RESULT([PowerPC])
-  CFLAGS="$CFLAGS -Wall -ansi -fomit-frame-pointer"
-  CXXFLAGS="$CXXFLAGS -Wall -ansi -fomit-frame-pointer"
+  CFLAGS="$CFLAGS -Wall -fomit-frame-pointer"
+  CXXFLAGS="$CXXFLAGS -Wall -fomit-frame-pointer"
 else
   if test x$MinGW = xyes
   then 
@@ -62,20 +62,20 @@ else
       if test x$ARCH = xi686
       then
         AC_MSG_RESULT([i686])
-        CFLAGS="$CFLAGS -Wall -ansi -march=i686 -O3 -fomit-frame-pointer -funroll-loops"
-        CXXFLAGS="$CXXFLAGS -Wall -ansi -march=i686 -O3 \
+        CFLAGS="$CFLAGS -Wall -march=i686 -O3 -fomit-frame-pointer -funroll-loops"
+        CXXFLAGS="$CXXFLAGS -Wall -march=i686 -O3 \
                 -fomit-frame-pointer -funroll-loops"
       else
         if test x$ARCH = xx86_64
         then
           AC_MSG_RESULT([x86_64])
-          CFLAGS="-Wall -ansi -O3 -mtune=nocona -fomit-frame-pointer -funroll-loops $CFLAGS"
-          CXXFLAGS="-Wall -ansi -O3 -mtune=nocona \
+          CFLAGS="-Wall -O3 -mtune=nocona -fomit-frame-pointer -funroll-loops $CFLAGS"
+          CXXFLAGS="-Wall -O3 -mtune=nocona \
                   -fomit-frame-pointer -funroll-loops $CXXFLAGS"
         else
           AC_MSG_RESULT([Other])
-          CFLAGS="-Wall -ansi -O3 $CFLAGS"
-          CXXFLAGS="-Wall -ansi -O3 $CXXFLAGS"
+          CFLAGS="-Wall -O3 $CFLAGS"
+          CXXFLAGS="-Wall -O3 $CXXFLAGS"
         fi
       fi
     fi    
@@ -354,4 +354,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile splitsentences/nonbreaking_prefixes/Makefile splitsentences/Makefile tika/Makefile utils/Makefile])
+AC_OUTPUT([Makefile bitextor-4.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile utils/nonbreaking_prefixes/Makefile tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile])

@@ -1,5 +1,5 @@
 SUBDIRS= nonbreaking_prefixes
 
-splitsentencesdir = $(prefix)/share/bitextor/splitsentences
+utilsdir = $(prefix)/share/bitextor/utils
 
-splitsentences_DATA = split-sentences.perl tokenizer.perl
+utils_DATA = split-sentences.perl tokenizer.perl lowercase.perl unicodepunct.py clean-corpus-n.perl 

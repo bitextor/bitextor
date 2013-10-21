@@ -1,0 +1,147 @@
+#!__BASH__
+
+OUTPUT=/dev/stdout
+
+exit_program()
+{
+  echo "USAGE: $1 SL TL SL_FILE TL_FILE DIC [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
+  echo "WHERE"
+  echo "   SL                    source language code (two characters)"
+  echo "   TL                    target language code (two characters)"
+  echo "   SL_CORPUS             file containing the source language segments"
+  echo "   TL_CORPUS             file containing the target language segments"
+  echo "   DIC                   output dictionary"
+  echo "   PREPROCESSED_CORPUS   folder to store the resulting pre-processed files (tokenised, lowercased and leared). If no folder is specified, a temporal folder is created"
+  echo "   PRODUCED_MODELS       folder to store the resulting models obtained as a by-product of the dictionaries building. If no folder is specified, a temporal folder is created"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  5)
+    SL="$1"
+    TL="$2"
+    SL_CORPUS="$3"
+    TL_CORPUS="$4"
+    DIC=$5
+    PREPROCCORPUS=$(mktemp -d /tmp/tempcorpuspreproc.XXXXX)
+    MODELSDIR=$(mktemp -d /tmp/tempgizamodel.XXXXX)
+    ;;
+  6)
+    SL="$1"
+    TL="$2"
+    SL_CORPUS="$3"
+    TL_CORPUS="$4"
+    DIC=$5
+    PREPROCCORPUS=$6
+    if [ ! -d $6 ]; then
+      echo "The path specified for storing the preprocessed files for the corpus is not valid."
+      exit_program $(basename $0)
+    fi
+    MODELSDIR=$(mktemp -d /tmp/tempgizamodel.XXXXX)
+    ;;
+  7)
+    SL="$1"
+    TL="$2"
+    SL_CORPUS="$3"
+    TL_CORPUS="$4"
+    DIC=$5
+    PREPROCCORPUS=$6
+    if [ ! -d $6 ]; then
+      echo "The path specified for storing the preprocessed files for the corpus is not valid."
+      exit_program $(basename $0)
+    fi
+    MODELSDIR=$7
+    if [ ! -d $7 ]; then
+      echo "The path specified for storing the models produced by GIZA++ is not valid."
+      exit_program $(basename $0)
+    fi
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+SL_TOKENISED="$PREPROCCORPUS/corpus.tok.$SL"
+TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
+SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
+TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
+
+zcat $SL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $SL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED
+zcat $TL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $TL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED
+
+cat $SL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $SL_LOW_TOKENISED
+cat $TL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $TL_LOW_TOKENISED
+perl __PREFIX__/share/bitextor/utils/clean-corpus-n.perl $PREPROCCORPUS/corpus.tok.low $SL $TL $PREPROCCORPUS/corpus.clean 1 50
+
+__PREFIX__/bin/plain2snt.out $PREPROCCORPUS/corpus.clean.$SL $PREPROCCORPUS/corpus.clean.$TL
+mv $PREPROCCORPUS/corpus.clean.${SL}_corpus.clean.$TL.snt $MODELSDIR/$TL-$SL-int-train.snt
+mv $PREPROCCORPUS/corpus.clean.${TL}_corpus.clean.$SL.snt $MODELSDIR/$SL-$TL-int-train.snt
+mv $PREPROCCORPUS/corpus.clean.$SL.vcb $MODELSDIR/$SL.vcb
+mv $PREPROCCORPUS/corpus.clean.$TL.vcb $MODELSDIR/$TL.vcb
+
+__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$SL -V$MODELSDIR/$SL.vcb.classes opt
+__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$TL -V$MODELSDIR/$TL.vcb.classes opt
+
+__PREFIX__/bin/snt2cooc.out $MODELSDIR/$SL.vcb $MODELSDIR/$TL.vcb $MODELSDIR/$TL-$SL-int-train.snt > $MODELSDIR/$TL-$SL.cooc
+__PREFIX__/bin/snt2cooc.out $MODELSDIR/$TL.vcb $MODELSDIR/$SL.vcb $MODELSDIR/$SL-$TL-int-train.snt > $MODELSDIR/$SL-$TL.cooc
+
+__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7
+
+__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 
+
+egrep ' ..$' $MODELSDIR/$SL.vcb > $MODELSDIR/$SL.filtered.vcb
+egrep ' ..$' $MODELSDIR/$TL.vcb > $MODELSDIR/$TL.filtered.vcb
+
+__PYTHON__ -c '
+import sys
+svocabulary={}
+tvocabulary={}
+svcb=open(sys.argv[1],"r")
+tvcb=open(sys.argv[2],"r")
+for line in svcb:
+  item=line.strip().split(" ")
+  svocabulary[item[0]]=item[1]
+
+for line in tvcb:
+  item=line.strip().split(" ")
+  tvocabulary[item[0]]=item[1]
+
+t3dic={}
+t3s=open(sys.argv[3],"r")
+t3t=open(sys.argv[4],"r")
+for line in t3t:
+  item=line.strip().split(" ")
+  if item[1] in t3dic:
+    t3dic[item[1]][item[0]]=item[2]
+  else:
+    t3dic[item[1]]={}
+    t3dic[item[1]][item[0]]=item[2]
+
+for line in t3s:
+  item=line.strip().split(" ")
+  if item[0] in t3dic:
+    if item[1] in t3dic[item[0]]:
+      value1=float(t3dic[item[0]][item[1]])
+      value2=float(item[2])
+      hmean=2/((1/value1)+(1/value2))
+      if hmean > 0.2:
+        if item[1] in svocabulary and item[0] in tvocabulary:
+          word1=svocabulary[item[1]]
+          word2=tvocabulary[item[0]]
+          print "{0}\t{1}".format(word1, word2)' $MODELSDIR/$SL.filtered.vcb $MODELSDIR/$TL.filtered.vcb $MODELSDIR/$SL-$TL.t3.final $MODELSDIR/$TL-$SL.t3.final > $DIC

@@ -1,4 +1,4 @@
-nonbreaking_prefixesdir = $(prefix)/share/bitextor/splitsentences/nonbreaking_prefixes
+nonbreaking_prefixesdir = $(prefix)/share/bitextor/utils/nonbreaking_prefixes
 
 # Add new nonbreaking_prefixes.
 nonbreaking_prefixes_DATA = nonbreaking_prefix.ar nonbreaking_prefix.de \

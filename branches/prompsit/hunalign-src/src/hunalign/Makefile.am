@@ -4,7 +4,7 @@ headers = alignment.h bloom.h bookToMatrix.h cooccurrence.h dictionary.h dicTree
 
 EXTRA_DIST=../include
 
-CXXFLAGS = -O9 -ffast-math -funroll-loops -I ../include
+AM_CXXFLAGS = -O9 -ffast-math -funroll-loops -I ../include
 
 hunalign_SOURCES = $(sources) $(headers)
 
