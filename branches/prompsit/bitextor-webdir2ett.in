@@ -43,6 +43,8 @@ done
 __JAVA__ -jar __TIKA__ --xml -s $tika_port &
 tika_pid=$!
 
+trap "kill $tika_pid" TERM
+
 check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
 timecounter=0
 while [ $check_running_tika -eq 0 ]; do

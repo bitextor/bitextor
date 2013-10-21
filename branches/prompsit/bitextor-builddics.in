@@ -82,32 +82,56 @@ TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
 SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
 TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
-zcat $SL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $SL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED
-zcat $TL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $TL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED
+#Tokenising the corpus
+echo "TOKENISING THE CORPUS..."
+zcat $SL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $SL -q | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+zcat $TL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $TL -q | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+wait
 
-cat $SL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $SL_LOW_TOKENISED
-cat $TL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $TL_LOW_TOKENISED
-perl __PREFIX__/share/bitextor/utils/clean-corpus-n.perl $PREPROCCORPUS/corpus.tok.low $SL $TL $PREPROCCORPUS/corpus.clean 1 50
+#Lowercasing the corpus
+echo "LOWERCASING THE CORPUS..."
+cat $SL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
+cat $TL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
+wait
 
-__PREFIX__/bin/plain2snt.out $PREPROCCORPUS/corpus.clean.$SL $PREPROCCORPUS/corpus.clean.$TL
+#Cleaning the corpus
+echo "FILTERING OUT TOO LONG SENTENCES..."
+perl __PREFIX__/share/bitextor/utils/clean-corpus-n.perl $PREPROCCORPUS/corpus.tok.low $SL $TL $PREPROCCORPUS/corpus.clean 1 50 2> /dev/null
+
+#Obtaining the vocabulary and the encoded sentences files
+echo "FORMATTING THE CORPUS FOR PROCESSING..."
+__PREFIX__/bin/plain2snt.out $PREPROCCORPUS/corpus.clean.$SL $PREPROCCORPUS/corpus.clean.$TL 2> /dev/null > /dev/null
 mv $PREPROCCORPUS/corpus.clean.${SL}_corpus.clean.$TL.snt $MODELSDIR/$TL-$SL-int-train.snt
 mv $PREPROCCORPUS/corpus.clean.${TL}_corpus.clean.$SL.snt $MODELSDIR/$SL-$TL-int-train.snt
 mv $PREPROCCORPUS/corpus.clean.$SL.vcb $MODELSDIR/$SL.vcb
 mv $PREPROCCORPUS/corpus.clean.$TL.vcb $MODELSDIR/$TL.vcb
 
-__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$SL -V$MODELSDIR/$SL.vcb.classes opt
-__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$TL -V$MODELSDIR/$TL.vcb.classes opt
+#Building classes from the words in the corpus
+echo "BUILDING WORD CLASSES FOR IMPROVING ALIGNMENT..."
+__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$SL -V$MODELSDIR/$SL.vcb.classes opt 2> /dev/null > /dev/null
+__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$TL -V$MODELSDIR/$TL.vcb.classes opt 2> /dev/null > /dev/null
+wait
 
-__PREFIX__/bin/snt2cooc.out $MODELSDIR/$SL.vcb $MODELSDIR/$TL.vcb $MODELSDIR/$TL-$SL-int-train.snt > $MODELSDIR/$TL-$SL.cooc
-__PREFIX__/bin/snt2cooc.out $MODELSDIR/$TL.vcb $MODELSDIR/$SL.vcb $MODELSDIR/$SL-$TL-int-train.snt > $MODELSDIR/$SL-$TL.cooc
+#Obtaining the coocurrence matrix of the fiels
+echo "CHECKING COOCURRENCE OF WORDS IN THE CORPUS..."
+__PREFIX__/bin/snt2cooc.out $MODELSDIR/$SL.vcb $MODELSDIR/$TL.vcb $MODELSDIR/$TL-$SL-int-train.snt > $MODELSDIR/$TL-$SL.cooc 2> /dev/null &
+__PREFIX__/bin/snt2cooc.out $MODELSDIR/$TL.vcb $MODELSDIR/$SL.vcb $MODELSDIR/$SL-$TL-int-train.snt > $MODELSDIR/$SL-$TL.cooc 2> /dev/null
+wait
 
-__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7
+#Running GIZA++ in both directions
+echo "BUILDING PROBABILISTIC DICTIONARIES..."
+__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null &
 
-__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 
+__PREFIX__/bin/GIZA++ -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
+wait
 
-egrep ' ..$' $MODELSDIR/$SL.vcb > $MODELSDIR/$SL.filtered.vcb
+echo "FILTERING DICTIONARY..."
+#Filtering the vocabularies to keep only those words occurring, at least, 10 times
+egrep ' ..$' $MODELSDIR/$SL.vcb > $MODELSDIR/$SL.filtered.vcb &
 egrep ' ..$' $MODELSDIR/$TL.vcb > $MODELSDIR/$TL.filtered.vcb
+wait
 
+#Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 __PYTHON__ -c '
 import sys
 svocabulary={}
@@ -145,3 +169,5 @@ for line in t3s:
           word1=svocabulary[item[1]]
           word2=tvocabulary[item[0]]
           print "{0}\t{1}".format(word1, word2)' $MODELSDIR/$SL.filtered.vcb $MODELSDIR/$TL.filtered.vcb $MODELSDIR/$SL-$TL.t3.final $MODELSDIR/$TL-$SL.t3.final > $DIC
+
+echo "DONE!"
