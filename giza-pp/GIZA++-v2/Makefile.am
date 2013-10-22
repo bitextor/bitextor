@@ -6,12 +6,12 @@ sources = Parameter.cpp myassert.cpp Perplexity.cpp model1.cpp model2.cpp \
 	model3_viterbi_with_tricks.cpp Dictionary.cpp model345-peg.cpp hmm.cpp \
 	HMMTables.cpp ForwardBackward.cpp
 
-headers = Alignment.h AlignTables.h Array2.h Array4.h Array.h ATables.h \
+headers = alignment.h AlignTables.h Array2.h Array4.h Array.h ATables.h \
 	collCounts.h D4Tables.h D5Tables.h defs.h Dictionary.h file_spec.h \
 	FlexArray.h ForwardBackward.h getSentence.h Globals.h hmm.h HMMTables.h \
 	logprob.h model1.h model2.h  model3.h MoveSwapMatrix.h myassert.h \
 	mymath.h mystl.h NTables.h Parameter.h Perplexity.h Pointer.h \
-	transpair_model1.h ranspair_model2.h  ranspair_model3.h transpair_model4.h \
+	transpair_model1.h transpair_model2.h transpair_model3.h transpair_model4.h \
 	transpair_model5.h transpair_modelhmm.h TTables.h  utility.h Vector.h vocab.h \
 	WordClasses.h
 
