@@ -1,0 +1,60 @@
+.\" Manpage for bitextor-cleantextalign.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-cleantextalign 1 "05 Jan 2011" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-cleantextalign \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-align-segments
+.RI [ OPTIONS ]
+.RI [ FILE ]
+
+.SH DESCRIPTION
+.B bitextor-cleantextalign
+is a Python script that filters unreliable pairs of aligned segments.
+The script reads the output of the script
+bitextor-align-segments(1), either from the standard input or from a 
+.IR FILE .
+Then, the script removes unaligned segments and aligned segments with a
+confidence score under a specified threshold. In addition, the tool can
+be configured to remove the aligned pairs of segments coming from an
+aligned pair of documents with too many wrong segment alignments.
+
+.SH OPTIONS
+.TP
+.BI \-m " NUM"
+if the number of wrong alignments in a pair of documents processed by
+.B bitextor-align-segments
+is higher than
+.IR NUM ,
+the pair of documents is discarded (5 by default)
+.TP
+.BI \-q " NUM"
+if the confidence score for a pair of segments aligned by 
+.B hunalign
+in
+.B bitextor-align-segments
+is lower than
+.IR NUM ,
+it is discarded (0 by default);
+.I NUM
+must be in [1,-1]
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
+bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
+bitextor-distancefilter(1), bitextor-aligner(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

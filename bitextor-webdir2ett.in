@@ -1,0 +1,128 @@
+#!__BASH__
+
+OUTPUT=/dev/stdout
+TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 webdir"
+  echo "WHERE"
+  echo "   webdir   folder downloaded directories"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  1)
+    WEBDIR="$1"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+tika_port=10000
+while [ $(__LSOF__ -i :$tika_port | __WC__ -l) -ne 0 ]; do
+    let tika_port=$tika_port+1;
+done
+__JAVA__ -jar __TIKA__ --xml -s $tika_port &
+tika_pid=$!
+
+trap "kill $tika_pid" TERM
+
+check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+timecounter=0
+while [ $check_running_tika -eq 0 ]; do
+  sleep 1s;
+  check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+  let timecounter=$timecounter+1
+done
+
+# Código aquí
+
+#
+# 1. Eliminar ficheros repetidos -> (log)
+# 2. Obtener tipo y codificación de ficheros
+# 3. Quedarse solo con los que tengan tipo html
+# 4. Convertir [no UTF-8 -> UTF-8], si hay error -> (log)
+# 5. Corregir errores HTML usando Tidy y eliminar las cabeceras HTML
+# 6. Incluir el contenido del fichero en base64
+#
+# Formato final del documento:
+# encoding	mimetype	url	content(base_64)
+#
+# Genera .ett -> encoded and typed text
+#
+
+# Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
+find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | \
+# Se pasan a md5
+__PYTHON__ -c 'import sys
+import hashlib
+import os
+import base64
+import socket
+from boilerpipe.extract import Extractor
+
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
+seen_md5={}
+for i in sys.stdin:
+  fields = i.split(" ")
+  if "text/" in fields[1]:
+    fields[0]=fields[0][:len(fields[0])-1]
+    fields[1]=fields[1][:len(fields[1])-1]
+    fields[2]=fields[2][:len(fields[2])-1]
+    #Checking for duplicates
+    file = open(fields[0], "r")
+    try:
+      s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      s.connect(("localhost", '$tika_port'))
+      s.sendall(file.read())
+      file.close()
+      s.shutdown(socket.SHUT_WR)
+      file_output=""
+      while 1:
+        data = s.recv(1024)
+        if data == "":
+          break
+        else:
+          file_output=file_output+data
+      s.close()
+      extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
+  
+      e = base64.b64encode(extractor.getHTML().encode("utf-8"))
+      #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+      c = hashlib.md5()
+      c.update(e)
+      #checking for duplicate content (duplicates are discarded)
+      if c.hexdigest() in seen_md5:
+        sys.stderr.write("Repeated file:\t"+fields[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+      else:
+        seen_md5[c.hexdigest()]=fields[0]
+        print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
+    except Exception,e:
+      sys.stderr.write(str(e)+"\n")
+      pass
+' $WEBDIR > $OUTPUT
+
+rm -Rf $TEMPCONV
+
+__KILL__ $tika_pid
+

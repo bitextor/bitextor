@@ -1,0 +1,67 @@
+.\" Manpage for bitextor-align-segments
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-align-segments 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-align-segments \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-align-segments
+.RI [ OPTIONS ]
+.B \-\-lang1
+.I LANG1
+.B \-\-lang2
+.I LANG2
+.RI [ FILE ]
+
+.SH DESCRIPTION
+.B bitextor-align-segments
+is a Python script that produces a list of aligned segments from
+a list of aligned documents in the rindex files. This script reads
+the list of aligned files produced by bitextor-align-documents(1),
+either from the standard input or from a 
+.IR FILE .
+In a first step, all the aligned documents are concatenated
+and stored in two different files, one for
+.I LANG1
+and another for
+.IR LANG2 .
+The files are concatenated following the same order, for both
+languages, that the one provided bitextor-align-documents(1).
+The external tool
+.B hunalign
+.RB ( http://mokk.bme.hu/resources/hunalign/ )
+is then used to align the segments in the pair of files. It is worth
+noting that the concatenated files are sepparated by the mark
+.BR <p> ,
+which ensures that only segments belonging to an aligned pair of
+documents will be aligned. This concatenation is performed to ensure a
+reasonable amount of text to be aligned, in order to build a better
+dictionary for
+.BR hunalign .
+
+.SH OPTIONS
+.TP
+.BI \-\-lang1 " LANG1"
+ID of the first language in the bitext (following the ISO 639-1)
+.TP
+.BI \-\-lang2 " LANG2"
+ID of the second language in the bitext (following the ISO 639-1)
+
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
+bitextor-distancefilter(1), bitextor-cleantextalign(1), bitextor-buildTMX(1), hunalign(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

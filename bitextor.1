@@ -1,0 +1,197 @@
+.\" Manpage for bitextor.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor 1 "09 Sep 2013" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor
+.RI [ OPTIONS ]
+.B \-u
+.I URL
+.B \-d
+.I DIRECTORY
+.I LANG1
+.I LANG2
+.br
+.B bitextor
+.RI [ OPTIONS ]
+.B \-U
+.I FILE
+.I LANG1
+.I LANG2
+.br
+.B bitextor
+.RI [ OPTIONS ]
+.B \-d
+.I DIRECTORY
+.I LANG1
+.I LANG2
+.br
+.B bitextor
+.RI [ OPTIONS ]
+.B \-D
+.I FILE
+.I LANG1
+.I LANG2
+
+.SH DESCRIPTION
+.PD 0
+.B bitextor
+is an automatic bitext detector which produces, from a multilingual crawled website,
+a list of aligned documents. The user must provide a
+.IR URL ,
+a list of URLs in a
+.I FILE
+(one per line), the path to a
+.I DIRECTORY
+containing a crawled website, or the path to a
+.I FILE
+containing a list of previously downloaded websites.
+It is also necessary to specify the two languages on which
+the user is interested by setting the language IDs following the ISO 639-1. The tool
+works following a sequence of steps.
+.SS STEPS
+.P
+.B 1-
+Downloads a website by using the tool httrack: see bitextor-downloadweb(1) (optional step);
+.P
+.B 2-
+The files in the website are analysed, cleaned and standardised (XHTML): see bitextor-webdir2ett(1);
+.P
+.B 3-
+The language of every webpage is detected: see bitextor-ett2lett(1);
+.P
+.B 4-
+The HTML structure is analysed to create a representation which is used to compare the different webpages: see bitextor-lett2lettr(1);
+.P
+.B 5-
+The a preliminary list of aligned-document candidates is obtained by computing overlapping metrics on bags-of-words: see bitextor-idx2ridx(1);
+.P
+.B 6-
+The candidates are checked by using the XHTML structure computed in : see bitextor-distancefilter(1);
+.P
+.B 7-
+The documents are aligned: see bitextor-align-documents(1);
+.P
+.B 8-
+The aligned documents are segmented and aligned: see bitextor-align-segments(1) and bitextor-cleantextalign(1);
+.P
+.B 9-
+The aligned segments are formatted into TMX standard format: see bitextor-buildTMX(1) (optional step).
+.P
+
+.SH OPTIONS
+.PD 1
+.SS "Website sources"
+
+.TP
+.BI \-u " URL"
+URL of a website to be crawled and processed.
+.TP
+.BI \-U " FILE"
+Path to a
+.I FILE
+containing a list of URLs to be crawled and processed (one per line)
+and the path to their corresponding target directory (where each of
+them will be stored) separated by a tab.
+.TP
+.BI \-d " DIRECTORY"
+Path to a
+.I DIRECTORY
+containing a crawled website. If option
+.B \-u
+is also enabled, then the
+.I DIRECTORY
+is used to store the website crawled.
+.TP
+.BI \-D " FILE"
+Path to a
+.I FILE
+containing a list of directories to be processed (one per line).
+.SS "Other options"
+.TP
+.BI \-l " FILE"
+Target path where the
+.I LETTR 
+will be stored in during bitext processing (see bitextor-lett2lettr(1))
+.TP
+.BI \-r " FILE"
+Target path where the
+.I RINDEX
+will be stored in during bitext processing (see bitextor-idx2ridx(1) and bitextor-distancefilter(1))
+.TP
+.BI \-i " FILE"
+Target path where the
+.I INDEX
+will be stored in during bitext processing (see bitextor-lett2idx(1))
+.TP
+.BI \-b " NUM"
+When this option is enabled, only the first
+.I NUM
+candidates from the
+.I RINDEX
+candidate list are taken into account when
+computing the bidirectional document alignment (see bitextor-distancefilter(1))
+.TP
+.BI \-v " FILE"
+Option defining the dictionary
+.I FILE
+which relates words in two or more languages
+to be processed in the website.
+.TP
+.BI \-m " NUM"
+if the number of wrong alignments in a pair of documents processed by
+bitextor-align-segments(1) is higher than
+.IR NUM ,
+the pair of documents is discarded (5 by default)
+.TP
+.BI \-q " NUM"
+if the confidence score for a pair of segments aligned by bitextor-align-segments(1)
+is lower than
+.IR NUM ,
+it is discarded (0 by default)
+.TP
+.B \-t
+if this option is enabled, the output of bitextor
+will be formatted as a standard TMX translation memory
+.TP
+.BI \-L " DIRECTORY"
+Target path where the log files produced by the modules of bitextor will be stored 
+
+.SH DEPENDENCES
+.B bitextor
+depends on the following external tools and libraries
+which must be installed in advance:
+.TP
+.B langid
+Python library that detects the language of a text file
+.TP
+.B python-Levenshtein
+Python library that implements the Levenshtein edit distance between two strings
+.TP
+.B boilerpipe
+Python library providing a Python interface to use the Java package
+boilerpipe for cleaning those parts of an HTML file that contain useless
+information, such as menus, adds, etc.
+.TP
+.B httrack
+External tool used for crawling a website (this tool is not necessary to install Bitextor)
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor-downloadweb(1),
+bitextor-webdir2ett(1), bitextor-ett2lett(1), bitextor-lett2idx(1), bitextor-idx2ridx(1),
+bitextor-lett2lettr(1), bitextor-distancefilter(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

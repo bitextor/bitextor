@@ -1,0 +1,82 @@
+#!__ENV__ __PYTHON__
+
+
+# 1. Reading from STDIN a set of aligned documents. The input format is:
+#   filename1	filename2	clean_text1_in_base64	clean_text2_in_base64
+# 2. Text is cleaned and, for every aligned pair, both texts are dumped, in the same order in two temporary files. Every text block is sepparated to the previous one by a block:
+#    <p>
+#    <file lang="lang_id">file_name</file>
+#    <p>
+# 3. Running hunalign on the two temporary files
+# 4. Removing unaligned segments and <p> mark
+# 5. Identifying the filenames for every block of segments, and printing everything to the output
+#
+# Output format:
+#   filename1    filename2    segment1    segment2    quality
+#
+
+import sys
+import os
+import argparse
+import base64
+import subprocess
+import re
+from tempfile import NamedTemporaryFile
+
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
+def runAligner(filename1, filename2):
+  # option -ppthresh=10?
+  hunalign = ["__PREFIX__/bin/hunalign", "-text", "-realign", "/dev/null", filename1, filename2]
+  p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
+  for line in p.stdout:
+    yield line.decode("utf-8")
+  return
+
+oparser = argparse.ArgumentParser(description="Tool that reads the output of bitextor-align-documents and aligns the segments of the aligned documents")
+oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
+oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
+oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+
+options = oparser.parse_args()
+
+tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
+tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
+
+if options.aligned_docs == None:
+  reader = sys.stdin
+else:
+  reader = open(options.aligned_docs,"r")
+
+for line in reader:
+  fields=line.strip().split("\t")
+  filename1=fields[0]
+  filename2=fields[1]
+  encodedtext1=fields[2]
+  encodedtext2=fields[3]
+  tmp_file1.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
+  pipe1tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/splitsentences/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
+  pipe1 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  parsed_text, errout = pipe1.communicate(tokenized_text)
+  tmp_file1.write(parsed_text)
+
+  tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
+  pipe2tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/splitsentences/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
+  pipe2 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  parsed_text, errout = pipe2.communicate(tokenized_text)
+  tmp_file2.write(parsed_text)
+tmp_file1.close()
+tmp_file2.close()
+
+filenames=[]
+for line in runAligner(tmp_file1.name, tmp_file2.name):
+  hun_line=line.strip()
+  if "<p>" not in line and "\t\t" not in hun_line and len(hun_line.split("\t"))>=2:
+    if "<file " in hun_line:
+      plain=re.sub("<[^>]*>", "", hun_line.strip())
+      filenames=plain.split("\t")
+    else:
+      print "{0}\t{1}\t{2}".format(filenames[0], filenames[1], hun_line)

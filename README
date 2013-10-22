@@ -1,0 +1,74 @@
+=== DESCRIPTION ===
+
+Bitextor is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
+  1- Downloads a website by using the tool httrack: see module bitextor-downloadweb (optional step);
+  2- The files in the website are analysed, cleaned and standardised: see module bitextor-webdir2ett;
+  3- The language of every webpage is detected: see module bitextor-ett2lett;
+  4- The HTML structure is analysed to create a representation which is used to compare the different webpages: see module bitextor-lett2lettr;
+  5- The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see module bitextor-idx2ridx;
+  6- The candidates are checked by using the HTML structure: see module bitextor-distancefilter;
+  7- The documents are aligned: see module bitextor-align-documents;
+  8- A set of aligned documents is obtained from the aligned documents: see modules bitextor-align-segments and bitextor-cleantextalign;
+  9- The aligned segments are formatted into TMX standard format: see module bitextor-buildTMX (optional step).
+It is worth noting that Each of these steps can be run separately.
+
+
+
+=== REQUIREMENTS ===
+
+Most of the scripts in bitextor are written in Python. Because of this, it is necessary to install Python 2. Some external Python libraries should also be installed before starting the installation of bitextor:
+  - python-Levenshtein: Python library for computing the Levenshtein edit-distance.
+  - LangID.py: Python library for plain text language detection.
+  - boilerpipe: Python wrapper for the Java package boilerpipe, which helps to remove useless information from HTML files, such as menus, adds, etc.
+The easiest way to install these libraries is using the tool pip. For installing the three libraries at the same time, you can simply run:
+
+ user@pc:~$ sudo pip install boilerpipe langid python-Levenshtein
+
+In addition to these Python libraries, the tool HTTrack may be necessary if you plan to use bitextor to download multilingual websites. When installing bitextor, you can specify that you do not want to use these tool, but, in this case, you will only be able to process websites which have been already installed (starting the process in the second step).
+
+
+
+=== INSTALLING BITEXTOR ===
+
+To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
+
+ user@pc:~$ ./configure
+ user@pc:~$ make
+ user@pc:~$ sudo make install
+
+In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
+
+ user@pc:~$ ./configure --prefix=LOCALDIR
+ user@pc:~$ make
+ user@pc:~$ make install
+
+where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
+
+Two more tools are included in bitextor package and will be installed together with bitextor:
+ - hunalign: a software for sentence alignment (http://mokk.bme.hu/resources/hunalign/)
+ - apache tika: a tool for HTML files normalisation (http://tika.apache.org/)
+
+
+
+=== RUNNING BITEXTOR ===
+
+There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
+  bitextor [OPTIONS]     URL LANG1 LANG2
+  bitextor [OPTIONS] -f FILE LANG1 LANG2
+In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -f should contain a list of URLs, which are processed separately. One more way to run bitextor is available, using option -d to specify a directory containing a crawled website (this step starts in the second step described in the previous section):
+  bitextor [OPTIONS] -d DIRECTORY LANG1 LANG2
+
+Several options can be set using the command line options:
+  -f FILE   sets the path to a file containing a list of URLs to be crawled and processed (one per line).
+  -d FILE   sets the path to a directory containing a crawled website.
+  -l FILE   target path where the LETTR file, built by the script bitextor-lett2lettr, will be stored in during the bitext processing.
+  -r FILE   target path where the RINDEX file, built by the script bitextor-idx2ridx, will be stored in during the bitext processing.
+  -b NUM    when this option is enabled, only the first NUM candidates from the RINDEX candidate list are taken into account when computing the bidirectional document alignment.
+  -v FILE   path to the dictionary used by the script bitextor-lettr2idx.
+  -m NUM    if the number of wrong alignments in a pair of documents processed by bitextor-align-segments is higher than NUM, the pair of documents is discarded (5 by default).
+  -q NUM    if the confidence score for a pair of segments aligned by hunalign in bitextor-align-segments is lower than NUM it is discarded (0 by default).
+  -t        if this option is enabled, the output of bitextor will be formatted as a standard TMX translation memory (this option adds at the end of the pipeline the script bitextor-buildTMX).
+
+
+=== EXAMPLE ===
+  

@@ -1,0 +1,87 @@
+#!__ENV__ __PYTHON__
+
+#
+# 1. Leer .lettr y cargarlo en memoria
+# 2. Leer .ridx e ir haciendo distancia de edicion
+# 3. Con el porcentaje de parecido anterior y el nuevo se realiza:
+#      nuevo_porcentaje = ant_porcentaje * dist_porcentaje
+#    donde:
+#      dist_porcentaje = longitud(raspa1) / (longitud(raspa1) + dist)
+# 4. Se muestran los 10 documentos con los porcentajes actualizados
+#
+# Formato final del documento:
+# num_doc_lang1    [num_doc_lang2:ratio]+
+#
+# Genera .ridx -> reverse index
+#
+
+import sys
+from sets import Set
+import argparse
+from operator import itemgetter
+import Levenshtein
+
+def rellenarDocumentos(fich, documentos):
+  file = open(fich, "r")
+  contador = 1
+  for i in file:
+    campos = i.strip().split("\t")
+    #Checking if format is crrect
+    if len(campos) == 7:
+      #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
+      tags = Set(campos[6].split('_'))
+      tags.remove('')
+      #List of names of tags in the current raspa
+      tags_with_bounds = ["_{0}_".format(x) for x in tags]
+      dic={}
+      #Creating a map with all the tags found in the raspa and the character with which they will be replaced
+      charidx=32
+      for tag in tags_with_bounds:
+        dic[chr(charidx)]=tag
+        charidx=charidx+1
+      #If character '_' is used, it must be replaced, since it is already representing text
+      if '_' in dic:
+        extratag=dic['_']
+        dic.remove('_')
+        dic[chr(charidx)]=extratag
+      inv_dic = {v:k for k, v in dic.items()}
+      for tag,code in inv_dic.items():
+        campos[6]=campos[6].replace(tag,code)
+      documentos[contador] = campos[6]
+    contador += 1
+  file.close()
+
+oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
+oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
+oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+options = oparser.parse_args()
+
+if options.ridx == None:
+  reader = sys.stdin
+else:
+  reader = open(options.ridx,"r")
+
+index = {}
+documentos = {}
+rellenarDocumentos(options.lettr, documentos)
+
+for i in reader:
+  campos = i.split("\t")
+  longitud_s = len(documentos[int(campos[0])])
+  parecidos = {}
+  cadena = str(campos[0])
+  for j in range(1,len(campos)-1):
+    doc = campos[j].split(":")
+    if float(doc[1]) > 0.10:
+      longitud_t = len(documentos[int(doc[0])])
+      dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
+      port = 1 - (dist / float(max(longitud_s, longitud_t)))
+      ##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
+      #new_per = (float(doc[1]) + port)/2.0
+      #new_per = port
+      new_per = float(doc[1]) * port
+      parecidos[doc[0]] = new_per
+  parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+  for k in parecidos:
+    cadena += "\t" + str(k[0]) + ":" + str(k[1])
+  print cadena

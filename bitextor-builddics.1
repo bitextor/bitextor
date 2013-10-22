@@ -1,0 +1,52 @@
+.\" Manpage for bitextor-builddics.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-builddics 1 "22 Oct 2013" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-builddics \- This application is part of
+.B bitextor
+( the automatic bitext generator from multilingual websites )
+
+.SH SYNOPSIS
+.B bitextor-builddics
+.I LANG1
+.I LANG2
+.I CORPUS_LANG1
+.I CORPUS_LANG2
+.I OUTPUT
+
+.SH DESCRIPTION
+.B bitextor-builddics
+is a Bash and Python script that produces a dictionary to
+be used with bitextor from a parallel corpus. For a pair
+of languages
+.I LANG1
+and
+.IR LANG2 ,
+two files must be provided, 
+.I CORPUS_LANG1
+and
+.IR CORPUS_LANG2 ,
+containing a list of segments in each of both languages.
+The segments in each file in the same line must be parallel.
+This script uses the tool GIZA++ to obtain a probabilistic
+dictionary, which is then filtered to keep only highly probable
+translations which are finall included in the resulting dictioanry,
+which is stored in
+.IR OUTPUT .
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
+bitextor-downloadweb(1), bitextor-ett2lett(1), bitextor-lett2idx(1),
+bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>
