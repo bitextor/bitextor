@@ -1,0 +1,46 @@
+.\" Manpage for bitextor-score-document-alignment.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-score-document-alignment 1 "29 Sep 2013" "bitextor v4.0" "bitextor man pages"
+.SH NAME
+bitextor-score-document-alignment \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-score-document-alignment
+.B \-\-lang1
+.I LANG1
+.B \-\-lang2
+.I LANG2
+.B \-d
+.I DIC
+.RI [ FILE ]
+
+.SH DESCRIPTION
+.B bitextor-score-document-alignment
+is a Python script that scores a list of aligned documents produced
+by the script 
+.B bitextor-align-documents
+by means of the global segment alignment score provided by the
+extenral tool 
+.BR hunalign .
+The output of
+.B bitextor-align-documents
+can be read from standard input or from a
+.IR FILE .
+
+.SH SEE ALSO
+bitextor-align-segments(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
+bitextor-distancefilter(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

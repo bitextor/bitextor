@@ -64,7 +64,7 @@ for line in reader:
 
   tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
   pipe2tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/splitsentences/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext2))
+  tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
   pipe2 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   parsed_text, errout = pipe2.communicate(tokenized_text)
   tmp_file2.write(parsed_text)
