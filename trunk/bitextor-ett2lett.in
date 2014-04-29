@@ -41,14 +41,14 @@ class Parser(HTMLParser):
   def handle_data( self, data ):
     if self.script == 0:
       if self.include1 == 1:
-        if data[-1] == ".":
+        if data.strip()[-1] == ".":
           self.output.append(data + "\n")
         else:
           self.output.append(data + ".\n")
       elif self.include2 > 0:
         palabras = len(data.split())
         if palabras > 4:
-          if data[-1] == ".":
+          if data.strip()[-1] == ".":
             self.output.append(data + "\n")
           else:
             self.output.append(data + ".\n")
