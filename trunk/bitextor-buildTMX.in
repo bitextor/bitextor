@@ -10,6 +10,7 @@
 import sys
 import argparse
 import time
+import locale
 
 oparser = argparse.ArgumentParser(description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX translation memory.")
 oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, the script will read from standard input)', default=None)
@@ -24,11 +25,14 @@ else:
 print "<?xml version=\"1.0\"?>"
 print "<tmx version=\"1.4\">"
 print " <header"
+print "   adminlang=\""+locale.setlocale(locale.LC_ALL, '').split(".")[0].split("_")[0]+"\""
+print "   srclang=\""+options.lang1+"\""
+print "   o-tmf=\"PlainText\""
 print "   creationtool=\"bitextor\""
 print "   creationtoolversion=\"4.0\""
 print "   datatype=\"PlainText\""
 print "   segtype=\"sentence\""
-print "   creationdate=\""+time.strftime("%Y-%m-%dT%H:%M:%S%Z")+"\""
+print "   creationdate=\""+time.strftime("%Y%m%dT%H%M%S")+"\""
 print "   o-encoding=\"utf-8\">"
 print " </header>"
 print " <body>"
@@ -37,7 +41,7 @@ tuid_counter=1
 for line in reader:
   fields = line.strip().split("\t")
   if len(fields) == 4:
-    print "   <tu tuid="+str(tuid_counter)+" datatype=\"Text\">"
+    print "   <tu tuid=\""+str(tuid_counter)+"\" datatype=\"Text\">"
     print "    <tuv xml:lang=\""+options.lang1+"\">"
     print "     <prop type=\"source-document\">"+fields[0]+"</prop>"
     print "     <seg>"+fields[2]+"</seg>"
