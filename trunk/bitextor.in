@@ -12,6 +12,7 @@ LETTR=$TMPLETTR
 LANG1=""
 LANG2=""
 BIDIDOCALIGN=0
+DOCALIGNMENT=0
 FORMAT="PLAIN"
 INDEX=""
 MAXLINES=5
@@ -100,6 +101,10 @@ exit_program()
   echo "                  removed (0 by default)."
   echo "  -t              if this option is enabled, the output of the tool will be"
   echo "                  formated in the standard XML-based format TMX."
+  echo "  -a              if this option is enabled, Bitextor will perform the alignment only"
+  echo "                  at the level of documents. The output will be tab-sepparated, with"
+  echo "                  three fields: two with the name of the documents aligned and one with"
+  echo "                  the score provided by hunalign for the pair of documents."
   exit 1
 }
 
@@ -156,16 +161,35 @@ align_segments(){
 
     rm $index_pipe1 $index_pipe2
 
-    __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-    __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+    else
+        HUNALIGN_DIC=$(mktemp /tmp/hunalign_dic.XXXXXX)
+        tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-score-document-alignment --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        rm $HUNALIGN_DIC
+    fi
   else
-    __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
-    __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-    __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-    __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+    else
+        HUNALIGN_DIC=$(mktemp /tmp/hunalign_dic.XXXXXX)
+        tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
+        __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-score-document-alignment --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        rm $HUNALIGN_DIC
+    fi
   fi
 
   if [ $FORMAT == "TMX" ]; then
@@ -177,7 +201,7 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "tq:m:v:b:l:u:U:d:D:L:D:e:I:" $*)
+ARGS=$(getopt "taq:m:v:b:l:u:U:d:D:L:D:e:I:" $*)
 
 set -- $ARGS
 for i
@@ -257,6 +281,10 @@ do
       ;;
     -t)
       FORMAT="TMX"
+      shift
+      ;;
+    -a)
+      DOCALIGNMENT=1
       shift
       ;;
     -v)
