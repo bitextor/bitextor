@@ -155,7 +155,7 @@ align_segments(){
     rindex1_pid=$!
 
     __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTEROUT > $RINDEX2
+    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
 
     wait $rindex1_pid
 
