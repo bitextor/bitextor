@@ -1,5 +1,69 @@
-#!__ENV__ __PYTHON__
+#!__BASH__
 
+OUTPUT=/dev/stdout
+TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
+
+exit_program()
+{
+  echo "USAGE: $1 webdir"
+  echo "WHERE"
+  echo "   webdir   folder downloaded directories"
+  exit 1
+}
+
+langs=""
+FILE="/dev/stdin"
+
+ARGS=$(getopt "hl:" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h|--help)
+      exit_program $(basename $0)
+      ;;
+    -l|--languages)
+      shift
+      langs="-l $1"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  0);;
+  1)
+    FILE="$1"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+tika_port=30000
+while [ $(__LSOF__ -i :$tika_port | __WC__ -l) -ne 0 ]; do
+    let tika_port=$tika_port+1;
+done
+__JAVA__ -jar __TIKA__ -t -s $tika_port &
+tika_pid=$!
+
+trap "kill $tika_pid" TERM
+
+check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+timecounter=0
+while [ $check_running_tika -eq 0 ]; do
+  sleep 1s;
+  check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+  let timecounter=$timecounter+1
+done
+
+
+__PYTHON__ -c '
 #
 # 1. Read lines from .ett file
 # 2. For eac line, the HTML is cleaned and the language is detected for the raw text
@@ -14,57 +78,13 @@ import base64
 from HTMLParser import HTMLParser
 import langid
 import argparse
+import socket
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
-class Parser(HTMLParser):
-
-  def __init__( self ):
-    HTMLParser.__init__( self )
-    self.contains1 = ("h1", "h2", "h3", "h4")
-    self.contains2 = ("p", "li", "a")
-    self.script = 0
-    self.include1 = 0
-    self.include2 = 0
-    self.output = []
-
-  def handle_starttag( self, tag, attrs ):
-    if tag == "script" or tag == "noscript":
-      self.script = 1
-    if self.script == 0:
-      if tag in self.contains1:
-        self.include1 = 1
-      elif tag in self.contains2:
-        self.include2 += 1
-
-  def handle_data( self, data ):
-    if self.script == 0:
-      if self.include1 == 1:
-        if len(data.split()) > 0:
-          if data.strip()[-1] == ".":
-            self.output.append(data + "\n")
-          else:
-            self.output.append(data + ".\n")
-      elif self.include2 > 0:
-        palabras = len(data.split())
-        if palabras > 4:
-          if data.strip()[-1] == ".":
-            self.output.append(data + "\n")
-          else:
-            self.output.append(data + ".\n")
-
-  def handle_endtag( self, tag ):
-    if tag == "script" or tag == "noscript":
-      self.script = 0
-    if self.script == 0:
-      if tag in self.contains1:
-        self.include1 = 0
-      elif tag in self.contains2:
-        self.include2 -= 1
-
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
-oparser.add_argument('ett_path', metavar='FILE', nargs='?', help='File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)', default=None)
+oparser.add_argument("ett_path", metavar="FILE", nargs="?", help="File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)", default=None)
 oparser.add_argument("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
 options = oparser.parse_args()
 
@@ -81,10 +101,22 @@ else:
 for line in reader:
   linefields=line.strip().split()
   #decoding the b64 original webpage
-  e = base64.b64decode(linefields[3]).replace("\n", " ")
-  p=Parser()
-  p.feed(e)
-  parsed_text=" ".join(p.output)
+  e = base64.b64decode(linefields[3])
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.connect(("localhost", '$tika_port'))
+  s.sendall(e)
+  s.shutdown(socket.SHUT_WR)
+  file_output=""
+  while 1:
+    data = s.recv(1024)
+    if data == "":
+      break
+    else:
+      file_output=file_output+data.replace("\n", " ")
+  s.close()
+      
+  parsed_text=file_output.strip()
+
   if len(parsed_text)>0:
     #detecting language
     lang, conf = langid.classify(parsed_text)
@@ -93,4 +125,6 @@ for line in reader:
       e = base64.b64encode(parsed_text)
       linefields.append(e)
       print "\t".join(linefields)
-      #sys.stdout.write("{0}\t{1}\t{2}\n".format(lang, "\t".join(linefields), e))
+      #sys.stdout.write("{0}\t{1}\t{2}\n".format(lang, "\t".join(linefields), e))' $langs < $FILE
+
+__KILL__ $tika_pid
