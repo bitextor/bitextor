@@ -127,8 +127,8 @@ wait
 
 echo "FILTERING DICTIONARY..."
 #Filtering the vocabularies to keep only those words occurring, at least, 10 times
-egrep ' ..$' $MODELSDIR/$SL.vcb > $MODELSDIR/$SL.filtered.vcb &
-egrep ' ..$' $MODELSDIR/$TL.vcb > $MODELSDIR/$TL.filtered.vcb
+egrep ' [^ ][^ ]+$' $MODELSDIR/$SL.vcb > $MODELSDIR/$SL.filtered.vcb &
+egrep ' [^ ][^ ]+$' $MODELSDIR/$TL.vcb > $MODELSDIR/$TL.filtered.vcb
 wait
 
 echo -e "${SL}\t${TL}" > $DIC
