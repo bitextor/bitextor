@@ -85,7 +85,7 @@ sys.setdefaultencoding("UTF-8")
 seen_md5={}
 for i in sys.stdin:
   fields = i.split(" ")
-  if "text/" in fields[1]:
+  if "text/" in fields[1] or "/xml" in fields[1]:
     fields[0]=fields[0][:len(fields[0])-1]
     fields[1]=fields[1][:len(fields[1])-1]
     fields[2]=fields[2][:len(fields[2])-1]

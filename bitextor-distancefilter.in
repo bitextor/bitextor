@@ -66,22 +66,23 @@ documentos = {}
 rellenarDocumentos(options.lettr, documentos)
 
 for i in reader:
-  campos = i.split("\t")
-  longitud_s = len(documentos[int(campos[0])])
-  parecidos = {}
-  cadena = str(campos[0])
-  for j in range(1,len(campos)-1):
-    doc = campos[j].split(":")
-    if float(doc[1]) > 0.10:
-      longitud_t = len(documentos[int(doc[0])])
-      dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
-      port = 1 - (dist / float(max(longitud_s, longitud_t)))
-      ##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
-      #new_per = (float(doc[1]) + port)/2.0
-      #new_per = port
-      new_per = float(doc[1]) * port
-      parecidos[doc[0]] = new_per
-  parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
-  for k in parecidos:
-    cadena += "\t" + str(k[0]) + ":" + str(k[1])
-  print cadena
+  campos = i.strip().split("\t")
+  if len(campos)>1:
+    longitud_s = len(documentos[int(campos[0])])
+    parecidos = {}
+    cadena = str(campos[0])
+    for j in range(1,len(campos)):
+      doc = campos[j].split(":")
+      if float(doc[1]) > 0.10:
+        longitud_t = len(documentos[int(doc[0])])
+        dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
+        port = 1 - (dist / float(max(longitud_s, longitud_t)))
+        ##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
+        #new_per = (float(doc[1]) + port)/2.0
+        #new_per = port
+        new_per = float(doc[1]) * port
+        parecidos[doc[0]] = new_per
+    parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+    for k in parecidos:
+      cadena += "\t" + str(k[0]) + ":" + str(k[1])
+    print cadena
