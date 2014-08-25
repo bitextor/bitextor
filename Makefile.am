@@ -77,7 +77,7 @@ bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__LSOF__!$(LSOF)!g" | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__TIKA__!$(prefix)/share/java/tika-app-1.4.jar!g" | \
-	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__PREFIX__!$(prefix)!g" | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 

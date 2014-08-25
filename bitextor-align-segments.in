@@ -16,11 +16,14 @@
 #
 
 import sys
+sys.path.append('/path/to/search')
 import os
 import argparse
 import base64
 import subprocess
 import re
+from nltk.tokenize.punkt import PunktWordTokenizer
+import ulyses
 from tempfile import NamedTemporaryFile
 
 reload(sys)
@@ -28,11 +31,36 @@ sys.setdefaultencoding("UTF-8")
 
 def runAligner(filename1, filename2):
   # option -ppthresh=10?
-  hunalign = ["__PREFIX__/bin/hunalign", "-text", "-realign", "/dev/null", filename1, filename2]
+  hunalign = ["__PREFIX__/bin/hunalign", "-realign", "/dev/null", filename1, filename2]
+  #hunalign = ["__PREFIX__/bin/hunalign", "-text", "-realign", "/dev/null", filename1, filename2]
   p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
   for line in p.stdout:
     yield line.decode("utf-8")
   return
+
+def splitSegs(mitok, text):
+  return mitok.split(ulyses.splitinwords(text))
+
+def trainSegmenters(reader):
+  reader_list=[]
+  mitok_l1=ulyses.Putokenizer()
+  mitok_l1.init_model()
+  mitok_l2=ulyses.Putokenizer()
+  mitok_l2.init_model()
+
+  for line in reader:
+    reader_list.append(line.strip())
+    fields=reader_list[-1].split("\t")
+    text1=base64.b64decode(fields[2]).decode("utf-8")
+    mitok_l1.feed_model(ulyses.splitinwords(text1))
+
+    text2=base64.b64decode(fields[3]).decode("utf-8")
+    mitok_l2.feed_model(ulyses.splitinwords(text2))
+
+  mitok_l1.update_model()
+  mitok_l2.update_model()
+
+  return mitok_l1, mitok_l2, reader_list
 
 oparser = argparse.ArgumentParser(description="Tool that reads the output of bitextor-align-documents and aligns the segments of the aligned documents")
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
@@ -44,39 +72,102 @@ options = oparser.parse_args()
 tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
 tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
 
+tmp_file1_origtext=NamedTemporaryFile(delete=False, dir="/tmp")
+tmp_file2_origtext=NamedTemporaryFile(delete=False, dir="/tmp")
+
 if options.aligned_docs == None:
   reader = sys.stdin
 else:
   reader = open(options.aligned_docs,"r")
 
-for line in reader:
-  fields=line.strip().split("\t")
+mitok_l1, mitok_l2, reader_list=trainSegmenters(reader)
+
+for line in reader_list:
+  fields=line.split("\t")
   filename1=fields[0]
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
   tmp_file1.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
-  pipe1tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
-  pipe1 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  parsed_text, errout = pipe1.communicate(tokenized_text)
-  tmp_file1.write(parsed_text)
+  tmp_file1_origtext.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
+#  pipe1tok = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+#  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
+  for seg in splitSegs(mitok_l1, base64.b64decode(encodedtext1).decode("utf-8")):
+    tmp_file1_origtext.write(seg+"\n")
+    tokenized_text=PunktWordTokenizer().tokenize(seg)
+    tmp_file1.write(" ".join(tokenized_text)+"\n")
+  #pipe1 = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  #parsed_text, errout = pipe1.communicate(tokenized_text)
 
   tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
-  pipe2tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
-  pipe2 = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  parsed_text, errout = pipe2.communicate(tokenized_text)
-  tmp_file2.write(parsed_text)
+  tmp_file2_origtext.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
+#  pipe2tok = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  for seg in splitSegs(mitok_l2, base64.b64decode(encodedtext2).decode("utf-8")):
+    tmp_file2_origtext.write(seg+"\n")
+    tokenized_text=PunktWordTokenizer().tokenize(seg)
+    #sys.stderr.write(str(tokenized_text))
+    tmp_file2.write(" ".join(tokenized_text)+"\n")
+  #tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
+  #pipe2 = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
+  #parsed_text, errout = pipe2.communicate(tokenized_text)
+  #tmp_file2.write(parsed_text)
 tmp_file1.close()
+tmp_file1_origtext.close()
 tmp_file2.close()
+tmp_file2_origtext.close()
 
-filenames=[]
-for line in runAligner(tmp_file1.name, tmp_file2.name):
+filereader1=open(tmp_file1_origtext.name, "r")
+filereader2=open(tmp_file2_origtext.name, "r")
+
+filename1=""
+filename2=""
+hunalign_output=runAligner(tmp_file1.name, tmp_file2.name)
+prev_hun=hunalign_output.next().strip()
+for line in hunalign_output:
   hun_line=line.strip()
-  if "<p>" not in line and "\t\t" not in hun_line and len(hun_line.split("\t"))>=2:
-    if "<file " in hun_line:
-      plain=re.sub("<[^>]*>", "", hun_line.strip())
-      filenames=plain.split("\t")
+  last_position1 = filereader1.tell()
+  last_position2 = filereader2.tell()
+  line1=filereader1.readline().strip()
+  line2=filereader2.readline().strip()
+  if line1!="<p>" or line2!="<p>":
+    if "<file " in line1 and "<file " in line2:
+      filename1=re.sub("<[^>]*>", "", line1)
+      filename2=re.sub("<[^>]*>", "", line2)
     else:
-      print "{0}\t{1}\t{2}".format(filenames[0], filenames[1], hun_line)
+      prev_fields=prev_hun.split("\t")
+      fields=hun_line.split("\t")
+      #print str(int(fields[0])-int(prev_fields[0]))+" ----- "+str(int(fields[1])-int(prev_fields[1]))
+      if int(fields[0])-int(prev_fields[0]) > 1:
+        for i in xrange((int(fields[0])-int(prev_fields[0]))-1):
+          line1+=" "+filereader1.readline().strip()
+
+      elif int(fields[1])-int(prev_fields[1]) > 1:
+        for i in xrange((int(fields[1])-int(prev_fields[1]))-1):
+          line2+=" "+filereader2.readline().strip()
+
+      elif float(prev_fields[2])==-0.3:
+        if int(fields[0])==int(prev_fields[0]):
+          line1=""
+          filereader1.seek(last_position1)
+        elif int(fields[1])==int(prev_fields[1]):
+          line2=""
+          filereader2.seek(last_position2)
+
+      print "{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2])
+
+  prev_hun=hun_line
+
+filereader1.close()
+filereader2.close()
+
+os.remove(tmp_file1.name)
+os.remove(tmp_file1_origtext.name)
+os.remove(tmp_file2.name)
+os.remove(tmp_file2_origtext.name)
+      
+#  if "<p>" not in line and "\t\t" not in hun_line and len(hun_line.split("\t"))>=2:
+#    if "<file " in hun_line:
+#      plain=re.sub("<[^>]*>", "", hun_line.strip())
+#      filenames=plain.split("\t")
+#    else:
+#      print "{0}\t{1}\t{2}".format(filenames[0], filenames[1], hun_line)
