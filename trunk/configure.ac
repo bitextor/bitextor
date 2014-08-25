@@ -280,6 +280,34 @@ print (var)" 2> /dev/null`
 ])
   fi
 
+  AC_MSG_CHECKING([for NLTK for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import nltk; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires nltk for Python. Please, install v3.0 or later and try again. http://www.nltk.org
+])
+  fi
+
+    AC_MSG_CHECKING([for regex for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import regex; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again. https://code.google.com/p/mrab-regex-hg/
+])
+  fi
+
   AC_MSG_CHECKING([for boilerpipe for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import boilerpipe; \
