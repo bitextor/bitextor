@@ -262,6 +262,7 @@ do
       ;;
      -d)
       shift
+      rm $DIRNAME
       DIRNAME=$1
       if [ $INPUTMODE -eq 0 ]; then
         INPUTMODE=3

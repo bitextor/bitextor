@@ -3,7 +3,7 @@ bitextordir = $(prefix)/share/bitextor
 
 bitextor_DATA = diccionario.dic
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign tika utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2
+SUBDIRS= hunalign-src hunalign-src/src/hunalign tika utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulyses
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
             bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
