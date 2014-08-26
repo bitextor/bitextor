@@ -1,7 +1,6 @@
 #!__BASH__
 
 OUTPUT=/dev/stdout
-TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
 
 exit_program()
 {
@@ -79,9 +78,16 @@ from HTMLParser import HTMLParser
 import langid
 import argparse
 import socket
+import re
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
+
+def split_obvious_paragraphs(input):
+  breaking_tags=[r"(</?[Pp] *)",r"(</?[Hh][1-6] *)",r"(</?li *)",r"(</?div *)",r"(</?LI *)",r"(</?DIV *)"]
+  for tag in breaking_tags:
+    input=re.sub(tag, "\n"+r"\g<1>", input)
+  return input
 
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
 oparser.add_argument("ett_path", metavar="FILE", nargs="?", help="File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)", default=None)
@@ -101,7 +107,8 @@ else:
 for line in reader:
   linefields=line.strip().split()
   #decoding the b64 original webpage
-  e = base64.b64decode(linefields[3])
+  e = re.sub("\s\s+"," ",base64.b64decode(linefields[3]).replace("\n", " "))
+  e = split_obvious_paragraphs(e)
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.connect(("localhost", '$tika_port'))
   s.sendall(e)
@@ -112,7 +119,7 @@ for line in reader:
     if data == "":
       break
     else:
-      file_output=file_output+data.replace("\n", " ")
+      file_output=file_output+data
   s.close()
       
   parsed_text=file_output.strip()

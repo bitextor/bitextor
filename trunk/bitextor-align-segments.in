@@ -16,13 +16,14 @@
 #
 
 import sys
-sys.path.append('/path/to/search')
 import os
 import argparse
 import base64
 import subprocess
 import re
 from nltk.tokenize.punkt import PunktWordTokenizer
+import site
+site.addsitedir('__PREFIX__/lib/python')
 import ulyses
 from tempfile import NamedTemporaryFile
 
@@ -40,6 +41,7 @@ def runAligner(filename1, filename2):
 
 def splitSegs(mitok, text):
   return mitok.split(ulyses.splitinwords(text))
+      
 
 def trainSegmenters(reader):
   reader_list=[]
@@ -92,21 +94,27 @@ for line in reader_list:
   tmp_file1_origtext.write("<p>\n<file lang=\""+options.lang1+"\">"+filename1+"</file>\n<p>\n")
 #  pipe1tok = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
 #  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
-  for seg in splitSegs(mitok_l1, base64.b64decode(encodedtext1).decode("utf-8")):
-    tmp_file1_origtext.write(seg+"\n")
-    tokenized_text=PunktWordTokenizer().tokenize(seg)
-    tmp_file1.write(" ".join(tokenized_text)+"\n")
+  for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      for seg in splitSegs(mitok_l1, trimorigseg):
+        tmp_file1_origtext.write(seg+"\n")
+        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tmp_file1.write(" ".join(tokenized_text)+"\n")
   #pipe1 = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   #parsed_text, errout = pipe1.communicate(tokenized_text)
 
   tmp_file2.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
   tmp_file2_origtext.write("<p>\n<file lang=\""+options.lang2+"\">"+filename2+"</file>\n<p>\n")
 #  pipe2tok = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  for seg in splitSegs(mitok_l2, base64.b64decode(encodedtext2).decode("utf-8")):
-    tmp_file2_origtext.write(seg+"\n")
-    tokenized_text=PunktWordTokenizer().tokenize(seg)
-    #sys.stderr.write(str(tokenized_text))
-    tmp_file2.write(" ".join(tokenized_text)+"\n")
+  for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      for seg in splitSegs(mitok_l2, trimorigseg):
+        tmp_file2_origtext.write(seg+"\n")
+        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        #sys.stderr.write(str(tokenized_text))
+        tmp_file2.write(" ".join(tokenized_text)+"\n")
   #tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
   #pipe2 = subprocess.Popen(["perl", "/home/miquel/local/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   #parsed_text, errout = pipe2.communicate(tokenized_text)
