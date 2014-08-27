@@ -1,5 +1,5 @@
-ulyses_dir = $(prefix)/lib/python
-export PYTHONPATH = $(ulyses_dir)
+export PYTHONPATH = $(pythondir)
 
 install:
-	python setup.py install --install-lib=$(ulyses_dir) --install-script=$(ulyses_dir)
+	mkdir -p $(PYTHONPATH)
+	python setup.py install --prefix=$(prefix)
