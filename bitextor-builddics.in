@@ -90,6 +90,7 @@ esac
 SL_TOKENISED="$PREPROCCORPUS/corpus.tok.$SL"
 TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
 SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
+TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
 #Tokenising the corpus
 echo "TOKENISING THE CORPUS..."
