@@ -8,12 +8,7 @@ bitextor-score-document-alignment \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-score-document-alignment
-.B \-\-lang1
-.I LANG1
-.B \-\-lang2
-.I LANG2
-.B \-d
-.I DIC
+.RI [ OPTIONS ]
 .RI [ FILE ]
 
 .SH DESCRIPTION
@@ -28,6 +23,20 @@ The output of
 .B bitextor-align-documents
 can be read from standard input or from a
 .IR FILE .
+
+.SH OPTIONS
+.TP
+.BI \-\-lang1 " LANG1"
+ID of the first language in the bitext (following the ISO 639-1)
+.TP
+.BI \-\-lang2 " LANG2"
+ID of the second language in the bitext (following the ISO 639-1)
+.TP
+.BI \-d " DIC"
+Dictionary for hunalign
+.TP
+.BI \-t " TMP_IR"
+Alternative tmp directory (/tmp by default)
 
 .SH SEE ALSO
 bitextor-align-segments(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
