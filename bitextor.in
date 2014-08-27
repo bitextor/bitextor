@@ -105,6 +105,8 @@ exit_program()
   echo "                  at the level of documents. The output will be tab-sepparated, with"
   echo "                  three fields: two with the name of the documents aligned and one with"
   echo "                  the score provided by hunalign for the pair of documents."
+  echo "  -O FILE         if this option is enabled, the otput of bitextor will be redirected"
+  echo "                  to file FILE, if not it is redirected to the standard output."
   exit 1
 }
 
@@ -201,7 +203,7 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "xaq:m:v:b:l:u:U:d:D:L:D:e:I:t:" $*)
+ARGS=$(getopt "xaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:" $*)
 
 set -- $ARGS
 for i
@@ -311,6 +313,11 @@ do
     -t)
       shift
       TMPDIR=$1
+      shift
+      ;;
+    -O)
+      shift
+      OUTPUT=$1
       shift
       ;;
     -h)
