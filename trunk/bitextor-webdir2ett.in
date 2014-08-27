@@ -1,7 +1,6 @@
 #!__BASH__
 
 OUTPUT=/dev/stdout
-TEMPCONV=$(mktemp /tmp/tempconv.XXXXX)
 
 exit_program()
 {
@@ -121,8 +120,6 @@ for i in sys.stdin:
       sys.stderr.write(str(e)+"\n")
       pass
 ' $WEBDIR > $OUTPUT
-
-rm -Rf $TEMPCONV
 
 __KILL__ $tika_pid
 

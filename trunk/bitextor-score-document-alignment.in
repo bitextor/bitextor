@@ -30,11 +30,12 @@ oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File conta
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
 oparser.add_argument("-d", "--dic", help="Dictionary for hunalign", dest="dicpath", required=True)
+oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default", dest="tmpdir", required=False, default="/tmp")
 
 options = oparser.parse_args()
 
-tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
-tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
+tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
 
 if options.aligned_docs == None:
   reader = sys.stdin
@@ -45,8 +46,8 @@ for line in reader:
   fields=line.strip().split("\t")
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-  tmp_file1=NamedTemporaryFile(delete=False, dir="/tmp")
-  tmp_file2=NamedTemporaryFile(delete=False, dir="/tmp")
+  tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+  tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
   pipe1tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
   tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
   pipe1splitsent = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))

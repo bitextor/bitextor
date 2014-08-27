@@ -4,8 +4,9 @@ OUTPUT=/dev/stdout
 
 exit_program()
 {
-  echo "USAGE: $1 SL TL SL_FILE TL_FILE DIC [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
+  echo "USAGE: $1 [-t tmp-dir] SL TL SL_FILE TL_FILE DIC [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
   echo "WHERE"
+  echo "   -t tmp-dir            alternative tmp directory (/tmp by default)"
   echo "   SL                    source language code (two characters)"
   echo "   TL                    target language code (two characters)"
   echo "   SL_CORPUS             file containing the source language segments"
@@ -16,14 +17,23 @@ exit_program()
   exit 1
 }
 
-ARGS=$(getopt "h" $*)
+if [[ -z $TMPDIR ]]; then
+  TMPDIR="/tmp"
+fi
+
+ARGS=$(getopt "ht:" $*)
 
 set -- $ARGS
 for i
 do
   case "$i" in
-    -h)
+    -h|--help)
       exit_program $(basename $0)
+      ;;
+    -t|--tmp-dir)
+      shift
+      TMPDIR=$1
+      shift
       ;;
     --)
       shift
@@ -39,8 +49,8 @@ case $# in
     SL_CORPUS="$3"
     TL_CORPUS="$4"
     DIC=$5
-    PREPROCCORPUS=$(mktemp -d /tmp/tempcorpuspreproc.XXXXX)
-    MODELSDIR=$(mktemp -d /tmp/tempgizamodel.XXXXX)
+    PREPROCCORPUS=$(mktemp -d $TMPDIR/tempcorpuspreproc.XXXXX)
+    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
     ;;
   6)
     SL="$1"
@@ -53,7 +63,7 @@ case $# in
       echo "The path specified for storing the preprocessed files for the corpus is not valid."
       exit_program $(basename $0)
     fi
-    MODELSDIR=$(mktemp -d /tmp/tempgizamodel.XXXXX)
+    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
     ;;
   7)
     SL="$1"
@@ -80,7 +90,6 @@ esac
 SL_TOKENISED="$PREPROCCORPUS/corpus.tok.$SL"
 TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
 SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
-TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
 #Tokenising the corpus
 echo "TOKENISING THE CORPUS..."

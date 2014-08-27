@@ -3,12 +3,8 @@
 OUTPUT=/dev/stdout
 URLFILE=""
 URL=""
-DIRNAME=$(mktemp /tmp/downloaded_websites.XXXXXX)
 #Path to default dictionary: it can be replaced by using option -v
 VOCABULARY="__PREFIX__/share/bitextor/diccionario.dic"
-#LETT=$(mktemp /tmp/lett.XXXXXX)
-TMPLETTR=$(mktemp /tmp/lettr.XXXXXX)
-LETTR=$TMPLETTR
 LANG1=""
 LANG2=""
 BIDIDOCALIGN=0
@@ -18,7 +14,9 @@ INDEX=""
 MAXLINES=5
 MINQUALITY=0
 INPUTMODE=0
-
+if [[ -z $TMPDIR ]]; then
+  TMPDIR="/tmp"
+fi
 WEBDIR2ETTLOG=/dev/null
 ETT2LETTLOG=/dev/null
 LETT2LETTRLOG=/dev/null
@@ -59,7 +57,8 @@ exit_program()
   echo "WHERE:"
   echo "  -u URL          URL of a website to crawl (one per line); if option -d is also" 
   echo "                  enabled, the website is downloaded to the directory specified,"
-  echo "                  if not, it is downloaded in a temporal directory in '/tmp'."
+  echo "                  if not, it is downloaded in a temporal directory in '/tmp' (or"
+  echo "                  a different directory if -t option is used)."
   echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
   echo "                  corresponding destination path (one per line)."
   echo "  -d DIRECTORY    folder containing a crawled website (if option -u is enabled,"
@@ -75,7 +74,7 @@ exit_program()
   echo "                  different modules of bitextor will be stored"
   echo "  -l LETTR        custom path where the file with extension .lettr (language"
   echo "                  encoded and typed data with 'raspa') will be created"
-  echo "                  (/tmp/lettr.XXXXXX by default)."
+  echo "                  (/lettr.XXXXXX by default)."
   echo "  -I PATH         custom path where the output of the intermediate files produced"
   echo "                  by the modules of bitextor will be stored."
   echo "  -b NUM          if this option is enabled, the document alignment process is"
@@ -99,7 +98,8 @@ exit_program()
   echo "                  with a score"
   echo "                  lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                  removed (0 by default)."
-  echo "  -t              if this option is enabled, the output of the tool will be"
+  echo "  -t TMP-DIR      alternative tmp directory (/tmp by default)."
+  echo "  -x              if this option is enabled, the output of the tool will be."
   echo "                  formated in the standard XML-based format TMX."
   echo "  -a              if this option is enabled, Bitextor will perform the alignment only"
   echo "                  at the level of documents. The output will be tab-sepparated, with"
@@ -128,26 +128,26 @@ run_bitextor(){
 align_segments(){
   local LETTR=$1
 
-  output_pipe=$(mktemp /tmp/output_pipe.XXXXXX)
+  output_pipe=$(mktemp $TMPDIR/output_pipe.XXXXXX)
   rm $output_pipe
   mkfifo $output_pipe
 
   if [ $BIDIDOCALIGN -ge 1 ]; then
     #Named pipe for paralelising obtaining the initial index for the ridx 1
-    index_pipe1=$(mktemp /tmp/index_pipe.XXXXXX)
+    index_pipe1=$(mktemp $TMPDIR/index_pipe.XXXXXX)
     rm $index_pipe1
     mkfifo $index_pipe1
 
     #Named pipe for paralelising obtaining the initial index for the ridx 2
-    index_pipe2=$(mktemp /tmp/index_pipe.XXXXXX)
+    index_pipe2=$(mktemp $TMPDIR/index_pipe.XXXXXX)
     rm $index_pipe2
     mkfifo $index_pipe2
 
     __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $index_pipe1 > $index_pipe2 &
 
-    RINDEX1=$(mktemp /tmp/ridx.XXXXXX)
-    RINDEX2=$(mktemp /tmp/ridx.XXXXXX) 
+    RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
+    RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX) 
 
     __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
     __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
@@ -163,13 +163,13 @@ align_segments(){
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
     else
-        HUNALIGN_DIC=$(mktemp /tmp/hunalign_dic.XXXXXX)
+        HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
         tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-score-document-alignment --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
         rm $HUNALIGN_DIC
     fi
   else
@@ -178,16 +178,16 @@ align_segments(){
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
         __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
         __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
     else
-        HUNALIGN_DIC=$(mktemp /tmp/hunalign_dic.XXXXXX)
+        HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
         tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
         __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
         __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
         __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-score-document-alignment --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
         rm $HUNALIGN_DIC
     fi
   fi
@@ -201,7 +201,7 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "taq:m:v:b:l:u:U:d:D:L:D:e:I:" $*)
+ARGS=$(getopt "xaq:m:v:b:l:u:U:d:D:L:D:e:I:t:" $*)
 
 set -- $ARGS
 for i
@@ -262,7 +262,6 @@ do
       ;;
      -d)
       shift
-      rm $DIRNAME
       DIRNAME=$1
       if [ $INPUTMODE -eq 0 ]; then
         INPUTMODE=3
@@ -280,7 +279,7 @@ do
       LETTR=$1
       shift
       ;;
-    -t)
+    -x)
       FORMAT="TMX"
       shift
       ;;
@@ -309,6 +308,11 @@ do
       MINQUALITY=$1
       shift
       ;;
+    -t)
+      shift
+      TMPDIR=$1
+      shift
+      ;;
     -h)
       exit_program $(basename $0)
       ;;
@@ -328,6 +332,14 @@ case $# in
     exit_program $(basename $0)
     ;;
 esac
+
+if [ $DIRNAME == "" ]; then
+  DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
+fi
+TMPLETTR=$(mktemp $TMPDIR/lettr.XXXXXX)
+if [[ -z $LETTR ]]; then
+  LETTR=$TMPLETTR
+fi
 
 case $INPUTMODE in
   1)
