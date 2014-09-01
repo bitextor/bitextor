@@ -131,7 +131,10 @@ filereader2=open(tmp_file2_origtext.name, "r")
 filename1=""
 filename2=""
 hunalign_output=runAligner(tmp_file1.name, tmp_file2.name)
-prev_hun=hunalign_output.next().strip()
+try :
+  prev_hun=hunalign_output.next().strip()
+except StopIteration :
+  prev_hun=""
 for line in hunalign_output:
   hun_line=line.strip()
   last_position1 = filereader1.tell()
