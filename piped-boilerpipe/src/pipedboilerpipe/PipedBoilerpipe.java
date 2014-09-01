@@ -35,24 +35,26 @@ public class PipedBoilerpipe {
         {
             try {
                 String[] fields=stdin.nextLine().split("\t");
-                //Reading a line
-                String line=fields[3];
-                //Processing XHTML
-                StringReader reader = new StringReader(line);
-                TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
-                //Processing XHTML to remove boilerplates
-                ArticleExtractor extractor=ArticleExtractor.INSTANCE;
-                extractor.process(source);
-                //Producing clean XHTML
-                HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-                fields[3]=h.process(source, line).replace("\n", " ");
-                StringBuilder sb=new StringBuilder();
-                for(String f: fields){
-                    sb.append(f);
-                    sb.append("\t");
+                if(fields.length==4){
+                    //Reading a line
+                    String line=fields[3];
+                    //Processing XHTML
+                    StringReader reader = new StringReader(line);
+                    TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
+                    //Processing XHTML to remove boilerplates
+                    ArticleExtractor extractor=ArticleExtractor.INSTANCE;
+                    extractor.process(source);
+                    //Producing clean XHTML
+                    HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
+                    fields[3]=h.process(source, line).replace("\n", " ");
+                    StringBuilder sb=new StringBuilder();
+                    for(String f: fields){
+                        sb.append(f);
+                        sb.append("\t");
+                    }
+                    sb.deleteCharAt(sb.length()-1);
+                    System.out.println(sb.toString());
                 }
-                sb.deleteCharAt(sb.length()-1);
-                System.out.println(sb.toString());
             } catch (SAXException ex) {
                 ex.printStackTrace(System.err);
             } catch (BoilerpipeProcessingException ex){

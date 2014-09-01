@@ -102,7 +102,8 @@ bitextor-builddics: bitextor-builddics.in
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-webdir2ett: bitextor-webdir2ett.in
-	sed "s!__BASH__!$(BASH)!g" $< | \
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__BASH__!$(BASH)!g" | \
 	sed "s!__KILL__!$(KILL)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
 	sed "s!__LSOF__!$(LSOF)!g" | \
