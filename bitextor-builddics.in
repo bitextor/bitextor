@@ -94,8 +94,14 @@ TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
 #Tokenising the corpus
 echo "TOKENISING THE CORPUS..."
-zcat $SL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $SL -q | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
-zcat $TL_CORPUS | perl __PREFIX__/share/bitextor/utils/tokenizer.perl -l $TL -q | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+zcat $SL_CORPUS | __PYTHON__ -c 'import sys
+from nltk.tokenize.punkt import PunktWordTokenizer
+for line in sys.stdin:
+  print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+zcat $TL_CORPUS | __PYTHON__ -c 'import sys
+from nltk.tokenize.punkt import PunktWordTokenizer
+for line in sys.stdin:
+  print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus
