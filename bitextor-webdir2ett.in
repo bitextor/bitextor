@@ -72,11 +72,8 @@ done
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | \
 # Se pasan a md5
 __PYTHON__ -c 'import sys
-import hashlib
 import os
-import base64
 import socket
-from boilerpipe.extract import Extractor
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -104,22 +101,30 @@ for i in sys.stdin:
         else:
           file_output=file_output+data
       s.close()
-      extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
-  
-      e = base64.b64encode(extractor.getHTML().encode("utf-8"))
-      #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
-      c = hashlib.md5()
-      c.update(e)
-      #checking for duplicate content (duplicates are discarded)
-      if c.hexdigest() in seen_md5:
-        sys.stderr.write("Repeated file:\t"+fields[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
-      else:
-        seen_md5[c.hexdigest()]=fields[0]
-        print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),e)
-    except Exception,e:
-      sys.stderr.write(str(e)+"\n")
-      pass
-' $WEBDIR > $OUTPUT
+      output = file_output.encode("utf-8").translate("", "\r").translate(" ", "\n").translate(" ", "\t")
+      print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),output)' $WEBDIR | \
+#      extractor = Extractor(extractor="ArticleExtractor", html=file_output.encode("utf-8"))
+java -jar __PREFIX__/share/java/dist/piped-boilerpipe.jar | \
+__PYTHON__ -c 'import sys
+import hashlib
+import base64
+
+for i in sys.stdin:
+  fields = i.split("\t")
+  e = base64.b64encode(field[3].encode("utf-8"))
+  #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
+  c = hashlib.md5()
+  c.update(e)
+  #checking for duplicate content (duplicates are discarded)
+  if c.hexdigest() in seen_md5:
+    sys.stderr.write("Repeated file:\t"+fields[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+  else:
+    seen_md5[c.hexdigest()]=fields[0]
+    print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],fields[3],e)
+  except Exception,e:
+    sys.stderr.write(str(e)+"\n")
+    pass
+' > $OUTPUT
 
 __KILL__ $tika_pid
 
