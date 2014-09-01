@@ -340,7 +340,7 @@ case $# in
     ;;
 esac
 
-if [ $DIRNAME == "" ]; then
+if [ "$DIRNAME" == "" ]; then
   DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
 fi
 TMPLETTR=$(mktemp $TMPDIR/lettr.XXXXXX)
