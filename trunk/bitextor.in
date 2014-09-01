@@ -134,6 +134,9 @@ align_segments(){
   rm $output_pipe
   mkfifo $output_pipe
 
+  HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
+  tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
+
   if [ $BIDIDOCALIGN -ge 1 ]; then
     #Named pipe for paralelising obtaining the initial index for the ridx 1
     index_pipe1=$(mktemp $TMPDIR/index_pipe.XXXXXX)
@@ -165,14 +168,11 @@ align_segments(){
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
     else
-        HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
-        tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
-        rm $HUNALIGN_DIC
     fi
   else
     if [ $DOCALIGNMENT -eq 0 ]; then
@@ -180,17 +180,14 @@ align_segments(){
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
         __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
         __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
     else
-        HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
-        tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
         __PREFIX__/bin/bitextor-lett2idx $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
         __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
         __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
-        rm $HUNALIGN_DIC
     fi
   fi
 
@@ -199,6 +196,8 @@ align_segments(){
   else
     cat < $output_pipe >> $OUTPUT
   fi
+
+  rm $HUNALIGN_DIC
 
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
