@@ -308,9 +308,9 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-  AC_MSG_CHECKING([for boilerpipe for Python])
+  AC_MSG_CHECKING([for charade for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
-import boilerpipe; \
+import charade; \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
@@ -318,7 +318,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires boilerpipe for Python. Please, install v1.2 or later and try again. http://code.google.com/p/boilerpipe
+    AC_MSG_ERROR([this package requires charade for Python. Please, install v1.2 or later and try again. https://pypi.python.org/pypi/charade/1.0.3
 ])
   fi
 
