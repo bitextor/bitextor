@@ -1,8 +1,6 @@
 
 bitextordir = $(prefix)/share/bitextor
 
-bitextor_DATA = diccionario.dic
-
 SUBDIRS= hunalign-src hunalign-src/src/hunalign tika utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulyses piped-boilerpipe
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
@@ -21,7 +19,7 @@ bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
          bitextor-webdir2ett.1 bitextor-buildTMX.1
 
-EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) $(bitextor_DATA) utils \
+EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) utils \
             DocumentacionBitextor-4.odt tika giza-pp 
 
 CLEANFILES=$(bin_SCRIPTS)
