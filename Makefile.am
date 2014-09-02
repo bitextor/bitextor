@@ -48,6 +48,7 @@ bitextor-align-segments: bitextor-align-segments.in
 
 bitextor-score-document-alignment: bitextor-score-document-alignment.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__PYTHONPATH__!$(pythondir)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
