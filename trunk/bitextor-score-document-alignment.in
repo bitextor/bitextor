@@ -1,5 +1,6 @@
 #!__ENV__ __PYTHON__
 
+
 # 1. Reading from STDIN a set of aligned documents. The input format is:
 #   filename1	filename2	clean_text1_in_base64	clean_text2_in_base64
 # 2. Text is cleaned and, for every aligned pair, both texts are dumped, in the same order in two temporary files. Every text block is sepparated to the previous one by a block:
@@ -20,17 +21,46 @@ import argparse
 import base64
 import subprocess
 import re
+from nltk.tokenize.punkt import PunktWordTokenizer
+import site
+site.addsitedir('__PYTHONPATH__')
+import ulyses
 from tempfile import NamedTemporaryFile
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
+def splitSegs(mitok, text):
+  return mitok.split(ulyses.splitinwords(text))
+      
+
+def trainSegmenters(reader):
+  reader_list=[]
+  mitok_l1=ulyses.Putokenizer()
+  mitok_l1.init_model()
+  mitok_l2=ulyses.Putokenizer()
+  mitok_l2.init_model()
+
+  for line in reader:
+    reader_list.append(line.strip())
+    fields=reader_list[-1].split("\t")
+    text1=base64.b64decode(fields[2]).decode("utf-8")
+    mitok_l1.feed_model(ulyses.splitinwords(text1))
+
+    text2=base64.b64decode(fields[3]).decode("utf-8")
+    mitok_l2.feed_model(ulyses.splitinwords(text2))
+
+  mitok_l1.update_model()
+  mitok_l2.update_model()
+
+  return mitok_l1, mitok_l2, reader_list
+
 oparser = argparse.ArgumentParser(description="Tool that reads the output of bitextor-align-documents and aligns the segments of the aligned documents")
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
-oparser.add_argument("-d", "--dic", help="Dictionary for hunalign", dest="dicpath", required=True)
-oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default", dest="tmpdir", required=False, default="/tmp")
+oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
+oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 
 options = oparser.parse_args()
 
@@ -42,35 +72,49 @@ if options.aligned_docs == None:
 else:
   reader = open(options.aligned_docs,"r")
 
-for line in reader:
-  fields=line.strip().split("\t")
-  encodedtext1=fields[2]
-  encodedtext2=fields[3]
+mitok_l1, mitok_l2, reader_list=trainSegmenters(reader)
+
+for line in reader_list:
   tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
   tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-  pipe1tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/tokenizer.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  tokenized_text, errout = pipe1tok.communicate(base64.b64decode(encodedtext1))
-  pipe1splitsent = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  parsed_text, errout = pipe1splitsent.communicate(tokenized_text)
-  tmp_file1.write(parsed_text)
-  tmp_file1.close()
-  filename1=tmp_file1.name
 
-  pipe2tok = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/tokenizer.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  tokenized_text, errout = pipe2tok.communicate(base64.b64decode(encodedtext2))
-  pipe2splitsent = subprocess.Popen(["perl", "__PREFIX__/share/bitextor/utils/split-sentences.perl", "-l", options.lang2], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr = open(os.devnull, "w"))
-  parsed_text, errout = pipe2splitsent.communicate(tokenized_text)
-  tmp_file2.write(parsed_text)
+  fields=line.split("\t")
+  filename1=fields[0]
+  filename2=fields[1]
+  encodedtext1=fields[2]
+  encodedtext2=fields[3]
+  for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      for seg in splitSegs(mitok_l1, trimorigseg):
+        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tmp_file1.write(" ".join(tokenized_text)+"\n")
+
+  for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      for seg in splitSegs(mitok_l2, trimorigseg):
+        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tmp_file2.write(" ".join(tokenized_text)+"\n")
+
+  tmp_file1_name=tmp_file1.name
+  tmp_file2_name=tmp_file2.name
+
+  tmp_file1.close()
   tmp_file2.close()
-  filename2=tmp_file2.name
-  hunalign = ["__PREFIX__/bin/hunalign", "-text", "-realign", "/dev/null", filename1, filename2]
-#  hunalign = ["/home/miquel/local/bin/hunalign", "-text", options.dicpath, filename1, filename2]
+
+  if options.dic == None:
+    hunalign = ["__PREFIX__/bin/hunalign", "-realign", "/dev/null", tmp_file1_name, tmp_file2_name]
+  else:
+    hunalign = ["__PREFIX__/bin/hunalign", options.dic, tmp_file1_name, tmp_file2_name]
+
   p = subprocess.Popen(hunalign, stdout= open(os.devnull, "w"), stderr = subprocess.PIPE)
   parsed_alignment, errout = p.communicate()
   quality=errout.split("\n")
-  if len(quality) < 37:
+  if len(quality) < 16:
     sys.stderr.write("Error: files "+fields[0]+" and "+fields[1]+" cannot be aligned; hunalign says:\n"+"\n".join(quality))
   else:
-    print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[35].split(' ')[1])
-    os.unlink(filename1)
-    os.unlink(filename2)
+    print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[15].split(' ')[1])
+
+  os.remove(tmp_file1.name)
+  os.remove(tmp_file2.name)
