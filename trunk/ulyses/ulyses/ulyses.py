@@ -174,8 +174,6 @@ class Putokenizer:
     f_propernoun = self.freqs([dot[i] for i in xrange(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(u".,:!?\"'")]) >= 0.95]) 
     self.f_map_prepn = dict(f_propernoun.items() + {key:0 for key in tokens if not key in f_propernoun}.items())
     
-    print self.f_map_l
-  
   def split(self, words):
     posini = 0
     for i in xrange(len(words)):

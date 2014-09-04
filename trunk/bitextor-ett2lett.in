@@ -45,7 +45,7 @@ case $# in
 esac
 
 tika_port=30000
-while [ $(__LSOF__ -i :$tika_port | __WC__ -l) -ne 0 ]; do
+while [ $(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l) -ne 0 ]; do
     let tika_port=$tika_port+1;
 done
 __JAVA__ -jar __TIKA__ -t -s $tika_port &
@@ -53,11 +53,11 @@ tika_pid=$!
 
 trap "kill $tika_pid" TERM
 
-check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+check_running_tika=$(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l)
 timecounter=0
 while [ $check_running_tika -eq 0 ]; do
   sleep 1s;
-  check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+  check_running_tika=$(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l)
   let timecounter=$timecounter+1
 done
 

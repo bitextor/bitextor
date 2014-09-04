@@ -195,12 +195,12 @@ then
   AC_MSG_ERROR([You don't have grep installed.])
 fi
 
-AC_PATH_PROG(LSOF, lsof, no)
-if test x$ac_cv_path_LSOF = x
+AC_PATH_PROG(NETSTAT, netstat, no)
+if test x$ac_cv_path_NETSTAT = x
 then
-  AC_MSG_ERROR([You don't have lsof installed.])
+  AC_MSG_ERROR([You don't have netstat installed.])
 fi
-if test x$ac_cv_path_LSOF = xno
+if test x$ac_cv_path_NETSTAT = xno
 then
   AC_MSG_ERROR([You don't have lsof installed.])
 fi

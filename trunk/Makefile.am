@@ -74,7 +74,7 @@ bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__BASH__!$(BASH)!g" $< | \
 	sed "s!__KILL__!$(KILL)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
-	sed "s!__LSOF__!$(LSOF)!g" | \
+	sed "s!__NETSTAT__!$(NETSTAT)!g" | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__TIKA__!$(prefix)/share/java/tika-app-1.4.jar!g" | \
 	sed "s!__PREFIX__!$(prefix)!g" | \
@@ -106,7 +106,7 @@ bitextor-webdir2ett: bitextor-webdir2ett.in
 	sed "s!__BASH__!$(BASH)!g" | \
 	sed "s!__KILL__!$(KILL)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
-	sed "s!__LSOF__!$(LSOF)!g" | \
+	sed "s!__NETSTAT__!$(NETSTAT)!g" | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__TIKA__!$(prefix)/share/java/tika-app-1.4.jar!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
