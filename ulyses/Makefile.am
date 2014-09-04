@@ -1,9 +1,9 @@
 export PYTHONPATH = $(pythondir)
 
-EXTRA_DIST=setup.py setup.cfg
+EXTRA_DIST=setup.py setup.cfg ulyses
 
-ulyses_SOURCES=ulyses/__init__.py ulyses/ulyses.py 
+ulyses_SOURCES=ulyses/__init__.py ulyses/ulyses.py
 
-all:
+install:
 	mkdir -p $(PYTHONPATH)
 	python setup.py install --prefix=$(prefix)

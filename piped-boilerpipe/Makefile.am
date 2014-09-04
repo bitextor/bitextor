@@ -1,6 +1,8 @@
-tikadir = $(prefix)/share/java/
+EXTRA_DIST=lib src manifest.mf
 
-tika_DATA = piped-boilerpipe.jar lib/boilerpipe-1.2.0.jar lib/nekohtml-1.9.13.jar lib/xerces-2.9.1.jar
+boilerpipedir = $(prefix)/share/java/
+
+boilerpipe_DATA = piped-boilerpipe.jar lib/boilerpipe-1.2.0.jar lib/nekohtml-1.9.13.jar lib/xerces-2.9.1.jar manifest.mf
 
 piped-boilerpipe.jar:
 	mkdir -p build
