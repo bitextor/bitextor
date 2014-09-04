@@ -77,6 +77,7 @@ import socket
 import charade
 import base64
 import select
+from struct import pack
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -92,6 +93,7 @@ for i in sys.stdin:
     try:
       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       s.connect(("localhost", '$tika_port'))
+      s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO,pack("ii", 30, 0))
       s.sendall(file.read())
       file.close()
       s.shutdown(socket.SHUT_WR)
