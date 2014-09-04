@@ -36,7 +36,7 @@ case $# in
 esac
 
 tika_port=10000
-while [ $(__LSOF__ -i :$tika_port | __WC__ -l) -ne 0 ]; do
+while [ $(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l) -ne 0 ]; do
     let tika_port=$tika_port+1;
 done
 __JAVA__ -jar __TIKA__ --xml -s $tika_port &
@@ -44,11 +44,11 @@ tika_pid=$!
 
 trap "kill $tika_pid" TERM
 
-check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+check_running_tika=$(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l)
 timecounter=0
 while [ $check_running_tika -eq 0 ]; do
   sleep 1s;
-  check_running_tika=$(__LSOF__ -i :$tika_port | __WC__ -l)
+  check_running_tika=$(__NETSTAT__ -lna | egrep ":$tika_port\s" | __WC__ -l)
   let timecounter=$timecounter+1
 done
 
@@ -76,6 +76,7 @@ import os
 import socket
 import charade
 import base64
+import select
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -95,16 +96,19 @@ for i in sys.stdin:
       file.close()
       s.shutdown(socket.SHUT_WR)
       file_output=""
-      while 1:
-        data = s.recv(1024)
-        if data == "":
-          break
-        else:
-          file_output=file_output+data
+      ready = select.select([s], [], [], 60)
+      if ready[0]:
+        while 1:
+          data = s.recv(1024)
+          if data == "":
+            break
+          else:
+            file_output=file_output+data
       s.close()
-      file_output=unicode(file_output, charade.detect(file_output)["encoding"])
-      output = file_output.replace("\r", "").replace("\n", " ").replace("\t", " ")
-      print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),output)
+      if file_output != "":
+        file_output=unicode(file_output, charade.detect(file_output)["encoding"])
+        output = file_output.replace("\r", "").replace("\n", " ").replace("\t", " ")
+        print "{0}\t{1}\t{2}\t{3}".format(fields[2].strip(),fields[1],os.path.relpath(fields[0],sys.argv[1]),output)
     except Exception,e:
       sys.stderr.write(str(e)+"\n")
       pass 
