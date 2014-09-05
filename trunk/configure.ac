@@ -195,14 +195,14 @@ then
   AC_MSG_ERROR([You don't have grep installed.])
 fi
 
-AC_PATH_PROG(NETSTAT, netstat, no)
-if test x$ac_cv_path_NETSTAT = x
+AC_PATH_PROG(GAWK, gawk, no)
+if test x$ac_cv_path_GAWK = x
 then
   AC_MSG_ERROR([You don't have netstat installed.])
 fi
-if test x$ac_cv_path_NETSTAT = xno
+if test x$ac_cv_path_GAWK = xno
 then
-  AC_MSG_ERROR([You don't have lsof installed.])
+  AC_MSG_ERROR([You don't have gawk installed.])
 fi
 
 AC_PATH_PROG(JAVA, java, no)
@@ -402,4 +402,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-4.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulyses/Makefile])
+AC_OUTPUT([Makefile bitextor-4.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulyses/Makefile])
