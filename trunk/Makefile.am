@@ -1,7 +1,7 @@
 
 bitextordir = $(prefix)/share/bitextor
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign tika utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulyses piped-boilerpipe piped-tika
+SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulyses piped-boilerpipe piped-tika
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
             bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
@@ -72,11 +72,8 @@ bitextor-downloadweb: bitextor-downloadweb.in
 
 bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__BASH__!$(BASH)!g" $< | \
-	sed "s!__KILL__!$(KILL)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
-	sed "s!__NETSTAT__!$(NETSTAT)!g" | \
 	sed "s!__WC__!$(WC)!g" | \
-	sed "s!__TIKA__!$(prefix)/share/java/tika-app-1.5.jar!g" | \
 	sed "s!__PREFIX__!$(prefix)!g" | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
