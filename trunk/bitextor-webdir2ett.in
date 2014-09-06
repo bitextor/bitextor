@@ -53,13 +53,7 @@ esac
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | __GREP__ -E "(text|html|xml)" | \
-__GAWK__ '{
-  printf substr($2,1,length($2)-1);    # formato: text/html etc.
-  printf "\t"; 
-  printf substr($3,9,length($3));       # encoding
-  printf "\t";
-  print substr($1,1,length($1)-1);    # nombre_fichero
-}' | \
+__GAWK__ '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | \
 __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar | __JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
 __PYTHON__ -c 'import sys
 import hashlib
