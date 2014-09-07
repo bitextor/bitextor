@@ -67,9 +67,7 @@ for i in sys.stdin:
   fields = i.strip().split("\t")
   #e = fields[3]
   try:
-    #e = base64.b64encode(unicode(fields[3], charade.detect(fields[3])["encoding"]))
     e = base64.b64encode(fields[3])
-    #e = base64.b64encode(unicode(fields[3], charade.detect(fields[3])["encoding"]).encode("utf-8"))
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     c = hashlib.md5()
     c.update(e)
