@@ -155,26 +155,6 @@ then
   AC_MSG_ERROR([You don't have gawk installed.])
 fi
 
-AC_PATH_PROG(KILL, kill, no)
-if test x$ac_cv_path_KILL = x
-then
-  AC_MSG_ERROR([You don't have kill installed.])
-fi
-if test x$ac_cv_path_KILL = xno
-then
-  AC_MSG_ERROR([You don't have kill installed.])
-fi
-
-AC_PATH_PROG(COMM, comm, no)
-if test x$ac_cv_path_COMM = x
-then
-  AC_MSG_ERROR([You don't have comm installed.])
-fi
-if test x$ac_cv_path_COMM = xno
-then
-  AC_MSG_ERROR([You don't have comm installed.])
-fi
-
 AC_PATH_PROG(WC, wc, no)
 if test x$ac_cv_path_WC = x
 then
@@ -325,20 +305,6 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again. https://code.google.com/p/mrab-regex-hg/
-])
-  fi
-
-  AC_MSG_CHECKING([for charade for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import charade; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires charade for Python. Please, install v1.2 or later and try again. https://pypi.python.org/pypi/charade/1.0.3
 ])
   fi
 
