@@ -20,7 +20,7 @@ bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-webdir2ett.1 bitextor-buildTMX.1
 
 EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) utils \
-            tika giza-pp 
+            giza-pp 
 
 CLEANFILES=$(bin_SCRIPTS)
 
