@@ -9,8 +9,8 @@ exit_program()
   echo "   -t tmp-dir            alternative tmp directory (/tmp by default)"
   echo "   SL                    source language code (two characters)"
   echo "   TL                    target language code (two characters)"
-  echo "   SL_CORPUS             file containing the source language segments"
-  echo "   TL_CORPUS             file containing the target language segments"
+  echo "   SL_FILE               file containing the source language segments (can be gzipped)"
+  echo "   TL_FILE               file containing the target language segments (can be gzipped)"
   echo "   DIC                   output dictionary"
   echo "   PREPROCESSED_CORPUS   folder to store the resulting pre-processed files (tokenised, lowercased and leared). If no folder is specified, a temporal folder is created"
   echo "   PRODUCED_MODELS       folder to store the resulting models obtained as a by-product of the dictionaries building. If no folder is specified, a temporal folder is created"
@@ -94,11 +94,22 @@ TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
 #Tokenising the corpus
 echo "TOKENISING THE CORPUS..."
-zcat $SL_CORPUS | __PYTHON__ -c 'import sys
+if [ "$(file $SL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
+    cattool="zcat"
+else
+    cattool="cat"
+fi
+$cattool $SL_CORPUS | __PYTHON__ -c 'import sys
 from nltk.tokenize.punkt import PunktWordTokenizer
 for line in sys.stdin:
   print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
-zcat $TL_CORPUS | __PYTHON__ -c 'import sys
+
+if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
+    cattool="zcat"
+else
+    cattool="cat"
+fi
+$cattool $TL_CORPUS | __PYTHON__ -c 'import sys
 from nltk.tokenize.punkt import PunktWordTokenizer
 for line in sys.stdin:
   print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
