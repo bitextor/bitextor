@@ -101,24 +101,27 @@ public class PipedTika {
                     }
                 }
                 //Building the new handler
-                ContentHandler handler;
-                if(returnxml){
-                    is=new BufferedInputStream(new FileInputStream(filename));
-                    handler=getTransformerHandler(os, "xml", "UTF-8", true);
+                try{
+                    ContentHandler handler;
+                    if(returnxml){
+                        is=new BufferedInputStream(new FileInputStream(filename));
+                        handler=getTransformerHandler(os, "xml", "UTF-8", true);
+                    }
+                    else{
+                        String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
+                        String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                        is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+                        handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
+                    }
+                    //Parsing
+                    parser.parse(is, handler, new Metadata(), new ParseContext());
+                    if(returnxml)
+                        System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
+                    else
+                        System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
+                } catch(FileNotFoundException e){
+                    System.err.println("ERROR: File "+filename+" could not be opened.");
                 }
-                else{
-                    String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                    String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-//System.out.println(content);
-                    is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
-                    handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
-                }
-                //Parsing
-                parser.parse(is, handler, new Metadata(), new ParseContext());
-                if(returnxml)
-                    System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
-                else
-                    System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
             }
         }
     }    
