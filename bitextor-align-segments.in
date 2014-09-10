@@ -83,6 +83,15 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
     line2=filereader2.readline().strip()
     prev_fields=prev_hun.split("\t")
     fields=hun_line.split("\t")
+
+    if float(prev_fields[2])==-0.3:
+      if int(fields[0])==int(prev_fields[0]):
+        line1=""
+        filereader1.seek(last_position1)
+      elif int(fields[1])==int(prev_fields[1]):
+        line2=""
+        filereader2.seek(last_position2)
+
     if int(fields[0])-int(prev_fields[0]) > 1:
       for i in xrange((int(fields[0])-int(prev_fields[0]))-1):
         line1+=" "+filereader1.readline().strip()
@@ -90,14 +99,6 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
     elif int(fields[1])-int(prev_fields[1]) > 1:
       for i in xrange((int(fields[1])-int(prev_fields[1]))-1):
         line2+=" "+filereader2.readline().strip()
-
-    elif float(prev_fields[2])==-0.3:
-      if int(fields[0])==int(prev_fields[0]):
-        line1=""
-        filereader1.seek(last_position1)
-      elif int(fields[1])==int(prev_fields[1]):
-        line2=""
-        filereader2.seek(last_position2)
 
     print "{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2])
 
