@@ -146,9 +146,12 @@ align_segments(){
     rm $index_pipe2
     mkfifo $index_pipe2
 
-    __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-    tee $index_pipe1 > $index_pipe2 &
+    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
 
+    __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+    tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+
+    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
     RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
     RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX) 
 
@@ -163,6 +166,21 @@ align_segments(){
     wait $rindex1_pid
 
     rm $index_pipe1 $index_pipe2
+
+    L1WORDS=$(mktemp $TMPDIR/l1words.XXXXXX)
+    L2WORDS=$(mktemp $TMPDIR/l2words.XXXXXX)
+    WORDS=$(mktemp $TMPDIR/words.XXXXXX)
+
+    grep -P "^$LANG1\t" $INDEX | cut -f 2 | sort > $L1WORDS
+    grep -P "^$LANG2\t" $INDEX | cut -f 2 | sort > $L2WORDS
+    rm $INDEX
+
+    comm -12 $L1WORDS $L2WORDS > $WORDS
+    rm $L1WORDS $L2WORDS
+
+    paste $WORDS $WORDS | sed 's/\t/ @ /g' >> $HUNALIGN_DIC
+    rm $WORDS
+    
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
@@ -195,7 +213,7 @@ align_segments(){
     cat < $output_pipe >> $OUTPUT
   fi
 
-  rm $HUNALIGN_DIC
+#  rm $HUNALIGN_DIC
 
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
