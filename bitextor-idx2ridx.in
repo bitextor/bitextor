@@ -73,6 +73,17 @@ def traducirPalabras(index, dic, dictp, translatedindex):
         translatedindex[i].update(dic[word])
     dictp[i] = contador
 
+def feedDictWithIdenticalWords(index1, index2, dic):
+  words_lang1=Set()
+  for key, words in index_text1.items():
+    words_lang1=words_lang1.union(words)
+
+  words_lang2=Set()
+  for key, words in index_text2.items():
+    words_lang2=words_lang2.union(words)
+
+  for w in words_lang1.intersection(words_lang2):
+    dic[w].append(w)
 
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('idx', metavar='FILE', nargs='?', help='File produced by bitextor-lett2idx containing an index of the different words for every language in the website and the list of documents in which they appear (if undefined, the script will read from the standard input)', default=None)
@@ -97,6 +108,8 @@ else:
   reader = open(options.idx, "r")
 
 rellenarIndex(reader, options.lang1, options.lang2, index_text1, index_text2)
+
+feedDictWithIdenticalWords(index_text1, index_text2, dic)
 
 #
 # Para cada par de documentos, tras llamar a traducirPalabras, se realiza una
