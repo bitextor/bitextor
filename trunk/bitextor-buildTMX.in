@@ -12,6 +12,9 @@ import argparse
 import time
 import locale
 
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
 oparser = argparse.ArgumentParser(description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX translation memory.")
 oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, the script will read from standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
@@ -44,11 +47,11 @@ for line in reader:
     print "   <tu tuid=\""+str(tuid_counter)+"\" datatype=\"Text\">"
     print "    <tuv xml:lang=\""+options.lang1+"\">"
     print "     <prop type=\"source-document\">"+fields[0]+"</prop>"
-    print "     <seg>"+fields[2]+"</seg>"
+    print "     <seg>"+fields[2].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     print "    </tuv>"
     print "    <tuv xml:lang=\""+options.lang2+"\">"
     print "     <prop type=\"source-document\">"+fields[1]+"</prop>"
-    print "     <seg>"+fields[3]+"</seg>"
+    print "     <seg>"+fields[3].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     print "    </tuv>"
     print "   </tu>"
     tuid_counter=tuid_counter+1
