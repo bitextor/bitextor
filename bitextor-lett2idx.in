@@ -21,12 +21,14 @@ import argparse
 import unicodedata
 sys.path.append("__PREFIX__/share/bitextor/utils")
 from unicodepunct import get_unicode_punct
+from nltk.tokenize.punkt import PunktWordTokenizer
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett or bitextor-lett2lettr containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
+oparser.add_argument("-m", "--max-occ", help="Maximum number of occurrences of a word in one language to be kept in the index", type=int, dest="maxo", default=-1)
 
 options = oparser.parse_args()
 
@@ -47,9 +49,9 @@ for line in reader:
   fields=line.strip().split("\t")
   lang=fields[0]
   #Decoding base 64:
-  text = base64.b64decode(fields[5])
+  text = base64.b64decode(fields[5]).decode("utf-8")
   #Getting the bag of words in the document
-  sorted_uniq_wordlist = set(text.lower().split())
+  sorted_uniq_wordlist = set(" ".join(PunktWordTokenizer().tokenize(text)).lower().split())
   #Trimming non-aplphanumerics:
   clean_sorted_uniq_wordlist = filter(None, [w.strip(punctuation) for w in sorted_uniq_wordlist])
   sorted_uniq_wordlist=clean_sorted_uniq_wordlist
@@ -69,8 +71,9 @@ for line in reader:
 
 for map_lang, map_vocabulary in word_map.items():
   for map_word, map_doc in map_vocabulary.items():
-    sorted_docs=sorted(word_map[map_lang][map_word], reverse=True)
-    for doc_list_idx in range(0, len(sorted_docs)-1):
-      sorted_docs[doc_list_idx]=str(sorted_docs[doc_list_idx]-sorted_docs[doc_list_idx+1])
-    sorted_docs[len(sorted_docs)-1]=str(sorted_docs[len(sorted_docs)-1])
-    print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))
+    if options.maxo == -1 or len(word_map[map_lang][map_word])<=options.maxo:
+      sorted_docs=sorted(word_map[map_lang][map_word], reverse=True)
+      for doc_list_idx in range(0, len(sorted_docs)-1):
+        sorted_docs[doc_list_idx]=str(sorted_docs[doc_list_idx]-sorted_docs[doc_list_idx+1])
+      sorted_docs[len(sorted_docs)-1]=str(sorted_docs[len(sorted_docs)-1])
+      print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))
