@@ -48,9 +48,9 @@ def splitSegs(mitok, text):
 
 def trainSegmenters(reader):
   reader_list=[]
-  mitok_l1=ulysses.Putokenizer()
+  mitok_l1=ulysses.Ulysses()
   mitok_l1.init_model()
-  mitok_l2=ulysses.Putokenizer()
+  mitok_l2=ulysses.Ulysses()
   mitok_l2.init_model()
 
   for line in reader:

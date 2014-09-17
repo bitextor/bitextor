@@ -1,2 +1,2 @@
-from ulysses import Putokenizer
+from ulysses import Ulysses
 from ulysses import splitinwords
