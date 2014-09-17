@@ -15,7 +15,7 @@ sys.setdefaultencoding('UTF8')
 
 ENDINGS = set([u".", u"!", u"?", u".\"", u".''", u".”", u".˝", u".»", u"!\"", u"!''", u"!”", u"!˝", u"!»", u"?\"", u"?''", u"?”", u"?˝", u"?»", u".)", u".]", u".}"])
 
-class Putokenizer:
+class Ulysses:
 
   def pprinttable(self, rows, output):
     if len(rows) > 1:
@@ -421,7 +421,7 @@ def main():
       for j in splitinwords(i.strip()):
         tokens.append(j)
 
-    mitok = Putokenizer()
+    mitok = Ulysses()
 
     mitok.analysis(tokens, output)
     sys.exit(0)
@@ -432,14 +432,14 @@ def main():
       for j in splitinwords(i.strip()):
         tokens.append(j)
 
-    mitok = Putokenizer()
+    mitok = Ulysses()
     mitok.train(tokens)
     #mitok.line_by_line_training(mitok.tokens_generator(input))
     pickle.dump(mitok, output)
     sys.exit(0)
 
 
-  mitok = Putokenizer()
+  mitok = Ulysses()
   name = ""
 
   if datafile != "":
