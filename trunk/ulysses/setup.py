@@ -3,12 +3,12 @@ import sys, os
 
 version = '0.9'
 
-setup(name='ulyses',
+setup(name='ulysses',
       version=version,
-      description="ulyses.py is a standalone sentences splitter.",
+      description="ulysses.py is a standalone sentences splitter.",
       long_description="""\
 """,
-      packages = ['ulyses'],
+      packages = ['ulysses'],
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='sentence splitting',
       author='Sergio Ortiz Rojas',
@@ -16,15 +16,15 @@ setup(name='ulyses',
       url='https://github.com/sortiz/ulysses-sentence-splitter',
       license='GPLv2',
       zip_safe=False,
-      py_modules=['ulyses'],
+      py_modules=['ulysses'],
       install_requires=[
           # -*- Extra requirements: -*-
           'regex',
       ],
-#      scripts = ['ulyses.py'],
+#      scripts = ['ulysses.py'],
       entry_points= {
         'console_scripts': [
-          'ulyses = ulyses.ulyses:main',
+          'ulysses = ulysses.ulysses:main',
         ],
       },
       )

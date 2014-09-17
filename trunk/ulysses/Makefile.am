@@ -1,8 +1,8 @@
 export PYTHONPATH = $(pythondir)
 
-EXTRA_DIST=setup.py setup.cfg ulyses
+EXTRA_DIST=setup.py setup.cfg ulysses
 
-ulyses_SOURCES=ulyses/__init__.py ulyses/ulyses.py
+ulysses_SOURCES=ulysses/__init__.py ulysses/ulysses.py
 
 install:
 	mkdir -p $(PYTHONPATH)
