@@ -25,7 +25,7 @@ import codecs
 from nltk.tokenize.punkt import PunktWordTokenizer
 import site
 site.addsitedir('__PYTHONPATH__')
-import ulyses
+import ulysses
 from tempfile import NamedTemporaryFile
 
 reload(sys)
@@ -43,24 +43,24 @@ def runAligner(filename1, filename2, dic):
   return
 
 def splitSegs(mitok, text):
-  return mitok.split(ulyses.splitinwords(text))
+  return mitok.split(ulysses.splitinwords(text))
       
 
 def trainSegmenters(reader):
   reader_list=[]
-  mitok_l1=ulyses.Putokenizer()
+  mitok_l1=ulysses.Putokenizer()
   mitok_l1.init_model()
-  mitok_l2=ulyses.Putokenizer()
+  mitok_l2=ulysses.Putokenizer()
   mitok_l2.init_model()
 
   for line in reader:
     reader_list.append(line.strip())
     fields=reader_list[-1].split("\t")
     text1=base64.b64decode(fields[2]).decode("utf-8")
-    mitok_l1.feed_model(ulyses.splitinwords(text1))
+    mitok_l1.feed_model(ulysses.splitinwords(text1))
 
     text2=base64.b64decode(fields[3]).decode("utf-8")
-    mitok_l2.feed_model(ulyses.splitinwords(text2))
+    mitok_l2.feed_model(ulysses.splitinwords(text2))
 
   mitok_l1.update_model()
   mitok_l2.update_model()
