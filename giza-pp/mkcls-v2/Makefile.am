@@ -12,4 +12,4 @@ mkcls_SOURCES = $(sources) $(headers)
 
 bin_PROGRAMS= mkcls
 
-AM_CXXFLAGS = -Wall -W -DNDEBUG -O3 -funroll-loops
+AM_CXXFLAGS = $(CFLAGS_GLOBAL) -Wall -W -DNDEBUG -O3 -funroll-loops

@@ -171,8 +171,8 @@ align_segments(){
     L2WORDS=$(mktemp $TMPDIR/l2words.XXXXXX)
     WORDS=$(mktemp $TMPDIR/words.XXXXXX)
 
-    grep -P "^$LANG1\t" $INDEX | cut -f 2 | sort > $L1WORDS
-    grep -P "^$LANG2\t" $INDEX | cut -f 2 | sort > $L2WORDS
+    grep "^$LANG1"$'\t' $INDEX | cut -f 2 | sort > $L1WORDS
+    grep "^$LANG2"$'\t' $INDEX | cut -f 2 | sort > $L2WORDS
     rm $INDEX
 
     comm -12 $L1WORDS $L2WORDS > $WORDS
@@ -388,8 +388,8 @@ case $INPUTMODE in
         URL=$(echo "$line" | cut -f 1)
         DIRNAME=$(echo "$line" | cut -f 2)
 	echo $line
-	echo "$(echo $line | __GREP__ -P '\t' |__WC__ -l)"
-        if [ -z $DIRNAME -o $(echo $line | __GREP__ -P '\s' |__WC__ -l) -eq 0 ]; then
+	echo "$(echo $line | __GREP__ $'\t' |__WC__ -l)"
+        if [ -z $DIRNAME -o $(echo $line | __GREP__ '\s' |__WC__ -l) -eq 0 ]; then
           echo "Error in the format of the file containing the list of urls: in every line of the file, you have to include a URL and the name of the path where the website will be downloaded separated with a tab."
           exit -1
         else

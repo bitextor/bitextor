@@ -1,7 +1,7 @@
 
 bitextordir = $(prefix)/share/bitextor
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika
+SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika ulysses-data
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
             bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
