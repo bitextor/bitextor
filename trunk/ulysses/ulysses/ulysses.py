@@ -5,6 +5,7 @@ import sys
 import codecs
 import regex
 from collections import namedtuple
+from collections import Counter
 import pickle 
 import getopt
 import tempfile
@@ -15,8 +16,25 @@ sys.setdefaultencoding('UTF8')
 
 ENDINGS = set([u".", u"!", u"?", u".\"", u".''", u".”", u".˝", u".»", u"!\"", u"!''", u"!”", u"!˝", u"!»", u"?\"", u"?''", u"?”", u"?˝", u"?»", u".)", u".]", u".}"])
 
-class Ulysses:
+def im(a, b): #integrate maps
+  if a is None:
+    return b
+  elif b is None:
+    return a
+  else:
+    return dict(sum((Counter(x) for x in [a,b]), Counter()))
 
+class Ulysses:
+  def __init__(self):
+    self.f_map_t = None
+    self.f_map_l = None
+    self.f_map_b = None
+    self.f_map_wpunct = None
+    self.f_map_bigram = None
+    self.f_map_prenumdot_bigram = None
+    self.f_map_prenum = None
+    self.f_map_prepn = None
+  
   def pprinttable(self, rows, output):
     if len(rows) > 1:
       headers = rows[0]._fields
@@ -152,27 +170,28 @@ class Ulysses:
                        self.veredict(pre[i], dot[i], post[i])))
     self.pprinttable(table, output)
     
+    
   def train(self, tokens):
     pre, dot, post = self.simplify(tokens)      
-    self.f_map_t = self.freqs(tokens) 
+    self.f_map_t = im(self.f_map_t, self.freqs(tokens)) 
     # raw frequency of each token lowercased
-    self.f_map_l = self.freqs([i.lower() for i in tokens])
+    self.f_map_l = im(self.f_map_l, self.freqs([i.lower() for i in tokens]))
     # raw frequency of tokens considered as possible sentence beginning
-    self.f_map_b = self.freqs([i.lower() for i in post])
+    self.f_map_b = im(self.f_map_b, self.freqs([i.lower() for i in post]))
     # raw frequency of tokens without punctuation at the end
-    self.f_map_wpunct = self.freqs([i.rstrip(u".,:!?\"'") for i in tokens])
+    self.f_map_wpunct = im(self.f_map_wpunct, self.freqs([i.rstrip(u".,:!?\"'") for i in tokens]))
     # raw frequency of bigrams with punctuation at the end of token and upper at the start of the posttoken
-    self.f_map_bigram = self.freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])])
+    self.f_map_bigram = im(self.f_map_bigram, self.freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])]))
     #frequences that a token is preced by a number with dot
-    self.f_map_prenumdot_bigram = self.freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])])
+    self.f_map_prenumdot_bigram = im(self.f_map_prenumdot_bigram, self.freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])]))
   
     # dot before number
     f_prenum = self.freqs([dot[i] for i in xrange(len(dot)) if regex.match(ur"^([0-9]|[iIvVXxlL]{1,4})",post[i])])
-    self.f_map_prenum = dict(f_prenum.items() + {key:0 for key in tokens if not key in f_prenum}.items())
+    self.f_map_prenum = im(self.f_map_prenum, dict(f_prenum.items() + {key:0 for key in tokens if not key in f_prenum}.items()))
 
     # dot before proper_noun
     f_propernoun = self.freqs([dot[i] for i in xrange(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(u".,:!?\"'")]) >= 0.95]) 
-    self.f_map_prepn = dict(f_propernoun.items() + {key:0 for key in tokens if not key in f_propernoun}.items())
+    self.f_map_prepn = im(self.f_map_prepn, dict(f_propernoun.items() + {key:0 for key in tokens if not key in f_propernoun}.items()))
     
   def split(self, words):
     posini = 0

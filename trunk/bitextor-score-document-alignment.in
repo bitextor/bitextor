@@ -34,12 +34,20 @@ def splitSegs(mitok, text):
   return mitok.split(ulysses.splitinwords(text))
       
 
-def trainSegmenters(reader):
+def trainSegmenters(reader, l1, l2):
   reader_list=[]
-  mitok_l1=ulysses.Ulysses()
-  mitok_l1.init_model()
-  mitok_l2=ulysses.Ulysses()
-  mitok_l2.init_model()
+
+  try:
+    mitok_l1=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
+  except:
+    mitok_l1=ulysses.Ulysses()
+    mitok_l1.init_model()
+  
+  try:
+    mitok_l2=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
+  except:
+    mitok_l2=ulysses.Ulysses()
+    mitok_l2.init_model()
 
   for line in reader:
     reader_list.append(line.strip())
@@ -72,7 +80,7 @@ if options.aligned_docs == None:
 else:
   reader = open(options.aligned_docs,"r")
 
-mitok_l1, mitok_l2, reader_list=trainSegmenters(reader)
+mitok_l1, mitok_l2, reader_list=trainSegmenters(reader, options.lang1, options.lang2)
 
 for line in reader_list:
   tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
