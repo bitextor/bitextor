@@ -166,7 +166,7 @@ for line in reader_list:
       for seg in splitSegs(mitok_l1, trimorigseg):
         tmp_file1_origtext.write(seg+"\n")
         tokenized_text=PunktWordTokenizer().tokenize(seg)
-        tmp_file1.write(u" ".join(tokenized_text)+"\n")
+        tmp_file1.write(u" ".join(tokenized_text).lower()+"\n")
 
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
@@ -174,7 +174,7 @@ for line in reader_list:
       for seg in splitSegs(mitok_l2, trimorigseg):
         tmp_file2_origtext.write(seg+"\n")
         tokenized_text=PunktWordTokenizer().tokenize(seg)
-        tmp_file2.write(u" ".join(tokenized_text)+"\n")
+        tmp_file2.write(u" ".join(tokenized_text).lower()+"\n")
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
