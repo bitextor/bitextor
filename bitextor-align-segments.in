@@ -136,12 +136,6 @@ oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for 
 
 options = oparser.parse_args()
 
-#tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-#tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-
-#tmp_file1_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-#tmp_file2_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-
 if options.aligned_docs == None:
   reader = sys.stdin
 else:
