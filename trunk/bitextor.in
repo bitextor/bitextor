@@ -213,7 +213,7 @@ align_segments(){
     cat < $output_pipe >> $OUTPUT
   fi
 
-#  rm $HUNALIGN_DIC
+  rm $HUNALIGN_DIC
 
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
