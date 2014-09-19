@@ -15,7 +15,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
+import org.apache.commons.codec.Charsets;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
@@ -110,7 +110,7 @@ public class PipedTika {
                     else{
                         String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
                         String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-                        is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+                        is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
                         handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
                     }
                     //Parsing
