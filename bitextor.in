@@ -133,7 +133,7 @@ align_segments(){
   mkfifo $output_pipe
 
   HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
-  tail -n +2 $VOCABULARY | sed 's/\t/ @ /g' > $HUNALIGN_DIC
+  tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
 
   if [ $BIDIDOCALIGN -ge 1 ]; then
     #Named pipe for paralelising obtaining the initial index for the ridx 1
