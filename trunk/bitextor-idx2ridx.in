@@ -56,7 +56,9 @@ def cargarDiccionarios(diccionario, lang1, lang2, dic):
     ind += 1
   for i in file:
     campos = i.strip().split("\t")
-    dic[campos[col_dic2]].append(campos[col_dic1])
+    if len(campos) == 2:
+      dic[campos[col_dic2]].append(campos[col_dic1])
+  file.close()
 
 #
 # En el segundo documento, se traducen las palabras encontradas en el
@@ -75,11 +77,11 @@ def traducirPalabras(index, dic, dictp, translatedindex):
 
 def feedDictWithIdenticalWords(index1, index2, dic):
   words_lang1=Set()
-  for key, words in index_text1.items():
+  for key, words in index1.items():
     words_lang1=words_lang1.union(words)
 
   words_lang2=Set()
-  for key, words in index_text2.items():
+  for key, words in index2.items():
     words_lang2=words_lang2.union(words)
 
   for w in words_lang1.intersection(words_lang2):
