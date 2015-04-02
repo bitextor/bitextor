@@ -23,7 +23,8 @@ import subprocess
 import re
 import pickle
 import codecs
-from nltk.tokenize.punkt import PunktWordTokenizer
+#from nltk.tokenize.punkt import PunktWordTokenizer
+from nltk import word_tokenize
 import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
@@ -159,7 +160,8 @@ for line in reader_list:
     if trimorigseg != "":
       for seg in splitSegs(mitok_l1, trimorigseg):
         tmp_file1_origtext.write(seg+"\n")
-        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tokenized_text=word_tokenize(seg)
+        #tokenized_text=PunktWordTokenizer().tokenize(seg)
         tmp_file1.write(u" ".join(tokenized_text).lower()+"\n")
 
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
@@ -167,7 +169,8 @@ for line in reader_list:
     if trimorigseg != "":
       for seg in splitSegs(mitok_l2, trimorigseg):
         tmp_file2_origtext.write(seg+"\n")
-        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tokenized_text=word_tokenize(seg)
+        #tokenized_text=PunktWordTokenizer().tokenize(seg)
         tmp_file2.write(u" ".join(tokenized_text).lower()+"\n")
 
   tmp_file1_name=tmp_file1.name
