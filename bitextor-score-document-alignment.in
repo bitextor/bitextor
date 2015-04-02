@@ -21,7 +21,8 @@ import argparse
 import base64
 import subprocess
 import re
-from nltk.tokenize.punkt import PunktWordTokenizer
+#from nltk.tokenize.punkt import PunktWordTokenizer
+from nltk import word_tokenize
 import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
@@ -95,14 +96,16 @@ for line in reader_list:
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       for seg in splitSegs(mitok_l1, trimorigseg):
-        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tokenized_text=word_tokenize(seg)
+        #tokenized_text=PunktWordTokenizer().tokenize(seg)
         tmp_file1.write(" ".join(tokenized_text)+"\n")
 
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       for seg in splitSegs(mitok_l2, trimorigseg):
-        tokenized_text=PunktWordTokenizer().tokenize(seg)
+        tokenized_text=word_tokenize(seg)
+        #tokenized_text=PunktWordTokenizer().tokenize(seg)
         tmp_file2.write(" ".join(tokenized_text)+"\n")
 
   tmp_file1_name=tmp_file1.name
