@@ -3,14 +3,14 @@ bitextordir = $(prefix)/share/bitextor
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika ulysses-data
 
-bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in \
+bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
-            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in \
+            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in\
             bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in \
             bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in
 
-bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign \
-            bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett \
+bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-idx2ridx-freq \
+            bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett bitextor-lett2idx-freq \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics\
             bitextor-webdir2ett bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment
             
@@ -83,10 +83,21 @@ bitextor-idx2ridx: bitextor-idx2ridx.in
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
+bitextor-idx2ridx-freq: bitextor-idx2ridx-freq.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+
 bitextor-lett2idx: bitextor-lett2idx.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+
+bitextor-lett2idx-freq: bitextor-lett2idx-freq.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+
 
 bitextor-lett2lettr: bitextor-lett2lettr.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \

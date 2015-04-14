@@ -9,6 +9,7 @@ LANG2=""
 BIDIDOCALIGN=0
 DOCALIGNMENT=0
 FORMAT="PLAIN"
+FREQ="0"
 INDEX=""
 MAXLINES=5
 MINQUALITY=0
@@ -148,20 +149,37 @@ align_segments(){
 
     INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
 
-    __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-    tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+    else
+        __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+    fi
+
 
     INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
     RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
     RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX) 
 
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+
+    else
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+    fi
 
     rindex1_pid=$!
 
-    __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
-    __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+    else
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+    fi
 
     wait $rindex1_pid
 
@@ -192,18 +210,35 @@ align_segments(){
     fi
   else
     if [ $DOCALIGNMENT -eq 0 ]; then
-        __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
-        __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        if [ $FREQ == "1" ]; then
+            __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        else
+            __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        fi
     else
-        __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
-        __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        if  [ $FREQ == "1" ]; then
+            __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        else
+            __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        fi
     fi
   fi
 
@@ -218,7 +253,7 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "xaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:" $*)
 
 set -- $ARGS
 for i
@@ -300,6 +335,10 @@ do
       FORMAT="TMX"
       shift
       ;;
+    -f)
+      FREQ="1"
+      shift
+      ;;
     -a)
       DOCALIGNMENT=1
       shift
@@ -333,6 +372,10 @@ do
     -O)
       shift
       OUTPUT=$1
+      shift
+      ;;
+    -f)
+      USEWORDFREQ=1
       shift
       ;;
     -h)
