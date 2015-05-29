@@ -53,14 +53,6 @@ esac
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | __GREP__ -E "(text|html|xml)" | \
-python -c '
-import sys
-
-for line in sys.stdin:
-  filename=line.split(":")[0]
-  with file(filename, 'r') as original: data = original.read()
-  with file(filename, 'w') as modified: modified.write('<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml"> <head> <meta name="Content-Encoding" content="UTF-8"/> <meta name="Content-Type" content="text/plain; charset=UTF-8"/> <title/> </head> <body>\n' + data+ '\n</body></html>')
-  sys.stdout.write(line)' | \
 __GAWK__ '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | \
 __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar | __JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
 __PYTHON__ -c 'import sys
