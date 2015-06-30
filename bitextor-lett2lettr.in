@@ -45,6 +45,9 @@ class Parser(HTMLParser):
     else:
       self.output.append("_" + tag + "_")
 
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
 oparser = argparse.ArgumentParser(description="Script that obtains an abstract representation of every file in a crawled website. The script reads the output from bitextor-ett2lett, reads the content of each file, and produces the representation, which is later used by bitextor-distancefilter to rank the aligned-document candidates.")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
 options = oparser.parse_args()
