@@ -103,7 +103,7 @@ $cattool $SL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import word_tokenize
 for line in sys.stdin:
-  print word_tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+  print word_tokenize(line.decode("utf-8").strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
   #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
 if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
@@ -115,7 +115,7 @@ $cattool $TL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import word_tokenize
 for line in sys.stdin:
-  print word_tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+  print word_tokenize(line.decode("utf-8").strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
   #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
@@ -167,23 +167,27 @@ echo -e "${SL}\t${TL}" > $DIC
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 __PYTHON__ -c '
 import sys
+
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
 svocabulary={}
 tvocabulary={}
 svcb=open(sys.argv[1],"r")
 tvcb=open(sys.argv[2],"r")
 for line in svcb:
-  item=line.strip().split(" ")
+  item=line.decode("utf-8").strip().split(" ")
   svocabulary[item[0]]=item[1]
 
 for line in tvcb:
-  item=line.strip().split(" ")
+  item=line.decode("utf-8").strip().split(" ")
   tvocabulary[item[0]]=item[1]
 
 t3dic={}
 t3s=open(sys.argv[3],"r")
 t3t=open(sys.argv[4],"r")
 for line in t3t:
-  item=line.strip().split(" ")
+  item=line.decode("utf-8").strip().split(" ")
   if item[1] in t3dic:
     t3dic[item[1]][item[0]]=item[2]
   else:
@@ -191,7 +195,7 @@ for line in t3t:
     t3dic[item[1]][item[0]]=item[2]
 
 for line in t3s:
-  item=line.strip().split(" ")
+  item=line.decode("utf-8").strip().split(" ")
   if item[0] in t3dic:
     if item[1] in t3dic[item[0]]:
       value1=float(t3dic[item[0]][item[1]])
