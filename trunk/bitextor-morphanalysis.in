@@ -33,6 +33,10 @@ case $# in
   1)
     MORPHANAL="$1"
     ;;
+  2)
+    MORPHANAL="$1"
+    FILE="$2"
+    ;;
   *)
     exit_program $(basename $0)
     ;;

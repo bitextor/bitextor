@@ -30,9 +30,9 @@ DISTANCEFILTER21LOG=/dev/null
 ALIGNDOCUMENTSLOG=/dev/null
 ALIGNSEGMENTSLOG=/dev/null
 CLEANTEXTLOG=/dev/null
-MORPHANAL_S2T=/dev/null
-MORPHANAL_T2S=/dev/null
-
+MORPHANAL_OPTIONS=""
+MORPH1=""
+MORPH2=""
 WEBDIR2ETTOUT=""
 ETT2LETTOUT=""
 LETT2LETTROUT=""
@@ -106,10 +106,14 @@ exit_program()
   echo "                    at the level of documents. The output will be tab-sepparated, with"
   echo "                    three fields: two with the name of the documents aligned and one with"
   echo "                    the score provided by hunalign for the pair of documents."
-  echo "  -M MORPH1:MORPH2  morphological analysers from the Apertium platform that will allow"
-  echo "                    to apply word matching directly on lemmas; this is an mportant tool"
-  echo "                    for aglutinant languages in order to obtain a good coverage with the"
-  echo "                    bilingual lexicon approach."
+  echo "  -M                morphological analyser in the Apertium platform for source language"
+  echo "                    that will allow to apply word matching directly on lemmas; this is an"
+  echo "                    important tool for aglutinant languages in order to obtain a good"
+  echo "                    coverage with the bilingual lexicon approach."
+  echo "  -N                morphological analyser in the Apertium platform for target language"
+  echo "                    that will allow to apply word matching directly on lemmas; this is an"
+  echo "                    important tool for aglutinant languages in order to obtain a good"
+  echo "                    coverage with the bilingual lexicon approach."
   echo "  -O FILE           if this option is enabled, the otput of bitextor will be redirected"
   echo "                    to file FILE, if not it is redirected to the standard output."
   exit 1
@@ -159,7 +163,7 @@ align_segments(){
         __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         tee $INDEX |tee $index_pipe1 > $index_pipe2 &
     else
-        __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         tee $INDEX |tee $index_pipe1 > $index_pipe2 &
     fi
 
@@ -208,7 +212,7 @@ align_segments(){
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
@@ -221,14 +225,14 @@ align_segments(){
             __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
             __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-            __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
             __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
         else
-            __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
             __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-            __PREFIX__/bin/bitextor-align-segments -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
             __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
         fi
     else
@@ -239,7 +243,7 @@ align_segments(){
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
         else
-            __PREFIX__/bin/bitextor-lett2idx -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
             __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
@@ -256,10 +260,10 @@ align_segments(){
 
   rm $HUNALIGN_DIC
 
-  rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
+  rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $MORPH1 $MORPH2 $RINDEX2
 }
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:" $*)
 
 set -- $ARGS
 for i
@@ -283,9 +287,18 @@ do
       ALIGNSEGMENTSOUT=$INTERMEDIATEFILE/alignsegments
       shift
       ;;
-     -M)
-      MORPHANAL_S2T=$(echo $1 | cut -d ':' -f 1)
-      MORPHANAL_T2S=$(echo $1 | cut -d ':' -f 2)
+     -M|--SMORPH)
+      shift
+      MORPH1=$(mktemp $TMPDIR/morph1.XXXXXX)
+      sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
+      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_sl $MORPH1"
+      shift
+      ;;
+     -N|--TMORPH)
+      shift
+      MORPH2=$(mktemp $TMPDIR/morph2.XXXXXX)
+      sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH2
+      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2" 
       shift
       ;;
      -L)
