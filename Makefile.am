@@ -50,7 +50,8 @@ bitextor-align-segments: bitextor-align-segments.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHONPATH__!$(pythondir)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
-	sed "s!__ENV__!$(ENV)!g" >$@
+	sed "s!__ENV__!$(ENV)!g" | \
+        sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-score-document-alignment: bitextor-score-document-alignment.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
@@ -97,7 +98,8 @@ bitextor-idx2ridx-freq: bitextor-idx2ridx-freq.in
 bitextor-lett2idx: bitextor-lett2idx.in nltk_data
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
 
 bitextor-lett2idx-freq: bitextor-lett2idx-freq.in nltk_data
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
