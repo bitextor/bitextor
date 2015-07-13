@@ -30,6 +30,8 @@ DISTANCEFILTER21LOG=/dev/null
 ALIGNDOCUMENTSLOG=/dev/null
 ALIGNSEGMENTSLOG=/dev/null
 CLEANTEXTLOG=/dev/null
+MORPHANAL_S2T=/dev/null
+MORPHANAL_T2S=/dev/null
 
 WEBDIR2ETTOUT=""
 ETT2LETTOUT=""
@@ -70,42 +72,46 @@ exit_program()
   echo "  LANG2           selected language with two letters code: en, es, fr, de ..."
   echo ""
   echo "OPTIONS:"
-  echo "  -L PATH         custom path where the directory containing the logs of the"
-  echo "                  different modules of bitextor will be stored"
-  echo "  -l LETTR        custom path where the file with extension .lettr (language"
-  echo "                  encoded and typed data with 'raspa') will be created"
-  echo "                  (/lettr.XXXXXX by default)."
-  echo "  -I PATH         custom path where the output of the intermediate files produced"
-  echo "                  by the modules of bitextor will be stored."
-  echo "  -b NUM          if this option is enabled, the document alignment process is"
-  echo "                  run in both directions and only the first NUM candidates in"
-  echo "                  every direction will be taken into account. With this, the list"
-  echo "                  of final candidates will be obtained computing the average of"
-  echo "                  every pair of candidates in both directions. This option should"
-  echo "                  improve precision and drop recall, since those candidates in a"
-  echo "                  position lower than NUM will be discarded for the alignment"
-  echo "                  (NUM must be in [1,10])"
-  echo "  -v VOCABULARY   option for using a custom multilingual vocabulary for preliminar"
-  echo "                  document alignment. The vocabulary must be a tab-separated file,"
-  echo "                  in which the first line contains the names of the languages"
-  echo "                  corresponding to each column, and the rest of the lines must"
-  echo "                  contain the same word translated to all these languages."
-  echo "  -m MAX_LINES    maximum number or wrong segment alignments tolerated to accept a"
-  echo "                  pair of documents as a valid document alignment. If this number"
-  echo "                  is reached, the whole document pair is discarded (5 by default)."
-  echo "  -q MIN_QUALITY  threshold for Hunalign confidence score; those pairs of segments"
-  echo "                  with a score"
-  echo "                  lower than MIN_QUALITY will be considered wrong and they will be"
-  echo "                  removed (0 by default)."
-  echo "  -t TMP-DIR      alternative tmp directory (/tmp by default)."
-  echo "  -x              if this option is enabled, the output of the tool will be."
-  echo "                  formated in the standard XML-based format TMX."
-  echo "  -a              if this option is enabled, Bitextor will perform the alignment only"
-  echo "                  at the level of documents. The output will be tab-sepparated, with"
-  echo "                  three fields: two with the name of the documents aligned and one with"
-  echo "                  the score provided by hunalign for the pair of documents."
-  echo "  -O FILE         if this option is enabled, the otput of bitextor will be redirected"
-  echo "                  to file FILE, if not it is redirected to the standard output."
+  echo "  -L PATH           custom path where the directory containing the logs of the"
+  echo "                    different modules of bitextor will be stored"
+  echo "  -l LETTR          custom path where the file with extension .lettr (language"
+  echo "                    encoded and typed data with 'raspa') will be created"
+  echo "                    (/lettr.XXXXXX by default)."
+  echo "  -I PATH           custom path where the output of the intermediate files produced"
+  echo "                    by the modules of bitextor will be stored."
+  echo "  -b NUM            if this option is enabled, the document alignment process is"
+  echo "                    run in both directions and only the first NUM candidates in"
+  echo "                    every direction will be taken into account. With this, the list"
+  echo "                    of final candidates will be obtained computing the average of"
+  echo "                    every pair of candidates in both directions. This option should"
+  echo "                    improve precision and drop recall, since those candidates in a"
+  echo "                    position lower than NUM will be discarded for the alignment"
+  echo "                    (NUM must be in [1,10])"
+  echo "  -v VOCABULARY     option for using a custom multilingual vocabulary for preliminar"
+  echo "                    document alignment. The vocabulary must be a tab-separated file,"
+  echo "                    in which the first line contains the names of the languages"
+  echo "                    corresponding to each column, and the rest of the lines must"
+  echo "                    contain the same word translated to all these languages."
+  echo "  -m MAX_LINES      maximum number or wrong segment alignments tolerated to accept a"
+  echo "                    pair of documents as a valid document alignment. If this number"
+  echo "                    is reached, the whole document pair is discarded (5 by default)."
+  echo "  -q MIN_QUALITY    threshold for Hunalign confidence score; those pairs of segments"
+  echo "                    with a score"
+  echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
+  echo "                    removed (0 by default)."
+  echo "  -t TMP-DIR        alternative tmp directory (/tmp by default)."
+  echo "  -x                if this option is enabled, the output of the tool will be."
+  echo "                    formated in the standard XML-based format TMX."
+  echo "  -a                if this option is enabled, Bitextor will perform the alignment only"
+  echo "                    at the level of documents. The output will be tab-sepparated, with"
+  echo "                    three fields: two with the name of the documents aligned and one with"
+  echo "                    the score provided by hunalign for the pair of documents."
+  echo "  -M MORPH1:MORPH2  morphological analysers from the Apertium platform that will allow"
+  echo "                    to apply word matching directly on lemmas; this is an mportant tool"
+  echo "                    for aglutinant languages in order to obtain a good coverage with the"
+  echo "                    bilingual lexicon approach."
+  echo "  -O FILE           if this option is enabled, the otput of bitextor will be redirected"
+  echo "                    to file FILE, if not it is redirected to the standard output."
   exit 1
 }
 
@@ -253,7 +259,7 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $RINDEX2
 }
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:" $*)
 
 set -- $ARGS
 for i
@@ -275,6 +281,11 @@ do
       DISTANCEFILTER21OUT=$INTERMEDIATEFILE/distancefilter-lang2-lang1
       ALIGNDOCUMENTSOUT=$INTERMEDIATEFILE/aligndocuments
       ALIGNSEGMENTSOUT=$INTERMEDIATEFILE/alignsegments
+      shift
+      ;;
+     -M)
+      MORPHANAL_S2T=$(echo $1 | cut -d ':' -f 1)
+      MORPHANAL_T2S=$(echo $1 | cut -d ':' -f 2)
       shift
       ;;
      -L)

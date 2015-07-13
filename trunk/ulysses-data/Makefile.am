@@ -1,3 +1,4 @@
+EXTRA_DIST=de.pickle.gz en.pickle.gz es.pickle.gz fr.pickle.gz it.pickle.gz pt.pickle.gz
 bitextordiru=$(prefix)/share/bitextor/ulysses-data
 
 install:

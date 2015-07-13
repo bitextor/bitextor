@@ -22,6 +22,8 @@ import unicodedata
 sys.path.append("__PREFIX__/share/bitextor/utils")
 from unicodepunct import get_unicode_punct
 #from nltk.tokenize.punkt import PunktWordTokenizer
+import nltk
+nltk.download(punkt)
 from nltk import word_tokenize
 
 reload(sys)
@@ -30,6 +32,8 @@ sys.setdefaultencoding("UTF-8")
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett or bitextor-lett2lettr containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
 oparser.add_argument("-m", "--max-occ", help="Maximum number of occurrences of a word in one language to be kept in the index", type=int, dest="maxo", default=-1)
+oparser.add_argument("--morphanalyser_s2t", help="Path to the Apertium's morphological analyser for SL to TL" dest="morphanal1", default=None)
+oparser.add_argument("--morphanalyser_t2s", help="Path to the Apertium's morphological analyser for TL to SL" dest="morphanal2", default=None)
 
 options = oparser.parse_args()
 

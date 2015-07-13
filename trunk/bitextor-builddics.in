@@ -201,7 +201,7 @@ for line in t3s:
       value1=float(t3dic[item[0]][item[1]])
       value2=float(item[2])
       hmean=2/((1/value1)+(1/value2))
-      if hmean > 0.2:
+      if hmean > 0.1:
         if item[1] in svocabulary and item[0] in tvocabulary:
           word1=svocabulary[item[1]]
           word2=tvocabulary[item[0]]

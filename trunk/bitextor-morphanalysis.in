@@ -1,0 +1,41 @@
+#!__BASH__
+
+OUTPUT=/dev/stdout
+
+FILE="/dev/stdin"
+
+exit_program()
+{
+  echo "USAGE: $1 apertium_morph_analysing_mode"
+  echo "WHERE"
+  echo "   apertium_morph_analysing_mode   mode file performing all the steps for morphology analysis up to the step just before applying transfer rules"
+  exit 1
+}
+
+ARGS=$(getopt "h" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+
+case $# in
+  1)
+    MORPHANAL="$1"
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+cat $FILE | __BASH__ $MORPHANAL | sed 's/\$/\$\n/g' | sed 's/\/[^$]*\$/\$/g' | sed 's/<.*//g' | sed 's/\^//g' | tr -d '\n' | sed 's/$/\n/g'
