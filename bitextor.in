@@ -68,8 +68,8 @@ exit_program()
   echo "  -D FILE         file containing a list of URIs to folders containing crawled"
   echo "                  websites."
   echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
-  echo "  LANG1           selected language with two letters code: en, es, fr, de ..."
-  echo "  LANG2           selected language with two letters code: en, es, fr, de ..."
+  echo "  LANG1           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
+  echo "  LANG2           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo ""
   echo "OPTIONS:"
   echo "  -L PATH           custom path where the directory containing the logs of the"
@@ -290,14 +290,15 @@ do
      -M|--SMORPH)
       shift
       MORPH1=$(mktemp $TMPDIR/morph1.XXXXXX)
-      sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
+      sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH1
+      #sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_sl $MORPH1"
       shift
       ;;
      -N|--TMORPH)
       shift
       MORPH2=$(mktemp $TMPDIR/morph2.XXXXXX)
-      sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH2
+      sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH2
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2" 
       shift
       ;;
@@ -420,6 +421,16 @@ case $# in
     LANG2="$2"
     if [[ -z $VOCABULARY ]]; then
       echo "THE VOCABULARY FILE WAS NOT SET: USE OPTION -v"
+      exit_program $(basename $0)
+    fi
+    LANG1INVOC=$(head -n 1 $VOCABULARY | cut -f 1)
+    LANG2INVOC=$(head -n 1 $VOCABULARY | cut -f 2)
+    if [ $LANG1 != $LANG1INVOC -a $LANG1 != $LANG2INVOC ]; then
+      echo -e "\nLANGUAGE \"$LANG1\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
+      exit_program $(basename $0)
+    fi
+    if [ $LANG2 != $LANG1INVOC -a $LANG2 != $LANG2INVOC ]; then
+      echo -e "\nLANGUAGE \"$LANG2\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
       exit_program $(basename $0)
     fi
     ;;

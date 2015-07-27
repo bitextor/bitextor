@@ -6,12 +6,12 @@ SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/G
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
             bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in\
-            bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in bitextor-morphanalysis.in \
+            bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in \
             bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in install_nltk_data.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-idx2ridx-freq \
             bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett bitextor-lett2idx-freq \
-            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-morphanalysis\
+            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics \
             bitextor-webdir2ett bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment
             
 bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
@@ -32,9 +32,6 @@ bitextor: bitextor.in
 
 nltk_data:
 	python install_nltk_data.py
-
-bitextor-morphanalysis: bitextor-morphanalysis.in
-	sed "s!__BASH__!$(BASH)!g;" $< >$@
 
 bitextor-buildTMX: bitextor-buildTMX.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
