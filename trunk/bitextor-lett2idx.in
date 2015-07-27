@@ -62,13 +62,18 @@ for line in reader:
     spmorph = subprocess.Popen(morphanalyser, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     morph_stdout,error = spmorph.communicate(input=text)
     if len(error.strip()) == 0:
-      text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout.decode("utf-8")))
+      #text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout.decode("utf-8")))
+      text = re.sub(r"[/<][^$]*\$", "", re.sub(r"\^[^/<]*[</]", "", re.sub(r"/\*([^$]*)\$", r"/\1", morph_stdout.decode("utf-8"))))
+
   if len(text.strip()) != 0 and options.morphanal2 != None and lang == options.lang2:
     morphanalyser = ["__BASH__", options.morphanal2]
     tpmorph = subprocess.Popen(morphanalyser, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     morph_stdout,error = tpmorph.communicate(input=text)
     if len(error.strip()) == 0:
-      text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout.decode("utf-8")))
+      text = re.sub(r"[/<][^$]*\$", "", re.sub(r"\^[^/<]*[</]", "", re.sub(r"/\*([^$]*)\$", r"/\1", morph_stdout.decode("utf-8"))))
+    sys.stderr.write(text+"\n")
+  if options.morphanal2 == None and lang == options.lang2:
+    sys.stderr.write(text+"\n")
   #Getting the bag of words in the document
   sorted_uniq_wordlist = set(" ".join(word_tokenize(text)).lower().split())
   #sorted_uniq_wordlist = set(" ".join(PunktWordTokenizer().tokenize(text)).lower().split())

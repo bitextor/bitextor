@@ -8,13 +8,13 @@ AC_PREREQ(2.52)
 #m4_define([required_libpcre_version], [6.4])
 #m4_define([required_pkg_config_version], [0.15])
 
-AC_INIT([bitextor], [4.1.0], [jorgeferrandez@gmail.com])
+AC_INIT([bitextor], [4.1.1], [jorgeferrandez@gmail.com])
 AC_CONFIG_HEADER([bitextor_config.h])
 #AC_CONFIG_HEADER([])
 AC_CANONICAL_SYSTEM
 
 PACKAGE=bitextor
-VERSION=4.1.0
+VERSION=4.1.1
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
@@ -230,6 +230,37 @@ AS_IF([test "x$with_httrack" != xno],
      if test x$ac_cv_path_HTTRACK = xno
      then
        AC_MSG_ERROR([You don't have httrack installed: try to install it or run this script with option --without-httrack.])
+     fi
+])
+
+
+AC_ARG_WITH([apertium],
+            [AS_HELP_STRING([--without-apertium],
+              [disable support for apertium; if this option is enabled, you will not be able to use apertium morphological analysers)])],
+            [],
+            [with_apertium=yes])
+          
+AS_IF([test "x$with_apertium" != xno],
+  [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
+     if test x$ac_cv_path_APERTIUM = x
+     then
+       AC_MSG_ERROR([You don't have apertium-destxt installed: try to install it or run this script with option --without-apertium.])
+     fi
+     if test x$ac_cv_path_APERTIUM = xno
+     then
+       AC_MSG_ERROR([You don't have apertium-destxt installed: try to install it or run this script with option --without-apertium.])
+     fi
+])
+
+AS_IF([test "x$with_apertium" != xno],
+  [AC_PATH_PROG(APERTIUM, apertium-retxt, no)
+     if test x$ac_cv_path_APERTIUM = x
+     then
+       AC_MSG_ERROR([You don't have apertium-retxt installed: try to install it or run this script with option --without-apertium.])
+     fi
+     if test x$ac_cv_path_APERTIUM = xno
+     then
+       AC_MSG_ERROR([You don't have apertium-retxt installed: try to install it or run this script with option --without-apertium.])
      fi
 ])
 
