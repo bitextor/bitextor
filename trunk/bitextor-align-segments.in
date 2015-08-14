@@ -24,7 +24,7 @@ import re
 import pickle
 import codecs
 #from nltk.tokenize.punkt import PunktWordTokenizer
-from nltk import word_tokenize
+from nltk import wordpunct_tokenize
 import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
@@ -172,7 +172,7 @@ for line in reader_list:
     if trimorigseg != "":
       for seg in splitSegs(mitok_l1, trimorigseg):
         tmp_file1_origtext.write(seg+"\n")
-        tmp_tok_segs.append(u" ".join(word_tokenize(seg)))
+        tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
   tokenized_text=u"\n".join(tmp_tok_segs)
   if options.morphanal1 != None:
     morphanalyser = ["__BASH__", options.morphanal1]
@@ -185,7 +185,7 @@ for line in reader_list:
     if trimorigseg != "":
       for seg in splitSegs(mitok_l2, trimorigseg):
         tmp_file2_origtext.write(seg+"\n")
-        tmp_tok_segs.append(u" ".join(word_tokenize(seg)))
+        tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
   tokenized_text=u"\n".join(tmp_tok_segs)
   if options.morphanal2 != None:
     morphanalyser = ["__BASH__", options.morphanal2]
