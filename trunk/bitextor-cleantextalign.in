@@ -13,7 +13,7 @@ import argparse
 
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-align-segments and cleans unaligned segments and segments with a confidence score too low")
 oparser.add_argument('aligned_seg', metavar='FILE', nargs='?', help='File containing the set of aliged segments provided by the script bitextor-align-segments (if undefined, the script reads from the standard input)', default=None)
-oparser.add_argument("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type=int, dest="minq", default=0)
+oparser.add_argument("-q", "--min-quality", help="Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)", type=float, dest="minq", default=0)
 oparser.add_argument("-m", "--max-lines", help="Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded", type=int, dest="maxl", default=-1)
 options = oparser.parse_args()
 
@@ -35,7 +35,7 @@ for i in reader:
       error_count=0
       last_filepair=(campos[0],campos[1])
       segment_list=[]
-    if float(campos[-1]) > float(options.minq):
+    if float(campos[-1]) > options.minq:
       campos.pop()
       segment_list.append("\t".join(campos))
     else:
