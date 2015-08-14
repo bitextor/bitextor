@@ -22,7 +22,7 @@ import unicodedata
 sys.path.append("__PREFIX__/share/bitextor/utils")
 from unicodepunct import get_unicode_punct
 #from nltk.tokenize.punkt import PunktWordTokenizer
-from nltk import word_tokenize
+from nltk import wordpunct_tokenize
 from collections import Counter
 from sets import Set
 import math
@@ -59,10 +59,10 @@ for line in reader:
   text = base64.b64decode(fields[5]).decode("utf-8")
   if lang not in word_freqs:
     word_freqs[lang]=Counter()
-  word_freqs[lang].update(word_tokenize(text.lower()))
+  word_freqs[lang].update(wordpunct_tokenize(text.lower()))
   #Getting the bag of words in the document
   #word_freqs.update(PunktWordTokenizer().tokenize(text.lower()))
-  sorted_uniq_wordlist = set(" ".join(word_tokenize(text)).lower().split())
+  sorted_uniq_wordlist = set(" ".join(wordpunct_tokenize(text)).lower().split())
   #sorted_uniq_wordlist = set(" ".join(PunktWordTokenizer().tokenize(text)).lower().split())
   #Trimming non-aplphanumerics:
   clean_sorted_uniq_wordlist = filter(None, [w.strip(punctuation) for w in sorted_uniq_wordlist])
