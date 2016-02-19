@@ -1,0 +1,52 @@
+.\" Manpage for bitextor-lett2idx.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-lett2idx 1 "09 Sep 2014" "bitextor v4.1" "bitextor man pages"
+.SH NAME
+bitextor-lett2idx \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-lett2idx
+.RI [ FILE ]
+
+.SH DESCRIPTION
+.B bitextor-lett2idx
+is a Python script which reads the output of bitextor-ett2lett(1) (although
+it can also use the output of bitextor-lett2lettr(1)), either from the standard
+input or from a 
+.IR FILE ,
+and obtains an index containing, for every word in a crawled website,
+which files contain, at least, one occurrence of this word. 
+Separated word indexes are built for every language detected in the website.
+The output of this script is a tab-separated file containing, for each line,
+a language code in the first field, a word in the second, and, in the third
+field, a list of document colon-separated IDs of the documents in which the
+word appears. Since the document IDs correspond to the line number where they
+appear in the
+.I FILE
+provided by bitextor-ett2lett(1), the list of IDs is presented as sequence of
+incremental shifts. In this way, the first document ID in the list is the one
+with the lower line number. Then, the next identifiers correspond to the number
+of lines to be added to the previous shift to obtain the next ID. For instance,
+if we have the word \'house\' in English, which appears in documents 12, 17, 30, and 42,
+the line would look like:
+.P
+.B 	en	house	12:5:13:12
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
+bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>
