@@ -27,9 +27,9 @@ def rellenarDocumentos(fich, documentos):
   for i in file:
     campos = i.strip().split("\t")
     #Checking if format is crrect
-    if len(campos) == 7:
+    if len(campos) == 8:
       #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
-      tags = Set(campos[6].split('_'))
+      tags = Set(campos[7].split('_'))
       tags.remove('')
       #List of names of tags in the current raspa
       tags_with_bounds = ["_{0}_".format(x) for x in tags]
@@ -46,8 +46,8 @@ def rellenarDocumentos(fich, documentos):
         dic[chr(charidx)]=extratag
       inv_dic = {v:k for k, v in dic.items()}
       for tag,code in inv_dic.items():
-        campos[6]=campos[6].replace(tag,code)
-      documentos[contador] = campos[6]
+        campos[7]=campos[7].replace(tag,code)
+      documentos[contador] = campos[7]
     contador += 1
   file.close()
 

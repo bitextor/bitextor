@@ -1,3 +1,5 @@
+#!__ENV__ __PYTHON__
+
 #-*- coding: utf-8 -*-
 #
 # This files has been created building on the crawler.py script

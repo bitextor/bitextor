@@ -302,6 +302,7 @@ do
       shift
       LOGDIR=$1
       mkdir -p $LOGDIR
+      CRAWLLOG=$LOGDIR/bitextorcrawl.log
       CRAWL2ETTLOG=$LOGDIR/bitextorcrawl2ett.log
       ETT2LETTLOG=$LOGDIR/bitextorett2lett.log
       LETT2LETTRLOG=$LOGDIR/bitextorlett2lettr.log

@@ -59,7 +59,7 @@ else:
 
 for line in reader:
   content=line.strip().split("\t")
-  e = base64.b64decode(content[5]).decode("utf-8")
+  e = base64.b64decode(content[4]).decode("utf-8")
   if e != "":
     p=Parser()
     p.feed(e)
