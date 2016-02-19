@@ -4,14 +4,14 @@ bitextordir = $(prefix)/share/bitextor
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika ulysses-data
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
-            bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in \
-            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in\
-            bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in \
+            bitextor-cleantextalign.in bitextor-distancefilter.in bitextor-downloadweb.in bitextor-crawl2ett.in \
+            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \
+            bitextor-lett2lettr.in bitextor-webdir2ett.in bitextor-ridx2filenames.in bitextor-crawl.in \
             bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in install_nltk_data.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-idx2ridx-freq \
-            bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett bitextor-lett2idx-freq \
-            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics \
+            bitextor-distancefilter bitextor-downloadweb bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl \
+            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
             bitextor-webdir2ett bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment
             
 bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
@@ -32,6 +32,20 @@ bitextor: bitextor.in
 
 nltk_data:
 	python install_nltk_data.py
+
+bitextor-crawl: bitextor-crawl.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__ENV__!$(ENV)!g" >$@
+
+bitextor-crawl2ett: bitextor-crawl2ett.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__BASH__!$(BASH)!g" | \
+	sed "s!__JAVA__!$(JAVA)!g" | \
+	sed "s!__GAWK__!$(GAWK)!g" | \
+	sed "s!__GREP__!$(GREP)!g" | \
+	sed "s!__WC__!$(WC)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
 bitextor-buildTMX: bitextor-buildTMX.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
