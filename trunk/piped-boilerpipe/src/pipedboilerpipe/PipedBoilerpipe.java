@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
  * BoilerPipe to clean it
  */
 public class PipedBoilerpipe {
-
     /**
      * Java tool that reads HTML documents from STDIN (one per line) and applies
      * the ArticleExtractor in BoilerPipe to clean it
@@ -35,9 +34,9 @@ public class PipedBoilerpipe {
         {
             try {
                 String[] fields=stdin.nextLine().split("\t");
-                if(fields.length==4){
+                if(fields.length==6){
                     //Reading a line
-                    String line=fields[3];
+                    String line=fields[5];
                     //Processing XHTML
                     StringReader reader = new StringReader(line);
                     TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
@@ -46,7 +45,7 @@ public class PipedBoilerpipe {
                     extractor.process(source);
                     //Producing clean XHTML
                     HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-                    fields[3]=h.process(source, line).replace("\n", " ");
+                    fields[5]=h.process(source, line).replace("\n", " ");
                     StringBuilder sb=new StringBuilder();
                     for(String f: fields){
                         sb.append(f);

@@ -56,7 +56,7 @@ for line in reader:
   fields=line.strip().split("\t")
   lang=fields[0]
   #Decoding base 64:
-  text = base64.b64decode(fields[5]).decode("utf-8")
+  text = base64.b64decode(fields[6]).decode("utf-8")
   if len(text.strip()) != 0 and options.morphanal1 != None and lang == options.lang1:
     morphanalyser = ["__BASH__", options.morphanal1]
     spmorph = subprocess.Popen(morphanalyser, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)

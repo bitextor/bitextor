@@ -85,11 +85,7 @@ public class PipedTika {
         //Reading a file path from stdin each time
         while((line=br.readLine())!=null){
             String[] fields=line.split("\t");
-            if(fields.length>=3){
-                //Reading a line
-                String filename=fields[2];
-                os=new ByteArrayOutputStream();
-                InputStream is;
+            if(fields.length>=2){
                 //Option for setting if the output is XML or TXT
                 boolean returnxml=true;
                 if(args.length>0){
@@ -101,27 +97,27 @@ public class PipedTika {
                     }
                 }
                 //Building the new handler
-                try{
-                    ContentHandler handler;
-                    if(returnxml){
-                        is=new BufferedInputStream(new FileInputStream(filename));
-                        handler=getTransformerHandler(os, "xml", "UTF-8", true);
-                    }
-                    else{
-                        String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                        String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-                        is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
-                        handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
-                    }
-                    //Parsing
-                    parser.parse(is, handler, new Metadata(), new ParseContext());
-                    if(returnxml)
-                        System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
-                    else
-                        System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
-                } catch(FileNotFoundException e){
-                    System.err.println("ERROR: File "+filename+" could not be opened.");
+                ContentHandler handler;
+                os=new ByteArrayOutputStream();
+                InputStream is;
+                if(returnxml){
+                    String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
+                    String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                    is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
+                    handler=getTransformerHandler(os, "xml", "UTF-8", true);
                 }
+                else{
+                    String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
+                    String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                    is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
+                    handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
+                }
+                //Parsing
+                parser.parse(is, handler, new Metadata(), new ParseContext());
+                if(returnxml)
+                    System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
+                else
+                    System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
             }
         }
     }    

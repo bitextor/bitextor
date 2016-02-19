@@ -56,7 +56,7 @@ for line in reader:
   #word_freqs[lang].update(PunktWordTokenizer().tokenize(text.lower()))
 
   #Decoding base 64:
-  text = base64.b64decode(fields[5]).decode("utf-8")
+  text = base64.b64decode(fields[6]).decode("utf-8")
   if lang not in word_freqs:
     word_freqs[lang]=Counter()
   word_freqs[lang].update(wordpunct_tokenize(text.lower()))

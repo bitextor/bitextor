@@ -49,7 +49,7 @@ file = open(options.lettr,"r")
 for j in file:
   campos = j.split("\t")
   if len(campos) > 4:
-    documentos[contador] = (campos[3], campos[5]) # file_path parsed_text_base64
+    documentos[contador] = (campos[3], campos[6]) # file_path parsed_text_base64
   contador += 1
 file.close()
 
