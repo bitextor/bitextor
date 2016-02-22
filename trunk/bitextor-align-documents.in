@@ -43,17 +43,18 @@ else:
 indices = {}
 documentos = {}
 
-# Se lee el fichero .lett extrayendo la url y el base64
+# File .lett is read extracting the URL and the base64 encoded content
 contador = 1
 file = open(options.lettr,"r")
 for j in file:
   campos = j.split("\t")
   if len(campos) > 4:
-    documentos[contador] = (campos[3], campos[6]) # file_path parsed_text_base64
+    documentos[contador] = (campos[3], campos[6]) # URL parsed_text_base64
   contador += 1
 file.close()
 
 if combine == False:
+  #Reading the .ridx file with the preliminary alignment
   for i in reader:
     fields = i.split("\t")
     if len(fields) >= 2:
@@ -68,7 +69,7 @@ if combine == False:
     options.oridx.close()
 else:
   best_ridx2_inv = {}
-
+  #Reading the .ridx file with the preliminary alignment in one of the directions
   for line_ridx2 in reader2:
     fields=line_ridx2.strip().split("\t");
     if len(fields) >= 2:
@@ -81,6 +82,7 @@ else:
           best_ridx2_inv[int(field_n[0])][int(fields[0])]=field_n[1]
   reader2.close()
 
+  #Reading the .ridx file with the preliminary alignment in the other direction and combining this information with the previous one
   for line_ridx1 in reader1:
     new_candidate_list = {}
     fields=line_ridx1.strip().split("\t")
