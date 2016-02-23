@@ -21,15 +21,15 @@ import argparse
 from operator import itemgetter
 import Levenshtein
 
-def rellenarDocumentos(fich, documentos):
-  file = open(fich, "r")
-  contador = 1
+def readLETT(f, docs):
+  file = open(f, "r")
+  fileid = 1
   for i in file:
-    campos = i.strip().split("\t")
+    fields = i.strip().split("\t")
     #Checking if format is crrect
-    if len(campos) == 8:
+    if len(fields) >= 8:
       #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
-      tags = Set(campos[7].split('_'))
+      tags = Set(fields[7].split('_'))
       tags.remove('')
       #List of names of tags in the current raspa
       tags_with_bounds = ["_{0}_".format(x) for x in tags]
@@ -46,9 +46,9 @@ def rellenarDocumentos(fich, documentos):
         dic[chr(charidx)]=extratag
       inv_dic = {v:k for k, v in dic.items()}
       for tag,code in inv_dic.items():
-        campos[7]=campos[7].replace(tag,code)
-      documentos[contador] = campos[7]
-    contador += 1
+        fields[7]=fields[7].replace(tag,code)
+      docs[fileid] = fields[7]
+    fileid += 1
   file.close()
 
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
@@ -62,27 +62,21 @@ else:
   reader = open(options.ridx,"r")
 
 index = {}
-documentos = {}
-rellenarDocumentos(options.lettr, documentos)
+documents = {}
+readLETT(options.lettr, documents)
 
 for i in reader:
-  campos = i.strip().split("\t")
-  if len(campos)>1:
-    longitud_s = len(documentos[int(campos[0])])
-    parecidos = {}
-    cadena = str(campos[0])
-    for j in range(1,len(campos)):
-      doc = campos[j].split(":")
-      if float(doc[1]) > 0.10:
-        longitud_t = len(documentos[int(doc[0])])
-        dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
-        port = 1 - (dist / float(max(longitud_s, longitud_t)))
-        ##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
-        #new_per = (float(doc[1]) + port)/2.0
-        #new_per = port
-        new_per = float(doc[1]) * port
-        parecidos[doc[0]] = new_per
-    parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
-    for k in parecidos:
-      cadena += "\t" + str(k[0]) + ":" + str(k[1])
-    print cadena
+  fields = i.strip().split("\t")
+  #The document must have at least one candidate
+  if len(fields)>1:
+    len_s = len(documents[int(fields[0])])
+    sys.stdout.write(str(fields[0]))
+    for j in range(1,len(fields)):
+      candidate = fields[j]
+      candidateid = int(fields[j].split(":")[0])
+      len_t = len(documents[candidateid])
+      dist = Levenshtein.distance(documents[int(fields[0])],documents[candidateid])
+      port = 1 - (dist / float(max(len_s, len_t)))
+      candidate+=":"+str(port)
+      sys.stdout.write("\t"+candidate)
+    sys.stdout.write("\n")

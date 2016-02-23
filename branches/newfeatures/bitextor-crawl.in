@@ -234,10 +234,11 @@ class Crawler(object):
                 # Make unique list (these are the links in the document)
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
                         doc.text, re.S)
-                doc.links = list(set(links))
+                doc.links = list(links)
+                linksset = Set(doc.links)
                 self.process_document(doc)
 
-                for link in doc.links:
+                for link in linksset:
                     rlink = self._follow_link(url, link.strip())
                     self._add_target(rlink)
 
