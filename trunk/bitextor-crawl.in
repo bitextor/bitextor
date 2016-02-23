@@ -91,9 +91,11 @@ class Crawler(object):
         self.query = rx.group(4)
 
         if url not in self.seen:
+            self.target_lock.acquire()
             self.targets.append(url)
             self.seen.add(url)
-        self._spawn_new_worker()
+            self.target_lock.release()
+            self._spawn_new_worker()
 
         while self.threads:
             try:
@@ -265,7 +267,9 @@ options = oparser.parse_args()
 class MyCrawler(Crawler):
   def process_document(self, doc):
     if doc.status == 200:
+      self.concurrency_lock.acquire()
       print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
+      self.concurrency_lock.release()
     else:
       pass
 
