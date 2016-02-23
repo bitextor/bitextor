@@ -91,10 +91,10 @@ class Crawler(object):
         self.query = rx.group(4)
 
         if url not in self.seen:
-            self.target_lock.acquire()
+            #self.target_lock.acquire()
             self.targets.append(url)
             self.seen.add(url)
-            self.target_lock.release()
+            #self.target_lock.release()
             self._spawn_new_worker()
 
         while self.threads:
@@ -279,6 +279,6 @@ if not options.URL.startswith("http"):
     sys.exit(-1)
 
 crawler = MyCrawler()
-crawler.set_follow_mode(Crawler.F_SAME_PATH)
+crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 crawler.crawl(options.URL)
