@@ -85,8 +85,8 @@ else:
 for line in reader:
   linefields=line.strip().split("\t")
   #decoding the b64 original webpage
-  if len(linefields)>=6:
-    parsed_text=base64.b64decode(linefields[5].decode("utf-8"))
+  if len(linefields)>=5:
+    parsed_text=base64.b64decode(linefields[4].decode("utf-8"))
 
     if len(parsed_text)>0:
       #detecting language

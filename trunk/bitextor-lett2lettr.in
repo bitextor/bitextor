@@ -17,6 +17,7 @@ import math
 import fileinput
 from HTMLParser import HTMLParser
 import argparse
+import datetime
 
 class Parser(HTMLParser):
 
@@ -63,4 +64,4 @@ for line in reader:
   if e != "":
     p=Parser()
     p.feed(e)
-    print line.strip()+"\t"+"".join(p.output)
+    print line.strip()+"\t"+"".join(p.output)+"\t"+str(datetime.datetime.now().time())
