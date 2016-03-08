@@ -19,6 +19,9 @@ from urllib import quote, unquote
 import urllib2
 import base64
 import argparse
+from random import shuffle
+
+from sets import Set as set 
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -234,10 +237,11 @@ class Crawler(object):
                 # Make unique list (these are the links in the document)
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
                         doc.text, re.S)
-                doc.links = list(set(links))
+                linksset = list(set(links))
+                shuffle(linksset)
                 self.process_document(doc)
 
-                for link in doc.links:
+                for link in linksset:
                     rlink = self._follow_link(url, link.strip())
                     self._add_target(rlink)
 
@@ -268,7 +272,8 @@ class MyCrawler(Crawler):
   def process_document(self, doc):
     if doc.status == 200:
       self.concurrency_lock.acquire()
-      print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
+      print base64.b64encode(doc.text)+"\t"+doc.url
+      #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
       self.concurrency_lock.release()
     else:
       pass

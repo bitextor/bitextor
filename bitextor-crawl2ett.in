@@ -63,17 +63,15 @@ m=magic.open(magic.MAGIC_NONE)
 m.load()
 for line in sys.stdin:
   fields=line.strip().split("\t")
-  if len(fields)>=3:
+  if len(fields)>=2:
     url=fields[1]
     content=fields[0]
-    urlsinfile=fields[2]
     #~Mime and encodign
     m.setflags(16|1024)
     magicoutput=m.buffer(base64.b64decode(content)).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
     magicoutput.append(content)
-    magicoutput.append(urlsinfile)
     print "\t".join(magicoutput)
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")' | \
@@ -90,7 +88,7 @@ for i in sys.stdin:
   fields = i.strip().split("\t")
   #e = fields[3]
   try:
-    e = base64.b64encode(fields[5])
+    e = base64.b64encode(fields[4])
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     c = hashlib.md5()
     c.update(e)
@@ -99,7 +97,7 @@ for i in sys.stdin:
       sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
       seen_md5[c.hexdigest()]=fields[2]
-      print "{0}\t{1}\t{2}\t{3}\t{4}".format(fields[0].strip(),fields[1],fields[2],e, fields[4])
+      print "{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e)
   except UnicodeDecodeError:
     sys.stderr.write("File "+fields[2]+" produced a character encoding error")
 ' > $OUTPUT

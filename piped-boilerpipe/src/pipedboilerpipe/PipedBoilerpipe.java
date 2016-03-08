@@ -34,9 +34,9 @@ public class PipedBoilerpipe {
         {
             try {
                 String[] fields=stdin.nextLine().split("\t");
-                if(fields.length==6){
+                if(fields.length==5){
                     //Reading a line
-                    String line=fields[5];
+                    String line=fields[4];
                     //Processing XHTML
                     StringReader reader = new StringReader(line);
                     TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
@@ -45,7 +45,7 @@ public class PipedBoilerpipe {
                     extractor.process(source);
                     //Producing clean XHTML
                     HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-                    fields[5]=h.process(source, line).replace("\n", " ");
+                    fields[4]=h.process(source, line).replace("\n", " ");
                     StringBuilder sb=new StringBuilder();
                     for(String f: fields){
                         sb.append(f);
