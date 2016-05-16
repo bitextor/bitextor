@@ -8,6 +8,8 @@ bitextor-lett2idx \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-lett2idx
+.BI \-\-lang1 " LANG1"
+.BI \-\-lang2 " LANG2"
 .RI [ FILE ]
 
 .SH DESCRIPTION
@@ -33,6 +35,20 @@ if we have the word \'house\' in English, which appears in documents 12, 17, 30,
 the line would look like:
 .P
 .B 	en	house	12:5:13:12
+
+.SH OPTIONS
+.TP
+.BI \-\-lang1 " LANG1"
+ID of the first language in the bitext (following the ISO 639-1)
+.TP
+.BI \-\-lang2 " LANG2"
+ID of the second language in the bitext (following the ISO 639-1)
+.BI \-m " MAX"
+Maximum number of occurrences of a word in one language to be kept in the index
+.BI \-\-morphanalyser_sl " ANALYSER"
+Morphological analyser for source language; Bitextor is capable of using the morphological analyser provided by Apertium (http://www.apertium.org).
+.BI \-\-morphanalyser_tl " ANALYSER"
+Morphological analyser for target language; Bitextor is capable of using the morphological analyser provided by Apertium (http://www.apertium.org).
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

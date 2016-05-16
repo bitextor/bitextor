@@ -73,7 +73,7 @@ else:
   for line_ridx2 in reader2:
     fields=line_ridx2.strip().split("\t");
     if len(fields) >= 2:
-      num_candidates=min(len(fields)-1,options.candidate_num+1)
+      num_candidates=min(len(fields)-1,options.candidate_num)
       for candidate_idx in range(1,num_candidates+1):
         field_n=fields[candidate_idx].split(":")
         if len(field_n) == 2:
@@ -87,7 +87,7 @@ else:
     new_candidate_list = {}
     fields=line_ridx1.strip().split("\t")
     if len(fields) >= 2:
-      num_candidates=min(len(fields)-1,options.candidate_num+1)
+      num_candidates=min(len(fields)-1,options.candidate_num)
       for candidate_idx in range(1,num_candidates+1):
         field_n=fields[candidate_idx].split(":")
         if len(field_n) == 2:
