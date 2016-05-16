@@ -28,6 +28,7 @@ from nltk import wordpunct_tokenize
 import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
+#from segtok.segmenter import split_multi
 from tempfile import NamedTemporaryFile
 import gzip
 
@@ -171,6 +172,7 @@ for line in reader_list:
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       for seg in splitSegs(mitok_l1, trimorigseg):
+      #for seg in split_multi(trimorigseg):
         tmp_file1_origtext.write(seg+"\n")
         tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
   tokenized_text=u"\n".join(tmp_tok_segs)
@@ -184,6 +186,7 @@ for line in reader_list:
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       for seg in splitSegs(mitok_l2, trimorigseg):
+      #for seg in split_multi(trimorigseg):
         tmp_file2_origtext.write(seg+"\n")
         tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
   tokenized_text=u"\n".join(tmp_tok_segs)

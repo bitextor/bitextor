@@ -1,24 +1,25 @@
 .\" Manpage for bitextor-webdir2ett.
 .\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
-.TH bitextor-webdir2ett 1 "09 Sep 2014" "bitextor v4.1" "bitextor man pages"
+.TH bitextor-crawl2ett 1 "16 May 2016" "bitextor v5.0" "bitextor man pages"
 .SH NAME
-bitextor-webdir2ett \- This application is part of
+bitextor-crawl2ett \- This application is part of
 .B bitextor
 ( the automatic bitext generator from multilingual websites )
 
 .SH SYNOPSIS
-.B bitextor-webdir2ett
+.B bitextor-crawl2ett
 .I PATH
 
 .SH DESCRIPTION
-bitextor-webdir2ett is a bash/Python script that processes the documents of a
-crawled website. This script processes all the files in the directory in
-.IR PATH ,
-and extracts the
-.BR encoding ,
-the
-.BR mimetype ,
-and the base64-encoded
+bitextor-crawl2ett is a bash/Python script that processes the output of the script
+.IR bitextor-crawl
+and extracts the following information for every document:
+.IR URL 
+of the document,
+.BR encoding 
+of the file, and
+.BR mimetype 
+of the
 .B content
 of each file. This script uses the library
 .B boilerpipe
@@ -31,7 +32,7 @@ The output of this script is a tab-separated file in which every line correspond
 to a document.
 
 .SH DEPENDENCES
-.B bitextor-webdir2ett
+.B bitextor-crawl2ett
 depends on the Python library
 .B boilerpipe
 for cleaning those parts of an HTML file that contain useless

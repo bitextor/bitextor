@@ -399,4 +399,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-4.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulysses/Makefile ulysses-data/Makefile])
+AC_OUTPUT([Makefile bitextor-4.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile])

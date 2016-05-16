@@ -46,7 +46,11 @@ DISTANCEFILTER12OUT=""
 DISTANCEFILTER21OUT=""
 ALIGNDOCUMENTSOUT=""
 ALIGNSEGMENTSOUT=""
-
+MODEL="__PREFIX__/share/bitextor/model/keras.model"
+WEIGHTS="__PREFIX__/share/bitextor/model/keras.weights"
+SIZELIMIT=""
+TIMELIMIT=""
+DOCSIMTHRESHOLD=""
 exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
@@ -56,10 +60,10 @@ exit_program()
   echo "USAGE: $1 [OPTIONS] -e FILE        -v VOCABULARY LANG1 LANG2"
   echo ""
   echo "WHERE:"
-  echo "  -u URL          URL of a website to crawl (one per line); if option -d is also" 
-  echo "                  enabled, the website is downloaded to the directory specified,"
-  echo "                  if not, it is downloaded in a temporal directory in '/tmp' (or"
-  echo "                  a different directory if -t option is used)."
+  echo "  -u URL          URL of a website to crawl (one per line); if option -e is also" 
+  echo "                  enabled, the website is downloaded in the ETT fomat and stored"
+  echo "                  in the file at the specified path, if not, it is downloaded in"
+  echo "                  a temporal directory in '/tmp' (or a different directory if -T option is used)."
   echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
   echo "                  corresponding destination path (one per line)."
   echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
@@ -94,7 +98,7 @@ exit_program()
   echo "                    with a score"
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
-  echo "  -t TMP-DIR        alternative tmp directory (/tmp by default)."
+  echo "  -T TMP-DIR        alternative tmp directory (/tmp by default)."
   echo "  -x                if this option is enabled, the output of the tool will be."
   echo "                    formated in the standard XML-based format TMX."
   echo "  -a                if this option is enabled, Bitextor will perform the alignment only"
@@ -111,6 +115,17 @@ exit_program()
   echo "                    coverage with the bilingual lexicon approach."
   echo "  -O FILE           if this option is enabled, the otput of bitextor will be redirected"
   echo "                    to file FILE, if not it is redirected to the standard output."
+  echo "  -d THRESHOLD      threshold for the parallel-document confidence score. This threshold"
+  echo "                    can take real values in [0,1], being 0 equivalent to not setting any"
+  echo "                    threshold and 1 the highest threshold possible."
+  echo "  -s TIME           size limit for the crawling process; if this option is set, the crawling"
+  echo "                    process will stop after the amount of data specified has been crawled."
+  echo "                    This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G)"
+  echo "                    for example: '50M' for 50 Megabytes"
+  echo "  -t TIME           time limit for the crawling process; if this option is set, the crawling"
+  echo "                    process will stop after the amount of time specified. This option must"
+  echo "                    be an amount of time and a time unit (h for hours, m for minutes and"
+  echo "                    s for seconds), for example: '35m' for 35 minutes"
   exit 1
 }
 
@@ -122,17 +137,38 @@ run_bitextor_ett(){
  align_segments $LETTR
 }
 
+trapsigint(){
+  if [ $# -eq 0 ]; then
+    echo "Bitextor finished the crawling process and is in the alignment phase; please, use SIGTERM to stop it."
+  else
+    kill $1
+    echo "Bitextor just stopped crawling and the alignment process will start inmediatelly."
+    wait
+  fi
+}
+
 run_bitextor(){
   local URL=$1
+  tmpcrawl=$(mktemp $TMPDIR/crawl.XXXXXX)
+  rm $tmpcrawl
+  mkfifo $tmpcrawl
 
-  __PREFIX__/bin/bitextor-crawl $URL 2> $CRAWLLOG | tee $CRAWL2ETTOUT | \
-  __PREFIX__/bin/bitextor-crawl2ett 2> $CRAWL2ETTLOG | tee $ETT | \
+  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  crawl_pid=$(jobs -p)
+  trap "trapsigint $crawl_pid" SIGINT
+
+  __PREFIX__/bin/bitextor-crawl2ett < $tmpcrawl 2> $CRAWL2ETTLOG | tee $ETT | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+
+  wait
+  rm $tmpcrawl
   align_segments $LETTR
 }
 
 align_segments(){
+  trap '' SIGINT
+
   local LETTR=$1
 
   output_pipe=$(mktemp $TMPDIR/output_pipe.XXXXXX)
@@ -170,24 +206,48 @@ align_segments(){
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
-
+        __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
     else
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+        __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
     fi
 
     rindex1_pid=$!
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+        __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2 &
     else
         __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
-        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+        __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+        __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+        __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2 &
     fi
 
-    wait $rindex1_pid
+    #wait $rindex1_pid
+    wait
 
     rm $index_pipe1 $index_pipe2
 
@@ -219,14 +279,26 @@ align_segments(){
         if [ $FREQ == "1" ]; then
             __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
             __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
         else
             __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
             __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
@@ -235,17 +307,30 @@ align_segments(){
         if  [ $FREQ == "1" ]; then
             __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
         else
             __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-structuredistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsdistance -l $LETTR | \
+            __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
+            __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
+            __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
         fi
     fi
+    wait
   fi
 
   if [ $FORMAT == "TMX" ]; then
@@ -259,7 +344,11 @@ align_segments(){
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $MORPH1 $MORPH2 $RINDEX2
 }
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:" $*)
+
+trap '' SIGINT
+
+
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:" $*)
 
 set -- $ARGS
 for i
@@ -376,9 +465,20 @@ do
       MINQUALITY=$1
       shift
       ;;
-    -t)
+    -T)
       shift
       TMPDIR=$1
+      mkdir -p $1
+      shift
+      ;;
+    -s)
+      shift
+      SIZELIMIT="-s $1"
+      shift
+      ;;
+    -t)
+      shift
+      TIMELIMIT="-t $1"
       shift
       ;;
     -O)
@@ -388,6 +488,11 @@ do
       ;;
     -f)
       USEWORDFREQ=1
+      shift
+      ;;
+    -d)
+      shift
+      DOCSIMTHRESHOLD="-t $1"
       shift
       ;;
     -h)

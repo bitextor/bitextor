@@ -46,11 +46,11 @@ for line in reader:
   if len(fields) == 4:
     print "   <tu tuid=\""+str(tuid_counter)+"\" datatype=\"Text\">"
     print "    <tuv xml:lang=\""+options.lang1+"\">"
-    print "     <prop type=\"source-document\">"+fields[0]+"</prop>"
+    print "     <prop type=\"source-document\">"+fields[0].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
     print "     <seg>"+fields[2].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     print "    </tuv>"
     print "    <tuv xml:lang=\""+options.lang2+"\">"
-    print "     <prop type=\"source-document\">"+fields[1]+"</prop>"
+    print "     <prop type=\"source-document\">"+fields[1].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
     print "     <seg>"+fields[3].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     print "    </tuv>"
     print "   </tu>"

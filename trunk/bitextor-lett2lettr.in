@@ -1,4 +1,5 @@
 #!__ENV__ __PYTHON__
+# -*- coding: utf-8 -*-
 
 #
 # 1. File .lett is processed to obtain a representation of the structure formatted as a string (here called 'raspa'), containing both html tags and the number of words in the text blocks
@@ -15,14 +16,14 @@ import sys
 import base64
 import math
 import fileinput
-from HTMLParser import HTMLParser
+import HTMLParser
 import argparse
 import datetime
 
-class Parser(HTMLParser):
+class Parser(HTMLParser.HTMLParser):
 
   def __init__( self ):
-    HTMLParser.__init__( self )
+    HTMLParser.HTMLParser.__init__( self )
     self.script = 0
     self.output = []
 
@@ -60,8 +61,13 @@ else:
 
 for line in reader:
   content=line.strip().split("\t")
-  e = base64.b64decode(content[4]).decode("utf-8")
-  if e != "":
-    p=Parser()
-    p.feed(e)
-    print line.strip()+"\t"+"".join(p.output)+"\t"+str(datetime.datetime.now().time())
+  if len(content) >= 6:
+    e = base64.b64decode(content[4])
+    if e != "":
+      p=Parser()
+      try:
+        p.feed(e)
+        print line.strip()+"\t"+"".join(p.output)+"\t"+str(datetime.datetime.now().time())
+      except HTMLParser.HTMLParseError:
+        pass
+
