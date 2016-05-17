@@ -95,26 +95,6 @@ AC_ARG_ENABLE(profile,
               [  --enable-profile  Enable "-pg -g -Wall" compiler options],
               [CXXFLAGS="-pg -g -Wall"; CFLAGS="-pg -g -Wall"; LDFLAGS="-pg"])
 
-#AC_PATH_PROG(XMLLINT, xmllint, no)
-#if test x$ac_cv_path_XMLLINT = x
-#then
-#  AC_MSG_ERROR([You don't have xmllint installed.])
-#fi
-#if test x$ac_cv_path_XMLLINT = xno
-#then
-#  AC_MSG_ERROR([You don't have xmllint installed.])
-#fi
- 
-#  AC_PATH_PROG(XSLTPROC, xsltproc, no)
-#  if test x$ac_cv_path_XSLTPROC = x
-#  then
-#    AC_MSG_ERROR([You don't have xsltproc installed.])
-#  fi
-#  if test x$ac_cv_path_XSLTPROC = xno
-#  then
-#    AC_MSG_ERROR([You don't have xsltproc installed.])
-#  fi
-
 AC_PATH_PROG(BASH, bash, no)
 if test x$ac_cv_path_BASH = x
 then
@@ -124,16 +104,6 @@ if test x$ac_cv_path_BASH = xno
 then
   AC_MSG_ERROR([You don't have bash installed.])
 fi
-
-#AC_PATH_PROG(FLEX, flex, no)
-#if test x$ac_cv_path_FLEX = x
-#then
-#  AC_MSG_ERROR([You don't have flex installed.])
-#fi
-#if test x$ac_cv_path_FLEX = xno
-#then
-#  AC_MSG_ERROR([You don't have flex installed.])
-#fi
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 if test x$ac_cv_path_PKG_CONFIG = x
@@ -215,25 +185,6 @@ then
   AC_MSG_ERROR([You don't have jar installed.])
 fi
 
-AC_ARG_WITH([httrack],
-            [AS_HELP_STRING([--without-httrack],
-              [disable support for httrack; if this option is enabled, you will not be able to download new websites (but you will be able to process already downloaded websites)])],
-            [],
-            [with_httrack=yes])
-          
-AS_IF([test "x$with_httrack" != xno],
-  [AC_PATH_PROG(HTTRACK, httrack, no)
-     if test x$ac_cv_path_HTTRACK = x
-     then
-       AC_MSG_ERROR([You don't have httrack installed: try to install it or run this script with option --without-httrack.])
-     fi
-     if test x$ac_cv_path_HTTRACK = xno
-     then
-       AC_MSG_ERROR([You don't have httrack installed: try to install it or run this script with option --without-httrack.])
-     fi
-])
-
-
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--without-apertium],
               [disable support for apertium; if this option is enabled, you will not be able to use apertium morphological analysers)])],
@@ -282,6 +233,38 @@ print (var)" 2> /dev/null`
   fi
 
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+  AC_MSG_CHECKING([for keras for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import keras; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
+])
+  fi
+
+AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+  AC_MSG_CHECKING([for h5py for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import h5py; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- h5py:   Please, install v2.6 or later and try again. http://www.keras.io/
+])
+  fi
+
+AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for numpy for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import numpy; \
@@ -296,6 +279,21 @@ print (var)" 2> /dev/null`
 - numpy:   Please, install v1.7 or later and try again. http://www.numpy.org/
 ])
   fi
+
+  AC_MSG_CHECKING([for libmagic for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import magic; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires magic for Python. Please, install v1.1.4 or later and try again. https://github.com/ahupp/python-magic
+])
+  fi
+
 
   AC_MSG_CHECKING([for LangID for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
@@ -352,11 +350,6 @@ fi
 AC_CHECK_FUNCS(strcasecmp)
 
 
-
-#PKG_CHECK_MODULES(APERTIUM, [dnl
-#  lttoolbox-3.2 >= required_lttoolbox_version dnl
-#  libxml-2.0 >= required_libxml_version dnl
-#  libpcre >= required_libpcre_version], CPPFLAGS="$CPPFLAGS $APERTIUM_CFLAGS"; LIBS="$LIBS $APERTIUM_LIBS")
 
 # Check for wide strings
 AC_DEFUN([AC_CXX_WSTRING],[
