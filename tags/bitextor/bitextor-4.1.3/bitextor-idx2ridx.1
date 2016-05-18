@@ -9,9 +9,9 @@ bitextor-idx2ridx \- This application is part of
 .SH SYNOPSIS
 .B bitextor-idx2ridx
 .RI [ OPTIONS ]
+.BI \-\-lang1 " LANG1"
+.BI \-\-lang2 " LANG2"
 .RI [ FILE ]
-.I LANG1
-.I LANG2
 
 .SH DESCRIPTION
 .B bitextor-idx2ridx
@@ -55,7 +55,13 @@ to determine the path to a dictionary. A dictionary must follow the following fo
 .BI \-d " FILE"
 Path to the
 .I FILE
-containing the custom dictionary to be used.
+containing the custom dictionary to be used. 
+.TP
+.BI \-\-lang1 " LANG1"
+ID of the first language in the bitext (following the ISO 639-1)
+.TP
+.BI \-\-lang2 " LANG2"
+ID of the second language in the bitext (following the ISO 639-1)
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

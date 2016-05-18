@@ -8,11 +8,13 @@ bitextor-builddics \- This application is part of
 
 .SH SYNOPSIS
 .B bitextor-builddics
+.BI \-t " TMP"
 .I LANG1
 .I LANG2
 .I CORPUS_LANG1
 .I CORPUS_LANG2
-.I OUTPUT
+.I PREPROC_OUTPUT
+.I MODELS_OUTPUT
 
 .SH DESCRIPTION
 .B bitextor-builddics
@@ -27,13 +29,22 @@ two files must be provided,
 and
 .IR CORPUS_LANG2 ,
 containing a list of segments in each of both languages.
-The segments in each file in the same line must be parallel.
+The segments at the same line in each file must be parallel.
 This script uses the tool GIZA++ to obtain a probabilistic
 dictionary, which is then filtered to keep only highly probable
 translations which are finall included in the resulting dictioanry,
-which is stored in
-.IR OUTPUT .
+which is stored in the new dictionary
+.IR DIC .
 The corpora files can be gzipped.
+
+In addition, it is possible to store both the preprocessed
+files and the modules produced at
+.I PREPROC_OUTPUT
+and
+.IR MODELS_OUTPUT ,
+respectively, if these directories are specified. If the path
+to the directories does not exist, they are created when the script is run.
+
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),

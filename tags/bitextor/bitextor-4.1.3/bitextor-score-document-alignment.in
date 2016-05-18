@@ -125,7 +125,8 @@ for line in reader_list:
   if len(quality) < 16:
     sys.stderr.write("Error: files "+fields[0]+" and "+fields[1]+" cannot be aligned; hunalign says:\n"+"\n".join(quality))
   else:
-    print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[15].split(' ')[1])
+    if ' ' in quality[15]:
+      print "{0}\t{1}\t{2}".format(fields[0], fields[1], quality[15].split(' ')[1])
 
   os.remove(tmp_file1.name)
   os.remove(tmp_file2.name)

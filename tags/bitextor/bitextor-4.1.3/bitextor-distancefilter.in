@@ -1,4 +1,5 @@
 #!__ENV__ __PYTHON__
+# -*- coding: utf-8 -*-
 
 #
 # 1. Leer .lettr y cargarlo en memoria
@@ -37,13 +38,13 @@ def rellenarDocumentos(fich, documentos):
       #Creating a map with all the tags found in the raspa and the character with which they will be replaced
       charidx=32
       for tag in tags_with_bounds:
-        dic[chr(charidx)]=tag
+        dic[unichr(charidx)]=tag
         charidx=charidx+1
       #If character '_' is used, it must be replaced, since it is already representing text
       if '_' in dic:
         extratag=dic['_']
-        dic.remove('_')
-        dic[chr(charidx)]=extratag
+        del dic['_']
+        dic[unichr(charidx)]=extratag
       inv_dic = {v:k for k, v in dic.items()}
       for tag,code in inv_dic.items():
         campos[6]=campos[6].replace(tag,code)
@@ -51,8 +52,12 @@ def rellenarDocumentos(fich, documentos):
     contador += 1
   file.close()
 
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
 oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
+oparser.add_argument("-t", "--threshold", help="minimum valiue of the similarity score between two files to be taken into account as feasible candidates", dest="threshold", type=float, default=0.10)
 oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
 options = oparser.parse_args()
 
@@ -73,13 +78,10 @@ for i in reader:
     cadena = str(campos[0])
     for j in range(1,len(campos)):
       doc = campos[j].split(":")
-      if float(doc[1]) > 0.10:
+      if float(doc[1]) > options.threshold:
         longitud_t = len(documentos[int(doc[0])])
-        dist = Levenshtein.distance(documentos[int(campos[0])],documentos[int(doc[0])])
+        dist = Levenshtein.distance(documentos[int(campos[0])].decode("utf-8"),documentos[int(doc[0])].decode("utf-8"))
         port = 1 - (dist / float(max(longitud_s, longitud_t)))
-        ##port = float((min(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))/float(max(len(documentos[int(campos[0])]),len(documentos[int(doc[0])]))))*(longitud / float(longitud + dist)))
-        #new_per = (float(doc[1]) + port)/2.0
-        #new_per = port
         new_per = float(doc[1]) * port
         parecidos[doc[0]] = new_per
     parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)

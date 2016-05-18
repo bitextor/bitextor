@@ -73,7 +73,7 @@ else:
     fields=line_ridx2.strip().split("\t");
     if len(fields) >= 2:
       num_candidates=min(len(fields)-1,options.candidate_num+1)
-      for candidate_idx in range(1,num_candidates+1):
+      for candidate_idx in range(1,num_candidates):
         field_n=fields[candidate_idx].split(":")
         if len(field_n) == 2:
           if int(field_n[0]) not in best_ridx2_inv:
@@ -86,7 +86,7 @@ else:
     fields=line_ridx1.strip().split("\t")
     if len(fields) >= 2:
       num_candidates=min(len(fields)-1,options.candidate_num+1)
-      for candidate_idx in range(1,num_candidates+1):
+      for candidate_idx in range(1,num_candidates):
         field_n=fields[candidate_idx].split(":")
         if len(field_n) == 2:
           if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:

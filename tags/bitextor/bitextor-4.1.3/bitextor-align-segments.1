@@ -50,7 +50,12 @@ ID of the first language in the bitext (following the ISO 639-1)
 ID of the second language in the bitext (following the ISO 639-1)
 .BI \-t " TMP_IR"
 Alternative tmp directory (/tmp by default)
-
+.BI \-d " DIC"
+Bilingual lexicon used for aligning both documents and segments
+.BI \-\-morphanalyser_sl " ANALYSER"
+Morphological analyser for source language; Bitextor is capable of using the morphological analyser provided by Apertium (http://www.apertium.org).
+.BI \-\-morphanalyser_tl " ANALYSER"
+Morphological analyser for target language; Bitextor is capable of using the morphological analyser provided by Apertium (http://www.apertium.org).
 
 .SH SEE ALSO
 bitextor-align-documents(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
