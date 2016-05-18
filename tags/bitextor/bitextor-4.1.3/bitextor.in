@@ -1,0 +1,498 @@
+#!__BASH__
+
+OUTPUT=/dev/stdout
+URLFILE=""
+URL=""
+#Path to default dictionary: it can be replaced by using option -v
+LANG1=""
+LANG2=""
+BIDIDOCALIGN=0
+DOCALIGNMENT=0
+FORMAT="PLAIN"
+FREQ="0"
+INDEX=""
+MAXLINES=5
+MINQUALITY=0
+INPUTMODE=0
+if [[ -z $TMPDIR ]]; then
+  TMPDIR="/tmp"
+fi
+WEBDIR2ETTLOG=/dev/null
+ETT2LETTLOG=/dev/null
+LETT2LETTRLOG=/dev/null
+LETT2IDXLOG=/dev/null
+IDX2RIDXLOG=/dev/null
+IDX2RIDX12LOG=/dev/null
+IDX2RIDX21LOG=/dev/null
+DISTANCEFILTERLOG=/dev/null
+DISTANCEFILTER12LOG=/dev/null
+DISTANCEFILTER21LOG=/dev/null
+ALIGNDOCUMENTSLOG=/dev/null
+ALIGNSEGMENTSLOG=/dev/null
+CLEANTEXTLOG=/dev/null
+MORPHANAL_OPTIONS=""
+MORPH1=""
+MORPH2=""
+WEBDIR2ETTOUT=""
+ETT2LETTOUT=""
+LETT2LETTROUT=""
+LETT2IDXOUT=""
+IDX2RIDXOUT=""
+IDX2RIDX12OUT=""
+IDX2RIDX21OUT=""
+DISTANCEFILTEROUT="/dev/null"
+DISTANCEFILTER12OUT=""
+DISTANCEFILTER21OUT=""
+ALIGNDOCUMENTSOUT=""
+ALIGNSEGMENTSOUT=""
+
+exit_program()
+{
+  #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
+  #echo "          [-q min_quality] [url] lang1 lang2"
+  echo "USAGE: $1 [OPTIONS] -u URL -d DIRECTORY    -v VOCABULARY LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -d DIRECTORY           -v VOCABULARY LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -U FILE                -v VOCABULARY LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -D FILE                -v VOCABULARY LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -e FILE                -v VOCABULARY LANG1 LANG2"
+  echo ""
+  echo "WHERE:"
+  echo "  -u URL          URL of a website to crawl (one per line); if option -d is also" 
+  echo "                  enabled, the website is downloaded to the directory specified,"
+  echo "                  if not, it is downloaded in a temporal directory in '/tmp' (or"
+  echo "                  a different directory if -t option is used)."
+  echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
+  echo "                  corresponding destination path (one per line)."
+  echo "  -d DIRECTORY    folder containing a crawled website (if option -u is enabled,"
+  echo "                  the website is first downloaded and then processed)."
+  echo "  -D FILE         file containing a list of URIs to folders containing crawled"
+  echo "                  websites."
+  echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
+  echo "  LANG1           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
+  echo "  LANG2           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
+  echo ""
+  echo "OPTIONS:"
+  echo "  -L PATH           custom path where the directory containing the logs of the"
+  echo "                    different modules of bitextor will be stored"
+  echo "  -l LETTR          custom path where the file with extension .lettr (language"
+  echo "                    encoded and typed data with 'raspa') will be created"
+  echo "                    (/lettr.XXXXXX by default)."
+  echo "  -I PATH           custom path where the output of the intermediate files produced"
+  echo "                    by the modules of bitextor will be stored."
+  echo "  -b NUM            if this option is enabled, the document alignment process is"
+  echo "                    run in both directions and only the first NUM candidates in"
+  echo "                    every direction will be taken into account. With this, the list"
+  echo "                    of final candidates will be obtained computing the average of"
+  echo "                    every pair of candidates in both directions. This option should"
+  echo "                    improve precision and drop recall, since those candidates in a"
+  echo "                    position lower than NUM will be discarded for the alignment"
+  echo "                    (NUM must be in [1,10])"
+  echo "  -v VOCABULARY     option for using a custom multilingual vocabulary for preliminar"
+  echo "                    document alignment. The vocabulary must be a tab-separated file,"
+  echo "                    in which the first line contains the names of the languages"
+  echo "                    corresponding to each column, and the rest of the lines must"
+  echo "                    contain the same word translated to all these languages."
+  echo "  -m MAX_LINES      maximum number or wrong segment alignments tolerated to accept a"
+  echo "                    pair of documents as a valid document alignment. If this number"
+  echo "                    is reached, the whole document pair is discarded (5 by default)."
+  echo "  -q MIN_QUALITY    threshold for Hunalign confidence score; those pairs of segments"
+  echo "                    with a score"
+  echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
+  echo "                    removed (0 by default)."
+  echo "  -t TMP-DIR        alternative tmp directory (/tmp by default)."
+  echo "  -x                if this option is enabled, the output of the tool will be."
+  echo "                    formated in the standard XML-based format TMX."
+  echo "  -a                if this option is enabled, Bitextor will perform the alignment only"
+  echo "                    at the level of documents. The output will be tab-sepparated, with"
+  echo "                    three fields: two with the name of the documents aligned and one with"
+  echo "                    the score provided by hunalign for the pair of documents."
+  echo "  -M                morphological analyser in the Apertium platform for source language"
+  echo "                    that will allow to apply word matching directly on lemmas; this is an"
+  echo "                    important tool for aglutinant languages in order to obtain a good"
+  echo "                    coverage with the bilingual lexicon approach."
+  echo "  -N                morphological analyser in the Apertium platform for target language"
+  echo "                    that will allow to apply word matching directly on lemmas; this is an"
+  echo "                    important tool for aglutinant languages in order to obtain a good"
+  echo "                    coverage with the bilingual lexicon approach."
+  echo "  -O FILE           if this option is enabled, the otput of bitextor will be redirected"
+  echo "                    to file FILE, if not it is redirected to the standard output."
+  exit 1
+}
+
+run_bitextor_ett(){
+
+  cat $1 | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+ align_segments $LETTR
+}
+
+run_bitextor(){
+  local DIRNAME=$1
+
+  __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+  align_segments $LETTR
+}
+
+align_segments(){
+  local LETTR=$1
+
+  output_pipe=$(mktemp $TMPDIR/output_pipe.XXXXXX)
+  rm $output_pipe
+  mkfifo $output_pipe
+
+  HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
+  tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
+
+  if [ $BIDIDOCALIGN -ge 1 ]; then
+    #Named pipe for paralelising obtaining the initial index for the ridx 1
+    index_pipe1=$(mktemp $TMPDIR/index_pipe.XXXXXX)
+    rm $index_pipe1
+    mkfifo $index_pipe1
+
+    #Named pipe for paralelising obtaining the initial index for the ridx 2
+    index_pipe2=$(mktemp $TMPDIR/index_pipe.XXXXXX)
+    rm $index_pipe2
+    mkfifo $index_pipe2
+
+    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
+
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+    else
+        __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        tee $INDEX |tee $index_pipe1 > $index_pipe2 &
+    fi
+
+
+    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
+    RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
+    RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX) 
+
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+
+    else
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+    fi
+
+    rindex1_pid=$!
+
+    if [ $FREQ == "1" ]; then
+        __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+    else
+        __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+        __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2
+    fi
+
+    wait $rindex1_pid
+
+    rm $index_pipe1 $index_pipe2
+
+    L1WORDS=$(mktemp $TMPDIR/l1words.XXXXXX)
+    L2WORDS=$(mktemp $TMPDIR/l2words.XXXXXX)
+    WORDS=$(mktemp $TMPDIR/words.XXXXXX)
+
+    grep "^$LANG1"$'\t' $INDEX | cut -f 2 | sort > $L1WORDS
+    grep "^$LANG2"$'\t' $INDEX | cut -f 2 | sort > $L2WORDS
+    rm $INDEX
+
+    comm -12 $L1WORDS $L2WORDS > $WORDS
+    rm $L1WORDS $L2WORDS
+
+    paste $WORDS $WORDS | sed 's/\t/ @ /g' >> $HUNALIGN_DIC
+    rm $WORDS
+    
+
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+    else
+        __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+    fi
+  else
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        if [ $FREQ == "1" ]; then
+            __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        else
+            __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        fi
+    else
+        if  [ $FREQ == "1" ]; then
+            __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        else
+            __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+            __PREFIX__/bin/bitextor-idx2ridx -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+            __PREFIX__/bin/bitextor-distancefilter -l $LETTR 2> $DISTANCEFILTERLOG | tee $DISTANCEFILTEROUT | \
+            __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+            __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        fi
+    fi
+  fi
+
+  if [ $FORMAT == "TMX" ]; then
+    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 < $output_pipe > $OUTPUT
+  else
+    cat < $output_pipe >> $OUTPUT
+  fi
+
+  rm $HUNALIGN_DIC
+
+  rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $MORPH1 $MORPH2 $RINDEX2
+}
+
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:" $*)
+
+set -- $ARGS
+for i
+do
+  case "$i" in
+     -I)
+      shift
+      INTERMEDIATEFILE=$1
+      mkdir -p $INTERMEDIATEFILE
+      WEBDIR2ETTOUT=$INTERMEDIATEFILE/webdir2ett
+      ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
+      LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
+      LETT2IDXOUT=$INTERMEDIATEFILE/lett2idx
+      IDX2RIDXOUT=$INTERMEDIATEFILE/idx2ridx
+      IDX2RIDX12OUT=$INTERMEDIATEFILE/idx2ridx-lang1-lang2
+      IDX2RIDX21OUT=$INTERMEDIATEFILE/idx2ridx-lang2-lang1
+      DISTANCEFILTEROUT=$INTERMEDIATEFILE/distancefilter
+      DISTANCEFILTER12OUT=$INTERMEDIATEFILE/distancefilter-lang1-lang2
+      DISTANCEFILTER21OUT=$INTERMEDIATEFILE/distancefilter-lang2-lang1
+      ALIGNDOCUMENTSOUT=$INTERMEDIATEFILE/aligndocuments
+      ALIGNSEGMENTSOUT=$INTERMEDIATEFILE/alignsegments
+      shift
+      ;;
+     -M|--SMORPH)
+      shift
+      MORPH1=$(mktemp $TMPDIR/morph1.XXXXXX)
+      sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH1
+      #sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
+      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_sl $MORPH1"
+      shift
+      ;;
+     -N|--TMORPH)
+      shift
+      MORPH2=$(mktemp $TMPDIR/morph2.XXXXXX)
+      sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH2
+      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2" 
+      shift
+      ;;
+     -L)
+      shift
+      LOGDIR=$1
+      mkdir -p $LOGDIR
+      WEBDIR2ETTLOG=$LOGDIR/bitextorwebdir2ett.log
+      ETT2LETTLOG=$LOGDIR/bitextorett2lett.log
+      LETT2LETTRLOG=$LOGDIR/bitextorlett2lettr.log
+      LETT2IDXLOG=$LOGDIR/bitextorlett2idx.log
+      IDX2RIDXLOG=$LOGDIR/bitextoridx2ridx.log
+      IDX2RIDX12LOG=$LOGDIR/bitextoridx2ridx_lang1-lang2.log
+      IDX2RIDX21LOG=$LOGDIR/bitextoridx2ridx_lang2-lang1.log
+      DISTANCEFILTERLOG=$LOGDIR/bitextordistancefilter.log
+      DISTANCEFILTER12LOG=$LOGDIR/bitextordistancefilter_lang1-lang2.log
+      DISTANCEFILTER21LOG=$LOGDIR/bitextordistancefilter_lang2-lang1.log
+      ALIGNDOCUMENTSLOG=$LOGDIR/bitextoraligndocuments.log
+      ALIGNSEGMENTSLOG=$LOGDIR/bitextoralignsegments.log
+      CLEANTEXTLOG=$LOGDIR/bitextorcleantextalign.log
+      shift
+      ;;
+     -e)
+      shift
+      ETT=$1
+      INPUTMODE=5
+      shift
+      ;;
+     -u)
+      shift
+      URL=$1
+      INPUTMODE=1
+      shift
+      ;;
+     -U)
+      shift
+      URLFILE=$1
+      INPUTMODE=2
+      shift
+      ;;
+     -d)
+      shift
+      DIRNAME=$1
+      if [ $INPUTMODE -eq 0 ]; then
+        INPUTMODE=3
+      fi
+      shift
+      ;;
+     -D)
+      shift
+      DIRFILE=$1
+      INPUTMODE=4
+      shift
+      ;;
+    -l)
+      shift
+      LETTR=$1
+      shift
+      ;;
+    -x)
+      FORMAT="TMX"
+      shift
+      ;;
+    -f)
+      FREQ="1"
+      shift
+      ;;
+    -a)
+      DOCALIGNMENT=1
+      shift
+      ;;
+    -v)
+      shift
+      VOCABULARY=$1
+      shift
+      ;;
+    -b)
+      shift
+      BIDIDOCALIGN=$1
+      shift
+      ;;
+    -m)
+      shift
+      MAXLINES=$1
+      BYTEXT=1
+      shift
+      ;;
+    -q)
+      shift
+      MINQUALITY=$1
+      shift
+      ;;
+    -t)
+      shift
+      TMPDIR=$1
+      shift
+      ;;
+    -O)
+      shift
+      OUTPUT=$1
+      shift
+      ;;
+    -f)
+      USEWORDFREQ=1
+      shift
+      ;;
+    -h)
+      exit_program $(basename $0)
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+
+case $# in
+  2)
+    LANG1="$1"
+    LANG2="$2"
+    if [[ -z $VOCABULARY ]]; then
+      echo "THE VOCABULARY FILE WAS NOT SET: USE OPTION -v"
+      exit_program $(basename $0)
+    fi
+    LANG1INVOC=$(head -n 1 $VOCABULARY | cut -f 1)
+    LANG2INVOC=$(head -n 1 $VOCABULARY | cut -f 2)
+    if [ $LANG1 != $LANG1INVOC -a $LANG1 != $LANG2INVOC ]; then
+      echo -e "\nLANGUAGE \"$LANG1\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
+      exit_program $(basename $0)
+    fi
+    if [ $LANG2 != $LANG1INVOC -a $LANG2 != $LANG2INVOC ]; then
+      echo -e "\nLANGUAGE \"$LANG2\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
+      exit_program $(basename $0)
+    fi
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
+if [ "$DIRNAME" == "" ]; then
+  DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
+fi
+TMPLETTR=$(mktemp $TMPDIR/lettr.XXXXXX)
+if [[ -z $LETTR ]]; then
+  LETTR=$TMPLETTR
+fi
+
+case $INPUTMODE in
+  1)
+    if [ $(which httrack|__WC__ -l) -eq 0 ]; then
+      echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
+      exit
+    else
+      __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+      run_bitextor $DIRNAME
+    fi
+    ;;
+  2)
+    if [ $(which httrack|__WC__ -l) -eq 0 ]; then
+      echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script. It is also possible to run bitextor on a website already donwloaded by using option -d."
+      exit
+    else
+      cat $URLFILE | \
+      while read line;
+      do
+        URL=$(echo "$line" | cut -f 1)
+        DIRNAME=$(echo "$line" | cut -f 2)
+	echo $line
+	echo "$(echo $line | __GREP__ $'\t' |__WC__ -l)"
+        if [ -z $DIRNAME -o $(echo $line | __GREP__ '\s' |__WC__ -l) -eq 0 ]; then
+          echo "Error in the format of the file containing the list of urls: in every line of the file, you have to include a URL and the name of the path where the website will be downloaded separated with a tab."
+          exit -1
+        else
+          __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+          run_bitextor $DIRNAME
+        fi
+      done
+    fi
+    ;;
+  3)
+    run_bitextor $DIRNAME
+    ;;
+  4)
+    while read line;
+    do
+      run_bitextor $line
+    done < $DIRFILE
+    ;;
+  5)
+    run_bitextor_ett $ETT
+    ;;
+  *)
+    exit_program $(basename $0)
+    ;;
+esac
+
