@@ -15,16 +15,26 @@ It is worth noting that Each of these steps can be run separately.
 
 === REQUIREMENTS ===
 
-Most of the scripts in bitextor are written in Python. Because of this, it is necessary to install Python 2. Some external Python libraries should also be installed before starting the installation of bitextor:
-  - python-Levenshtein: Python library for computing the Levenshtein edit-distance.
-  - LangID.py: Python library for plain text language detection.
-  - boilerpipe: Python wrapper for the Java package boilerpipe, which helps to remove useless information from HTML files, such as menus, adds, etc.
-The easiest way to install these libraries is using the tool pip. For installing the three libraries at the same time, you can simply run:
+Autotools are necessary for building and installing the project. Tools javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is requeired for compiling. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operative systems repositories.
 
- user@pc:~$ sudo pip install boilerpipe langid python-Levenshtein
+Some external Python libraries should also be installed before starting the installation of bitextor:
 
-In addition to these Python libraries, the tool HTTrack may be necessary if you plan to use bitextor to download multilingual websites. When installing bitextor, you can specify that you do not want to use these tool, but, in this case, you will only be able to process websites which have been already installed (starting the process in the second step).
+* python-Levenshtein: Python library for computing the Levenshtein edit-distance.
+* LangID.py: Python library for plain text language detection.
+* regex: Python package for regular expressions in Python.
+* NLTK: Python package with natural language processing utilities.
+* numpy: Python package for scientific computing with Python.
+* keras: Python package for implementing neural networks for deep learning.
+* h5py: Pythonic interface to the HDF5 binary data format.
+* magic: Python interface for the magic library, used to detect files' format.
 
+The easiest way to install these python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
+
+   user@pc:~$ sudo pip install langid python-Levenshtein regex NLTK numpy magic h5py keras
+
+Most of these packages are also available in the repositories of many Unix-based systems.
+
+In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionaly, just use the option "--without-apertium" when running the configuration script.
 
 
 === INSTALLING BITEXTOR ===
@@ -44,31 +54,48 @@ In case you do not have sudoer privileges, it is possible to install the tool lo
 where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
 
 Two more tools are included in bitextor package and will be installed together with bitextor:
- - hunalign: a software for sentence alignment (http://mokk.bme.hu/resources/hunalign/)
- - apache tika: a tool for HTML files normalisation (http://tika.apache.org/)
-
+* hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
+* GIZA++: machine translation package, here used for building probabilistic bilingual dictionaries (<https://code.google.com/p/giza-pp/>)
+* apache tika: a tool for HTML files normalisation (<http://tika.apache.org/>)
+* boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>)
 
 
 === RUNNING BITEXTOR ===
 
 There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
-  bitextor [OPTIONS]     URL LANG1 LANG2
-  bitextor [OPTIONS] -f FILE LANG1 LANG2
-In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -f should contain a list of URLs, which are processed separately. One more way to run bitextor is available, using option -d to specify a directory containing a crawled website (this step starts in the second step described in the previous section):
-  bitextor [OPTIONS] -d DIRECTORY LANG1 LANG2
+
+  bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
+  bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
+
+In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -U should be a tab-sepparated file containing, in each line, a URL to be crawled and its destination ETT file. In all cases, it is mandatory to specify the lexicon to be used and the target languages to be crawled. One more way to run bitextor is available, using option *-e* to specify an ETT file containing a previoiusly crawled website (this step starts in the second step described in the previous section): 
+
+  bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
+
+Options -u and -e can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
 
 Several options can be set using the command line options:
-  -f FILE   sets the path to a file containing a list of URLs to be crawled and processed (one per line).
-  -d FILE   sets the path to a directory containing a crawled website.
-  -l FILE   target path where the LETTR file, built by the script bitextor-lett2lettr, will be stored in during the bitext processing.
-  -r FILE   target path where the RINDEX file, built by the script bitextor-idx2ridx, will be stored in during the bitext processing.
-  -b NUM    when this option is enabled, only the first NUM candidates from the RINDEX candidate list are taken into account when computing the bidirectional document alignment.
-  -v FILE   path to the dictionary used by the script bitextor-lettr2idx.
-  -m NUM    if the number of wrong alignments in a pair of documents processed by bitextor-align-segments is higher than NUM, the pair of documents is discarded (5 by default).
-  -q NUM    if the confidence score for a pair of segments aligned by hunalign in bitextor-align-segments is lower than NUM it is discarded (0 by default).
-  -t        if this option is enabled, the output of bitextor will be formatted as a standard TMX translation memory (this option adds at the end of the pipeline the script bitextor-buildTMX).
 
-It is worth noting that a bilingual dictionary relating the languages of the parallel corpus that will be built is required. The following some dictionaries are provided already, but customised dictionaries can easily built from parallel corpora as explained in the next section.
+* -U FILE   sets the path to a file containing a list of URLs and their destination ETT file to be crawled and processed (one per line).
+* -e FILE   sets the path to the ETT file containing the documents crawled from a website.
+* -L DIRECTORY   Target path where the log files of each module will be stored (by default, they are stored in a temporal directory which is removed at  the end of the run)
+* -I DIRECTORY   Target  path  where  the  intermediate  files  of  each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
+* -b NUM    when this option is enabled, only the first NUM candidates from the RINDEX candidate list are taken into account when computing the bidirectional document alignment.
+* -v FILE   path to the dictionary used by the script bitextor-lettr2idx.
+* -m NUM    if the number of wrong alignments in a pair of documents processed by bitextor-align-segments is higher than NUM, the pair of documents is discarded (5 by default).
+* -q NUM    if the confidence score for a pair of segments aligned by hunalign in bitextor-align-segments is lower than NUM it is discarded (0 by default).
+* -T DIRECTORY     alternative tmp directory (/tmp by default)
+* -O FILE     target file containing the result of the crawling (either plain text or a TMX translation memory)
+* -x        if this option is enabled, the output of bitextor will be formatted as a standard TMX translation memory (this option adds at the end of the pipeline the script bitextor-buildTMX).
+* -a        if this option is enabled, bitextor will print aligned documents instead of aligned segments; the output is tab-separatted, with the paths to the two aligned files and a general score provided by hunalign to the document en each line.
+* -M      morphological analyser in the Apertium platform for source language that will allow to apply word matching directly on lemmas; this is an important tool for aglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
+* -N      morphological analyser in the Apertium platform for target language that will allow to apply word matching directly on lemmas; this is an important tool for aglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
+* -O FILE      if this option is enabled, the otput of bitextor will be redirected to file FILE, if not it is redirected to the standard output.
+* -d THRESHOLD     threshold for the parallel-document confidence score. This threshold can take real values in [0,1], being 0 equivalent to not setting any threshold and 1 the highest threshold possible.
+* -s SIZE     size limit for the crawling process; if this option is set, the crawling process will stop after the amount of data specified has been crawled. This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G) for example: '50M' for 50 Megabytes.
+* -t TIME     time limit for the crawling process; if this option is set, the crawling process will stop after the amount of time specified. This option must be an amount of time and a time unit (h for hours, m for minutes and s for seconds), for example: '35m' for 35 minutes.
+
+
+It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
 === BUILDING BILINGUAL DICTIONARIES FROM PARALLEL CORPORA ===
 
