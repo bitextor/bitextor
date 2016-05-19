@@ -118,7 +118,7 @@ exit_program()
   echo "  -d THRESHOLD      threshold for the parallel-document confidence score. This threshold"
   echo "                    can take real values in [0,1], being 0 equivalent to not setting any"
   echo "                    threshold and 1 the highest threshold possible."
-  echo "  -s TIME           size limit for the crawling process; if this option is set, the crawling"
+  echo "  -s SIZE           size limit for the crawling process; if this option is set, the crawling"
   echo "                    process will stop after the amount of data specified has been crawled."
   echo "                    This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G)"
   echo "                    for example: '50M' for 50 Megabytes"
