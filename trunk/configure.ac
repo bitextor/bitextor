@@ -8,13 +8,13 @@ AC_PREREQ(2.52)
 #m4_define([required_libpcre_version], [6.4])
 #m4_define([required_pkg_config_version], [0.15])
 
-AC_INIT([bitextor], [4.1.1], [jorgeferrandez@gmail.com])
+AC_INIT([bitextor], [5.0.0], [jorgeferrandez@gmail.com])
 AC_CONFIG_HEADER([bitextor_config.h])
 #AC_CONFIG_HEADER([])
 AC_CANONICAL_SYSTEM
 
 PACKAGE=bitextor
-VERSION=4.1.1
+VERSION=5.0.0
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
