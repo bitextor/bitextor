@@ -3,6 +3,9 @@ bitextordir = $(prefix)/share/bitextor
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika ulysses-data model
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = bitextor-5.0.pc
+
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
             bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \

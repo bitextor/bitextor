@@ -56,17 +56,14 @@ public class PipedTika {
      *         if the transformer can not be created
      */
     private static TransformerHandler getTransformerHandler(
-            OutputStream output, String method, String encoding, boolean prettyPrint)
+            OutputStream output, String method, boolean prettyPrint)
             throws TransformerConfigurationException {
         SAXTransformerFactory factory = (SAXTransformerFactory)
                 SAXTransformerFactory.newInstance();
         TransformerHandler handler = factory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.METHOD, method);
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, prettyPrint ? "yes" : "no");
-        if (encoding != null) {
-            handler.getTransformer().setOutputProperty(
-                    OutputKeys.ENCODING, encoding);
-        }
+        handler.getTransformer().setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         handler.setResult(new StreamResult(output));
         return handler;
     }
@@ -100,18 +97,27 @@ public class PipedTika {
                 ContentHandler handler;
                 os=new ByteArrayOutputStream();
                 InputStream is;
-                if(returnxml){
-                    String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                    String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-                    is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
-                    handler=getTransformerHandler(os, "xml", "UTF-8", true);
+                String filecontent, content, inputencoding;
+                try{
+                    if(fields[1].contains("="))
+                        inputencoding=fields[1].split("=")[1];
+                    else
+                        inputencoding=fields[1];
+
+                    filecontent=new String(Base64.decodeBase64(fields[3]), inputencoding);
+                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                    is = new ByteArrayInputStream(content.getBytes(inputencoding));
+                } catch(java.io.UnsupportedEncodingException ex){
+                    filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
+                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                    is = new ByteArrayInputStream(content.getBytes("utf-8"));
                 }
-                else{
-                    String filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                    String content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-                    is = new ByteArrayInputStream(content.getBytes(Charsets.UTF_8));
+
+                if(returnxml)
+                    handler=getTransformerHandler(os, "xml", true);
+                else
                     handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
-                }
+ 
                 //Parsing
                 parser.parse(is, handler, new Metadata(), new ParseContext());
                 if(returnxml)
