@@ -243,7 +243,7 @@ class Crawler(object):
                             conn.request('GET', path)
                             res = conn.getresponse()
         
-                            if res.status == 301 or res.status == 302:
+                            if res.status >= 301 and res.status <= 308:
                                 rlink = self._follow_link(url, res.getheader('location'))
                                 self._add_target(rlink)
                                 logging.info('redirect: %s -> %s' % (url, rlink))
@@ -263,6 +263,12 @@ class Crawler(object):
                             links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
                                     doc.text, re.S)
                             linksset = list(set(links))
+
+                            #Getting redirections using http-equiv="refresh"
+                            links = re.findall('''<meta\s*http-equiv=['"]refresh['"]\s*content=['"][^ ]* *URL=([^'"]+)['"]>''',
+                                    doc.text, re.S)
+                            linksset.extend(list(set(links)))
+
                             shuffle(linksset)
                             self.process_document(doc)
         
