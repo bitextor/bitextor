@@ -370,6 +370,8 @@ crawler.crawl(options.URL)
 if crawler.interrupt:
   if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:
     sys.stderr.write("Crawling size limit reached: stopping crawl\n")
+    sys.exit(3)
   elif crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
     sys.stderr.write("Crawling time limit reached: stopping crawl\n")
+    sys.exit(4)
 
