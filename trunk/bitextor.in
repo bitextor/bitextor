@@ -7,6 +7,8 @@ if [[ -z $TMPDIR ]]; then
   TMPDIR="/tmp"
 fi
 #Path to default dictionary: it can be replaced by using option -v
+JOBS=""
+TIMEOUT=""
 LANG1=""
 LANG2=""
 BIDIDOCALIGN=0
@@ -51,7 +53,6 @@ WEIGHTS="__PREFIX__/share/bitextor/model/keras.weights"
 SIZELIMIT=""
 TIMELIMIT=""
 DOCSIMTHRESHOLD=""
-CONDITIONALTHRESHOLD=false
 exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
@@ -117,12 +118,8 @@ exit_program()
   echo "  -O FILE           if this option is enabled, the otput of bitextor will be redirected"
   echo "                    to file FILE, if not it is redirected to the standard output."
   echo "  -d THRESHOLD      threshold for the parallel-document confidence score. This threshold"
-  echo "                    can take real values in [0.0,1.0], being 0.0 equivalent to not setting"
-  echo "                    any threshold and 1.0 the highest threshold possible. It is possible to"
-  echo "                    set a threshold that is only used if the crawling process is stopped before"
-  echo "                    a website is completely downloaded (in this case it is easier to make errors"
-  echo "                    when aligning documents. To do so, add the character 's' at the end of the"
-  echo "                    threshold."
+  echo "                    can take real values in [0,1], being 0 equivalent to not setting any"
+  echo "                    threshold and 1 the highest threshold possible."
   echo "  -s SIZE           size limit for the crawling process; if this option is set, the crawling"
   echo "                    process will stop after the amount of data specified has been crawled."
   echo "                    This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G)"
@@ -131,6 +128,12 @@ exit_program()
   echo "                    process will stop after the amount of time specified. This option must"
   echo "                    be an amount of time and a time unit (h for hours, m for minutes and"
   echo "                    s for seconds), for example: '35m' for 35 minutes"
+  echo "  -j JOBS           number of jobs to be run in parallel (threads) used during crawling;"
+  echo "                    note that a number of jobs too high may cause that the server will not"
+  echo "                    be able to attend all the connection requests (default value 4)."
+  echo "  -c TIME           connection timeout; maximum time (in seconds) to wait until a connection"
+  echo "                    request is attended from the servere during web crawling (defalut value 15)."
+
   exit 1
 }
 
@@ -158,30 +161,16 @@ run_bitextor(){
   rm $tmpcrawl
   mkfifo $tmpcrawl
 
-  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT 2> $CRAWLLOG > $tmpcrawl &
-
-  cpid=$!
+  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
-  trap "trapsigint $crawl_pid" SIGUSR1
 
-  tee $CRAWL2ETTOUT < $tmpcrawl | __PREFIX__/bin/bitextor-crawl2ett 2> $CRAWL2ETTLOG | tee $ETT | \
+  __PREFIX__/bin/bitextor-crawl2ett < $tmpcrawl 2> $CRAWL2ETTLOG | tee $ETT | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR 
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
 
-  wait $cpid
-  CRAWLOUTPUT=$?
+  wait
   rm $tmpcrawl
-
-  #if the crawl is stopped, or it reaches a limit
-  if [[ "$CRAWLOUTPUT" == "130" || "$CRAWLOUTPUT" == "4" || "$CRAWLOUTPUT" == "3" ]]; then
-      >&2 echo "Website download stopped"
-  else
-      if $CONDITIONALTHRESHOLD; then
-          DOCSIMTHRESHOLD=""
-      fi
-  fi
-
   align_segments $LETTR
 }
 
@@ -367,7 +356,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:" $*)
 
 set -- $ARGS
 for i
@@ -511,13 +500,17 @@ do
       ;;
     -d)
       shift
-      code=$(echo $1 | sed 's/[.0-9]//g')
-      if [[ "$code" == "s" ]]; then
-          CONDITIONALTHRESHOLD=true
-          DOCSIMTHRESHOLD="-t $(echo $1 | sed 's/s//g')"
-      else
-          DOCSIMTHRESHOLD="-t $1"
-      fi
+      DOCSIMTHRESHOLD="-t $1"
+      shift
+      ;;
+    -j)
+      shift
+      JOBS="-j $1"
+      shift
+      ;;
+    -c)
+      shift
+      TIMEOUT="-o $1"
       shift
       ;;
     -h)
