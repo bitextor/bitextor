@@ -1,0 +1,4 @@
+- Better dealing with redirection
+- Setting a limit of retrials when errors occur in (up to 5)
+- Adding an option for setting the number of parallel threads that can be run during crawling
+- Adding an option for specifying the timout value

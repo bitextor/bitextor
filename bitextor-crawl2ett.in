@@ -70,9 +70,6 @@ for line in sys.stdin:
     m.setflags(16|1024)
     magicoutput=m.buffer(base64.b64decode(content)).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
-    if "unknown" in magicoutput[1]:
-      import chardet
-      magicoutput[1]="charset="+chardet.detect(base64.b64decode(content))["encoding"]
     magicoutput.append(url)
     magicoutput.append(content)
     print "\t".join(magicoutput)

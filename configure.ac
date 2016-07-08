@@ -294,6 +294,7 @@ print (var)" 2> /dev/null`
   AC_MSG_CHECKING([for libmagic for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import magic; \
+m=magic.open(magic.MAGIC_NONE); \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
@@ -333,21 +334,6 @@ print (var)" 2> /dev/null`
     AC_MSG_ERROR([this package requires nltk for Python. Please, install v3.0 or later and try again. http://www.nltk.org
 ])
   fi
-
-  AC_MSG_CHECKING([for chardet for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import chardet; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires chardet for Python. Please, install v2.3 or later and try again. https://github.com/chardet/chardet
-])
-  fi
-
 
     AC_MSG_CHECKING([for regex for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
@@ -418,4 +404,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-5.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile])
+AC_OUTPUT([Makefile bitextor-4.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile giza-pp/GIZA++-v2/Makefile giza-pp/mkcls-v2/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile])

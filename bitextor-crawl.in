@@ -46,7 +46,7 @@ class Crawler(object):
         self.seen = set()
         self.threads = []
         self.concurrency = 0
-        self.max_outstanding = 8
+        self.max_outstanding = 16
         self.max_depth = 50
         self.root_url = None
         self.proto = None
@@ -60,6 +60,7 @@ class Crawler(object):
         self.timelimit = None
         self.robotsparser = robotparser.RobotFileParser()
         self.interrupt = False
+        self.timeout = 10
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -73,6 +74,9 @@ class Crawler(object):
 
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
+
+    def set_timeout(self, time):
+        self.timeout=time
 
     def add_url_filter(self, uf):
         self.url_filters.append(uf)
@@ -105,8 +109,13 @@ class Crawler(object):
         self.dir_path = dirname(self.path)
         self.query = rx.group(4)
 
-        self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
-        self.robotsparser.read()
+        try:
+          self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
+          self.robotsparser.read()
+        except IOError:
+          sys.stderr.write("It was not possible to connect to the web server specified")
+          sys.exit(-1)
+
 
         self.targets.append(url)
         self.seen.add(url)
@@ -224,7 +233,8 @@ class Crawler(object):
                     try:
                         url = self.targets.pop(0)
                         logging.debug('url: %s' % url)
-                        self.visited[url] = True
+                        if url not in self.visited:
+                          self.visited[url] = 1
                         self.targets_lock.release()
     
                         if not self.robotsparser.can_fetch("*", url):
@@ -236,10 +246,10 @@ class Crawler(object):
                             path = rx.group(3)
         
                             if protocol == 'http':
-                                conn = httplib.HTTPConnection(host, timeout=10)
+                                conn = httplib.HTTPConnection(host, timeout=self.timeout)
                             else:
-                                conn = httplib.HTTPSConnection(host, timeout=10)
-        
+                                conn = httplib.HTTPSConnection(host, timeout=self.timeout)
+
                             conn.request('GET', path)
                             res = conn.getresponse()
         
@@ -263,12 +273,6 @@ class Crawler(object):
                             links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
                                     doc.text, re.S)
                             linksset = list(set(links))
-
-                            #Getting redirections using http-equiv="refresh"
-                            links = re.findall('''<meta\s*http-equiv=['"]refresh['"]\s*content=['"][^ ]* *URL=([^'"]+)['"]>''',
-                                    doc.text, re.S)
-                            linksset.extend(list(set(links)))
-
                             shuffle(linksset)
                             self.process_document(doc)
         
@@ -287,10 +291,14 @@ class Crawler(object):
                         elif self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
                             self.interrupt=True
                         else:
-                            logging.error('%s: %s, retrying' % (url, str(e)))
                             self.targets_lock.acquire()
-                            self.targets.append(url)
-                            self.seen.add(url)
+                            if self.visited[url] <= 5:
+                              logging.error('%s: %s, retrying (attempt %s)' % (url, str(e), str(self.visited[url])))
+                              self.targets.append(url)
+                              self.visited[url]=self.visited[url]+1
+                              self.seen.add(url)
+                            else:
+                              logging.error('%s: %s, given up after 5 attempts' % (url, str(e)))
                             self.targets_lock.release()
                 else:
                     self.targets_lock.release()
@@ -311,6 +319,8 @@ oparser = argparse.ArgumentParser(description="Script that crawls a website and 
 oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
 oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
+oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
+oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -338,7 +348,9 @@ if not options.URL.startswith("http"):
     sys.exit(-1)
 
 crawler = MyCrawler()
+crawler.set_concurrency_level(options.jobs)
 crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
+crawler.set_timeout(20)
 if options.sizelimit != None:
   unit=options.sizelimit[-1]
   if unit == 'G':
@@ -370,8 +382,6 @@ crawler.crawl(options.URL)
 if crawler.interrupt:
   if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:
     sys.stderr.write("Crawling size limit reached: stopping crawl\n")
-    sys.exit(3)
   elif crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
     sys.stderr.write("Crawling time limit reached: stopping crawl\n")
-    sys.exit(4)
 
