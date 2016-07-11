@@ -73,7 +73,7 @@ public class PipedTika {
      * The input contains additional information: it is tab-sepparated and the name of the file is in field 3
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws FileNotFoundException, IOException, TikaException, TransformerConfigurationException, SAXException {
+    public static void main(String[] args) throws FileNotFoundException, IOException, TransformerConfigurationException, SAXException {
         BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
         String line;
         //Tika t=new Tika();
@@ -117,13 +117,17 @@ public class PipedTika {
                     handler=getTransformerHandler(os, "xml", true);
                 else
                     handler=new BodyContentHandler((new OutputStreamWriter(os, "UTF-8")));
- 
+
                 //Parsing
-                parser.parse(is, handler, new Metadata(), new ParseContext());
-                if(returnxml)
-                    System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
-                else
-                    System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
+                try{
+                    parser.parse(is, handler, new Metadata(), new ParseContext());
+                    if(returnxml)
+                        System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
+                    else
+                        System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
+                } catch(TikaException ex){
+                    System.err.println("Error while processing file");
+                }
             }
         }
     }    
