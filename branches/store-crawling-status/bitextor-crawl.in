@@ -23,8 +23,9 @@ import base64
 import argparse
 from random import shuffle
 import signal
+import pickle
 
-from sets import Set as set 
+from sets import Set as set
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -71,6 +72,8 @@ class Crawler(object):
         self.concurrency_lock = Lock()
 
         logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
+
+        self.dumpfile=None
 
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
@@ -236,7 +239,7 @@ class Crawler(object):
                         if url not in self.visited:
                           self.visited[url] = 1
                         self.targets_lock.release()
-    
+
                         if not self.robotsparser.can_fetch("*", url):
                             sys.stderr.write("robots.txt forbids crawling URL: "+url+"\n")
                         else:
@@ -244,7 +247,7 @@ class Crawler(object):
                             protocol = rx.group(1)
                             host = rx.group(2)
                             path = rx.group(3)
-        
+
                             if protocol == 'http':
                                 conn = httplib.HTTPConnection(host, timeout=self.timeout)
                             else:
@@ -252,13 +255,13 @@ class Crawler(object):
 
                             conn.request('GET', path)
                             res = conn.getresponse()
-        
+
                             if res.status >= 301 and res.status <= 308:
                                 rlink = self._follow_link(url, res.getheader('location'))
                                 self._add_target(rlink)
                                 logging.info('redirect: %s -> %s' % (url, rlink))
                                 continue
-        
+
                             # Check content type
                             try:
                                 if not re.search(self.content_type_filter,
@@ -267,7 +270,7 @@ class Crawler(object):
                                     continue
                             except TypeError: # getheader result is None
                                 continue
-        
+
                             doc = Document(res, url)
                             # Make unique list (these are the links in the document)
                             links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
@@ -275,11 +278,11 @@ class Crawler(object):
                             linksset = list(set(links))
                             shuffle(linksset)
                             self.process_document(doc)
-        
+
                             for link in linksset:
                                 rlink = self._follow_link(url, link.strip())
                                 self._add_target(rlink)
-        
+
                             if self.concurrency < self.max_outstanding:
                                 self._spawn_new_worker()
                     except KeyError as e:
@@ -308,9 +311,6 @@ class Crawler(object):
         self.concurrency -= 1
         self.concurrency_lock.release()
 
-    def termsighandler(signum, frame):
-        sys.stderr.write("Stopping crawling by user's SIGTERM\n")
-        self.interrput=True
 
 
 ##### NEW CODE #####
@@ -321,6 +321,8 @@ oparser.add_argument("-t", help="Time limit after which crawling will be stopped
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
+oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
+oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -341,6 +343,25 @@ class MyCrawler(Crawler):
         self.concurrency_lock.release()
     else:
       pass
+
+  def get_status_object(self):
+    return { 'visited':self.visited , 'targets':self.targets , 'seen':self.seen }
+
+  def load_status(self,statusobj):
+    self.visited=statusobj['visited']
+    self.targets=statusobj['targets']
+    self.seen=statusobj['seen']
+
+  def termsighandler(self, signum, frame):
+    sys.stderr.write("Stopping crawling by user's SIGTERM\n")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    if self.dumpfile != None:
+      sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
+      pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
+      self.interrupt=True
+      #exit(143) #128 + 15(SIGTERM).
+
 
 if not options.URL.startswith("http"):
   if options.URL.find("://") != -1:
@@ -375,13 +396,20 @@ if options.timelimit != None:
     sys.stderr.write("The value of option -t (download time limit) has to be a number and a unit ('s' for second, 'm' for minutes, or 'h' for hours), for example: 15m or 3h\n")
     sys.exit(-1)
 
+if options.dump != None:
+  crawler.dumpfile=options.dump
+
+if options.load != None:
+  sys.stderr.write("Restoring crawling from "+options.load+"\n")
+  crawler.load_status(pickle.load(open(options.load,'rb')))
+
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
+signal.signal(signal.SIGTERM, crawler.termsighandler)
 crawler.crawl(options.URL)
-#signal.signal(signal.SIGTERM, crawler.termsighandler)
+
 
 if crawler.interrupt:
   if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:
     sys.stderr.write("Crawling size limit reached: stopping crawl\n")
   elif crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
     sys.stderr.write("Crawling time limit reached: stopping crawl\n")
-
