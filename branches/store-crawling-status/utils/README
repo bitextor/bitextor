@@ -1,0 +1,73 @@
+Europarl v3 Preprocessing Tools
+===============================
+written by Philipp Koehn and Josh Schroeder
+
+
+Sentence Splitter
+=================
+Usage ./split-sentences.perl -l [en|de|...] < textfile > splitfile
+
+Uses punctuation and Capitalization clues to split paragraphs of 
+sentences into files with one sentence per line. For example:
+
+This is a paragraph. It contains several sentences. "But why," you ask?
+
+goes to:
+
+This is a paragraph.
+It contains several sentences.
+"But why," you ask?
+
+See more information in the Nonbreaking Prefixes section.
+
+
+Tokenizer
+=========
+Usage ./tokenizer.perl -l [en|de|...] < textfile > tokenizedfile
+
+Splits out most punctuation from words. Special cases where splits
+do not occur are documented in the code. 
+
+This E.U. treaty is, to use the words of Mr. Smith, "awesome." 
+
+goes to:
+
+This E.U. treaty is , to use the words of Mr. Smith , " awesome . "
+
+Like the sentence splitter, it makes use of the nonbreaking_prefixes
+directory.
+
+
+Nonbreaking Prefixes Directory
+==============================
+
+Nonbreaking prefixes are loosely defined as any word ending in a
+period that does NOT indicate an end of sentence marker. A basic
+example is Mr. and Ms. in English.
+
+The sentence splitter and tokenizer included with this release
+both use the nonbreaking prefix files included in this directory.
+
+To add a file for other languages, follow the naming convention
+nonbreaking_prefix.?? and use the two-letter language code you
+intend to use when calling split-sentences.perl and tokenizer.perl.
+
+Both split-sentences and tokenizer will first look for a file for the
+language they are processing, and fall back to English if a file
+for that language is not found. If the nonbreaking_prefixes directory does
+not exist at the same location as the split-sentences.perl and tokenizer.perl
+files, they will not run.
+
+For the splitter, normally a period followed by an uppercase word
+results in a sentence split. If the word preceeding the period
+is a nonbreaking prefix, this line break is not inserted.
+
+For the tokenizer, a nonbreaking prefix is not separated from its 
+period with a space.
+
+A special case of prefixes, NUMERIC_ONLY, is included for special
+cases where the prefix should be handled ONLY when before numbers.
+For example, "Article No. 24 states this." the No. is a nonbreaking
+prefix. However, in "No. It is not true." No functions as a word.
+
+See the example prefix files included here for more examples.

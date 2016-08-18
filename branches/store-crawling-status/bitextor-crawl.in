@@ -1,0 +1,387 @@
+#!__ENV__ __PYTHON__
+
+#-*- coding: utf-8 -*-
+#
+# This files has been created building on the crawler.py script
+# in the Creepy project, by Wei-Ning Huang (AZ) <aitjcize@gmail.com>
+# and is distributed under GPLv3 license.
+#
+
+import httplib
+import logging
+import re
+import sys
+import time
+import robotparser
+
+from posixpath import join, dirname, normpath
+from threading import Thread, Lock
+from urllib import quote, unquote
+
+import urllib2
+import base64
+import argparse
+from random import shuffle
+import signal
+
+from sets import Set as set 
+
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
+class Document(object):
+    def __init__(self, res, url):
+        self.url = url
+        self.query = '' if not '?' in url else url.split('?')[-1]
+        self.status = res.status
+        self.text = res.read()
+        self.headers = dict(res.getheaders())
+        self.links = []
+
+class Crawler(object):
+    F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH = range(4)
+    def __init__(self, debug=False):
+        self.visited = {}
+        self.targets = []
+        self.seen = set()
+        self.threads = []
+        self.concurrency = 0
+        self.max_outstanding = 16
+        self.max_depth = 50
+        self.root_url = None
+        self.proto = None
+        self.host = None
+        self.path = None
+        self.dir_path = None
+        self.query = None
+        self.crawlstarts = time.time()
+        self.crawlsize = 0.0
+        self.sizelimit = None
+        self.timelimit = None
+        self.robotsparser = robotparser.RobotFileParser()
+        self.interrupt = False
+        self.timeout = 10
+
+        self.follow_mode = self.F_SAME_HOST
+        self.content_type_filter = '(text/html)'
+        self.url_filters = []
+        self.prefix_filter = '^(#|javascript:|mailto:)'
+
+        self.targets_lock = Lock()
+        self.concurrency_lock = Lock()
+
+        logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
+
+    def set_content_type_filter(self, cf):
+        self.content_type_filter = '(%s)' % ('|'.join(cf))
+
+    def set_timeout(self, time):
+        self.timeout=time
+
+    def add_url_filter(self, uf):
+        self.url_filters.append(uf)
+
+    def set_follow_mode(self, mode):
+        if mode > 5:
+            raise RuntimeError('invalid follow mode.')
+        self.follow_mode = mode
+
+    def set_concurrency_level(self, level):
+        self.max_outstanding = level
+
+    def set_max_depth(self, max_depth):
+        self.max_depth = max_depth
+
+    def process_document(self, doc):
+        print 'GET', doc.status, doc.url, doc.links
+        #to do stuff with url depth use self._calc_depth(doc.url)
+
+    def crawl(self, url):
+        self.root_url = url
+
+        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
+        if rx is None:
+          url="http://"+url
+          rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
+        self.proto = rx.group(1)
+        self.host = rx.group(2)
+        self.path = rx.group(3)
+        self.dir_path = dirname(self.path)
+        self.query = rx.group(4)
+
+        try:
+          self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
+          self.robotsparser.read()
+        except IOError:
+          sys.stderr.write("It was not possible to connect to the web server specified")
+          sys.exit(-1)
+
+
+        self.targets.append(url)
+        self.seen.add(url)
+        self._spawn_new_worker()
+
+        while self.threads:
+            try:
+                for t in self.threads:
+                    try:
+                        t.join(1)
+                        if not t.isAlive():
+                            self.threads.remove(t)
+                    except RuntimeError:
+                        pass
+
+            except KeyboardInterrupt:
+                sys.exit(1)
+
+    def _url_domain(self, host):
+        parts = host.split('.')
+        if len(parts) <= 2:
+            return host
+        elif re.match('^[0-9]+(?:\.[0-9]+){3}$', host): # IP
+            return host
+        else:
+            return '.'.join(parts[1:])
+
+    def _follow_link(self, url, link):
+        # Remove anchor
+        link = re.sub(r'#[^#]*$', '', link)
+
+        # Skip prefix
+        if re.search(self.prefix_filter, link):
+            return None
+
+        # Filter url
+        for f in self.url_filters:
+            if re.search(f, link):
+                return None
+
+        rx = re.match('(https?://)([^/:]+)(:[0-9]+)?([^\?]*)(\?.*)?', url)
+        url_proto = rx.group(1)
+        url_host = rx.group(2)
+        url_port = rx.group(3) if rx.group(3) else ''
+        url_path = rx.group(4) if len(rx.group(4)) > 0 else '/'
+        url_dir_path = dirname(url_path)
+
+        rx = re.match('((https?://)([^/:]+)(:[0-9]+)?)?([^\?]*)(\?.*)?', link)
+        link_full_url = rx.group(1) != None
+        link_proto = rx.group(2) if rx.group(2) else url_proto
+        link_host = rx.group(3) if rx.group(3) else url_host
+        link_port = rx.group(4) if rx.group(4) else url_port
+        link_path = rx.group(5) if rx.group(5) else url_path
+        link_query = quote(rx.group(6), '?=&%') if rx.group(6) else ''
+
+        if not link_full_url and not link.startswith('/'):
+            link_path = normpath(join(url_dir_path, link_path))
+        link_dir_path = dirname(link_path)
+
+        link_url = link_proto + link_host + link_port + link_path + link_query
+
+        if self.follow_mode == self.F_ANY:
+            return link_url
+        elif self.follow_mode == self.F_SAME_DOMAIN:
+            return link_url if self._url_domain(self.host) == \
+                    self._url_domain(link_host) else None
+        elif self.follow_mode == self.F_SAME_HOST:
+            return link_url if self.host == link_host else None
+        elif self.follow_mode == self.F_SAME_PATH:
+            if self.host == link_host and \
+                    link_dir_path.startswith(self.dir_path):
+                return link_url
+            else:
+                return None
+
+    def _calc_depth(self, url):
+        # calculate url depth
+        return len(url.replace('https', 'http').replace(self.root_url, '')
+                .rstrip('/').split('/')) - 1
+
+    def _add_target(self, target):
+        if not target:
+            return
+
+        if self.max_depth and self._calc_depth(target) > self.max_depth:
+            return
+
+        self.targets_lock.acquire()
+        if self.visited.has_key(target):
+            self.targets_lock.release()
+            return
+        if target not in self.seen:
+            self.targets.append(target)
+            self.seen.add(target)
+        self.targets_lock.release()
+
+    def _spawn_new_worker(self):
+        self.concurrency_lock.acquire()
+        try:
+            self.concurrency += 1
+            t = Thread(target=self._worker, args=(self.concurrency,))
+            t.daemon = True
+            self.threads.append(t)
+            t.start()
+        finally:
+            self.concurrency_lock.release()
+
+    def _worker(self, _):
+        while self.targets:
+            if self.interrupt:
+                break
+            else:
+                self.targets_lock.acquire()
+                if len(self.targets)>0:
+                    try:
+                        url = self.targets.pop(0)
+                        logging.debug('url: %s' % url)
+                        if url not in self.visited:
+                          self.visited[url] = 1
+                        self.targets_lock.release()
+    
+                        if not self.robotsparser.can_fetch("*", url):
+                            sys.stderr.write("robots.txt forbids crawling URL: "+url+"\n")
+                        else:
+                            rx = re.match('(https?)://([^/]+)(.*)', url)
+                            protocol = rx.group(1)
+                            host = rx.group(2)
+                            path = rx.group(3)
+        
+                            if protocol == 'http':
+                                conn = httplib.HTTPConnection(host, timeout=self.timeout)
+                            else:
+                                conn = httplib.HTTPSConnection(host, timeout=self.timeout)
+
+                            conn.request('GET', path)
+                            res = conn.getresponse()
+        
+                            if res.status >= 301 and res.status <= 308:
+                                rlink = self._follow_link(url, res.getheader('location'))
+                                self._add_target(rlink)
+                                logging.info('redirect: %s -> %s' % (url, rlink))
+                                continue
+        
+                            # Check content type
+                            try:
+                                if not re.search(self.content_type_filter,
+                                    res.getheader('Content-Type')):
+                                    sys.stderr.write(url+" discarded: wrong file type\n")
+                                    continue
+                            except TypeError: # getheader result is None
+                                continue
+        
+                            doc = Document(res, url)
+                            # Make unique list (these are the links in the document)
+                            links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
+                                    doc.text, re.S)
+                            linksset = list(set(links))
+                            shuffle(linksset)
+                            self.process_document(doc)
+        
+                            for link in linksset:
+                                rlink = self._follow_link(url, link.strip())
+                                self._add_target(rlink)
+        
+                            if self.concurrency < self.max_outstanding:
+                                self._spawn_new_worker()
+                    except KeyError as e:
+                        # Pop from an empty set
+                        break
+                    except (httplib.HTTPException, EnvironmentError) as e:
+                        if self.sizelimit != None and self.crawlsize > self.sizelimit:
+                            self.interrupt=True
+                        elif self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
+                            self.interrupt=True
+                        else:
+                            self.targets_lock.acquire()
+                            if self.visited[url] <= 5:
+                              logging.error('%s: %s, retrying (attempt %s)' % (url, str(e), str(self.visited[url])))
+                              self.targets.append(url)
+                              self.visited[url]=self.visited[url]+1
+                              self.seen.add(url)
+                            else:
+                              logging.error('%s: %s, given up after 5 attempts' % (url, str(e)))
+                            self.targets_lock.release()
+                else:
+                    self.targets_lock.release()
+
+
+        self.concurrency_lock.acquire()
+        self.concurrency -= 1
+        self.concurrency_lock.release()
+
+    def termsighandler(signum, frame):
+        sys.stderr.write("Stopping crawling by user's SIGTERM\n")
+        self.interrput=True
+
+
+##### NEW CODE #####
+
+oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-sepparated output containing the base64 encoded document and the corresponding URL.")
+oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
+oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
+oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
+oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
+oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
+options = oparser.parse_args()
+
+class MyCrawler(Crawler):
+  def process_document(self, doc):
+    if doc.status == 200:
+      self.concurrency_lock.acquire()
+      try:
+        print base64.b64encode(doc.text)+"\t"+doc.url
+        self.crawlsize+=sys.getsizeof(doc.text)/1000000.0
+        if self.sizelimit != None and self.crawlsize > self.sizelimit:
+          #sys.stderr.write("Crawling size limit reached: stopping crawl\n")
+          self.interrupt=True
+        if self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
+          #sys.stderr.write("Crawling time limit reached: stopping crawl\n")
+          self.interrupt=True
+        #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
+      finally:
+        self.concurrency_lock.release()
+    else:
+      pass
+
+if not options.URL.startswith("http"):
+  if options.URL.find("://") != -1:
+    sys.stderr.write("Error: '"+options.URL.split("://")[0]+"' is not a valid protocol; you should use either 'http' or 'https'\n")
+    sys.exit(-1)
+
+crawler = MyCrawler()
+crawler.set_concurrency_level(options.jobs)
+crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
+crawler.set_timeout(20)
+if options.sizelimit != None:
+  unit=options.sizelimit[-1]
+  if unit == 'G':
+    crawler.sizelimit=float(options.sizelimit[:-1])*1000
+  elif unit == 'M':
+    crawler.sizelimit=float(options.sizelimit[:-1])
+  elif unit == 'K':
+    crawler.sizelimit=float(options.sizelimit[:-1])/1000.0
+  else:
+    sys.stderr.write("The value of option -s (download size limit) has to be a number and a unit ('G' for gigabytes, 'M' for megabytes, or 'K' for kilobytes), for example: 10M or 150K\n")
+    sys.exit(-1)
+
+if options.timelimit != None:
+  unit=options.timelimit[-1]
+  if unit == 'h':
+    crawler.timelimit=float(options.timelimit[:-1])*3600
+  elif unit == 'm':
+    crawler.timelimit=float(options.timelimit[:-1])*60
+  elif unit == 's':
+    crawler.timelimit=float(options.timelimit[:-1])
+  else:
+    sys.stderr.write("The value of option -t (download time limit) has to be a number and a unit ('s' for second, 'm' for minutes, or 'h' for hours), for example: 15m or 3h\n")
+    sys.exit(-1)
+
+#crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
+crawler.crawl(options.URL)
+#signal.signal(signal.SIGTERM, crawler.termsighandler)
+
+if crawler.interrupt:
+  if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:
+    sys.stderr.write("Crawling size limit reached: stopping crawl\n")
+  elif crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
+    sys.stderr.write("Crawling time limit reached: stopping crawl\n")
+

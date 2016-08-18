@@ -1,0 +1,111 @@
+#!__ENV__ __PYTHON__
+
+#
+# 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a dictionary. It is possible to provide two ridx files and combine them
+# 2. The name of the aligned files are provided together with the clean text in base64 following this format:
+# 
+# Output format:
+#   file_lang1	file_lang2	cleantext_encoded_base64_lang1	cleantext_encoded_base64_lang2
+#
+
+import sys
+import argparse
+from operator import itemgetter
+
+oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from the standard input) and produces a list of aligned documents. If two ridx files are provided, a bidirectional alignment is performed between them.")
+oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang1 to lang2', default=None)
+oparser.add_argument('ridx2', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang2 to lang1', default=None)
+oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file when performing bidirectional document alignment. This parameter is set by default to 1, which means that only documents being mutualy the best alignment option will be aligned. Note that this option is only used when two ridx files are provided", type=int, dest="candidate_num", default=1)
+oparser.add_argument("-r", "--ridx", help="If this option is defined, the rinal ridx file used for aligning the documents will be saved in the path specified (when two ridx files are provided, the ridx obtained when merging both files will be used)", dest="oridx", type=argparse.FileType('w'), default=None)
+
+options = oparser.parse_args()
+
+#if options.lang1 == None:
+#  sys.stderr.write("Undefined value for language 1. Set this value by using the parameter '-1'")
+#  sys.exit(-1)
+#
+#if options.lang2 == None:
+#  sys.stderr.write("Undefined value for language 2. Set this value by using the parameter '-2'")
+#  sys.exit(-1)
+
+combine=False
+if options.ridx2 == None:
+  if options.ridx1 == None:
+    reader = sys.stdin
+  else:
+    reader = open(options.ridx1,"r")
+else:
+  combine = True
+  reader1 = open(options.ridx1,"r")
+  reader2 = open(options.ridx2,"r")
+
+indices = {}
+documentos = {}
+
+# File .lett is read extracting the URL and the base64 encoded content
+contador = 1
+file = open(options.lettr,"r")
+for j in file:
+  campos = j.split("\t")
+  if len(campos) > 4:
+    documentos[contador] = (campos[3], campos[5]) # URL parsed_text_base64
+  contador += 1
+file.close()
+
+if combine == False:
+  #Reading the .ridx file with the preliminary alignment
+  for i in reader:
+    fields = i.split("\t")
+    if len(fields) >= 2:
+      if options.oridx != None:
+        options.oridx.write(i)
+      try:
+        indices[int(fields[0])] = int(fields[1].strip().split(":")[0])
+      except:
+        pass
+  reader.close()
+  if options.oridx != None:
+    options.oridx.close()
+else:
+  best_ridx2_inv = {}
+  #Reading the .ridx file with the preliminary alignment in one of the directions
+  for line_ridx2 in reader2:
+    fields=line_ridx2.strip().split("\t");
+    if len(fields) >= 2:
+      num_candidates=min(len(fields)-1,options.candidate_num)
+      for candidate_idx in range(1,num_candidates+1):
+        field_n=fields[candidate_idx].split(":")
+        if len(field_n) == 2:
+          if int(field_n[0]) not in best_ridx2_inv:
+            best_ridx2_inv[int(field_n[0])]={}
+          best_ridx2_inv[int(field_n[0])][int(fields[0])]=field_n[1]
+  reader2.close()
+
+  #Reading the .ridx file with the preliminary alignment in the other direction and combining this information with the previous one
+  for line_ridx1 in reader1:
+    new_candidate_list = {}
+    fields=line_ridx1.strip().split("\t")
+    if len(fields) >= 2:
+      num_candidates=min(len(fields)-1,options.candidate_num)
+      for candidate_idx in range(1,num_candidates+1):
+        field_n=fields[candidate_idx].split(":")
+        if len(field_n) == 2:
+          if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
+            average=(float(best_ridx2_inv[int(fields[0])][int(field_n[0])])+float(field_n[1]))/2
+            new_candidate_list[field_n[0]]=average
+    if len(new_candidate_list) >= 1:
+      sorted_candidates = sorted(new_candidate_list.iteritems(), key=itemgetter(1), reverse=True)
+      indices[int(fields[0])] = int(sorted_candidates[0][0])
+      if options.oridx != None:
+        elements=map(lambda candidate_tuple: "{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]), sorted_candidates)
+        options.oridx.write("{0}\t{1}\n".format(fields[0], "\t".join(elements)))
+  reader1.close()
+  if options.oridx != None:
+    options.oridx.close()
+
+for k in indices:
+  if indices[k] in documentos.keys():
+    print "{0}\t{1}\t{2}\t{3}".format(documentos[k][0], documentos[indices[k]][0], documentos[k][1], documentos[indices[k]][1])
+    del documentos[k]
+
