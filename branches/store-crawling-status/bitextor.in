@@ -174,7 +174,7 @@ run_bitextor(){
       CONTINUEARGS="-l $CRAWLINGSTATUSCONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $CRAWLINGSTATUSDUMP $CRAWLINGSTATUSCONTINUE 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
 
