@@ -177,6 +177,7 @@ run_bitextor(){
   __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
+  trap "trapsigint $crawl_pid" SIGUSR1
 
   __PREFIX__/bin/bitextor-crawl2ett < $tmpcrawl 2> $CRAWL2ETTLOG | tee $ETT | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
