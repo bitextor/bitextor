@@ -53,6 +53,10 @@ WEIGHTS="__PREFIX__/share/bitextor/model/keras.weights"
 SIZELIMIT=""
 TIMELIMIT=""
 DOCSIMTHRESHOLD=""
+CRAWLINGSTATUSDUMP=""
+CRAWLINGSTATUSCONTINUE=""
+
+
 exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
@@ -62,7 +66,7 @@ exit_program()
   echo "USAGE: $1 [OPTIONS] -e FILE        -v VOCABULARY LANG1 LANG2"
   echo ""
   echo "WHERE:"
-  echo "  -u URL          URL of a website to crawl (one per line); if option -e is also" 
+  echo "  -u URL          URL of a website to crawl (one per line); if option -e is also"
   echo "                  enabled, the website is downloaded in the ETT fomat and stored"
   echo "                  in the file at the specified path, if not, it is downloaded in"
   echo "                  a temporal directory in '/tmp' (or a different directory if -T option is used)."
@@ -161,7 +165,16 @@ run_bitextor(){
   rm $tmpcrawl
   mkfifo $tmpcrawl
 
-  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  DUMPARGS=""
+  if [ "$CRAWLINGSTATUSDUMP" != "" ]; then
+      DUMPARGS="-d $CRAWLINGSTATUSDUMP"
+  fi
+  CONTINUEARGS=""
+  if [ "$CRAWLINGSTATUSCONTINUE" != "" ]; then
+      CONTINUEARGS="-l $CRAWLINGSTATUSCONTINUE"
+  fi
+
+  __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $CRAWLINGSTATUSDUMP $CRAWLINGSTATUSCONTINUE 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
 
@@ -210,7 +223,7 @@ align_segments(){
 
     INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
     RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
-    RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX) 
+    RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX)
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
@@ -272,7 +285,7 @@ align_segments(){
 
     paste $WORDS $WORDS | sed 's/\t/ @ /g' >> $HUNALIGN_DIC
     rm $WORDS
-    
+
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
@@ -356,7 +369,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:" $*)
 
 set -- $ARGS
 for i
@@ -392,7 +405,7 @@ do
       shift
       MORPH2=$(mktemp $TMPDIR/morph2.XXXXXX)
       sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH2
-      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2" 
+      MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2"
       shift
       ;;
     -L)
@@ -513,6 +526,16 @@ do
       TIMEOUT="-o $1"
       shift
       ;;
+    -p)
+      shift
+      CRAWLINGSTATUSDUMP="$1"
+      shift
+      ;;
+     -C)
+        shift
+        CRAWLINGSTATUSCONTINUE="$1"
+        shift
+        ;;
     -h)
       exit_program $(basename $0)
       ;;
@@ -584,4 +607,3 @@ case $INPUTMODE in
     exit_program $(basename $0)
     ;;
 esac
-
