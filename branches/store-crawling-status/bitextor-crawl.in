@@ -360,7 +360,7 @@ class MyCrawler(Crawler):
     if self.dumpfile != None:
       sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
       pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
-      self.interrupt=True
+    self.interrupt=True
       #exit(143) #128 + 15(SIGTERM).
 
 
