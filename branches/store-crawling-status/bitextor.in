@@ -55,6 +55,7 @@ TIMELIMIT=""
 DOCSIMTHRESHOLD=""
 CRAWLINGSTATUSDUMP=""
 CRAWLINGSTATUSCONTINUE=""
+CRAWLINGDATACONTINUE=""
 
 
 exit_program()
@@ -172,6 +173,9 @@ run_bitextor(){
   CONTINUEARGS=""
   if [ "$CRAWLINGSTATUSCONTINUE" != "" ]; then
       CONTINUEARGS="-l $CRAWLINGSTATUSCONTINUE"
+  fi
+  if [ "$CRAWLINGDATACONTINUE" != "" ]; then
+      CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
   __PREFIX__/bin/bitextor-crawl $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
@@ -370,7 +374,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:" $*)
+ARGS=$(getopt "xfaq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
 
 set -- $ARGS
 for i
@@ -535,6 +539,11 @@ do
      -C)
         shift
         CRAWLINGSTATUSCONTINUE="$1"
+        shift
+        ;;
+     -R)
+        shift
+        CRAWLINGDATACONTINUE="$1"
         shift
         ;;
     -h)

@@ -323,6 +323,7 @@ oparser.add_argument("-j", help="Number of crawling jobs that can be run in para
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
+oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -402,6 +403,10 @@ if options.dump != None:
 if options.load != None:
   sys.stderr.write("Restoring crawling from "+options.load+"\n")
   crawler.load_status(pickle.load(open(options.load,'rb')))
+if options.resumeett != None:
+  for line in open(options.resumeett):
+      print line.rstrip("\n")
+
 
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
