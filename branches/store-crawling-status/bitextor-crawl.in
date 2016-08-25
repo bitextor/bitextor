@@ -290,9 +290,13 @@ class Crawler(object):
                         break
                     except (httplib.HTTPException, EnvironmentError) as e:
                         if self.sizelimit != None and self.crawlsize > self.sizelimit:
+                            self.concurrency_lock.acquire()
                             self.interrupt=True
+                            self.concurrency_lock.release()
                         elif self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
+                            self.concurrency_lock.acquire()
                             self.interrupt=True
+                            self.concurrency_lock.release()
                         else:
                             self.targets_lock.acquire()
                             if self.visited[url] <= 5:
@@ -357,10 +361,13 @@ class MyCrawler(Crawler):
     sys.stderr.write("Stopping crawling by user's SIGTERM\n")
     sys.stdout.flush()
     sys.stderr.flush()
+    self.concurrency_lock.acquire()
+    self.interrupt=True
     if self.dumpfile != None:
       sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
       pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
-    self.interrupt=True
+    self.concurrency_lock.release()
+
       #exit(143) #128 + 15(SIGTERM).
 
 
