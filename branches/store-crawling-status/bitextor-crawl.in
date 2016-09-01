@@ -340,9 +340,11 @@ class MyCrawler(Crawler):
         if self.sizelimit != None and self.crawlsize > self.sizelimit:
           #sys.stderr.write("Crawling size limit reached: stopping crawl\n")
           self.interrupt=True
+          self.save_status()
         if self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
           #sys.stderr.write("Crawling time limit reached: stopping crawl\n")
           self.interrupt=True
+          self.save_status()
         #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
       finally:
         self.concurrency_lock.release()
@@ -357,15 +359,18 @@ class MyCrawler(Crawler):
     self.targets=statusobj['targets']
     self.seen=statusobj['seen']
 
+  def save_status(self):
+    if self.dumpfile != None:
+      sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
+      pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
+
   def termsighandler(self, signum, frame):
     sys.stderr.write("Stopping crawling by user's SIGTERM\n")
     sys.stdout.flush()
     sys.stderr.flush()
     self.concurrency_lock.acquire()
     self.interrupt=True
-    if self.dumpfile != None:
-      sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
-      pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
+    self.save_status()
     self.concurrency_lock.release()
 
       #exit(143) #128 + 15(SIGTERM).
