@@ -40,9 +40,11 @@ class Document(object):
         self.links = []
 
 class Crawler(object):
-    F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH = range(4)
+    F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH, F_TLD = range(5)
     def __init__(self, debug=False):
+        self.currdomain = ""
         self.visited = {}
+        self.outerdomaintargets = {}
         self.targets = []
         self.seen = set()
         self.threads = []
@@ -62,6 +64,7 @@ class Crawler(object):
         self.robotsparser = robotparser.RobotFileParser()
         self.interrupt = False
         self.timeout = 10
+        self.TLdomain = ""
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -85,7 +88,7 @@ class Crawler(object):
         self.url_filters.append(uf)
 
     def set_follow_mode(self, mode):
-        if mode > 5:
+        if mode > 6:
             raise RuntimeError('invalid follow mode.')
         self.follow_mode = mode
 
@@ -99,9 +102,24 @@ class Crawler(object):
         print 'GET', doc.status, doc.url, doc.links
         #to do stuff with url depth use self._calc_depth(doc.url)
 
-    def crawl(self, url):
+    def keep_crawling(self):
+        self.targets_lock.acquire()
+        self.targets = list(self.outerdomaintargets[self.outerdomaintargets.keys()[0]])
+        self.seen = set(self.targets)
+        del self.outerdomaintargets[self.outerdomaintargets.keys()[0]]
+        self.targets_lock.release()
+        self.root_url = self.targets.pop()
+        self.crawl(self.root_url)
+
+    def init_crawling(self, url):
         self.root_url = url
 
+        self.targets.append(url)
+        self.seen.add(url)
+        self.crawl(url)
+
+
+    def crawl(self, url):
         rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
         if rx is None:
           url="http://"+url
@@ -112,16 +130,15 @@ class Crawler(object):
         self.dir_path = dirname(self.path)
         self.query = rx.group(4)
 
+        self.TLdomain = self.host.split(".")[-1]
+        self.currdomain = self._url_domain(self.host)
+
         try:
           self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
           self.robotsparser.read()
         except IOError:
           sys.stderr.write("It was not possible to connect to the web server specified")
-          sys.exit(-1)
 
-
-        self.targets.append(url)
-        self.seen.add(url)
         self._spawn_new_worker()
 
         while self.threads:
@@ -179,9 +196,26 @@ class Crawler(object):
         link_dir_path = dirname(link_path)
 
         link_url = link_proto + link_host + link_port + link_path + link_query
-
         if self.follow_mode == self.F_ANY:
             return link_url
+        elif self.follow_mode == self.F_TLD:
+            dom = self._url_domain(link_host)
+            #print "Aquest es un dels URLs que podria afegir: "+link_url
+            sys.stderr.write(link_url+"\t"+dom+"\t"+dom.split(".")[-1]+"\t")
+            if dom == self.currdomain:
+                sys.stderr.write("Inside the same domain\n")
+                return link_url
+            elif dom.split(".")[-1] == self.TLdomain:
+                self.targets_lock.acquire()
+                if dom not in self.outerdomaintargets:
+                    self.outerdomaintargets[dom] = set()
+                self.outerdomaintargets[dom].add(link_url)
+                self.targets_lock.release()
+                sys.stderr.write("Stored in the list of domains\n")
+                return None
+            else:
+                sys.stderr.write("Discarded\n")
+                return None
         elif self.follow_mode == self.F_SAME_DOMAIN:
             return link_url if self._url_domain(self.host) == \
                     self._url_domain(link_host) else None
@@ -234,7 +268,7 @@ class Crawler(object):
                 self.targets_lock.acquire()
                 if len(self.targets)>0:
                     try:
-                        url = self.targets.pop(0)
+                        url = self.targets.pop()
                         logging.debug('url: %s' % url)
                         if url not in self.visited:
                           self.visited[url] = 1
@@ -328,6 +362,7 @@ oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
+oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -372,9 +407,7 @@ class MyCrawler(Crawler):
     self.interrupt=True
     self.save_status()
     self.concurrency_lock.release()
-
       #exit(143) #128 + 15(SIGTERM).
-
 
 if not options.URL.startswith("http"):
   if options.URL.find("://") != -1:
@@ -383,7 +416,10 @@ if not options.URL.startswith("http"):
 
 crawler = MyCrawler()
 crawler.set_concurrency_level(options.jobs)
-crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
+if options.crawltld:
+  crawler.set_follow_mode(Crawler.F_TLD)
+else:
+  crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
 crawler.set_timeout(20)
 if options.sizelimit != None:
   unit=options.sizelimit[-1]
@@ -419,11 +455,12 @@ if options.resumeett != None:
   for line in open(options.resumeett):
       print line.rstrip("\n")
 
-
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
-crawler.crawl(options.URL)
-
+crawler.init_crawling(options.URL)
+if options.crawltld:
+  while len(crawler.outerdomaintargets.keys()) > 0:
+    crawler.keep_crawling()
 
 if crawler.interrupt:
   if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:
