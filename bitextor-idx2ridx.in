@@ -18,6 +18,18 @@ import argparse
 from sets import Set
 from collections import defaultdict
 from operator import itemgetter
+import re
+
+def readLETT(f, docs):
+  file = open(f, "r")
+  fileid = 1
+  for i in file:
+    fields = i.strip().split("\t")
+    if len(fields) >= 5:
+      #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
+      docs[fileid] = fields[3]
+    fileid += 1
+  file.close()
 
 #
 # Se rellenan los indices de palabras en las dos lenguas a partir del
@@ -90,6 +102,7 @@ def feedDictWithIdenticalWords(index1, index2, dic):
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('idx', metavar='FILE', nargs='?', help='File produced by bitextor-lett2idx containing an index of the different words for every language in the website and the list of documents in which they appear (if undefined, the script will read from the standard input)', default=None)
 oparser.add_argument('-d', help='Dictionary containing translations of words for the languages of the website; it is used to compute the overlapping scores which allow to relate documents in both languages)', dest="diccionario", required=True)
+oparser.add_argument('-l', help='LETT file; if it is provided, document pair candidates are provided only if they belong to the same domain', dest="lett", required=False, default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
 options = oparser.parse_args()
@@ -123,17 +136,33 @@ feedDictWithIdenticalWords(index_text1, index_text2, dic)
 #
 traducirPalabras(index_text2, dic, dict_palabras, translated_index_text2)
 
+if options.lett != None:
+  documents = {}
+  readLETT(options.lett, documents)
+
 for i in index_text1:
+  if options.lett != None:
+    rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[i])
+    ihost = rx.group(2)
+
   parecidos = {}
   for j in index_text2:
+    validpair = True
+    if options.lett != None:
+      rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
+      jhost = rx.group(2)
+      sys.stderr.write(str(ihost)+"\t"+str(jhost)+"\n")
+      if jhost != ihost:
+        validpair = False
 #     c3 = filter(lambda x: x in translated_index_text2[j], index_text1[i])
-    c3 = index_text1[i].intersection(translated_index_text2[j])
-    if len(c3) > 0 and int(dict_palabras[j]) > 0:
-      max_vocab=max(len(index_text1[i]),len(index_text2[j]))
-      min_vocab=min(len(index_text1[i]),len(index_text2[j]))
-      num_intersect_words=len(c3)
-      num_trans_words_text2=dict_palabras[j]
-      parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
+    if validpair:
+      c3 = index_text1[i].intersection(translated_index_text2[j])
+      if len(c3) > 0 and int(dict_palabras[j]) > 0:
+        max_vocab=max(len(index_text1[i]),len(index_text2[j]))
+        min_vocab=min(len(index_text1[i]),len(index_text2[j]))
+        num_intersect_words=len(c3)
+        num_trans_words_text2=dict_palabras[j]
+        parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
 
   if len(parecidos) > 0:
     parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
