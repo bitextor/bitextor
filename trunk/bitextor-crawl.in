@@ -203,7 +203,6 @@ class Crawler(object):
             #print "Aquest es un dels URLs que podria afegir: "+link_url
             sys.stderr.write(link_url+"\t"+dom+"\t"+dom.split(".")[-1]+"\t")
             if dom == self.currdomain:
-                sys.stderr.write("Inside the same domain\n")
                 return link_url
             elif dom.split(".")[-1] == self.TLdomain:
                 self.targets_lock.acquire()
@@ -211,10 +210,10 @@ class Crawler(object):
                     self.outerdomaintargets[dom] = set()
                 self.outerdomaintargets[dom].add(link_url)
                 self.targets_lock.release()
-                sys.stderr.write("Stored in the list of domains\n")
+                sys.stderr.write("'"+link+"' stored in the list of domains\n")
                 return None
             else:
-                sys.stderr.write("Discarded\n")
+                sys.stderr.write("'"+link+"' discarded: not in the same TLD\n")
                 return None
         elif self.follow_mode == self.F_SAME_DOMAIN:
             return link_url if self._url_domain(self.host) == \
