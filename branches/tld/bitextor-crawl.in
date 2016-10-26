@@ -12,7 +12,9 @@ import logging
 import re
 import sys
 import time
+import datetime
 import robotparser
+
 
 from posixpath import join, dirname, normpath
 from threading import Thread, Lock
@@ -71,6 +73,8 @@ class Crawler(object):
         self.url_filters = []
         self.prefix_filter = '^(#|javascript:|mailto:)'
 
+        self.domain_blacklist=set()
+
         self.targets_lock = Lock()
         self.concurrency_lock = Lock()
 
@@ -108,14 +112,27 @@ class Crawler(object):
         self.seen = set(self.targets)
         del self.outerdomaintargets[self.outerdomaintargets.keys()[0]]
         self.targets_lock.release()
-        self.root_url = self.targets.pop()
+        self.root_url = self.targets[0]
         self.crawl(self.root_url)
 
-    def init_crawling(self, url):
+    def init_crawling(self, url, additionalUrls=[], blacklist=[]):
         self.root_url = url
 
         self.targets.append(url)
         self.seen.add(url)
+
+        for link in additionalUrls:
+            link_url, link_host = self._normalize_link_from_url(link,link)
+            dom = self._url_domain(link_host)
+            if dom not in self.outerdomaintargets:
+                self.outerdomaintargets[dom] = set()
+            self.outerdomaintargets[dom].add(link_url)
+
+        for link in blacklist:
+            link_url, link_host = self._normalize_link_from_url(link,link)
+            dom = self._url_domain(link_host)
+            self.domain_blacklist.add(dom)
+
         self.crawl(url)
 
 
@@ -139,14 +156,17 @@ class Crawler(object):
         except IOError:
           sys.stderr.write("It was not possible to connect to the web server specified")
 
+        #print >> sys.stderr, "{0} crawl: Spanning new worker".format(datetime.datetime.now())
         self._spawn_new_worker()
 
         while self.threads:
+            #print >> sys.stderr, "{0} crawl: Cheking threads".format(datetime.datetime.now())
             try:
                 for t in self.threads:
                     try:
                         t.join(1)
                         if not t.isAlive():
+                            #print >> sys.stderr, "{0} crawl: t is not alive".format(datetime.datetime.now())
                             self.threads.remove(t)
                     except RuntimeError:
                         pass
@@ -163,19 +183,8 @@ class Crawler(object):
         else:
             return '.'.join(parts[1:])
 
-    def _follow_link(self, url, link):
-        # Remove anchor
-        link = re.sub(r'#[^#]*$', '', link)
 
-        # Skip prefix
-        if re.search(self.prefix_filter, link):
-            return None
-
-        # Filter url
-        for f in self.url_filters:
-            if re.search(f, link):
-                return None
-
+    def _normalize_link_from_url(self,link,url):
         rx = re.match('(https?://)([^/:]+)(:[0-9]+)?([^\?]*)(\?.*)?', url)
         url_proto = rx.group(1)
         url_host = rx.group(2)
@@ -196,6 +205,23 @@ class Crawler(object):
         link_dir_path = dirname(link_path)
 
         link_url = link_proto + link_host + link_port + link_path + link_query
+        return link_url, link_host
+
+    def _follow_link(self, url, link):
+        # Remove anchor
+        link = re.sub(r'#[^#]*$', '', link)
+
+        # Skip prefix
+        if re.search(self.prefix_filter, link):
+            return None
+
+        # Filter url
+        for f in self.url_filters:
+            if re.search(f, link):
+                return None
+
+        link_url, link_host = self._normalize_link_from_url(link,url)
+
         if self.follow_mode == self.F_ANY:
             return link_url
         elif self.follow_mode == self.F_TLD:
@@ -204,12 +230,15 @@ class Crawler(object):
             if dom == self.currdomain:
                 return link_url
             elif dom.split(".")[-1] == self.TLdomain:
-                self.targets_lock.acquire()
-                if dom not in self.outerdomaintargets:
-                    self.outerdomaintargets[dom] = set()
-                self.outerdomaintargets[dom].add(link_url)
-                self.targets_lock.release()
-                sys.stderr.write("'"+link+"' stored in the list of domains\n")
+                if dom not in self.domain_blacklist:
+                    self.targets_lock.acquire()
+                    if dom not in self.outerdomaintargets:
+                        self.outerdomaintargets[dom] = set()
+                    self.outerdomaintargets[dom].add(link_url)
+                    self.targets_lock.release()
+                    sys.stderr.write("'"+link+"' stored in the list of domains\n")
+                else:
+                    sys.stderr.write("'"+link+"' not stored in the list of domains because of blacklist\n")
                 return None
             else:
                 sys.stderr.write("'"+link+"' discarded: not in the same TLD\n")
@@ -259,10 +288,14 @@ class Crawler(object):
             self.concurrency_lock.release()
 
     def _worker(self, _):
+        #print >> sys.stderr, "{0} _worker: starting. targets={1}".format(datetime.datetime.now(),self.targets)
         while self.targets:
+            #print >> sys.stderr, "{0} _worker: start of loop".format(datetime.datetime.now())
             if self.interrupt:
+                #print >> sys.stderr, "{0} _worker: interrupted".format(datetime.datetime.now())
                 break
             else:
+                #print >> sys.stderr, "{0} _worker: starting action. targets={1}".format(datetime.datetime.now(),self.targets)
                 self.targets_lock.acquire()
                 if len(self.targets)>0:
                     try:
@@ -352,7 +385,7 @@ class Crawler(object):
 ##### NEW CODE #####
 
 oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-sepparated output containing the base64 encoded document and the corresponding URL.")
-oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
+oparser.add_argument("URLLIST", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
 oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
@@ -360,11 +393,13 @@ oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
-oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
+oparser.add_argument("-D", help="This option allows you to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
+oparser.add_argument("-b", help="File with list of URLs whose domain will not be explored in TLD crawling mode", dest="blacklist")
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
   def process_document(self, doc):
+    #print >> sys.stderr, "Processing document: {0}".format(str(doc))
     if doc.status == 200:
       self.concurrency_lock.acquire()
       try:
@@ -385,12 +420,13 @@ class MyCrawler(Crawler):
       pass
 
   def get_status_object(self):
-    return { 'visited':self.visited , 'targets':self.targets , 'seen':self.seen }
+    return { 'visited':self.visited , 'targets':self.targets , 'seen':self.seen, 'outerdomaintargets':self.outerdomaintargets }
 
   def load_status(self,statusobj):
     self.visited=statusobj['visited']
     self.targets=statusobj['targets']
     self.seen=statusobj['seen']
+    self.outerdomaintargets=statusobj['outerdomaintargets']
 
   def save_status(self):
     if self.dumpfile != None:
@@ -407,10 +443,29 @@ class MyCrawler(Crawler):
     self.concurrency_lock.release()
       #exit(143) #128 + 15(SIGTERM).
 
-if not options.URL.startswith("http"):
-  if options.URL.find("://") != -1:
-    sys.stderr.write("Error: '"+options.URL.split("://")[0]+"' is not a valid protocol; you should use either 'http' or 'https'\n")
-    sys.exit(-1)
+urllist=[]
+for line in open(options.URLLIST):
+    line=line.rstrip("\n")
+    url=line.strip()
+    if not url.startswith("http"):
+        if url.find("://") != -1:
+            sys.stderr.write("Error: '"+url.split("://")[0]+"' is not a valid protocol; you should use either 'http' or 'https'\n")
+            sys.exit(-1)
+    urllist.append(url)
+
+blacklist=[]
+if options.blacklist:
+    for line in open(options.blacklist):
+        line=line.rstrip("\n")
+        url=line.strip()
+        if not url.startswith("http"):
+            if url.find("://") != -1:
+                sys.stderr.write("Error: '"+url.split("://")[0]+"' is not a valid protocol; you should use either 'http' or 'https'\n")
+                sys.exit(-1)
+            else:
+                #we need this in order to reuse domain extractor code
+                url="http://"+url
+        blacklist.append(url)
 
 crawler = MyCrawler()
 crawler.set_concurrency_level(options.jobs)
@@ -449,16 +504,21 @@ if options.dump != None:
 if options.load != None:
   sys.stderr.write("Restoring crawling from "+options.load+"\n")
   crawler.load_status(pickle.load(open(options.load,'rb')))
+  #we ignore additional URLs since they have already been loaded
+  additionalUrls=[]
 if options.resumeett != None:
   for line in open(options.resumeett):
       print line.rstrip("\n")
 
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
-crawler.init_crawling(options.URL)
-if options.crawltld:
-  while len(crawler.outerdomaintargets.keys()) > 0:
-    crawler.keep_crawling()
+crawler.init_crawling(urllist[0], additionalUrls=urllist[1:], blacklist=blacklist)
+#if options.crawltld:
+
+while len(crawler.outerdomaintargets.keys()) > 0:
+  #print >> sys.stderr, "{0} Start crawlig new domain".format(datetime.datetime.now())
+  crawler.keep_crawling()
+  #print >> sys.stderr, "{0} End crawlig new domain".format(datetime.datetime.now())
 
 if crawler.interrupt:
   if crawler.sizelimit != None and crawler.crawlsize > crawler.sizelimit:

@@ -73,6 +73,8 @@ exit_program()
   echo "                  a temporal directory in '/tmp' (or a different directory if -T option is used)."
   echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
   echo "                  corresponding destination path (one per line)."
+  echo "  -W FILE         file containing a list of URLs to crawl (one per line). The result of"
+  echo "                  crawling them all will be stored in a single file"
   echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
   echo "  LANG1           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo "  LANG2           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
@@ -144,6 +146,8 @@ exit_program()
   echo "                    execution of Bitextor. This option must be used together with -C and the previous execution "
   echo "                    and the previous execution must have included the -p option in order to store the crawling status."
   echo "  -D                if this flag is set, all the websites in the TLD will be crawled."
+  echo "  -B FILE           use the URLs in FILE as a blacklist when crawling a TLD. FILE must contain one URL"
+  echo "                    per line. Websites with same domain as an URL in the blacklist will not be crawled."
 
   exit 1
 }
@@ -167,7 +171,7 @@ trapsigint(){
 }
 
 run_bitextor(){
-  local URL=$1
+  local URLLIST=$1
   tmpcrawl=$(mktemp $TMPDIR/crawl.XXXXXX)
   rm $tmpcrawl
   mkfifo $tmpcrawl
@@ -184,7 +188,7 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $BLACKLISTFILE_ARGUMENT $URLLIST $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
   trap "trapsigint $crawl_pid" SIGUSR1
@@ -385,7 +389,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
+ARGS=$(getopt "xfaDq:m:v:b:l:u:U:W:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:B:" $*)
 
 set -- $ARGS
 for i
@@ -462,6 +466,17 @@ do
       shift
       URLFILE=$1
       INPUTMODE=2
+      shift
+      ;;
+    -W)
+      shift
+      URLFILE=$1
+      INPUTMODE=4
+      shift
+      ;;
+    -B)
+      shift
+      BLACKLISTFILE_ARGUMENT="-b $1"
       shift
       ;;
     -l)
@@ -607,7 +622,10 @@ fi
 
 case $INPUTMODE in
   1)
-    run_bitextor $URL
+    URLFILE=$(mktemp $TMPDIR/urllist.XXXXXX)
+    echo "$URL" >> $URLFILE
+    run_bitextor $URLFILE
+    rm $URLFILE
     ;;
   2)
     cat $URLFILE | \
@@ -627,6 +645,9 @@ case $INPUTMODE in
     ;;
   3)
     run_bitextor_ett $ETT
+    ;;
+  4)
+    run_bitextor $URLFILE
     ;;
   *)
     exit_program $(basename $0)
