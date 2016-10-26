@@ -151,7 +151,6 @@ for i in index_text1:
     if options.lett != None:
       rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
       jhost = rx.group(2)
-      sys.stderr.write(str(ihost)+"\t"+str(jhost)+"\n")
       if jhost != ihost:
         validpair = False
 #     c3 = filter(lambda x: x in translated_index_text2[j], index_text1[i])

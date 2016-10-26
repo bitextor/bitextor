@@ -14,6 +14,7 @@ import sys
 import time
 import robotparser
 
+from ssl import CertificateError
 from posixpath import join, dirname, normpath
 from threading import Thread, Lock
 from urllib import quote, unquote
@@ -138,6 +139,9 @@ class Crawler(object):
           self.robotsparser.read()
         except IOError:
           sys.stderr.write("It was not possible to connect to the web server specified")
+        except CertificateError:
+          sys.stderr.write("Certificate error: ")
+          sys.stderr.write(str(sys.exc_info()[0])+"\n")
 
         self._spawn_new_worker()
 
@@ -458,6 +462,7 @@ signal.signal(signal.SIGTERM, crawler.termsighandler)
 crawler.init_crawling(options.URL)
 if options.crawltld:
   while len(crawler.outerdomaintargets.keys()) > 0:
+    sys.stderr.write("Remaining "+str(len(crawler.outerdomaintargets.keys()))+" websites to to crawl\n")
     crawler.keep_crawling()
 
 if crawler.interrupt:
