@@ -201,7 +201,6 @@ class Crawler(object):
         elif self.follow_mode == self.F_TLD:
             dom = self._url_domain(link_host)
             #print "Aquest es un dels URLs que podria afegir: "+link_url
-            sys.stderr.write(link_url+"\t"+dom+"\t"+dom.split(".")[-1]+"\t")
             if dom == self.currdomain:
                 return link_url
             elif dom.split(".")[-1] == self.TLdomain:
