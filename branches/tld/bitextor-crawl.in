@@ -23,9 +23,11 @@ from urllib import quote, unquote
 import urllib2
 import base64
 import argparse
-from random import shuffle
+from random import shuffle, randrange
 import signal
 import pickle
+import pycld2 as cld2
+import heapq
 
 from sets import Set as set
 
@@ -43,6 +45,7 @@ class Document(object):
 
 class Crawler(object):
     F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH, F_TLD = range(5)
+    RANDOMRANGE=100000
     def __init__(self, debug=False):
         self.currdomain = ""
         self.visited = {}
@@ -65,6 +68,7 @@ class Crawler(object):
         self.timelimit = None
         self.robotsparser = robotparser.RobotFileParser()
         self.interrupt = False
+        self.strongStop=False
         self.timeout = 10
         self.TLdomain = ""
 
@@ -108,17 +112,19 @@ class Crawler(object):
 
     def keep_crawling(self):
         self.targets_lock.acquire()
-        self.targets = list(self.outerdomaintargets[self.outerdomaintargets.keys()[0]])
+        self.targets = [ (depth,randrange(self.RANDOMRANGE),url) for depth,url in self.outerdomaintargets[self.outerdomaintargets.keys()[0]] ]
+        heapq.heapify(self.targets)
         self.seen = set(self.targets)
         del self.outerdomaintargets[self.outerdomaintargets.keys()[0]]
         self.targets_lock.release()
-        self.root_url = self.targets[0]
+        self.root_url = self.targets[0][2]
         self.crawl(self.root_url)
 
     def init_crawling(self, url, additionalUrls=[], blacklist=[]):
         self.root_url = url
 
-        self.targets.append(url)
+        #self.targets.append(url)
+        heapq.heappush(self.targets,(0,randrange(self.RANDOMRANGE),url))
         self.seen.add(url)
 
         for link in additionalUrls:
@@ -126,7 +132,7 @@ class Crawler(object):
             dom = self._url_domain(link_host)
             if dom not in self.outerdomaintargets:
                 self.outerdomaintargets[dom] = set()
-            self.outerdomaintargets[dom].add(link_url)
+            self.outerdomaintargets[dom].add((self._calc_depth(link_url),link_url))
 
         for link in blacklist:
             link_url, link_host = self._normalize_link_from_url(link,link)
@@ -143,12 +149,16 @@ class Crawler(object):
           rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', url)
         self.proto = rx.group(1)
         self.host = rx.group(2)
+        self.domain = self._url_domain(self.host)
         self.path = rx.group(3)
         self.dir_path = dirname(self.path)
         self.query = rx.group(4)
 
         self.TLdomain = self.host.split(".")[-1]
         self.currdomain = self._url_domain(self.host)
+        self.processed_documents=0
+        self.interrupt = False
+        self.languages_in_site=set()
 
         try:
           self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
@@ -234,7 +244,7 @@ class Crawler(object):
                     self.targets_lock.acquire()
                     if dom not in self.outerdomaintargets:
                         self.outerdomaintargets[dom] = set()
-                    self.outerdomaintargets[dom].add(link_url)
+                    self.outerdomaintargets[dom].add((self._calc_depth(link_url),link_url))
                     self.targets_lock.release()
                     sys.stderr.write("'"+link+"' stored in the list of domains\n")
                 else:
@@ -272,7 +282,8 @@ class Crawler(object):
             self.targets_lock.release()
             return
         if target not in self.seen:
-            self.targets.append(target)
+            #self.targets.append(target)
+            heapq.heappush(self.targets,(self._calc_depth(target),randrange(self.RANDOMRANGE),target))
             self.seen.add(target)
         self.targets_lock.release()
 
@@ -299,7 +310,8 @@ class Crawler(object):
                 self.targets_lock.acquire()
                 if len(self.targets)>0:
                     try:
-                        url = self.targets.pop()
+                        #url = self.targets.pop()
+                        urldepth,_, url = heapq.heappop(self.targets)
                         logging.debug('url: %s' % url)
                         if url not in self.visited:
                           self.visited[url] = 1
@@ -366,7 +378,8 @@ class Crawler(object):
                             self.targets_lock.acquire()
                             if self.visited[url] <= 5:
                               logging.error('%s: %s, retrying (attempt %s)' % (url, str(e), str(self.visited[url])))
-                              self.targets.append(url)
+                              #self.targets.append(url)
+                              heapq.heappush(self.targets,(self._calc_depth(url),randrange(self.RANDOMRANGE),url))
                               self.visited[url]=self.visited[url]+1
                               self.seen.add(url)
                             else:
@@ -384,7 +397,7 @@ class Crawler(object):
 
 ##### NEW CODE #####
 
-oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-sepparated output containing the base64 encoded document and the corresponding URL.")
+oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-separated output containing the base64 encoded document and the corresponding URL.")
 oparser.add_argument("URLLIST", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
 oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
@@ -395,24 +408,50 @@ oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows you to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
 oparser.add_argument("-b", help="File with list of URLs whose domain will not be explored in TLD crawling mode", dest="blacklist")
+oparser.add_argument("-a", help="Stop crawling website after downloading these many documents if content in the two desired languages has not been identified", dest="earlypatience")
+oparser.add_argument("-L", help="Languages of the website, split by ; . If the -a option is used, crawling is stopped if documents in these languages are not found", dest="languages")
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
   def process_document(self, doc):
     #print >> sys.stderr, "Processing document: {0}".format(str(doc))
     if doc.status == 200:
+      #detect language of document if needed
+      docLanguage=None
+      if self.required_languages and len(self.required_languages - self.languages_in_site) > 0:
+        #it is done outside the lock for efficiency reasons
+        try:
+          isReliable, textBytesFound, details=cld2.detect(doc.text)
+          if isReliable:
+            if len(details) > 0:
+              docLanguage=details[0][1]
+        except cld2.error as clderr:
+          sys.stderr.write("Error detecting language of a document. Don't worry unless you see this error message very often.\n")
+          sys.stderr.write(str(clderr))
+          sys.stderr.write("\n")
+
       self.concurrency_lock.acquire()
       try:
         print base64.b64encode(doc.text)+"\t"+doc.url
         self.crawlsize+=sys.getsizeof(doc.text)/1000000.0
+        if docLanguage != None:
+          self.processed_documents+=1
+          self.languages_in_site.add(docLanguage)
         if self.sizelimit != None and self.crawlsize > self.sizelimit:
           #sys.stderr.write("Crawling size limit reached: stopping crawl\n")
           self.interrupt=True
+          self.strongStop=True
           self.save_status()
         if self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
           #sys.stderr.write("Crawling time limit reached: stopping crawl\n")
           self.interrupt=True
+          self.strongStop=True
           self.save_status()
+
+        if self.required_languages and len(self.required_languages - self.languages_in_site) > 0 and self.processed_documents > self.max_documents:
+          self.domain_blacklist.add(self.domain)
+          self.interrupt=True
+          sys.stderr.write("Downloaded {0} documents without finding required languagues: stopping crawl\n".format(self.processed_documents))
         #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
       finally:
         self.concurrency_lock.release()
@@ -442,6 +481,10 @@ class MyCrawler(Crawler):
     self.save_status()
     self.concurrency_lock.release()
       #exit(143) #128 + 15(SIGTERM).
+
+  def set_early_stop_options(self,languages,numdocuments):
+    self.required_languages=set(languages)
+    self.max_documents=numdocuments
 
 urllist=[]
 for line in open(options.URLLIST):
@@ -498,6 +541,9 @@ if options.timelimit != None:
     sys.stderr.write("The value of option -t (download time limit) has to be a number and a unit ('s' for second, 'm' for minutes, or 'h' for hours), for example: 15m or 3h\n")
     sys.exit(-1)
 
+if options.earlypatience and options.languages:
+  crawler.set_early_stop_options(options.languages.split(";"),int(options.earlypatience))
+
 if options.dump != None:
   crawler.dumpfile=options.dump
 
@@ -513,9 +559,8 @@ if options.resumeett != None:
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
 crawler.init_crawling(urllist[0], additionalUrls=urllist[1:], blacklist=blacklist)
-#if options.crawltld:
 
-while len(crawler.outerdomaintargets.keys()) > 0:
+while len(crawler.outerdomaintargets.keys()) > 0 and not crawler.strongStop :
   #print >> sys.stderr, "{0} Start crawlig new domain".format(datetime.datetime.now())
   crawler.keep_crawling()
   #print >> sys.stderr, "{0} End crawlig new domain".format(datetime.datetime.now())

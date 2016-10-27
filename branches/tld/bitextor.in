@@ -57,6 +57,7 @@ CRAWLINGSTATUSDUMP=""
 CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
+EARLYSTOP_ARGUMENT=""
 
 exit_program()
 {
@@ -148,6 +149,9 @@ exit_program()
   echo "  -D                if this flag is set, all the websites in the TLD will be crawled."
   echo "  -B FILE           use the URLs in FILE as a blacklist when crawling a TLD. FILE must contain one URL"
   echo "                    per line. Websites with same domain as an URL in the blacklist will not be crawled."
+  echo "  -E NUM-DOCUMENTS  stop crawling a website if, after downloading NUM-DOCUMENTS documents, there is a"
+  echo "                    language for which no documents have been downloaded."
+
 
   exit 1
 }
@@ -188,7 +192,7 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $BLACKLISTFILE_ARGUMENT $URLLIST $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $BLACKLISTFILE_ARGUMENT $EARLYSTOP_ARGUMENT $URLLIST $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
   trap "trapsigint $crawl_pid" SIGUSR1
@@ -389,7 +393,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:W:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:B:" $*)
+ARGS=$(getopt "xfaDq:m:v:b:l:u:U:W:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:B:E:" $*)
 
 set -- $ARGS
 for i
@@ -477,6 +481,11 @@ do
     -B)
       shift
       BLACKLISTFILE_ARGUMENT="-b $1"
+      shift
+      ;;
+    -E)
+      shift
+      EARLYSTOP_ARGUMENT="-a $1 -L "
       shift
       ;;
     -l)
@@ -609,6 +618,10 @@ case $# in
     exit_program $(basename $0)
     ;;
 esac
+
+if [ "$EARLYSTOP_ARGUMENT" != "" ]; then
+    EARLYSTOP_ARGUMENT="$EARLYSTOP_ARGUMENT $LANG1;$LANG2"
+fi
 
 TMPETT=$(mktemp $TMPDIR/ett.XXXXXX)
 if [[ -z $ETT ]]; then

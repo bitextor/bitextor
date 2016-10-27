@@ -42,7 +42,7 @@ then
   CXXFLAGS="$CXXFLAGS -Wall -fomit-frame-pointer"
 else
   if test x$MinGW = xyes
-  then 
+  then
     AC_MSG_RESULT([MinGW])
     CFLAGS="$CFLAGS -Wall -march=i686 -O3 -DMINGW -fomit-frame-pointer \
 	        -funroll-loops -I/include -L/lib"
@@ -51,7 +51,7 @@ else
     CPPFLAGS="$CPPFLAGS -I/include"
   else
     if test x$Cygwin = xyes
-    then 
+    then
       AC_MSG_RESULT([Cygwin])
       CFLAGS="$CFLAGS -Wall -march=i686 -O3 -fomit-frame-pointer \
            -funroll-loops"
@@ -78,7 +78,7 @@ else
           CXXFLAGS="-Wall -O3 $CXXFLAGS"
         fi
       fi
-    fi    
+    fi
   fi
 fi
 
@@ -88,7 +88,7 @@ AM_SANITY_CHECK
 AC_LANG_CPLUSPLUS
 
 AC_ARG_ENABLE(debug,
-              [  --enable-debug    Enable "-g -Wall" compiler options], 
+              [  --enable-debug    Enable "-g -Wall" compiler options],
               [CXXFLAGS="-g -Wall"; CFLAGS="-g -Wall"])
 
 AC_ARG_ENABLE(profile,
@@ -190,7 +190,7 @@ AC_ARG_WITH([apertium],
               [disable support for apertium; if this option is enabled, you will not be able to use apertium morphological analysers)])],
             [],
             [with_apertium=yes])
-          
+
 AS_IF([test "x$with_apertium" != xno],
   [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
      if test x$ac_cv_path_APERTIUM = x
@@ -321,6 +321,21 @@ print (var)" 2> /dev/null`
 ])
   fi
 
+
+  AC_MSG_CHECKING([for pycld2 for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import pycld2; \
+var = True; \
+print (var)" 2> /dev/null`
+if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires pycld2 for Python. Please, install v0.31 or later and try again. https://pypi.python.org/pypi/pycld2/
+])
+  fi
+
   AC_MSG_CHECKING([for NLTK for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import nltk; \
@@ -380,12 +395,12 @@ std::wstring test = L"test";
 AC_CXX_WSTRING
 AC_C_BIGENDIAN
 
-if test "$ac_cv_cxx_wstring" = no 
+if test "$ac_cv_cxx_wstring" = no
 then
   AC_MSG_ERROR([Missing wide string support])
 fi
 
-  
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h stddef.h python.h])
