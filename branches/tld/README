@@ -82,10 +82,20 @@ Bitextor should be called with the following arguments in order to crawl a top-l
 
 bitextor [OPTIONS] -v LEXICON -W SEED-URL-FILE -B BLACKLIST-FILE -E EARLY-STOP-PATIENCE -D LANG1 LANG2
 
-SEED-URL-FILE and BLACKLIST-FILE must contain one URL per line. The arguments -B and -E are optional.
+SEED-URL-FILE and BLACKLIST-FILE must contain one URL per line. The arguments -B and -E are optional. The crawling of the whole TLD is likely to take a long time and
+you may want to stop the process at some point and resume it later. In that case, you may want to invoke Bitextor with the following arguments:
 
+bitextor [OTHER OPTIONS] -v LEXICON -W SEED-URL-FILE -B BLACKLIST-FILE -E EARLY-STOP-PATIENCE -D -d STATUS-FILE.pkl -i 3600 -I INTERMEDIATE-FILES-DIR LANG1 LANG2
 
-Several options can be set using the command line options:
+If bitextor is stopped with Ctrl-C, it will save the crawling status into STATUS-FILE.pkl. The -i argument makes it store the crawling status every hour (3600 seconds) into STATUS-FILE.pkl.intermediate. This allows us to have an status file even if Bitextor crashes, there is a power failure, etc.
+
+In order to continue a TLD crawling from an status file, invoke Bitextor as follows:
+
+bitextor [OTHER OPTIONS] -v LEXICON -W SEED-URL-FILE -B BLACKLIST-FILE -E EARLY-STOP-PATIENCE -D -d -NEW-STATUS-FILE.pkl -i 3600 -I INTERMEDIATE-FILES-DIR -C PREVIOUS-STATUS-FILE.pkl -R PREVIOUS-INTERMEDIATE-FILES-DIR/crawl2ett LANG1 LANG2
+
+Is this new execution, you must use a different directory for intermediate files as well as a different status file.
+
+Other options can be set using the command line arguments:
 
 * -U FILE   sets the path to a file containing a list of URLs and their destination ETT file to be crawled and processed (one per line).
 * -e FILE   sets the path to the ETT file containing the documents crawled from a website.

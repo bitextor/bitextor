@@ -58,6 +58,7 @@ CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
 EARLYSTOP_ARGUMENT=""
+PERIODICALLY_SAVE_ARGUMENT=""
 
 exit_program()
 {
@@ -142,6 +143,7 @@ exit_program()
   echo "  -c TIME           connection timeout; maximum time (in seconds) to wait until a connection"
   echo "                    request is attended from the servere during web crawling (defalut value 15)."
   echo "  -p FILE           write crawling status to FILE if the crawling ends because a time/size limit has been reached."
+  echo "  -i TIME           write crawling status to FILE.intermediate (being FILE the argument of -p) every TIME seconds."
   echo "  -C FILE           load crawling status from FILE. Use this option to continue a previously interrupted crawling. "
   echo "  -R FILE           reuse the crawled documents from FILE. FILE must be a crawl2ett file from a previous"
   echo "                    execution of Bitextor. This option must be used together with -C and the previous execution "
@@ -192,7 +194,7 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $BLACKLISTFILE_ARGUMENT $EARLYSTOP_ARGUMENT $URLLIST $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $BLACKLISTFILE_ARGUMENT $EARLYSTOP_ARGUMENT $URLLIST $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS $PERIODICALLY_SAVE_ARGUMENT 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
   trap "trapsigint $crawl_pid" SIGUSR1
@@ -393,7 +395,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:W:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:B:E:" $*)
+ARGS=$(getopt "xfaDq:m:v:b:l:u:U:W:d:D:L:D:e:I:t:i:O:M:N:T:s:j:c:p:C:R:B:E:" $*)
 
 set -- $ARGS
 for i
@@ -540,6 +542,11 @@ do
     -t)
       shift
       TIMELIMIT="-t $1"
+      shift
+      ;;
+    -i)
+      shift
+      PERIODICALLY_SAVE_ARGUMENT="-T $1"
       shift
       ;;
     -O)

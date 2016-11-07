@@ -116,16 +116,18 @@ class Crawler(object):
         heapq.heapify(self.targets)
         self.seen = set(self.targets)
         del self.outerdomaintargets[self.outerdomaintargets.keys()[0]]
+        self.visited={}
         self.targets_lock.release()
         self.root_url = self.targets[0][2]
         self.crawl(self.root_url)
 
     def init_crawling(self, url, additionalUrls=[], blacklist=[]):
-        self.root_url = url
+        if url != None:
+            self.root_url = url
 
-        #self.targets.append(url)
-        heapq.heappush(self.targets,(0,randrange(self.RANDOMRANGE),url))
-        self.seen.add(url)
+            #self.targets.append(url)
+            heapq.heappush(self.targets,(0,randrange(self.RANDOMRANGE),url))
+            self.seen.add(url)
 
         for link in additionalUrls:
             link_url, link_host = self._normalize_link_from_url(link,link)
@@ -139,7 +141,7 @@ class Crawler(object):
             dom = self._url_domain(link_host)
             self.domain_blacklist.add(dom)
 
-        self.crawl(url)
+        self.crawl(self.root_url)
 
 
     def crawl(self, url):
@@ -400,10 +402,11 @@ class Crawler(object):
 oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-separated output containing the base64 encoded document and the corresponding URL.")
 oparser.add_argument("URLLIST", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
 oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
+oparser.add_argument("-T", help="Save crawling status every X secods", dest="timesave", required=False, default=None)
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
-oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
+oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM or a size/time limit is reached", dest="dump", required=False, default=None)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows you to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
@@ -414,7 +417,7 @@ options = oparser.parse_args()
 
 class MyCrawler(Crawler):
   def process_document(self, doc):
-    #print >> sys.stderr, "Processing document: {0}".format(str(doc))
+    print >> sys.stderr, "Processing document: {0}".format(doc.url)
     if doc.status == 200:
       #detect language of document if needed
       docLanguage=None
@@ -451,7 +454,7 @@ class MyCrawler(Crawler):
         if self.required_languages and len(self.required_languages - self.languages_in_site) > 0 and self.processed_documents > self.max_documents:
           self.domain_blacklist.add(self.domain)
           self.interrupt=True
-          sys.stderr.write("Downloaded {0} documents without finding required languagues: stopping crawl\n".format(self.processed_documents))
+          sys.stderr.write("Downloaded {0} documents from {1} without finding required languagues: stopping crawl\n".format(self.processed_documents,self.domain))
         #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(doc.links)
       finally:
         self.concurrency_lock.release()
@@ -459,18 +462,24 @@ class MyCrawler(Crawler):
       pass
 
   def get_status_object(self):
-    return { 'visited':self.visited , 'targets':self.targets , 'seen':self.seen, 'outerdomaintargets':self.outerdomaintargets }
+    return { 'visited':self.visited , 'targets':self.targets , 'seen':self.seen, 'outerdomaintargets':self.outerdomaintargets, 'root_url':self.root_url }
 
   def load_status(self,statusobj):
     self.visited=statusobj['visited']
     self.targets=statusobj['targets']
     self.seen=statusobj['seen']
     self.outerdomaintargets=statusobj['outerdomaintargets']
+    self.root_url=statusobj['root_url']
 
-  def save_status(self):
+  def save_status(self, intermediate=False):
     if self.dumpfile != None:
-      sys.stderr.write("Saving crawling status to "+self.dumpfile+"\n")
-      pickle.dump(self.get_status_object(),open(self.dumpfile,'wb'))
+      if intermediate:
+        suffix=".intermediate"
+      else:
+        suffix=""
+
+      sys.stderr.write("Saving crawling status to "+self.dumpfile+suffix+"\n")
+      pickle.dump(self.get_status_object(),open(self.dumpfile+suffix,'wb'))
 
   def termsighandler(self, signum, frame):
     sys.stderr.write("Stopping crawling by user's SIGTERM\n")
@@ -485,6 +494,29 @@ class MyCrawler(Crawler):
   def set_early_stop_options(self,languages,numdocuments):
     self.required_languages=set(languages)
     self.max_documents=numdocuments
+
+class BackgroundSaver(Thread):
+  def __init__(self,saveinterval,crawler):
+    super(BackgroundSaver, self).__init__()
+    self.saveinterval=saveinterval
+    self.crawler=crawler
+    self.execute=True
+
+  def run(self):
+    while self.execute:
+        totalSleep=0
+        while totalSleep < self.saveinterval and self.execute:
+          time.sleep(1)
+          totalSleep+=1
+
+        if self.execute:
+          crawler.concurrency_lock.acquire()
+          crawler.save_status(intermediate=True)
+          crawler.concurrency_lock.release()
+
+  def stop(self):
+    self.execute=False
+
 
 urllist=[]
 for line in open(options.URLLIST):
@@ -547,18 +579,30 @@ if options.earlypatience and options.languages:
 if options.dump != None:
   crawler.dumpfile=options.dump
 
+firstUrl=urllist[0]
+additionalUrls=urllist[1:]
+
 if options.load != None:
   sys.stderr.write("Restoring crawling from "+options.load+"\n")
   crawler.load_status(pickle.load(open(options.load,'rb')))
   #we ignore additional URLs since they have already been loaded
+  firstUrl=None
   additionalUrls=[]
 if options.resumeett != None:
   for line in open(options.resumeett):
       print line.rstrip("\n")
 
+
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
-crawler.init_crawling(urllist[0], additionalUrls=urllist[1:], blacklist=blacklist)
+#Thread that will be executed every options.timesave seconds for saving crawling status
+#It will stop when crawling finishes
+bgsaver=None
+if options.timesave:
+  bgsaver = BackgroundSaver(int(options.timesave),crawler)
+  bgsaver.start()
+crawler.init_crawling(firstUrl, additionalUrls=additionalUrls, blacklist=blacklist)
+
 
 while len(crawler.outerdomaintargets.keys()) > 0 and not crawler.strongStop :
   #print >> sys.stderr, "{0} Start crawlig new domain".format(datetime.datetime.now())
@@ -570,3 +614,6 @@ if crawler.interrupt:
     sys.stderr.write("Crawling size limit reached: stopping crawl\n")
   elif crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
     sys.stderr.write("Crawling time limit reached: stopping crawl\n")
+
+if bgsaver != None:
+  bgsaver.stop()
