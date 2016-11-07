@@ -417,7 +417,7 @@ options = oparser.parse_args()
 
 class MyCrawler(Crawler):
   def process_document(self, doc):
-    print >> sys.stderr, "Processing document: {0}".format(doc.url)
+    #print >> sys.stderr, "Processing document: {0}".format(doc.url)
     if doc.status == 200:
       #detect language of document if needed
       docLanguage=None
