@@ -13,7 +13,7 @@ import re
 import sys
 import time
 import datetime
-import robotparser
+from reppy.robots import Robots
 
 
 from posixpath import join, dirname, normpath
@@ -66,7 +66,7 @@ class Crawler(object):
         self.crawlsize = 0.0
         self.sizelimit = None
         self.timelimit = None
-        self.robotsparser = robotparser.RobotFileParser()
+        self.robotsparser = None
         self.interrupt = False
         self.strongStop=False
         self.timeout = 10
@@ -124,7 +124,6 @@ class Crawler(object):
     def init_crawling(self, url, additionalUrls=[], blacklist=[]):
         if url != None:
             self.root_url = url
-
             #self.targets.append(url)
             heapq.heappush(self.targets,(0,randrange(self.RANDOMRANGE),url))
             self.seen.add(url)
@@ -162,11 +161,12 @@ class Crawler(object):
         self.interrupt = False
         self.languages_in_site=set()
 
+        self.robotsparser=None
+        robotsurl=self.proto+self.host+"/robots.txt"
         try:
-          self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
-          self.robotsparser.read()
+          self.robotsparser = Robots.fetch(robotsurl)
         except IOError:
-          sys.stderr.write("It was not possible to connect to the web server specified")
+          sys.stderr.write("It was not possible to connect to the web server specified: {0}".format(robotsurl))
 
         #print >> sys.stderr, "{0} crawl: Spanning new worker".format(datetime.datetime.now())
         self._spawn_new_worker()
@@ -319,7 +319,7 @@ class Crawler(object):
                           self.visited[url] = 1
                         self.targets_lock.release()
 
-                        if not self.robotsparser.can_fetch("*", url):
+                        if self.robotsparser != None and not self.robotsparser.allowed (url,"*"):
                             sys.stderr.write("robots.txt forbids crawling URL: "+url+"\n")
                         else:
                             rx = re.match('(https?)://([^/]+)(.*)', url)
@@ -429,7 +429,7 @@ class MyCrawler(Crawler):
             if len(details) > 0:
               docLanguage=details[0][1]
         except cld2.error as clderr:
-          sys.stderr.write("Error detecting language of a document. Don't worry unless you see this error message very often.\n")
+          sys.stderr.write("Error detecting language of document {0}. Don't worry unless you see this error message very often.\n".format(doc.url))
           sys.stderr.write(str(clderr))
           sys.stderr.write("\n")
 

@@ -336,6 +336,20 @@ if test "$ac_supports_python_ver" = "True";
 ])
   fi
 
+  AC_MSG_CHECKING([for reppy for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import reppy; \
+var = True; \
+print (var)" 2> /dev/null`
+if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires reppy for Python. Please, install v0.4.1 or later and try again. https://pypi.python.org/pypi/reppy/
+])
+  fi
+
   AC_MSG_CHECKING([for NLTK for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import nltk; \

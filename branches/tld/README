@@ -22,6 +22,7 @@ Some external Python libraries should also be installed before starting the inst
 * python-Levenshtein: Python library for computing the Levenshtein edit-distance.
 * LangID.py: Python library for plain text language detection.
 * pycld2: Python library for language detection in HTML documents.
+* reppy: Python library for parsing robots.txt files.
 * regex: Python package for regular expressions in Python.
 * NLTK: Python package with natural language processing utilities.
 * numpy: Python package for scientific computing with Python.
@@ -31,7 +32,7 @@ Some external Python libraries should also be installed before starting the inst
 
 The easiest way to install these python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
 
-   user@pc:~$ sudo pip install langid pycld2 python-Levenshtein regex NLTK numpy magic h5py keras
+   user@pc:~$ sudo pip install langid pycld2 reppy python-Levenshtein regex NLTK numpy magic h5py keras
 
 Most of these packages are also available in the repositories of many Unix-based systems.
 
