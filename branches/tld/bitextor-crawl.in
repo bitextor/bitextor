@@ -86,6 +86,7 @@ class Crawler(object):
         logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
 
         self.dumpfile=None
+        self.required_languages=None
 
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
