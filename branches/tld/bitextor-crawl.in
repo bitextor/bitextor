@@ -13,6 +13,7 @@ import re
 import sys
 import time
 import datetime
+import reppy
 from reppy.robots import Robots
 
 
@@ -167,7 +168,8 @@ class Crawler(object):
           self.robotsparser = Robots.fetch(robotsurl)
         except IOError:
           sys.stderr.write("It was not possible to connect to the web server specified: {0}".format(robotsurl))
-
+        except reppy.exceptions.ReppyException:
+          sys.stderr.write("It was not possible to connect to the web server specified: {0}".format(robotsurl))
         #print >> sys.stderr, "{0} crawl: Spanning new worker".format(datetime.datetime.now())
         self._spawn_new_worker()
 
