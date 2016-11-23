@@ -29,6 +29,7 @@ import signal
 import pickle
 import pycld2 as cld2
 import heapq
+import shutil
 
 from sets import Set as set
 
@@ -482,7 +483,17 @@ class MyCrawler(Crawler):
         suffix=""
 
       sys.stderr.write("Saving crawling status to "+self.dumpfile+suffix+"\n")
-      pickle.dump(self.get_status_object(),open(self.dumpfile+suffix,'wb'))
+      self.targets_lock.acquire()
+      try:
+        pickle.dump(self.get_status_object(),open(self.dumpfile+suffix+".temp",'wb'))
+      except (IOError,RuntimeError):
+        sys.stderr.write("Error writing crawling status file: {0}\n".format(self.dumpfile+suffix))
+      else:
+        shutil.copyfile(self.dumpfile+suffix+".temp",self.dumpfile+suffix)
+      finally:
+        self.targets_lock.release()
+
+
 
   def termsighandler(self, signum, frame):
     sys.stderr.write("Stopping crawling by user's SIGTERM\n")
@@ -513,9 +524,7 @@ class BackgroundSaver(Thread):
           totalSleep+=1
 
         if self.execute:
-          crawler.concurrency_lock.acquire()
           crawler.save_status(intermediate=True)
-          crawler.concurrency_lock.release()
 
   def stop(self):
     self.execute=False
