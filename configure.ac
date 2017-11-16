@@ -302,7 +302,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires magic for Python. Please, install v1.1.4 or later and try again. https://github.com/ahupp/python-magic
+    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python-magic' and try again.
 ])
   fi
 
