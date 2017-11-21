@@ -1,0 +1,61 @@
+.\" Manpage for bitextor-webdir2ett.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-crawl2ett 1 "16 May 2016" "bitextor v5.0" "bitextor man pages"
+.SH NAME
+bitextor-crawl2ett \- This application is part of
+.B bitextor
+( the automatic bitext generator from multilingual websites )
+
+.SH SYNOPSIS
+.B bitextor-crawl2ett
+.I PATH
+
+.SH DESCRIPTION
+bitextor-crawl2ett is a bash/Python script that processes the output of the script
+.IR bitextor-crawl
+and extracts the following information for every document:
+.IR URL 
+of the document,
+.BR encoding 
+of the file, and
+.BR mimetype 
+of the
+.B content
+of each file. This script uses the library
+.B boilerpipe
+to remove menus and unuseful parts of the HTML files. Then,
+the tool
+.B Apache-Tika
+is used to fix errors in the HTML structure and obtain a version of the file
+in XHTML. This tool also normalises the encoding of the documents to UTF-8.
+The output of this script is a tab-separated file in which every line corresponds
+to a document.
+
+.SH DEPENDENCES
+.B bitextor-crawl2ett
+depends on the Python library
+.B boilerpipe
+for cleaning those parts of an HTML file that contain useless
+information, such as menus, adds, etc. This library must be installed
+in advance to use this scipt. This script also deppends on
+.BR Apache-Tika ,
+but this tool is installed together with
+.B bitextor
+package.
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
+bitextor-downloadweb(1), bitextor-ett2lett(1), bitextor-lett2idx(1),
+bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

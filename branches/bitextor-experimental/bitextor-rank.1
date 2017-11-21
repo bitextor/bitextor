@@ -1,0 +1,71 @@
+.\" Manpage for bitextor-align-segments
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-rank 1 "16 May 2016" "bitextor v5.0" "bitextor man pages"
+.SH NAME
+bitextor-rank \- This application is part of
+.B bitextor
+( the automatic bitext generator )
+
+.SH SYNOPSIS
+.B bitextor-rank
+.RI [ OPTIONS ]
+.BI \-w " WEIGHTS"
+.BI \-m " MODEL"
+.I [ RINDEX ]
+
+
+.SH DESCRIPTION
+.B bitextor-rank
+is a Python script that takes a
+.IR RINDEX
+with a list of metrics and ranks the list of candidates for every
+file, providing a quality score for every document pair. The
+following is an example of an 
+.IR RINDEX
+file that presents the metrics obtained for file 512 and two
+candidates: files 502 and 505:
+
+.B      512     502:0.4:0.48:0.12:0.17:0:0.4:0.4	505:0.2:0.14:0.22:0.4:0:0.1:0.2
+
+This script uses the keras, a library that allows using neural networks
+for binary classification. In this case, the
+.IR MODEL
+and
+.IR WEIGHTS
+provided are used with a neural network for logistic regression; the
+metrics in the list are used as features to feed the neural network,
+and the output score is used to rank the candidates. The score
+provided for every document pair is a value in [0,1].
+
+.SH OPTIONS
+.TP
+.BI \-w " WEIGHTS"
+File containing the weights set for the neural netwokr, which is
+obtained with the script
+.B bitextor-train-document-alignment
+.TP
+.BI \-m " MODEL"
+File containing the regression model to be used by the neural netwokr,
+which is obtained with the script
+.B bitextor-train-document-alignment
+.TP
+.BI \-t " THRESHOLD"
+Quality threshold set to discard document pairs that have an excessively
+low similarity score obtained by the regressor. This threshold can take
+values in [0,1]
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor(1), bitextor-downloadweb(1), bitextor-webdir2ett(1), bitextor-ett2lett(1),
+bitextor-lett2idx(1), bitextor-idx2ridx(1), bitextor-lett2lettr(1),
+bitextor-distancefilter(1), bitextor-cleantextalign(1), bitextor-buildTMX(1), hunalign(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>
