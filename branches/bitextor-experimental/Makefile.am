@@ -32,8 +32,11 @@ EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) utils \
 
 CLEANFILES=$(bin_SCRIPTS)
 
-smttools:
-	cd mgiza/mgizapp/ && cmake . && make && cp bin/* $(prefix)/bin/.
+compile-smttools:
+	cd mgiza/mgizapp/ && cmake . && make 
+
+install-smttools:
+	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 
 bitextor-train-document-alignment: bitextor-train-document-alignment.in
@@ -41,7 +44,9 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.in
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor: bitextor.in smttools
+install: install-recursive install-smttools
+
+bitextor: bitextor.in compile-smttools
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
