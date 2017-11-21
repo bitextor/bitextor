@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Ant-Version: Apache Ant 1.9.2
-Created-By: 1.7.0_65-b32 (Oracle Corporation)
-Class-Path: boilerpipe-1.2.0.jar nekohtml-1.9.13.jar xerce
- s-2.9.1.jar
-X-COMMENT: Main-Class will be added automatically by build
-Main-Class: pipedboilerpipe.PipedBoilerpipe
-
-
