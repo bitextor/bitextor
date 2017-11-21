@@ -55,7 +55,8 @@ where LOCALDIR can be any directory where you have writing permission, such as ~
 
 Two more tools are included in bitextor package and will be installed together with bitextor:
 * hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
-* GIZA++: machine translation package, here used for building probabilistic bilingual dictionaries (<https://code.google.com/p/giza-pp/>)
+* mgiza: machine translation package, here used for building probabilistic bilingual dictionaries (<https://github.com/moses-smt/mgiza>)
+* clustercat: Fast Word Clustering program, parallelised alternative to mkcls (<https://github.com/jonsafari/clustercat>)
 * apache tika: a tool for HTML files normalisation (<http://tika.apache.org/>)
 * boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>)
 

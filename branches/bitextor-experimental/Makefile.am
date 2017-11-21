@@ -1,10 +1,10 @@
 
 bitextordir = $(prefix)/share/bitextor
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign utils giza-pp/mkcls-v2 giza-pp/GIZA++-v2 ulysses piped-boilerpipe piped-tika ulysses-data model
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-5.0.pc
+
+SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
@@ -19,24 +19,29 @@ bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-c
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
-            features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison
+            features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
 bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-distancefilter.1 bitextor-ett2lett.1 \
          bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
          bitextor-buildTMX.1
 
+
 EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) utils \
-            giza-pp model
+            model
 
 CLEANFILES=$(bin_SCRIPTS)
+
+smttools:
+	cd mgiza/mgizapp/ && cmake . && make && cp bin/* $(prefix)/bin/.
+	cp clustercat/bin/* $(prefix)/bin/.
 
 bitextor-train-document-alignment: bitextor-train-document-alignment.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor: bitextor.in
+bitextor: bitextor.in smttools
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \

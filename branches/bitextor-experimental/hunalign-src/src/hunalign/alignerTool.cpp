@@ -519,6 +519,12 @@ double alignerToolWithObjects( const DictionaryItems& dictionary,
   {
     filterTrailByQuality( bestTrail, trailScoresInterval, alignParameters.qualityThreshold );
 
+    if ( (bestTrail.size()>0) && (bestTrail[0]!=Rundle(0,0)) )
+    {
+	std::cerr << "Correcting a rare bug affecting first bisentences.\n";
+	bestTrail.insert(bestTrail.begin(),Rundle(0,0));
+    }
+
     for ( int i=0; i<bestTrail.size()-1; ++i )
     {
       // The [huPos, nexthuPos) interval corresponds to the [enPos, nextenPos) interval.
@@ -577,12 +583,12 @@ void alignerToolWithFilenames( const DictionaryItems& dictionary,
   std::ifstream hus(huFilename.c_str());
   SentenceList huSentenceListPretty;
   huSentenceListPretty.readNoIds( hus );
-  std::cerr << huSentenceListPretty.size() << " hungarian sentences read." << std::endl;
+  std::cerr << huSentenceListPretty.size() << " source language sentences read." << std::endl;
 
   std::ifstream ens(enFilename.c_str());
   SentenceList enSentenceList;
   enSentenceList.readNoIds( ens );
-  std::cerr << enSentenceList.size() << " english sentences read." << std::endl;
+  std::cerr << enSentenceList.size() << " target language sentences read." << std::endl;
 
   if ( (enSentenceList.      size() < huSentenceListPretty.size()/5) ||
        (huSentenceListPretty.size() < enSentenceList.      size()/5) )
