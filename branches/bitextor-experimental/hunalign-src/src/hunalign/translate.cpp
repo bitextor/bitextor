@@ -178,20 +178,9 @@ void trivialTranslate(
                            Sentence& translatedSentence
                      )
 {
-  bool logging = false;
-
-  std::ofstream* translateLogsPtr;
-  if (logging)
-  {
-    translateLogsPtr = new std::ofstream( "translate.txt", std::ios::app );
-  }
-  std::ostream& logs = *translateLogsPtr ; // std::cout;
 
   translatedSentence.id = sentence.id;
   Phrase& words = translatedSentence.words;
-
-  if (logging && !translatedSentence.id.empty())
-    logs << translatedSentence.id << "\t";
 
   const Phrase& originalWords = sentence.words;
 
@@ -206,28 +195,6 @@ void trivialTranslate(
     {
       words.push_back(phrase[k]);
     }
-
-    if (logging)
-      logs << originalWord << "(";
-    for ( k=0; k<phrase.size(); ++k )
-    {
-      if (logging)
-      {
-        logs << phrase[k];
-        if (k<phrase.size()-1)
-          logs << " ";
-      }
-    }
-    if (logging)
-      logs << ") ";
-  }
-
-  if (logging)
-    logs << "\n";
-
-  if (logging)
-  {
-    delete translateLogsPtr;
   }
 }
 
@@ -237,12 +204,9 @@ void trivialTranslateSentenceList(
                            SentenceList& translatedSentenceList
                      )
 {
-  {
-    std::ofstream translateLogs( "translate.txt" );
-  }
   
   translatedSentenceList.clear();
-
+  
   for ( int i=0; i<sentenceList.size(); ++i )
   {
     Sentence translatedSentence;
