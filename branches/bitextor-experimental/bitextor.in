@@ -73,7 +73,8 @@ exit_program()
   echo "                  a temporal directory in '/tmp' (or a different directory if -T option is used)."
   echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
   echo "                  corresponding destination path (one per line)."
-  echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
+  echo "  -e FILE         uses as an input the output of the module bitextor-webdir2ett"
+  echo "  -E FILE         uses as an input a lett file"
   echo "  LANG1           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo "  LANG2           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo ""
@@ -152,6 +153,13 @@ run_bitextor_ett(){
 
   cat $1 | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+  align_segments $LETTR
+}
+
+run_bitextor_lett(){
+
+  cat $1 | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
   align_segments $LETTR
 }
@@ -385,7 +393,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
+ARGS=$(getopt "xfaDq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
 
 set -- $ARGS
 for i
@@ -452,6 +460,15 @@ do
       fi
       shift
       ;;
+    -E)
+      shift
+      LETT=$1
+      if [ $INPUTMODE -eq 0 ]; then
+        INPUTMODE=4
+      fi
+      shift
+      ;;
+
     -u)
       shift
       URL=$1
@@ -600,6 +617,11 @@ if [[ -z $ETT ]]; then
   ETT=$TMPETT
 fi
 
+TMPLETT=$(mktemp $TMPDIR/lett.XXXXXX)
+if [[ -z $LETT ]]; then
+  LETT=$TMPLETT
+fi
+
 TMPLETTR=$(mktemp $TMPDIR/lettr.XXXXXX)
 if [[ -z $LETTR ]]; then
   LETTR=$TMPLETTR
@@ -627,6 +649,9 @@ case $INPUTMODE in
     ;;
   3)
     run_bitextor_ett $ETT
+    ;;
+  4)
+    run_bitextor_lett $LETT
     ;;
   *)
     exit_program $(basename $0)
