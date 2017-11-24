@@ -43,8 +43,10 @@ print " <body>"
 tuid_counter=1
 for line in reader:
   fields = line.strip().split("\t")
-  if len(fields) == 4:
+  if len(fields) >= 4:
     print "   <tu tuid=\""+str(tuid_counter)+"\" datatype=\"Text\">"
+    if len(fields) == 5:
+      print "    <prop type=\"hunalign-score\">"+fields[4]+"</prop>"
     print "    <tuv xml:lang=\""+options.lang1+"\">"
     print "     <prop type=\"source-document\">"+fields[0].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
     print "     <seg>"+fields[2].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"

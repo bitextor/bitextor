@@ -57,6 +57,7 @@ CRAWLINGSTATUSDUMP=""
 CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
+PRINTSCORE=""
 
 exit_program()
 {
@@ -106,8 +107,9 @@ exit_program()
   echo "                    with a score"
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
+  echo "  -W                Print the Hunalign information in output stream (column or TMX property)"
   echo "  -T TMP-DIR        alternative tmp directory (/tmp by default)."
-  echo "  -x                if this option is enabled, the output of the tool will be."
+  echo "  -x                if this option is enabled, the output of the tool will be"
   echo "                    formated in the standard XML-based format TMX."
   echo "  -a                if this option is enabled, Bitextor will perform the alignment only"
   echo "                    at the level of documents. The output will be tab-sepparated, with"
@@ -314,7 +316,7 @@ align_segments(){
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
@@ -333,7 +335,7 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
         else
             __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -346,7 +348,7 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
         fi
     else
         if  [ $FREQ == "1" ]; then
@@ -393,7 +395,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
+ARGS=$(getopt "xfaWDq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
 
 set -- $ARGS
 for i
@@ -564,23 +566,27 @@ do
       CRAWLINGSTATUSDUMP="$1"
       shift
       ;;
-     -C)
-        shift
-        CRAWLINGSTATUSCONTINUE="$1"
-        shift
-        ;;
-     -R)
-        shift
-        CRAWLINGDATACONTINUE="$1"
-        shift
-        ;;
+    -C)
+      shift
+      CRAWLINGSTATUSCONTINUE="$1"
+      shift
+      ;;
+    -R)
+      shift
+      CRAWLINGDATACONTINUE="$1"
+      shift
+      ;;
     -D)
-        TLD_CRAWL=" -D "
-        shift
-        ;;
+      TLD_CRAWL=" -D "
+      shift
+      ;;
+    -W)
+      PRINTSCORE="-s"
+      shift
+      ;;
     -h)
-        exit_program $(basename $0)
-        ;;
+      exit_program $(basename $0)
+      ;;
     --)
       shift
       break
