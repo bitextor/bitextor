@@ -26,13 +26,15 @@ Some external Python libraries should also be installed before starting the inst
 * numpy: Python package for scientific computing with Python.
 * keras: Python package for implementing neural networks for deep learning.
 * h5py: Pythonic interface to the HDF5 binary data format.
-* magic: Python interface for the magic library, used to detect files' format.
+* python-magic: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
 
 The easiest way to install these python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
 
    user@pc:~$ sudo pip install langid python-Levenshtein regex NLTK numpy magic h5py keras
 
-Most of these packages are also available in the repositories of many Unix-based systems.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automatke, gawk, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+
+Most of these pip packages are also available in the repositories of many Unix-based systems.
 
 In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionaly, just use the option "--without-apertium" when running the configuration script.
 
@@ -53,7 +55,7 @@ In case you do not have sudoer privileges, it is possible to install the tool lo
 
 where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
 
-Two more tools are included in bitextor package and will be installed together with bitextor:
+Some more tools are included in the bitextor package and will be installed together with bitextor:
 * hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
 * mgiza: machine translation package, here used for building probabilistic bilingual dictionaries (<https://github.com/moses-smt/mgiza>)
 * clustercat: Fast Word Clustering program, parallelised alternative to mkcls (<https://github.com/jonsafari/clustercat>)
@@ -95,6 +97,7 @@ Several options can be set using the command line options:
 * -s SIZE     size limit for the crawling process; if this option is set, the crawling process will stop after the amount of data specified has been crawled. This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G) for example: '50M' for 50 Megabytes.
 * -t TIME     time limit for the crawling process; if this option is set, the crawling process will stop after the amount of time specified. This option must be an amount of time and a time unit (h for hours, m for minutes and s for seconds), for example: '35m' for 35 minutes.
 
+More options using -h command.
 
 It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
