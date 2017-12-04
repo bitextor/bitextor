@@ -151,9 +151,9 @@ wait
 
 #Running GIZA++ in both directions
 echo "BUILDING PROBABILISTIC DICTIONARIES..."
-__PREFIX__/bin/mgiza -ncpus 0 -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
+__PREFIX__/bin/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
 
-__PREFIX__/bin/mgiza -ncpus 0 -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
+__PREFIX__/bin/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
 wait
 
 echo "FILTERING DICTIONARY..."
@@ -208,3 +208,6 @@ for line in t3s:
           print "{0}\t{1}".format(word1, word2)' $MODELSDIR/$SL.filtered.vcb $MODELSDIR/$TL.filtered.vcb $MODELSDIR/$SL-$TL.t3.final $MODELSDIR/$TL-$SL.t3.final | egrep '^.\s.$' -v | egrep '^[[:alpha:]-]+\s[[:alpha:]-]+$' >> $DIC
 
 echo "DONE!"
+
+rm -rf $PREPROCCORPUS
+rm -rf $MODELSDIR
