@@ -153,7 +153,7 @@ exit_program()
 
 run_bitextor_ett(){
 
-  cat $1 | \
+  zcat -f $1 | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
   align_segments $LETTR
@@ -161,7 +161,7 @@ run_bitextor_ett(){
 
 run_bitextor_lett(){
 
-  cat $1 | \
+  zcat -f $1 | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
   align_segments $LETTR
 }
@@ -638,7 +638,7 @@ case $INPUTMODE in
     run_bitextor $URL
     ;;
   2)
-    cat $URLFILE | \
+    zcat -f $URLFILE | \
     while read line;
     do
       URL=$(echo "$line" | cut -f 1)

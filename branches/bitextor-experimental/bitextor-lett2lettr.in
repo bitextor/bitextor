@@ -68,7 +68,7 @@ for line in reader:
       try:
         p.feed(e)
         raspa = "".join(p.output)
-        if raspa.split('_')[1][-2:] == "ml":
+        if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in raspa):
           print line.strip()+"\t"+raspa+"\t"+str(datetime.datetime.now().time())
       except HTMLParser.HTMLParseError:
         pass
