@@ -57,7 +57,7 @@ CRAWLINGSTATUSDUMP=""
 CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
-PRINTSCORE=""
+PRINTSTATS=""
 
 BUILDDICTTMP=$(mktemp $TMPDIR/BUILDDICTTMP.XXXXXX)
 
@@ -109,7 +109,7 @@ exit_program()
   echo "                    with a score"
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
-  echo "  -W                Print the Hunalign information in output stream (column or TMX property)"
+  echo "  -W                Print stats similar to ILSP-FC fields, as the Hunalign information in output stream, in added columns or TMX properties"
   echo "  -T TMP-DIR        alternative tmp directory (/tmp by default)."
   echo "  -x                if this option is enabled, the output of the tool will be"
   echo "                    formated in the standard XML-based format TMX."
@@ -318,7 +318,8 @@ align_segments(){
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+        __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
@@ -337,7 +338,8 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+            __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
         else
             __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -350,7 +352,8 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSCORE 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+            __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
         fi
     else
         if  [ $FREQ == "1" ]; then
@@ -454,6 +457,7 @@ do
       ALIGNDOCUMENTSLOG=$LOGDIR/bitextoraligndocuments.log
       ALIGNSEGMENTSLOG=$LOGDIR/bitextoralignsegments.log
       CLEANTEXTLOG=$LOGDIR/bitextorcleantextalign.log
+      ADDTEXTSTATSLOG=$LOGDIR/bitextoraddtextstats.log
       shift
       ;;
     -e)
@@ -583,7 +587,7 @@ do
       shift
       ;;
     -W)
-      PRINTSCORE="-s"
+      PRINTSTATS="-s"
       shift
       ;;
     -h)
