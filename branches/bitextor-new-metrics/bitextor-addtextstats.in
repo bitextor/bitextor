@@ -16,13 +16,13 @@ else:
 
 for i in reader:
   fields = i.strip().split("\t")
-  if options.stats != False:
-    lengthRatio=len(fields[2].encode('utf8'))*1.0/len(fields[3].encode('utf8'))
+  if options.isPrintingStats != False:
+    lengthRatio=len(fields[2].decode('utf8'))*1.0/len(fields[3].decode('utf8'))
     numTokensSL=len(fields[2].split(' ')) #This is not the way this should be counted, we need to tokenize better first
     numTokensTL=len(fields[3].split(' ')) #This is not the way this should be counted, we need to tokenize better first
-    fields.append(lengthRatio)
-    fields.append(numTokensSL)
-    fields.append(numTokensTL)
+    fields.append(str(lengthRatio))
+    fields.append(str(numTokensSL))
+    fields.append(str(numTokensTL))
   print("\t".join(fields))
 
 

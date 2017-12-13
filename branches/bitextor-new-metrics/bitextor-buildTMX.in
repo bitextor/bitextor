@@ -11,6 +11,7 @@ import sys
 import argparse
 import time
 import locale
+import re
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -52,17 +53,17 @@ for line in reader:
       infoTag=[]
       print "    <prop type=\"score\">"+fields[4]+"</prop>"
       #Output info data ILSP-FC specification
-      if float(fields[5])>float(options.max-length) or float(fields[5])<float(options.min-length):
+      if float(fields[5])>float(options.maxl) or float(fields[5])<float(options.minl):
         infoTag.append("charlength ratio of TUVs is lower than 0.6 or higher than 1.6")
-      if re.sub("[^0-9]", "", fields[2]) == re.sub("[^0-9]", "", fields[3]):
+      if re.sub("[^0-9]", "", fields[2]) != re.sub("[^0-9]", "", fields[3]):
         infoTag.append("different numbers in TUVs")
       print "    <prop type=\"type\">1:1</prop"
-      if re.sub(r'\W+', '', fields[2]) == re.sub(r'\W+', '', fields[3]): #think about this better
+      if re.sub(r'\W+', '', fields[2]) == re.sub(r'\W+', '', fields[3]):
         infoTag.append("equal TUVs")
       if False: #think about this
-        infoTg.append("duplicate")
-      
-      print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
+        infoTag.append("duplicate")
+      if len(infoTag) > 0:
+        print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
       
     infoTagSL=[]
     infoTagTL=[]
@@ -70,17 +71,19 @@ for line in reader:
     print "     <prop type=\"source-document\">"+fields[0].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
     print "     <seg>"+fields[2].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     if len(fields) >= 5:
-      if int(fields[6])<int(options.min-tokens):
-        infoTagSL.append("very short segments, shorter than "+options.min-tokens)
-    print "    <prop type=\"info\">"+"|".join(infoTagSL)+"</prop>"
+      if int(fields[6])<int(options.mint):
+        infoTagSL.append("very short segments, shorter than "+options.mint)
+    if len(infoTagSL) > 0:
+      print "    <prop type=\"info\">"+"|".join(infoTagSL)+"</prop>"
     print "    </tuv>"
     print "    <tuv xml:lang=\""+options.lang2+"\">"
     print "     <prop type=\"source-document\">"+fields[1].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
     print "     <seg>"+fields[3].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     if len(fields) >= 5:
-      if int(fields[7])<int(options.min-tokens):
-        infoTagTL.append("very short segments, shorter than "+options.min-tokens)
-    print "    <prop type=\"info\">"+"|".join(infoTagTL)+"</prop>"
+      if int(fields[7])<int(options.mint):
+        infoTagTL.append("very short segments, shorter than "+options.mint)
+    if len(infoTagTL) > 0:
+      print "    <prop type=\"info\">"+"|".join(infoTagTL)+"</prop>"
     print "    </tuv>"
     print "   </tu>"
     tuid_counter=tuid_counter+1
