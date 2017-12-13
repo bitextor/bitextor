@@ -1,0 +1,5 @@
+bin/clustercat
+src/ext/word2vec/distance
+src/ext/word2vec/word-analogy
+*.[oa~]
+.*.sw[op]
