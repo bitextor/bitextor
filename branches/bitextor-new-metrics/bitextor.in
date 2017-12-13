@@ -59,7 +59,7 @@ CRAWLINGDATACONTINUE=""
 TLD=""
 PRINTSTATS=""
 
-BUILDDICTTMP=$(mktemp $TMPDIR/BUILDDICTTMP.XXXXXX)
+BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
 exit_program()
 {
@@ -180,7 +180,7 @@ trapsigint(){
 
 run_bitextor(){
   local URL=$1
-  tmpcrawl=$(mktemp $TMPDIR/$BUILDDICTTMP/crawl.XXXXXX)
+  tmpcrawl=$(mktemp $BUILDDICTTMP/crawl.XXXXXX)
   rm $tmpcrawl
   mkfifo $tmpcrawl
 
@@ -220,25 +220,25 @@ align_segments(){
     TLD_IDX2RIDX=" -l $1 "
   fi
 
-  output_pipe=$(mktemp $TMPDIR/$BUILDDICTTMP/output_pipe.XXXXXX)
+  output_pipe=$(mktemp $BUILDDICTTMP/output_pipe.XXXXXX)
   rm $output_pipe
   mkfifo $output_pipe
 
-  HUNALIGN_DIC=$(mktemp $TMPDIR/$BUILDDICTTMP/hunalign_dic.XXXXXX)
+  HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
   tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
 
   if [ $BIDIDOCALIGN -ge 1 ]; then
     #Named pipe for paralelising obtaining the initial index for the ridx 1
-    index_pipe1=$(mktemp $TMPDIR/$BUILDDICTTMP/index_pipe.XXXXXX)
+    index_pipe1=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe1
     mkfifo $index_pipe1
 
     #Named pipe for paralelising obtaining the initial index for the ridx 2
-    index_pipe2=$(mktemp $TMPDIR/$BUILDDICTTMP/index_pipe.XXXXXX)
+    index_pipe2=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe2
     mkfifo $index_pipe2
 
-    INDEX=$(mktemp $TMPDIR/$BUILDDICTTMP/idx.XXXXXX)
+    INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
@@ -249,9 +249,9 @@ align_segments(){
     fi
 
 
-    INDEX=$(mktemp $TMPDIR/$BUILDDICTTMP/idx.XXXXXX)
-    RINDEX1=$(mktemp $TMPDIR/$BUILDDICTTMP/ridx.XXXXXX)
-    RINDEX2=$(mktemp $TMPDIR/$BUILDDICTTMP/ridx.XXXXXX)
+    INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
+    RINDEX1=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
+    RINDEX2=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
@@ -300,9 +300,9 @@ align_segments(){
 
     rm $index_pipe1 $index_pipe2
 
-    L1WORDS=$(mktemp $TMPDIR/$BUILDDICTTMP/l1words.XXXXXX)
-    L2WORDS=$(mktemp $TMPDIR/$BUILDDICTTMP/l2words.XXXXXX)
-    WORDS=$(mktemp $TMPDIR/$BUILDDICTTMP/words.XXXXXX)
+    L1WORDS=$(mktemp $BUILDDICTTMP/l1words.XXXXXX)
+    L2WORDS=$(mktemp $BUILDDICTTMP/l2words.XXXXXX)
+    WORDS=$(mktemp $BUILDDICTTMP/words.XXXXXX)
 
     grep "^$LANG1"$'\t' $INDEX | cut -f 2 | sort > $L1WORDS
     grep "^$LANG2"$'\t' $INDEX | cut -f 2 | sort > $L2WORDS
@@ -426,7 +426,7 @@ do
       ;;
     -M|--SMORPH)
       shift
-      MORPH1=$(mktemp $TMPDIR/$BUILDDICTTMP/morph1.XXXXXX)
+      MORPH1=$(mktemp $BUILDDICTTMP/morph1.XXXXXX)
       sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH1
       #sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_sl $MORPH1"
@@ -434,7 +434,7 @@ do
       ;;
     -N|--TMORPH)
       shift
-      MORPH2=$(mktemp $TMPDIR/$BUILDDICTTMP/morph2.XXXXXX)
+      MORPH2=$(mktemp $BUILDDICTTMP/morph2.XXXXXX)
       sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH2
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2"
       shift
@@ -624,17 +624,17 @@ case $# in
     ;;
 esac
 
-TMPETT=$(mktemp $TMPDIR/$BUILDDICTTMP/ett.XXXXXX)
+TMPETT=$(mktemp $BUILDDICTTMP/ett.XXXXXX)
 if [[ -z $ETT ]]; then
   ETT=$TMPETT
 fi
 
-TMPLETT=$(mktemp $TMPDIR/$BUILDDICTTMP/lett.XXXXXX)
+TMPLETT=$(mktemp $BUILDDICTTMP/lett.XXXXXX)
 if [[ -z $LETT ]]; then
   LETT=$TMPLETT
 fi
 
-TMPLETTR=$(mktemp $TMPDIR/$BUILDDICTTMP/lettr.XXXXXX)
+TMPLETTR=$(mktemp $BUILDDICTTMP/lettr.XXXXXX)
 if [[ -z $LETTR ]]; then
   LETTR=$TMPLETTR
 fi

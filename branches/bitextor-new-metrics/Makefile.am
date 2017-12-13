@@ -17,7 +17,7 @@ bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segmen
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-idx2ridx-freq bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl bitextor-train-document-alignment \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
-            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment \
+            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-addtextstats \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
