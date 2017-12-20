@@ -57,7 +57,7 @@ for line in reader:
         infoTag.append("charlength ratio of TUVs is lower than 0.6 or higher than 1.6")
       if re.sub("[^0-9]", "", fields[2]) != re.sub("[^0-9]", "", fields[3]):
         infoTag.append("different numbers in TUVs")
-      print "    <prop type=\"type\">1:1</prop"
+      print "    <prop type=\"type\">1:1</prop>"
       if re.sub(r'\W+', '', fields[2]) == re.sub(r'\W+', '', fields[3]):
         infoTag.append("equal TUVs")
       if False: #think about this
@@ -72,7 +72,7 @@ for line in reader:
     print "     <seg>"+fields[2].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     if len(fields) >= 5:
       if int(fields[6])<int(options.mint):
-        infoTagSL.append("very short segments, shorter than "+options.mint)
+        infoTagSL.append("very short segments, shorter than "+str(options.mint))
     if len(infoTagSL) > 0:
       print "    <prop type=\"info\">"+"|".join(infoTagSL)+"</prop>"
     print "    </tuv>"
@@ -81,7 +81,7 @@ for line in reader:
     print "     <seg>"+fields[3].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
     if len(fields) >= 5:
       if int(fields[7])<int(options.mint):
-        infoTagTL.append("very short segments, shorter than "+options.mint)
+        infoTagTL.append("very short segments, shorter than "+str(options.mint))
     if len(infoTagTL) > 0:
       print "    <prop type=\"info\">"+"|".join(infoTagTL)+"</prop>"
     print "    </tuv>"
