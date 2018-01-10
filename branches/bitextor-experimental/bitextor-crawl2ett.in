@@ -10,7 +10,8 @@ exit_program()
   exit 1
 }
 
-ARGS=$(getopt "h" $*)
+ARGS=$(getopt "bh" $*)
+BOILERCOMMAND="__JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar"
 
 set -- $ARGS
 for i
@@ -18,6 +19,10 @@ do
   case "$i" in
     -h)
       exit_program $(basename $0)
+      ;;
+    -b)
+      shift
+      BOILERCOMMAND="cat -"
       ;;
     --)
       shift
@@ -71,17 +76,15 @@ for line in sys.stdin:
     magicoutput=m.buffer(base64.b64decode(content)).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
-    magicoutput.append(content)
+    magicoutput.append(base64.b64encode(base64.b64decode(content).decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1")).encode("utf8")))
     print "\t".join(magicoutput)
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")' | \
-__JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x | __JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
+__JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x | eval "$BOILERCOMMAND" | \
 __PYTHON__ -c 'import sys
 import hashlib
 import base64
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 seen_md5={}
 for i in sys.stdin:
@@ -97,7 +100,7 @@ for i in sys.stdin:
       sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
       seen_md5[c.hexdigest()]=fields[2]
-      print "{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e)
+      print("{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e))
   except UnicodeDecodeError:
     sys.stderr.write("File "+fields[2]+" produced a character encoding error")
 ' > $OUTPUT

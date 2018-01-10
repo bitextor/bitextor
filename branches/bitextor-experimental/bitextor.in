@@ -36,6 +36,7 @@ CLEANTEXTLOG=/dev/null
 MORPHANAL_OPTIONS=""
 MORPH1=""
 MORPH2=""
+CRAWLOUT=""
 CRAWL2ETTOUT=""
 ETT2LETTOUT=""
 LETT2LETTROUT=""
@@ -58,6 +59,7 @@ CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
 PRINTSTATS=""
+IGNOREBOILER=""
 
 BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
@@ -89,6 +91,7 @@ exit_program()
   echo "                    (/lettr.XXXXXX by default)."
   echo "  -I PATH           custom path where the output of the intermediate files produced"
   echo "                    by the modules of bitextor will be stored."
+  echo "  -B                ignores and skips the boilerpipe clean step"
   echo "  -b NUM            if this option is enabled, the document alignment process is"
   echo "                    run in both directions and only the first NUM candidates in"
   echo "                    every direction will be taken into account. With this, the list"
@@ -196,12 +199,12 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
   trap "trapsigint $crawl_pid" SIGUSR1
 
-  __PREFIX__/bin/bitextor-crawl2ett < $tmpcrawl 2> $CRAWL2ETTLOG | tee $ETT | \
+  __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
 
@@ -400,7 +403,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaWDq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
+ARGS=$(getopt "xfaWDBq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
 
 set -- $ARGS
 for i
@@ -410,6 +413,7 @@ do
       shift
       INTERMEDIATEFILE=$1
       mkdir -p $INTERMEDIATEFILE
+      CRAWLOUT=$INTERMEDIATEFILE/crawl
       CRAWL2ETTOUT=$INTERMEDIATEFILE/crawl2ett
       ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
       LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
@@ -496,6 +500,10 @@ do
       ;;
     -x)
       FORMAT="TMX"
+      shift
+      ;;
+    -B)
+      IGNOREBOILER="-b "
       shift
       ;;
     -f)
