@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Ant-Version: Apache Ant 1.9.2
 Created-By: 1.7.0_65-b32 (Oracle Corporation)
-Class-Path: tika-app-1.16.jar commons-codec-1.11.jar
+Class-Path: tika-app-1.17.jar commons-codec-1.11.jar
 X-COMMENT: Main-Class will be added automatically by build
 Main-Class: pipedtika/PipedTika
 
