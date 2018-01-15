@@ -76,8 +76,11 @@ for line in sys.stdin:
     magicoutput=m.buffer(base64.b64decode(content)).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
-    magicoutput.append(base64.b64encode(base64.b64decode(content).decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1")).encode("utf8")))
-    print "\t".join(magicoutput)
+    try:
+      magicoutput.append(base64.b64encode(base64.b64decode(content).decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1")).encode("utf8")))
+      print "\t".join(magicoutput)
+    except LookupError as e:
+      sys.stderr.write("Unknown character encoding in file "+url+": "+str(e)+"\n")
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")' | \
 __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x | eval "$BOILERCOMMAND" | \
