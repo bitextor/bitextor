@@ -1,0 +1,80 @@
+#!/bin/sh
+## By Jon Dehdari, 2015, public domain
+## Compatibility wrapper for brown-cluster, using mkcls's command-line arguments
+## If you find an error in the interpretation of mkcls's arcane command-line arguments, please let me know
+
+mkcls_cmd_args='
+mkcls command-line arguments:
+
+  -p<file>    training input text file (default: train)
+  -V<file>    cluster output file
+  -c<i>       number of word clusters (default: 100)
+  -m<i>       minimum word count (default: 1)
+
+Ignored arguments:
+  -a<s>       set stochastic optimization algorithm {rrt,ta,gda,sa,hc} (default: ta == Threshold Annealing))
+  -e<f> <i>   set stochastic optimization parameter (for gamma, nu, alpha)
+  -h<s>       set hapax init name
+  -i<s>       set initialization value {ran,aio,gda,freq,other} (default: ran)
+  -k<s>       set category selection {det,ran,best} (default: best)
+  -l<f>       use LO, and set rho
+  -M<i>       maximum number of optimization steps
+  -n<i>       number of optimization runs (default: 1)
+  -N<i>       set optimize parameter count (default: 10)
+  -o<file>    graph output
+  -O<i>       set one-with-hapas (default: 1)
+  -P<file>    training ngram file
+  -r<i>       set random seed (default: 532567487)
+  -s<i>       set maximum runtime seconds
+  -v<i>       verbose mode
+  -w<s>       set word selection {det,ran,incr} (default: det)
+  -y<f>       use special criterion, and set sigma distortion (default: 5.0)
+'
+
+## Set defaults to be like mkcls, unless they're overwritten latter by manually specifying them
+min_count=1
+classes=100
+in_file='train'
+
+
+while [ $# -gt 0 ]; do
+
+	## Let me know if you actually use the original -h argument (hapax init name), and I'll change this
+	if [ $1 = '--help' ] || [ $1 = '-h' ]; then
+		echo "$mkcls_cmd_args"
+		exit
+	fi
+
+	## Ugh.  Use a space between flags and their values
+	flag=$(echo "$1" | grep -o '^-.')
+	arg=${1#-?}
+	case $flag in
+	-p)
+		in_file="$arg"
+		shift
+		;;
+	-V)
+		out_file="$arg"
+		shift
+		;;
+	-c)
+		classes="$arg"
+		shift
+		;;
+	-m)
+		min_count="$arg"
+		shift
+		;;
+	*)
+		shift
+		;;
+	esac
+done
+
+cmd_string="$(dirname $0)/wcluster --threads 4 --min-occur $min_count  --c $classes --text $in_file --output_dir ${out_file}_brown_dir "
+
+echo 'Executing:' >&2
+echo "$cmd_string" >&2
+eval "$cmd_string" && \
+$(dirname $0)/hier2flat_no_freqs.sh < ${out_file}_brown_dir/paths > $out_file && \
+\rm ${out_file}_brown_dir/log # really verbose for large corpora

@@ -98,20 +98,20 @@ public class PipedTika {
                 os=new ByteArrayOutputStream();
                 InputStream is;
                 String filecontent, content, inputencoding;
-                try{
-                    if(fields[1].contains("="))
-                        inputencoding=fields[1].split("=")[1];
-                    else
-                        inputencoding=fields[1];
-
-                    filecontent=new String(Base64.decodeBase64(fields[3]), inputencoding);
-                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
-                    is = new ByteArrayInputStream(content.getBytes(inputencoding));
-                } catch(java.io.UnsupportedEncodingException ex){
+//                try{
+//                    if(fields[1].contains("="))
+//                        inputencoding=fields[1].split("=")[1];
+//                    else
+//                        inputencoding=fields[1];
+//
+//                    filecontent=new String(Base64.decodeBase64(fields[3]), inputencoding);
+//                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+//                    is = new ByteArrayInputStream(content.getBytes(inputencoding));
+//                } catch(java.io.UnsupportedEncodingException ex){
                     filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").trim();
+                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").replaceAll("<meta charset=([^<]*)>", "" ).replaceAll("<meta http-equiv=\"content-type\" content=([^<]*)>", "" ).trim();
                     is = new ByteArrayInputStream(content.getBytes("utf-8"));
-                }
+//                }
 
                 if(returnxml)
                     handler=getTransformerHandler(os, "xml", true);
@@ -120,9 +120,11 @@ public class PipedTika {
 
                 //Parsing
                 try{
-                    parser.parse(is, handler, new Metadata(), new ParseContext());
+                    Metadata metadata = new Metadata();
+                    metadata.set(Metadata.CONTENT_ENCODING, "UTF-8");
+                    parser.parse(is, handler, metadata, new ParseContext());
                     if(returnxml)
-                        System.out.println(line+"\t"+os.toString().replace("\n", " ").replaceAll("\\s+", " "));
+                        System.out.println(line+"\t"+new String(os.toString().replace("\n", " ").replaceAll("\\s+", " ").getBytes(), "UTF-8"));
                     else
                         System.out.println(line+"\t"+new String(Base64.encodeBase64(os.toString().getBytes()), "UTF-8"));
                 } catch(TikaException ex){

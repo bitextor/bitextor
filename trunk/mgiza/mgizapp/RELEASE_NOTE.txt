@@ -1,0 +1,54 @@
+Release Notes
+0.7.0
+
+Overview
+
+The version provide a new building system by cmake and native MS Windows support. Please be advised that the code has undergone a lot of modifications, if you are not using MS Windows, we suggest you use old 0.6.3 version until more test.
+
+You are welcomed to help testing it and report bugs.
+
+Thank you.
+
+New Building System
+
+In additional to GNU autotools, MGIZA++ now supports CMake. Use
+
+cmake 
+make
+make install
+
+to build and install, on both Windows and Linux.
+
+Native MS Windows support
+
+The code has been modified to provide native Windows support. You can now generate Visual Studio solution and build it by invoking:
+
+cmake -G "Visual Studio 10"
+msbuild /p:Configuration=Release mgiza.sln
+
+Download link https://sourceforge.net/projects/mgizapp/files/mgizapp-0.7.0.tar.gz/download.
+0.6.3
+
+Memory optimization
+
+Filter vocabulary / word class and eliminate duplications. Being able to train with 34M sentence pairs and keep memory below 2G.
+
+Bug fix
+
+When log file was specified, model 3/4/5 training will occasionally encounter racing condition and crash. The unnecessary logging information is removed, because the same message is already printed on screen.
+
+Download link http://www.cs.cmu.edu/~qing/release/mgiza-0.6.3-10-01-11.tar.gz.
+0.6.2
+
+Minor interface change to keep compatibility with Chaski 0.2.2, the symal.sh script need file name to be specified instead of directly outputs to STDOUT.
+
+Download link http://www.cs.cmu.edu/~qing/release/mgiza-0.6.2-09-12-07.tar.gz.
+0.6.1
+
+Since the this release the MGIZA is separated from QMT package and therefore the dependencies are removed. Currently the only dependency is pthread library.
+
+Scripts for force alignment / resume training is included in the package. Please refer to forcealignment
+
+Added error tolerance functionality for hmmnorm executable, which allows ignoring a number of trunks.
+
+Download link: http://www.cs.cmu.edu/~qing/release/mgiza-0.6.1-09-11-17.tar.gz

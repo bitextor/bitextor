@@ -36,6 +36,7 @@ CLEANTEXTLOG=/dev/null
 MORPHANAL_OPTIONS=""
 MORPH1=""
 MORPH2=""
+CRAWLOUT=""
 CRAWL2ETTOUT=""
 ETT2LETTOUT=""
 LETT2LETTROUT=""
@@ -57,6 +58,10 @@ CRAWLINGSTATUSDUMP=""
 CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
+PRINTSTATS=""
+IGNOREBOILER=""
+
+BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
 exit_program()
 {
@@ -73,7 +78,8 @@ exit_program()
   echo "                  a temporal directory in '/tmp' (or a different directory if -T option is used)."
   echo "  -U FILE         tab-separated file containing a list of URLs to crawl and their"
   echo "                  corresponding destination path (one per line)."
-  echo "  -e FILE         uses as an imput the output of the module bitextor-webdir2ett"
+  echo "  -e FILE         uses as an input the output of the module bitextor-webdir2ett"
+  echo "  -E FILE         uses as an input a lett file"
   echo "  LANG1           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo "  LANG2           selected language with two letters code (ISO 639-1): en, es, fr, de ..."
   echo ""
@@ -85,6 +91,7 @@ exit_program()
   echo "                    (/lettr.XXXXXX by default)."
   echo "  -I PATH           custom path where the output of the intermediate files produced"
   echo "                    by the modules of bitextor will be stored."
+  echo "  -B                ignores and skips the boilerpipe clean step"
   echo "  -b NUM            if this option is enabled, the document alignment process is"
   echo "                    run in both directions and only the first NUM candidates in"
   echo "                    every direction will be taken into account. With this, the list"
@@ -105,8 +112,9 @@ exit_program()
   echo "                    with a score"
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
+  echo "  -W                Print stats similar to ILSP-FC fields, as the Hunalign information in output stream, in added columns or TMX properties"
   echo "  -T TMP-DIR        alternative tmp directory (/tmp by default)."
-  echo "  -x                if this option is enabled, the output of the tool will be."
+  echo "  -x                if this option is enabled, the output of the tool will be"
   echo "                    formated in the standard XML-based format TMX."
   echo "  -a                if this option is enabled, Bitextor will perform the alignment only"
   echo "                    at the level of documents. The output will be tab-sepparated, with"
@@ -150,8 +158,15 @@ exit_program()
 
 run_bitextor_ett(){
 
-  cat $1 | \
+  zcat -f $1 | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+  align_segments $LETTR
+}
+
+run_bitextor_lett(){
+
+  zcat -f $1 | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
   align_segments $LETTR
 }
@@ -168,7 +183,7 @@ trapsigint(){
 
 run_bitextor(){
   local URL=$1
-  tmpcrawl=$(mktemp $TMPDIR/crawl.XXXXXX)
+  tmpcrawl=$(mktemp $BUILDDICTTMP/crawl.XXXXXX)
   rm $tmpcrawl
   mkfifo $tmpcrawl
 
@@ -184,12 +199,12 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWL2ETTOUT > $tmpcrawl &
+  __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | sort | tee $CRAWLOUT > $tmpcrawl &
   crawl_pid=$(jobs -p)
   trap "trapsigint $crawl_pid" SIGINT
   trap "trapsigint $crawl_pid" SIGUSR1
 
-  __PREFIX__/bin/bitextor-crawl2ett < $tmpcrawl 2> $CRAWL2ETTLOG | tee $ETT | \
+  __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
   __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
   __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
 
@@ -208,25 +223,25 @@ align_segments(){
     TLD_IDX2RIDX=" -l $1 "
   fi
 
-  output_pipe=$(mktemp $TMPDIR/output_pipe.XXXXXX)
+  output_pipe=$(mktemp $BUILDDICTTMP/output_pipe.XXXXXX)
   rm $output_pipe
   mkfifo $output_pipe
 
-  HUNALIGN_DIC=$(mktemp $TMPDIR/hunalign_dic.XXXXXX)
+  HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
   tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
 
   if [ $BIDIDOCALIGN -ge 1 ]; then
     #Named pipe for paralelising obtaining the initial index for the ridx 1
-    index_pipe1=$(mktemp $TMPDIR/index_pipe.XXXXXX)
+    index_pipe1=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe1
     mkfifo $index_pipe1
 
     #Named pipe for paralelising obtaining the initial index for the ridx 2
-    index_pipe2=$(mktemp $TMPDIR/index_pipe.XXXXXX)
+    index_pipe2=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe2
     mkfifo $index_pipe2
 
-    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
+    INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-lett2idx-freq -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
@@ -237,9 +252,9 @@ align_segments(){
     fi
 
 
-    INDEX=$(mktemp $TMPDIR/idx.XXXXXX)
-    RINDEX1=$(mktemp $TMPDIR/ridx.XXXXXX)
-    RINDEX2=$(mktemp $TMPDIR/ridx.XXXXXX)
+    INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
+    RINDEX1=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
+    RINDEX2=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
 
     if [ $FREQ == "1" ]; then
         __PREFIX__/bin/bitextor-idx2ridx-freq -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
@@ -288,9 +303,9 @@ align_segments(){
 
     rm $index_pipe1 $index_pipe2
 
-    L1WORDS=$(mktemp $TMPDIR/l1words.XXXXXX)
-    L2WORDS=$(mktemp $TMPDIR/l2words.XXXXXX)
-    WORDS=$(mktemp $TMPDIR/words.XXXXXX)
+    L1WORDS=$(mktemp $BUILDDICTTMP/l1words.XXXXXX)
+    L2WORDS=$(mktemp $BUILDDICTTMP/l2words.XXXXXX)
+    WORDS=$(mktemp $BUILDDICTTMP/words.XXXXXX)
 
     grep "^$LANG1"$'\t' $INDEX | cut -f 2 | sort > $L1WORDS
     grep "^$LANG2"$'\t' $INDEX | cut -f 2 | sort > $L2WORDS
@@ -306,7 +321,8 @@ align_segments(){
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+        __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
@@ -325,7 +341,8 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+            __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
         else
             __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
             __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -338,7 +355,8 @@ align_segments(){
             __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
             __PREFIX__/bin/bitextor-align-documents -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
             __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES 2> $CLEANTEXTLOG > $output_pipe &
+            __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+            __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
         fi
     else
         if  [ $FREQ == "1" ]; then
@@ -385,7 +403,7 @@ align_segments(){
 trap '' SIGINT
 
 
-ARGS=$(getopt "xfaDq:m:v:b:l:u:U:d:D:L:D:e:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
+ARGS=$(getopt "xfaWDBq:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:" $*)
 
 set -- $ARGS
 for i
@@ -395,6 +413,7 @@ do
       shift
       INTERMEDIATEFILE=$1
       mkdir -p $INTERMEDIATEFILE
+      CRAWLOUT=$INTERMEDIATEFILE/crawl
       CRAWL2ETTOUT=$INTERMEDIATEFILE/crawl2ett
       ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
       LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
@@ -411,7 +430,7 @@ do
       ;;
     -M|--SMORPH)
       shift
-      MORPH1=$(mktemp $TMPDIR/morph1.XXXXXX)
+      MORPH1=$(mktemp $BUILDDICTTMP/morph1.XXXXXX)
       sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH1
       #sed 's/lt-proc /lt-proc -n /' < $1 > $MORPH1
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_sl $MORPH1"
@@ -419,7 +438,7 @@ do
       ;;
     -N|--TMORPH)
       shift
-      MORPH2=$(mktemp $TMPDIR/morph2.XXXXXX)
+      MORPH2=$(mktemp $BUILDDICTTMP/morph2.XXXXXX)
       sed 's/lt-proc /apertium-destxt | lt-proc /' < $1 | sed 's/\(^.*lt-proc.*$\)/\1 | apertium-retxt/' > $MORPH2
       MORPHANAL_OPTIONS="$MORPHANAL_OPTIONS --morphanalyser_tl $MORPH2"
       shift
@@ -442,6 +461,7 @@ do
       ALIGNDOCUMENTSLOG=$LOGDIR/bitextoraligndocuments.log
       ALIGNSEGMENTSLOG=$LOGDIR/bitextoralignsegments.log
       CLEANTEXTLOG=$LOGDIR/bitextorcleantextalign.log
+      ADDTEXTSTATSLOG=$LOGDIR/bitextoraddtextstats.log
       shift
       ;;
     -e)
@@ -452,6 +472,15 @@ do
       fi
       shift
       ;;
+    -E)
+      shift
+      LETT=$1
+      if [ $INPUTMODE -eq 0 ]; then
+        INPUTMODE=4
+      fi
+      shift
+      ;;
+
     -u)
       shift
       URL=$1
@@ -471,6 +500,10 @@ do
       ;;
     -x)
       FORMAT="TMX"
+      shift
+      ;;
+    -B)
+      IGNOREBOILER="-b "
       shift
       ;;
     -f)
@@ -547,23 +580,27 @@ do
       CRAWLINGSTATUSDUMP="$1"
       shift
       ;;
-     -C)
-        shift
-        CRAWLINGSTATUSCONTINUE="$1"
-        shift
-        ;;
-     -R)
-        shift
-        CRAWLINGDATACONTINUE="$1"
-        shift
-        ;;
+    -C)
+      shift
+      CRAWLINGSTATUSCONTINUE="$1"
+      shift
+      ;;
+    -R)
+      shift
+      CRAWLINGDATACONTINUE="$1"
+      shift
+      ;;
     -D)
-        TLD_CRAWL=" -D "
-        shift
-        ;;
+      TLD_CRAWL=" -D "
+      shift
+      ;;
+    -W)
+      PRINTSTATS="-s"
+      shift
+      ;;
     -h)
-        exit_program $(basename $0)
-        ;;
+      exit_program $(basename $0)
+      ;;
     --)
       shift
       break
@@ -595,12 +632,17 @@ case $# in
     ;;
 esac
 
-TMPETT=$(mktemp $TMPDIR/ett.XXXXXX)
+TMPETT=$(mktemp $BUILDDICTTMP/ett.XXXXXX)
 if [[ -z $ETT ]]; then
   ETT=$TMPETT
 fi
 
-TMPLETTR=$(mktemp $TMPDIR/lettr.XXXXXX)
+TMPLETT=$(mktemp $BUILDDICTTMP/lett.XXXXXX)
+if [[ -z $LETT ]]; then
+  LETT=$TMPLETT
+fi
+
+TMPLETTR=$(mktemp $BUILDDICTTMP/lettr.XXXXXX)
 if [[ -z $LETTR ]]; then
   LETTR=$TMPLETTR
 fi
@@ -610,7 +652,7 @@ case $INPUTMODE in
     run_bitextor $URL
     ;;
   2)
-    cat $URLFILE | \
+    zcat -f $URLFILE | \
     while read line;
     do
       URL=$(echo "$line" | cut -f 1)
@@ -628,7 +670,13 @@ case $INPUTMODE in
   3)
     run_bitextor_ett $ETT
     ;;
+  4)
+    run_bitextor_lett $LETT
+     
+    ;;
   *)
     exit_program $(basename $0)
     ;;
 esac
+
+rm -rf $BUILDDICTTMP
