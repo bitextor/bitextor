@@ -22,7 +22,12 @@ from urllib import quote, unquote
 import urllib2
 import base64
 import argparse
-from random import shuffle
+import random
+
+#SET THE SEED FOR REPRODUCIBILITY TESTS
+#SEED=4
+#random.seed(SEED)
+
 import signal
 import pickle
 
@@ -312,7 +317,7 @@ class Crawler(object):
                             links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
                                     doc.text, re.S)
                             linksset = list(set(links))
-                            shuffle(linksset)
+                            random.shuffle(linksset)
                             self.process_document(doc)
 
                             for link in linksset:

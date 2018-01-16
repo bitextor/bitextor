@@ -30,18 +30,18 @@ basically any kind of operating system.</p>
 <h3>Download</h3>
 
 <p>Hunalign source code package: <br>
-<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1.tgz">
-         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1.tgz</a>
+<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2.tgz">
+         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2.tgz</a>
 </p>
 
 <p>You can browse this package online here:<br>
-<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1/">
-         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1/</a>
+<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2/">
+         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2/</a>
 </p>
 
 <p>For convenience, precompiled Windows binaries are provided here:<br>
-<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1-windows.zip">
-         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.1-windows.zip</a>
+<a href="ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2-windows.zip">
+         ftp://ftp.mokk.bme.hu/Hunglish/src/hunalign/latest/hunalign-1.2-windows.zip</a>
 <br>
 Note that this is not a complete hunalign distribution, just the Windows binaries alone.
 The source package is still a recommended download, complementing the binaries with
@@ -53,8 +53,8 @@ offline documentation, language resources and additional tools.
 <h4>Build under Linux/Unix/Mac OS X:</h4>
 
 <p>
-<pre>tar zxvf hunalign-1.1.tgz
-cd hunalign-1.1/src/hunalign
+<pre>tar zxvf hunalign-1.2.tgz
+cd hunalign-1.2/src/hunalign
 make
 </pre>
 </p>
@@ -65,6 +65,7 @@ make
 
 <p>As already noted, precompiled Windows binaries are provided.
 But it is easy to build from source under Windows, too.
+With CYGWIN installed, make should work.
 Using MSVC++, just create a project with the
 src/hunalign/*.cpp and src/utils/*.cpp files in it, excluding the obsolete
 src/hunalign/DOMTreeErrorReporter.cpp
@@ -297,6 +298,29 @@ The standard output is a batch job description for hunalign, so this command can
 followed by:
 </p><pre>hunalign dictionary.dic -batch hunalign_batch</pre>
 <p></p>
+<p>partialAlign works by finding words that occur exactly twice in the bidocument,
+once on the left and once on the right side.
+After collecting all such correspondences, the algorithm uses dynamic programming
+to find the longest possible chain of correspondences that does not contain
+crossings. (A crossing is an incompatible pair of correspondences that can not
+be refined into an alignment.) The chain is then thinned to make final chunk sizes close to
+maximal_size_of_chunks.
+
+A file named output_filename.poset is written that logs which correspondences are
+used and which are excluded as false positives. This log can be used to manually check for mistakes,
+but normally this is not necessary, as the output of the algorithm is very reliable.
+
+<h4>LF Aligner</h4>
+
+<p>András Farkas wrote and maintains a very useful wrapper around hunalign and partialAlign.
+Its input is a document pair in some popular rich text format, and its output
+is a set of extracted bisentences in txt, xls or tmx (translation memory) formats.
+It deals with document format conversion, sentence segmentation and other stuff,
+hiding all the messy details from the user. For most people other than natural
+language processing professionals, it is recommended over hunalign.</p>
+
+<p><a href="http://sourceforge.net/projects/aligner/">LF Aligner has its own page.</a>
+It bundles hunalign so its users don't even have to set hunalign up for themselves.</p>
 
 <h3>For developers</h3>
 
@@ -320,7 +344,7 @@ quasiglobals to proper command line arguments of the program.</p>
 <pre>D. Varga, L. Németh, P. Halácsy, A. Kornai, V. Trón, V. Nagy (2005).<br
 ><b>Parallel corpora for medium density languages</b>
 <i>In Proceedings of the RANLP 2005</i>, pages 590-596.
-<a href="http://mokk.bme.hu/archive/varga05/pdf/data/at_download">(pdf)</a>
+<a href="http://www.ldc.upenn.edu/Catalog/docs/LDC2008T01/ranlp05.pdf">(pdf)</a>
 <br></pre>
 
 <p>hunalign was developed under the Hunglish Project to build the
