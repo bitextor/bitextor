@@ -35,10 +35,10 @@ import org.apache.commons.codec.binary.Base64;
  * Class implemented to allow tika to process a list of files without having to
  * restart the virtual machine each time. This is a simple class that takes a list
  * of files from the standard input and process it to produce XHTML UTF-8 output.
- * The result of the processing is also output in a line per file, which makes 
+ * The result of the processing is also output in a line per file, which makes
  * it easier to process it in a pipe.
- * 
- * @author Miquel Esplà Gomis
+ *
+ * @author Miquel Espla Gomis
  */
 public class PipedTika {
     /**
@@ -109,7 +109,7 @@ public class PipedTika {
 //                    is = new ByteArrayInputStream(content.getBytes(inputencoding));
 //                } catch(java.io.UnsupportedEncodingException ex){
                     filecontent=new String(Base64.decodeBase64(fields[3]), "utf-8");
-                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").replaceAll("<meta charset=([^<]*)>", "" ).replaceAll("<meta http-equiv=\"content-type\" content=([^<]*)>", "" ).trim();
+                    content=filecontent.replaceAll("\\s+", " ").replaceAll("\n\\s*", "\n").replaceAll("charset=([^<]*)>", "" ).replaceAll("<meta http-equiv=","").replaceAll("content=([^<]*)>", "" ).trim();
                     is = new ByteArrayInputStream(content.getBytes("utf-8"));
 //                }
 
@@ -132,5 +132,5 @@ public class PipedTika {
                 }
             }
         }
-    }    
+    }
 }

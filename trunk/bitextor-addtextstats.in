@@ -17,7 +17,10 @@ else:
 for i in reader:
   fields = i.strip().split("\t")
   if options.isPrintingStats != False:
-    lengthRatio=len(fields[2].decode('utf8'))*1.0/len(fields[3].decode('utf8'))
+    if len(fields[3].decode('utf8')) == 0:
+      lengthRatio=0
+    else:
+      lengthRatio=len(fields[2].decode('utf8'))*1.0/len(fields[3].decode('utf8'))
     numTokensSL=len(fields[2].split(' ')) #This is not the way this should be counted, we need to tokenize better first
     numTokensTL=len(fields[3].split(' ')) #This is not the way this should be counted, we need to tokenize better first
     fields.append(str(lengthRatio))
