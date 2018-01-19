@@ -31,6 +31,7 @@ import ulysses
 #from segtok.segmenter import split_multi
 from tempfile import NamedTemporaryFile
 import gzip
+from iso639 import languages
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -142,12 +143,15 @@ oparser = argparse.ArgumentParser(description="Tool that reads the output of bit
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+oparser.add_argument("--nltk" , help="Use NLTK sentence splitter instead of Ulysses", dest="useNltkSentTok", default=False)
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
 oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)
 oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL", dest="morphanal2", default=None)
 
 options = oparser.parse_args()
+
+useNltkSentTok=options.useNltkSentTok
 
 if options.aligned_docs == None:
   reader = sys.stdin
@@ -171,10 +175,20 @@ for line in reader_list:
   for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      for seg in splitSegs(mitok_l1, trimorigseg):
-      #for seg in split_multi(trimorigseg):
-        tmp_file1_origtext.write(seg+"\n")
-        tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang1).name.lower()):
+            tmp_file1_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+        except LookupError:
+          for sentence in sent_tokenize(trimorigseg):
+            tmp_file1_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      else:
+        for seg in splitSegs(mitok_l1, trimorigseg):
+          tmp_file1_origtext.write(seg+"\n")
+          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+
   tokenized_text=u"\n".join(tmp_tok_segs)
   if options.morphanal1 != None:
     morphanalyser = ["__BASH__", options.morphanal1]
@@ -185,10 +199,20 @@ for line in reader_list:
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      for seg in splitSegs(mitok_l2, trimorigseg):
-      #for seg in split_multi(trimorigseg):
-        tmp_file2_origtext.write(seg+"\n")
-        tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang2).name.lower()):
+            tmp_file2_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+        except LookupError:
+          for sentence in sent_tokenize(trimorigseg):
+            tmp_file2_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      else:
+        for seg in splitSegs(mitok_l2, trimorigseg):
+          tmp_file2_origtext.write(seg+"\n")
+          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+   
   tokenized_text=u"\n".join(tmp_tok_segs)
   if options.morphanal2 != None:
     morphanalyser = ["__BASH__", options.morphanal2]

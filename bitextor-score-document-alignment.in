@@ -27,6 +27,7 @@ import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
 from tempfile import NamedTemporaryFile
+from iso639 import languages
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
@@ -68,10 +69,13 @@ oparser = argparse.ArgumentParser(description="Tool that reads the output of bit
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+oparser.add_argument("--nltk" , help="Use NLTK sentence splitter instead of Ulysses", dest="useNltkSentTok", default=False)
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
 oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 
 options = oparser.parse_args()
+
+useNltkSentTok=options.useNltkSentTok
 
 tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
 tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
@@ -95,18 +99,42 @@ for line in reader_list:
   for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      for seg in splitSegs(mitok_l1, trimorigseg):
-        tokenized_text=wordpunct_tokenize(seg)
-        #tokenized_text=PunktWordTokenizer().tokenize(seg)
-        tmp_file1.write(" ".join(tokenized_text)+"\n")
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang1).name.lower()):
+            tokenized_text=wordpunct_tokenize(seg)
+            #tokenized_text=PunktWordTokenizer().tokenize(seg)
+            tmp_file1.write(" ".join(tokenized_text)+"\n")
+        except LookupError:
+          for sentence in sent_tokenize(trimorigseg):
+            tokenized_text=wordpunct_tokenize(seg)
+            #tokenized_text=PunktWordTokenizer().tokenize(seg)
+            tmp_file1.write(" ".join(tokenized_text)+"\n")
+      else:
+        for seg in splitSegs(mitok_l1, trimorigseg):
+          tokenized_text=wordpunct_tokenize(seg)
+          #tokenized_text=PunktWordTokenizer().tokenize(seg)
+          tmp_file1.write(" ".join(tokenized_text)+"\n")
 
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      for seg in splitSegs(mitok_l2, trimorigseg):
-        tokenized_text=wordpunct_tokenize(seg)
-        #tokenized_text=PunktWordTokenizer().tokenize(seg)
-        tmp_file2.write(" ".join(tokenized_text)+"\n")
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang2).name.lower()):
+            tokenized_text=wordpunct_tokenize(seg)
+            #tokenized_text=PunktWordTokenizer().tokenize(seg)
+            tmp_file2.write(" ".join(tokenized_text)+"\n")
+        except LookupError:
+          for sentence in sent_tokenize(trimorigseg):
+            tokenized_text=wordpunct_tokenize(seg)
+            #tokenized_text=PunktWordTokenizer().tokenize(seg)
+            tmp_file2.write(" ".join(tokenized_text)+"\n")
+      else:
+        for seg in splitSegs(mitok_l2, trimorigseg):
+          tokenized_text=wordpunct_tokenize(seg)
+          #tokenized_text=PunktWordTokenizer().tokenize(seg)
+          tmp_file2.write(" ".join(tokenized_text)+"\n")
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
