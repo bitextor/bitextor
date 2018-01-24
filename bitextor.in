@@ -93,6 +93,7 @@ exit_program()
   echo "  -I PATH           custom path where the output of the intermediate files produced"
   echo "                    by the modules of bitextor will be stored."
   echo "  -B                ignores and skips the boilerpipe clean step"
+  echo "  -n                uses NLTK sentence tokenizer instead of Ulysses"
   echo "  -b NUM            if this option is enabled, the document alignment process is"
   echo "                    run in both directions and only the first NUM candidates in"
   echo "                    every direction will be taken into account. With this, the list"

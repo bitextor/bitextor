@@ -307,6 +307,20 @@ print (var)" 2> /dev/null`
   fi
 
 
+  AC_MSG_CHECKING([for iso-639 for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import iso639; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires iso639 for Python. Please, install with 'sudo pip install iso-639' and try again.
+])
+  fi
+
   AC_MSG_CHECKING([for LangID for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import langid; \
