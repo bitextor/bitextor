@@ -27,6 +27,7 @@ Some external Python libraries should also be installed before starting the inst
 * keras: Python package for implementing neural networks for deep learning.
 * h5py: Pythonic interface to the HDF5 binary data format.
 * python-magic: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
+* iso-639: Python package to convert between language names and ISO-639 codes
 
 The easiest way to install these python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
 
