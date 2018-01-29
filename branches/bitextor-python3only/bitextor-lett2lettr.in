@@ -65,7 +65,7 @@ for line in reader:
       try:
         p.feed(e)
         raspa = "".join(p.output)
-        if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in raspa):
+        if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in raspa): #Delete entries without *ml in the first tag to avoid things different than HTML or XML as JPGS or PDF, for example.
           print(line.strip()+"\t"+raspa+"\t"+str(datetime.datetime.now().time()))
       except html.parser.HTMLParseError:
         pass
