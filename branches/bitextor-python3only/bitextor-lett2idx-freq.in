@@ -16,7 +16,7 @@
 import sys
 import string
 import base64
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import argparse
 import unicodedata
 sys.path.append("__PREFIX__/share/bitextor/utils")
@@ -24,11 +24,8 @@ from unicodepunct import get_unicode_punct
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 from collections import Counter
-from sets import Set
 import math
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett or bitextor-lett2lettr containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
@@ -65,7 +62,7 @@ for line in reader:
   sorted_uniq_wordlist = set(" ".join(wordpunct_tokenize(text)).lower().split())
   #sorted_uniq_wordlist = set(" ".join(PunktWordTokenizer().tokenize(text)).lower().split())
   #Trimming non-aplphanumerics:
-  clean_sorted_uniq_wordlist = filter(None, [w.strip(punctuation) for w in sorted_uniq_wordlist])
+  clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
   sorted_uniq_wordlist=clean_sorted_uniq_wordlist
 
   for word in sorted_uniq_wordlist:
@@ -82,18 +79,18 @@ for line in reader:
   docnumber=docnumber+1
 
 word_freqs_norm={}
-for lang in word_freqs.keys():
+for lang in list(word_freqs.keys()):
   total=sum(word_freqs[lang].values())
   word_freqs_norm[lang]={}
-  for word in word_freqs[lang].keys():
+  for word in list(word_freqs[lang].keys()):
     word_freqs_norm[lang][word]=float(word_freqs[lang][word])/total
 
-for map_lang, map_vocabulary in word_map.items():
-  docset = Set([])
-  for l in map_vocabulary.values():
+for map_lang, map_vocabulary in list(word_map.items()):
+  docset = set([])
+  for l in list(map_vocabulary.values()):
     docset.update(l)
   numdocs=len(docset)
-  for map_word, map_doc in map_vocabulary.items():
+  for map_word, map_doc in list(map_vocabulary.items()):
     if options.maxo == -1 or len(word_map[map_lang][map_word])<=options.maxo:
       sorted_docs=sorted(word_map[map_lang][map_word], reverse=True)
       for doc_list_idx in range(0, len(sorted_docs)-1):
@@ -101,7 +98,7 @@ for map_lang, map_vocabulary in word_map.items():
       sorted_docs[len(sorted_docs)-1]=str(sorted_docs[len(sorted_docs)-1])
       #print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))
       if map_word in word_freqs_norm[map_lang]:
-        print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))+"\t"+str(word_freqs_norm[map_lang][map_word])+"\t"+str(math.log(numdocs/float(len(sorted_docs))))
+        print(map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))+"\t"+str(word_freqs_norm[map_lang][map_word])+"\t"+str(math.log(numdocs/float(len(sorted_docs)))))
       else:
         #print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))
         sys.stderr.write(map_word+"\n")

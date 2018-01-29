@@ -34,8 +34,6 @@ from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 def runAligner(filename1, filename2, dic):
   # option -ppthresh=10?
@@ -45,14 +43,14 @@ def runAligner(filename1, filename2, dic):
     hunalign = ["__PREFIX__/bin/hunalign", dic, filename1, filename2]
   p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
   for line in p.stdout:
-    yield line.decode("utf-8")
+    yield line
   return
 
 def runAnalyse(morph, text):
   panalyse = subprocess.Popen(morph, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
   morph_stdout,error = panalyse.communicate(input=text)
   if len(error.strip()) == 0:
-    tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout.decode("utf-8")))
+    tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout))
     return tokenized_text
   else:
     return text
@@ -65,24 +63,24 @@ def trainSegmenters(reader, l1, l2):
   reader_list=[]
 
   try:
-    mitok_l1=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
+    mitok_l1=pickle.load(gzip.open("/lustre/home/dc007/lpla/local-test/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
   except:
     mitok_l1=ulysses.Ulysses()
     mitok_l1.init_model()
   
   try:
-    mitok_l2=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
+    mitok_l2=pickle.load(gzip.open("/lustre/home/dc007/lpla/local-test/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
   except:
     mitok_l2=ulysses.Ulysses()
     mitok_l2.init_model()
 
   for line in reader:
-    reader_list.append(line.decode("utf-8").strip())
+    reader_list.append(line.strip())
     fields=reader_list[-1].split("\t")
-    text1=base64.b64decode(fields[2]).decode("utf-8")
+    text1=base64.b64decode(fields[2].encode("utf8")).decode("utf-8")
     mitok_l1.feed_model(ulysses.splitinwords(text1))
 
-    text2=base64.b64decode(fields[3]).decode("utf-8")
+    text2=base64.b64decode(fields[3].encode("utf8")).decode("utf-8")
     mitok_l2.feed_model(ulysses.splitinwords(text2))
 
   mitok_l1.update_model()
@@ -96,15 +94,15 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
 
   hunalign_output=runAligner(file1, file2, dic)
   try :
-    prev_hun=hunalign_output.next().strip()
-    prev_fields=prev_hun.split("\t")
+    prev_hun=next(hunalign_output).strip()
+    prev_fields=prev_hun.split(b"\t")
     if int(prev_fields[0]) > 0:
-      for i in xrange(int(prev_fields[0])):
-        line1=filereader1.readline().strip().decode("utf-8")
+      for i in range(int(prev_fields[0])):
+        line1=filereader1.readline().strip()
 
     elif int(prev_fields[1]) > 1:
-      for i in xrange(int(prev_fields[1])):
-        line2=filereader2.readline().strip().decode("utf-8")
+      for i in range(int(prev_fields[1])):
+        line2=filereader2.readline().strip()
 
   except StopIteration :
     prev_hun=""
@@ -112,10 +110,10 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
     hun_line=line.strip()
     last_position1 = filereader1.tell()
     last_position2 = filereader2.tell()
-    line1=filereader1.readline().strip().decode("utf-8")
-    line2=filereader2.readline().strip().decode("utf-8")
-    prev_fields=prev_hun.split("\t")
-    fields=hun_line.split("\t")
+    line1=filereader1.readline().strip()
+    line2=filereader2.readline().strip()
+    prev_fields=prev_hun.split(b"\t")
+    fields=hun_line.split(b"\t")
 
     if float(prev_fields[2])==-0.3:
       if int(fields[0])==int(prev_fields[0]):
@@ -126,14 +124,14 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
         filereader2.seek(last_position2)
 
     if int(fields[0])-int(prev_fields[0]) > 1:
-      for i in xrange((int(fields[0])-int(prev_fields[0]))-1):
-        line1+=u" "+filereader1.readline().strip().decode("utf-8")
+      for i in range((int(fields[0])-int(prev_fields[0]))-1):
+        line1+=" "+filereader1.readline().strip()
 
     if int(fields[1])-int(prev_fields[1]) > 1:
-      for i in xrange((int(fields[1])-int(prev_fields[1]))-1):
-        line2+=u" "+filereader2.readline().strip().decode("utf-8")
+      for i in range((int(fields[1])-int(prev_fields[1]))-1):
+        line2+=" "+filereader2.readline().strip()
 
-    print "{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2])
+    print("{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8")))
 
     prev_hun=hun_line
 
@@ -179,22 +177,22 @@ for line in reader_list:
       if useNltkSentTok:
         try:
           for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang1).name.lower()):
-            tmp_file1_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+            tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
+            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
         except LookupError:
           for sentence in sent_tokenize(trimorigseg):
-            tmp_file1_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+            tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
+            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
       else:
         for seg in splitSegs(mitok_l1, trimorigseg):
-          tmp_file1_origtext.write(seg+"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+          tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
+          tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
 
-  tokenized_text=u"\n".join(tmp_tok_segs)
+  tokenized_text="\n".join(tmp_tok_segs)
   if options.morphanal1 != None:
-    morphanalyser = ["__BASH__", options.morphanal1]
+    morphanalyser = ["/bin/sh", options.morphanal1]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file1.write(tokenized_text.lower()+"\n")
+  tmp_file1.write(tokenized_text.lower().encode("utf8")+b"\n")
 
   tmp_tok_segs=[]
   for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
@@ -203,22 +201,22 @@ for line in reader_list:
       if useNltkSentTok:
         try:
           for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang2).name.lower()):
-            tmp_file2_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+            tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
+            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
         except LookupError:
           for sentence in sent_tokenize(trimorigseg):
-            tmp_file2_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+            tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
+            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
       else:
         for seg in splitSegs(mitok_l2, trimorigseg):
-          tmp_file2_origtext.write(seg+"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+          tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
+          tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
    
-  tokenized_text=u"\n".join(tmp_tok_segs)
+  tokenized_text="\n".join(tmp_tok_segs)
   if options.morphanal2 != None:
-    morphanalyser = ["__BASH__", options.morphanal2]
+    morphanalyser = ["/bin/sh", options.morphanal2]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file2.write(tokenized_text.lower()+"\n")
+  tmp_file2.write(tokenized_text.lower().encode("utf8")+b"\n")
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
