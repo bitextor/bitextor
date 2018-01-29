@@ -1,0 +1,6 @@
+# pack-refs with: peeled fully-peeled 
+c1798ff03a258fe886bd16ca135f7886ac348bba refs/remotes/origin/PRE_CPP11
+403a56ebc03da4970905195cbd5b4decf58c6686 refs/remotes/origin/RELEASE-3.0
+f45a5468d4b26a49628dce8f43a6542df8d3aa82 refs/remotes/origin/gh-pages
+d643960de98565d208114780ba8025799208afa7 refs/remotes/origin/master
+3bbabd8fcd108dd70c3ea7008801cc3b0436ea76 refs/tags/mgizapp

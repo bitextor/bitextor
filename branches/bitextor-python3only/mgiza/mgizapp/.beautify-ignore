@@ -1,0 +1,4 @@
+# Directories that should *not* be beautified.
+#
+# (This configuration file is for mosesmt's scripts/other/beautify.py)
+CMakeFiles

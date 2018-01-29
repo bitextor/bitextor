@@ -1,0 +1,12 @@
+cmake .
+make
+make install
+
+If you want to install to a custom location, add the following flag when you run cmake:
+-DCMAKE_INSTALL_PREFIX=/path/to/custom/location
+
+Mac users : Installing the boost library using Homebrew causes issues with building mgiza. Please compile the Boost library from source using instructions in the section "Manually Installing Boost" at this URL : http://www.statmt.org/moses/?n=Development.GetStarted
+
+NOTE: Boost Version 1.48 has problem with the code, you can use either 1.46 or 1.50+. Unfortunately 1.48 is shipped with Ubuntu 12.04 LTS, you can either download and compile libboost 1.50+ from their website, or just do this:
+
+sudo apt-get install libboost1.46-all-dev
