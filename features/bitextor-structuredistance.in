@@ -16,7 +16,6 @@
 #
 
 import sys
-from sets import Set
 import argparse
 from operator import itemgetter
 import Levenshtein
@@ -30,7 +29,7 @@ def readLETT(f, docs):
     #Checking if format is crrect
     if len(fields) >= 7:
       #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
-      tags = Set(fields[6].split('_'))
+      tags = set(fields[6].split('_'))
       tags.remove('')
       #List of names of tags in the current raspa
       tags_with_bounds = ["_{0}_".format(x) for x in tags]
@@ -38,15 +37,15 @@ def readLETT(f, docs):
       #Creating a map with all the tags found in the raspa and the character with which they will be replaced
       charidx=32
       for tag in tags_with_bounds:
-        dic[unichr(charidx)]=tag
+        dic[chr(charidx)]=tag
         charidx=charidx+1
       #If character '_' is used, it must be replaced, since it is already representing text
       if '_' in dic:
         extratag=dic['_']
         del dic['_']
-        dic[unichr(charidx)]=extratag
-      inv_dic = {v:k for k, v in dic.items()}
-      for tag,code in inv_dic.items():
+        dic[chr(charidx)]=extratag
+      inv_dic = {v:k for k, v in list(dic.items())}
+      for tag,code in list(inv_dic.items()):
         fields[6]=fields[6].replace(tag,code)
       docs[fileid] = fields[6]
     fileid += 1

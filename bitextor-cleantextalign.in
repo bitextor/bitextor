@@ -33,7 +33,7 @@ for i in reader:
     if last_filepair[0]!=campos[0] or last_filepair[1]!=campos[1]:
       if options.maxl==-1 or error_count<options.maxl:
         if len(segment_list)>0:
-          print "\n".join(segment_list)
+          print("\n".join(segment_list))
       error_count=0
       last_filepair=(campos[0],campos[1])
       segment_list=[]
@@ -48,4 +48,4 @@ for i in reader:
     sys.stderr.write("UNALIGNED SEGMENT: " + i)
 #reader.close()
 if len(segment_list)>0:
-  print "\n".join(segment_list)
+  print("\n".join(segment_list))

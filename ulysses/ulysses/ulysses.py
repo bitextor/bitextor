@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!__ENV__ __PYTHON__
 # -*- coding:utf-8 -*-
 from operator import pos
 import sys
@@ -11,10 +11,7 @@ import getopt
 import tempfile
 import os
 
-reload(sys)  # Reload does the trick!
-sys.setdefaultencoding('UTF8')
-
-ENDINGS = set([u".", u"!", u"?", u".\"", u".''", u".”", u".˝", u".»", u"!\"", u"!''", u"!”", u"!˝", u"!»", u"?\"", u"?''", u"?”", u"?˝", u"?»", u".)", u".]", u".}"])
+ENDINGS = set([".", "!", "?", ".\"", ".''", ".”", ".˝", ".»", "!\"", "!''", "!”", "!˝", "!»", "?\"", "?''", "?”", "?˝", "?»", ".)", ".]", ".}"])
 
 def im(a, b): #integrate maps
   if a is None:
@@ -40,31 +37,31 @@ class Ulysses:
       headers = rows[0]._fields
       lens = []
       for i in range(len(rows[0])):
-        lens.append(len(max([x[i] for x in rows] + [headers[i]],key=lambda x:len(unicode(x)))))
+        lens.append(len(max([x[i] for x in rows] + [headers[i]],key=lambda x:len(str(x)))))
       formats = []
       hformats = []
       for i in range(len(rows[0])):
         if isinstance(rows[0][i], int):
-          formats.append(u"%%%dd" % lens[i])
+          formats.append("%%%dd" % lens[i])
         else:
-          formats.append(u"%%-%ds" % lens[i])
-        hformats.append(u"%%-%ds" % lens[i])
-      pattern = u" | ".join(formats)
-      hpattern = u" | ".join(hformats)
-      separator = u"-+-".join([u'-' * n for n in lens])
+          formats.append("%%-%ds" % lens[i])
+        hformats.append("%%-%ds" % lens[i])
+      pattern = " | ".join(formats)
+      hpattern = " | ".join(hformats)
+      separator = "-+-".join(['-' * n for n in lens])
       output.write(hpattern % tuple(headers))
-      output.write(u"\n")
+      output.write("\n")
       output.write(separator)
-      output.write(u"\n")
+      output.write("\n")
       for line in rows:
         output.write(pattern % tuple(line))
-        output.write(u"\n")
+        output.write("\n")
     elif len(rows) == 1:
       row = rows[0]
       hwidth = len(max(row._fields,key=lambda x: len(x)))
       for i in range(len(row)):
-        output.write(u"%*s = %s" % (hwidth,row._fields[i],row[i]))
-        output.write(u"\n")
+        output.write("%*s = %s" % (hwidth,row._fields[i],row[i]))
+        output.write("\n")
 
   def endswith(self, mystr, endings):
     for i in endings:
@@ -77,17 +74,17 @@ class Ulysses:
     post = []
     dot = []
   
-    for i in xrange(len(tokens_list)):
+    for i in range(len(tokens_list)):
       if self.endswith(tokens_list[i], ENDINGS):
         if i >= 1:
           pre.append(tokens_list[i-1])
         else:
-          pre.append(u"")
+          pre.append("")
     
         if i<(len(tokens_list)-1):
           post.append(tokens_list[i+1])
         else:
-          post.append(u"")
+          post.append("")
       
         dot.append(tokens_list[i])
 
@@ -95,7 +92,7 @@ class Ulysses:
 
   def freqs(self, tokens_list):
     result = {}
-    result[u""] = 1
+    result[""] = 1
   
     for i in tokens_list:
       if not i in result:
@@ -108,65 +105,65 @@ class Ulysses:
     try: 
       #if token[-2:] in [u".\"", u".”", u".˝", u".»"] or token[-3:] in [u".''"]:
       #  return u"OK0"
-      if token[-3:] == u"..." and posttoken.lstrip(u"([{")[0:1].islower():
-        return u"NO0"
-      elif token[0:1] in [u"(",u"{",u"[",u"¿",u"¡"] and not token[-2:-1] in  [u")", u"}", u"]", u"?", u"!"]:
-        return u"NO0.1"
-      elif pretoken == u"" or pretoken[-1:] in [u":", u";", u".", u"?", u"!"][0:1]:
-        return u"NO0.2"
-      elif regex.match(ur"[[:upper:]][[:lower:]]?[.]", token) and regex.match(ur"[[:upper:]][[:lower:]]+[.!?]", posttoken):
-        return u"NO0.3"
-      elif regex.match(ur"[[:lower:]]{3,}[.!?]", pretoken) and regex.match(ur"[[:upper:]][[:lower:]]?[.]", token):
-        return u"NO0.4"
-      elif token[-1:] == u"." and posttoken[0:1] in [u"-", u"¿", u"¡", u"«"]:
-        return u"OK1"
-      elif regex.match(ur"[^[:alpha:]]*[[:upper:]][[:lower:]]?[.]", token):
-        return u"NO1.1"
+      if token[-3:] == "..." and posttoken.lstrip("([{")[0:1].islower():
+        return "NO0"
+      elif token[0:1] in ["(","{","[","¿","¡"] and not token[-2:-1] in  [")", "}", "]", "?", "!"]:
+        return "NO0.1"
+      elif pretoken == "" or pretoken[-1:] in [":", ";", ".", "?", "!"][0:1]:
+        return "NO0.2"
+      elif regex.match(r"[[:upper:]][[:lower:]]?[.]", token) and regex.match(r"[[:upper:]][[:lower:]]+[.!?]", posttoken):
+        return "NO0.3"
+      elif regex.match(r"[[:lower:]]{3,}[.!?]", pretoken) and regex.match(r"[[:upper:]][[:lower:]]?[.]", token):
+        return "NO0.4"
+      elif token[-1:] == "." and posttoken[0:1] in ["-", "¿", "¡", "«"]:
+        return "OK1"
+      elif regex.match(r"[^[:alpha:]]*[[:upper:]][[:lower:]]?[.]", token):
+        return "NO1.1"
       #elif regex.match(ur"[[:upper:]][[:lower:]]?[.]", token) and float(self.f_map_t[token]) / float(self.f_map_l[token.lower()]) > 0.8 and float(self.f_map_t[posttoken]) > float(self.f_map_b[posttoken.lower()]) and float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) > 0.6:
       #  return u"[{0:.4f}] NO1.2".format(float(self.f_map_t[token]) / float(self.f_map_l[token.lower()]))
 
-      elif not regex.match(ur"[[:alpha:]]{1,2}[.]", token) and regex.match(ur"[[:upper:]][[:lower:]]?[.]", token) and float(self.f_map_t[token]) / float(self.f_map_wpunct[token.rstrip(u".,:!?\"'")]) < 0.6:
-        return u"[{0:.4f}] OK3".format(float(self.f_map_t[token]) / float(self.f_map_wpunct[token.rstrip(u".,:!?\"'")]))
-      elif regex.match(ur"^[[:lower:]]{3,}[.]$", token) and regex.match(ur"[[:upper:]][[:lower:]]{2,}$", posttoken) and float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) < 0.9:
-        return u"OK4"  # NEW - EXPERIMENTAL FOR GERMAN
-      elif regex.match(ur"^[]})\"\'»][.]$", token[-2:]):
-        return u"OK5"
-      elif regex.match(ur"^[¿¡][[:upper:]]", posttoken[0:2]):
-        return u"OK6"    
-      elif self.f_map_prenum[token] > 5 and float(self.f_map_prenum[token])/float(self.f_map_t[token]) > 0.50 and regex.match(ur"^([0-9]|[iIvVXxlL]{1,4})", posttoken):
-        return u"[{0:.4f}] NO2".format(float(self.f_map_prenum[token])/float(self.f_map_t[token]))
+      elif not regex.match(r"[[:alpha:]]{1,2}[.]", token) and regex.match(r"[[:upper:]][[:lower:]]?[.]", token) and float(self.f_map_t[token]) / float(self.f_map_wpunct[token.rstrip(".,:!?\"'")]) < 0.6:
+        return "[{0:.4f}] OK3".format(float(self.f_map_t[token]) / float(self.f_map_wpunct[token.rstrip(".,:!?\"'")]))
+      elif regex.match(r"^[[:lower:]]{3,}[.]$", token) and regex.match(r"[[:upper:]][[:lower:]]{2,}$", posttoken) and float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) < 0.9:
+        return "OK4"  # NEW - EXPERIMENTAL FOR GERMAN
+      elif regex.match(r"^[]})\"\'»][.]$", token[-2:]):
+        return "OK5"
+      elif regex.match(r"^[¿¡][[:upper:]]", posttoken[0:2]):
+        return "OK6"    
+      elif self.f_map_prenum[token] > 5 and float(self.f_map_prenum[token])/float(self.f_map_t[token]) > 0.50 and regex.match(r"^([0-9]|[iIvVXxlL]{1,4})", posttoken):
+        return "[{0:.4f}] NO2".format(float(self.f_map_prenum[token])/float(self.f_map_t[token]))
       elif self.f_map_prepn[token] > 5 and float(self.f_map_prepn[token])/float(self.f_map_t[token]) > 0.50 and posttoken[0:1].isupper():
-        return u"[{0:.4f}] NO3".format(float(self.f_map_prepn[token])/float(self.f_map_t[token]))
-      elif posttoken.lstrip(u"([{-")[0:1].islower():
-        return u"NO4"
-      elif token.rstrip(u".,:!?\"'").islower() and len(token.rstrip(u".,:!?\"'")) > 6:
-        return u"OK7"
+        return "[{0:.4f}] NO3".format(float(self.f_map_prepn[token])/float(self.f_map_t[token]))
+      elif posttoken.lstrip("([{-")[0:1].islower():
+        return "NO4"
+      elif token.rstrip(".,:!?\"'").islower() and len(token.rstrip(".,:!?\"'")) > 6:
+        return "OK7"
       elif (float(self.f_map_prenumdot_bigram[posttoken])/(float(self.f_map_t[posttoken]))) > 0.6:
-        return u"NO0.5" # NEW - EXPERIMENTAL FOR GERMAN
-      elif regex.match(ur"[0-9]+[.]$", token) and regex.match(ur"[[:upper:]][[:lower:]]{2,}$", posttoken) and float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) > 0.9:
-        return u"NO0.6"  # NEW - EXPERIMENTAL FOR GERMAN
-      elif regex.match(ur"^[0-9][.]$", token[-2:]):
-        return u"OK8"
-      elif regex.match(ur"^[[:upper:]][.]$", token) and pretoken.istitle() and posttoken.istitle():
-        return u"NO5"
-      elif regex.match(ur"^[[(][^)]+[.]$", token):
-        return u"NO6"
+        return "NO0.5" # NEW - EXPERIMENTAL FOR GERMAN
+      elif regex.match(r"[0-9]+[.]$", token) and regex.match(r"[[:upper:]][[:lower:]]{2,}$", posttoken) and float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) > 0.9:
+        return "NO0.6"  # NEW - EXPERIMENTAL FOR GERMAN
+      elif regex.match(r"^[0-9][.]$", token[-2:]):
+        return "OK8"
+      elif regex.match(r"^[[:upper:]][.]$", token) and pretoken.istitle() and posttoken.istitle():
+        return "NO5"
+      elif regex.match(r"^[[(][^)]+[.]$", token):
+        return "NO6"
       elif float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]) < 0.6:
-        return u"[{0:.4f}] OK2".format(float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]))   # NEW - EXPERIMENTAL FOR GERMAN - RE-EDITED FROM <0.2 TO ORIGINAL 0.6
+        return "[{0:.4f}] OK2".format(float(self.f_map_t[posttoken]) / float(self.f_map_l[posttoken.lower()]))   # NEW - EXPERIMENTAL FOR GERMAN - RE-EDITED FROM <0.2 TO ORIGINAL 0.6
       else:
-        return u"?"
-    except KeyError, e:
-      return u"?"
+        return "?"
+    except KeyError as e:
+      return "?"
 
   def analysis(self, tokens, output):
     self.train(tokens)
     pre, dot, post = self.simplify(tokens)      
-    Row = namedtuple('Row', [u'Previous', u'EOS', u'Next', u'Veredict'])
+    Row = namedtuple('Row', ['Previous', 'EOS', 'Next', 'Veredict'])
     table = []
-    for i in xrange(len(dot)):
+    for i in range(len(dot)):
       table.append(Row(pre[i],                        
-                       u"{0} ({1} / {2} / {3} / {4})".format(dot[i], self.f_map_t[dot[i]], self.f_map_wpunct[dot[i].rstrip(u".,:!?\"'")], self.f_map_l[dot[i].lower()], float(self.f_map_bigram[u"{0} {1}".format(dot[i], post[i])]) if u"{0} {1}".format(dot[i], post[i]) in self.f_map_bigram else 0),
-                       u"{0} ({1} / {2} / {3})".format(post[i], self.f_map_t[post[i]], self.f_map_b[post[i].lower()], self.f_map_l[post[i].lower()]),
+                       "{0} ({1} / {2} / {3} / {4})".format(dot[i], self.f_map_t[dot[i]], self.f_map_wpunct[dot[i].rstrip(".,:!?\"'")], self.f_map_l[dot[i].lower()], float(self.f_map_bigram["{0} {1}".format(dot[i], post[i])]) if "{0} {1}".format(dot[i], post[i]) in self.f_map_bigram else 0),
+                       "{0} ({1} / {2} / {3})".format(post[i], self.f_map_t[post[i]], self.f_map_b[post[i].lower()], self.f_map_l[post[i].lower()]),
                        self.veredict(pre[i], dot[i], post[i])))
     self.pprinttable(table, output)
     
@@ -179,33 +176,33 @@ class Ulysses:
     # raw frequency of tokens considered as possible sentence beginning
     self.f_map_b = im(self.f_map_b, self.freqs([i.lower() for i in post]))
     # raw frequency of tokens without punctuation at the end
-    self.f_map_wpunct = im(self.f_map_wpunct, self.freqs([i.rstrip(u".,:!?\"'") for i in tokens]))
+    self.f_map_wpunct = im(self.f_map_wpunct, self.freqs([i.rstrip(".,:!?\"'") for i in tokens]))
     # raw frequency of bigrams with punctuation at the end of token and upper at the start of the posttoken
-    self.f_map_bigram = im(self.f_map_bigram, self.freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])]))
+    self.f_map_bigram = im(self.f_map_bigram, self.freqs(["{0} {1}".format(tokens[i],tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])]))
     #frequences that a token is preced by a number with dot
-    self.f_map_prenumdot_bigram = im(self.f_map_prenumdot_bigram, self.freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])]))
+    self.f_map_prenumdot_bigram = im(self.f_map_prenumdot_bigram, self.freqs(["{0}".format(tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[0-9]+[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])]))
   
     # dot before number
-    f_prenum = self.freqs([dot[i] for i in xrange(len(dot)) if regex.match(ur"^([0-9]|[iIvVXxlL]{1,4})",post[i])])
-    self.f_map_prenum = im(self.f_map_prenum, dict(f_prenum.items() + {key:0 for key in tokens if not key in f_prenum}.items()))
+    f_prenum = self.freqs([dot[i] for i in range(len(dot)) if regex.match(r"^([0-9]|[iIvVXxlL]{1,4})",post[i])])
+    self.f_map_prenum = im(self.f_map_prenum, dict(list(f_prenum.items()) + list({key:0 for key in tokens if not key in f_prenum}.items())))
 
     # dot before proper_noun
-    f_propernoun = self.freqs([dot[i] for i in xrange(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(u".,:!?\"'")]) >= 0.95]) 
-    self.f_map_prepn = im(self.f_map_prepn, dict(f_propernoun.items() + {key:0 for key in tokens if not key in f_propernoun}.items()))
+    f_propernoun = self.freqs([dot[i] for i in range(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(".,:!?\"'")]) >= 0.95]) 
+    self.f_map_prepn = im(self.f_map_prepn, dict(list(f_propernoun.items()) + list({key:0 for key in tokens if not key in f_propernoun}.items())))
     
   def split(self, words):
     posini = 0
-    for i in xrange(len(words)):
+    for i in range(len(words)):
       if self.endswith(words[i], ENDINGS):
-        pre = words[i-1] if i > 0 else u""
-        pos = words[i+1] if i < (len(words) - 1) else u""
+        pre = words[i-1] if i > 0 else ""
+        pos = words[i+1] if i < (len(words) - 1) else ""
         retval = self.veredict(pre, words[i], pos)
-        if retval[-3:-1] == u"OK":
-          yield u" ".join(words[posini:i+1])
+        if retval[-3:-1] == "OK":
+          yield " ".join(words[posini:i+1])
           posini = i +1
     else:
       if posini <= len(words) - 1:
-        yield u" ".join(words[posini:])
+        yield " ".join(words[posini:])
     
     return
     
@@ -235,17 +232,17 @@ class Ulysses:
     tokens_list.extend(new_tokens_list)
     tokens_list.append(next_first_tok)
   
-    for i in xrange(1,len(tokens_list)-1):
+    for i in range(1,len(tokens_list)-1):
       if self.endswith(tokens_list[i], ENDINGS):
         if i >= 1:
           pre.append(tokens_list[i-1])
         else:
-          pre.append(u"")
+          pre.append("")
     
         if i<(len(tokens_list)-1):
           post.append(tokens_list[i+1])
         else:
-          post.append(u"")
+          post.append("")
       
         dot.append(tokens_list[i])
 
@@ -254,15 +251,15 @@ class Ulysses:
   #Method that initialises a model by setting up the internal variables
   def init_model(self):
     self.f_map_t={}
-    self.f_map_t[u""] = 1
+    self.f_map_t[""] = 1
     self.f_map_l={}
-    self.f_map_l[u""] = 1
+    self.f_map_l[""] = 1
     self.f_map_wpunct={}
-    self.f_map_wpunct[u""] = 1
+    self.f_map_wpunct[""] = 1
     self.f_map_bigram={}
-    self.f_map_bigram[u""] = 1
+    self.f_map_bigram[""] = 1
     self.f_map_prenumdot_bigram={}
-    self.f_map_prenumdot_bigram[u""] = 1
+    self.f_map_prenumdot_bigram[""] = 1
     self.pre=[]
     self.dot=[]
     self.post=[]
@@ -272,11 +269,11 @@ class Ulysses:
     # raw frequency of tokens considered as possible sentence beginning
     self.f_map_b=self.freqs([i.lower() for i in self.post])
     # dot before number
-    f_prenum=self.freqs([self.dot[i] for i in xrange(len(self.dot)) if regex.match(ur"^([0-9]|[iIvVXxlL]{1,4})",self.post[i])])
-    self.f_map_prenum=dict(f_prenum.items() + {key:0 for key in self.f_map_t if not key in f_prenum}.items())
+    f_prenum=self.freqs([self.dot[i] for i in range(len(self.dot)) if regex.match(r"^([0-9]|[iIvVXxlL]{1,4})",self.post[i])])
+    self.f_map_prenum=dict(list(f_prenum.items()) + list({key:0 for key in self.f_map_t if not key in f_prenum}.items()))
     # dot before proper_noun
-    f_propernoun=self.freqs([self.dot[i] for i in xrange(len(self.dot)) if self.post[i][0:1].isupper() and float(self.f_map_t[self.post[i]])/float(self.f_map_l[self.post[i].lower()]) >= 0.95 and float(self.f_map_t[self.dot[i]])/float(self.f_map_wpunct[self.dot[i].rstrip(u".,:!?\"'")]) >= 0.95])
-    self.f_map_prepn=dict(f_propernoun.items() + {key:0 for key in self.f_map_t if not key in f_propernoun}.items())
+    f_propernoun=self.freqs([self.dot[i] for i in range(len(self.dot)) if self.post[i][0:1].isupper() and float(self.f_map_t[self.post[i]])/float(self.f_map_l[self.post[i].lower()]) >= 0.95 and float(self.f_map_t[self.dot[i]])/float(self.f_map_wpunct[self.dot[i].rstrip(".,:!?\"'")]) >= 0.95])
+    self.f_map_prepn=dict(list(f_propernoun.items()) + list({key:0 for key in self.f_map_t if not key in f_propernoun}.items()))
     
   #Method that feeds the model with a sequence of tokens; this method can
   #be called several times to feed the model with the corresponding statistics;
@@ -292,11 +289,11 @@ class Ulysses:
     # raw frequency of each token lowercased
     self.update_freqs([i.lower() for i in tokens], self.f_map_l)
     # raw frequency of tokens without punctuation at the end
-    self.update_freqs([i.rstrip(u".,:!?\"'") for i in tokens], self.f_map_wpunct)
+    self.update_freqs([i.rstrip(".,:!?\"'") for i in tokens], self.f_map_wpunct)
     # raw frequency of bigrams with punctuation at the end of token and upper at the start of the posttoken
-    self.update_freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
+    self.update_freqs(["{0} {1}".format(tokens[i],tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
     #frequences that a token is preced by a number with dot
-    self.update_freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
+    self.update_freqs(["{0}".format(tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[0-9]+[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
     last_word=tokens[-1]
   
   #Method that obtains a generator producing, in each iteration a list
@@ -306,8 +303,8 @@ class Ulysses:
       yield splitinwords(l.strip())
 
   def line_by_line_training(self, tokens_generator):
-    last_word=u""
-    tokens=tokens_generator.next()
+    last_word=""
+    tokens=next(tokens_generator)
     
     for next_step_tokens in tokens_generator:
       tmp_pre, tmp_dot, tmp_post = self.context_simplify(tokens, last_word, next_step_tokens[0])
@@ -319,15 +316,15 @@ class Ulysses:
       # raw frequency of each token lowercased
       self.update_freqs([i.lower() for i in tokens], self.f_map_l)
       # raw frequency of tokens without punctuation at the end
-      self.update_freqs([i.rstrip(u".,:!?\"'") for i in tokens], self.f_map_wpunct)
+      self.update_freqs([i.rstrip(".,:!?\"'") for i in tokens], self.f_map_wpunct)
       # raw frequency of bigrams with punctuation at the end of token and upper at the start of the posttoken
-      self.update_freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
+      self.update_freqs(["{0} {1}".format(tokens[i],tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
       #frequences that a token is preced by a number with dot
-      self.update_freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
+      self.update_freqs(["{0}".format(tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[0-9]+[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
       last_word=tokens[-1]
       tokens=next_step_tokens
       
-    tmp_pre, tmp_dot, tmp_post = self.context_simplify(tokens, last_word, u"")
+    tmp_pre, tmp_dot, tmp_post = self.context_simplify(tokens, last_word, "")
     pre.extend(tmp_pre)
     dot.extend(tmp_dot)
     post.extend(tmp_post)
@@ -336,21 +333,21 @@ class Ulysses:
     # raw frequency of each token lowercased
     self.update_freqs([i.lower() for i in tokens], self.f_map_l)
     # raw frequency of tokens without punctuation at the end
-    self.update_freqs([i.rstrip(u".,:!?\"'") for i in tokens], self.f_map_wpunct)
+    self.update_freqs([i.rstrip(".,:!?\"'") for i in tokens], self.f_map_wpunct)
     # raw frequency of bigrams with punctuation at the end of token and upper at the start of the posttoken
-    self.update_freqs([u"{0} {1}".format(tokens[i],tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
+    self.update_freqs(["{0} {1}".format(tokens[i],tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[[:upper:]][[:lower:]]?[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_bigram)
     #frequences that a token is preced by a number with dot
-    self.update_freqs([u"{0}".format(tokens[i+1]) for i in xrange(len(tokens)-1) if regex.match(ur"[0-9]+[.]", tokens[i]) and regex.match(ur"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
+    self.update_freqs(["{0}".format(tokens[i+1]) for i in range(len(tokens)-1) if regex.match(r"[0-9]+[.]", tokens[i]) and regex.match(r"[[:upper:]]", tokens[i+1])], self.f_map_prenumdot_bigram)
     last_word=tokens[-1]
     
     # raw frequency of tokens considered as possible sentence beginning
     self.f_map_b=self.freqs([i.lower() for i in post])
     # dot before number
-    f_prenum=self.freqs([dot[i] for i in xrange(len(dot)) if regex.match(ur"^([0-9]|[iIvVXxlL]{1,4})",post[i])])
-    self.f_map_prenum=sorted(dict(f_prenum.items() + {key:0 for key in self.f_map_t if not key in f_prenum}.items()))
+    f_prenum=self.freqs([dot[i] for i in range(len(dot)) if regex.match(r"^([0-9]|[iIvVXxlL]{1,4})",post[i])])
+    self.f_map_prenum=sorted(dict(list(f_prenum.items()) + list({key:0 for key in self.f_map_t if not key in f_prenum}.items())))
     # dot before proper_noun
-    f_propernoun=self.freqs([dot[i] for i in xrange(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(u".,:!?\"'")]) >= 0.95]) 
-    self.f_map_prepn=sorted(dict(f_propernoun.items() + {key:0 for key in self.f_map_t if not key in f_propernoun}.items()))
+    f_propernoun=self.freqs([dot[i] for i in range(len(dot)) if post[i][0:1].isupper() and float(self.f_map_t[post[i]])/float(self.f_map_l[post[i].lower()]) >= 0.95 and float(self.f_map_t[dot[i]])/float(self.f_map_wpunct[dot[i].rstrip(".,:!?\"'")]) >= 0.95]) 
+    self.f_map_prepn=sorted(dict(list(f_propernoun.items()) + list({key:0 for key in self.f_map_t if not key in f_propernoun}.items())))
     
   ### END OF THE CODE ADDED BY MIQUEL ESPLÀ-GOMIS ####
     
@@ -371,13 +368,13 @@ Usage: {0} [options] [input [output]]
     
 
 def splitinwords(mystr):
-  return regex.split(ur"[ \n\r\t\xa0]+", mystr)
+  return regex.split(r"[ \n\r\t\xa0]+", mystr)
 
 def main():
 
   try:
     opts, args = getopt.getopt(sys.argv[1:], "d:btach", ["data=", "batch", "train", "analysis", "compare", "help"])
-  except getopt.GetoptError, err:
+  except getopt.GetoptError as err:
     help()
     sys.exit(2)
     
@@ -487,24 +484,24 @@ def main():
   if not batch_mode:
     for i in input:
       if compare_mode:
-        output.write(u"{0}\n".format(i.strip()))
-        output.write(u"---\n")
+        output.write("{0}\n".format(i.strip()))
+        output.write("---\n")
       for j in mitok.split(splitinwords(i.strip())):
-        output.write(u"{0}\n".format(j))
+        output.write("{0}\n".format(j))
       if compare_mode:
-        output.write(u"\n")
+        output.write("\n")
   else:
     for f in input:
       finput = codecs.getreader('utf-8')(open(f.strip(), "r"))
       foutput = codecs.getwriter('utf-8')(open("{0}.ptk".format(f.strip()), "w"))
       for i in finput:
         if compare_mode:
-          foutput.write(u"{0}\n".format(i.strip()))
-          foutput.write(u"---\n")
+          foutput.write("{0}\n".format(i.strip()))
+          foutput.write("---\n")
         for j in mitok.split(splitinwords(i.strip())):
-          foutput.write(u"{0}\n".format(j))
+          foutput.write("{0}\n".format(j))
         if compare_mode:
-          foutput.write(u"\n")
+          foutput.write("\n")
       finput.close()
       
   if input != sys.stdin:

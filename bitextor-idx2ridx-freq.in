@@ -15,7 +15,6 @@
 
 import sys
 import argparse
-from sets import Set
 from collections import defaultdict
 from operator import itemgetter
 
@@ -71,7 +70,7 @@ def cargarDiccionarios(diccionario, lang1, lang2, dic):
 #
 def traducirPalabras(index, dic, dictp, translatedindex):
   for i in index:
-    translatedindex[i] = Set([])
+    translatedindex[i] = set([])
     contador = 0
     for word in index[i]:
       if word in dic:
@@ -80,12 +79,12 @@ def traducirPalabras(index, dic, dictp, translatedindex):
     dictp[i] = contador
 
 def feedDictWithIdenticalWords(index1, index2, dic):
-  words_lang1=Set()
-  for key, words in index1.items():
+  words_lang1=set()
+  for key, words in list(index1.items()):
     words_lang1=words_lang1.union(words)
 
-  words_lang2=Set()
-  for key, words in index2.items():
+  words_lang2=set()
+  for key, words in list(index2.items()):
     words_lang2=words_lang2.union(words)
 
   for w in words_lang1.intersection(words_lang2):
@@ -153,7 +152,7 @@ for i in index_text1:
       #parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
 
   if len(parecidos) > 0:
-    parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+    parecidos = sorted(list(parecidos.items()), key=itemgetter(1), reverse=True)
   encontrados[i] = []
   for j in parecidos:
     encontrados[i].append(str(j[0]) + ":" + str(j[1]))
@@ -172,4 +171,4 @@ for i in encontrados:
       primera = False
     else:
       cadena += "\t" + str(encontrados[i][j])
-  print cadena
+  print(cadena)

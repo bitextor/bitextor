@@ -26,6 +26,6 @@ for i in reader:
     fields.append(str(lengthRatio))
     fields.append(str(numTokensSL))
     fields.append(str(numTokensTL))
-  print("\t".join(fields))
+  print(("\t".join(fields)))
 
 

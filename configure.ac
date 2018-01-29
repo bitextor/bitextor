@@ -241,14 +241,14 @@ print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="1.0.3"
-    kerasversion=`python -c "import keras; print keras.__version__" 2> /dev/null`
+    kerasversion=`python -c "import keras; print(keras.__version__)" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$kerasversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])
-      AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is v$kerasversion; try running:
+      AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is $kerasversion; try running:
 pip install --upgrade keras
 ])
     fi

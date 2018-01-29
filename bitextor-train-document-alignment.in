@@ -44,7 +44,7 @@ for i in reader:
   count+=1
   featuresline = i.strip().split("\t")
 
-  features=map(float, featuresline[2:-1])
+  features=list(map(float, featuresline[2:-1]))
   label=float(featuresline[-1])
   featurelist_train.append(features)
   labels_train.append(label)
@@ -56,7 +56,7 @@ reader = open(options.developmentfile,"r")
 for i in reader:
   featuresline = i.strip().split("\t")
 
-  features=map(float, featuresline[2:-1])
+  features=list(map(float, featuresline[2:-1]))
   label=float(featuresline[-1])
   featurelist_dev.append(features)
   labels_dev.append(label)
@@ -75,7 +75,7 @@ dimof_output = len(set(labels_array_train.flat))
 bestmodel=None
 minerr=100000.0
 nmodel=0
-for nmodel in xrange(0,options.nbest):
+for nmodel in range(0,options.nbest):
   model = Sequential()
   model.add(Dense(14, input_dim=7, init="uniform", activation='relu'))
   model.add(Dense(1, init='uniform'))
