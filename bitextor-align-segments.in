@@ -159,7 +159,8 @@ if options.aligned_docs == None:
 else:
   reader = open(options.aligned_docs,"r")
 
-mitok_l1, mitok_l2, reader_list=trainSegmenters(reader, options.lang1, options.lang2)
+if not useNltkSentTok:
+  mitok_l1, mitok_l2, reader_list=trainSegmenters(reader, options.lang1, options.lang2)
 
 for line in reader_list:
   tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
