@@ -19,6 +19,8 @@ from sets import Set
 from collections import defaultdict
 from operator import itemgetter
 import re
+import math
+import numpy
 
 def readLETT(f, docs):
   file = open(f, "r")
@@ -35,7 +37,7 @@ def readLETT(f, docs):
 # Se rellenan los indices de palabras en las dos lenguas a partir del
 # .idx de la entrada.
 #
-def rellenarIndex(file, lang1, lang2, index1, index2):
+def rellenarIndex(file, lang1, lang2, index1, index2, occindex1, occindex2):
   for i in file:
     campos = i.strip().split("\t")
     if len(campos) == 3:
@@ -44,11 +46,20 @@ def rellenarIndex(file, lang1, lang2, index1, index2):
         acum = 1
 
         for j in documentos:
-          acum += int(j)
+          docid=j.split("@")[0]
+          occs=j.split("@")[1]
+          acum += int(docid)
           if campos[0] == lang1:
             index1[acum].add(campos[1])
+            if acum not in occindex1:
+              occindex1[acum]={}
+            occindex1[acum][campos[1]]=occs
           else:
             index2[acum].add(campos[1])
+            if acum not in occindex2:
+              occindex2[acum]={}
+            occindex2[acum][campos[1]]=occs
+
   file.close()
 
 #
@@ -77,15 +88,37 @@ def cargarDiccionarios(diccionario, lang1, lang2, dic):
 # diccionario de su idioma por las equivalentes en el otro idioma.
 # Esto se hace para todos los documentos encontrados en el segundo idioma.
 #
-def traducirPalabras(index, dic, dictp, translatedindex):
+def traducirPalabras2(index, indexocc, dic, dictp, translatedindex):
   for i in index:
-    translatedindex[i] = Set([])
+    translatedindex[i] = {}
     contador = 0
     for word in index[i]:
       if word in dic:
+        occs=float(indexocc[i][word])
+        #print word+"\t"+str(dic[word])+"\t"+str(occs)+"\t"+str(occs/float(len(translatedindex)))
         contador += 1
-        translatedindex[i].update(dic[word])
+        for trans in dic[word]:
+          if trans in translatedindex:
+            translatedindex[i][trans]+=occs/float(len(dic[word]))
+            #translatedindex[i][trans]+=occs
+          else:
+            translatedindex[i][trans]=occs/float(len(dic[word]))
+            #translatedindex[i][trans]=occs
     dictp[i] = contador
+
+def traducirPalabras(index1, index2, indexocc1, indexocc2, dic, translatedindex):
+  for word in index1:
+    if word in dic:
+      validtrans=Set(dic[word]).intersection(Set(index2))
+      if len(validtrans) > 0:
+        occs=float(indexocc1[word])/float(len(validtrans))
+        for trans in validtrans:
+          #print word+"\t"+str(occs)+"\t"+trans
+          if trans in translatedindex:
+            translatedindex[trans]+=occs
+          else:
+            translatedindex[trans]=occs
+
 
 def feedDictWithIdenticalWords(index1, index2, dic):
   words_lang1=Set()
@@ -108,12 +141,13 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 options = oparser.parse_args()
 
 index_text1 = defaultdict(set)
+index_occ_text1 = {}
 index_text2 = defaultdict(set)
+index_occ_text2 = {}
 dic = defaultdict(list)
 lista_palabras = []
 encontrados = {}
 dict_palabras = {}
-translated_index_text2 = {}
 
 cargarDiccionarios(options.diccionario, options.lang1, options.lang2, dic)
 
@@ -122,7 +156,7 @@ if options.idx == None:
 else:
   reader = open(options.idx, "r")
 
-rellenarIndex(reader, options.lang1, options.lang2, index_text1, index_text2)
+rellenarIndex(reader, options.lang1, options.lang2, index_text1, index_text2, index_occ_text1, index_occ_text2)
 
 feedDictWithIdenticalWords(index_text1, index_text2, dic)
 
@@ -134,40 +168,76 @@ feedDictWithIdenticalWords(index_text1, index_text2, dic)
 # porcentaje de cuanto se parecen eso documentos. Se muestra una lista con
 # los 10 documentos mas parecidos a cada uno de ellos.
 #
-traducirPalabras(index_text2, dic, dict_palabras, translated_index_text2)
+
+cosine_sim=True
 
 if options.lett != None:
   documents = {}
   readLETT(options.lett, documents)
 
-for i in index_text1:
-  if options.lett != None:
-    rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[i])
-    ihost = rx.group(2)
-
-  parecidos = {}
-  for j in index_text2:
-    validpair = True
+if cosine_sim:
+  for i in index_text1:
     if options.lett != None:
-      rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
-      jhost = rx.group(2)
-      if jhost != ihost:
-        validpair = False
-#     c3 = filter(lambda x: x in translated_index_text2[j], index_text1[i])
-    if validpair:
-      c3 = index_text1[i].intersection(translated_index_text2[j])
-      if len(c3) > 0 and int(dict_palabras[j]) > 0:
+      rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[i])
+      ihost = rx.group(2)
+
+    parecidos = {}
+    for j in index_text2:
+      validpair = True
+      if options.lett != None:
+        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
+        jhost = rx.group(2)
+        if jhost != ihost:
+          validpair = False
+
+      if validpair:
+        translated_index_text2={}
+
+        traducirPalabras(index_text2[j], index_text1[i], index_occ_text2[j], index_occ_text1[i], dic, translated_index_text2)
+        c3 = Set(index_occ_text1[i].keys()).intersection(Set(translated_index_text2.keys()))
+
+        numerator = sum([ float(index_occ_text1[i][key])*float(translated_index_text2[key]) for key in c3 ])
+        denom1 = math.sqrt(sum([float(v)*float(v) for v in index_occ_text1[i].values()]))
+        denom2 = math.sqrt(sum([float(v)*float(v) for v in translated_index_text2.values()]))
+
+        parecidos[j]=numerator/(denom1*denom2)
+
+    if len(parecidos) > 0:
+      parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+    encontrados[i] = []
+    for j in parecidos:
+      encontrados[i].append(str(j[0]) + ":" + str(j[1]))
+
+else:
+  translated_index_text2 = {}
+  traducirPalabras2(index_text2, index_occ_text2, dic, dict_palabras, translated_index_text2)
+  for i in index_text1:
+    if options.lett != None:
+      rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[i])
+      ihost = rx.group(2)
+
+    parecidos = {}
+    for j in index_text2:
+      validpair = True
+      if options.lett != None:
+        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
+        jhost = rx.group(2)
+        if jhost != ihost:
+          validpair = False
+
+      if validpair:
+        c3 = Set(index_occ_text1[i].keys()).intersection(Set(translated_index_text2[j].keys()))
         max_vocab=max(len(index_text1[i]),len(index_text2[j]))
         min_vocab=min(len(index_text1[i]),len(index_text2[j]))
         num_intersect_words=len(c3)
         num_trans_words_text2=dict_palabras[j]
         parecidos[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
 
-  if len(parecidos) > 0:
-    parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
-  encontrados[i] = []
-  for j in parecidos:
-    encontrados[i].append(str(j[0]) + ":" + str(j[1]))
+    if len(parecidos) > 0:
+      parecidos = sorted(parecidos.items(), key=itemgetter(1), reverse=True)
+    encontrados[i] = []
+    for j in parecidos:
+      encontrados[i].append(str(j[0]) + ":" + str(j[1]))
 
 # Se saca el numero de documento y sus 10 mas parecidos.
 for i in encontrados:
