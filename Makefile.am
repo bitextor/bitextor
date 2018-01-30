@@ -2,7 +2,7 @@
 bitextordir = $(prefix)/share/bitextor
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = bitextor-5.0.pc
+pkgconfig_DATA = bitextor-5.1.pc
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
