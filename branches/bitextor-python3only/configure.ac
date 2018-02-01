@@ -8,13 +8,13 @@ AC_PREREQ(2.52)
 #m4_define([required_libpcre_version], [6.4])
 #m4_define([required_pkg_config_version], [0.15])
 
-AC_INIT([bitextor], [5.0.0], [jorgeferrandez@gmail.com])
+AC_INIT([bitextor], [5.1.0], [jorgeferrandez@gmail.com])
 AC_CONFIG_HEADER([bitextor_config.h])
 #AC_CONFIG_HEADER([])
 AC_CANONICAL_SYSTEM
 
 PACKAGE=bitextor
-VERSION=5.0.0
+VERSION=5.1.0
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
@@ -418,4 +418,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-5.0.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile])
+AC_OUTPUT([Makefile bitextor-5.1.pc hunalign-src/Makefile hunalign-src/src/hunalign/Makefile piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile])
