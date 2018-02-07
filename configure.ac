@@ -16,7 +16,7 @@ AC_CANONICAL_SYSTEM
 PACKAGE=bitextor
 VERSION=5.1.0
 
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
+AM_INIT_AUTOMAKE([subdir-objects])
 
 # Checks for programs.
 
