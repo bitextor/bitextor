@@ -6,7 +6,7 @@ pkgconfig_DATA = bitextor-5.1.pc
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
-bitextor_SOURCES = bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
+bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
             bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \
             bitextor-lett2lettr.in bitextor-ridx2filenames.in bitextor-crawl.in \
@@ -27,7 +27,7 @@ bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
          bitextor-buildTMX.1
 
 
-EXTRA_DIST= $(man_MANS) $(bitextor_SOURCES) utils \
+EXTRA_DIST= $(man_MANS) $(bitextor_SOURCEFILES) utils \
             model
 
 CLEANFILES=$(bin_SCRIPTS)
