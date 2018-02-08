@@ -77,7 +77,7 @@ minerr=100000.0
 nmodel=0
 for nmodel in xrange(0,options.nbest):
   model = Sequential()
-  model.add(Dense(14, input_dim=7, init="uniform", activation='relu'))
+  model.add(Dense(dimof_input*2, input_dim=dimof_input, init="uniform", activation='relu'))
   model.add(Dense(1, init='uniform'))
   model.add(Activation('sigmoid'))
 
