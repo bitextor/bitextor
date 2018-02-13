@@ -16,7 +16,7 @@ AC_CANONICAL_SYSTEM
 PACKAGE=bitextor
 VERSION=5.1.0
 
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
+AM_INIT_AUTOMAKE([subdir-objects])
 
 # Checks for programs.
 
@@ -216,7 +216,7 @@ AS_IF([test "x$with_apertium" != xno],
 ])
 
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import Levenshtein; \
@@ -232,7 +232,7 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for keras for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import keras; \
@@ -259,7 +259,7 @@ pip install --upgrade keras
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for h5py for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import h5py; \
@@ -275,7 +275,7 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for numpy for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import numpy; \
