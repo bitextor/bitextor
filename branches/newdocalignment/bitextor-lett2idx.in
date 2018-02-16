@@ -100,7 +100,7 @@ for line in reader:
 
 for map_lang, map_vocabulary in word_map.items():
   for map_word, map_doc_occ in map_vocabulary.items():
-    if options.maxo == -1 or len(lang_vocab_counter[map_lang][map_word])<=options.maxo:
+    if options.maxo == -1 or lang_vocab_counter[map_lang][map_word]<=options.maxo:
       sorted_docs=sorted(map_doc_occ.keys(), reverse=True)
       for doc_list_idx in range(0, len(sorted_docs)-1):
         sorted_docs[doc_list_idx]=str(sorted_docs[doc_list_idx]-sorted_docs[doc_list_idx+1])+"@"+str(word_map[map_lang][map_word][sorted_docs[doc_list_idx]])

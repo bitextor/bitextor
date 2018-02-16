@@ -81,19 +81,21 @@ minerr=100000.0
 
 for nmodel in xrange(0,options.nbest):
   model = Sequential()
-  model.add(Dense(dimof_input*2, input_dim=dimof_input, init="uniform", activation='relu'))
+  model.add(Dense(dimof_input*2, init="uniform", activation='relu', input_shape=(dimof_input,)))
+  model.add(Dropout(0.5, seed=1058))
+  #model.add(Dense(dimof_input/2, init="uniform", activation='relu'))
   model.add(Dense(1, init='uniform'))
   model.add(Activation('sigmoid'))
 
   earlyStopping=EarlyStopping(patience=10, verbose=1, mode='auto')
-  checkpoint=ModelCheckpoint(options.weights, monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
-  #checkpoint=ModelCheckpoint(options.weights, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', period=1)
+  #checkpoint=ModelCheckpoint(options.weights, monitor='val_loss', verbose=0, save_best_only=True, mode='auto')
+  checkpoint=ModelCheckpoint(options.weights, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 
   sgd = SGD(lr=0.5, decay=1e-4, momentum=0.1, nesterov=True)
-  model.compile(loss='binary_crossentropy',  optimizer="adam")
+  model.compile(loss='binary_crossentropy',  optimizer=sgd)
 
-  trainingout=model.fit(feats_array_train, labels_array_train, batch_size=128, nb_epoch=10000, verbose=1, callbacks=[earlyStopping], validation_data=(feats_array_dev,labels_array_dev), shuffle=True, show_accuracy=False, class_weight=None, sample_weight=None)
+  trainingout=model.fit(feats_array_train, labels_array_train, batch_size=128, nb_epoch=10000, verbose=1, callbacks=[earlyStopping,checkpoint], validation_data=(feats_array_dev,labels_array_dev), shuffle=True, class_weight=None, sample_weight=None)
   err = trainingout.history['val_loss'][-12]
   if err < minerr:
     bestmodeliter=nmodel
