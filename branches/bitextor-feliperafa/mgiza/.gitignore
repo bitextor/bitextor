@@ -1,0 +1,17 @@
+.*.swp
+*.exe
+mgizapp/CMakeCache.txt
+mgizapp/CMakeFiles
+mgizapp/Makefile
+mgizapp/bin
+mgizapp/cmake_install.cmake
+mgizapp/lib
+mgizapp/scripts/CMakeFiles
+mgizapp/scripts/Makefile
+mgizapp/scripts/cmake_install.cmake
+mgizapp/src/CMakeFiles
+mgizapp/src/Makefile
+mgizapp/src/cmake_install.cmake
+mgizapp/src/mkcls/CMakeFiles
+mgizapp/src/mkcls/Makefile
+mgizapp/src/mkcls/cmake_install.cmake
