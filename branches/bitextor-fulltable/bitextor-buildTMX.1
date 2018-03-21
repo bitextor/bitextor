@@ -1,0 +1,45 @@
+.\" Manpage for bitextor-webdir2ett.
+.\" Contact jferrandez@prompsit.com or mespla@dlsi.ua.es to correct errors or typos.
+.TH bitextor-webdir2ett 1 "16 May 2016" "bitextor v5.0" "bitextor man pages"
+.SH NAME
+bitextor-buildTMX \- This application is part of
+.B bitextor
+( the automatic bitext generator from multilingual websites )
+
+.SH SYNOPSIS
+.B bitextor-buildTMX
+.BI \-\-lang1 " LANG1"
+.BI \-\-lang2 " LANG2"
+.RI [ FILE ]
+
+.SH DESCRIPTION
+.B bitextor-buildTMX
+is a Python script that reads the output of
+.BR bitextor-cleantextalign ,
+either from the standard input or from a 
+.IR FILE ,
+and formats the set of aligned pairs of segments as a
+TMX standarised translation memory.
+.B \-\-lang1
+and
+.B \-\-lang2
+provide the ID of the languages in the bitext (following
+the ISO 639-1) in order to add them to the corresponding
+fields in the TMX.
+
+.SH SEE ALSO
+bitextor-align-documents(1), bitextor-align-segments(1), bitextor(1),
+bitextor-downloadweb(1), bitextor-ett2lett(1), bitextor-lett2idx(1),
+bitextor-idx2ridx(1), bitextor-lett2lettr(1), bitextor-distancefilter(1),
+bitextor-aligner(1), bitextor-cleantextalign(1), bitextor-buildTMX(1)
+
+.SH BUGS
+No known bugs.
+
+.SH AUTHORS
+.PD 0
+.B Jorge Ferrández Tordera
+.R <jferrandez@prompsit.com>
+.P
+.B Miquel Esplà-Gomis
+.R <mespla@dlsi.ua.es>

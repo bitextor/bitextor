@@ -1,0 +1,4 @@
+# pack-refs with: peeled fully-peeled 
+946b9d43cd220a44e146dd2b2c5d46e3c15d8958 refs/remotes/origin/condex
+b19f171b5eedf07a6919177f1acf7f51e3caf139 refs/remotes/origin/master
+935f973abf7e3e0984d2905e760c2ad1dc3d5b45 refs/remotes/origin/swig
