@@ -4,7 +4,7 @@
 # 1. Leer .idx extrayendo palabras en las dos lenguas
 # 2. Traducir palabras en los segundos documentos
 # 3. Hacer interseccion entre cada par de documentos
-# 4. Se muestran los 10 documentos de la segunda lengua mas parecidos a cada
+# 4. Se muestran los numSimilar (10) documentos de la segunda lengua mas parecidos a cada
 #    uno de la primera
 #
 # Formato final del documento:
@@ -105,6 +105,7 @@ oparser.add_argument('-d', help='Dictionary containing translations of words for
 oparser.add_argument('-l', help='LETT file; if it is provided, document pair candidates are provided only if they belong to the same domain', dest="lett", required=False, default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+oparser.add_argument("--numSimilar", help="Number of similar documents to take into account", dest="numSimilar", required=False, default=10)
 options = oparser.parse_args()
 
 index_text1 = defaultdict(set)
@@ -132,7 +133,7 @@ feedDictWithIdenticalWords(index_text1, index_text2, dic)
 # ese documento en la funcion traducirPalabras. El resultado de la interseccion
 # entre el numero de palabras traducidas en traducirPalabras dara un
 # porcentaje de cuanto se parecen eso documentos. Se muestra una lista con
-# los 10 documentos mas parecidos a cada uno de ellos.
+# los numSimilar (10) documentos mas parecidos a cada uno de ellos.
 #
 traducirPalabras(index_text2, dic, dict_palabras, translated_index_text2)
 
@@ -171,8 +172,8 @@ for i in index_text1:
 
 # Se saca el numero de documento y sus 10 mas parecidos.
 for i in encontrados:
-  if len(encontrados[i]) > 10:
-    contador = 10
+  if len(encontrados[i]) > options.numSimilar:
+    contador = options.numSimilar
   else:
     contador = len(encontrados[i])
   primera = True
