@@ -128,7 +128,7 @@ letter	carta
 ```
 Some dictionaries are available in https://sourceforge.net/projects/bitextor/files/bitextor/bitextor-4.0/dictionaries/ . However, customised dictionaries can be automatically built from parallel corpora. This package includes the script bitextor-builddics to ease the creation of these dictionaries. The script uses the tool GIZA++ (http://code.google.com/p/giza-pp/) to build probabilistic dictionaries, which are filtered to keep only those pairs of words fitting the following two criteria:
 - both words must occurr at leat  10 times in the corpus; and
-- the harmoinc mean of translating the word from lang1 to lang2 and from lang2 to lang1 must be equal or higher than 0.2.
+- the harmonic mean of translating the word from lang1 to lang2 and from lang2 to lang1 must be equal or higher than 0.2.
 
 To obtain a dictionary, it is only needed to have a parallel corpus in the following format:
  - the corpus must be composed by two files, one containing the segments in lang1, and the other containing the segments in lang2; and
