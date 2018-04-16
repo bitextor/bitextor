@@ -70,7 +70,7 @@ Some more tools are included in the bitextor package and will be installed toget
 - boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>)
 
 
-=== RUNNING BITEXTOR ===
+## RUNNING BITEXTOR
 
 There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
 ```
