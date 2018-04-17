@@ -182,3 +182,4 @@ for k in indices:
       print("{1}\t{0}\t{3}\t{2}".format(documentos[k][0], documentos[indices[k]][0], documentos[k][1], documentos[indices[k]][1]))
     if not options.nonsymmetric:
       del documentos[k]
+
