@@ -17,29 +17,29 @@ It is worth noting that Each of these steps can be run separately.
 
 ## REQUIREMENTS
 
-Autotools are necessary for building and installing the project. Tools javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is requeired for compiling. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operative systems repositories.
+**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** for 'clustercat' project. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
 
 Some external Python libraries should also be installed before starting the installation of bitextor:
 
-- python-Levenshtein: Python library for computing the Levenshtein edit-distance.
-- LangID.py: Python library for plain text language detection.
-- regex: Python package for regular expressions in Python.
-- NLTK: Python package with natural language processing utilities.
-- numpy: Python package for scientific computing with Python.
-- keras: Python package for implementing neural networks for deep learning.
-- h5py: Pythonic interface to the HDF5 binary data format.
-- python-magic: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
-- iso-639: Python package to convert between language names and ISO-639 codes
+- **python-Levenshtein**: Python library for computing the Levenshtein edit-distance.
+- **LangID.py**: Python library for plain text language detection.
+- **regex**: Python package for regular expressions in Python.
+- **NLTK**: Python package with natural language processing utilities.
+- **numpy**: Python package for scientific computing with Python.
+- **keras**: Python package for implementing neural networks for deep learning.
+- **h5py**: Pythonic interface to the HDF5 binary data format.
+- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
+- **iso-639**: Python package to convert between language names and ISO-639 codes
 
-The easiest way to install these python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
+The easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
 
-` user@pc:~$ sudo pip install langid python-Levenshtein regex NLTK numpy magic h5py keras`
+`user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639`
 
-For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automatke, gawk, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
 Most of these pip packages are also available in the repositories of many Unix-based systems.
 
-In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionaly, just use the option "--without-apertium" when running the configuration script.
+In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script.
 
 
 ## INSTALLING BITEXTOR
@@ -47,17 +47,17 @@ In addition to these Python libraries, the tool Apertium (http://www.apertium.or
 To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
 
 ```
- user@pc:~$ ./configure
- user@pc:~$ make
- user@pc:~$ sudo make install
+user@pc:~$ ./configure
+user@pc:~$ make
+user@pc:~$ sudo make install
 ```
 
 In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
 
 ```
- user@pc:~$ ./configure --prefix=LOCALDIR
- user@pc:~$ make
- user@pc:~$ make install
+user@pc:~$ ./configure --prefix=LOCALDIR
+user@pc:~$ make
+user@pc:~$ make install
 ```
 
 where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
@@ -74,12 +74,12 @@ Some more tools are included in the bitextor package and will be installed toget
 
 There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
 ```
-  bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
-  bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
+bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
+bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
 ```
-In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -U should be a tab-sepparated file containing, in each line, a URL to be crawled and its destination ETT file. In all cases, it is mandatory to specify the lexicon to be used and the target languages to be crawled. One more way to run bitextor is available, using option *-e* to specify an ETT file containing a previoiusly crawled website (this step starts in the second step described in the previous section): 
+In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -U should be a tab-separated file containing, in each line, a URL to be crawled and its destination ETT file. In all cases, it is mandatory to specify the lexicon to be used and the target languages to be crawled. One more way to run bitextor is available, using option *-e* to specify an ETT file containing a previously crawled website (this step starts in the second step described in the previous section): 
 ```
-  bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
+bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
 ```
 Options -u and -e can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
 
@@ -87,8 +87,8 @@ Several options can be set using the command line options:
 
 - -U FILE   sets the path to a file containing a list of URLs and their destination ETT file to be crawled and processed (one per line).
 - -e FILE   sets the path to the ETT file containing the documents crawled from a website.
-- -L DIRECTORY   Target path where the log files of each module will be stored (by default, they are stored in a temporal directory which is removed at  the end of the run)
-- -I DIRECTORY   Target  path  where  the  intermediate  files  of  each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
+- -L DIRECTORY   Target path where the log files of each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
+- -I DIRECTORY   Target path where the intermediate files of each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
 - -b NUM    when this option is enabled, only the first NUM candidates from the RINDEX candidate list are taken into account when computing the bidirectional document alignment.
 - -v FILE   path to the dictionary used by the script bitextor-lettr2idx.
 - -m NUM    if the number of wrong alignments in a pair of documents processed by bitextor-align-segments is higher than NUM, the pair of documents is discarded (5 by default).
@@ -96,12 +96,12 @@ Several options can be set using the command line options:
 - -T DIRECTORY     alternative tmp directory (/tmp by default)
 - -O FILE     target file containing the result of the crawling (either plain text or a TMX translation memory)
 - -x        if this option is enabled, the output of bitextor will be formatted as a standard TMX translation memory (this option adds at the end of the pipeline the script bitextor-buildTMX).
-- -a        if this option is enabled, bitextor will print aligned documents instead of aligned segments; the output is tab-separatted, with the paths to the two aligned files and a general score provided by hunalign to the document en each line.
-- -M      morphological analyser in the Apertium platform for source language that will allow to apply word matching directly on lemmas; this is an important tool for aglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
-- -N      morphological analyser in the Apertium platform for target language that will allow to apply word matching directly on lemmas; this is an important tool for aglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
-- -O FILE      if this option is enabled, the otput of bitextor will be redirected to file FILE, if not it is redirected to the standard output.
+- -a        if this option is enabled, bitextor will print aligned documents instead of aligned segments; the output is tab-separated, with the paths to the two aligned files and a general score provided by hunalign to the document en each line.
+- -M      morphological analyser in the Apertium platform for source language that will allow to apply word matching directly on lemmas; this is an important tool for agglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
+- -N      morphological analyser in the Apertium platform for target language that will allow to apply word matching directly on lemmas; this is an important tool for agglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
+- -O FILE      if this option is enabled, the output of bitextor will be redirected to file FILE, if not it is redirected to the standard output.
 - -d THRESHOLD     threshold for the parallel-document confidence score. This threshold can take real values in [0,1], being 0 equivalent to not setting any threshold and 1 the highest threshold possible.
-- -s SIZE     size limit for the crawling process; if this option is set, the crawling process will stop after the amount of data specified has been crawled. This option must be an amount of Kylobytes (K), Megabytes (M) or Gigabytes (G) for example: '50M' for 50 Megabytes.
+- -s SIZE     size limit for the crawling process; if this option is set, the crawling process will stop after the amount of data specified has been crawled. This option must be an amount of Kilobytes (K), Megabytes (M) or Gigabytes (G) for example: '50M' for 50 Megabytes.
 - -t TIME     time limit for the crawling process; if this option is set, the crawling process will stop after the amount of time specified. This option must be an amount of time and a time unit (h for hours, m for minutes and s for seconds), for example: '35m' for 35 minutes.
 
 More options using -h command.
@@ -114,8 +114,8 @@ To create a parallel corpus, it is necessary to have a bilingual dictionary cont
 ```
 LANGUAGE1_CODE	LANGUAGE2_CODE
 word1_in_language1	word1_in_language2
-word2_in_language1       word2_in_language2
-word3_in_language1       word3_in_language2
+word2_in_language1	word2_in_language2
+word3_in_language1	word3_in_language2
 ...	...
 ```
 For example, a valid dictionary could be:
@@ -127,7 +127,7 @@ letter	carta
 ...	...
 ```
 Some dictionaries are available in https://sourceforge.net/projects/bitextor/files/bitextor/bitextor-4.0/dictionaries/ . However, customised dictionaries can be automatically built from parallel corpora. This package includes the script bitextor-builddics to ease the creation of these dictionaries. The script uses the tool GIZA++ (http://code.google.com/p/giza-pp/) to build probabilistic dictionaries, which are filtered to keep only those pairs of words fitting the following two criteria:
-- both words must occurr at leat  10 times in the corpus; and
+- both words must occur at least 10 times in the corpus; and
 - the harmonic mean of translating the word from lang1 to lang2 and from lang2 to lang1 must be equal or higher than 0.2.
 
 To obtain a dictionary, it is only needed to have a parallel corpus in the following format:
@@ -135,7 +135,7 @@ To obtain a dictionary, it is only needed to have a parallel corpus in the follo
  - the segments appearing in the same line in both files must be parallel.
 For a pair of files FILE1 and FILE2 containing a parallel corpus, the script would be used as follows:
 ```
-  bitextor-builddics LANG1 LANG2 FILE1 FILE2 OUTPUT
+bitextor-builddics LANG1 LANG2 FILE1 FILE2 OUTPUT
 ```
 with OUTPUT being the path to the file which will contain the resulting dictionary.
 
