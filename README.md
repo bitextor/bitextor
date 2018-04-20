@@ -17,7 +17,7 @@ It is worth noting that Each of these steps can be run separately.
 
 ## REQUIREMENTS
 
-**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for 'clustercat' project. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
+**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
 
 Some external Python libraries should also be installed before starting the installation of bitextor:
 
