@@ -17,7 +17,7 @@ It is worth noting that Each of these steps can be run separately.
 
 ## REQUIREMENTS
 
-**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** for 'clustercat' project. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
+**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for 'clustercat' project. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
 
 Some external Python libraries should also be installed before starting the installation of bitextor:
 
@@ -35,7 +35,7 @@ The easiest way to install these Python libraries is using the tool pip (https:/
 
 `user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639`
 
-For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
 Most of these pip packages are also available in the repositories of many Unix-based systems.
 
