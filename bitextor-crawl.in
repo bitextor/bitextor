@@ -2,7 +2,7 @@
 
 #-*- coding: utf-8 -*-
 #
-# This files has been created building on the crawler.py script
+# This file has been created building on the crawler.py script
 # in the Creepy project, by Wei-Ning Huang (AZ) <aitjcize@gmail.com>
 # and is distributed under GPLv3 license.
 #
@@ -143,7 +143,7 @@ class Crawler(object):
           self.robotsparser.set_url(self.proto+self.host+"/robots.txt")
           self.robotsparser.read()
         except IOError:
-          sys.stderr.write("It was not possible to connect to the web server specified")
+          sys.stderr.write("It was not possible to connect to the web server specified to retrieve the robots.txt file")
         except CertificateError:
           sys.stderr.write("Certificate error: ")
           sys.stderr.write(str(sys.exc_info()[0])+"\n")
