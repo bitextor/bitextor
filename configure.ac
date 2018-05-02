@@ -260,6 +260,22 @@ pip install --upgrade keras
   fi
 
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
+  AC_MSG_CHECKING([for tensorflow for Python])
+  ac_supports_python_ver=`$PYTHON -c "import sys; \
+import tensorflow; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- tensorflow:   Please, install tensorflow and try again. http://www.tensorflow.org/
+])
+  fi
+
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for h5py for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
 import h5py; \
@@ -271,7 +287,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- h5py:   Please, install v2.6 or later and try again. http://www.keras.io/
+- h5py:   Please, install v2.6 or later and try again. http://www.h5py.org/
 ])
   fi
 
