@@ -47,7 +47,7 @@ In addition to these Python libraries, the tool Apertium (http://www.apertium.or
 To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
 
 ```
-user@pc:~$ ./configure
+user@pc:~$ ./autogen.sh
 user@pc:~$ make
 user@pc:~$ sudo make install
 ```
@@ -55,7 +55,7 @@ user@pc:~$ sudo make install
 In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
 
 ```
-user@pc:~$ ./configure --prefix=LOCALDIR
+user@pc:~$ ./autogen.sh --prefix=LOCALDIR
 user@pc:~$ make
 user@pc:~$ make install
 ```
