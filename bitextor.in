@@ -58,6 +58,9 @@ CRAWLINGSTATUSCONTINUE=""
 CRAWLINGDATACONTINUE=""
 TLD=""
 PRINTSTATS=""
+FILTERLINES=""
+HUNALIGNSCORE=""
+ELRCSCORES=""
 IGNOREBOILER=""
 USENLTK=""
 CONFIGFILEOPTIONS=""
@@ -307,7 +310,7 @@ align_segments(){
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT -i converge $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
-        __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
+        __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
@@ -326,7 +329,7 @@ align_segments(){
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
         __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
-         __PREFIX__/bin/bitextor-addtextstats $PRINTSTATS > $output_pipe &
+        __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE > $output_pipe &
     else
         __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -344,7 +347,7 @@ align_segments(){
   fi
 
   if [ $FORMAT == "TMX" ]; then
-    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 < $output_pipe > $OUTPUT
+    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ELRCSCORES,idnumber < $output_pipe > $OUTPUT
   else
     cat < $output_pipe >> $OUTPUT
   fi
@@ -430,7 +433,7 @@ do
       ALIGNDOCUMENTSLOG=$LOGDIR/bitextoraligndocuments.log
       ALIGNSEGMENTSLOG=$LOGDIR/bitextoralignsegments.log
       CLEANTEXTLOG=$LOGDIR/bitextorcleantextalign.log
-      ADDTEXTSTATSLOG=$LOGDIR/bitextoraddtextstats.log
+      ADDTEXTSTATSLOG=$LOGDIR/bitextorelrcfiltering.log
       shift
       ;;
     -e | --ett)
@@ -557,6 +560,9 @@ do
       ;;
     -W | --elrc-quality-metrics)
       PRINTSTATS="-s"
+      FILTERLINES="-f"
+      HUNALIGNSCORE=",hunalign"
+      ELRCSCORES=",lengthratio,numTokensSL,numTokensTL"
       shift
       ;;
     -n | --nltk)

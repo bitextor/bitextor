@@ -17,7 +17,7 @@ bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segm
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-idx2ridx-freq bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl bitextor-train-document-alignment \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
-            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-addtextstats \
+            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
@@ -175,7 +175,7 @@ bitextor-builddics: bitextor-builddics.in nltk_data
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
-bitextor-addtextstats: bitextor-addtextstats.in
+bitextor-elrc-filtering: bitextor-elrc-filtering.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
