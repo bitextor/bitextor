@@ -44,7 +44,7 @@ for i in reader:
         fieldsdict["zipporah"]=str(round(float(fieldsdict["zipporah"]),4))
       if "bicleaner" in fieldsdict and fieldsdict["bicleaner"].strip() != '':
         fieldsdict["bicleaner"]=str(round(float(fieldsdict["bicleaner"]),4))
-      if int(fieldsdict["numTokensSL"]) >= 200 or int(fieldsdict["numTokensTL"]) >= 200 or fieldsdict["seg1"].strip() == '' or fieldsdict["seg2"].strip() == '' or float(fieldsdict["lengthratio"]) >= 6 or float(fieldsdict["lengthratio"]) <= 0.1666 or ('zipporah' in fieldsdict and fieldsdict["zipporah"] != "" and float(fieldsdict["zipporah"]) < 0.0):
+      if int(fieldsdict["numTokensSL"]) >= 200 or int(fieldsdict["numTokensTL"]) >= 200 or fieldsdict["seg1"].strip() == '' or fieldsdict["seg2"].strip() == '' or float(fieldsdict["lengthratio"]) >= 6 or float(fieldsdict["lengthratio"]) <= 0.1666: 
         continue
   fieldsdict["idnumber"]=str(idcounter)
   fieldstoprint=[]
