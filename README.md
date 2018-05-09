@@ -47,7 +47,7 @@ In addition to these Python libraries, the tool Apertium (http://www.apertium.or
 To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
 
 ```
-user@pc:~$ ./configure
+user@pc:~$ ./autogen.sh
 user@pc:~$ make
 user@pc:~$ sudo make install
 ```
@@ -55,12 +55,18 @@ user@pc:~$ sudo make install
 In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
 
 ```
-user@pc:~$ ./configure --prefix=LOCALDIR
+user@pc:~$ ./autogen.sh --prefix=LOCALDIR
 user@pc:~$ make
 user@pc:~$ make install
 ```
 
-where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, HTTRack is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool (and, therefore, you do not plan to use the script bitextor-downloadsite to download websites) you can run configure with the option --without-httrack.
+where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, Apertium is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool you can run configure with the option --without-apertium:
+
+```
+user@pc:~$ ./autogen.sh --prefix=LOCALDIR --without-apertium
+user@pc:~$ make
+user@pc:~$ make install
+```
 
 Some more tools are included in the bitextor package and will be installed together with bitextor:
 - hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
