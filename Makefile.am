@@ -2,21 +2,21 @@
 bitextordir = $(prefix)/share/bitextor
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = bitextor-5.1.pc
+pkgconfig_DATA = bitextor-git.pc
 
 SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
             bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \
-            bitextor-lett2lettr.in bitextor-ridx2filenames.in bitextor-crawl.in \
+            bitextor-lett2lettr.in bitextor-ridx2filenames.in bitextor-crawl.in bitextor-downloadweb.in bitextor-webdir2ett.in \
             bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in install_nltk_data.py \
             features/bitextor-structuredistance.in features/bitextor-urlsetoverlap.in features/bitextor-urlsdistance.in \
             features/bitextor-imagesetoverlap.in features/bitextor-mutuallylinked.in features/bitextor-urlscomparison.in
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-idx2ridx-freq bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl bitextor-train-document-alignment \
-            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
+            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
@@ -181,3 +181,14 @@ bitextor-elrc-filtering: bitextor-elrc-filtering.in
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@	
 
+bitextor-downloadweb: bitextor-downloadweb.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@ 
+
+bitextor-webdir2ett: bitextor-webdir2ett.in
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
