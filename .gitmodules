@@ -4,3 +4,6 @@
 [submodule "mgiza"]
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
+[submodule "hunalign"]
+	path = hunalign
+	url = https://github.com/danielvarga/hunalign

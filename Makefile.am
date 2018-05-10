@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
+SUBDIRS= utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
             bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
@@ -33,20 +33,26 @@ EXTRA_DIST= $(man_MANS) $(bitextor_SOURCEFILES) utils \
 CLEANFILES=$(bin_SCRIPTS)
 
 compile-smttools:
-	cd mgiza/mgizapp/ && cmake . && make 
+	cd mgiza/mgizapp/ && cmake . && make
+
+compile-hunalign:
+	cd hunalign/src/hunalign && make 
 
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
+
+install-hunalign:
+	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
 
 bitextor-train-document-alignment: bitextor-train-document-alignment.in
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-install: install-recursive install-smttools
+install: install-recursive install-smttools install-hunalign
 
-bitextor: bitextor.in compile-smttools
+bitextor: bitextor.in compile-smttools compile-hunalign
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
