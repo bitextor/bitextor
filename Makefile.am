@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
+SUBDIRS= utils ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCEFILES=bitextor.sh bitextor-align-documents.py bitextor-align-segments.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
@@ -21,13 +21,13 @@ bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-c
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
-bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
-         bitextor-distancefilter.1 bitextor-ett2lett.1 \
-         bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
-         bitextor-buildTMX.1
+bitextor_MANS=doc/bitextor.1 doc/bitextor-cleantextalign.1 \
+         doc/bitextor-distancefilter.1 doc/bitextor-ett2lett.1 \
+         doc/bitextor-idx2ridx.1 doc/bitextor-lett2idx.1 doc/bitextor-lett2lettr.1 \
+         doc/bitextor-buildTMX.1
 
 
-EXTRA_DIST= $(man_MANS) $(bitextor_SOURCEFILES) utils \
+EXTRA_DIST= $(bitextor_MANS) $(bitextor_SOURCEFILES) utils \
             model
 
 CLEANFILES=$(bin_SCRIPTS)
