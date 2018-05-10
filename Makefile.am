@@ -6,13 +6,13 @@ pkgconfig_DATA = bitextor-git.pc
 
 SUBDIRS= utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
 
-bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
-            bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
-            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \
-            bitextor-lett2lettr.in bitextor-ridx2filenames.in bitextor-crawl.in bitextor-downloadweb.in bitextor-webdir2ett.in \
-            bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in install_nltk_data.py \
-            features/bitextor-structuredistance.in features/bitextor-urlsetoverlap.in features/bitextor-urlsdistance.in \
-            features/bitextor-imagesetoverlap.in features/bitextor-mutuallylinked.in features/bitextor-urlscomparison.in
+bitextor_SOURCEFILES=bitextor.sh bitextor-align-documents.py bitextor-align-segments.py \
+            bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
+            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py \
+            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
+            bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
+            features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
+            features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-idx2ridx-freq bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl bitextor-train-document-alignment \
