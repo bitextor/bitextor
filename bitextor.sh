@@ -64,6 +64,7 @@ ELRCSCORES=""
 IGNOREBOILER=""
 USENLTK=""
 USEHTTRACK=0
+USEBUCKLETT=0
 CONFIGFILEOPTIONS=""
 CONFIGFILE=""
 DIRNAME=""
@@ -74,7 +75,7 @@ BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 parse_config_file()
 {
   if [ "$1" != "" ]; then
-    cat $1 | sed -r 's:^[ ]*::' | sed -r 's:[ ]*$::' | sed 's:^:\-\-:' | sed 's:^\-\-\-:\-:' | sed -r 's:\#[.]*$::' | sed -r 's:[ ]*=[ ]*: :' | sed 's:\n: :'
+    cat $1 | sed -r 's:\#.*$::' | sed -r 's:^ *::' | sed -r 's: *$::' | grep -v '^$' | sed 's:^:\-\-:' | sed 's:^\-\-\-:\-:' | sed -r 's: *= *: :' | tr '\n' ' '
   fi
 }
 
@@ -88,6 +89,9 @@ exit_program()
   echo "USAGE: $1 [OPTIONS] -e FILE        -v VOCABULARY LANG1 LANG2"
   echo ""
   echo "WHERE:"
+  echo "  -F configfile     (--config-file) path of the configuration file with Bitextor options."
+  echo "                    It can be filled up with one line of consecutive space separated parameters as the usual command call,"
+  echo "                    split that call in several lines, or writting an option per line with the argument separated by '=' or space"
   echo "  -u URL            (--url) URL of a website to crawl (one per line); if option -e is also"
   echo "                    enabled, the website is downloaded in the ETT fomat and stored"
   echo "                    in the file at the specified path, if not, it is downloaded in"
@@ -230,9 +234,14 @@ run_bitextor(){
       DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
     fi
     __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
-    __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-    __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-    __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+    if [ "$USEBUCKLETT" == 0]; then
+      __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
+      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
+      __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+    else
+      __PREFIX__/bin/httrack2bitextor $DIRNAME $LANG1 $LANG2 -mapping $mapping -file2realurl=$DIRNAME/file2realurl 2>$log | \
+      __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+    fi
   fi
 
   wait
@@ -372,8 +381,8 @@ align_segments(){
 
 trap '' SIGINT
 
-
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname: -- "$@")
+OLDARGS=$@
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- "$@")
 
 eval set -- $ARGS
 for i
@@ -383,12 +392,12 @@ do
       shift
       CONFIGFILE=$1
       CONFIGFILEOPTIONS=`parse_config_file $CONFIGFILE`
-      shift
       ;;
   esac
+  shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname: -- $CONFIGFILEOPTIONS "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l buck-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -570,6 +579,7 @@ do
       shift
       DIRNAME="$1"
       shift
+      ;;
     -D | --crawl-tld)
       TLD_CRAWL=" -D "
       shift
@@ -592,11 +602,15 @@ do
     -H | --httrack)
       shift
       if [ $(which httrack|__WC__ -l) -eq 0 ]; then
-        echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script.
+        echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script."
         exit
       else
         USEHTTRACK=1
       fi
+      ;;
+    --buck-lett)
+      shift
+      USEBUCKLETT=1
       ;;
     -h | --help)
       exit_program $(basename $0)
