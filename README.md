@@ -91,28 +91,7 @@ bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
 ```
 Options -u and -e can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
 
-Several options can be set using the command line options:
-
-- -U FILE   sets the path to a file containing a list of URLs and their destination ETT file to be crawled and processed (one per line).
-- -e FILE   sets the path to the ETT file containing the documents crawled from a website.
-- -L DIRECTORY   Target path where the log files of each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
-- -I DIRECTORY   Target path where the intermediate files of each module will be stored (by default, they are stored in a temporal directory which is removed at the end of the run)
-- -b NUM    when this option is enabled, only the first NUM candidates from the RINDEX candidate list are taken into account when computing the bidirectional document alignment.
-- -v FILE   path to the dictionary used by the script bitextor-lettr2idx.
-- -m NUM    if the number of wrong alignments in a pair of documents processed by bitextor-align-segments is higher than NUM, the pair of documents is discarded (5 by default).
-- -q NUM    if the confidence score for a pair of segments aligned by hunalign in bitextor-align-segments is lower than NUM it is discarded (0 by default).
-- -T DIRECTORY     alternative tmp directory (/tmp by default)
-- -O FILE     target file containing the result of the crawling (either plain text or a TMX translation memory)
-- -x        if this option is enabled, the output of bitextor will be formatted as a standard TMX translation memory (this option adds at the end of the pipeline the script bitextor-buildTMX).
-- -a        if this option is enabled, bitextor will print aligned documents instead of aligned segments; the output is tab-separated, with the paths to the two aligned files and a general score provided by hunalign to the document en each line.
-- -M      morphological analyser in the Apertium platform for source language that will allow to apply word matching directly on lemmas; this is an important tool for agglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
-- -N      morphological analyser in the Apertium platform for target language that will allow to apply word matching directly on lemmas; this is an important tool for agglutinant languages in order to obtain a good coverage with the bilingual lexicon approach.
-- -O FILE      if this option is enabled, the output of bitextor will be redirected to file FILE, if not it is redirected to the standard output.
-- -d THRESHOLD     threshold for the parallel-document confidence score. This threshold can take real values in [0,1], being 0 equivalent to not setting any threshold and 1 the highest threshold possible.
-- -s SIZE     size limit for the crawling process; if this option is set, the crawling process will stop after the amount of data specified has been crawled. This option must be an amount of Kilobytes (K), Megabytes (M) or Gigabytes (G) for example: '50M' for 50 Megabytes.
-- -t TIME     time limit for the crawling process; if this option is set, the crawling process will stop after the amount of time specified. This option must be an amount of time and a time unit (h for hours, m for minutes and s for seconds), for example: '35m' for 35 minutes.
-
-More options using -h command.
+See more useful options using -h or --help command.
 
 It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
