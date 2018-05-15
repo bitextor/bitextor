@@ -2,51 +2,57 @@
 bitextordir = $(prefix)/share/bitextor
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = bitextor-5.1.pc
+pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= hunalign-src hunalign-src/src/hunalign utils clustercat ulysses piped-boilerpipe piped-tika ulysses-data model
+SUBDIRS= utils ulysses piped-boilerpipe piped-tika ulysses-data model
 
-bitextor_SOURCEFILES=bitextor.in bitextor-align-documents.in bitextor-align-segments.in bitextor-idx2ridx-freq.in \
-            bitextor-cleantextalign.in bitextor-crawl2ett.in bitextor-rank.in bitextor-train-document-alignment.in \
-            bitextor-ett2lett.in bitextor-idx2ridx.in bitextor-lett2idx.in bitextor-lett2idx-freq.in \
-            bitextor-lett2lettr.in bitextor-ridx2filenames.in bitextor-crawl.in \
-            bitextor-buildTMX.in bitextor-score-document-alignment.in bitextor-builddics.in install_nltk_data.py \
-            features/bitextor-structuredistance.in features/bitextor-urlsetoverlap.in features/bitextor-urlsdistance.in \
-            features/bitextor-imagesetoverlap.in features/bitextor-mutuallylinked.in features/bitextor-urlscomparison.in
+bitextor_SOURCEFILES=bitextor.sh bitextor-align-documents.py bitextor-align-segments.py \
+            bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
+            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py \
+            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
+            bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
+            features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
+            features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
-            bitextor-idx2ridx-freq bitextor-ett2lett bitextor-lett2idx-freq bitextor-crawl bitextor-train-document-alignment \
-            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett \
+            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment \
+            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
-bitextor_MANS=bitextor.1 bitextor-cleantextalign.1 \
-         bitextor-distancefilter.1 bitextor-ett2lett.1 \
-         bitextor-idx2ridx.1 bitextor-lett2idx.1 bitextor-lett2lettr.1 \
-         bitextor-buildTMX.1
+bitextor_MANS=doc/bitextor.1 doc/bitextor-cleantextalign.1 \
+         doc/bitextor-distancefilter.1 doc/bitextor-ett2lett.1 \
+         doc/bitextor-idx2ridx.1 doc/bitextor-lett2idx.1 doc/bitextor-lett2lettr.1 \
+         doc/bitextor-buildTMX.1
 
 
-EXTRA_DIST= $(man_MANS) $(bitextor_SOURCEFILES) utils \
+EXTRA_DIST= $(bitextor_MANS) $(bitextor_SOURCEFILES) utils \
             model
 
 CLEANFILES=$(bin_SCRIPTS)
 
 compile-smttools:
-	cd mgiza/mgizapp/ && cmake . && make 
+	cd mgiza/mgizapp/ && cmake . && make
+
+compile-hunalign:
+	cd hunalign/src/hunalign && make 
 
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 
-bitextor-train-document-alignment: bitextor-train-document-alignment.in
+install-hunalign:
+	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
+
+bitextor-train-document-alignment: bitextor-train-document-alignment.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-install: install-recursive install-smttools
+install: install-recursive install-smttools install-hunalign
 
-bitextor: bitextor.in compile-smttools
+bitextor: bitextor.sh compile-smttools compile-hunalign
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
@@ -55,47 +61,47 @@ bitextor: bitextor.in compile-smttools
 nltk_data:
 	python install_nltk_data.py
 
-features/bitextor-urlscomparison: features/bitextor-urlscomparison.in
+features/bitextor-urlscomparison: features/bitextor-urlscomparison.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-features/bitextor-structuredistance: features/bitextor-structuredistance.in
+features/bitextor-structuredistance: features/bitextor-structuredistance.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-features/bitextor-mutuallylinked: features/bitextor-mutuallylinked.in
+features/bitextor-mutuallylinked: features/bitextor-mutuallylinked.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-rank: bitextor-rank.in
+bitextor-rank: bitextor-rank.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-features/bitextor-urlsetoverlap: features/bitextor-urlsetoverlap.in
+features/bitextor-urlsetoverlap: features/bitextor-urlsetoverlap.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-features/bitextor-imagesetoverlap: features/bitextor-imagesetoverlap.in
+features/bitextor-imagesetoverlap: features/bitextor-imagesetoverlap.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-features/bitextor-urlsdistance: features/bitextor-urlsdistance.in
+features/bitextor-urlsdistance: features/bitextor-urlsdistance.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-crawl: bitextor-crawl.in
+bitextor-crawl: bitextor-crawl.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-crawl2ett: bitextor-crawl2ett.in
+bitextor-crawl2ett: bitextor-crawl2ett.sh
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__BASH__!$(BASH)!g" | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
@@ -104,39 +110,39 @@ bitextor-crawl2ett: bitextor-crawl2ett.in
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
-bitextor-buildTMX: bitextor-buildTMX.in
+bitextor-buildTMX: bitextor-buildTMX.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-ridx2filenames: bitextor-ridx2filenames.in
+bitextor-ridx2filenames: bitextor-ridx2filenames.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-align-segments: bitextor-align-segments.in
+bitextor-align-segments: bitextor-align-segments.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHONPATH__!$(pythondir)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" | \
         sed "s!__BASH__!$(BASH)!g;" >$@
 
-bitextor-score-document-alignment: bitextor-score-document-alignment.in
+bitextor-score-document-alignment: bitextor-score-document-alignment.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHONPATH__!$(pythondir)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-align-documents: bitextor-align-documents.in
+bitextor-align-documents: bitextor-align-documents.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-cleantextalign: bitextor-cleantextalign.in
+bitextor-cleantextalign: bitextor-cleantextalign.py
 	sed "s!__ENV__!$(ENV)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
-bitextor-ett2lett: bitextor-ett2lett.in
+bitextor-ett2lett: bitextor-ett2lett.sh
 	sed "s!__BASH__!$(BASH)!g" $< | \
 	sed "s!__JAVA__!$(JAVA)!g" | \
 	sed "s!__WC__!$(WC)!g" | \
@@ -144,40 +150,41 @@ bitextor-ett2lett: bitextor-ett2lett.in
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
-bitextor-idx2ridx: bitextor-idx2ridx.in
+bitextor-idx2ridx: bitextor-idx2ridx.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
-bitextor-idx2ridx-freq: bitextor-idx2ridx-freq.in
-	sed "s!__PREFIX__!$(prefix)!g" $< | \
-	sed "s!__ENV__!$(ENV)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
-
-bitextor-lett2idx: bitextor-lett2idx.in nltk_data
+bitextor-lett2idx: bitextor-lett2idx.py nltk_data
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
-bitextor-lett2idx-freq: bitextor-lett2idx-freq.in nltk_data
-	sed "s!__PREFIX__!$(prefix)!g" $< | \
-	sed "s!__ENV__!$(ENV)!g" | \
-	sed "s!__PYTHON__!$(PYTHON)!g" >$@
-
-bitextor-lett2lettr: bitextor-lett2lettr.in
+bitextor-lett2lettr: bitextor-lett2lettr.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-bitextor-builddics: bitextor-builddics.in nltk_data
+bitextor-builddics: bitextor-builddics.sh nltk_data
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
-bitextor-elrc-filtering: bitextor-elrc-filtering.in
+bitextor-elrc-filtering: bitextor-elrc-filtering.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@	
 
+bitextor-downloadweb: bitextor-downloadweb.sh
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@ 
+
+bitextor-webdir2ett: bitextor-webdir2ett.sh
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@

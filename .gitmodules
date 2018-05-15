@@ -1,0 +1,9 @@
+[submodule "clustercat"]
+	path = clustercat
+	url = https://github.com/jonsafari/clustercat
+[submodule "mgiza"]
+	path = mgiza
+	url = https://github.com/moses-smt/mgiza
+[submodule "hunalign"]
+	path = hunalign
+	url = https://github.com/bitextor/hunalign

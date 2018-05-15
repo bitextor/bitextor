@@ -1,6 +1,6 @@
 # Bitextor
 
-## DESCRIPTION
+## Description
 
 Bitextor is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
   1. Downloads a website by using the tool httrack: see module bitextor-downloadweb (optional step);
@@ -15,9 +15,9 @@ Bitextor is a tool for automatically harvesting bitexts from multilingual websit
 It is worth noting that Each of these steps can be run separately.
 
 
-## REQUIREMENTS
+## Dependences
 
-**Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` ), there are some external tools that need to be in the path. **Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
 
 Some external Python libraries should also be installed before starting the installation of bitextor:
 
@@ -42,7 +42,7 @@ Most of these pip packages are also available in the repositories of many Unix-b
 In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script.
 
 
-## INSTALLING BITEXTOR
+## Install
 
 To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
 
@@ -76,7 +76,7 @@ Some more tools are included in the bitextor package and will be installed toget
 - boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>)
 
 
-## RUNNING BITEXTOR
+## Run
 
 There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
 ```
@@ -114,7 +114,7 @@ More options using -h command.
 
 It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
-## BUILDING BILINGUAL DICTIONARIES FROM PARALLEL CORPORA
+## Build bilingual dictionaries from parallel corpora
 
 To create a parallel corpus, it is necessary to have a bilingual dictionary containing translations of words. These dictionaries are formatted as follows:
 ```
