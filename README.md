@@ -1,6 +1,8 @@
-# Bitextor
 
-## Description
+![Banner](img/banner.png?raw=true)
+=====
+
+![License](https://img.shields.io/badge/License-GPLv2-blue.svg)
 
 Bitextor is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
   1. Downloads a website by using the tool httrack: see module bitextor-downloadweb (optional step);
