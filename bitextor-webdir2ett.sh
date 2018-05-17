@@ -52,9 +52,32 @@ esac
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
-find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | __GREP__ -E "(text|html|xml)" | \
-__GAWK__ '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | \
-__JAVA__ -jar __PREFIX__/share/java/piped-tika.jar | __JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
+find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | grep -E "(text|html|xml)" | \
+gawk '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | grep -v 'hts-cache' | python -c " 
+import sys
+import magic
+import base64
+
+m=magic.open(magic.MAGIC_NONE)
+m.load()
+for line in sys.stdin:
+  fields=line.strip().split('\t')
+  if len(fields)>=3:
+    filepath=fields[2]
+    with open(filepath, 'r') as content_file:
+      content = content_file.read()
+    mime=fields[0]
+    encoding=fields[1]
+    newline = []
+    newline.append(mime)
+    newline.append(encoding)
+    newline.append(filepath.replace('$WEBDIR/',''))
+    newline.append(base64.b64encode(content.decode(encoding.split('=')[1].replace('unknown-8bit','iso-8859-1')).encode('utf8')))
+    print '\t'.join(newline)
+  else:
+    sys.stderr.write('Wrong line: '+line.strip()+'\n')
+" | \
+java -jar __PREFIX__/share/java/piped-tika.jar | java -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
 __PYTHON__ -c 'import sys
 import hashlib
 import base64
@@ -65,9 +88,9 @@ sys.setdefaultencoding("UTF-8")
 seen_md5={}
 for i in sys.stdin:
   fields = i.strip().split("\t")
-  #e = fields[3]
+  e = fields[3]
   try:
-    e = base64.b64encode(fields[3])
+    #e = base64.b64encode(fields[3])
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     c = hashlib.md5()
     c.update(e)

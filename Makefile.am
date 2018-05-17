@@ -8,14 +8,14 @@ SUBDIRS= utils ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCEFILES=bitextor.sh bitextor-align-documents.py bitextor-align-segments.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
-            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py \
+            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py tar2lett.py \
             bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
-            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment \
+            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment tar2lett \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
@@ -41,6 +41,8 @@ compile-hunalign:
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
+	cp textsanitizer.py $(prefix)/bin/.
+	touch $(prefix)/bin/__init__.py
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
@@ -188,3 +190,10 @@ bitextor-webdir2ett: bitextor-webdir2ett.sh
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
+
+tar2lett: tar2lett.py
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
+

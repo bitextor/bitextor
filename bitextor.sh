@@ -21,6 +21,8 @@ INPUTMODE=0
 CRAWLLOG=/dev/null
 CRAWL2ETTLOG=/dev/null
 ETT2LETTLOG=/dev/null
+TAR2LETTLOG=/dev/null
+WEBDIR2ETTLOG=/dev/null
 LETT2LETTRLOG=/dev/null
 LETT2IDXLOG=/dev/null
 IDX2RIDXLOG=/dev/null
@@ -39,6 +41,7 @@ CRAWLOUT=""
 CRAWL2ETTOUT=""
 ETT2LETTOUT=""
 LETT2LETTROUT=""
+WEBDIR2ETTOUT=""
 LETT2IDXOUT=""
 IDX2RIDXOUT=""
 IDX2RIDX12OUT=""
@@ -64,7 +67,7 @@ ELRCSCORES=""
 IGNOREBOILER=""
 USENLTK=""
 USEHTTRACK=0
-USEBUCKLETT=0
+USEJHULETT=0
 CONFIGFILEOPTIONS=""
 CONFIGFILE=""
 DIRNAME=""
@@ -106,6 +109,8 @@ exit_program()
   echo "OPTIONS:"
   echo "  -L PATH           (--logs-dir) custom path where the directory containing the logs of the"
   echo "                    different modules of bitextor will be stored"
+  echo "  -H                (--httrack) use HTTrack instead of embedded Creepy crawling engine"
+  echo "  --jhu-lett        (only with --httrack) use JHU pipeline process for ETT and LETT processing from HTTrack files"
   echo "  -l LETTR          (--lettr) custom path where the file with extension .lettr (language"
   echo "                    encoded and typed data with 'raspa') will be created"
   echo "                    (/lettr.XXXXXX by default)."
@@ -220,7 +225,7 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  if [ "$USEHTTRACK" == 0 ]; then
+  if [ "$USEHTTRACK" == "0" ]; then
     __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
     crawl_pid=$(jobs -p)
     trap "trapsigint $crawl_pid" SIGINT
@@ -234,12 +239,14 @@ run_bitextor(){
       DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
     fi
     __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
-    if [ "$USEBUCKLETT" == 0]; then
+    if [ "$USEJHULETT" == "0" ]; then
       __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
       __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
       __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
     else
-      __PREFIX__/bin/httrack2bitextor $DIRNAME $LANG1 $LANG2 -mapping $mapping -file2realurl=$DIRNAME/file2realurl 2>$log | \
+      TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
+      tar czf $TARNAME -C $DIRNAME/ .
+      __PREFIX__/bin/tar2lett $TARNAME $LANG1 $LANG2 2> $TAR2LETTLOG | \
       __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
     fi
   fi
@@ -382,7 +389,7 @@ align_segments(){
 trap '' SIGINT
 
 OLDARGS=$@
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- "$@")
 
 eval set -- $ARGS
 for i
@@ -397,7 +404,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l buck-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -410,6 +417,7 @@ do
       CRAWL2ETTOUT=$INTERMEDIATEFILE/crawl2ett
       ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
       LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
+      WEBDIR2ETTOUT=$INTERMEDIATEFILE/webdir2ett
       LETT2IDXOUT=$INTERMEDIATEFILE/lett2idx
       IDX2RIDXOUT=$INTERMEDIATEFILE/idx2ridx
       IDX2RIDX12OUT=$INTERMEDIATEFILE/idx2ridx-lang1-lang2
@@ -443,6 +451,8 @@ do
       CRAWLLOG=$LOGDIR/bitextorcrawl.log
       CRAWL2ETTLOG=$LOGDIR/bitextorcrawl2ett.log
       ETT2LETTLOG=$LOGDIR/bitextorett2lett.log
+      TAR2LETTLOG=$LOGDIR/bitextortar2lett.log
+      WEBDIR2ETTLOG=$LOGDIR/bitextorwebdir2ett.log
       LETT2LETTRLOG=$LOGDIR/bitextorlett2lettr.log
       LETT2IDXLOG=$LOGDIR/bitextorlett2idx.log
       IDX2RIDXLOG=$LOGDIR/bitextoridx2ridx.log
@@ -601,16 +611,16 @@ do
       ;;
     -H | --httrack)
       shift
-      if [ $(which httrack|__WC__ -l) -eq 0 ]; then
+      if [ $(which httrack| wc -l) -eq 0 ]; then
         echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script."
         exit
       else
         USEHTTRACK=1
       fi
       ;;
-    --buck-lett)
+    --jhu-lett)
       shift
-      USEBUCKLETT=1
+      USEJHULETT=1
       ;;
     -h | --help)
       exit_program $(basename $0)
@@ -672,8 +682,8 @@ case $INPUTMODE in
       URL=$(echo "$line" | cut -f 1)
       ETT=$(echo "$line" | cut -f 2)
       echo $line
-      echo "$(echo $line | __GREP__ $'\t' |__WC__ -l)"
-      if [ $(echo $line | __GREP__ '\s' |__WC__ -l) -eq 0 ]; then
+      echo "$(echo $line | grep $'\t' | wc -l)"
+      if [ $(echo $line | grep '\s' | wc -l) -eq 0 ]; then
         echo "Error in the format of the file containing the list of urls: in every line of the file, you have to include a URL and the path to the ETT file where the information downloaded will be stored, separated with a tab."
         exit -1
       else

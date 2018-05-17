@@ -42,7 +42,7 @@ case $# in
     ;;
 esac
 
-if [ $(command -v httrack|__WC__ -l) -eq 0 ]; then
+if [ $(command -v httrack| wc -l) -eq 0 ]; then
   echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script."
 else
   $(command -v httrack) --skeleton -Q -q -%i0 -I0 $URL $DOWNLOAD_PATH
