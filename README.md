@@ -33,9 +33,14 @@ Some external Python libraries should also be installed before starting the inst
 - **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
 - **iso-639**: Python package to convert between language names and ISO-639 codes
 
+Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
+- **bs4**: BeautifulSoup4 is a Python package for HTML/XML processing and cleaning
+- **html2txt**: text extractor from HTML, created by Aaron Swartz
+- **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
+
 The easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639`
+`user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639 bs4 html2txt cld2-cffi`
 
 For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
