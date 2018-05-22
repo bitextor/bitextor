@@ -41,15 +41,17 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
 - **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
 
-The easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
+We expect this project to be compatible with latest version of all previous dependencies (in releases we will attach a `requirements.txt` file to run `pip install -r requirements.txt` with specific versions of those dependencies). So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the libraries at the same time, you can simply run:
 
 `user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639 bs4 html2txt cld2-cffi`
 
-For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
-
 Most of these pip packages are also available in the repositories of many Unix-based systems.
 
-In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+
+`user@pc:~$ sudo apt install automake gawk openjdk-8-jdk python-pip python-magic httrack`
+
+In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script at the install step.
 
 
 ## Install
