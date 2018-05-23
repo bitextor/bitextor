@@ -6,14 +6,14 @@
 
 `bitextor` is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
   1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-  2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` and `bitextor-webdir2ett`;
-  3. The language of every web page is detected: see module `bitextor-ett2lett`;
+  2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` and `bitextor-webdir2ett` (optional as related with previous step);
+  3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a LETT file as input);
   4. The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
   5. The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
   6. The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
   7. The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
   8. A set of aligned segments is obtained from the aligned documents, using Hunalign: see modules `bitextor-align-segments` and `bitextor-cleantextalign`;
-  9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step).
+  9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
 
 It is worth noting that each of these steps can be run separately.
 
@@ -41,15 +41,17 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
 - **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
 
-The easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the three libraries at the same time, you can simply run:
+We expect this project to be compatible with latest version of all previous dependencies (in releases we will attach a `requirements.txt` file to run `pip install -r requirements.txt` with specific versions of those dependencies). So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the libraries at the same time, you can simply run:
 
 `user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639 bs4 html2txt cld2-cffi`
 
-For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
-
 Most of these pip packages are also available in the repositories of many Unix-based systems.
 
-In addition to these Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+
+`user@pc:~$ sudo apt install automake gawk openjdk-8-jdk python-pip python-magic httrack`
+
+In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script at the install step.
 
 
 ## Install
