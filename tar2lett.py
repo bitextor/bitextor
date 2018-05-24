@@ -94,6 +94,8 @@ if __name__ == "__main__":
                 original_uri = file2realurl[filename]
         if original_uri is None:
             original_uri = original_url(data)
+        if original_uri is "unknown_url":
+            original_uri = "http://" + filename
 
         sys.stderr.write("Processed file Nr. %d : %s = %s\n" %
                          (filenr, filename, original_uri))
