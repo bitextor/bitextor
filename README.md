@@ -5,15 +5,16 @@
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 `bitextor` is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
-  1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-  2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` and `bitextor-webdir2ett` (optional as related with previous step);
-  3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a LETT file as input);
-  4. The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
-  5. The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
-  6. The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
-  7. The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
-  8. A set of aligned segments is obtained from the aligned documents, using Hunalign: see modules `bitextor-align-segments` and `bitextor-cleantextalign`;
-  9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
+
+1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
+2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` and `bitextor-webdir2ett` (optional as related with previous step);
+3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a LETT file as input);
+4. The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
+5. The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
+6. The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
+7. The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
+8. A set of aligned segments is obtained from the aligned documents, using Hunalign: see modules `bitextor-align-segments` and `bitextor-cleantextalign`;
+9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
 
 It is worth noting that each of these steps can be run separately.
 
