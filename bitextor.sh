@@ -64,6 +64,8 @@ PRINTSTATS=""
 FILTERLINES=""
 HUNALIGNSCORE=""
 ELRCSCORES=""
+BICLEANERSCORE=""
+ZIPPORAHSCORE=""
 IGNOREBOILER=""
 USENLTK=""
 USEHTTRACK=0
@@ -75,6 +77,8 @@ ALIGNEDDOCINPUT=""
 ALIGNEDSENTSINPUT=""
 ONLYCRAWL=""
 ONLYLETT=""
+BICLEANER=""
+ZIPPORAH=""
 
 BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
@@ -119,6 +123,9 @@ exit_program()
   echo "  --aligned-sentences-input FILE      Performs cleaning and optional TMX conversion of provided aligned sentences"
   echo "  --only-crawl      Only performs crawling"
   echo "  --only-lett       Only performs crawling, ETT and LETT(r) processing, printing this last file"
+  echo "  --bicleaner CONFIG     Performs Bicleaner score and attach it to the output, needs a configuration file YAML"
+  echo "  --zipporah        Performs Zipporah score and attach it to the output"
+  echo ""
   echo "  -l LETTR          (--lettr) custom path where the file with extension .lettr (language"
   echo "                    encoded and typed data with 'raspa') will be created"
   echo "                    (/lettr.XXXXXX by default)."
@@ -255,7 +262,7 @@ run_bitextor(){
     fi
   else
     if [ "$DIRNAME" == "" ]; then
-      DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
+      DIRNAME=$(mktemp -d $TMPDIR/downloaded_websites.XXXXXX)
     fi
     __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
     if [ "$ONLYCRAWL" == "" ] ; then
@@ -276,34 +283,45 @@ run_bitextor(){
 
   wait
   rm $tmpcrawl
+  if [ "$TARNAME" != "" ]; then
+    rm -r $TARNAME
+  fi
+
   if [ "$ONLYLETT" == "" -a "$ONLYCRAWL" == "" ]; then
     align_documents_and_segments $LETTR
+    if [ "$DIRNAME" != "" ]; then
+      rm -r $DIRNAME
+    fi
+
   else
     cat $LETTR
   fi
 }
 
 align_segments(){
-  __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $1 -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT
+  __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d "$1" -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT
 }
 
 clean_segments(){
-#  if [ "$ZIPPORAH" != "" ]; then
-#   
-#  fi
-#  if [ "$BICLEANER" != "" ]; then
-#   
-#  fi
-  __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
-  __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE
-
+  OUTPUTCLEANERS=$(mktemp outputcleaners.XXXXXX)
+  cat - > $OUTPUTCLEANERS
+  if [ "$ZIPPORAH" != "" ]; then
+    echo "Missing Zipporah code of features"
+  fi
+  if [ "$BICLEANER" != "" ]; then
+    python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2> /dev/null
+    mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
+  fi
+  cat $OUTPUTCLEANERS | __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+  __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE
+  rm -r $OUTPUTCLEANERS
 }
 
 convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
-    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ELRCSCORES,idnumber 
+    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
   else
-    cat - 
+    cat -
   fi
 }
 
@@ -405,7 +423,7 @@ align_documents_and_segments(){
         __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
         __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        align_segments $HUNALIGN_DIC | \ 
+        align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
     else
         __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
@@ -421,7 +439,6 @@ align_documents_and_segments(){
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
   fi
-  
   convert_to_tmx < $output_pipe > $OUTPUT
 
   rm $HUNALIGN_DIC
@@ -433,7 +450,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS=$@
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah -- "$@")
 
 eval set -- $ARGS
 for i
@@ -448,7 +465,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -689,6 +706,17 @@ do
       shift
       USEJHULETT=1
       ;;
+    --bicleaner)
+      shift
+      BICLEANER=$1
+      BICLEANERSCORE=",bicleaner"
+      shift
+      ;;
+    --zipporah)
+      shift
+      ZIPPORAH="yes"
+      ZIPPORAHSCORE=",zipporah"
+      ;;
     -h | --help)
       exit_program $(basename $0)
       ;;
@@ -765,9 +793,10 @@ case $INPUTMODE in
     run_bitextor_lett $LETT
     ;;
   5)
-    HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
-    cat $ALIGNEDDOCINPUT | align_segments $HUNALIGN_DIC | clean_segments | convert_to_tmx
+    TEMPHUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
+    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $TEMPHUNALIGN_DIC
+    cat $ALIGNEDDOCINPUT | align_segments $TEMPHUNALIGN_DIC | clean_segments | convert_to_tmx
+    rm -rf $TEMPHUNALIGN_DIC
     ;;
   6)
     cat $ALIGNEDSENTSINPUT | clean_segments | convert_to_tmx

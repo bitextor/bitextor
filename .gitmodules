@@ -7,3 +7,6 @@
 [submodule "hunalign"]
 	path = hunalign
 	url = https://github.com/bitextor/hunalign
+[submodule "bicleaner"]
+	path = bicleaner
+	url = https://github.com/bitextor/bicleaner

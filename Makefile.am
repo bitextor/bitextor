@@ -42,6 +42,7 @@ install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 	cp textsanitizer.py $(prefix)/bin/.
+	cp bicleaner/*.py $(prefix)/bin/.
 	touch $(prefix)/bin/__init__.py
 
 install-hunalign:

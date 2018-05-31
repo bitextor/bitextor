@@ -29,7 +29,7 @@ error_count=0
 segment_list=[]
 for i in reader:
   campos = i.strip().split("\t")
-  if len(campos) == 5:
+  if len(campos) >= 5:
     if last_filepair[0]!=campos[0] or last_filepair[1]!=campos[1]:
       if options.maxl==-1 or error_count<options.maxl:
         if len(segment_list)>0:
@@ -37,7 +37,7 @@ for i in reader:
       error_count=0
       last_filepair=(campos[0],campos[1])
       segment_list=[]
-    if float(campos[-1]) > options.minq:
+    if float(campos[4]) > options.minq:
       if not options.isPrintingScore:
         campos.pop()
       segment_list.append("\t".join(campos))
