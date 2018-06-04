@@ -79,7 +79,8 @@ ONLYCRAWL=""
 ONLYLETT=""
 BICLEANER=""
 ZIPPORAH=""
-
+BICLEANERTHRESHOLD=""
+ZIPPORAHTHRESHOLD=""
 BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
 
@@ -119,12 +120,15 @@ exit_program()
   echo "                    different modules of bitextor will be stored"
   echo "  -H                (--httrack) use HTTrack instead of embedded Creepy crawling engine"
   echo "  --jhu-lett        (only with --httrack) use JHU pipeline process for ETT and LETT processing from HTTrack files"
+  echo "  --jhu-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by JHU document aligner"
   echo "  --aligned-document-input FILE       Performs sentence alignment, cleaning and optional TMX conversion of provided aligned documents"
   echo "  --aligned-sentences-input FILE      Performs cleaning and optional TMX conversion of provided aligned sentences"
   echo "  --only-crawl      Only performs crawling"
   echo "  --only-lett       Only performs crawling, ETT and LETT(r) processing, printing this last file"
   echo "  --bicleaner CONFIG     Performs Bicleaner score and attach it to the output, needs a configuration file YAML"
   echo "  --zipporah        Performs Zipporah score and attach it to the output"
+  echo "  --filter-bicleaner SCORE            Performs filtering using the --bicleaner score, thresholding it. For example, 0.7"
+  echo "  --filter-zipporah SCORE             Performs filtering using the --zipporah score, thresholding it. For example, 0.0"
   echo ""
   echo "  -l LETTR          (--lettr) custom path where the file with extension .lettr (language"
   echo "                    encoded and typed data with 'raspa') will be created"
@@ -306,11 +310,35 @@ clean_segments(){
   OUTPUTCLEANERS=$(mktemp outputcleaners.XXXXXX)
   cat - > $OUTPUTCLEANERS
   if [ "$ZIPPORAH" != "" ]; then
-    echo "Missing Zipporah code of features"
+    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 | python -c "
+import sys
+
+for line in sys.stdin:
+  parts = line.split('\t')
+  parts[-1]=parts[-1].strip()
+  if '$ZIPPORAHTHRESHOLD' != '':
+    if float(parts[-1]) >= float('$ZIPPORAHTHRESHOLD'):
+      print(line)
+  else:
+    print(line)
+
+    " > ${OUTPUTCLEANERS}-tmp
+    mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
   if [ "$BICLEANER" != "" ]; then
     python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2> /dev/null
-    mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
+    cat ${OUTPUTCLEANERS}-tmp | python -c "
+import sys
+
+for line in sys.stdin:
+  parts = line.split('\t')
+  parts[-1]=parts[-1].strip()
+  if '$BICLEANERTHRESHOLD' != '':
+    if float(parts[-1]) >= float('$BICLEANERTHRESHOLD'):
+      print(line)
+  else:
+    print(line)
+    " > $OUTPUTCLEANERS
   fi
   cat $OUTPUTCLEANERS | __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
   __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE
@@ -450,7 +478,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS=$@
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command: -- "$@")
 
 eval set -- $ARGS
 for i
@@ -465,7 +493,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command: -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -714,8 +742,24 @@ do
       ;;
     --zipporah)
       shift
-      ZIPPORAH="yes"
+      ZIPPORAH=$1
       ZIPPORAHSCORE=",zipporah"
+      shift
+      ;;
+    --filter-bicleaner)
+      shift
+      BICLEANERTHRESHOLD=$1
+      shift
+      ;;
+    --filter-zipporah)
+      shift
+      ZIPPORAHTHRESHOLD=$1
+      shift
+      ;;
+    --jhu-aligner-command)
+      shift
+      TRANSLATIONCOMMAND=$1
+      shift
       ;;
     -h | --help)
       exit_program $(basename $0)
