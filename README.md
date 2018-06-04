@@ -54,7 +54,9 @@ For system libraries and tools we used apt because we are in a Debian-like envir
 
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script at the install step.
 
-For Bicleaner submodule `python3` is needed and then just run `pip install -r bicleaner/requirements.txt`, in case that `pip` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
+For optional Bicleaner submodule `python3` is needed and then just run `pip install -r bicleaner/requirements.txt`, in case that `pip` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
+
+For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, `perl` for Moses scripts, `g++` for compiling Zipporah feature extractor, and Python libraries `sklearn`, `numpy` and `matplotlib` for the linear regression.
 
 
 ## Install
