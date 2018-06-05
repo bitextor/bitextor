@@ -52,7 +52,7 @@ For system libraries and tools we used apt because we are in a Debian-like envir
 
 `user@pc:~$ sudo apt install automake gawk openjdk-8-jdk python-pip python-magic httrack`
 
-In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you do not need this functionally, just use the option "--without-apertium" when running the configuration script at the install step.
+In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option "--with-apertium" when running the configuration script at the install step.
 
 For optional Bicleaner submodule `python3` is needed and then just run `pip install -r bicleaner/requirements.txt`, in case that `pip` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
 
@@ -77,10 +77,12 @@ user@pc:~$ make
 user@pc:~$ make install
 ```
 
-where LOCALDIR can be any directory where you have writing permission, such as ~/local. In both examples, Apertium is a requirement and an error will be prompted to the user if this tool is not installed when running configure. If you do not want to use this tool you can run configure with the option --without-apertium:
+where LOCALDIR can be any directory where you have writing permission, such as ~/local.
+
+In both examples, Apertium is an optional requirement and a warning will be prompted to the user if this tool is not installed when running configure. If you want to use this tool you can run configure with the option --with-apertium, but again, it is purely optional:
 
 ```
-user@pc:~$ ./autogen.sh --prefix=LOCALDIR --without-apertium
+user@pc:~$ ./autogen.sh --prefix=LOCALDIR --with-apertium
 user@pc:~$ make
 user@pc:~$ make install
 ```

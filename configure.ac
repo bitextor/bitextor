@@ -186,20 +186,25 @@ then
 fi
 
 AC_ARG_WITH([apertium],
-            [AS_HELP_STRING([--without-apertium],
-              [disable support for apertium; if this option is enabled, you will not be able to use apertium morphological analysers)])],
+            [AS_HELP_STRING([--with-apertium],
+              [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
             [],
-            [with_apertium=yes])
+            [with_apertium=no])
+
+AS_IF([test "x$with_apertium" != yes],
+  AC_MSG_WARN([You are not using apertium as morphological analyser. In case you want to use it, install it and use with option --with-apertium])
+)
+
           
 AS_IF([test "x$with_apertium" != xno],
   [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
      if test x$ac_cv_path_APERTIUM = x
      then
-       AC_MSG_ERROR([You don't have apertium-destxt installed: try to install it or run this script with option --without-apertium.])
+       AC_MSG_ERROR([You don't have apertium-destxt installed])
      fi
      if test x$ac_cv_path_APERTIUM = xno
      then
-       AC_MSG_ERROR([You don't have apertium-destxt installed: try to install it or run this script with option --without-apertium.])
+       AC_MSG_ERROR([You don't have apertium-destxt installed])
      fi
 ])
 
@@ -207,11 +212,11 @@ AS_IF([test "x$with_apertium" != xno],
   [AC_PATH_PROG(APERTIUM, apertium-retxt, no)
      if test x$ac_cv_path_APERTIUM = x
      then
-       AC_MSG_ERROR([You don't have apertium-retxt installed: try to install it or run this script with option --without-apertium.])
+       AC_MSG_ERROR([You don't have apertium-retxt installed])
      fi
      if test x$ac_cv_path_APERTIUM = xno
      then
-       AC_MSG_ERROR([You don't have apertium-retxt installed: try to install it or run this script with option --without-apertium.])
+       AC_MSG_ERROR([You don't have apertium-retxt installed])
      fi
 ])
 
