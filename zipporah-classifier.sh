@@ -1,5 +1,9 @@
 #!__BASH__
 
+if [[ -z $TMPDIR ]]; then
+  TMPDIR="/tmp"
+fi
+
 corpus=`mktemp $TMPDIR/input.XXXXXX`
 intermediatefile=`mktemp $TMPDIR/input.tok.truecased.XXXXXX`
 ngram_order=5
