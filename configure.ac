@@ -195,6 +195,16 @@ then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
 
+AC_PATH_PROG(NGRAM, ngram, no)
+if test x$ac_cv_path_NGRAM = x
+then
+  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
+fi
+if test x$ac_cv_path_NGRAM = xno
+then
+  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
+fi
+
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
