@@ -185,6 +185,16 @@ then
   AC_MSG_ERROR([You don't have jar installed.])
 fi
 
+AC_PATH_PROG(HTTRACK, httrack, no)
+if test x$ac_cv_path_HTTRACK = x
+then
+  AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
+fi
+if test x$ac_cv_path_HTTRACK = xno
+then
+  AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
+fi
+
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
