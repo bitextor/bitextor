@@ -10,3 +10,6 @@
 [submodule "bicleaner"]
 	path = bicleaner
 	url = https://github.com/bitextor/bicleaner
+[submodule "document-aligner"]
+	path = document-aligner
+	url = https://github.com/bitextor/document-aligner.git

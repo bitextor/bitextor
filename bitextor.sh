@@ -369,8 +369,16 @@ align_documents_and_segments(){
 
   HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
   tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
-
-  if [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
+  if [ "$TRANSLATIONCOMMAND" != "" ]; then
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        cat $LETTR | awk -F $'\t' 'BEGIN {OFS = FS} NF{NF-=2};1' | __PREFIX__/bin/doc_align.sh -l $LANG2 -t "$TRANSLATIONCOMMAND" 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        align_segments $HUNALIGN_DIC | \
+        clean_segments > $output_pipe &
+    else
+        cat $LETTR | awk -F $'\t' 'BEGIN {OFS = FS} NF{NF-=2};1' | __PREFIX__/bin/doc_align.sh -l $LANG2 -t "$TRANSLATIONCOMMAND" 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
+    fi
+  elif [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
     #Named pipe for paralelising obtaining the initial index for the ridx 1
     index_pipe1=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe1
@@ -477,7 +485,7 @@ align_documents_and_segments(){
 
 trap '' SIGINT
 
-OLDARGS=$@
+OLDARGS="$@"
 ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command: -- "$@")
 
 eval set -- $ARGS
@@ -758,7 +766,7 @@ do
       ;;
     --jhu-aligner-command)
       shift
-      TRANSLATIONCOMMAND=$1
+      TRANSLATIONCOMMAND="$1"
       shift
       ;;
     -h | --help)
