@@ -158,6 +158,7 @@ exit_program()
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
   echo "  -W                (--elrc-quality-metrics) Print stats similar to ILSP-FC fields, as the Hunalign information in output stream, in added columns or TMX properties"
+  echo "  --filter-with-elrc       Needs -W/--elrc-quality-metrics. Filter sentences using ELRC metrics"
   echo "  -T TMP-DIR        (--tmp-dir) alternative tmp directory (/tmp by default)."
   echo "  -x                (--tmx-output) if this option is enabled, the output of the tool will be"
   echo "                    formated in the standard XML-based format TMX."
@@ -348,8 +349,10 @@ for line in sys.stdin:
 convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
     __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
-  else
+  elif [ "$PRINTSTATS" != "" ]; then
     cat -
+  else
+    cat - | cut -f 1-4
   fi
 }
 
@@ -486,7 +489,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS="$@"
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command: -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command:,filter-with-elrc -- "$@")
 
 eval set -- $ARGS
 for i
@@ -501,7 +504,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command: -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command:,filter-with-elrc -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -716,9 +719,12 @@ do
       ;;
     -W | --elrc-quality-metrics)
       PRINTSTATS="-s"
-      FILTERLINES="-f"
       HUNALIGNSCORE=",hunalign"
       ELRCSCORES=",lengthratio,numTokensSL,numTokensTL"
+      shift
+      ;;
+    --filter-with-elrc)
+      FILTERLINES="-f"
       shift
       ;;
     -n | --nltk)
