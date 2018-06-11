@@ -205,23 +205,20 @@ exit_program()
 run_bitextor_ett(){
 
   zcat -f $1 | \
-  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
-  if [ "$RETURNLETTR" != "" ]; then
-    cat $LETTR
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+  if [ "$ONLYLETT" != "" ]; then
+    cat $LETT
   else
-    align_documents_and_segments $LETTR
+    align_documents_and_segments $LETT
   fi 
 }
 
 run_bitextor_lett(){
 
-  zcat -f $1 | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
-  if [ "$RETURNLETTR" != "" ]; then
-    cat $LETTR
+  if [ "$ONLYLETT" != "" ]; then
+    cat $1
   else
-    align_documents_and_segments $LETTR
+    align_documents_and_segments $1
   fi
 }
 
@@ -260,8 +257,7 @@ run_bitextor(){
     trap "trapsigint $crawl_pid" SIGUSR1
     if [ "$ONLYCRAWL" == "" ] ; then
       __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-      __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
     else
       cat $tmpcrawl
     fi
@@ -273,33 +269,29 @@ run_bitextor(){
     if [ "$ONLYCRAWL" == "" ] ; then
       if [ "$USEJHULETT" == "0" ]; then
         __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-        __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
       else
         TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
         tar czf $TARNAME -C $DIRNAME/ .
-        __PREFIX__/bin/tar2lett $TARNAME $LANG1 $LANG2 2> $TAR2LETTLOG | \
-        __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+        __PREFIX__/bin/tar2lett $TARNAME $LANG1 $LANG2 2> $TAR2LETTLOG > $LETT & 
       fi
     else
       echo "Crawling finished at $DIRNAME"
     fi
   fi
 
-  wait
   rm $tmpcrawl
   if [ "$TARNAME" != "" ]; then
     rm -r $TARNAME
   fi
 
   if [ "$ONLYLETT" == "" -a "$ONLYCRAWL" == "" ]; then
-    align_documents_and_segments $LETTR
+    align_documents_and_segments $LETT
     if [ "$DIRNAME" != "" ]; then
       rm -r $DIRNAME
     fi
-
   else
-    cat $LETTR
+    cat $LETT
   fi
 }
 
@@ -359,8 +351,6 @@ convert_to_tmx(){
 align_documents_and_segments(){
   trap '' SIGINT
 
-  local LETTR=$1
-
   TLD_IDX2RIDX=""
   if [ "$TLD_CRAWL" != "" ]; then
     TLD_IDX2RIDX=" -l $1 "
@@ -373,12 +363,13 @@ align_documents_and_segments(){
   HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
   tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
   if [ "$TRANSLATIONCOMMAND" != "" ]; then
+    cat $LETT > $LETT.txt
     if [ $DOCALIGNMENT -eq 0 ]; then
-        cat $LETTR | awk -F $'\t' 'BEGIN {OFS = FS} NF{NF-=2};1' | __PREFIX__/bin/doc_align.sh -l $LANG2 -t "$TRANSLATIONCOMMAND" 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -b 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
     else
-        cat $LETTR | awk -F $'\t' 'BEGIN {OFS = FS} NF{NF-=2};1' | __PREFIX__/bin/doc_align.sh -l $LANG2 -t "$TRANSLATIONCOMMAND" 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -b 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
   elif [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
@@ -393,7 +384,7 @@ align_documents_and_segments(){
     mkfifo $index_pipe2
 
     INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
-
+    cat $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
@@ -815,6 +806,8 @@ if [[ -z $ETT ]]; then
 fi
 
 TMPLETT=$(mktemp $BUILDDICTTMP/lett.XXXXXX)
+rm $TMPLETT
+mkfifo $TMPLETT
 if [[ -z $LETT ]]; then
   LETT=$TMPLETT
 fi

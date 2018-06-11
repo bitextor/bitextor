@@ -12,4 +12,4 @@
 	url = https://github.com/bitextor/bicleaner
 [submodule "document-aligner"]
 	path = document-aligner
-	url = https://github.com/bitextor/document-aligner.git
+	url = https://github.com/paracrawl/document-aligner.git
