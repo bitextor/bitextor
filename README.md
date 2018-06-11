@@ -113,6 +113,12 @@ See more useful options using -h or --help command.
 
 It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
+To test our baseline you can use the configuration file included in the repository (given the code at `~/bitextor` and the probabilistic dictionaries at `~/bitextor-dictionaries/??-??.dic`). See format documentation inside the `baseline.conf` to create your own file. In action:
+
+```
+bitextor --config-file ~/bitextor/baseline.conf -u URL LANG1 LANG2
+```
+
 ## Build bilingual dictionaries from parallel corpora
 
 To create a parallel corpus, it is necessary to have a bilingual dictionary containing translations of words. These dictionaries are formatted as follows:
