@@ -43,4 +43,4 @@ paste $intermediatefile.tm.$LANG1-$LANG2 $intermediatefile.tm.$LANG2-$LANG1 $int
 python __PREFIX__/share/bitextor/zipporah/apply_logistic.py $model/model.$langfr $intermediatefile.feats.txt $intermediatefile.zipporah
 
 paste $corpus $intermediatefile.zipporah
-rm -rf $intermediatefile.* $corpus*
+rm -rf $intermediatefile* $corpus*
