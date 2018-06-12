@@ -58,7 +58,7 @@ For optional Bicleaner submodule `python3` is needed and then just run `pip3 ins
 
 For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, `perl` for Moses scripts, `g++` for compiling Zipporah feature extractor, and Python libraries `sklearn`, `numpy` and `matplotlib` for the linear regression.
 
-For optional document aligner from JHU just run `pip install -r document-aligner/requirements.txt``.
+For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies.
 
 ## Install
 
