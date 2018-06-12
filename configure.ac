@@ -148,11 +148,21 @@ fi
 AC_PATH_PROG(GAWK, gawk, no)
 if test x$ac_cv_path_GAWK = x
 then
-  AC_MSG_ERROR([You don't have netstat installed.])
+  AC_MSG_ERROR([You don't have gawk installed.])
 fi
 if test x$ac_cv_path_GAWK = xno
 then
   AC_MSG_ERROR([You don't have gawk installed.])
+fi
+
+AC_PATH_PROG(CMAKE, cmake, no)
+if test x$ac_cv_path_CMAKE = x
+then
+  AC_MSG_ERROR([You don't have cmake installed.])
+fi
+if test x$ac_cv_path_CMAKE = xno
+then
+  AC_MSG_ERROR([You don't have cmake installed.])
 fi
 
 AC_PATH_PROG(JAVA, java, no)
@@ -194,6 +204,17 @@ if test x$ac_cv_path_HTTRACK = xno
 then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
+
+AC_PATH_PROG(PYTHON2, python, no)
+if test x$ac_cv_path_PYTHON2 = x
+then
+  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
+fi
+if test x$ac_cv_path_PYTHON2 = xno
+then
+  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
+fi
+
 
 AC_PATH_PROG(NGRAM, ngram, no)
 if test x$ac_cv_path_NGRAM = x
@@ -243,7 +264,7 @@ AS_IF([test "x$with_apertium" != xno],
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import Levenshtein; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -258,8 +279,24 @@ print (var)" 2> /dev/null`
   fi
 
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+  AC_MSG_CHECKING([for tensorflow for Python])
+  ac_supports_python_ver=`python -c "import sys; \
+import tensorflow; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- tensorflow:   Please, install tensorflow and try again. http://www.tensorflow.org/
+])
+  fi
+
+AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for keras for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import keras; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -285,24 +322,8 @@ pip install --upgrade keras
   fi
 
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
-  AC_MSG_CHECKING([for tensorflow for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
-import tensorflow; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- tensorflow:   Please, install tensorflow and try again. http://www.tensorflow.org/
-])
-  fi
-
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for h5py for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import h5py; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -376,7 +397,7 @@ print (var)" 2> /dev/null`
 
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for numpy for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import numpy; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -391,7 +412,7 @@ print (var)" 2> /dev/null`
   fi
 
   AC_MSG_CHECKING([for libmagic for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import magic; \
 m=magic.open(magic.MAGIC_NONE); \
 var = True; \
@@ -407,7 +428,7 @@ print (var)" 2> /dev/null`
 
 
   AC_MSG_CHECKING([for iso-639 for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import iso639; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -421,7 +442,7 @@ print (var)" 2> /dev/null`
   fi
 
   AC_MSG_CHECKING([for LangID for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import langid; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -435,7 +456,7 @@ print (var)" 2> /dev/null`
   fi
 
   AC_MSG_CHECKING([for NLTK for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import nltk; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -449,7 +470,7 @@ print (var)" 2> /dev/null`
   fi
 
     AC_MSG_CHECKING([for regex for Python])
-  ac_supports_python_ver=`$PYTHON -c "import sys; \
+  ac_supports_python_ver=`python -c "import sys; \
 import regex; \
 var = True; \
 print (var)" 2> /dev/null`

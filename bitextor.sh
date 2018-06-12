@@ -126,7 +126,7 @@ exit_program()
   echo "  --only-crawl      Only performs crawling"
   echo "  --only-lett       Only performs crawling, ETT and LETT(r) processing, printing this last file"
   echo "  --bicleaner CONFIG     Performs Bicleaner score and attach it to the output, needs a configuration file YAML"
-  echo "  --zipporah        Performs Zipporah score and attach it to the output"
+  echo "  --zipporah MODEL_FOLDER             Performs Zipporah score and attach it to the output"
   echo "  --filter-bicleaner SCORE            Performs filtering using the --bicleaner score, thresholding it. For example, 0.7"
   echo "  --filter-zipporah SCORE             Performs filtering using the --zipporah score, thresholding it. For example, 0.0"
   echo ""
@@ -265,7 +265,7 @@ run_bitextor(){
     if [ "$DIRNAME" == "" ]; then
       DIRNAME=$(mktemp -d $TMPDIR/downloaded_websites.XXXXXX)
     fi
-    __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
+    __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
     if [ "$ONLYCRAWL" == "" ] ; then
       if [ "$USEJHULETT" == "0" ]; then
         __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
@@ -280,11 +280,6 @@ run_bitextor(){
     fi
   fi
 
-  rm $tmpcrawl
-  if [ "$TARNAME" != "" ]; then
-    rm -r $TARNAME
-  fi
-
   if [ "$ONLYLETT" == "" -a "$ONLYCRAWL" == "" ]; then
     align_documents_and_segments $LETT
     if [ "$DIRNAME" != "" ]; then
@@ -293,6 +288,11 @@ run_bitextor(){
   else
     cat $LETT
   fi
+
+  rm $tmpcrawl
+  if [ "$TARNAME" != "" ]; then
+    rm -r $TARNAME
+  fi
 }
 
 align_segments(){
@@ -300,10 +300,11 @@ align_segments(){
 }
 
 clean_segments(){
-  OUTPUTCLEANERS=$(mktemp outputcleaners.XXXXXX)
+  OUTPUTCLEANERS=$(mktemp $BUILDDICTTMP/outputcleaners.XXXXXX)
   cat - > $OUTPUTCLEANERS
+  > $CLEANTEXTLOG
   if [ "$ZIPPORAH" != "" ]; then
-    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 | python -c "
+    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python -c "
 import sys
 
 for line in sys.stdin:
@@ -319,7 +320,7 @@ for line in sys.stdin:
     mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
   if [ "$BICLEANER" != "" ]; then
-    python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2> /dev/null
+    python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2>> $CLEANTEXTLOG
     cat ${OUTPUTCLEANERS}-tmp | python -c "
 import sys
 
@@ -333,7 +334,7 @@ for line in sys.stdin:
     print(line)
     " > $OUTPUTCLEANERS
   fi
-  cat $OUTPUTCLEANERS | __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
+  cat $OUTPUTCLEANERS | __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2>> $CLEANTEXTLOG | \
   __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE
   rm -r $OUTPUTCLEANERS
 }
