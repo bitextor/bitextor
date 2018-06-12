@@ -21,7 +21,7 @@ It is worth noting that each of these steps can be run separately.
 
 ## Dependences
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` ), there are some external tools that need to be in the path. **Autotools** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` ), there are some external tools that need to be in the path. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path. See Ubuntu/Debian command below to install all of them at once.
 
 Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
 
@@ -42,23 +42,40 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
 - **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
 
-We expect this project to be compatible with latest version of all previous dependencies (in releases we will attach a `requirements.txt` file to run `pip install -r requirements.txt` with specific versions of those dependencies). So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the libraries at the same time, you can simply run:
+We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). For installing the libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip install langid python-Levenshtein regex nltk numpy h5py keras tensorflow iso-639 bs4 html2txt cld2-cffi`
+`user@pc:~$ sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex`
 
 Most of these pip packages are also available in the repositories of many Unix-based systems.
 
-For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install automake, gawk, cmake, libboost, Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+For system libraries and tools we used apt because we are in a Debian-like environment. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
-`user@pc:~$ sudo apt install automake gawk openjdk-8-jdk python-pip python-magic httrack`
+`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic libboost-all-dev`
 
-In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option "--with-apertium" when running the configuration script at the install step.
+### Optional dependences
 
-For optional Bicleaner submodule `python3` is needed and then just run `pip3 install -r bicleaner/requirements.txt`, in case that `pip3` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
+In case you want to use HTTrack instead of integrated Creepy crawler just:
+`sudo apt install httrack`
 
-For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, `perl` for Moses scripts, `g++` for compiling Zipporah feature extractor, and Python libraries `sklearn`, `numpy` and `matplotlib` for the linear regression.
+In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
 
-For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies.
+For the alternative HTTrack to LETT process script named with `--jhu-lett`, some Python 2 dependences are needed:
+`sudo pip install html2text bs4`
+`sudo CFLAGS="-Wno-narrowing" pip install cld2-cffi`
+```bash
+wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
+tar xzvf chared-1.2.2.tar.gz
+cd chared-1.2.2/
+python setup.py install
+```
+
+For optional Bicleaner submodule `python3` is needed and then just run `sudo pip3 install -r bicleaner/requirements.txt`, in case that `pip3` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
+
+For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
+`sudo pip install matplotlib sklearn numpy`
+`sudo apt install python-tk`
+
+For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
 
 ## Install
 
