@@ -177,7 +177,7 @@ class TextSanitizer():
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-infile', type=argparse.FileType('w'),
+    parser.add_argument('-infile', type=argparse.FileType('r'),
                         help='output file', default=sys.stdin)
     parser.add_argument('-outfile', type=argparse.FileType('w'),
                         help='output file', default=sys.stdout)
