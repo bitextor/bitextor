@@ -4,16 +4,19 @@
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps:
+`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps (scripts sorted by default use):
 
 1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` and `bitextor-webdir2ett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a LETT file as input);
-4. The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
-5. The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
-6. The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
-7. The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
-8. A set of aligned segments is obtained from the aligned documents, using Hunalign: see modules `bitextor-align-segments` and `bitextor-cleantextalign`;
+2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` or `tar2lett` (optional as related with previous step);
+3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a LETT file as input);
+4. Document align:
+* Bitextor document aligner
+  * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
+  * The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
+  * The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
+  * The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
+* or Paracrawl document aligner `document-aligner/doc_align`
+8. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `zipporah-classifier` and `bicleaner/bicleaner-classifier-full`
 9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
 
 It is worth noting that each of these steps can be run separately.
@@ -114,7 +117,7 @@ Some more tools are included in the bitextor package and will be installed toget
 
 ## Run
 
-There are three ways to call bitextor. Two of them include the first step (downloading the websites) and are:
+There are many ways to call bitextor, but here we will explain the three most used. Two of them include the first step (downloading the websites) and are:
 ```
 bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
 bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
@@ -125,9 +128,9 @@ bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
 ```
 Options -u and -e can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
 
-See more useful options using -h or --help command.
+See more useful options, entry points and stop points of the whole pipeline using -h or --help command.
 
-It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required. Some dictionaries are provided already, but customised dictionaries can easily be built from parallel corpora as explained in the next section.
+It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required if you are using the default document aligner. Some dictionaries are provided already in [bitextor-data](https://github.com/bitextor/bitextor-data), but customised dictionaries can easily be built from parallel corpora as explained in the next section.
 
 To test our baseline you can use the configuration file included in the repository (given the code at `~/bitextor` and the probabilistic dictionaries at `~/bitextor-dictionaries/??-??.dic`). See format documentation inside the `baseline.conf` to create your own file. In action:
 
