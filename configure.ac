@@ -316,6 +316,64 @@ print (var)" 2> /dev/null`
 ])
   fi
 
+#JHU document aligner Python 3 checks
+  AC_MSG_CHECKING([for NLTK for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import nltk; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_WARN([JHU document aligner package requires nltk for Python 3. This option will not work on Bitextor until you install the library.
+])
+  fi
+
+  AC_MSG_CHECKING([for LangID for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import langid; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_WARN([JHU document aligner package requires langid for Python 3. This option will not work on Bitextor until you install the library.
+])
+  fi
+
+  AC_MSG_CHECKING([for scipy for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import scipy; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_WARN([JHU document aligner package requires scipy for Python 3. This option will not work on Bitextor until you install the library.
+])
+  fi
+
+  AC_MSG_CHECKING([for sklearn for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import sklearn; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_WARN([JHU document aligner package requires sklearn for Python 3. This option will not work on Bitextor until you install the library.
+])
+  fi
+
+
 AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for numpy for Python])
   ac_supports_python_ver=`$PYTHON -c "import sys; \
