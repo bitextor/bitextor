@@ -72,8 +72,7 @@ python setup.py install
 For optional Bicleaner submodule `python3` is needed and then just run `sudo pip3 install -r bicleaner/requirements.txt`, in case that `pip3` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
 
 For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
-`sudo pip install matplotlib sklearn numpy`
-`sudo apt install python-tk`
+`sudo pip install matplotlib sklearn numpy && sudo apt install python-tk`
 
 For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
 
