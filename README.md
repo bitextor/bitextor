@@ -44,7 +44,7 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 
 We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install all the basic libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex`
+`user@pc:~$ sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
 
 Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are more updated.
 
