@@ -16,8 +16,8 @@
   * The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
   * The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
 * or Paracrawl document aligner `document-aligner/doc_align`
-8. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `zipporah-classifier` and `bicleaner/bicleaner-classifier-full`
-9. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
+5. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `zipporah-classifier` and `bicleaner/bicleaner-classifier-full`
+6. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
 
 It is worth noting that each of these steps can be run separately.
 
