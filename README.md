@@ -4,11 +4,16 @@
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. The user must provide a URL, a list of URLs in a file (one per line), or the path to a directory containing a crawled website. It is also necessary to specify the two languages on which the user is interested by setting the language IDs following the ISO 639-1. The tool works following a sequence of steps (scripts sorted by default use):
+`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. To run it, it is necessary to provide:
+1. The source where the parallel data will be searched: a web site (the URL of the web site), a list of web sites, an [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file, or the path to a directory containing a crawled website.
+2. The two languages on which the user is interested: language IDs must be provided following the ISO [639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)) or a machine translation system, depending on the document-alignment strategy choosen
+
+The tool works following a sequence of steps (scripts sorted by default use):
 
 1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
 2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` or `tar2lett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a LETT file as input);
+3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file as input);
 4. Document align:
 * Bitextor document aligner
   * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
@@ -122,21 +127,24 @@ There are many ways to call bitextor, but here we will explain the three most us
 bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
 bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
 ```
-In the first case, bitextor downloads the URL specified. In the second case, the file specified with the option -U should be a tab-separated file containing, in each line, a URL to be crawled and its destination ETT file. In all cases, it is mandatory to specify the lexicon to be used and the target languages to be crawled. One more way to run bitextor is available, using option *-e* to specify an ETT file containing a previously crawled website (this step starts in the second step described in the previous section): 
+where, *LANG1* and *LANG2* are the two-character lang codes following the ISO 639-1, and *LEXICON* is a bilingual lexicon bewteen languages LANG1 and LANG2.
+With option *-u* bitextor downloads the URL specified; option *-U* allows to use a tab-separated file containing, in each line, a URL to be crawled and the [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file where the crawled data will be stored.
+
+It is also possible to re-process a previously crawled web site by using option *-e* to specify an [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) (this process starts in the second step described in the previous section): 
 ```
 bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
 ```
-Options -u and -e can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
+Options *-u* and *-e* can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
 
-See more useful options, entry points and stop points of the whole pipeline using -h or --help command.
-
-It is worth noting that a bilingual lexicon relating the languages of the parallel corpus that will be built is required if you are using the default document aligner. Some dictionaries are provided already in [bitextor-data](https://github.com/bitextor/bitextor-data), but customised dictionaries can easily be built from parallel corpora as explained in the next section.
-
-To test our baseline you can use the configuration file included in the repository (given the code at `~/bitextor` and the probabilistic dictionaries at `~/bitextor-dictionaries/??-??.dic`). See format documentation inside the `baseline.conf` to create your own file. In action:
-
+See more useful options, entry points and stop points of the whole pipeline using -h or --help command. Options can be provided either when calling bitextor or by definning them in a configuration file as in the following example:
 ```
-bitextor --config-file ~/bitextor/baseline.conf -u URL LANG1 LANG2
+bitextor --config-file CONFIGFILE -u URL LANG1 LANG2
 ```
+A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is `~/bitextor-dictionaries`.
+
+Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined in the next section.
+
+It is important to highlight that Bitextor 
 
 ## Build bilingual dictionaries from parallel corpora
 
@@ -170,7 +178,157 @@ bitextor-builddics LANG1 LANG2 FILE1 FILE2 OUTPUT
 with OUTPUT being the path to the file which will contain the resulting dictionary.
 
 
+###Sample of a bitext###
 
+A small sample can be generated by crawling, for example, Miquel Esplà-Gomis' website (one of the developers of Bitextor): [http://www.dlsi.ua.es/~mespla](http://www.dlsi.ua.es/~mespla), which contains parallel data between Catalan and English. To do so, the English—Catalan bilingual lexicon at [https://github.com/bitextor/bitextor-data/blob/master/dics/en-ca.dic](https://github.com/bitextor/bitextor-data/blob/master/dics/en-ca.dic) can be used. Then run:
+
+~~~~~~
+:::bash
+ user@pc:~$ bitextor -u http://www.dlsi.ua.es/~mespla -v en-ca.dic -x en ca
+~~~~~~
+
+A small [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory will be generated:
+
+~~~~~~
+:::XML
+<?xml version="1.0"?>
+<tmx version="1.4">
+ <header
+   adminlang="ca"
+   srclang="en"
+   o-tmf="PlainText"
+   creationtool="bitextor"
+   creationtoolversion="4.0"
+   datatype="PlainText"
+   segtype="sentence"
+   creationdate="20140817T174918"
+   o-encoding="utf-8">
+ </header>
+ <body>
+   <tu tuid="1" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Associació Europea per a la Traducció Automàtica</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Associació Europea per a la Traducció Automàtica</seg>
+    </tuv>
+   </tu>
+   <tu tuid="2" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Software</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Programari</seg>
+    </tuv>
+   </tu>
+   <tu tuid="3" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Gamblr-CAT: Software for word-level quality estimation in computer aided translation based on translation memories.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Gamblr-CAT: Programa per a l&apos;estimació de la qualitat per a eines de traucció assistida per ordinador basada en memòries de traducció.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="4" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>This software allows to obtain binary quality estimations at the level of words (also called word-keeping recommendations) for translation suggestions produced by a translation memory tool by using either statistical word alignments or external sources of bilingual information.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Aquest programa permet obtenir estimacions de la qualitat binàries a nivell de paraula per a suggeriments de traducció proporcionats per memòries de traducció fent servir alineaments de paraules o fonts d&apos;informació bilingüe extenres.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="5" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Gamblr-MT: Software for word-level quality estimation in machine translation.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Gamblr-MT: Programa per a l&apos;estimació de la qualitat per a traducció automàtica.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="6" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>This is a collection of scripts that allow to obtain a collection of features for word-level quality estimation using external sources of bilingual information.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Es tracta d&apos;una col·lecció de scripts que permet obtenir uan col·lecció de característiques per a l&apos;estimació de la qualitat de la traducció fent servir fonts d&apos;informació bilingüe externes.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="7" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Bitextor: Software for building parallel data from multilingual websites.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Bitextor: Programari per a la creació de corpus paral·lels a partir de llocs web multilíngües.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="8" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>This tool is able to create a parallel corpus from a multilingual website by using only a bilingual lexicon.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Aquesta eina pot crear un corpus paral·lel a partir d&apos;un lloc multilíngüe fent servir només un lexicó bilingüe.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="9" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>OmegaT-SessionLog: Plugin for tracking the actions of a translator when using the computer aided translation based on translation memories tool OmegaT. This plugin creates an XML session log containing all the actions taken by the translation using this tool.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>OmegaT-SessionLog: Complement per a enregistrar les accions que un traductor professional duu a terme quan fa servir l&apos;eina de traducció assistida per ordinador basada en memòries de traducció OmegaT. Aquest complement crea un registre de la sessió en XML que conté totes les accions realitzades pel traductor durant el procés de traducció.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="10" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>OmegaT-Marker-Plugin: Plugin for OmegaT that implements the heuristic word-level quality estimation system.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>OmegaT-Marker-Plugin: Complement per a l&apos;eina de traducció assistida per ordinador basada en memòries de traducció OmegaT que implementa un mètode heurístic per a l&apos;estimació de la qualitat a nivell de paraules.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="11" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>This plguin allows to apply some of the methods implemented in Gamblr-CAT for word-level quality estimation in translation memories.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Aquest complement permet aplicar alguns dels mètodes implementats en Gamblr-CAT per a l&apos;estimació de la qualitat de la traducció en memòries de traducció.</seg>
+    </tuv>
+   </tu>
+   <tu tuid="12" datatype="Text">
+    <tuv xml:lang="en">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/software.html</prop>
+     <seg>Flyligner: Word-alignment software based on external sources of bilingual information.</seg>
+    </tuv>
+    <tuv xml:lang="ca">
+     <prop type="source-document">http://www.dlsi.ua.es/~mespla/programari.html</prop>
+     <seg>Flyligner: Eina per a l&apos;alineament de paraules basada en fonts d&apos;informació bilingüe externes.</seg>
+    </tuv>
+   </tu>
+ </body>
+</tmx>
+~~~~~~
+If you want to store the translation memory in a file, use the option **-O**.
 
 
 
