@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 `bitextor` is a tool for automatically harvesting bitexts from multilingual websites. To run it, it is necessary to provide:
-1. The source where the parallel data will be searched: a web site (the URL of the web site), a list of web sites, an [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file, or the path to a directory containing a crawled website.
+1. The source where the parallel data will be searched: a web site (the URL of the web site), a list of web sites, an [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file, or the path to a directory containing a crawled website.
 2. The two languages on which the user is interested: language IDs must be provided following the ISO [639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
 3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)) or a machine translation system, depending on the document-alignment strategy choosen
 
@@ -13,7 +13,7 @@ The tool works following a sequence of steps (scripts sorted by default use):
 
 1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
 2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` or `tar2lett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file as input);
+3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file as input);
 4. Document align:
 * Bitextor document aligner
   * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
@@ -67,7 +67,7 @@ In case you want to use HTTrack instead of integrated Creepy crawler just:
 
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
 
-For the alternative HTTrack to LETT process script named with `--jhu-lett`, some Python 2 dependences are needed:
+For the alternative HTTrack to [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) process script named with `--jhu-lett`, some Python 2 dependences are needed:
 `sudo pip install html2text bs4`
 `sudo CFLAGS="-Wno-narrowing" pip install cld2-cffi`
 ```bash
@@ -128,9 +128,9 @@ bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
 bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
 ```
 where, *LANG1* and *LANG2* are the two-character lang codes following the ISO 639-1, and *LEXICON* is a bilingual lexicon bewteen languages LANG1 and LANG2.
-With option *-u* bitextor downloads the URL specified; option *-U* allows to use a tab-separated file containing, in each line, a URL to be crawled and the [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) file where the crawled data will be stored.
+With option *-u* bitextor downloads the URL specified; option *-U* allows to use a tab-separated file containing, in each line, a URL to be crawled and the [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) file where the crawled data will be stored.
 
-It is also possible to re-process a previously crawled web site by using option *-e* to specify an [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor) (this process starts in the second step described in the previous section): 
+It is also possible to re-process a previously crawled web site by using option *-e* to specify an [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) (this process starts in the second step described in the previous section): 
 ```
 bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
 ```
