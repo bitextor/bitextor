@@ -81,6 +81,7 @@ BICLEANER=""
 ZIPPORAH=""
 BICLEANERTHRESHOLD=""
 ZIPPORAHTHRESHOLD=""
+DONOTPIPELETT=""
 BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
 
@@ -278,7 +279,11 @@ run_bitextor(){
       echo "Crawling finished at $DIRNAME"
     fi
   fi
-
+  
+  if [ "$DONOTPIPELETT" != "" ]; then
+    wait
+  fi
+  
   if [ "$ONLYLETT" == "" -a "$ONLYCRAWL" == "" ]; then
     align_documents_and_segments $LETT
     if [ "$DIRNAME" != "" ]; then
@@ -572,6 +577,8 @@ do
       LETT=$1
       if [ $INPUTMODE -eq 0 ]; then
         INPUTMODE=4
+      else
+        DONOTPIPELETT='yes'
       fi
       shift
       ;;
