@@ -102,7 +102,7 @@ user@pc:~$ make
 user@pc:~$ make install
 ```
 
-where LOCALDIR can be any directory where you have writing permission, such as ~/local.
+where LOCALDIR can be any directory where you have writing permission, such as `~/local`.
 
 In both examples, Apertium is an optional requirement and a warning will be prompted to the user if this tool is not installed when running configure. If you want to use this tool you can run configure with the option --with-apertium, but again, it is purely optional:
 
@@ -140,7 +140,7 @@ See more useful options, entry points and stop points of the whole pipeline usin
 ```
 bitextor --config-file CONFIGFILE -u URL LANG1 LANG2
 ```
-A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is `~/bitextor-dictionaries`.
+A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is in `bitextor-dictionaries` relative path folder from your running path. Change it if it is necessary.
 
 Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined in the next section.
 
