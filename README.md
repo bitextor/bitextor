@@ -142,6 +142,6 @@ bitextor --config-file CONFIGFILE -u URL LANG1 LANG2
 ```
 A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is in `bitextor-dictionaries` relative path folder from your running path. Change it if it is necessary.
 
-Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora)
+Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
 
 Test your installation and parameters with this [sample of running bitext](https://github.com/bitextor/bitextor/wiki/Sample-of-a-bitext).
