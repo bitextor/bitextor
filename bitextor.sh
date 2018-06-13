@@ -11,7 +11,7 @@ JOBS=""
 TIMEOUT=""
 LANG1=""
 LANG2=""
-BIDIDOCALIGN=0
+BIDIDOCALIGN=1
 DOCALIGNMENT=0
 FORMAT="PLAIN"
 INDEX=""
@@ -137,14 +137,13 @@ exit_program()
   echo "                    by the modules of bitextor will be stored."
   echo "  -B                (--ignore-boilerpipe-cleaning) ignores and skips the boilerpipe clean step"
   echo "  -n                (--nltk) uses NLTK sentence tokenizer instead of Ulysses"
-  echo "  -b NUM            (--num-accepted-candidates) if this option is enabled, the document alignment process is"
-  echo "                    run in both directions and only the first NUM candidates in"
-  echo "                    every direction will be taken into account. With this, the list"
-  echo "                    of final candidates will be obtained computing the average of"
-  echo "                    every pair of candidates in both directions. This option should"
-  echo "                    improve precision and drop recall, since those candidates in a"
-  echo "                    position lower than NUM will be discarded for the alignment"
-  echo "                    (NUM must be in [1,10])"
+  echo "  -b NUM            (--num-accepted-candidates) NUM is the number of possible alignment candidates taken into"
+  echo "                    account for every document in one language. If NUM is higher than 1, candidate document"
+  echo "                    alignments are obtained from LANG1 to LANG2 and from LANG2 to LANG1 and then symmetrised, "
+  echo "                    while if NUM=0, ony candidates from LANG1 to LANG2 are obtained. In addition, if NUM>1,"
+  echo "                    several candidates can be considered for a single document, while If NUM=1, only the best"
+  echo "                    candidate will be taken into account. The default value for this option is 1, which is"
+  echo "                    the one that has proved to provide best results." 
   echo "  -v VOCABULARY     (--vocabulary) option for using a custom multilingual vocabulary for preliminar"
   echo "                    document alignment. The vocabulary must be a tab-separated file,"
   echo "                    in which the first line contains the names of the languages"
@@ -250,7 +249,7 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  if [ "$USEHTTRACK" == "0" ]; then
+  if [ "$USEHTTRACK" == "0" ]; then #HTTRACK not used
     __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
     crawl_pid=$(jobs -p)
     trap "trapsigint $crawl_pid" SIGINT
