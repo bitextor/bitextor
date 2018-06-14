@@ -21,13 +21,7 @@ bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
-bitextor_MANS=doc/bitextor.1 doc/bitextor-cleantextalign.1 \
-         doc/bitextor-distancefilter.1 doc/bitextor-ett2lett.1 \
-         doc/bitextor-idx2ridx.1 doc/bitextor-lett2idx.1 doc/bitextor-lett2lettr.1 \
-         doc/bitextor-buildTMX.1
-
-
-EXTRA_DIST= $(bitextor_MANS) $(bitextor_SOURCEFILES) utils \
+EXTRA_DIST= $(bitextor_SOURCEFILES) utils \
             model
 
 CLEANFILES=$(bin_SCRIPTS)
