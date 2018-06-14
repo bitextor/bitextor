@@ -61,7 +61,7 @@ for line in reader:
   #Output info data ILSP-FC specification
   if re.sub("[^0-9]", "", fieldsdict["seg1"]) != re.sub("[^0-9]", "", fieldsdict["seg2"]):
     infoTag.append("different numbers in TUVs")
-  print "    <prop type=\"type\">1:1</prop>"
+  print("    <prop type=\"type\">1:1</prop>")
   if re.sub(r'\W+', '', fieldsdict["seg1"]) == re.sub(r'\W+', '', fieldsdict["seg2"]):
     infoTag.append("equal TUVs")
   if len(infoTag) > 0:
@@ -72,7 +72,7 @@ for line in reader:
   print("    <tuv xml:lang=\""+options.lang1+"\">")
   if "url1" in columns:
     print("     <prop type=\"source-document\">"+fieldsdict['url1'].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>")
-  print("     <seg>"+fieldsdict['seg1'].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
+  print("     <seg>"+fieldsdict['seg1'].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
   if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(options.mint):
     infoTagSL.append("very short segments, shorter than "+str(options.mint))
   if len(infoTagSL) > 0:
@@ -81,7 +81,7 @@ for line in reader:
   print("    <tuv xml:lang=\""+options.lang2+"\">")
   if "url2" in columns:
     print("     <prop type=\"source-document\">"+fieldsdict["url2"].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>")
-  print("     <seg>"+fieldsdict["seg2"].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
+  print("     <seg>"+fieldsdict["seg2"].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
   if "numTokensTL" in fieldsdict and fieldsdict["numTokensTL"] != "" and int(fieldsdict["numTokensTL"])<int(options.mint):
     infoTagTL.append("very short segments, shorter than "+str(options.mint))
   if len(infoTagTL) > 0:

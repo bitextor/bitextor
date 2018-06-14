@@ -205,16 +205,6 @@ then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
 
-AC_PATH_PROG(PYTHON2, python, no)
-if test x$ac_cv_path_PYTHON2 = x
-then
-  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
-fi
-if test x$ac_cv_path_PYTHON2 = xno
-then
-  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
-fi
-
 
 AC_PATH_PROG(NGRAM, ngram, no)
 if test x$ac_cv_path_NGRAM = x
@@ -391,7 +381,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python-magic' and try again.
+    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python3-magic' and try again.
 ])
   fi
 

@@ -40,7 +40,7 @@ __PREFIX__/share/bitextor/zipporah/generate-bow-xent $e2f $intermediatefile.ngra
 wait
 paste $intermediatefile.tm.$LANG1-$LANG2 $intermediatefile.tm.$LANG2-$LANG1 $intermediatefile.ngram.$LANG1 $intermediatefile.ngram.$LANG1 | awk '{print ($1)+($2),"\t",($3)+($4)}' | awk '{a=$1/10;b=$2/10;print a^8,b^8}' > $intermediatefile.feats.txt
 
-python __PREFIX__/share/bitextor/zipporah/apply_logistic.py $model/model.$langfr $intermediatefile.feats.txt $intermediatefile.zipporah
+python3 __PREFIX__/share/bitextor/zipporah/apply_logistic.py $model/model.$langfr $intermediatefile.feats.txt $intermediatefile.zipporah
 
 paste $corpus $intermediatefile.zipporah
 rm -rf $intermediatefile* $corpus*

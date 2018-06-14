@@ -63,7 +63,7 @@ bitextor: bitextor.sh compile-smttools compile-hunalign compile-zipporah
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 nltk_data:
-	python install_nltk_data.py
+	python3 install_nltk_data.py
 
 features/bitextor-urlscomparison: features/bitextor-urlscomparison.py
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
