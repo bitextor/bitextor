@@ -103,8 +103,7 @@ $cattool $SL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print " ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8")' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
-  #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
 if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
     cattool="zcat"
@@ -115,8 +114,7 @@ $cattool $TL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print " ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8")' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
-  #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus

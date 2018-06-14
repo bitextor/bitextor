@@ -308,7 +308,7 @@ clean_segments(){
   cat - > $OUTPUTCLEANERS
   > $CLEANTEXTLOG
   if [ "$ZIPPORAH" != "" ]; then
-    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python -c "
+    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python3 -c "
 import sys
 
 for line in sys.stdin:
@@ -325,7 +325,7 @@ for line in sys.stdin:
   fi
   if [ "$BICLEANER" != "" ]; then
     python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2>> $CLEANTEXTLOG
-    cat ${OUTPUTCLEANERS}-tmp | python -c "
+    cat ${OUTPUTCLEANERS}-tmp | python3 -c "
 import sys
 
 for line in sys.stdin:

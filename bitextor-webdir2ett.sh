@@ -73,7 +73,7 @@ for line in sys.stdin:
     newline.append(encoding)
     newline.append(filepath.replace('$WEBDIR/',''))
     newline.append(base64.b64encode(content.decode(encoding.split('=')[1].replace('unknown-8bit','iso-8859-1')).encode('utf8')))
-    print '\t'.join(newline)
+    print('\t'.join(newline))
   else:
     sys.stderr.write('Wrong line: '+line.strip()+'\n')
 " | \
@@ -82,24 +82,22 @@ __PYTHON__ -c 'import sys
 import hashlib
 import base64
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 seen_md5={}
 for i in sys.stdin:
   fields = i.strip().split("\t")
-  e = fields[3]
+  #e = fields[3]
   try:
-    #e = base64.b64encode(fields[3])
+    e = base64.b64encode(fields[4].encode("utf8")).decode("utf8")
     #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     c = hashlib.md5()
-    c.update(e)
+    c.update(e.encode("utf8"))
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
       sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
       seen_md5[c.hexdigest()]=fields[2]
-      print "{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e)
+      print("{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e))
   except UnicodeDecodeError:
     sys.stderr.write("File "+fields[2]+" produced a character encoding error")
 ' > $OUTPUT
