@@ -7,3 +7,9 @@
 [submodule "hunalign"]
 	path = hunalign
 	url = https://github.com/bitextor/hunalign
+[submodule "bicleaner"]
+	path = bicleaner
+	url = https://github.com/bitextor/bicleaner
+[submodule "document-aligner"]
+	path = document-aligner
+	url = https://github.com/paracrawl/document-aligner.git

@@ -4,30 +4,24 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= utils ulysses piped-boilerpipe piped-tika ulysses-data model
+SUBDIRS= zipporah utils ulysses piped-boilerpipe piped-tika ulysses-data model share
 
-bitextor_SOURCEFILES=bitextor.sh bitextor-align-documents.py bitextor-align-segments.py \
+bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
-            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py \
+            bitextor-ett2lett.sh bitextor-idx2ridx.py bitextor-lett2idx.py tar2lett.py \
             bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
-bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
-            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment \
+bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
+            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment tar2lett \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
-bitextor_MANS=doc/bitextor.1 doc/bitextor-cleantextalign.1 \
-         doc/bitextor-distancefilter.1 doc/bitextor-ett2lett.1 \
-         doc/bitextor-idx2ridx.1 doc/bitextor-lett2idx.1 doc/bitextor-lett2lettr.1 \
-         doc/bitextor-buildTMX.1
-
-
-EXTRA_DIST= $(bitextor_MANS) $(bitextor_SOURCEFILES) utils \
+EXTRA_DIST= $(bitextor_SOURCEFILES) utils \
             model
 
 CLEANFILES=$(bin_SCRIPTS)
@@ -38,9 +32,19 @@ compile-smttools:
 compile-hunalign:
 	cd hunalign/src/hunalign && make 
 
+compile-zipporah:
+	cd zipporah && g++ generate-bow-xent.cc -o generate-bow-xent -std=c++11
+
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
+	cp textsanitizer.py $(prefix)/bin/.
+	cp bicleaner/*.py $(prefix)/bin/.
+	cp document-aligner/*.sh $(prefix)/bin/.
+	cp document-aligner/*.py $(prefix)/bin/.
+	cp -R document-aligner/utils $(prefix)/bin/.
+	touch $(prefix)/bin/__init__.py
+	chmod a+x $(prefix)/share/bitextor/zipporah/*
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
@@ -52,7 +56,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign
 
-bitextor: bitextor.sh compile-smttools compile-hunalign
+bitextor: bitextor.sh compile-smttools compile-hunalign compile-zipporah
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
@@ -188,3 +192,16 @@ bitextor-webdir2ett: bitextor-webdir2ett.sh
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
+
+zipporah-classifier: zipporah-classifier.sh
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
+
+tar2lett: tar2lett.py
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
+

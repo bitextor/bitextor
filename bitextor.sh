@@ -11,7 +11,7 @@ JOBS=""
 TIMEOUT=""
 LANG1=""
 LANG2=""
-BIDIDOCALIGN=0
+BIDIDOCALIGN=1
 DOCALIGNMENT=0
 FORMAT="PLAIN"
 INDEX=""
@@ -21,6 +21,8 @@ INPUTMODE=0
 CRAWLLOG=/dev/null
 CRAWL2ETTLOG=/dev/null
 ETT2LETTLOG=/dev/null
+TAR2LETTLOG=/dev/null
+WEBDIR2ETTLOG=/dev/null
 LETT2LETTRLOG=/dev/null
 LETT2IDXLOG=/dev/null
 IDX2RIDXLOG=/dev/null
@@ -39,6 +41,7 @@ CRAWLOUT=""
 CRAWL2ETTOUT=""
 ETT2LETTOUT=""
 LETT2LETTROUT=""
+WEBDIR2ETTOUT=""
 LETT2IDXOUT=""
 IDX2RIDXOUT=""
 IDX2RIDX12OUT=""
@@ -61,14 +64,24 @@ PRINTSTATS=""
 FILTERLINES=""
 HUNALIGNSCORE=""
 ELRCSCORES=""
+BICLEANERSCORE=""
+ZIPPORAHSCORE=""
 IGNOREBOILER=""
 USENLTK=""
 USEHTTRACK=0
-USEBUCKLETT=0
+USEJHULETT=0
 CONFIGFILEOPTIONS=""
 CONFIGFILE=""
 DIRNAME=""
-
+ALIGNEDDOCINPUT=""
+ALIGNEDSENTSINPUT=""
+ONLYCRAWL=""
+ONLYLETT=""
+BICLEANER=""
+ZIPPORAH=""
+BICLEANERTHRESHOLD=""
+ZIPPORAHTHRESHOLD=""
+DONOTPIPELETT=""
 BUILDDICTTMP=$(mktemp -d $TMPDIR/BUILDDICTTMP.XXXXXX)
 
 
@@ -106,6 +119,18 @@ exit_program()
   echo "OPTIONS:"
   echo "  -L PATH           (--logs-dir) custom path where the directory containing the logs of the"
   echo "                    different modules of bitextor will be stored"
+  echo "  -H                (--httrack) use HTTrack instead of embedded Creepy crawling engine"
+  echo "  --jhu-lett        (only with --httrack) use JHU pipeline process for ETT and LETT processing from HTTrack files"
+  echo "  --jhu-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by JHU document aligner"
+  echo "  --aligned-document-input FILE       Performs sentence alignment, cleaning and optional TMX conversion of provided aligned documents"
+  echo "  --aligned-sentences-input FILE      Performs cleaning and optional TMX conversion of provided aligned sentences"
+  echo "  --only-crawl      Only performs crawling"
+  echo "  --only-lett       Only performs crawling, ETT and LETT(r) processing, printing this last file"
+  echo "  --bicleaner CONFIG     Performs Bicleaner score and attach it to the output, needs a configuration file YAML"
+  echo "  --zipporah MODEL_FOLDER             Performs Zipporah score and attach it to the output"
+  echo "  --filter-bicleaner SCORE            Performs filtering using the --bicleaner score, thresholding it. For example, 0.7"
+  echo "  --filter-zipporah SCORE             Performs filtering using the --zipporah score, thresholding it. For example, 0.0"
+  echo ""
   echo "  -l LETTR          (--lettr) custom path where the file with extension .lettr (language"
   echo "                    encoded and typed data with 'raspa') will be created"
   echo "                    (/lettr.XXXXXX by default)."
@@ -113,14 +138,13 @@ exit_program()
   echo "                    by the modules of bitextor will be stored."
   echo "  -B                (--ignore-boilerpipe-cleaning) ignores and skips the boilerpipe clean step"
   echo "  -n                (--nltk) uses NLTK sentence tokenizer instead of Ulysses"
-  echo "  -b NUM            (--num-accepted-candidates) if this option is enabled, the document alignment process is"
-  echo "                    run in both directions and only the first NUM candidates in"
-  echo "                    every direction will be taken into account. With this, the list"
-  echo "                    of final candidates will be obtained computing the average of"
-  echo "                    every pair of candidates in both directions. This option should"
-  echo "                    improve precision and drop recall, since those candidates in a"
-  echo "                    position lower than NUM will be discarded for the alignment"
-  echo "                    (NUM must be in [1,10])"
+  echo "  -b NUM            (--num-accepted-candidates) NUM is the number of possible alignment candidates taken into"
+  echo "                    account for every document in one language. If NUM is higher than 1, candidate document"
+  echo "                    alignments are obtained from LANG1 to LANG2 and from LANG2 to LANG1 and then symmetrised, "
+  echo "                    while if NUM=0, ony candidates from LANG1 to LANG2 are obtained. In addition, if NUM>1,"
+  echo "                    several candidates can be considered for a single document, while If NUM=1, only the best"
+  echo "                    candidate will be taken into account. The default value for this option is 1, which is"
+  echo "                    the one that has proved to provide best results." 
   echo "  -v VOCABULARY     (--vocabulary) option for using a custom multilingual vocabulary for preliminar"
   echo "                    document alignment. The vocabulary must be a tab-separated file,"
   echo "                    in which the first line contains the names of the languages"
@@ -134,6 +158,7 @@ exit_program()
   echo "                    lower than MIN_QUALITY will be considered wrong and they will be"
   echo "                    removed (0 by default)."
   echo "  -W                (--elrc-quality-metrics) Print stats similar to ILSP-FC fields, as the Hunalign information in output stream, in added columns or TMX properties"
+  echo "  --filter-with-elrc       Needs -W/--elrc-quality-metrics. Filter sentences using ELRC metrics"
   echo "  -T TMP-DIR        (--tmp-dir) alternative tmp directory (/tmp by default)."
   echo "  -x                (--tmx-output) if this option is enabled, the output of the tool will be"
   echo "                    formated in the standard XML-based format TMX."
@@ -180,16 +205,21 @@ exit_program()
 run_bitextor_ett(){
 
   zcat -f $1 | \
-  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
-  align_segments $LETTR
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+  if [ "$ONLYLETT" != "" ]; then
+    cat $LETT
+  else
+    align_documents_and_segments $LETT
+  fi 
 }
 
 run_bitextor_lett(){
 
-  zcat -f $1 | \
-  __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
-  align_segments $LETTR
+  if [ "$ONLYLETT" != "" ]; then
+    cat $1
+  else
+    align_documents_and_segments $1
+  fi
 }
 
 trapsigint(){
@@ -220,39 +250,111 @@ run_bitextor(){
       CONTINUEARGS="$CONTINUEARGS -e $CRAWLINGDATACONTINUE"
   fi
 
-  if [ "$USEHTTRACK" == 0 ]; then
+  if [ "$USEHTTRACK" == "0" ]; then #HTTRACK not used
     __PREFIX__/bin/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
     crawl_pid=$(jobs -p)
     trap "trapsigint $crawl_pid" SIGINT
     trap "trapsigint $crawl_pid" SIGUSR1
-  
-    __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-    __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-    __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+    if [ "$ONLYCRAWL" == "" ] ; then
+      __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
+      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+    else
+      cat $tmpcrawl
+    fi
   else
     if [ "$DIRNAME" == "" ]; then
-      DIRNAME=$(mktemp $TMPDIR/downloaded_websites.XXXXXX)
+      DIRNAME=$(mktemp -d $TMPDIR/downloaded_websites.XXXXXX)
     fi
-    __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME
-    if [ "$USEBUCKLETT" == 0]; then
-      __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT | \
-      __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+    __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
+    if [ "$ONLYCRAWL" == "" ] ; then
+      if [ "$USEJHULETT" == "0" ]; then
+        __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
+        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
+      else
+        TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
+        tar czf $TARNAME -C $DIRNAME/ .
+        __PREFIX__/bin/tar2lett $TARNAME $LANG1 $LANG2 2> $TAR2LETTLOG > $LETT & 
+      fi
     else
-      __PREFIX__/bin/httrack2bitextor $DIRNAME $LANG1 $LANG2 -mapping $mapping -file2realurl=$DIRNAME/file2realurl 2>$log | \
-      __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR &
+      echo "Crawling finished at $DIRNAME"
     fi
   fi
+  
+  if [ "$DONOTPIPELETT" != "" ]; then
+    wait
+  fi
+  
+  if [ "$ONLYLETT" == "" -a "$ONLYCRAWL" == "" ]; then
+    align_documents_and_segments $LETT
+    if [ "$DIRNAME" != "" ]; then
+      rm -r $DIRNAME
+    fi
+  else
+    cat $LETT
+  fi
 
-  wait
   rm $tmpcrawl
-  align_segments $LETTR
+  if [ "$TARNAME" != "" ]; then
+    rm -r $TARNAME
+  fi
 }
 
 align_segments(){
-  trap '' SIGINT
+  __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d "$1" -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT
+}
 
-  local LETTR=$1
+clean_segments(){
+  OUTPUTCLEANERS=$(mktemp $BUILDDICTTMP/outputcleaners.XXXXXX)
+  cat - > $OUTPUTCLEANERS
+  > $CLEANTEXTLOG
+  if [ "$ZIPPORAH" != "" ]; then
+    cat $OUTPUTCLEANERS | __PREFIX__/bin/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python -c "
+import sys
+
+for line in sys.stdin:
+  parts = line.split('\t')
+  parts[-1]=parts[-1].strip()
+  if '$ZIPPORAHTHRESHOLD' != '':
+    if float(parts[-1]) >= float('$ZIPPORAHTHRESHOLD'):
+      print(line)
+  else:
+    print(line)
+
+    " > ${OUTPUTCLEANERS}-tmp
+    mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
+  fi
+  if [ "$BICLEANER" != "" ]; then
+    python3 __PREFIX__/bin/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2>> $CLEANTEXTLOG
+    cat ${OUTPUTCLEANERS}-tmp | python -c "
+import sys
+
+for line in sys.stdin:
+  parts = line.split('\t')
+  parts[-1]=parts[-1].strip()
+  if '$BICLEANERTHRESHOLD' != '':
+    if float(parts[-1]) >= float('$BICLEANERTHRESHOLD'):
+      print(line)
+  else:
+    print(line)
+    " > $OUTPUTCLEANERS
+  fi
+  cat $OUTPUTCLEANERS | __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2>> $CLEANTEXTLOG | \
+  __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE
+  rm -r $OUTPUTCLEANERS
+}
+
+convert_to_tmx(){
+  if [ $FORMAT == "TMX" ]; then
+    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+  elif [ "$PRINTSTATS" != "" ]; then
+    cat -
+  else
+    cat - | cut -f 1-4
+  fi
+}
+
+align_documents_and_segments(){
+  trap '' SIGINT
 
   TLD_IDX2RIDX=""
   if [ "$TLD_CRAWL" != "" ]; then
@@ -265,8 +367,17 @@ align_segments(){
 
   HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
   tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
-
-  if [ $BIDIDOCALIGN -ge 1 ]; then
+  if [ "$TRANSLATIONCOMMAND" != "" ]; then
+    cat $LETT > $LETT.txt
+    if [ $DOCALIGNMENT -eq 0 ]; then
+        __PREFIX__/bin/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -b 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        align_segments $HUNALIGN_DIC | \
+        clean_segments > $output_pipe &
+    else
+        __PREFIX__/bin/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -b 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
+    fi
+  elif [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
     #Named pipe for paralelising obtaining the initial index for the ridx 1
     index_pipe1=$(mktemp $BUILDDICTTMP/index_pipe.XXXXXX)
     rm $index_pipe1
@@ -278,7 +389,7 @@ align_segments(){
     mkfifo $index_pipe2
 
     INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
-
+    cat $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
@@ -296,7 +407,7 @@ align_segments(){
     __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
     __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
 
-    rindex1_pid=$!
+    #rindex1_pid=$!
 
     __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
     __PREFIX__/bin/bitextor-imagesetoverlap -l $LETTR | \
@@ -329,14 +440,14 @@ align_segments(){
 
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT -i converge $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
-        __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE > $output_pipe &
+        align_segments $HUNALIGN_DIC | \
+        clean_segments > $output_pipe &
     else
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
-  else
+  else #Use Apertium to index both documents
+    cat $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     if [ $DOCALIGNMENT -eq 0 ]; then
         __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -348,9 +459,8 @@ align_segments(){
         __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
         __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-align-segments $MORPHANAL_OPTIONS -d $HUNALIGN_DIC -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT | \
-        __PREFIX__/bin/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2> $CLEANTEXTLOG | \
-        __PREFIX__/bin/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE > $output_pipe &
+        align_segments $HUNALIGN_DIC | \
+        clean_segments > $output_pipe &
     else
         __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
         __PREFIX__/bin/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
@@ -364,14 +474,8 @@ align_segments(){
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
-    wait
   fi
-
-  if [ $FORMAT == "TMX" ]; then
-    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ELRCSCORES,idnumber < $output_pipe > $OUTPUT
-  else
-    cat < $output_pipe >> $OUTPUT
-  fi
+  convert_to_tmx < $output_pipe > $OUTPUT
 
   rm $HUNALIGN_DIC
 
@@ -381,8 +485,8 @@ align_segments(){
 
 trap '' SIGINT
 
-OLDARGS=$@
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- "$@")
+OLDARGS="$@"
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command:,filter-with-elrc -- "$@")
 
 eval set -- $ARGS
 for i
@@ -397,7 +501,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l buck-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file: -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,nltk,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,jhu-aligner-command:,filter-with-elrc -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -410,6 +514,7 @@ do
       CRAWL2ETTOUT=$INTERMEDIATEFILE/crawl2ett
       ETT2LETTOUT=$INTERMEDIATEFILE/ett2lett
       LETT2LETTROUT=$INTERMEDIATEFILE/lett2lettr
+      WEBDIR2ETTOUT=$INTERMEDIATEFILE/webdir2ett
       LETT2IDXOUT=$INTERMEDIATEFILE/lett2idx
       IDX2RIDXOUT=$INTERMEDIATEFILE/idx2ridx
       IDX2RIDX12OUT=$INTERMEDIATEFILE/idx2ridx-lang1-lang2
@@ -443,6 +548,8 @@ do
       CRAWLLOG=$LOGDIR/bitextorcrawl.log
       CRAWL2ETTLOG=$LOGDIR/bitextorcrawl2ett.log
       ETT2LETTLOG=$LOGDIR/bitextorett2lett.log
+      TAR2LETTLOG=$LOGDIR/bitextortar2lett.log
+      WEBDIR2ETTLOG=$LOGDIR/bitextorwebdir2ett.log
       LETT2LETTRLOG=$LOGDIR/bitextorlett2lettr.log
       LETT2IDXLOG=$LOGDIR/bitextorlett2idx.log
       IDX2RIDXLOG=$LOGDIR/bitextoridx2ridx.log
@@ -470,10 +577,35 @@ do
       LETT=$1
       if [ $INPUTMODE -eq 0 ]; then
         INPUTMODE=4
+      else
+        DONOTPIPELETT='yes'
       fi
       shift
       ;;
-
+    --aligned-document-input)
+      shift
+      ALIGNEDDOCINPUT=$1
+      if [ $INPUTMODE -eq 0 ]; then
+        INPUTMODE=5
+      fi
+      shift
+      ;;
+    --aligned-sentences-input)
+      shift
+      ALIGNEDSENTSINPUT=$1
+      if [ $INPUTMODE -eq 0 ]; then
+        INPUTMODE=6
+      fi
+      shift
+      ;;
+    --only-crawl)
+      shift
+      ONLYCRAWL="yes"
+      ;;
+    --only-lett)
+      shift
+      ONLYLETT="yes"
+      ;;
     -u | --url)
       shift
       URL=$1
@@ -586,9 +718,12 @@ do
       ;;
     -W | --elrc-quality-metrics)
       PRINTSTATS="-s"
-      FILTERLINES="-f"
       HUNALIGNSCORE=",hunalign"
       ELRCSCORES=",lengthratio,numTokensSL,numTokensTL"
+      shift
+      ;;
+    --filter-with-elrc)
+      FILTERLINES="-f"
       shift
       ;;
     -n | --nltk)
@@ -601,16 +736,43 @@ do
       ;;
     -H | --httrack)
       shift
-      if [ $(which httrack|__WC__ -l) -eq 0 ]; then
+      if [ $(which httrack| wc -l) -eq 0 ]; then
         echo "Error: the tool 'httrack' could not be found and it is necessary to download the websites. Please, first install this tool and then try again to run this script."
         exit
       else
         USEHTTRACK=1
       fi
       ;;
-    --buck-lett)
+    --jhu-lett)
       shift
-      USEBUCKLETT=1
+      USEJHULETT=1
+      ;;
+    --bicleaner)
+      shift
+      BICLEANER=$1
+      BICLEANERSCORE=",bicleaner"
+      shift
+      ;;
+    --zipporah)
+      shift
+      ZIPPORAH=$1
+      ZIPPORAHSCORE=",zipporah"
+      shift
+      ;;
+    --filter-bicleaner)
+      shift
+      BICLEANERTHRESHOLD=$1
+      shift
+      ;;
+    --filter-zipporah)
+      shift
+      ZIPPORAHTHRESHOLD=$1
+      shift
+      ;;
+    --jhu-aligner-command)
+      shift
+      TRANSLATIONCOMMAND="$1"
+      shift
       ;;
     -h | --help)
       exit_program $(basename $0)
@@ -652,6 +814,8 @@ if [[ -z $ETT ]]; then
 fi
 
 TMPLETT=$(mktemp $BUILDDICTTMP/lett.XXXXXX)
+rm $TMPLETT
+mkfifo $TMPLETT
 if [[ -z $LETT ]]; then
   LETT=$TMPLETT
 fi
@@ -672,8 +836,8 @@ case $INPUTMODE in
       URL=$(echo "$line" | cut -f 1)
       ETT=$(echo "$line" | cut -f 2)
       echo $line
-      echo "$(echo $line | __GREP__ $'\t' |__WC__ -l)"
-      if [ $(echo $line | __GREP__ '\s' |__WC__ -l) -eq 0 ]; then
+      echo "$(echo $line | grep $'\t' | wc -l)"
+      if [ $(echo $line | grep '\s' | wc -l) -eq 0 ]; then
         echo "Error in the format of the file containing the list of urls: in every line of the file, you have to include a URL and the path to the ETT file where the information downloaded will be stored, separated with a tab."
         exit -1
       else
@@ -686,7 +850,15 @@ case $INPUTMODE in
     ;;
   4)
     run_bitextor_lett $LETT
-     
+    ;;
+  5)
+    TEMPHUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
+    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $TEMPHUNALIGN_DIC
+    cat $ALIGNEDDOCINPUT | align_segments $TEMPHUNALIGN_DIC | clean_segments | convert_to_tmx
+    rm -rf $TEMPHUNALIGN_DIC
+    ;;
+  6)
+    cat $ALIGNEDSENTSINPUT | clean_segments | convert_to_tmx
     ;;
   *)
     exit_program $(basename $0)
