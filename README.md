@@ -35,7 +35,7 @@ For these system libraries and tools we used apt because we are in a Debian-like
 
 `user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic libboost-all-dev`
 
-Most of the scripts in bitextor are written in Python. Because of this, it is necessary to also install Python 2. All these tools are available in most Unix-based operating systems repositories.
+Most of the scripts in bitextor are written in Python 3 syntax. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
 
 Some external Python libraries should also be installed before starting the installation of bitextor:
 
@@ -56,7 +56,7 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 
 We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install all the basic libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
+`user@pc:~$ sudo pip3 install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
 
 Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are more updated.
 
@@ -69,19 +69,19 @@ In case you want to use HTTrack instead of integrated Creepy crawler just:
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
 
 For the alternative HTTrack to [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) process script named with `--jhu-lett`, some Python 2 dependences are needed:
-`sudo pip install html2text bs4`
-`sudo CFLAGS="-Wno-narrowing" pip install cld2-cffi`
+`sudo pip3 install html2text bs4`
+`sudo CFLAGS="-Wno-narrowing" pip3 install cld2-cffi`
 ```bash
 wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
 tar xzvf chared-1.2.2.tar.gz
 cd chared-1.2.2/
-python setup.py install
+python3 setup.py install
 ```
 
-For optional Bicleaner submodule `python3` is needed and then just run `sudo pip3 install -r bicleaner/requirements.txt`, in case that `pip3` is pointing to Python 3 installation. Otherwise, use the pertinent binary of `pip` of Python 3.
+For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
 
 For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
-`sudo pip install matplotlib sklearn numpy && sudo apt install python3-tk`
+`sudo pip3 install matplotlib sklearn numpy && sudo apt install python3-tk`
 
 For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
 
