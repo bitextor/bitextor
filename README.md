@@ -58,6 +58,10 @@ We expect this project to be compatible with latest version of all previous depe
 
 `user@pc:~$ sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
 
+If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0):
+
+`sudo pip install tensorflow==1.4.1`
+
 Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are more updated.
 
 
@@ -69,8 +73,11 @@ In case you want to use HTTrack instead of integrated Creepy crawler just:
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
 
 For the alternative HTTrack to [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) process script named with `--jhu-lett`, some Python 2 dependences are needed:
+
 `sudo pip install html2text bs4`
+
 `sudo CFLAGS="-Wno-narrowing" pip install cld2-cffi`
+
 ```bash
 wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
 tar xzvf chared-1.2.2.tar.gz
