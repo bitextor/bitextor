@@ -455,17 +455,29 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-  AC_MSG_CHECKING([for NLTK for Python])
+AC_MSG_CHECKING([for nltk for Python])
   ac_supports_python_ver=`python -c "import sys; \
 import nltk; \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
-    AC_MSG_RESULT([yes])
+    requiredversion="3.3"
+    nltkversion=`python -c "import nltk; print nltk.__version__" 2> /dev/null`
+    lowestversion=$(echo -e "$requiredversion\n$nltkversion" | sort -V | head -n 1)
+    if test "$lowestversion" == "$requiredversion";
+    then
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([this package requires nltk at version v3.3 or higher, while currently installed version is v$nltkversion; try running:
+pip install --upgrade nltk
+])
+    fi
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires nltk for Python. Please, install v3.0 or later and try again. http://www.nltk.org
+    AC_MSG_ERROR([this package requires the following libraries for Python:
+- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
 ])
   fi
 
