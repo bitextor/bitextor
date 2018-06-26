@@ -21,6 +21,8 @@ from operator import itemgetter
 from keras.models import model_from_json
 import numpy as np
 from keras.utils import np_utils
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
 oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)

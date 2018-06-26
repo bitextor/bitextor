@@ -394,7 +394,7 @@ align_documents_and_segments(){
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
 
-    INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
+    #INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
     RINDEX1=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
     RINDEX2=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
 
