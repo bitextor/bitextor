@@ -77,7 +77,7 @@ for line in sys.stdin:
   else:
     sys.stderr.write('Wrong line: '+line.strip()+'\n')
 " | \
-java -jar __PREFIX__/share/java/piped-tika.jar | java -jar __PREFIX__/share/java/piped-boilerpipe.jar | \
+java -jar __PREFIX__/share/java/piped-tika.jar 2> /dev/null | java -jar __PREFIX__/share/java/piped-boilerpipe.jar 2> /dev/null | \
 __PYTHON__ -c 'import sys
 import hashlib
 import base64

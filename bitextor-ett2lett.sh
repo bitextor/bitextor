@@ -45,7 +45,7 @@ case $# in
 esac
 
 
-cat $FILE | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t | \
+cat $FILE | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
 __PYTHON__ -c '
 #
 # 1. Read lines from .ett file

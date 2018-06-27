@@ -20,18 +20,18 @@ MINQUALITY=0
 INPUTMODE=0
 CRAWLLOG=/dev/null
 CRAWL2ETTLOG=/dev/null
-ETT2LETTLOG=/dev/null
+ETT2LETTLOG=/dev/stderr
 TAR2LETTLOG=/dev/null
 WEBDIR2ETTLOG=/dev/null
-LETT2LETTRLOG=/dev/null
-LETT2IDXLOG=/dev/null
-IDX2RIDXLOG=/dev/null
-IDX2RIDX12LOG=/dev/null
-IDX2RIDX21LOG=/dev/null
-DISTANCEFILTERLOG=/dev/null
-DISTANCEFILTER12LOG=/dev/null
-DISTANCEFILTER21LOG=/dev/null
-ALIGNDOCUMENTSLOG=/dev/null
+LETT2LETTRLOG=/dev/stderr
+LETT2IDXLOG=/dev/stderr
+IDX2RIDXLOG=/dev/stderr
+IDX2RIDX12LOG=/dev/stderr
+IDX2RIDX21LOG=/dev/stderr
+DISTANCEFILTERLOG=/dev/stderr
+DISTANCEFILTER12LOG=/dev/stderr
+DISTANCEFILTER21LOG=/dev/stderr
+ALIGNDOCUMENTSLOG=/dev/stderr
 ALIGNSEGMENTSLOG=/dev/null
 CLEANTEXTLOG=/dev/null
 MORPHANAL_OPTIONS=""
@@ -405,7 +405,7 @@ align_documents_and_segments(){
     __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
     __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
     __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
-    __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+    __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT > $RINDEX1 &
 
     #rindex1_pid=$!
 
@@ -416,7 +416,7 @@ align_documents_and_segments(){
     __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
     __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
     __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
-    __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER21LOG | tee $DISTANCEFILTER21OUT > $RINDEX2 &
+    __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER21LOG) | tee $DISTANCEFILTER21OUT > $RINDEX2 &
 
     #wait $rindex1_pid
     wait
@@ -457,7 +457,7 @@ align_documents_and_segments(){
         __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
         __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
         __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
-        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
+	__PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
@@ -470,7 +470,7 @@ align_documents_and_segments(){
         __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
         __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
         __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
-        __PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> $DISTANCEFILTER12LOG | tee $DISTANCEFILTER12OUT | \
+	__PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> <(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi

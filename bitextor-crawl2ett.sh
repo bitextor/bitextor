@@ -83,7 +83,7 @@ for line in sys.stdin:
       sys.stderr.write("Unknown character encoding in file "+url+": "+str(e)+"\n")
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")' | \
-__JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x | eval "$BOILERCOMMAND" | \
+__JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x 2> /dev/null | eval "$BOILERCOMMAND" 2> /dev/null | \
 __PYTHON__ -c 'import sys
 import hashlib
 import base64
