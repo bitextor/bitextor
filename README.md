@@ -66,7 +66,7 @@ If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking chan
 
 `sudo pip install tensorflow==1.4.1`
 
-Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are more updated.
+Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
 
 
 ### Optional dependences
