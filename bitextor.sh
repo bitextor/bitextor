@@ -1,5 +1,7 @@
 #!__BASH__
 
+set -eo pipefail
+
 OUTPUT=/dev/stdout
 URLFILE=""
 URL=""
@@ -471,7 +473,7 @@ align_documents_and_segments(){
         __PREFIX__/bin/bitextor-mutuallylinked -l $LETTR | \
         __PREFIX__/bin/bitextor-urlscomparison -l $LETTR | \
         __PREFIX__/bin/bitextor-urlsetoverlap -l $LETTR | \
-	__PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> <(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
+	__PREFIX__/bin/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
         __PREFIX__/bin/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
