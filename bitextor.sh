@@ -1,6 +1,6 @@
 #!__BASH__
 
-set -eo pipefail
+set -o pipefail
 
 OUTPUT=/dev/stdout
 URLFILE=""
