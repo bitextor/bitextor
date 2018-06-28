@@ -62,7 +62,7 @@ To ensure you are using the minimum required versions of the needed libraries, i
 
 `user@pc:~$ sudo pip install -r requirements.txt`
 
-If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0):
+If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0), also do that if you are using an [AMD CPU and you are having errors when importing](https://github.com/tensorflow/tensorflow/issues/17411):
 
 `sudo pip install tensorflow==1.4.1`
 
