@@ -35,24 +35,21 @@ case $# in
     ;;
 esac
 
-# Código aquí
-
 #
-# 1. Eliminar ficheros repetidos -> (log)
-# 2. Obtener tipo y codificación de ficheros
-# 3. Quedarse solo con los que tengan tipo html
-# 4. Convertir [no UTF-8 -> UTF-8], si hay error -> (log)
-# 5. Corregir errores HTML usando Tidy y eliminar las cabeceras HTML
-# 6. Incluir el contenido del fichero en base64
+# 1. Delete repeated files -> (log)
+# 2. Obtain mimetype and file encoding
+# 3. Keep only html files
+# 4. Convert non-UTF-8 to UTF-8 (if errors -> log)
+# 5. Fix HTML errors using Tika and delete the HTML headers
+# 6. Include the file content as base64 encoded string
 #
-# Formato final del documento:
+# Final output format is .ett -> encoded and typed text:
 # encoding	mimetype	url	content(base_64)
 #
-# Genera .ett -> encoded and typed text
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
-find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | grep -E "(text|html|xml)" | \
+find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | grep -E "(text/html;|text/xml;)" | \
 gawk '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | grep -v 'hts-cache' | python -c " 
 import sys
 import magic
@@ -91,7 +88,6 @@ for i in sys.stdin:
   e = fields[3]
   try:
     #e = base64.b64encode(fields[3])
-    #Por último, guardamos los datos en un mismo fichero con el formato: encoding   formato   nombre_fichero   base64
     c = hashlib.md5()
     c.update(e)
     #checking for duplicate content (duplicates are discarded)
