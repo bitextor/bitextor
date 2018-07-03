@@ -69,7 +69,10 @@ for line in sys.stdin:
     newline.append(mime)
     newline.append(encoding)
     newline.append(filepath.replace('$WEBDIR/',''))
-    newline.append(base64.b64encode(content.decode(encoding.split('=')[1].replace('unknown-8bit','iso-8859-1')).encode('utf8')))
+
+    charset = encoding.split('=')[1].replace('unknown-8bit','iso-8859-1').replace('us-ascii','utf-8')
+    newline.append(base64.b64encode(content.decode(charset).encode('utf8')))
+
     print '\t'.join(newline)
   else:
     sys.stderr.write('Wrong line: '+line.strip()+'\n')
