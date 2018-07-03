@@ -1,11 +1,11 @@
 #!__ENV__ __PYTHON__
 
-#
-# 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a dictionary. It is possible to provide two ridx files and combine them
-# 2. The name of the aligned files are provided together with the clean text in base64 following this format:
+# 1. Two RIDX files and and LETT file are taken as the input by this script. LETT contains information about all the files in the website. Each RIDX files contains, for each document in a language, the list of most promising files in another language to be parallel and a confidence score.
+# 2. RIDX files are read and most promising document pairs are aligned.
+# 3. The output of the script is a tab-separated file where each line contains the URLs of both files and their content (in plain text) encoded in base64
 # 
 # Output format:
-#   file_lang1	file_lang2	cleantext_encoded_base64_lang1	cleantext_encoded_base64_lang2
+#   file_lang1	file_lang2	plaintext_encoded_base64_lang1	plaintext_encoded_base64_lang2
 #
 
 import sys

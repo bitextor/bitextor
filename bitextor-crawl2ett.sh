@@ -43,20 +43,16 @@ case $# in
     ;;
 esac
 
-# Código aquí
 
 #
-# 1. Eliminar ficheros repetidos -> (log)
-# 2. Obtener tipo y codificación de ficheros
-# 3. Quedarse solo con los que tengan tipo html
-# 4. Convertir [no UTF-8 -> UTF-8], si hay error -> (log)
-# 5. Corregir errores HTML usando Tidy y eliminar las cabeceras HTML
-# 6. Incluir el contenido del fichero en base64
+# 1. Duplicate files are deleted (reporthed through STDERR)
+# 2. Guessing MIME type and encoding
+# 3. Keeping only XML/HTML files
+# 4. Normalizing XML/HTML with Tika and converting encoding into UTF-8
+# 5. Adding file content encoded with base64
 #
-# Formato final del documento:
+# Output format (ETT):
 # encoding	mimetype	url	content(base_64)
-#
-# Genera .ett -> encoded and typed text
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding

@@ -1,7 +1,7 @@
 #!__ENV__ __PYTHON__
 
 #
-# 1. All the alignments produced by hunalign are checked and those with a confidence score lower than a given threshold are discarded (also those unaligned segments are discarded)
+# 1. All the alignments produced by bitextor-alignsegments are checked and those with an alignemnt confidence score lower than a given threshold are discarded (also those unaligned segments are discarded)
 # 2. If, for a same document pair, a worng-alignment threshold is reached, the whole document pair is discarded
 #
 # Formato final del documento:

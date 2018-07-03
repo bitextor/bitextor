@@ -48,7 +48,6 @@ docnumber = 0
 word_map = {}
 
 punctuation=get_unicode_punct()
-#sys.stderr.write(punctuation+"\n")
 for line in reader:
   ##################
   #Parsing the text:
@@ -73,7 +72,6 @@ for line in reader:
         text =  re.sub(r"\^\*?", r"", re.sub(r"[/<][^$]*\$", r"", morph_stdout.decode("utf-8")))
     #Getting the bag of words in the document
     sorted_uniq_wordlist = set(" ".join(wordpunct_tokenize(text)).lower().split())
-    #sorted_uniq_wordlist = set(" ".join(PunktWordTokenizer().tokenize(text)).lower().split())
     #Trimming non-aplphanumerics:
     clean_sorted_uniq_wordlist = filter(None, [w.strip(punctuation) for w in sorted_uniq_wordlist])
     sorted_uniq_wordlist=clean_sorted_uniq_wordlist

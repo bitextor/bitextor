@@ -3,7 +3,7 @@
 import sys
 import argparse
 
-oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor pipeline and add stats from ILSP-FC")
+oparser = argparse.ArgumentParser(description="Script that reads takes a list of aligned segments, such as that produced by bitextor-alignsegments script, and computes the basic ELRC quality metrics: number of tokens in lang1/lang2 and length ratio.")
 oparser.add_argument('aligned_seg', metavar='FILE', nargs='?', help='File containing the set of aliged segments (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("-s", "--stats", help="Print stats or just output the input", action="store_true", dest="isPrintingStats", default=False)
 oparser.add_argument("-f", "--filtering", help="Filter lines according to ELRC rules (printing stats required)", action="store_true", dest="isFiltering", default=False)

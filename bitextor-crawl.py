@@ -6,6 +6,10 @@
 # in the Creepy project, by Wei-Ning Huang (AZ) <aitjcize@gmail.com>
 # and is distributed under GPLv3 license.
 #
+# The script allows to crawl a website. It takes, as the input, a URL
+# and a nubmer of optional parameters (use option -h for more details).
+# The output is a tab-separated file with one docuemnt per line, containing
+# first the content of the document encoded in base64 and the original URL 
 
 import httplib
 import logging

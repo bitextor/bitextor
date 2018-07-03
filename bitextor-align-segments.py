@@ -23,13 +23,11 @@ import subprocess
 import re
 import pickle
 import codecs
-#from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 from nltk.tokenize import sent_tokenize
 import site
 site.addsitedir('__PYTHONPATH__')
 import ulysses
-#from segtok.segmenter import split_multi
 from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages

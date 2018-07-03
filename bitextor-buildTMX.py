@@ -1,10 +1,13 @@
 #!__ENV__ __PYTHON__
 
 #
-# 1. The tool reads as an imput the output of bitextor-cleanalignments and formats it in TMX format
-#
-# Input format:
-# uri1    uri2    text1    text2
+# 1. The tool takes the output of bitextor-cleanalignments and formats it in TMX format
+# 2. Option -c allows to define what is expected to find in each field of the input, which makes this script flexible about the expected fields.
+# Default input format:
+# url1    url2    seg1    seg2    hunalign    zipporah    bicleaner    lengthratio    numTokensSL    numTokensTL    idnumber
+# where url1 and url2 are the URLs of the document, seg1 and seg2 are the aligned pair of segments, hunalign and zipporah are quality metrics
+# (in this case, provided by these two tools), lengthratio is the ratio between the word-length of seg1 and seg2, numTokensSL and numTokensTL is
+# the number of tokens in each segment and idnumber is the value to be assigned to each TU id parameter.
 #
 
 import sys

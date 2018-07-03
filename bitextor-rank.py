@@ -1,18 +1,14 @@
 #!__ENV__ __PYTHON__
 
 #
-# 1. Leer .lettr y cargarlo en memoria
-# 2. Leer .ridx e ir haciendo distancia de edicion
-# 3. Con el porcentaje de parecido anterior y el nuevo se realiza:
-#      nuevo_porcentaje = ant_porcentaje * dist_porcentaje
-#    donde:
-#      dist_porcentaje = longitud(raspa1) / (longitud(raspa1) + dist)
-# 4. Se muestran los 10 documentos con los porcentajes actualizados
+# 1. Reads LETT file and stores it as a dict object in python
+# 2. Reads RIDX file
+# 3. Uses a regressor to combine all the scores (features) assigned to each pair of documents and obtain a similarity metric that combines all of them
+# 4. Producing a new RIDX file that contains a single score for each pair of documents
 #
-# Formato final del documento:
-# num_doc_lang1    [num_doc_lang2:ratio]+
+# Expected input format:
+# num_doc_lang1    [num_doc_lang2:score1:score2:score3...]+
 #
-# Genera .ridx -> reverse index
 #
 
 import sys
