@@ -12,6 +12,9 @@ import hashlib
 import base64
 import argparse
 
+reload(sys)
+sys.setdefaultencoding("UTF-8")
+
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl2ett and removes duplicate files.")
 oparser.add_argument('ett', metavar='ETT', nargs='?', help='Output of the bitextor-crawl2ett script (in format ETT).', default=None)
 options = oparser.parse_args()
