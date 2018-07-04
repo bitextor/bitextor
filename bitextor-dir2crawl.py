@@ -1,6 +1,6 @@
 #!__ENV__ __PYTHON__
 
-
+import re
 import sys
 import magic
 import base64
@@ -20,18 +20,23 @@ else:
 
 m=magic.open(magic.MAGIC_NONE)
 m.load()
+url=""
 for line in reader:
   fields=line.strip().split('\t')
   if len(fields)>=3:
     filepath=fields[2]
     with open(filepath, 'r') as content_file:
       content = content_file.read()
+    for line in content.split("\n"):
+      if re.search(r'<!-- Mirrored from ', line):
+        url = re.sub(r'.*<!-- Mirrored from ', '', re.sub(r' by HTTrack Website Copier.*', '', line))
+        break
     mime=fields[0]
     encoding=fields[1]
     newline = []
     newline.append(mime)
     newline.append(encoding)
-    newline.append(filepath.replace('$WEBDIR/',''))
+    newline.append(url)
     newline.append(base64.b64encode(content.decode(encoding.split('=')[1].replace('unknown-8bit','iso-8859-1')).encode('utf8')))
     print '\t'.join(newline)
   else:

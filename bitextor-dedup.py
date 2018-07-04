@@ -19,13 +19,13 @@ oparser = argparse.ArgumentParser(description="Script that takes the output of b
 oparser.add_argument('ett', metavar='ETT', nargs='?', help='Output of the bitextor-crawl2ett script (in format ETT).', default=None)
 options = oparser.parse_args()
 
-if options.crawl == None:
+if options.ett == None:
   reader = sys.stdin
 else:
-  reader = open(options.crawl,"r")
+  reader = open(options.ett,"r")
 
 seen_md5={}
-for i in sys.stdin:
+for i in reader:
   fields = i.strip().split("\t")
   try:
     e = base64.b64encode(fields[4])

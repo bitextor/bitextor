@@ -50,5 +50,5 @@ esac
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
 find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | grep -E "(text/html;|text/xml;)" | \
-gawk '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | grep -v 'hts-cache' | __PREFIX__/bin/bitextor-dir2crawl | \ 
+gawk '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | grep -v 'hts-cache' | __PREFIX__/bin/bitextor-dir2crawl | \
 java -jar __PREFIX__/share/java/piped-tika.jar 2> /dev/null | java -jar __PREFIX__/share/java/piped-boilerpipe.jar 2> /dev/null | __PREFIX__/bin/bitextor-dedup > $OUTPUT
