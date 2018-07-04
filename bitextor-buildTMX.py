@@ -15,9 +15,22 @@ import argparse
 import time
 import locale
 import re
+from xml.sax.saxutils import escape
 
 reload(sys)
 sys.setdefaultencoding("UTF-8")
+
+def printseg(lang, columns, url, seg, fieldsdict, mint):
+  infoTag=[]
+  print "    <tuv xml:lang=\""+lang+"\">"
+  if "url1" in columns:
+    print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
+  print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
+  if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(mint):
+    infoTagSL.append("very short segments, shorter than "+str(options.mint))
+  if len(infoTag) > 0:
+    print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
+  print "    </tuv>"
 
 oparser = argparse.ArgumentParser(description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX translation memory.")
 oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, the script will read from standard input)', default=None)
@@ -71,27 +84,10 @@ for line in reader:
     infoTag.append("equal TUVs")
   if len(infoTag) > 0:
     print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
-    
-  infoTagSL=[]
-  infoTagTL=[]
-  print "    <tuv xml:lang=\""+options.lang1+"\">"
-  if "url1" in columns:
-    print "     <prop type=\"source-document\">"+fieldsdict['url1'].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
-  print "     <seg>"+fieldsdict['seg1'].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
-  if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(options.mint):
-    infoTagSL.append("very short segments, shorter than "+str(options.mint))
-  if len(infoTagSL) > 0:
-    print "    <prop type=\"info\">"+"|".join(infoTagSL)+"</prop>"
-  print "    </tuv>"
-  print "    <tuv xml:lang=\""+options.lang2+"\">"
-  if "url2" in columns:
-    print "     <prop type=\"source-document\">"+fieldsdict["url2"].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>"
-  print "     <seg>"+fieldsdict["seg2"].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>"
-  if "numTokensTL" in fieldsdict and fieldsdict["numTokensTL"] != "" and int(fieldsdict["numTokensTL"])<int(options.mint):
-    infoTagTL.append("very short segments, shorter than "+str(options.mint))
-  if len(infoTagTL) > 0:
-    print "    <prop type=\"info\">"+"|".join(infoTagTL)+"</prop>"
-  print "    </tuv>"
+
+  printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint)
+  printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint)
+  
   print "   </tu>"
 print " </body>"
 print "</tmx>"
