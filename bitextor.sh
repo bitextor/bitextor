@@ -392,7 +392,7 @@ align_documents_and_segments(){
     mkfifo $index_pipe2
 
     INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
-    cat $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+    zcat -fq $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
