@@ -45,7 +45,7 @@ case $# in
 esac
 
 export LC_ALL=C
-cat $FILE | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
+cat $FILE | __JAVA__ -Dfile.encoding=utf-8 -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
 __PYTHON__ -c '
 #
 # 1. Read lines from .ett file
