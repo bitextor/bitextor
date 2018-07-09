@@ -37,7 +37,8 @@ for line in reader:
     newline.append(mime)
     newline.append(encoding)
     newline.append(url)
-    newline.append(base64.b64encode(content.decode(encoding.split('=')[1].replace('unknown-8bit','iso-8859-1')).encode('utf8')))
+    charset = encoding.split('=')[1].replace('unknown-8bit','iso-8859-1').replace('us-ascii','iso-8859-1')
+    newline.append(base64.b64encode(content.decode(charset).encode('utf8')))
     print '\t'.join(newline)
   else:
     sys.stderr.write('Wrong line: '+line.strip()+'\n')
