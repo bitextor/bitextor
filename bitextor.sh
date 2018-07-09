@@ -205,8 +205,8 @@ exit_program()
 }
 
 run_bitextor_ett(){
-  zcat -f $1 | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t | \
-  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+  zcat -f $1 | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
   if [ "$ONLYLETT" != "" ]; then
     cat $LETT
   else
@@ -258,8 +258,8 @@ run_bitextor(){
     trap "trapsigint $crawl_pid" SIGUSR1
     if [ "$ONLYCRAWL" == "" ] ; then
       __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-      __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t | \
-      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+      __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
+      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
     else
       cat $tmpcrawl
     fi
@@ -271,8 +271,8 @@ run_bitextor(){
     if [ "$ONLYCRAWL" == "" ] ; then
       if [ "$USEJHULETT" == "0" ]; then
         __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-        __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t | \
-        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
+        __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
+        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
       else
         TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
         tar czf $TARNAME -C $DIRNAME/ .
@@ -393,7 +393,7 @@ align_documents_and_segments(){
     mkfifo $index_pipe2
 
     INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
-    zcat -fq $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+    zcat -f $LETT | __PREFIX__/bin/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     __PREFIX__/bin/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
