@@ -27,7 +27,7 @@ def printseg(lang, columns, url, seg, fieldsdict, mint):
     print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
   print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
   if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(mint):
-    infoTagSL.append("very short segments, shorter than "+str(options.mint))
+    infoTag.append("very short segments, shorter than "+str(options.mint))
   if len(infoTag) > 0:
     print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
   print "    </tuv>"

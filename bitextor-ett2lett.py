@@ -39,7 +39,6 @@ for line in reader:
   #decoding the b64 original webpage
   if len(linefields)>=5:
     parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
-
     if len(parsed_text)>0:
       #detecting language
       lang, conf = langid.classify(parsed_text)
@@ -48,4 +47,4 @@ for line in reader:
         e = base64.b64encode(parsed_text.encode("utf-8"))
         del linefields[-1]
         linefields.append(e)
-print "\t".join(linefields) 
+        print "\t".join(linefields) 
