@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 #
-# 1. File .lett is processed to obtain a representation of the structure formatted as a string (here called 'raspa'), containing both html tags and the number of words in the text blocks
-# 2. The final representation is added to the output together with the input elements
+# 1. File .lett is processed to obtain a representation of the structure formatted as a string (here called 'raspa'). This 'raspa' provides a simple representation containing HTML tags and text length in the form of a string, which allows easy to apply distance metrics such as Levenshtain's distance.
+# 2. The final representation is added to each line as an additional field
 #
 # Final output format:
 # language	encoding	mimetype	url	content(base_64)	raspa
 #
-# Generates a .lettr -> language encoded and typed text with raspa
 #
 
   # Se decodifica el base64

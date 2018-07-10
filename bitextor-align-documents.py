@@ -1,11 +1,11 @@
 #!__ENV__ __PYTHON__
 
-#
-# 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a dictionary. It is possible to provide two ridx files and combine them
-# 2. The name of the aligned files are provided together with the clean text in base64 following this format:
+# 1. Two RIDX files and and LETT file are taken as the input by this script. LETT contains information about all the files in the website. Each RIDX files contains, for each document in a language, the list of most promising files in another language to be parallel and a confidence score.
+# 2. RIDX files are read and most promising document pairs are aligned.
+# 3. The output of the script is a tab-separated file where each line contains the URLs of both files and their content (in plain text) encoded in base64
 # 
 # Output format:
-#   file_lang1	file_lang2	cleantext_encoded_base64_lang1	cleantext_encoded_base64_lang2
+#   file_lang1	file_lang2	plaintext_encoded_base64_lang1	plaintext_encoded_base64_lang2
 #
 
 import sys
@@ -37,17 +37,17 @@ else:
 
 indices = {}
 indicesProb = {}
-documentos = {}
+documents = {}
 documentsFile2=set()
 
 # File .lett is read extracting the URL and the base64 encoded content
-contador = 1
+counter = 1
 file = open(options.lettr,"r")
 for j in file:
-  campos = j.split("\t")
-  if len(campos) > 4:
-    documentos[contador] = (campos[3], campos[5]) # URL parsed_text_base64
-  contador += 1
+  fields = j.split("\t")
+  if len(fields) > 4:
+    documents[counter] = (fields[3], fields[5]) # URL parsed_text_base64
+  counter += 1
 file.close()
 
 ### PLEASE DELETE THE 'COMBINE' CODE, NOT SUPPORTED ANYMORE
@@ -149,7 +149,7 @@ else:
     pairedDocs.update(pairedDocsLine)
 
     if options.nonsymmetric:
-      for document in sorted(list(set(documentos.keys())-pairedDocs)): #We now print the relationships of the first read relationships file with unpaired documents
+      for document in sorted(list(set(documents.keys())-pairedDocs)): #We now print the relationships of the first read relationships file with unpaired documents
         if int(document) in best_ridx2 and len(best_ridx2[int(document)]) >= 1:
           new_candidate_list=best_ridx2[int(document)]
           candidateDocuments.append(len(new_candidate_list))
@@ -175,11 +175,11 @@ else:
     options.oridx.close()
 
 for k in indices:
-  if indices[k] in list(documentos.keys()):
+  if indices[k] in documents.keys():
     if indices[k] in documentsFile2: #Write the output keeping the language documents always in the same order (this is done because of the non-symmetric option that causes swaps in the last algorithm)
-      print("{0}\t{1}\t{2}\t{3}".format(documentos[k][0], documentos[indices[k]][0], documentos[k][1], documentos[indices[k]][1]))
+      print("{0}\t{1}\t{2}\t{3}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1]))
     else:
-      print("{1}\t{0}\t{3}\t{2}".format(documentos[k][0], documentos[indices[k]][0], documentos[k][1], documentos[indices[k]][1]))
+      print("{1}\t{0}\t{3}\t{2}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1]))
     if not options.nonsymmetric:
-      del documentos[k]
+      del documents[k]
 

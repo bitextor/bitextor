@@ -54,11 +54,19 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
 - **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
 
-We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install all the basic libraries at the same time, you can simply run:
+We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip3 install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
+`user@pc:~$ sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
 
-Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are more updated.
+To ensure you are using the minimum required versions of the needed libraries, if you didn't run the previous command, you should run:
+
+`user@pc:~$ sudo pip install -r requirements.txt`
+
+If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0), also do that if you are using an [AMD CPU and you are having errors when importing](https://github.com/tensorflow/tensorflow/issues/17411):
+
+`sudo pip install tensorflow==1.4.1`
+
+Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
 
 
 ### Optional dependences
@@ -69,8 +77,11 @@ In case you want to use HTTrack instead of integrated Creepy crawler just:
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
 
 For the alternative HTTrack to [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) process script named with `--jhu-lett`, some Python 2 dependences are needed:
+
 `sudo pip3 install html2text bs4`
-`sudo CFLAGS="-Wno-narrowing" pip3 install cld2-cffi`
+
+`sudo CFLAGS="-Wno-narrowing" pip3 install --upgrade cld2-cffi`
+
 ```bash
 wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
 tar xzvf chared-1.2.2.tar.gz
@@ -81,9 +92,10 @@ python3 setup.py install
 For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
 
 For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
-`sudo pip3 install matplotlib sklearn numpy && sudo apt install python3-tk`
 
-For optional document aligner from JHU read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
+`sudo pip3 install --upgrade matplotlib sklearn numpy && sudo apt install python3-tk`
+
+For optional document aligner from Paracrawl team read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
 
 ## Install
 

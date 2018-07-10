@@ -1,0 +1,16 @@
+bs4==0.0.1
+cld2-cffi==0.1.4
+h5py==2.8.0
+html2text==2018.1.9
+iso-639==0.4.5
+Keras==2.2.0
+langid==1.1.6
+matplotlib==2.2.2
+nltk==3.3
+numpy==1.14.5
+python-Levenshtein==0.12.0
+regex==2018.6.9
+scikit-learn==0.19.1
+scipy==1.1.0
+sklearn==0.0
+tensorflow==1.8.0
