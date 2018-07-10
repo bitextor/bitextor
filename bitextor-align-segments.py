@@ -61,13 +61,13 @@ def trainSegmenters(reader, l1, l2):
   reader_list=[]
 
   try:
-    mitok_l1=pickle.load(gzip.open("/lustre/home/dc007/lpla/local-test/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
+    mitok_l1=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
   except:
     mitok_l1=ulysses.Ulysses()
     mitok_l1.init_model()
   
   try:
-    mitok_l2=pickle.load(gzip.open("/lustre/home/dc007/lpla/local-test/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
+    mitok_l2=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
   except:
     mitok_l2=ulysses.Ulysses()
     mitok_l2.init_model()
