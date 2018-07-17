@@ -13,3 +13,6 @@
 [submodule "document-aligner"]
 	path = document-aligner
 	url = https://github.com/paracrawl/document-aligner.git
+[submodule "share/nonbreaking_prefixes"]
+	path = share/nonbreaking_prefixes
+	url = https://github.com/bitextor/nonbreaking_prefixes
