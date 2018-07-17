@@ -35,7 +35,7 @@ from iso639 import languages
 
 def runAligner(filename1, filename2, dic):
   # option -ppthresh=10?
-  if dic == None:
+  if dic == None or dic == "":
     hunalign = ["__PREFIX__/bin/hunalign", "-realign", "/dev/null", filename1, filename2]
   else:
     hunalign = ["__PREFIX__/bin/hunalign", dic, filename1, filename2]
