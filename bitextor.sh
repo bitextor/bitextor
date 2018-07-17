@@ -99,9 +99,9 @@ exit_program()
 {
   #echo "USAGE: $1 [-d dirname] [-l file] [-i index] [-r revindex] [-m max_lines]"
   #echo "          [-q min_quality] [url] lang1 lang2"
-  echo "USAGE: $1 [OPTIONS] -u URL -e FILE -v VOCABULARY LANG1 LANG2"
-  echo "USAGE: $1 [OPTIONS] -U FILE        -v VOCABULARY LANG1 LANG2"
-  echo "USAGE: $1 [OPTIONS] -e FILE        -v VOCABULARY LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -u URL -e FILE [-v VOCABULARY] LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -U FILE        [-v VOCABULARY] LANG1 LANG2"
+  echo "USAGE: $1 [OPTIONS] -e FILE        [-v VOCABULARY] LANG1 LANG2"
   echo ""
   echo "WHERE:"
   echo "  -F configfile     (--config-file) path of the configuration file with Bitextor options."
@@ -368,8 +368,11 @@ align_documents_and_segments(){
   rm $output_pipe
   mkfifo $output_pipe
 
-  HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-  tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
+  if [ "$VOCABULARY" != "" ]; then
+    HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
+    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
+  fi
+
   if [ "$TRANSLATIONCOMMAND" != "" ]; then
     cat $LETT > $LETT.txt
     DOCALIGNTEMP=$(mktemp -d $BUILDDICTTMP/docaligntemp.XXXXXX)
@@ -379,7 +382,7 @@ align_documents_and_segments(){
         clean_segments > $output_pipe &
     else
         __PREFIX__/bin/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -d -w $DOCALIGNTEMP 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
+        __PREFIX__/bin/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d "$HUNALIGN_DIC" $USENLTK > $output_pipe &
     fi
   elif [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
     #Named pipe for paralelising obtaining the initial index for the ridx 1
@@ -481,7 +484,9 @@ align_documents_and_segments(){
   fi
   convert_to_tmx < $output_pipe > $OUTPUT
 
-  rm $HUNALIGN_DIC
+  if [ "$HUNALIGN_DIC" != "" ]; then
+    rm $HUNALIGN_DIC
+  fi
 
   rm -Rf $TMPLETTR $TMPRINDEX $output_pipe $RINDEX1 $MORPH1 $MORPH2 $RINDEX2 $DOCALIGNTEMP
 }
@@ -792,19 +797,21 @@ case $# in
   2)
     LANG1="$1"
     LANG2="$2"
-    if [[ -z $VOCABULARY ]]; then
+    if [[ -z "$VOCABULARY" && "$TRANSLATIONCOMMAND" == "" ]]; then
       echo "THE VOCABULARY FILE WAS NOT SET: USE OPTION -v"
       exit_program $(basename $0)
     fi
-    LANG1INVOC=$(head -n 1 $VOCABULARY | cut -f 1)
-    LANG2INVOC=$(head -n 1 $VOCABULARY | cut -f 2)
-    if [ "$LANG1" != "$LANG1INVOC" -a "$LANG1" != "$LANG2INVOC" ]; then
-      echo -e "\nLANGUAGE \"$LANG1\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
-      exit_program $(basename $0)
-    fi
-    if [ "$LANG2" != "$LANG1INVOC" -a "$LANG2" != "$LANG2INVOC" ]; then
-      echo -e "\nLANGUAGE \"$LANG2\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
-      exit_program $(basename $0)
+    if [ "$VOCABULARY" != "" ]; then
+      LANG1INVOC=$(head -n 1 $VOCABULARY | cut -f 1)
+      LANG2INVOC=$(head -n 1 $VOCABULARY | cut -f 2)
+      if [ "$LANG1" != "$LANG1INVOC" -a "$LANG1" != "$LANG2INVOC" ]; then
+        echo -e "\nLANGUAGE \"$LANG1\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
+        exit_program $(basename $0)
+      fi
+      if [ "$LANG2" != "$LANG1INVOC" -a "$LANG2" != "$LANG2INVOC" ]; then
+        echo -e "\nLANGUAGE \"$LANG2\" COULD NOT BE FOUND IN LEXICON \"$VOCABULARY\"; REMEMBER TO USE ISO 639-1 LANGUAGE CODES BOTH IN THE FIRST LINE OF THE LEXICON AND THE LANGUAGES CODES WHEN RUNNING BITEXTOR\n"
+        exit_program $(basename $0)
+      fi
     fi
     ;;
   *)
@@ -856,8 +863,10 @@ case $INPUTMODE in
     run_bitextor_lett $LETT
     ;;
   5)
-    TEMPHUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $TEMPHUNALIGN_DIC
+    if [ "$VOCABULARY" != "" ]; then
+      TEMPHUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
+      tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $TEMPHUNALIGN_DIC
+    fi
     cat $ALIGNEDDOCINPUT | align_segments $TEMPHUNALIGN_DIC | clean_segments | convert_to_tmx
     rm -rf $TEMPHUNALIGN_DIC
     ;;
