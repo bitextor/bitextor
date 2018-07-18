@@ -33,7 +33,7 @@ compile-hunalign:
 	cd hunalign/src/hunalign && make 
 
 compile-zipporah:
-	cd zipporah && g++ generate-bow-xent.cc -o generate-bow-xent -std=c++11
+	cd zipporah/zipporah/tools && g++ generate-bow-xent.cc -o ../../generate-bow-xent -std=c++11
 
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
