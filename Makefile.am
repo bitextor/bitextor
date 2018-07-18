@@ -32,9 +32,6 @@ compile-smttools:
 compile-hunalign:
 	cd hunalign/src/hunalign && make 
 
-compile-zipporah:
-	cd zipporah/zipporah/tools && g++ generate-bow-xent.cc -o ../../generate-bow-xent -std=c++11
-
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
@@ -56,7 +53,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign
 
-bitextor: bitextor.sh compile-smttools compile-hunalign compile-zipporah
+bitextor: bitextor.sh compile-smttools compile-hunalign
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
