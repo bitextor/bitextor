@@ -16,3 +16,6 @@
 [submodule "share/nonbreaking_prefixes"]
 	path = share/nonbreaking_prefixes
 	url = https://github.com/bitextor/nonbreaking_prefixes
+[submodule "zipporah/zipporah"]
+	path = zipporah/zipporah
+	url = https://github.com/hainan-xv/zipporah
