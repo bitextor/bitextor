@@ -292,7 +292,7 @@ run_bitextor(){
     if [ "$DIRNAME" != "" ]; then
       rm -r $DIRNAME
     fi
-  else
+  elif [ "$ONLYLETT" != "" ]; then
     cat $LETT
   fi
 
