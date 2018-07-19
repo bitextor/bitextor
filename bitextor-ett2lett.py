@@ -42,7 +42,7 @@ for line in reader:
       lang, conf = langid.classify(parsed_text)
       if len(langs)==0 or lang in langs:
         linefields.insert(0,lang)
-        e = base64.b64encode(parsed_text.encode("utf-8")).decode("utf8")
+        e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
         del linefields[-1]
         linefields.append(e)
         print("\t".join(linefields))
