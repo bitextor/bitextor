@@ -3,7 +3,7 @@ import time
 import hashlib
 import base64
 import html5lib
-
+from lxml import etree
 
 def getWordStandoff(element,document,positionsdict):
     """Returns a list with word standoff annotations of a tree element of lxml
@@ -42,7 +42,7 @@ def getDocumentStandoff(document):
     """
     docstandoff=[]
     positions=dict()
-    for element in document.iter():
+    for element in document.iter(tag=etree.Element):
         wordstandoff = getWordStandoff(element,document,positions)
         if wordstandoff:
             docstandoff=docstandoff+wordstandoff
