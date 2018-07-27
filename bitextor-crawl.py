@@ -424,6 +424,9 @@ if not options.URL.startswith("http"):
   if options.URL.find("://") != -1:
     sys.stderr.write("Error: '"+options.URL.split("://")[0]+"' is not a valid protocol; you should use either 'http' or 'https'\n")
     sys.exit(-1)
+  else:
+    sys.stderr.write("No protocol provided in URL -- assuming http\n")
+    options.URL = "http://" + options.URL
 
 crawler = MyCrawler()
 crawler.set_concurrency_level(options.jobs)
