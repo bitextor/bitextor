@@ -258,6 +258,8 @@ class WagnerFischer(object):
             yield i - 1, j, self[i - 1][j], path_back + ["D"]
         elif op == "S":
             yield i - 1, j - 1, self[i - 1][j - 1], path_back + ["S"]
+        elif op == "O":
+            return  # Origin cell, so we're done
 
     def alignments(self):
         """
