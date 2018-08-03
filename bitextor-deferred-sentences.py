@@ -14,8 +14,8 @@ with open(sys.argv[1],'r') as reader:
 
 for line in sys.stdin:
     fields = line.split('\t')
-    shortpathSL=WagnerFischer(fields[2].split(),str(etree.tostring(documentStandoff[fields[0]][0], encoding='utf8', method="text")).split()).optimum_alignments()
-    shortpathTL=WagnerFischer(fields[3].split(),str(etree.tostring(documentStandoff[fields[1]][0], encoding='utf8', method="text")).split()).optimum_alignments()
+    shortpathSL=WagnerFischer(fields[2].split(' '),str(etree.tostring(documentStandoff[fields[0]][0], encoding='utf8', method="text")).split()).optimum_alignments()
+    shortpathTL=WagnerFischer(fields[3].split(' '),str(etree.tostring(documentStandoff[fields[1]][0], encoding='utf8', method="text")).split()).optimum_alignments()
         
     #print(len([ x for x in WagnerFischer(fields[2].split(),str(etree.tostring(documentStandoff[fields[0]][0], encoding='utf8', method="text")).split()).optimum_alignments() if x != "I" ]))
     #print(WagnerFischer(fields[3].split(),str(etree.tostring(documentStandoff[fields[1]][0], encoding='utf8', method="text")).split()).alignments())
