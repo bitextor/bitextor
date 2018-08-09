@@ -46,7 +46,8 @@ Some external Python libraries should also be installed before starting the inst
 - **numpy**: Python package for scientific computing with Python.
 - **keras**: Python package for implementing neural networks for deep learning.
 - **h5py**: Pythonic interface to the HDF5 binary data format.
-- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
+- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
+using `pip install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
 - **iso-639**: Python package to convert between language names and ISO-639 codes
 
 Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
