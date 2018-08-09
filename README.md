@@ -27,7 +27,7 @@ The tool works following a sequence of steps (scripts sorted by default use):
 It is worth noting that each of these steps can be run separately.
 
 
-## Dependences
+## Dependencies
 
 Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. Also **maven** for some dependencies. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
 
