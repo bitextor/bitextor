@@ -21,7 +21,7 @@ def getWordStandoff(element,document,positionsdict):
                 continue
             else:
                 #For every space separated word inside the tag, create a standoff annotation with the path from root, remove the w3 note from tag and the initial and final character positions. Then, update the position pointer
-                standoff.append(document.getelementpath(element).replace('{http://www.w3.org/1999/xhtml}','')+':'+str(wordposition)+"-"+str(wordposition+len(word)-1))
+                standoff.append(document.getelementpath(element)+':'+str(wordposition)+"-"+str(wordposition+len(word)-1))
                 wordposition=wordposition+len(word)
     if element.tail != None:        #If we have tail text (text after the closing tag until the next open/close tag)
         wordpositionparent=positionsdict[element.getparent()]       #Pointer of actual start word character outside the element tag (tail), which belongs to the parent tag
@@ -32,7 +32,7 @@ def getWordStandoff(element,document,positionsdict):
                 continue
             else:
                 #Generate word standoff annotation in the same way as the text inside the tag
-                standoff.append(document.getelementpath(element.getparent()).replace('{http://www.w3.org/1999/xhtml}','')+':'+str(wordpositionparent)+"-"+str(wordpositionparent+len(word)-1))
+                standoff.append(document.getelementpath(element.getparent())+':'+str(wordpositionparent)+"-"+str(wordpositionparent+len(word)-1))
                 wordpositionparent=wordpositionparent+len(word)
         positionsdict[element.getparent()]=wordpositionparent       #Update the pointer dictionary with the parent pointer
     positionsdict[element]=wordposition     #Insert the element pointer in the pointer dictionary (for future children with tail text)
