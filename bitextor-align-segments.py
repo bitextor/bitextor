@@ -102,7 +102,7 @@ def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, mitok, 
         except LookupError:
           # No language-specific sentence splitter available
           for seg in sent_tokenize(trimorigseg):
-            tmp_file1_origtext.write(seg+"\n")
+            tmp_file_origtext.write(seg+"\n")
             tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
       else:
         for seg in splitSegs(mitok, trimorigseg):
@@ -171,7 +171,7 @@ oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the 
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
 oparser.add_argument("--nltk" , help="Use NLTK sentence splitter instead of Ulysses", dest="useNltkSentTok", action="store_true")
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
-oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
+oparser.add_argument("-t", "--tmp-dir", help="Temporary directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)
 oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL", dest="morphanal2", default=None)
 
