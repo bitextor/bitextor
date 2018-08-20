@@ -26,6 +26,7 @@ import codecs
 from nltk import wordpunct_tokenize
 from nltk.tokenize import sent_tokenize
 import site
+import traceback
 site.addsitedir('__PYTHONPATH__')
 import ulysses
 from tempfile import NamedTemporaryFile
@@ -87,6 +88,32 @@ def trainSegmenters(reader, l1, l2):
   mitok_l2.update_model()
 
   return mitok_l1, mitok_l2, reader_list
+
+def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, mitok, morphanal, useNltkSentTok):
+  tmp_tok_segs=[]
+  for origseg in base64.b64decode(encodedtext).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
+            tmp_file_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+        except LookupError:
+          # No language-specific sentence splitter available
+          for seg in sent_tokenize(trimorigseg):
+            tmp_file1_origtext.write(seg+"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      else:
+        for seg in splitSegs(mitok, trimorigseg):
+          tmp_file_origtext.write(seg+"\n")
+          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+
+  tokenized_text=u"\n".join(tmp_tok_segs)
+  if morphanal != None:
+    morphanalyser = ["__BASH__", morphanal]
+    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
+  tmp_file.write(tokenized_text.lower()+"\n")
 
 def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
   filereader1=open(file1orig, "r")
@@ -157,6 +184,7 @@ if options.aligned_docs == None:
 else:
   reader = open(options.aligned_docs,"r")
 
+mitok_l1,mitok_l2=None,None
 if not useNltkSentTok:
   if options.aligned_docs == None:
     reader = sys.stdin
@@ -180,53 +208,9 @@ for line in reader_list:
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-  tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
-    trimorigseg=origseg.strip()
-    if trimorigseg != "":
-      if useNltkSentTok:
-        try:
-          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang1).name.lower()):
-            tmp_file1_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-        except LookupError:
-          for sentence in sent_tokenize(trimorigseg):
-            tmp_file1_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-      else:
-        for seg in splitSegs(mitok_l1, trimorigseg):
-          tmp_file1_origtext.write(seg+"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
 
-  tokenized_text=u"\n".join(tmp_tok_segs)
-  if options.morphanal1 != None:
-    morphanalyser = ["__BASH__", options.morphanal1]
-    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file1.write(tokenized_text.lower()+"\n")
-
-  tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
-    trimorigseg=origseg.strip()
-    if trimorigseg != "":
-      if useNltkSentTok:
-        try:
-          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang2).name.lower()):
-            tmp_file2_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-        except LookupError:
-          for sentence in sent_tokenize(trimorigseg):
-            tmp_file2_origtext.write(seg+"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-      else:
-        for seg in splitSegs(mitok_l2, trimorigseg):
-          tmp_file2_origtext.write(seg+"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-   
-  tokenized_text=u"\n".join(tmp_tok_segs)
-  if options.morphanal2 != None:
-    morphanalyser = ["__BASH__", options.morphanal2]
-    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file2.write(tokenized_text.lower()+"\n")
+  extract_encoded_text(encodedtext1, options.lang1, tmp_file1, tmp_file1_origtext, mitok_l1, options.morphanal1, useNltkSentTok)
+  extract_encoded_text(encodedtext2, options.lang2, tmp_file2, tmp_file2_origtext, mitok_l2, options.morphanal2, useNltkSentTok)
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
