@@ -9,7 +9,7 @@ with open(sys.argv[1],'r') as reader:
     for line in reader:
         fields = line.split('\t')
         fields = list(map(str.strip, fields))
-        document = html5lib.parse(base64.b64decode(fields[0]),treebuilder="lxml")
+        document = html5lib.parse(base64.b64decode(fields[0]),treebuilder="lxml",namespaceHTMLElements=False)
         documentStandoff[fields[1]]=(document,fields[4].split(';'))
 
 for line in sys.stdin:

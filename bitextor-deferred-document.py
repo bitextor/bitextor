@@ -56,6 +56,6 @@ for line in sys.stdin:
     fields = list(map(str.strip, fields)) #Strip all elements
     fields.append(str(time.time())) #Timestamp
     fields.append(hashlib.md5(base64.b64decode(fields[0])).hexdigest()) #MD5 document checksum
-    document = html5lib.parse(base64.b64decode(fields[0]),treebuilder="lxml") #We use lxml treebuilder because of getelementpath function and iteration through elements
+    document = html5lib.parse(base64.b64decode(fields[0]),treebuilder="lxml",namespaceHTMLElements=False) #We use lxml treebuilder because of getelementpath function and iteration through elements
     fields.append(";".join(getDocumentStandoff(document)))
     print('\t'.join(fields))
