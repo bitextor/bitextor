@@ -26,6 +26,7 @@ import codecs
 from nltk import wordpunct_tokenize
 from nltk.tokenize import sent_tokenize
 import site
+import traceback
 site.addsitedir('__PYTHONPATH__')
 import ulysses
 from tempfile import NamedTemporaryFile
@@ -86,6 +87,32 @@ def trainSegmenters(reader, l1, l2):
 
   return mitok_l1, mitok_l2, reader_list
 
+def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, mitok, morphanal, useNltkSentTok):
+  tmp_tok_segs=[]
+  for origseg in base64.b64decode(encodedtext).decode("utf-8").split("\n"):
+    trimorigseg=origseg.strip()
+    if trimorigseg != "":
+      if useNltkSentTok:
+        try:
+          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
+            tmp_file_origtext.write(seg+b"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+        except LookupError:
+          # No language-specific sentence splitter available
+          for seg in sent_tokenize(trimorigseg):
+            tmp_file_origtext.write(seg+b"\n")
+            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      else:
+        for seg in splitSegs(mitok, trimorigseg):
+          tmp_file_origtext.write(seg+b"\n")
+          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+
+  tokenized_text=u"\n".join(tmp_tok_segs)
+  if morphanal is not None:
+    morphanalyser = ["__BASH__", morphanal]
+    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
+  tmp_file.write(tokenized_text.lower()+b"\n")
+
 def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
   filereader1=open(file1orig, "r")
   filereader2=open(file2orig, "r")
@@ -142,7 +169,7 @@ oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the 
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
 oparser.add_argument("--nltk" , help="Use NLTK sentence splitter instead of Ulysses", dest="useNltkSentTok", action="store_true")
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
-oparser.add_argument("-t", "--tmp-dir", help="Temporal directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
+oparser.add_argument("-t", "--tmp-dir", help="Temporary directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)
 oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL", dest="morphanal2", default=None)
 
@@ -155,6 +182,7 @@ if options.aligned_docs == None:
 else:
   reader = open(options.aligned_docs,"r")
 
+mitok_l1,mitok_l2=None,None
 if not useNltkSentTok:
   if options.aligned_docs == None:
     reader = sys.stdin
@@ -178,53 +206,9 @@ for line in reader_list:
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-  tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext1).decode("utf-8").split("\n"):
-    trimorigseg=origseg.strip()
-    if trimorigseg != "":
-      if useNltkSentTok:
-        try:
-          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang1).name.lower()):
-            tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
-        except LookupError:
-          for sentence in sent_tokenize(trimorigseg):
-            tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
-      else:
-        for seg in splitSegs(mitok_l1, trimorigseg):
-          tmp_file1_origtext.write(seg.encode("utf8")+b"\n")
-          tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
 
-  tokenized_text="\n".join(tmp_tok_segs)
-  if options.morphanal1 != None:
-    morphanalyser = ["/bin/sh", options.morphanal1]
-    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file1.write(tokenized_text.lower().encode("utf8")+b"\n")
-
-  tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext2).decode("utf-8").split("\n"):
-    trimorigseg=origseg.strip()
-    if trimorigseg != "":
-      if useNltkSentTok:
-        try:
-          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=options.lang2).name.lower()):
-            tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
-        except LookupError:
-          for sentence in sent_tokenize(trimorigseg):
-            tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
-      else:
-        for seg in splitSegs(mitok_l2, trimorigseg):
-          tmp_file2_origtext.write(seg.encode("utf8")+b"\n")
-          tmp_tok_segs.append(" ".join(wordpunct_tokenize(seg)))
-   
-  tokenized_text="\n".join(tmp_tok_segs)
-  if options.morphanal2 != None:
-    morphanalyser = ["/bin/sh", options.morphanal2]
-    tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file2.write(tokenized_text.lower().encode("utf8")+b"\n")
+  extract_encoded_text(encodedtext1, options.lang1, tmp_file1, tmp_file1_origtext, mitok_l1, options.morphanal1, useNltkSentTok)
+  extract_encoded_text(encodedtext2, options.lang2, tmp_file2, tmp_file2_origtext, mitok_l2, options.morphanal2, useNltkSentTok)
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
