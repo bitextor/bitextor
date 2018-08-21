@@ -27,7 +27,7 @@ The tool works following a sequence of steps (scripts sorted by default use):
 It is worth noting that each of these steps can be run separately.
 
 
-## Dependences
+## Dependencies
 
 Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. Also **maven** for some dependencies. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
 
@@ -46,7 +46,8 @@ Some external Python libraries should also be installed before starting the inst
 - **numpy**: Python package for scientific computing with Python.
 - **keras**: Python package for implementing neural networks for deep learning.
 - **h5py**: Pythonic interface to the HDF5 binary data format.
-- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface).
+- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
+using `pip install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
 - **iso-639**: Python package to convert between language names and ISO-639 codes
 
 Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
