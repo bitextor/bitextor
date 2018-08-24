@@ -20,12 +20,18 @@ from xml.sax.saxutils import escape
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
-def printseg(lang, columns, url, seg, fieldsdict, mint):
+def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, no_delete_seg=False):
   infoTag=[]
   print "    <tuv xml:lang=\""+lang+"\">"
-  if "url1" in columns:
-    print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
-  print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
+  print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
+  if deferred:
+    print "     <prop type=\"deferred-seg\">"+deferred+"</prop>"
+
+  if no_delete_seg or deferred is None:
+    print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
+  else:
+    print "     <seg></seg>"
+
   if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(mint):
     infoTag.append("very short segments, shorter than "+str(options.mint))
   if len(infoTag) > 0:
@@ -40,6 +46,7 @@ oparser.add_argument("-q", "--min-length", help="Minimum length ratio between tw
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl", default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber")
+oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given", dest="no_delete_seg", action='store_true')
 options = oparser.parse_args()
 
 if options.clean_alignments != None:
@@ -84,9 +91,16 @@ for line in reader:
     infoTag.append("equal TUVs")
   if len(infoTag) > 0:
     print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
+  
+  deferredseg1=None
+  deferredseg2=None
+  if 'deferredseg1' in fieldsdict and fieldsdict['deferredseg1'] != "":
+      deferredseg1 = fieldsdict['deferredseg1']
+  if 'deferredseg2' in fieldsdict and fieldsdict['deferredseg2'] != "":
+      deferredseg2 = fieldsdict['deferredseg2']
 
-  printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint)
-  printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint)
+  printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint, deferredseg1, options.no_delete_seg)
+  printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint, deferredseg2, options.no_delete_seg)
   
   print "   </tu>"
 print " </body>"

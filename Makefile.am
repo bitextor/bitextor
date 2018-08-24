@@ -10,14 +10,14 @@ bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
             bitextor-ett2lett.py bitextor-idx2ridx.py bitextor-lett2idx.py tar2lett.py bitextor-identifyMIME.py bitextor-dir2crawl.py \
             bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
-            bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
+            bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-deferred-document.py bitextor-deferred-sentences.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
 bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment tar2lett bitextor-identifyMIME bitextor-dedup \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
-            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering bitextor-dir2crawl \
+            bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering bitextor-deferred-document bitextor-deferred-sentences bitextor-dir2crawl \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison 
             
@@ -33,6 +33,7 @@ compile-hunalign:
 	cd hunalign/src/hunalign && make 
 
 install-smttools:
+	cp wagnerfischer.py $(prefix)/bin/.
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 	cp textsanitizer.py $(prefix)/bin/.
@@ -193,6 +194,19 @@ bitextor-elrc-filtering: bitextor-elrc-filtering.py
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@	
+
+bitextor-deferred-document: bitextor-deferred-document.py
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
+
+bitextor-deferred-sentences: bitextor-deferred-sentences.py
+	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" | \
+	sed "s!__BASH__!$(BASH)!g;" >$@
+
 
 bitextor-downloadweb: bitextor-downloadweb.sh
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
