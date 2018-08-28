@@ -95,23 +95,23 @@ def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, mitok, 
       if useNltkSentTok:
         try:
           for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
-            tmp_file_origtext.write(seg+b"\n")
+            tmp_file_origtext.write(seg.encode("utf8")+b"\n")
             tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
         except LookupError:
           # No language-specific sentence splitter available
           for seg in sent_tokenize(trimorigseg):
-            tmp_file_origtext.write(seg+b"\n")
+            tmp_file_origtext.write(seg.encode("utf8")+b"\n")
             tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
       else:
         for seg in splitSegs(mitok, trimorigseg):
-          tmp_file_origtext.write(seg+b"\n")
+          tmp_file_origtext.write(seg.encode("utf8")+b"\n")
           tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
 
   tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
     morphanalyser = ["__BASH__", morphanal]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file.write(tokenized_text.lower()+b"\n")
+  tmp_file.write(tokenized_text.lower().encode("utf8")+b"\n")
 
 def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
   filereader1=open(file1orig, "r")
