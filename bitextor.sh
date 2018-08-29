@@ -71,6 +71,7 @@ BICLEANERSCORE=""
 ZIPPORAHSCORE=""
 DEFERREDCOLUMN=""
 DEFERRED=""
+KEEPSEG=""
 IGNOREBOILER=""
 USENLTK="--nltk"
 USEHTTRACK=0
@@ -136,6 +137,7 @@ exit_program()
   echo "  --filter-bicleaner SCORE            Performs filtering using the --bicleaner score, thresholding it. For example, 0.7"
   echo "  --filter-zipporah SCORE             Performs filtering using the --zipporah score, thresholding it. For example, 0.0"
   echo "  --deferred        Outputs the standoff deferred annotation instead of the segments"
+  echo "  --keep-orig-seg   Outputs the original seg even when standoff deferred annotation is generated"
   echo ""
   echo "  -l LETTR          (--lettr) custom path where the file with extension .lettr (language"
   echo "                    encoded and typed data with 'raspa') will be created"
@@ -209,8 +211,8 @@ exit_program()
 }
 
 run_bitextor_ett(){
-  zcat -f $1 | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
-  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+  zcat -f $1 | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
+  __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
   if [ "$ONLYLETT" != "" ]; then
     cat $LETT
   else
@@ -266,8 +268,8 @@ run_bitextor(){
     trap "trapsigint $crawl_pid" SIGUSR1
     if [ "$ONLYCRAWL" == "" ] ; then
       __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-      __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
-      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+      __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
+      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
     else
       cat $tmpcrawl
     fi
@@ -279,8 +281,8 @@ run_bitextor(){
     if [ "$ONLYCRAWL" == "" ] ; then
       if [ "$USEJHULETT" == "0" ]; then
         __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-        __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> $ETT2LETTLOG | \
-        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2>> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
+        __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
+        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
       else
         TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
         tar czf $TARNAME -C $DIRNAME/ .
@@ -369,7 +371,7 @@ for line in sys.stdin:
 
 convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
-    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN$ELRCSCORES,idnumber 
+    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 $KEEPSEG -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN$ELRCSCORES,idnumber 
   elif [ "$PRINTSTATS" != "" ]; then
     cat -
   else
@@ -516,7 +518,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS="$@"
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg -- "$@")
 
 eval set -- $ARGS
 for i
@@ -531,7 +533,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -794,6 +796,10 @@ do
       shift
       DEFERRED="--deferred"
       DEFERREDCOLUMN=",deferredseg1,deferredseg2"
+      ;;
+    --keep-orig-seg)
+      shift
+      KEEPSEG="--no-delete-seg"
       ;;
     --filter-bicleaner)
       shift

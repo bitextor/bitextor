@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 import time
 import hashlib
@@ -12,18 +15,22 @@ def get_sentence(standoff,document):
     """
     reconstructedsentence = ""
     for wordstandoff in standoff.split(';'):
-        wordstandoffparts = wordstandoff.split(':')
-        wordstandofflimits = wordstandoffparts[1].split('-')
-        element = document.find(wordstandoffparts[0])
-        if int(wordstandofflimits[1]) < len(element.text):
-            reconstructedsentence = reconstructedsentence + element.text[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
-        else:
-            tail = element.text
-            for child in element:
-                tail = tail + child.tail
-                if len(tail) > int(wordstandofflimits[1]):
-                    reconstructedsentence = reconstructedsentence + tail[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
-                    break
+        wordstandoffsegments = wordstandoff.split('+')
+        for wordstandoffseg in wordstandoffsegments:
+            wordstandoffparts = wordstandoffseg.split(':')
+            wordstandofflimits = wordstandoffparts[1].split('-')
+            element = document.find(wordstandoffparts[0])
+            if element.text is None:
+                element.text = ""
+            if int(wordstandofflimits[1]) < len(element.text):
+                reconstructedsentence = reconstructedsentence + element.text[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
+            else:
+                tail = element.text
+                for child in element:
+                    tail = tail + child.tail
+                    if len(tail) > int(wordstandofflimits[1]):
+                        reconstructedsentence = reconstructedsentence + tail[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
+                        break
     return reconstructedsentence.strip()
 
 

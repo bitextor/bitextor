@@ -1,8 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 from wagnerfischer import WagnerFischer
 import base64
 import html5lib
 from lxml import etree
+import re
 
 documentStandoff = dict()
 with open(sys.argv[1],'r') as reader:
@@ -16,9 +20,9 @@ for line in sys.stdin:
     fields = line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
 
-    shortpathSL=WagnerFischer(fields[2].split(' '),str(etree.tostring(documentStandoff[fields[0]][0], encoding='utf8', method="text")).split()).optimum_alignments() #Calculate a short distance path using Wagner-Fischer algorightm for source
-    shortpathTL=WagnerFischer(fields[3].split(' '),str(etree.tostring(documentStandoff[fields[1]][0], encoding='utf8', method="text")).split()).optimum_alignments() #and target sentences
-    
+    shortpathSL=WagnerFischer(fields[2].split(' '),[x for x in etree.tostring(documentStandoff[fields[0]][0], encoding='unicode', method="text").replace('\n','').replace('\t','').replace('\xa0','').split(' ') if x != '']).optimum_alignments() #Calculate a short distance path using Wagner-Fischer algorithm for source
+    shortpathTL=WagnerFischer(fields[3].split(' '),[x for x in etree.tostring(documentStandoff[fields[1]][0], encoding='unicode', method="text").replace('\n','').replace('\t','').replace('\xa0','').split(' ') if x != '']).optimum_alignments() #and target sentences
+   
     position=0
     standoffSL=[]
     for op in shortpathSL: #Obtain the standoff annotation of each sentence word from the full annotated document they come from, counting non-inserted words
