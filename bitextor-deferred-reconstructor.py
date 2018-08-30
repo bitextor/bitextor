@@ -13,7 +13,7 @@ def get_sentence(standoff,document):
 
     Retrieves the original content from a XHTML/XML html5lib parsed document pointed by a standoff annotation
     """
-    reconstructedsentence = ""
+    reconstructedsentence = []
     for wordstandoff in standoff.split(';'):
         wordstandoffsegments = wordstandoff.split('+')
         for wordstandoffseg in wordstandoffsegments:
@@ -23,15 +23,21 @@ def get_sentence(standoff,document):
             if element.text is None:
                 element.text = ""
             if int(wordstandofflimits[1]) < len(element.text):
-                reconstructedsentence = reconstructedsentence + element.text[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
+                if wordstandoffseg == wordstandoffsegments[0]:
+                    reconstructedsentence.append(element.text[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1])
+                else:
+                    reconstructedsentence[-1] = reconstructedsentence[-1] + element.text[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1]
             else:
                 tail = element.text
                 for child in element:
                     tail = tail + child.tail
                     if len(tail) > int(wordstandofflimits[1]):
-                        reconstructedsentence = reconstructedsentence + tail[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1] + " "
+                        if wordstandoffseg == wordstandoffsegments[0]:
+                            reconstructedsentence.append(tail[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1])
+                        else:
+                            reconstructedsentence[-1] = reconstructedsentence[-1] + tail[int(wordstandofflimits[0]):int(wordstandofflimits[1])+1]
                         break
-    return reconstructedsentence.strip()
+    return " ".join(reconstructedsentence)
 
 
 
