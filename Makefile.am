@@ -202,6 +202,7 @@ bitextor-downloadweb: bitextor-downloadweb.sh
 
 bitextor-webdir2ett: bitextor-webdir2ett.sh
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__JAVA__!$(JAVA)!g" | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
