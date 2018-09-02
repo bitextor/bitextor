@@ -29,19 +29,26 @@ for line in sys.stdin:
     
     position=0
     standoffSL=[]
-    for op in shortpathSL: #Obtain the standoff annotation of each sentence word from the full annotated document they come from, counting non-inserted words
-        if op != "I":
-            standoffSL.append(documentStandoff[fields[0]][1][position])
-        position = position + 1
-    fields.append(";".join(standoffSL))
-    
+    if shortpathSL[0] == 'S' and len(shortpathSL) == shortpathSL.count('I')+1:
+        fields.append("")
+    else:
+        for op in shortpathSL: #Obtain the standoff annotation of each sentence word from the full annotated document they come from, counting non-inserted words
+            if op != "I":
+                standoffSL.append(documentStandoff[fields[0]][1][position])
+            position = position + 1
+        fields.append(";".join(standoffSL))
+
     position=0
     standoffTL=[]
-    for op in shortpathTL: #Same for TL
-        if op != "I":
-            standoffTL.append(documentStandoff[fields[1]][1][position])
-        position = position + 1
-    fields.append(";".join(standoffTL))
+    if shortpathTL[0] == 'S' and len(shortpathTL) == shortpathTL.count('I')+1:
+        standoffTL=[]
+        fields.append("")
+    else:
+        for op in shortpathTL: #Same for TL
+            if op != "I":
+                standoffTL.append(documentStandoff[fields[1]][1][position])
+            position = position + 1
+        fields.append(";".join(standoffTL))
 
     #TODO: simplify the sentence standoff annotation joining/collapsing word standoff annotations with the same tag path
 

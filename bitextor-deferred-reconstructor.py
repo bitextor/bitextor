@@ -60,7 +60,10 @@ for line in sys.stdin:
     fields = line.split('\t')
     newfields = [fields[0],fields[1]]
     for annotation,url in {fields[2]:fields[0],fields[3]:fields[1]}.items(): #SL and TL annotations with URLs from input DOCALG file format: https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#docalg
-        newfields.append(get_sentence(annotation,document_standoff[url]))
+        if annotation != "":
+            newfields.append(get_sentence(annotation,document_standoff[url]))
+        else:
+            newfields.append("")
     print("\t".join(newfields))
 
 
