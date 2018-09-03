@@ -359,8 +359,8 @@ for line in sys.stdin:
   fi
 
   if [ "$DEFERRED" != "" ]; then
-    cat $CRAWLOUT | python3.6 __PREFIX__/bin/bitextor-deferred-document > $CRAWLOUTDEFERRED
-    cat $OUTPUTCLEANERS | python3.6 __PREFIX__/bin/bitextor-deferred-sentences $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
+    cat $CRAWLOUT | python3.6 __PREFIX__/bin/deferred-document.py > $CRAWLOUTDEFERRED
+    cat $OUTPUTCLEANERS | python3.6 __PREFIX__/bin/deferred-sentences.py $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
     mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
 
