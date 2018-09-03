@@ -215,16 +215,6 @@ then
   AC_MSG_ERROR([You don't have mvn (maven) installed.])
 fi
 
-AC_PATH_PROG(NGRAM, ngram, no)
-if test x$ac_cv_path_NGRAM = x
-then
-  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
-fi
-if test x$ac_cv_path_NGRAM = xno
-then
-  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
-fi
-
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
@@ -273,7 +263,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- python-Levenshtein:   Please, install v0.2 or later and try again. http://pypi.python.org/pypi/python-Levenshtein/
+- python-Levenshtein:   Please, install v0.2 or later and try again: sudo pip install python-Levenshtein
 ])
   fi
 
@@ -289,7 +279,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- tensorflow:   Please, install tensorflow and try again. http://www.tensorflow.org/
+- tensorflow:   Please, install tensorflow and try again: sudo pip install tensorflow
 ])
   fi
 
@@ -315,7 +305,7 @@ pip install --upgrade keras
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
+- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
 ])
   fi
 
@@ -331,7 +321,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- h5py:   Please, install v2.6 or later and try again. http://www.h5py.org/
+- h5py:   Please, install v2.6 or later and try again: sudo pip install h5py
 ])
   fi
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
@@ -375,7 +365,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- numpy:   Please, install v1.7 or later and try again. http://www.numpy.org/
+- numpy:   Please, install v1.7 or later and try again: sudo pip install numpy
 ])
   fi
 
@@ -419,7 +409,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again. https://github.com/saffsd/langid.py
+    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again: sudo pip install langid
 ])
   fi
 
@@ -445,7 +435,7 @@ pip install --upgrade nltk
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
+- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
 ])
   fi
 
@@ -459,7 +449,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again. https://code.google.com/p/mrab-regex-hg/
+    AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again: sudo pip install regex
 ])
   fi
 
@@ -518,4 +508,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile share/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile])

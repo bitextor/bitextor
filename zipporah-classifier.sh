@@ -18,12 +18,20 @@ cut -f 3 $corpus > $corpus.$LANG1
 cut -f 4 $corpus > $corpus.$LANG2
 
 for lang in $LANG1 $LANG2; do
-  perl __PREFIX__/share/bitextor/zipporah/tokenizer.perl -l $lang -threads 16 < $corpus.$lang 2>/dev/null | perl __PREFIX__/share/bitextor/zipporah/truecase.perl --model $model/truecase-model.$lang 2>/dev/null | awk '{printf("<s> %s </s>\n", $0)}' >  $intermediatefile.$lang
+  perl __PREFIX__/share/moses/tokenizer/tokenizer.perl -l $lang -threads 16 < $corpus.$lang 2>/dev/null | truecase --model $model/truecase-model.$lang 2>/dev/null | awk '{printf("<s> %s </s>\n", $0)}' >  $intermediatefile.$lang
   
   vocab="$model/vocab.$lang"
   map_unk=`tail -n 1 $vocab | sed "s/.$//g"`
-  
-  ngram -map-unk $map_unk -lm $model/lm.$lang -order $ngram_order -ppl $intermediatefile.$lang -debug 1 2>&1 | egrep "(logprob.*ppl.*ppl1=)|( too many words per sentence)" | head -n -1 | awk '{print log($6)}' > $intermediatefile.ngram.$lang
+ 
+  if [ ! -f $model/bin.lm.$lang ]; then
+      build_binary $model/lm.$lang $model/bin.lm.$lang
+  fi
+
+#  ngram -map-unk $map_unk -lm $model/lm.$lang -order $ngram_order -ppl $intermediatefile.$lang -debug 1 2>&1 | egrep "(logprob.*ppl.*ppl1=)|( too many words per sentence)" | head -n -1 | awk '{print log($6)}' > $intermediatefile.ngram.$lang
+
+
+cat $intermediatefile.$lang | awk -v v=$vocab -v u=$map_unk 'BEGIN{while((getline<v)>0) m[$1]=1;}{for(i=1;i<=NF;i++) {w=$i; if(m[w] !=1) w=u; printf("%s ", w)}; print""}' | query -v sentence  $model/bin.lm.$lang | grep ^Total | awk '{print -$2}' > $intermediatefile.ngram.$lang
+
   if [ "$lang" != "en" ]; then
     langfr="$lang"
   fi

@@ -119,8 +119,8 @@ wait
 
 #Lowercasing the corpus
 echo "LOWERCASING THE CORPUS..."
-cat $SL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
-cat $TL_TOKENISED | perl __PREFIX__/share/bitextor/utils/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
+cat $SL_TOKENISED | perl __PREFIX__/share/moses/tokenizer/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
+cat $TL_TOKENISED | perl __PREFIX__/share/moses/tokenizer/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
 wait
 
 #Cleaning the corpus

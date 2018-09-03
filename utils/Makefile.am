@@ -1,3 +1,3 @@
 utilsdir = $(prefix)/share/bitextor/utils
 
-utils_DATA = lowercase.perl unicodepunct.py clean-corpus-n.perl
+utils_DATA = unicodepunct.py clean-corpus-n.perl

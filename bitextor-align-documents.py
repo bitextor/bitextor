@@ -23,7 +23,6 @@ oparser.add_argument("-s", "--nonsymmetric", help="Write document alignments eve
 
 options = oparser.parse_args()
 
-### PLEASE DELETE THE 'COMBINE' CODE, NOT SUPPORTED ANYMORE
 combine=False
 if options.ridx2 == None:
   if options.ridx1 == None:
@@ -50,7 +49,6 @@ for j in file:
   counter += 1
 file.close()
 
-### PLEASE DELETE THE 'COMBINE' CODE, NOT SUPPORTED ANYMORE
 if combine == False:
   #Reading the .ridx file with the preliminary alignment
   for i in reader:
