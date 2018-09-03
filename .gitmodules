@@ -13,9 +13,12 @@
 [submodule "document-aligner"]
 	path = document-aligner
 	url = https://github.com/paracrawl/document-aligner.git
-[submodule "share/nonbreaking_prefixes"]
-	path = share/nonbreaking_prefixes
-	url = https://github.com/bitextor/nonbreaking_prefixes
 [submodule "zipporah/zipporah"]
 	path = zipporah/zipporah
 	url = https://github.com/hainan-xv/zipporah
+[submodule "preprocess"]
+	path = preprocess
+	url = https://github.com/kpu/preprocess
+[submodule "kenlm"]
+	path = kenlm
+	url = https://github.com/kpu/kenlm

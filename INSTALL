@@ -9,10 +9,27 @@ are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
 without warranty of any kind.
 
+Requirements
+============
+
+
+   Basically, just run these commands in a Ubuntu/Debian environment to install Bitextor default modules dependences:
+
+~~~~~~
+git submodule update --init --recursive
+sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic libboost-all-dev maven
+sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py
+#If you don't want to be bleeding edge with pip
+sudo pip install -r requirements.txt
+#If you are using Ubuntu 14.04 install tensorflow 1.4.1:
+sudo pip install tensorflow==1.4.1
+~~~~~~
+
+
 Basic Installation
 ==================
 
-   Briefly, the shell commands `./configure; make; make install' should
+   Briefly, the shell commands `./autogen.sh; make; make install' should
 configure, build, and install this package.  The following
 more-detailed instructions are generic; see the `README' file for
 instructions specific to this package.  Some packages provide this

@@ -280,7 +280,7 @@ run_bitextor(){
     __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
     if [ "$ONLYCRAWL" == "" ] ; then
       if [ "$USEJHULETT" == "0" ]; then
-        __PREFIX__/bin/bitextor-webdir2ett $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
+        __PREFIX__/bin/bitextor-webdir2ett $IGNOREBOILER $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
         __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
         __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
       else

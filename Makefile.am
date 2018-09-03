@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= zipporah utils ulysses piped-boilerpipe piped-tika ulysses-data model share
+SUBDIRS= zipporah utils ulysses piped-boilerpipe piped-tika ulysses-data model 
 
 bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
@@ -32,6 +32,12 @@ compile-smttools:
 compile-hunalign:
 	cd hunalign/src/hunalign && make 
 
+compile-truecaser:
+	cd preprocess && cmake . && make -j4
+
+compile-kenlm:
+	cd kenlm && cmake . && make -j4
+
 install-smttools:
 	cp wagnerfischer.py $(prefix)/bin/.
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
@@ -43,6 +49,9 @@ install-smttools:
 	cp -R document-aligner/utils $(prefix)/bin/.
 	touch $(prefix)/bin/__init__.py
 	chmod a+x $(prefix)/share/bitextor/zipporah/*
+	cp -R preprocess/moses $(prefix)/share/moses
+	cp preprocess/bin/truecase $(prefix)/bin/.
+	cp kenlm/bin/query kenlm/bin/build_binary $(prefix)/bin/.
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
@@ -54,7 +63,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign
 
-bitextor: bitextor.sh compile-smttools compile-hunalign
+bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compile-kenlm
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__GREP__!$(GREP)!g" | \
@@ -221,6 +230,7 @@ bitextor-downloadweb: bitextor-downloadweb.sh
 
 bitextor-webdir2ett: bitextor-webdir2ett.sh
 	sed "s!__PREFIX__!$(prefix)!g" $< | \
+	sed "s!__JAVA__!$(JAVA)!g" | \
 	sed "s!__ENV__!$(ENV)!g" | \
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__BASH__!$(BASH)!g;" >$@
