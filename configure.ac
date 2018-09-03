@@ -284,7 +284,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- python-Levenshtein:   Please, install v0.2 or later and try again. http://pypi.python.org/pypi/python-Levenshtein/
+- python-Levenshtein:   Please, install v0.2 or later and try again: sudo pip install python-Levenshtein
 ])
   fi
 
@@ -300,7 +300,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- tensorflow:   Please, install tensorflow and try again. http://www.tensorflow.org/
+- tensorflow:   Please, install tensorflow and try again: sudo pip install tensorflow
 ])
   fi
 
@@ -327,7 +327,7 @@ pip install --upgrade keras
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
+- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
 ])
   fi
 
@@ -343,7 +343,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- h5py:   Please, install v2.6 or later and try again. http://www.h5py.org/
+- h5py:   Please, install v2.6 or later and try again: sudo pip install h5py
 ])
   fi
 
@@ -417,7 +417,7 @@ print (var)" 2> /dev/null`
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- numpy:   Please, install v1.7 or later and try again. http://www.numpy.org/
+- numpy:   Please, install v1.7 or later and try again: sudo pip install numpy
 ])
   fi
 
@@ -461,7 +461,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again. https://github.com/saffsd/langid.py
+    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again: sudo pip install langid
 ])
   fi
 
@@ -487,7 +487,7 @@ pip install --upgrade nltk
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again. http://www.keras.io/
+- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
 ])
   fi
 
@@ -501,7 +501,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again. https://code.google.com/p/mrab-regex-hg/
+    AC_MSG_ERROR([this package requires regex for Python. Please, install it and try again: sudo pip install regex
 ])
   fi
 
