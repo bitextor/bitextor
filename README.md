@@ -55,7 +55,7 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
 - **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
 
-We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run:
+We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run (if `pip` points to `python2` installation, otherwise, use the `pip` version for that, sometimes named `pip2.7`):
 
 `user@pc:~$ sudo pip install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
 

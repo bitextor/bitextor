@@ -226,16 +226,6 @@ then
 fi
 
 
-AC_PATH_PROG(NGRAM, ngram, no)
-if test x$ac_cv_path_NGRAM = x
-then
-  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
-fi
-if test x$ac_cv_path_NGRAM = xno
-then
-  AC_MSG_WARN([You don't have ngram (SRILM) installed. You can't use Zipporah])
-fi
-
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
@@ -560,4 +550,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile share/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile])
