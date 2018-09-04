@@ -39,7 +39,6 @@ compile-kenlm:
 	cd kenlm && cmake . && make -j4
 
 install-smttools:
-	cp wagnerfischer.py $(prefix)/bin/.
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 	cp textsanitizer.py $(prefix)/bin/.
