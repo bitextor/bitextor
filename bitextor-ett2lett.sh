@@ -44,7 +44,7 @@ case $# in
     ;;
 esac
 
-export LC_ALL=C
+#export LC_ALL=C
 cat $FILE | __JAVA__ -Dfile.encoding=utf-8 -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
 __PYTHON__ -c '
 #
