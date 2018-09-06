@@ -795,7 +795,7 @@ do
     --deferred)
       shift
       DEFERRED="--deferred"
-      DEFERREDCOLUMN=",deferredseg1,deferredseg2"
+      DEFERREDCOLUMN=",deferredseg1,checksum1,deferredseg2,checksum2"
       ;;
     --keep-orig-seg)
       shift

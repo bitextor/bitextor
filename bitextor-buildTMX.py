@@ -20,12 +20,14 @@ from xml.sax.saxutils import escape
 reload(sys)
 sys.setdefaultencoding("UTF-8")
 
-def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, no_delete_seg=False):
+def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, checksum=None, no_delete_seg=False):
   infoTag=[]
   print "    <tuv xml:lang=\""+lang+"\">"
   print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
   if deferred:
     print "     <prop type=\"deferred-seg\">"+deferred+"</prop>"
+  if checksum:
+    print "     <prop type=\"checksum-seg\">"+checksum+"</prop>"
 
   if no_delete_seg or deferred is None:
     print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
@@ -45,7 +47,7 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 oparser.add_argument("-q", "--min-length", help="Minimum length ratio between two parts of TU", type=float, dest="minl", default=0.6)
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl", default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
-oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other options:hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber,deferredseg1,deferredseg2", default="url1,url2,seg1,seg2")
+oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other options:hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber,deferredseg1,deferredseg2,checksum1,checksum2", default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given", dest="no_delete_seg", action='store_true')
 options = oparser.parse_args()
 
@@ -83,7 +85,7 @@ for line in reader:
   if 'idnumber' in fieldsdict:
     print "   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">"
   else:
-    print "   <tu  datatype=\"Text\">"
+    print "   <tu datatype=\"Text\">"
   infoTag=[]
   if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
     print "    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>"
@@ -102,13 +104,19 @@ for line in reader:
   
   deferredseg1=None
   deferredseg2=None
+  checksum1=None
+  checksum2=None
   if 'deferredseg1' in fieldsdict and fieldsdict['deferredseg1'] != "":
       deferredseg1 = fieldsdict['deferredseg1']
   if 'deferredseg2' in fieldsdict and fieldsdict['deferredseg2'] != "":
       deferredseg2 = fieldsdict['deferredseg2']
+  if 'checksum1' in fieldsdict:
+      checksum1 = fieldsdict['checksum1']
+  if 'checksum2' in fieldsdict:
+      checksum2 = fieldsdict['checksum2']
 
-  printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint, deferredseg1, options.no_delete_seg)
-  printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint, deferredseg2, options.no_delete_seg)
+  printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint, deferredseg1, checksum1, options.no_delete_seg)
+  printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint, deferredseg2, checksum2, options.no_delete_seg)
   
   print "   </tu>"
 print " </body>"
