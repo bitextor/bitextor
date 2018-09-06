@@ -51,7 +51,13 @@ install-smttools:
 	cp -R preprocess/moses $(prefix)/share/moses
 	cp preprocess/bin/truecase $(prefix)/bin/.
 	cp kenlm/bin/query kenlm/bin/build_binary $(prefix)/bin/.
-	cp standoff/* $(prefix)/bin/.
+
+install-standoff:
+	chmod a+x standoff/*.py
+	cp standoff/deferred-document.py $(prefix)/bin/deferred-document
+	cp standoff/deferred-sentences.py $(prefix)/bin/deferred-sentences
+	cp standoff/reconstructor-deferred-sentences.py $(prefix)/bin/reconstructor-deferred-sentences
+	cp standoff/wagnerfischer.py $(prefix)/bin/.
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
@@ -61,7 +67,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 	sed "s!__PYTHON__!$(PYTHON)!g" | \
 	sed "s!__ENV__!$(ENV)!g" >$@
 
-install: install-recursive install-smttools install-hunalign
+install: install-recursive install-smttools install-hunalign install-standoff
 
 bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compile-kenlm
 	sed "s!__PREFIX__!$(prefix)!g" $< | \

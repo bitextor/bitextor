@@ -359,8 +359,8 @@ for line in sys.stdin:
   fi
 
   if [ "$DEFERRED" != "" ]; then
-    cat $CRAWLOUT | python3.6 __PREFIX__/bin/deferred-document.py > $CRAWLOUTDEFERRED
-    cat $OUTPUTCLEANERS | python3.6 __PREFIX__/bin/deferred-sentences.py $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
+    cat $CRAWLOUT | __PREFIX__/bin/deferred-document > $CRAWLOUTDEFERRED
+    cat $OUTPUTCLEANERS | __PREFIX__/bin/deferred-sentences $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
     mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
 
