@@ -53,11 +53,11 @@ install-smttools:
 	cp kenlm/bin/query kenlm/bin/build_binary $(prefix)/bin/.
 
 install-standoff:
-	chmod a+x standoff/*.py
 	cp standoff/deferred-document.py $(prefix)/bin/deferred-document
 	cp standoff/deferred-sentences.py $(prefix)/bin/deferred-sentences
 	cp standoff/reconstructor-deferred-sentences.py $(prefix)/bin/reconstructor-deferred-sentences
 	cp standoff/wagnerfischer.py $(prefix)/bin/.
+	chmod a+x $(prefix)/bin/deferred-document $(prefix)/bin/deferred-sentences $(prefix)/bin/reconstructor-deferred-sentences
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
