@@ -381,7 +381,7 @@ class MyCrawler(Crawler):
     if doc.status == 200:
       self.concurrency_lock.acquire()
       try:
-        print base64.b64encode(doc.text)+"\t"+doc.url
+        print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
         self.crawlsize+=sys.getsizeof(doc.text)/1000000.0
         if self.sizelimit != None and self.crawlsize > self.sizelimit:
           #sys.stderr.write("Crawling size limit reached: stopping crawl\n")
