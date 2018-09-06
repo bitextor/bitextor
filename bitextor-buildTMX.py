@@ -4,7 +4,7 @@
 # 1. The tool takes the output of bitextor-cleanalignments and formats it in TMX format
 # 2. Option -c allows to define what is expected to find in each field of the input, which makes this script flexible about the expected fields.
 # Default input format:
-# url1    url2    seg1    seg2    hunalign    zipporah    bicleaner    lengthratio    numTokensSL    numTokensTL    idnumber
+# url1    url2    seg1    seg2    [hunalign    zipporah    bicleaner    lengthratio    numTokensSL    numTokensTL    idnumber]
 # where url1 and url2 are the URLs of the document, seg1 and seg2 are the aligned pair of segments, hunalign and zipporah are quality metrics
 # (in this case, provided by these two tools), lengthratio is the ratio between the word-length of seg1 and seg2, numTokensSL and numTokensTL is
 # the number of tokens in each segment and idnumber is the value to be assigned to each TU id parameter.
@@ -45,7 +45,7 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 oparser.add_argument("-q", "--min-length", help="Minimum length ratio between two parts of TU", type=float, dest="minl", default=0.6)
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl", default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
-oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber")
+oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other options:hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber,deferredseg1,deferredseg2", default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given", dest="no_delete_seg", action='store_true')
 options = oparser.parse_args()
 
@@ -75,7 +75,15 @@ for line in reader:
   fieldsdict=dict()
   for field,column in zip(fields,columns):
     fieldsdict[column]=field
-  print "   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">"
+  if 'seg1' not in fieldsdict:
+      fieldsdict['seg1'] = ""
+  if 'seg2' not in fieldsdict:
+      fieldsdict['seg2'] = ""
+
+  if 'idnumber' in fieldsdict:
+    print "   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">"
+  else:
+    print "   <tu  datatype=\"Text\">"
   infoTag=[]
   if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
     print "    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>"
