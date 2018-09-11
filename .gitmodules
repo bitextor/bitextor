@@ -18,7 +18,7 @@
 	url = https://github.com/hainan-xv/zipporah
 [submodule "preprocess"]
 	path = preprocess
-	url = https://github.com/lesbinary/preprocess
+	url = https://github.com/kpu/preprocess
 [submodule "kenlm"]
 	path = kenlm
 	url = https://github.com/kpu/kenlm
