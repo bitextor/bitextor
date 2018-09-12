@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env __PYTHON__
 #
 # 1. Read lines from .ett file
 # 2. For eac line, the HTML is cleaned and the language is detected for the raw text
