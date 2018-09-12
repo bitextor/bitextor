@@ -8,14 +8,14 @@ SUBDIRS= zipporah utils ulysses piped-boilerpipe piped-tika ulysses-data model
 
 bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
-            bitextor-ett2lett.py bitextor-idx2ridx.py bitextor-lett2idx.py tar2lett.py bitextor-identifyMIME.py bitextor-dir2crawl.py \
+            bitextor-ett2lett.sh bitextor-lett-language-detector.py bitextor-idx2ridx.py bitextor-lett2idx.py tar2lett.py bitextor-identifyMIME.py bitextor-dir2crawl.py \
             bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh bitextor-webdir2ett.sh \
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py
 
 bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
-            bitextor-ett2lett bitextor-crawl bitextor-train-document-alignment tar2lett bitextor-identifyMIME bitextor-dedup \
+            bitextor-ett2lett bitextor-lett-language-detector bitextor-crawl bitextor-train-document-alignment tar2lett bitextor-identifyMIME bitextor-dedup \
             bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb bitextor-webdir2ett \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering bitextor-dir2crawl \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
@@ -176,7 +176,15 @@ bitextor-cleantextalign: bitextor-cleantextalign.py
 	sed "s!__ENV__!$(ENV)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 
-bitextor-ett2lett: bitextor-ett2lett.py
+bitextor-ett2lett: bitextor-ett2lett.sh
+	sed "s!__JAVA__!$(JAVA)!g" $< | \
+	sed "s!__BASH__!$(BASH)!g" | \
+	sed "s!__WC__!$(WC)!g" | \
+	sed "s!__PREFIX__!$(prefix)!g" | \
+	sed "s!__ENV__!$(ENV)!g" | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+
+bitextor-lett-language-detector: bitextor-lett-language-detector.py
 	sed "s!__JAVA__!$(JAVA)!g" $< | \
 	sed "s!__WC__!$(WC)!g" | \
 	sed "s!__PREFIX__!$(prefix)!g" | \
