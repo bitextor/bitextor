@@ -38,5 +38,5 @@ case $# in
     ;;
 esac
 
-cat $FILE | __JAVA__ -jar /home/lpla/local/share/java/piped-tika.jar -t 2> /dev/null | \
-/home/lpla/local/bin/bitextor-lett-language-detector $langs
+cat $FILE | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -t 2> /dev/null | \
+__PREFIX__/bin/bitextor-lett-language-detector $langs
