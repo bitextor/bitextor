@@ -353,8 +353,8 @@ for line in sys.stdin:
 
 convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
-    if [ $DEDUP != "" ]; then
-      if [ $DEDUPRAM != "" ]; then
+    if [ "$DEDUP" != "" ]; then
+      if [ "$DEDUPRAM" != "" ]; then
         __PREFIX__/bin/bitextor-buildTMX-dedupRAM --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
       else
         LC_ALL=C sort -k3 -k4 --compress-program=gzip | __PREFIX__/bin/bitextor-buildTMX-dedup --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 

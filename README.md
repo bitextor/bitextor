@@ -57,7 +57,7 @@ Also, Bitextor modules have alternative implementations from other pipelines, wh
 
 We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run (if `pip` points to `python2` installation, otherwise, use the `pip` version for that, sometimes named `pip2.7`):
 
-`user@pc:~$ sudo pip install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py`
+`user@pc:~$ sudo pip install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py ftfy`
 
 To ensure you are using the minimum required versions of the needed libraries, if you didn't run the previous command, you should run:
 
@@ -129,7 +129,6 @@ Some more tools are included in the bitextor package and will be installed toget
 - hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
 - mgiza: machine translation package, here used for building probabilistic bilingual dictionaries (<https://github.com/moses-smt/mgiza>)
 - clustercat: Fast Word Clustering program, parallelised alternative to mkcls (<https://github.com/jonsafari/clustercat>)
-- apache tika: a tool for HTML files normalisation (<http://tika.apache.org/>) (using Maven)
 - boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>) (using Maven)
 
 
