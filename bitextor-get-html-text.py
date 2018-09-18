@@ -22,7 +22,7 @@ def getElementText(element,document):
     if element.text != None:        #If we have text in tag
         #Add interpreted space for non-inline tags
         if element.tag not in inline_tags:
-            text = " "  #Add artificial separation as browser parser does if tag is not inline
+            text = "\n"  #Add artificial separation as browser parser does if tag is not inline
         text = text + element.text
     
     #Now we recursively iterate through the childs
@@ -32,7 +32,9 @@ def getElementText(element,document):
 
     #Add interpreted space for non-inline tags after all processing of the actual tag content
     if element.tag not in inline_tags:
-        text = text + " "
+        text = text + "\n"
+    elif element.tag == "br":
+        text = text + "\n"
 
     #Processing parent text (A.K.A. element.tail) similarly as the actual tag
     if element.tail != None:        #If we have tail parent text (text after the closing tag until the next open/close tag)
@@ -71,7 +73,7 @@ for line in sys.stdin:
         continue
     if args.text:
         documenttext = getDocumentText(document)
-        fields.append(base64.b64encode(re.sub("\s+", " ",documenttext).encode()).decode('utf8'))
+        fields.append(base64.b64encode(re.sub("[\n\t]+", "\n", re.sub("[ ]+", " ",documenttext)).encode()).decode('utf8'))
     else:
-        fields.append(re.sub("\s+", " ", etree.tostring(document).decode('utf8').replace('\n',' ')))
+        fields.append(etree.tostring(document).decode('utf8').replace("\t"," ").replace("\n"," "))
     print('\t'.join(fields))
