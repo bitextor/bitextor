@@ -20,6 +20,8 @@ INDEX=""
 MAXLINES=5
 MINQUALITY=0
 INPUTMODE=0
+DEDUPRAM=""
+DEDUP=""
 CRAWLLOG=/dev/null
 CRAWL2ETTLOG=/dev/null
 ETT2LETTLOG=/dev/stderr
@@ -200,6 +202,12 @@ exit_program()
   echo "                    execution of Bitextor. This option must be used together with -C and the previous execution "
   echo "                    and the previous execution must have included the -p option in order to store the crawling status."
   echo "  -D                (--crawl-tld) if this flag is set, all the websites in the TLD will be crawled."
+  echo "  --dedup           if this option is enabled, the resulting translation memory (TMX) will contain only unique segment pairs. The different URLs"
+  echo "                    where the repeated segment pairs will appear in different <prop> labels inside each <tuv> block. This option only works when"
+  echo "                    a TMX file is generated (-x); this option is automatically enabled when setting --dedup. Note that this option requires sorting"
+  echo "                    all the segment pairs identified, which can be time and disk consuming; to use a data structure in RAM, use option --dedup-ram."
+  echo "  --dedup-ram       this option performs the same way than --dedup, but instead of sorting the segments, it stores all of them in a data structure in"
+  echo "                    RAM memory for deduplication instead of sorting them."
 
   exit 1
 }
@@ -345,7 +353,15 @@ for line in sys.stdin:
 
 convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
-    __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+    if [ "$DEDUP" != "" ]; then
+      if [ "$DEDUPRAM" != "" ]; then
+        __PREFIX__/bin/bitextor-buildTMX-dedupRAM --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+      else
+        LC_ALL=C sort -k3 -k4 --compress-program=gzip | __PREFIX__/bin/bitextor-buildTMX-dedup --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+      fi
+    else
+      __PREFIX__/bin/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+    fi
   elif [ "$PRINTSTATS" != "" ]; then
     cat -
   else
@@ -492,7 +508,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS="$@"
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc -- "$@")
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,dedup,dedup-ram -- "$@")
 
 eval set -- $ARGS
 for i
@@ -507,7 +523,7 @@ do
   shift
 done
 
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc -- $CONFIGFILEOPTIONS $OLDARGS)
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,dedup,dedup-ram -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -769,6 +785,17 @@ do
       shift
       BICLEANERTHRESHOLD=$1
       shift
+      ;;
+    --dedup)
+      shift
+      FORMAT="TMX"
+      DEDUP=1
+      ;;
+    --dedup-ram)
+      shift
+      FORMAT="TMX"
+      DEDUP=1
+      DEDUPRAM=1
       ;;
     --filter-zipporah)
       shift
