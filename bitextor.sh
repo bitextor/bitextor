@@ -25,7 +25,6 @@ DEDUP=""
 CRAWLLOG=/dev/null
 CRAWL2ETTLOG=/dev/null
 ETT2LETTLOG=/dev/stderr
-TAR2LETTLOG=/dev/null
 WEBDIR2ETTLOG=/dev/null
 LETT2LETTRLOG=/dev/stderr
 LETT2IDXLOG=/dev/stderr
@@ -77,7 +76,6 @@ KEEPSEG=""
 IGNOREBOILER=""
 USENLTK="--nltk"
 USEHTTRACK=0
-USEJHULETT=0
 CONFIGFILEOPTIONS=""
 CONFIGFILE=""
 DIRNAME=""
@@ -128,8 +126,7 @@ exit_program()
   echo "  -L PATH           (--logs-dir) custom path where the directory containing the logs of the"
   echo "                    different modules of bitextor will be stored"
   echo "  -H                (--httrack) use HTTrack instead of embedded Creepy crawling engine"
-  echo "  --jhu-lett        (only with --httrack) use JHU pipeline process for ETT and LETT processing from HTTrack files"
-  echo "  --paracrawl-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by JHU document aligner"
+  echo "  --paracrawl-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by Paracrawl document aligner"
   echo "  --aligned-document-input FILE       Performs sentence alignment, cleaning and optional TMX conversion of provided aligned documents"
   echo "  --aligned-sentences-input FILE      Performs cleaning and optional TMX conversion of provided aligned sentences"
   echo "  --only-crawl      Only performs crawling"
@@ -273,10 +270,7 @@ run_bitextor(){
     crawl_pid=$(jobs -p)
     trap "trapsigint $crawl_pid" SIGINT
     trap "trapsigint $crawl_pid" SIGUSR1
-    if [ "$ONLYCRAWL" == "" ] ; then
-      __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-      __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
-    else
+    if [ "$ONLYCRAWL" != "" ] ; then
       cat $tmpcrawl
     fi
   else
@@ -285,17 +279,14 @@ run_bitextor(){
     fi
     __PREFIX__/bin/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
     if [ "$ONLYCRAWL" == "" ] ; then
-      if [ "$USEJHULETT" == "0" ]; then
-        __PREFIX__/bin/bitextor-webdir2ett $IGNOREBOILER $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT | \
-        __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT & 
-      else
-        TARNAME=$(mktemp $TMPDIR/tar.XXXXXX.tar.gz)
-        tar czf $TARNAME -C $DIRNAME/ .
-        __PREFIX__/bin/tar2lett $TARNAME $LANG1 $LANG2 2> $TAR2LETTLOG > $LETT & 
-      fi
+      __PREFIX__/bin/bitextor-webdir2warc $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT > $tmpcrawl &
     else
       echo "Crawling finished at $DIRNAME"
     fi
+  fi
+  if [ "$ONLYCRAWL" == "" ]; then
+    __PREFIX__/bin/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
+    __PREFIX__/bin/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
   fi
   
   if [ "$DONOTPIPELETT" != "" ]; then
@@ -531,11 +522,7 @@ align_documents_and_segments(){
 trap '' SIGINT
 
 OLDARGS="$@"
-<<<<<<< HEAD
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg -- "$@")
-=======
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,dedup,dedup-ram -- "$@")
->>>>>>> master
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg,dedup,dedup-ram -- "$@")
 
 eval set -- $ARGS
 for i
@@ -550,11 +537,7 @@ do
   shift
 done
 
-<<<<<<< HEAD
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg -- $CONFIGFILEOPTIONS $OLDARGS)
-=======
-ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l jhu-lett,tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,dedup,dedup-ram -- $CONFIGFILEOPTIONS $OLDARGS)
->>>>>>> master
+ARGS=$(getopt -o xaWDBHnf:q:m:v:b:l:u:U:d:D:L:D:e:E:I:t:O:M:N:T:s:j:c:p:C:R:F: -l tmx-output,only-document-alignment,elrc-quality-metrics,crawl-tld,ignore-boilerpipe-cleaning,httrack,ulysses,url:,url-list:,ett:,lett:,logs-dir:,lettr:,intermediate-files-dir:,num-accepted-candidates:,vocabulary:,tmp-dir:,num-threads:,sl-morphological-analyser:,tl-morphological-analyser:,output:,doc-alignment-score-threshold:,maximum-wrong-alignments:,seg-alignment-score-threshold:,continue-crawling-file:,reuse-crawling-file:,size-limit:,time-limit:,write-crawling-file:,timeout-crawl:,dirname:,config-file:,aligned-document-input:,aligned-sentences-input:,only-crawl,only-lett,bicleaner:,zipporah:,filter-bicleaner:,filter-zipporah:,paracrawl-aligner-command:,filter-with-elrc,deferred,keep-orig-seg,dedup,dedup-ram -- $CONFIGFILEOPTIONS $OLDARGS)
 eval set -- $ARGS
 for i
 do
@@ -602,7 +585,6 @@ do
       CRAWLLOG=$LOGDIR/bitextorcrawl.log
       CRAWL2ETTLOG=$LOGDIR/bitextorcrawl2ett.log
       ETT2LETTLOG=$LOGDIR/bitextorett2lett.log
-      TAR2LETTLOG=$LOGDIR/bitextortar2lett.log
       WEBDIR2ETTLOG=$LOGDIR/bitextorwebdir2ett.log
       LETT2LETTRLOG=$LOGDIR/bitextorlett2lettr.log
       LETT2IDXLOG=$LOGDIR/bitextorlett2idx.log
@@ -796,10 +778,6 @@ do
       else
         USEHTTRACK=1
       fi
-      ;;
-    --jhu-lett)
-      shift
-      USEJHULETT=1
       ;;
     --bicleaner)
       shift

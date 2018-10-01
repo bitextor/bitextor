@@ -56,6 +56,6 @@ esac
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
-cat $WEBCRAWL | __PREFIX__/bin/bitextor-identifyMIME | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x 2> /dev/null | eval "$BOILERCOMMAND" 2> /dev/null | __PREFIX__/bin/bitextor-dedup > $OUTPUT
+cat $WEBCRAWL | __PREFIX__/bin/bitextor-warc2ett | __PREFIX__/bin/bitextor-identifyMIME | __JAVA__ -jar __PREFIX__/share/java/piped-tika.jar -x 2> /dev/null | eval "$BOILERCOMMAND" 2> /dev/null | __PREFIX__/bin/bitextor-dedup > $OUTPUT
 
 
