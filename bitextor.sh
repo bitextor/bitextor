@@ -125,7 +125,7 @@ exit_program()
   echo "                    different modules of bitextor will be stored"
   echo "  -H                (--httrack) use HTTrack instead of embedded Creepy crawling engine"
   echo "  --jhu-lett        (only with --httrack) use JHU pipeline process for ETT and LETT processing from HTTrack files"
-  echo "  --paracrawl-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by JHU document aligner"
+  echo "  --paracrawl-aligner-command  COMMAND      Gives a translation command (Marian, Moses...) that is used by Paracrawl document aligner"
   echo "  --aligned-document-input FILE       Performs sentence alignment, cleaning and optional TMX conversion of provided aligned documents"
   echo "  --aligned-sentences-input FILE      Performs cleaning and optional TMX conversion of provided aligned sentences"
   echo "  --only-crawl      Only performs crawling"
