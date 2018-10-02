@@ -1,14 +1,9 @@
-#!__ENV__ __PYTHON__
+#!__ENV__ python3
 
 import re
 import sys
-import magic
-import base64
 import argparse
 import warc
-
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that takes a list of file paths from HTTrack crawled folder")
 options = oparser.parse_args()
@@ -19,13 +14,13 @@ for line in reader:
     filepath=line.strip()
     content=None
     url=None
-    with open(filepath, 'r') as content_file:
+    with open(filepath, 'rb') as content_file:
       content = content_file.read()
-    for line in content.split("\n"):
-      if re.search(r'<!-- Mirrored from ', line):
-        url = re.sub(r'.*<!-- Mirrored from ', '', re.sub(r' by HTTrack Website Copier.*', '', line))
+    for line in content.split(b"\n"):
+      if re.search(rb'<!-- Mirrored from ', line):
+        url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
         break
     warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url})
-    f = warc.WARCFile(fileobj=sys.stdout)
+    f = warc.WARCFile(fileobj=sys.stdout.buffer)
     f.write_record(warc_record)
 
