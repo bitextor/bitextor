@@ -30,7 +30,8 @@ def readLETT(f, docs):
     if len(fields) >= 7:
       #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
       tags = set(fields[6].split('_'))
-      tags.remove('')
+      if '' in tags:
+        tags.remove('')
       #List of names of tags in the current raspa
       tags_with_bounds = ["_{0}_".format(x) for x in tags]
       dic={}
