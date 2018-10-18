@@ -10,8 +10,7 @@ exit_program()
   exit 1
 }
 
-ARGS=$(getopt "bh" $*)
-BOILERCOMMAND="__JAVA__ -jar __PREFIX__/share/java/piped-boilerpipe.jar"
+ARGS=$(getopt "h" $*)
 
 set -- $ARGS
 for i
@@ -19,10 +18,6 @@ do
   case "$i" in
     -h)
       exit_program $(basename $0)
-      ;;
-    -b)
-      shift
-      BOILERCOMMAND="cat -"
       ;;
     --)
       shift
@@ -54,6 +49,4 @@ esac
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
-find "$WEBDIR" -type f -exec file -N --mime-type --mime-encoding {} + | grep -E "(text/html;|text/xml;)" | \
-gawk '{ print gensub(/([^:]+): ([^;]+); (.+)/, "\\2\t\\3\t\\1", "g", $0) }' | grep -v 'hts-cache' | __PREFIX__/bin/bitextor-dir2crawl | \
-python3 __PREFIX__/bin/bitextor-get-html-text | $BOILERCOMMAND | __PREFIX__/bin/bitextor-dedup > $OUTPUT
+find "$WEBDIR" -type f | grep -v 'hts-cache' | python3 $(dirname $0)/bitextor-dir2warc > $OUTPUT

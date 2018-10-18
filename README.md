@@ -12,8 +12,8 @@
 The tool works following a sequence of steps (scripts sorted by default use):
 
 1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` or `tar2lett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` or `tar2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file as input);
+2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` (optional as related with previous step);
+3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file as input);
 4. Document align:
 * Bitextor document aligner
   * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;

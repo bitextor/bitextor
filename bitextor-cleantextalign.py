@@ -39,7 +39,7 @@ for i in reader:
       segment_list=[]
     if float(campos[4]) > options.minq:
       if not options.isPrintingScore:
-        campos.pop()
+        campos.pop(4)
       segment_list.append("\t".join(campos))
     else:
       sys.stderr.write("CONFIDENCE SCORE TOO LOW FOR PAIR OF SEGMENTS: " + i)
