@@ -121,17 +121,17 @@ wait
 
 #Lowercasing the corpus
 echo "LOWERCASING THE CORPUS..."
-cat $SL_TOKENISED | perl __PREFIX__/share/moses/tokenizer/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
-cat $TL_TOKENISED | perl __PREFIX__/share/moses/tokenizer/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
+cat $SL_TOKENISED | perl $(dirname $0)/../share/moses/tokenizer/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
+cat $TL_TOKENISED | perl $(dirname $0)/../share/moses/tokenizer/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
 wait
 
 #Cleaning the corpus
 echo "FILTERING OUT TOO LONG SENTENCES..."
-perl __PREFIX__/share/bitextor/utils/clean-corpus-n.perl $PREPROCCORPUS/corpus.tok.low $SL $TL $PREPROCCORPUS/corpus.clean 1 50 2> /dev/null
+perl $(dirname $0)/../share/bitextor/utils/clean-corpus-n.perl $PREPROCCORPUS/corpus.tok.low $SL $TL $PREPROCCORPUS/corpus.clean 1 50 2> /dev/null
 
 #Obtaining the vocabulary and the encoded sentences files
 echo "FORMATTING THE CORPUS FOR PROCESSING..."
-__PREFIX__/bin/plain2snt $PREPROCCORPUS/corpus.clean.$SL $PREPROCCORPUS/corpus.clean.$TL 2> /dev/null > /dev/null
+$(dirname $0)/plain2snt $PREPROCCORPUS/corpus.clean.$SL $PREPROCCORPUS/corpus.clean.$TL 2> /dev/null > /dev/null
 mv $PREPROCCORPUS/corpus.clean.${SL}_corpus.clean.$TL.snt $MODELSDIR/$TL-$SL-int-train.snt
 mv $PREPROCCORPUS/corpus.clean.${TL}_corpus.clean.$SL.snt $MODELSDIR/$SL-$TL-int-train.snt
 mv $PREPROCCORPUS/corpus.clean.$SL.vcb $MODELSDIR/$SL.vcb
@@ -139,21 +139,21 @@ mv $PREPROCCORPUS/corpus.clean.$TL.vcb $MODELSDIR/$TL.vcb
 
 #Building classes from the words in the corpus
 echo "BUILDING WORD CLASSES FOR IMPROVING ALIGNMENT..."
-__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$SL -V$MODELSDIR/$SL.vcb.classes opt 2> /dev/null > /dev/null
-__PREFIX__/bin/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$TL -V$MODELSDIR/$TL.vcb.classes opt 2> /dev/null > /dev/null
+$(dirname $0)/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$SL -V$MODELSDIR/$SL.vcb.classes opt 2> /dev/null > /dev/null
+$(dirname $0)/mkcls -c50 -n2 -p$PREPROCCORPUS/corpus.clean.$TL -V$MODELSDIR/$TL.vcb.classes opt 2> /dev/null > /dev/null
 wait
 
 #Obtaining the coocurrence matrix of the fiels
 echo "CHECKING COOCURRENCE OF WORDS IN THE CORPUS..."
-__PREFIX__/bin/snt2cooc $MODELSDIR/$TL-$SL.cooc $MODELSDIR/$SL.vcb $MODELSDIR/$TL.vcb $MODELSDIR/$TL-$SL-int-train.snt 2> /dev/null
-__PREFIX__/bin/snt2cooc $MODELSDIR/$SL-$TL.cooc $MODELSDIR/$TL.vcb $MODELSDIR/$SL.vcb $MODELSDIR/$SL-$TL-int-train.snt 2> /dev/null
+$(dirname $0)/snt2cooc $MODELSDIR/$TL-$SL.cooc $MODELSDIR/$SL.vcb $MODELSDIR/$TL.vcb $MODELSDIR/$TL-$SL-int-train.snt 2> /dev/null
+$(dirname $0)/snt2cooc $MODELSDIR/$SL-$TL.cooc $MODELSDIR/$TL.vcb $MODELSDIR/$SL.vcb $MODELSDIR/$SL-$TL-int-train.snt 2> /dev/null
 wait
 
 #Running GIZA++ in both directions
 echo "BUILDING PROBABILISTIC DICTIONARIES..."
-__PREFIX__/bin/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
+$(dirname $0)/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$SL-$TL.cooc -c $MODELSDIR/$SL-$TL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$SL-$TL -s $MODELSDIR/$TL.vcb -t $MODELSDIR/$SL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
 
-__PREFIX__/bin/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
+$(dirname $0)/mgiza -ncpus 8 -CoocurrenceFile $MODELSDIR/$TL-$SL.cooc -c $MODELSDIR/$TL-$SL-int-train.snt -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o $MODELSDIR/$TL-$SL -s $MODELSDIR/$SL.vcb -t $MODELSDIR/$TL.vcb -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
 wait
 
 echo "FILTERING DICTIONARY..."
