@@ -14,12 +14,13 @@
 #
 
 import sys
+import os
 import string
 import base64
 from html.parser import HTMLParser
 import argparse
 import unicodedata
-sys.path.append("__PREFIX__/share/bitextor/utils")
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/utils")
 from unicodepunct import get_unicode_punct
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize

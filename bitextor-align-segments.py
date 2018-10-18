@@ -37,9 +37,9 @@ from iso639 import languages
 def runAligner(filename1, filename2, dic):
   # option -ppthresh=10?
   if dic == None or dic == "":
-    hunalign = ["__PREFIX__/bin/hunalign", "-realign", "/dev/null", filename1, filename2]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", "-realign", "/dev/null", filename1, filename2]
   else:
-    hunalign = ["__PREFIX__/bin/hunalign", dic, filename1, filename2]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", dic, filename1, filename2]
   p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
   for line in p.stdout:
     yield line
@@ -62,13 +62,13 @@ def trainSegmenters(reader, l1, l2):
   reader_list=[]
 
   try:
-    mitok_l1=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
+    mitok_l1=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
   except:
     mitok_l1=ulysses.Ulysses()
     mitok_l1.init_model()
   
   try:
-    mitok_l2=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
+    mitok_l2=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
   except:
     mitok_l2=ulysses.Ulysses()
     mitok_l2.init_model()

@@ -8,8 +8,7 @@
 #
 # The script allows to crawl a website. It takes, as the input, a URL
 # and a nubmer of optional parameters (use option -h for more details).
-# The output is a tab-separated file with one docuemnt per line, containing
-# first the content of the document encoded in base64 and the original URL 
+# The output is a WARC file
 
 import http.client
 import logging
@@ -34,6 +33,7 @@ import random
 
 import signal
 import pickle
+import warc
 
 
 class Document(object):
@@ -364,7 +364,7 @@ class Crawler(object):
 
 ##### NEW CODE #####
 
-oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in a tab-sepparated output containing the base64 encoded document and the corresponding URL.")
+oparser = argparse.ArgumentParser(description="Script that crawls a website and prints the downloaded documents in standard output using WARC format.")
 oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
 oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False, default=None)
 oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit", required=False, default=None)
@@ -381,7 +381,10 @@ class MyCrawler(Crawler):
     if doc.status == 200:
       self.concurrency_lock.acquire()
       try:
-        print(base64.b64encode(doc.text).decode('utf8')+"\t"+doc.url)
+        #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
+        warc_record = warc.WARCRecord(payload=doc.text,headers={"WARC-Target-URI":doc.url})
+        f = warc.WARCFile(fileobj=sys.stdout.buffer)
+        f.write_record(warc_record)
         self.crawlsize+=sys.getsizeof(doc.text)/1000000.0
         if self.sizelimit != None and self.crawlsize > self.sizelimit:
           self.interrupt=True

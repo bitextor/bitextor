@@ -40,13 +40,13 @@ def trainSegmenters(reader, l1, l2):
   reader_list=[]
 
   try:
-    mitok_l1=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
+    mitok_l1=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
   except:
     mitok_l1=ulysses.Ulysses()
     mitok_l1.init_model()
   
   try:
-    mitok_l2=pickle.load(gzip.open("__PREFIX__/share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
+    mitok_l2=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
   except:
     mitok_l2=ulysses.Ulysses()
     mitok_l2.init_model()
@@ -154,9 +154,9 @@ for line in reader_list:
   tmp_file2.close()
 
   if options.dic == None:
-    hunalign = ["__PREFIX__/bin/hunalign", "-realign", "/dev/null", tmp_file1_name, tmp_file2_name]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", "-realign", "/dev/null", tmp_file1_name, tmp_file2_name]
   else:
-    hunalign = ["__PREFIX__/bin/hunalign", options.dic, tmp_file1_name, tmp_file2_name]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", options.dic, tmp_file1_name, tmp_file2_name]
 
   p = subprocess.Popen(hunalign, stdout= open(os.devnull, "w"), stderr = subprocess.PIPE)
   parsed_alignment, errout = p.communicate()
