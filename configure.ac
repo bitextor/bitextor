@@ -291,7 +291,7 @@ print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="1.0.3"
-    kerasversion=`python -c "import keras; print(keras.__version__)" 2> /dev/null`
+    kerasversion=`python3 -c "import keras; print(keras.__version__)" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$kerasversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
@@ -324,6 +324,21 @@ print (var)" 2> /dev/null`
 - h5py:   Please, install v2.6 or later and try again: sudo pip install h5py
 ])
   fi
+  
+  AC_MSG_CHECKING([for WARC for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import warc; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Library to process WARC crawling format for Python 3 is missing. To install it, run "pip install warc3-wet".
+])
+  fi
+
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for scipy for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
@@ -421,7 +436,7 @@ print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="3.3"
-    nltkversion=`python -c "import nltk; print nltk.__version__" 2> /dev/null`
+    nltkversion=`python3 -c "import nltk; print nltk.__version__" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$nltkversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
@@ -508,4 +523,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile model/Makefile zipporah/Makefile])

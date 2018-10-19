@@ -27,8 +27,6 @@ from nltk import wordpunct_tokenize
 from nltk.tokenize import sent_tokenize
 import site
 import traceback
-site.addsitedir('__PYTHONPATH__')
-import ulysses
 from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages
@@ -54,56 +52,18 @@ def runAnalyse(morph, text):
   else:
     return text
 
-def splitSegs(mitok, text):
-  return mitok.split(ulysses.splitinwords(text))
-      
-
-def trainSegmenters(reader, l1, l2):
-  reader_list=[]
-
-  try:
-    mitok_l1=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l1), "r"))
-  except:
-    mitok_l1=ulysses.Ulysses()
-    mitok_l1.init_model()
-  
-  try:
-    mitok_l2=pickle.load(gzip.open(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/ulysses-data/{0}.pickle.gz".format(l2), "r"))
-  except:
-    mitok_l2=ulysses.Ulysses()
-    mitok_l2.init_model()
-
-  for line in reader:
-    reader_list.append(line.strip())
-    fields=reader_list[-1].split("\t")
-    text1=base64.b64decode(fields[2].encode("utf8")).decode("utf-8")
-    mitok_l1.feed_model(ulysses.splitinwords(text1))
-
-    text2=base64.b64decode(fields[3].encode("utf8")).decode("utf-8")
-    mitok_l2.feed_model(ulysses.splitinwords(text2))
-
-  mitok_l1.update_model()
-  mitok_l2.update_model()
-
-  return mitok_l1, mitok_l2, reader_list
-
-def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, mitok, morphanal, useNltkSentTok):
+def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, morphanal):
   tmp_tok_segs=[]
   for origseg in base64.b64decode(encodedtext).decode("utf-8").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      if useNltkSentTok:
-        try:
-          for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
-            tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-        except LookupError:
-          # No language-specific sentence splitter available
-          for seg in sent_tokenize(trimorigseg):
-            tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-            tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-      else:
-        for seg in splitSegs(mitok, trimorigseg):
+      try:
+        for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
+          tmp_file_origtext.write(seg.encode("utf8")+b"\n")
+          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      except LookupError:
+        # No language-specific sentence splitter available
+        for seg in sent_tokenize(trimorigseg):
           tmp_file_origtext.write(seg.encode("utf8")+b"\n")
           tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
 
@@ -167,7 +127,6 @@ oparser = argparse.ArgumentParser(description="Tool that reads the output of bit
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
-oparser.add_argument("--nltk" , help="Use NLTK sentence splitter instead of Ulysses", dest="useNltkSentTok", action="store_true")
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
 oparser.add_argument("-t", "--tmp-dir", help="Temporary directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)
@@ -175,25 +134,16 @@ oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morpholo
 
 options = oparser.parse_args()
 
-useNltkSentTok=options.useNltkSentTok
 
 if options.aligned_docs == None:
   reader = sys.stdin
 else:
   reader = open(options.aligned_docs,"r")
 
-mitok_l1,mitok_l2=None,None
-if not useNltkSentTok:
-  if options.aligned_docs == None:
-    reader = sys.stdin
-  else:
-    reader = open(options.aligned_docs,"r")
-  mitok_l1, mitok_l2, reader_list=trainSegmenters(reader, options.lang1, options.lang2)
+if options.aligned_docs == None:
+  reader_list = sys.stdin
 else:
-  if options.aligned_docs == None:
-    reader_list = sys.stdin
-  else:
-    reader_list = open(options.aligned_docs,"r")
+  reader_list = open(options.aligned_docs,"r")
 
 for line in reader_list:
   tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
@@ -207,8 +157,8 @@ for line in reader_list:
   encodedtext1=fields[2]
   encodedtext2=fields[3]
 
-  extract_encoded_text(encodedtext1, options.lang1, tmp_file1, tmp_file1_origtext, mitok_l1, options.morphanal1, useNltkSentTok)
-  extract_encoded_text(encodedtext2, options.lang2, tmp_file2, tmp_file2_origtext, mitok_l2, options.morphanal2, useNltkSentTok)
+  extract_encoded_text(encodedtext1, options.lang1, tmp_file1, tmp_file1_origtext, options.morphanal1)
+  extract_encoded_text(encodedtext2, options.lang2, tmp_file2, tmp_file2_origtext, options.morphanal2)
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name
