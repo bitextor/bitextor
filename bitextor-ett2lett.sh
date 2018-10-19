@@ -38,5 +38,5 @@ case $# in
     ;;
 esac
 
-cat $FILE | python3 $(dirname $0)/bitextor-get-html-text -t | \
+cat $FILE | python3 "$(dirname "$0")"/bitextor-get-html-text -t | \
 $(dirname $0)/bitextor-lett-language-detector $langs
