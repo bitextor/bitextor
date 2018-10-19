@@ -436,7 +436,7 @@ print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="3.3"
-    nltkversion=`python3 -c "import nltk; print nltk.__version__" 2> /dev/null`
+    nltkversion=`python3 -c "import nltk; print(nltk.__version__)" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$nltkversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
