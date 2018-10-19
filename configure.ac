@@ -366,6 +366,20 @@ print (var)" 2> /dev/null`
 ])
   fi
 
+  AC_MSG_CHECKING([for WARC for Python3])
+  ac_supports_python_ver=`python3 -c "import sys; \
+import warc; \
+var = True; \
+print (var)" 2> /dev/null`
+  if test "$ac_supports_python_ver" = "True";
+  then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Library to process WARC crawling format for Python 3 is missing. To install it, run "pip install warc3-wet".
+])
+  fi
+
   AC_MSG_CHECKING([for scipy for Python3])
   ac_supports_python_ver=`python3 -c "import sys; \
 import scipy; \
