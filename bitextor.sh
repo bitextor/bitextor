@@ -55,8 +55,8 @@ DISTANCEFILTER12OUT=""
 DISTANCEFILTER21OUT=""
 ALIGNDOCUMENTSOUT=""
 ALIGNSEGMENTSOUT=""
-MODEL="$(dirname $0)/../share/bitextor/model/keras.model"
-WEIGHTS="$(dirname $0)/../share/bitextor/model/keras.weights"
+MODEL=""$(dirname "$0")"/../share/bitextor/model/keras.model"
+WEIGHTS=""$(dirname "$0")"/../share/bitextor/model/keras.weights"
 SIZELIMIT=""
 TIMELIMIT=""
 DOCSIMTHRESHOLD=""
@@ -216,7 +216,7 @@ exit_program()
 }
 
 run_bitextor_ett(){
-  zcat -f $1 | $(dirname $0)/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+  zcat -f $1 | "$(dirname "$0")"/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
   if [ "$ONLYLETT" != "" ]; then
     cat $LETT
   else
@@ -266,7 +266,7 @@ run_bitextor(){
   fi
 
   if [ "$USEHTTRACK" == "0" ]; then #HTTRACK not used
-    $(dirname $0)/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
+    "$(dirname "$0")"/bitextor-crawl $TLD_CRAWL $URL $SIZELIMIT $TIMELIMIT $JOBS $TIMEOUT $DUMPARGS $CONTINUEARGS 2> $CRAWLLOG | tee $CRAWLOUT > $tmpcrawl &
     crawl_pid=$(jobs -p)
     trap "trapsigint $crawl_pid" SIGINT
     trap "trapsigint $crawl_pid" SIGUSR1
@@ -277,16 +277,16 @@ run_bitextor(){
     if [ "$DIRNAME" == "" ]; then
       DIRNAME=$(mktemp -d $TMPDIR/downloaded_websites.XXXXXX)
     fi
-    $(dirname $0)/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
+    "$(dirname "$0")"/bitextor-downloadweb $URL $DIRNAME > $CRAWLLOG 2>&1
     if [ "$ONLYCRAWL" == "" ] ; then
-      $(dirname $0)/bitextor-webdir2warc $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT > $tmpcrawl &
+      "$(dirname "$0")"/bitextor-webdir2warc $DIRNAME 2> $WEBDIR2ETTLOG | tee $WEBDIR2ETTOUT > $tmpcrawl &
     else
       echo "Crawling finished at $DIRNAME"
     fi
   fi
   if [ "$ONLYCRAWL" == "" ]; then
-    $(dirname $0)/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
-    $(dirname $0)/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
+    "$(dirname "$0")"/bitextor-crawl2ett $IGNOREBOILER < $tmpcrawl 2> $CRAWL2ETTLOG | tee $CRAWL2ETTOUT | \
+    "$(dirname "$0")"/bitextor-ett2lett -l ${LANG1},$LANG2 2> $ETT2LETTLOG | tee $ETT2LETTOUT > $LETT &
   fi
   
   if [ "$DONOTPIPELETT" != "" ]; then
@@ -309,7 +309,7 @@ run_bitextor(){
 }
 
 align_segments(){
-  $(dirname $0)/bitextor-align-segments $MORPHANAL_OPTIONS -d "$1" -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT
+  "$(dirname "$0")"/bitextor-align-segments $MORPHANAL_OPTIONS -d "$1" -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 $USENLTK 2> $ALIGNSEGMENTSLOG | tee $ALIGNSEGMENTSOUT
 }
 
 clean_segments(){
@@ -318,7 +318,7 @@ clean_segments(){
   
   > $CLEANTEXTLOG
   if [ "$ZIPPORAH" != "" ]; then
-    cat $OUTPUTCLEANERS | $(dirname $0)/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python3 -c "
+    cat $OUTPUTCLEANERS | "$(dirname "$0")"/zipporah-classifier $ZIPPORAH $LANG1 $LANG2 2>> $CLEANTEXTLOG | python3 -c "
 import sys
 
 for line in sys.stdin:
@@ -334,7 +334,7 @@ for line in sys.stdin:
     mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
   if [ "$BICLEANER" != "" ]; then
-    python3 $(dirname $0)/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2>> $CLEANTEXTLOG
+    python3 "$(dirname "$0")"/bicleaner-classifier-full.py $OUTPUTCLEANERS ${OUTPUTCLEANERS}-tmp -m $BICLEANER -s $LANG1 -t $LANG2 2>> $CLEANTEXTLOG
     cat ${OUTPUTCLEANERS}-tmp | python3 -c "
 import sys
 
@@ -355,13 +355,13 @@ for line in sys.stdin:
   fi
 
   if [ "$DEFERRED" != "" ]; then
-    cat $CRAWLOUT | $(dirname $0)/deferred-document > $CRAWLOUTDEFERRED
-    cat $OUTPUTCLEANERS | $(dirname $0)/deferred-sentences $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
+    cat $CRAWLOUT | "$(dirname "$0")"/deferred-document > $CRAWLOUTDEFERRED
+    cat $OUTPUTCLEANERS | "$(dirname "$0")"/deferred-sentences $CRAWLOUTDEFERRED > ${OUTPUTCLEANERS}-tmp
     mv ${OUTPUTCLEANERS}-tmp $OUTPUTCLEANERS
   fi
 
-  cat $OUTPUTCLEANERS | $(dirname $0)/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2>> $CLEANTEXTLOG | \
-  $(dirname $0)/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN
+  cat $OUTPUTCLEANERS | "$(dirname "$0")"/bitextor-cleantextalign -q $MINQUALITY -m $MAXLINES $PRINTSTATS 2>> $CLEANTEXTLOG | \
+  "$(dirname "$0")"/bitextor-elrc-filtering $PRINTSTATS $FILTERLINES -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN
   rm -r $OUTPUTCLEANERS
 }
 
@@ -369,12 +369,12 @@ convert_to_tmx(){
   if [ $FORMAT == "TMX" ]; then
     if [ "$DEDUP" != "" ]; then
       if [ "$DEDUPRAM" != "" ]; then
-        $(dirname $0)/bitextor-buildTMX-dedupRAM --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+        "$(dirname "$0")"/bitextor-buildTMX-dedupRAM --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
       else
-        LC_ALL=C sort -k3 -k4 --compress-program=gzip | $(dirname $0)/bitextor-buildTMX-dedup --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
+        LC_ALL=C sort -k3 -k4 --compress-program=gzip | "$(dirname "$0")"/bitextor-buildTMX-dedup --lang1 $LANG1 --lang2 $LANG2 -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$ELRCSCORES,idnumber 
       fi
     else
-      $(dirname $0)/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 $KEEPSEG -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN$ELRCSCORES,idnumber
+      "$(dirname "$0")"/bitextor-buildTMX --lang1 $LANG1 --lang2 $LANG2 $KEEPSEG -c url1,url2,seg1,seg2$HUNALIGNSCORE$ZIPPORAHSCORE$BICLEANERSCORE$DEFERREDCOLUMN$ELRCSCORES,idnumber
     fi
   elif [ "$PRINTSTATS" != "" ]; then
     cat -
@@ -404,12 +404,12 @@ align_documents_and_segments(){
     cat $LETT > $LETT.txt
     DOCALIGNTEMP=$(mktemp -d $BUILDDICTTMP/docaligntemp.XXXXXX)
     if [ $DOCALIGNMENT -eq 0 ]; then
-        $(dirname $0)/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -d -w $DOCALIGNTEMP 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -d -w $DOCALIGNTEMP 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
     else
-        $(dirname $0)/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -d -w $DOCALIGNTEMP 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        $(dirname $0)/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d "$HUNALIGN_DIC" $USENLTK > $output_pipe &
+        "$(dirname "$0")"/doc_align.sh -f $LETT.txt -l $LANG2 -t "$TRANSLATIONCOMMAND" -d -w $DOCALIGNTEMP 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d "$HUNALIGN_DIC" $USENLTK > $output_pipe &
     fi
   elif [ $BIDIDOCALIGN -ge 1 ]; then #Use dictionaries to pair indexes between documents
     #Named pipe for paralelising obtaining the initial index for the ridx 1
@@ -423,8 +423,8 @@ align_documents_and_segments(){
     mkfifo $index_pipe2
 
     INDEX=$(mktemp $BUILDDICTTMP/idx.XXXXXX)
-    zcat -f $LETT | $(dirname $0)/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
-    $(dirname $0)/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+    zcat -f $LETT | "$(dirname "$0")"/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+    "$(dirname "$0")"/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
     tee $INDEX |tee $index_pipe1 > $index_pipe2 &
 
 
@@ -432,25 +432,25 @@ align_documents_and_segments(){
     RINDEX1=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
     RINDEX2=$(mktemp $BUILDDICTTMP/ridx.XXXXXX)
 
-    $(dirname $0)/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
-    $(dirname $0)/bitextor-imagesetoverlap -l $LETTR | \
-    $(dirname $0)/bitextor-structuredistance -l $LETTR | \
-    $(dirname $0)/bitextor-urlsdistance -l $LETTR | \
-    $(dirname $0)/bitextor-mutuallylinked -l $LETTR | \
-    $(dirname $0)/bitextor-urlscomparison -l $LETTR | \
-    $(dirname $0)/bitextor-urlsetoverlap -l $LETTR | \
-    $(dirname $0)/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT > $RINDEX1 &
+    "$(dirname "$0")"/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 < $index_pipe1 2> $IDX2RIDX12LOG | tee $IDX2RIDX12OUT | \
+    "$(dirname "$0")"/bitextor-imagesetoverlap -l $LETTR | \
+    "$(dirname "$0")"/bitextor-structuredistance -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlsdistance -l $LETTR | \
+    "$(dirname "$0")"/bitextor-mutuallylinked -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlscomparison -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlsetoverlap -l $LETTR | \
+    "$(dirname "$0")"/bitextor-rank $DOCSIMTHRESHOLD -m "$MODEL" -w "$WEIGHTS" 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT > $RINDEX1 &
 
     #rindex1_pid=$!
 
-    $(dirname $0)/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
-    $(dirname $0)/bitextor-imagesetoverlap -l $LETTR | \
-    $(dirname $0)/bitextor-structuredistance -l $LETTR | \
-    $(dirname $0)/bitextor-urlsdistance -l $LETTR | \
-    $(dirname $0)/bitextor-mutuallylinked -l $LETTR | \
-    $(dirname $0)/bitextor-urlscomparison -l $LETTR | \
-    $(dirname $0)/bitextor-urlsetoverlap -l $LETTR | \
-    $(dirname $0)/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER21LOG) | tee $DISTANCEFILTER21OUT > $RINDEX2 &
+    "$(dirname "$0")"/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG2 --lang2 $LANG1 < $index_pipe2 2> $IDX2RIDX21LOG | tee $IDX2RIDX21OUT | \
+    "$(dirname "$0")"/bitextor-imagesetoverlap -l $LETTR | \
+    "$(dirname "$0")"/bitextor-structuredistance -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlsdistance -l $LETTR | \
+    "$(dirname "$0")"/bitextor-mutuallylinked -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlscomparison -l $LETTR | \
+    "$(dirname "$0")"/bitextor-urlsetoverlap -l $LETTR | \
+    "$(dirname "$0")"/bitextor-rank $DOCSIMTHRESHOLD -m "$MODEL" -w "$WEIGHTS" 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER21LOG) | tee $DISTANCEFILTER21OUT > $RINDEX2 &
 
     #wait $rindex1_pid
     wait
@@ -473,40 +473,40 @@ align_documents_and_segments(){
 
 
     if [ $DOCALIGNMENT -eq 0 ]; then
-        $(dirname $0)/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT -i converge $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/bitextor-align-documents -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT -i converge $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
     else
-        $(dirname $0)/bitextor-align-documents  -i converge -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        $(dirname $0)/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
+        "$(dirname "$0")"/bitextor-align-documents  -i converge -l $LETTR -n $BIDIDOCALIGN -r $DISTANCEFILTEROUT $RINDEX1 $RINDEX2 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
   else #Use Apertium to index both documents
-    cat $LETT | $(dirname $0)/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
+    cat $LETT | "$(dirname "$0")"/bitextor-lett2lettr 2> $LETT2LETTRLOG | tee $LETT2LETTROUT > $LETTR
     if [ $DOCALIGNMENT -eq 0 ]; then
-        $(dirname $0)/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-        $(dirname $0)/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-        $(dirname $0)/bitextor-imagesetoverlap -l $LETTR | \
-        $(dirname $0)/bitextor-structuredistance -l $LETTR | \
-        $(dirname $0)/bitextor-urlsdistance -l $LETTR | \
-        $(dirname $0)/bitextor-mutuallylinked -l $LETTR | \
-        $(dirname $0)/bitextor-urlscomparison -l $LETTR | \
-        $(dirname $0)/bitextor-urlsetoverlap -l $LETTR | \
-	$(dirname $0)/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
-        $(dirname $0)/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        "$(dirname "$0")"/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+        "$(dirname "$0")"/bitextor-imagesetoverlap -l $LETTR | \
+        "$(dirname "$0")"/bitextor-structuredistance -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlsdistance -l $LETTR | \
+        "$(dirname "$0")"/bitextor-mutuallylinked -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlscomparison -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlsetoverlap -l $LETTR | \
+	"$(dirname "$0")"/bitextor-rank $DOCSIMTHRESHOLD -m "$MODEL" -w "$WEIGHTS" 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
+        "$(dirname "$0")"/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
         align_segments $HUNALIGN_DIC | \
         clean_segments > $output_pipe &
     else
-        $(dirname $0)/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
-        $(dirname $0)/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
-        $(dirname $0)/bitextor-imagesetoverlap -l $LETTR | \
-        $(dirname $0)/bitextor-structuredistance -l $LETTR | \
-        $(dirname $0)/bitextor-urlsdistance -l $LETTR | \
-        $(dirname $0)/bitextor-mutuallylinked -l $LETTR | \
-        $(dirname $0)/bitextor-urlscomparison -l $LETTR | \
-        $(dirname $0)/bitextor-urlsetoverlap -l $LETTR | \
-	$(dirname $0)/bitextor-rank $DOCSIMTHRESHOLD -m $MODEL -w $WEIGHTS 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
-        $(dirname $0)/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        $(dirname $0)/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
+        "$(dirname "$0")"/bitextor-lett2idx $MORPHANAL_OPTIONS --lang1 $LANG1 --lang2 $LANG2 -m 15 $LETTR 2> $LETT2IDXLOG | tee $LETT2IDXOUT | \
+        "$(dirname "$0")"/bitextor-idx2ridx $TLD_IDX2RIDX -d $VOCABULARY --lang1 $LANG1 --lang2 $LANG2 2> $IDX2RIDXLOG | tee $IDX2RIDXOUT | \
+        "$(dirname "$0")"/bitextor-imagesetoverlap -l $LETTR | \
+        "$(dirname "$0")"/bitextor-structuredistance -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlsdistance -l $LETTR | \
+        "$(dirname "$0")"/bitextor-mutuallylinked -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlscomparison -l $LETTR | \
+        "$(dirname "$0")"/bitextor-urlsetoverlap -l $LETTR | \
+	"$(dirname "$0")"/bitextor-rank $DOCSIMTHRESHOLD -m "$MODEL" -w "$WEIGHTS" 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
+        "$(dirname "$0")"/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
+        "$(dirname "$0")"/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC $USENLTK > $output_pipe &
     fi
   fi
   convert_to_tmx < $output_pipe > $OUTPUT
