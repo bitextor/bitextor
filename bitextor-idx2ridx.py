@@ -12,7 +12,6 @@
 
 import sys
 import argparse
-from sets import Set
 from collections import defaultdict
 from operator import itemgetter
 import re
@@ -73,7 +72,7 @@ def loadDictionaries(dictionary, lang1, lang2, dic):
 #
 def translateWords(index, dic, dictp, translatedindex):
   for i in index:
-    translatedindex[i] = Set([])
+    translatedindex[i] = set([])
     counter = 0
     for word in index[i]:
       if word in dic:
@@ -86,12 +85,12 @@ def translateWords(index, dic, dictp, translatedindex):
 # both sides (they are likely to be proper nouns, codes, dates, etc. that do not need to be translated).
 #
 def feedDictWithIdenticalWords(index1, index2, dic):
-  words_lang1=Set()
-  for key, words in index1.items():
+  words_lang1=set()
+  for key, words in list(index1.items()):
     words_lang1=words_lang1.union(words)
 
-  words_lang2=Set()
-  for key, words in index2.items():
+  words_lang2=set()
+  for key, words in list(index2.items()):
     words_lang2=words_lang2.union(words)
 
   for w in words_lang1.intersection(words_lang2):
@@ -157,7 +156,7 @@ for i in index_text1:
         similar[j] = (float(min_vocab)/float(max_vocab))*(float(num_intersect_words)/float(num_trans_words_text2))
 
   if len(similar) > 0:
-    similar = sorted(similar.items(), key=itemgetter(1), reverse=True)
+    similar = sorted(list(similar.items()), key=itemgetter(1), reverse=True)
   found[i] = []
   for j in similar:
     found[i].append(str(j[0]) + ":" + str(j[1]))
@@ -176,4 +175,4 @@ for i in found:
       first = False
     else:
       candidatestring += "\t" + str(found[i][j])
-  print candidatestring
+  print(candidatestring)

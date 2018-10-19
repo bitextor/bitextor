@@ -30,10 +30,10 @@ for i in reader:
     fieldsdict[column]=field
   if options.isPrintingStats:
     extracolumns=["lengthratio","numTokensSL","numTokensTL","idnumber"]
-    if len(fieldsdict["seg2"].decode('utf8')) == 0:
+    if len(fieldsdict["seg2"]) == 0:
       lengthRatio=0
     else:
-      lengthRatio=len(fieldsdict["seg1"].decode('utf8'))*1.0/len(fieldsdict["seg2"].decode('utf8'))
+      lengthRatio=len(fieldsdict["seg1"])*1.0/len(fieldsdict["seg2"])
     numTokensSL=len(fieldsdict["seg1"].split(' ')) #This is not the way this should be counted, we need to tokenize better first
     numTokensTL=len(fieldsdict["seg2"].split(' ')) #This is not the way this should be counted, we need to tokenize better first
     fieldsdict["lengthratio"]=str(lengthRatio)

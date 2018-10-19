@@ -12,8 +12,6 @@ import hashlib
 import base64
 import argparse
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl2ett and removes duplicate files.")
 oparser.add_argument('ett', metavar='ETT', nargs='?', help='Output of the bitextor-crawl2ett script (in format ETT).', default=None)
@@ -28,10 +26,10 @@ seen_md5={}
 for i in reader:
   fields = i.strip().split("\t")
   try:
-    e = base64.b64encode(fields[4])
+    e = base64.b64encode(fields[4].encode("utf8")).decode("utf8")
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
-    c.update(e)
+    c.update(e.encode("utf8"))
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
       sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")

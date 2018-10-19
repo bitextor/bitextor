@@ -16,7 +16,6 @@
 #
 
 import sys
-from sets import Set
 import argparse
 from operator import itemgetter
 import re

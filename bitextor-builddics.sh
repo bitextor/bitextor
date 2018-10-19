@@ -103,8 +103,7 @@ $cattool $SL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print " ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8")' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
-  #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
 if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
     cattool="zcat"
@@ -115,8 +114,7 @@ $cattool $TL_CORPUS | __PYTHON__ -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print " ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8")' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
-  #print PunktWordTokenizer().tokenize(line.strip())' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus
@@ -168,8 +166,6 @@ echo -e "${SL}\t${TL}" > $DIC
 __PYTHON__ -c '
 import sys
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 svocabulary={}
 tvocabulary={}
@@ -205,7 +201,7 @@ for line in t3s:
         if item[1] in svocabulary and item[0] in tvocabulary:
           word1=svocabulary[item[1]]
           word2=tvocabulary[item[0]]
-          print "{0}\t{1}".format(word1, word2)' $MODELSDIR/$SL.filtered.vcb $MODELSDIR/$TL.filtered.vcb $MODELSDIR/$SL-$TL.t3.final $MODELSDIR/$TL-$SL.t3.final | egrep '^.\s.$' -v | egrep '^[[:alpha:]-]+\s[[:alpha:]-]+$' >> $DIC
+          print("{0}\t{1}".format(word1, word2))' $MODELSDIR/$SL.filtered.vcb $MODELSDIR/$TL.filtered.vcb $MODELSDIR/$SL-$TL.t3.final $MODELSDIR/$TL-$SL.t3.final | egrep '^.\s.$' -v | egrep '^[[:alpha:]-]+\s[[:alpha:]-]+$' >> $DIC
 
 echo "DONE!"
 

@@ -17,28 +17,26 @@ import locale
 import re
 from xml.sax.saxutils import escape
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, checksum=None, no_delete_seg=False):
   infoTag=[]
-  print "    <tuv xml:lang=\""+lang+"\">"
-  print "     <prop type=\"source-document\">"+escape(url)+"</prop>"
+  print("    <tuv xml:lang=\""+lang+"\">")
+  if "url1" in columns:
+    print("     <prop type=\"source-document\">"+escape(url)+"</prop>")
   if deferred:
-    print "     <prop type=\"deferred-seg\">"+deferred+"</prop>"
+    print("     <prop type=\"deferred-seg\">"+deferred+"</prop>")
   if checksum:
-    print "     <prop type=\"checksum-seg\">"+checksum+"</prop>"
+    print("     <prop type=\"checksum-seg\">"+checksum+"</prop>")
 
   if no_delete_seg or deferred is None:
-    print "     <seg>"+escape(seg.decode("utf-8"))+"</seg>"
+    print("     <seg>"+escape(seg)+"</seg>")
   else:
-    print "     <seg></seg>"
-
+    print("     <seg></seg>")
   if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(mint):
     infoTag.append("very short segments, shorter than "+str(options.mint))
   if len(infoTag) > 0:
-    print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
-  print "    </tuv>"
+    print("    <prop type=\"info\">"+"|".join(infoTag)+"</prop>")
+  print("    </tuv>")
 
 oparser = argparse.ArgumentParser(description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX translation memory.")
 oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, the script will read from standard input)', default=None)
@@ -55,20 +53,20 @@ if options.clean_alignments != None:
   reader = open(options.clean_alignments,"r")
 else:
   reader = sys.stdin
-print "<?xml version=\"1.0\"?>"
-print "<tmx version=\"1.4\">"
-print " <header"
-print "   adminlang=\""+locale.setlocale(locale.LC_ALL, '').split(".")[0].split("_")[0]+"\""
-print "   srclang=\""+options.lang1+"\""
-print "   o-tmf=\"PlainText\""
-print "   creationtool=\"bitextor\""
-print "   creationtoolversion=\"4.0\""
-print "   datatype=\"PlainText\""
-print "   segtype=\"sentence\""
-print "   creationdate=\""+time.strftime("%Y%m%dT%H%M%S")+"\""
-print "   o-encoding=\"utf-8\">"
-print " </header>"
-print " <body>"
+print("<?xml version=\"1.0\"?>")
+print("<tmx version=\"1.4\">")
+print(" <header")
+print("   adminlang=\""+locale.setlocale(locale.LC_ALL, '').split(".")[0].split("_")[0]+"\"")
+print("   srclang=\""+options.lang1+"\"")
+print("   o-tmf=\"PlainText\"")
+print("   creationtool=\"bitextor\"")
+print("   creationtoolversion=\"4.0\"")
+print("   datatype=\"PlainText\"")
+print("   segtype=\"sentence\"")
+print("   creationdate=\""+time.strftime("%Y%m%dT%H%M%S")+"\"")
+print("   o-encoding=\"utf-8\">")
+print(" </header>")
+print(" <body>")
 
 for line in reader:
   fields = line.split("\t")
@@ -83,24 +81,24 @@ for line in reader:
       fieldsdict['seg2'] = ""
 
   if 'idnumber' in fieldsdict:
-    print "   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">"
+    print("   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">")
   else:
-    print "   <tu datatype=\"Text\">"
+    print("   <tu datatype=\"Text\">")
   infoTag=[]
   if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
-    print "    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>"
+    print("    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>")
   if 'zipporah' in fieldsdict and fieldsdict['zipporah'] != "":
-    print "    <prop type=\"score-zipporah\">"+fieldsdict['zipporah']+"</prop>"
+    print("    <prop type=\"score-zipporah\">"+fieldsdict['zipporah']+"</prop>")
   if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
-    print "    <prop type=\"score-bicleaner\">"+fieldsdict['bicleaner']+"</prop>"
+    print("    <prop type=\"score-bicleaner\">"+fieldsdict['bicleaner']+"</prop>")
   #Output info data ILSP-FC specification
   if re.sub("[^0-9]", "", fieldsdict["seg1"]) != re.sub("[^0-9]", "", fieldsdict["seg2"]):
     infoTag.append("different numbers in TUVs")
-  print "    <prop type=\"type\">1:1</prop>"
+  print("    <prop type=\"type\">1:1</prop>")
   if re.sub(r'\W+', '', fieldsdict["seg1"]) == re.sub(r'\W+', '', fieldsdict["seg2"]):
     infoTag.append("equal TUVs")
   if len(infoTag) > 0:
-    print "    <prop type=\"info\">"+"|".join(infoTag)+"</prop>"
+    print("    <prop type=\"info\">"+"|".join(infoTag)+"</prop>")
   
   deferredseg1=None
   deferredseg2=None
@@ -118,7 +116,7 @@ for line in reader:
   printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint, deferredseg1, checksum1, options.no_delete_seg)
   printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint, deferredseg2, checksum2, options.no_delete_seg)
   
-  print "   </tu>"
-print " </body>"
-print "</tmx>"
+  print("   </tu>")
+print(" </body>")
+print("</tmx>")
 reader.close()

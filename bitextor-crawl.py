@@ -10,20 +10,20 @@
 # and a nubmer of optional parameters (use option -h for more details).
 # The output is a WARC file
 
-import httplib
+import http.client
 import logging
 import re
 import sys
 import time
-import datetime
-import robotparser
+import urllib.robotparser
 
 from ssl import CertificateError
 from posixpath import join, dirname, normpath
 from threading import Thread, Lock
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
+import base64
 import argparse
 import random
 
@@ -35,10 +35,6 @@ import signal
 import pickle
 import warc
 
-from sets import Set as set
-
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 class Document(object):
     def __init__(self, res, url):
@@ -46,11 +42,12 @@ class Document(object):
         self.query = '' if not '?' in url else url.split('?')[-1]
         self.status = res.status
         self.text = res.read()
+
         self.headers = dict(res.getheaders())
         self.links = []
 
 class Crawler(object):
-    F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH, F_TLD = range(5)
+    F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH, F_TLD = list(range(5))
     def __init__(self, debug=False):
         self.currdomain = ""
         self.visited = {}
@@ -71,7 +68,7 @@ class Crawler(object):
         self.crawlsize = 0.0
         self.sizelimit = None
         self.timelimit = None
-        self.robotsparser = robotparser.RobotFileParser()
+        self.robotsparser = urllib.robotparser.RobotFileParser()
         self.interrupt = False
         self.timeout = 10
         self.TLdomain = ""
@@ -109,14 +106,14 @@ class Crawler(object):
         self.max_depth = max_depth
 
     def process_document(self, doc):
-        print 'GET', doc.status, doc.url, doc.links
+        print('GET', doc.status, doc.url, doc.links)
         #to do stuff with url depth use self._calc_depth(doc.url)
 
     def keep_crawling(self):
         self.targets_lock.acquire()
-        self.targets = list(self.outerdomaintargets[self.outerdomaintargets.keys()[0]])
+        self.targets = list(self.outerdomaintargets[list(self.outerdomaintargets.keys())[0]])
         self.seen = set(self.targets)
-        del self.outerdomaintargets[self.outerdomaintargets.keys()[0]]
+        del self.outerdomaintargets[list(self.outerdomaintargets.keys())[0]]
         self.targets_lock.release()
         self.root_url = self.targets.pop()
         self.crawl(self.root_url)
@@ -213,7 +210,6 @@ class Crawler(object):
             return link_url
         elif self.follow_mode == self.F_TLD:
             dom = self._url_domain(link_host)
-            #print "Aquest es un dels URLs que podria afegir: "+link_url
             if dom == self.currdomain:
                 return link_url
             elif dom.split(".")[-1] == self.TLdomain:
@@ -252,7 +248,7 @@ class Crawler(object):
             return
 
         self.targets_lock.acquire()
-        if self.visited.has_key(target):
+        if target in self.visited:
             self.targets_lock.release()
             return
         if target not in self.seen:
@@ -294,9 +290,9 @@ class Crawler(object):
                             path = rx.group(3)
 
                             if protocol == 'http':
-                                conn = httplib.HTTPConnection(host, timeout=self.timeout)
+                                conn = http.client.HTTPConnection(host, timeout=self.timeout)
                             else:
-                                conn = httplib.HTTPSConnection(host, timeout=self.timeout)
+                                conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
                             conn.request('GET', path)
                             res = conn.getresponse()
@@ -318,8 +314,12 @@ class Crawler(object):
 
                             doc = Document(res, url)
                             # Make unique list (these are the links in the document)
-                            links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''',
-                                    doc.text, re.S)
+                            try:
+                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
+                                    doc.text.decode('utf8'))
+                            except:
+                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
+                                    doc.text.decode('latin1'))
                             linksset = list(set(links))
                             random.shuffle(linksset)
                             self.process_document(doc)
@@ -333,7 +333,7 @@ class Crawler(object):
                     except KeyError as e:
                         # Pop from an empty set
                         break
-                    except (httplib.HTTPException, EnvironmentError) as e:
+                    except (http.client.HTTPException, EnvironmentError) as e:
                         if self.sizelimit != None and self.crawlsize > self.sizelimit:
                             self.concurrency_lock.acquire()
                             self.interrupt=True
@@ -383,15 +383,13 @@ class MyCrawler(Crawler):
       try:
         #print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
         warc_record = warc.WARCRecord(payload=doc.text,headers={"WARC-Target-URI":doc.url})
-        f = warc.WARCFile(fileobj=sys.stdout)
+        f = warc.WARCFile(fileobj=sys.stdout.buffer)
         f.write_record(warc_record)
         self.crawlsize+=sys.getsizeof(doc.text)/1000000.0
         if self.sizelimit != None and self.crawlsize > self.sizelimit:
-          #sys.stderr.write("Crawling size limit reached: stopping crawl\n")
           self.interrupt=True
           self.save_status()
         if self.timelimit != None and time.time()-self.crawlstarts > self.timelimit:
-          #sys.stderr.write("Crawling time limit reached: stopping crawl\n")
           self.interrupt=True
           self.save_status()
       finally:
@@ -469,14 +467,14 @@ if options.load != None:
   crawler.load_status(pickle.load(open(options.load,'rb')))
 if options.resumeett != None:
   for line in open(options.resumeett):
-      print line.rstrip("\n")
+      print(line.rstrip("\n"))
 
 #crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
 signal.signal(signal.SIGTERM, crawler.termsighandler)
 crawler.init_crawling(options.URL)
 if options.crawltld:
-  while len(crawler.outerdomaintargets.keys()) > 0:
-    sys.stderr.write("Remaining "+str(len(crawler.outerdomaintargets.keys()))+" websites to to crawl\n")
+  while len(list(crawler.outerdomaintargets.keys())) > 0:
+    sys.stderr.write("Remaining "+str(len(list(crawler.outerdomaintargets.keys())))+" websites to to crawl\n")
     crawler.keep_crawling()
 
 if crawler.interrupt:

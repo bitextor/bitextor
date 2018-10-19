@@ -17,7 +17,7 @@ import sys
 import os
 import string
 import base64
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import argparse
 import unicodedata
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/utils")
@@ -27,8 +27,6 @@ from nltk import wordpunct_tokenize
 import subprocess
 import re
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information about the files in a crawled website to produce an index with all the words in these files and the list of documents in which each of them appear")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett or bitextor-lett2lettr containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
@@ -74,7 +72,7 @@ for line in reader:
     #Getting the bag of words in the document
     sorted_uniq_wordlist = set(" ".join(wordpunct_tokenize(text)).lower().split())
     #Trimming non-aplphanumerics:
-    clean_sorted_uniq_wordlist = filter(None, [w.strip(punctuation) for w in sorted_uniq_wordlist])
+    clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
     sorted_uniq_wordlist=clean_sorted_uniq_wordlist
 
     for word in sorted_uniq_wordlist:
@@ -90,11 +88,11 @@ for line in reader:
         word_map[lang][word].append(docnumber)
   docnumber=docnumber+1
 
-for map_lang, map_vocabulary in word_map.items():
-  for map_word, map_doc in map_vocabulary.items():
+for map_lang, map_vocabulary in list(word_map.items()):
+  for map_word, map_doc in list(map_vocabulary.items()):
     if options.maxo == -1 or len(word_map[map_lang][map_word])<=options.maxo:
       sorted_docs=sorted(word_map[map_lang][map_word], reverse=True)
       for doc_list_idx in range(0, len(sorted_docs)-1):
         sorted_docs[doc_list_idx]=str(sorted_docs[doc_list_idx]-sorted_docs[doc_list_idx+1])
       sorted_docs[len(sorted_docs)-1]=str(sorted_docs[len(sorted_docs)-1])
-      print map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs))
+      print(map_lang+"\t"+map_word+"\t"+":".join(reversed(sorted_docs)))

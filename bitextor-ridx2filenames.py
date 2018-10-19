@@ -20,4 +20,4 @@ for ridx_line in sys.stdin:
   for position in range(1,len(ridx_fields)):
     ridx_tuple = ridx_fields[position].split(":")
     ridx_elements.append(documents[int(ridx_tuple[0])]+":"+ridx_tuple[1])
-  print "\t".join(ridx_elements)
+  print("\t".join(ridx_elements))

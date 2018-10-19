@@ -43,9 +43,9 @@ for i in reader:
   newscores = {}
   for candidate in fields[1:]:
     fileid2=int(candidate.split(":")[0])
-    features=map(float, candidate.split(":")[1:])
+    features=list(map(float, candidate.split(":")[1:]))
     newscores[fileid2]=model.predict_proba(np.array([features]), batch_size=1, verbose=0)[0]
-  new_rank=sorted(newscores.items(), key=itemgetter(1), reverse=True)
+  new_rank=sorted(list(newscores.items()), key=itemgetter(1), reverse=True)
   sys.stdout.write(str(fileid1))
   for sorteditem in new_rank:
     fileid2 = sorteditem[0]
@@ -55,4 +55,4 @@ for i in reader:
       sys.stdout.write(str(fileid2))
       sys.stdout.write(":")
       sys.stdout.write(str(score))
-  print
+  print()

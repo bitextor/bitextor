@@ -76,7 +76,7 @@ else:
     if not options.nonsymmetric:
       converge=True
 
-  iterationList=range(0,int(iterations))
+  iterationList=list(range(0,int(iterations)))
   pairedDocs=set()
   #In each iteration we read the whole file of document relationships and candidates, but we ignore already paired documents
   for iteration in iterationList:
@@ -95,7 +95,7 @@ else:
       fields=line_ridx2.strip().split("\t");
       if len(fields) >= 2:
         num_candidates=min(len(fields)-1,options.candidate_num)
-        candidateIterations=range(1,num_candidates+1)
+        candidateIterations=list(range(1,num_candidates+1))
         for candidate_idx in candidateIterations:
           field_n=fields[candidate_idx].split(":")
           if len(field_n) == 2 and int(fields[0]) not in pairedDocs and int(field_n[0]) not in pairedDocs: #Avoid pairing docs already paired in previous iterations of the algorithm, in case you specified the parameter
@@ -117,7 +117,7 @@ else:
       fields=line_ridx1.strip().split("\t")
       if len(fields) >= 2:
         num_candidates=min(len(fields)-1,options.candidate_num)
-        candidateIterations=range(1,num_candidates+1)
+        candidateIterations=list(range(1,num_candidates+1))
         for candidate_idx in candidateIterations:
           field_n=fields[candidate_idx].split(":")
           if len(field_n) == 2 and int(field_n[0]) not in pairedDocs and int(fields[0]) not in pairedDocs: #Same check for already paired documents in several iterations
@@ -134,14 +134,14 @@ else:
 
       if len(new_candidate_list) >= 1:
         candidateDocuments.append(len(new_candidate_list))
-        sorted_candidates = sorted(new_candidate_list.iteritems(), key=itemgetter(1), reverse=True)
+        sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
         if int(fields[0]) not in indicesProb or indicesProb[int(fields[0])] < int(sorted_candidates[0][1]): #We store the final indices and their scores, in case of any symmetric relationship overlap
           indices[int(fields[0])] = int(sorted_candidates[0][0])
           indicesProb[int(fields[0])] = float(sorted_candidates[0][1])
         pairedDocsLine.add(int(fields[0]))
         pairedDocsLine.add(int(sorted_candidates[0][0]))
         if options.oridx != None:
-          elements=map(lambda candidate_tuple: "{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]), sorted_candidates)
+          elements=["{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]) for candidate_tuple in sorted_candidates]
           options.oridx.write("{0}\t{1}\n".format(fields[0], "\t".join(elements)))
 
     pairedDocs.update(pairedDocsLine)
@@ -151,14 +151,14 @@ else:
         if int(document) in best_ridx2 and len(best_ridx2[int(document)]) >= 1:
           new_candidate_list=best_ridx2[int(document)]
           candidateDocuments.append(len(new_candidate_list))
-          sorted_candidates = sorted(new_candidate_list.iteritems(), key=itemgetter(1), reverse=True)
+          sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
           if int(document) not in indicesProb or indicesProb[int(document)] < int(sorted_candidates[0][1]):
             indices[int(document)] = int(sorted_candidates[0][0])
             indicesProb[int(document)] = float(sorted_candidates[0][1])
           pairedDocs.add(int(document))
           pairedDocs.add(int(sorted_candidates[0][0]))
           if options.oridx != None:
-            elements=map(lambda candidate_tuple: "{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]), sorted_candidates)
+            elements=["{0}:{1}".format(candidate_tuple[0],candidate_tuple[1]) for candidate_tuple in sorted_candidates]
             for element in elements:
               score=element.split(':')[1]
               document2=element.split(':')[0]
@@ -175,9 +175,9 @@ else:
 for k in indices:
   if indices[k] in documents.keys():
     if indices[k] in documentsFile2: #Write the output keeping the language documents always in the same order (this is done because of the non-symmetric option that causes swaps in the last algorithm)
-      print "{0}\t{1}\t{2}\t{3}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1])
+      print("{0}\t{1}\t{2}\t{3}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1]))
     else:
-      print "{1}\t{0}\t{3}\t{2}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1])
+      print("{1}\t{0}\t{3}\t{2}".format(documents[k][0], documents[indices[k]][0], documents[k][1], documents[indices[k]][1]))
     if not options.nonsymmetric:
       del documents[k]
 

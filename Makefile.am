@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= zipporah utils ulysses piped-boilerpipe ulysses-data model 
+SUBDIRS= zipporah utils piped-boilerpipe model 
 
 bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
@@ -77,7 +77,7 @@ bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compil
 	sed "s!__BASH__!$(BASH)!g;" >$@
 
 nltk_data:
-	python install_nltk_data.py
+	python3 install_nltk_data.py
 
 features/bitextor-urlscomparison: features/bitextor-urlscomparison.py
 	sed "s!__PYTHON__!$(PYTHON)!g" $< | \

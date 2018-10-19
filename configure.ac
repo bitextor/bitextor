@@ -215,17 +215,6 @@ then
   AC_MSG_ERROR([You don't have mvn (maven) installed.])
 fi
 
-AC_PATH_PROG(PYTHON2, python, no)
-if test x$ac_cv_path_PYTHON2 = x
-then
-  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
-fi
-if test x$ac_cv_path_PYTHON2 = xno
-then
-  AC_MSG_ERROR([You don't have python/python2/python2.7 installed. Bitextor is written in python2 (we expect the python3 only version in next major release)])
-fi
-
-
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
@@ -262,9 +251,9 @@ AS_IF([test "x$with_apertium" != xno],
 ])
 
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import Levenshtein; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -278,9 +267,9 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for tensorflow for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import tensorflow; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -294,23 +283,22 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for keras for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import keras; \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="1.0.3"
-    kerasversion=`python -c "import keras; print keras.__version__" 2> /dev/null`
+    kerasversion=`python3 -c "import keras; print(keras.__version__)" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$kerasversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no])
-      AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is v$kerasversion; try running:
+      AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is $kerasversion; try running:
 pip install --upgrade keras
 ])
     fi
@@ -321,9 +309,9 @@ pip install --upgrade keras
 ])
   fi
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for h5py for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import h5py; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -336,11 +324,10 @@ print (var)" 2> /dev/null`
 - h5py:   Please, install v2.6 or later and try again: sudo pip install h5py
 ])
   fi
-
-#Paracrawl document aligner Python 3 checks
-  AC_MSG_CHECKING([for NLTK for Python3])
+  
+  AC_MSG_CHECKING([for WARC for Python3])
   ac_supports_python_ver=`python3 -c "import sys; \
-import nltk; \
+import warc; \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
@@ -348,25 +335,12 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_WARN([Paracrawl document aligner package requires nltk for Python 3. This option will not work on Bitextor until you install the library.
+    AC_MSG_ERROR([Library to process WARC crawling format for Python 3 is missing. To install it, run "pip install warc3-wet".
 ])
   fi
 
-  AC_MSG_CHECKING([for LangID for Python3])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import langid; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_WARN([Paracrawl document aligner package requires langid for Python 3. This option will not work on Bitextor until you install the library.
-])
-  fi
-
-  AC_MSG_CHECKING([for scipy for Python3])
+AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
+  AC_MSG_CHECKING([for scipy for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import scipy; \
 var = True; \
@@ -380,7 +354,7 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-  AC_MSG_CHECKING([for sklearn for Python3])
+  AC_MSG_CHECKING([for sklearn for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import sklearn; \
 var = True; \
@@ -395,9 +369,8 @@ print (var)" 2> /dev/null`
   fi
 
 
-AM_PATH_PYTHON([2.7], , [AC_MSG_ERROR([You don't have Python 2.7 or later installed.])])
   AC_MSG_CHECKING([for numpy for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import numpy; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -412,7 +385,7 @@ print (var)" 2> /dev/null`
   fi
 
   AC_MSG_CHECKING([for libmagic for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import magic; \
 m=magic.open(magic.MAGIC_NONE); \
 var = True; \
@@ -422,13 +395,13 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python-magic' and try again.
+    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python3-magic' and try again.
 ])
   fi
 
 
   AC_MSG_CHECKING([for iso-639 for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import iso639; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -442,7 +415,7 @@ print (var)" 2> /dev/null`
   fi
 
   AC_MSG_CHECKING([for LangID for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import langid; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -455,15 +428,15 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AC_MSG_CHECKING([for nltk for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  AC_MSG_CHECKING([for NLTK for Python])
+  ac_supports_python_ver=`python3 -c "import sys; \
 import nltk; \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
   then
     requiredversion="3.3"
-    nltkversion=`python -c "import nltk; print nltk.__version__" 2> /dev/null`
+    nltkversion=`python3 -c "import nltk; print(nltk.__version__)" 2> /dev/null`
     lowestversion=$(echo -e "$requiredversion\n$nltkversion" | sort -V | head -n 1)
     if test "$lowestversion" == "$requiredversion";
     then
@@ -482,7 +455,7 @@ pip install --upgrade nltk
   fi
 
     AC_MSG_CHECKING([for regex for Python])
-  ac_supports_python_ver=`python -c "import sys; \
+  ac_supports_python_ver=`python3 -c "import sys; \
 import regex; \
 var = True; \
 print (var)" 2> /dev/null`
@@ -550,4 +523,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile utils/Makefile ulysses/Makefile ulysses-data/Makefile model/Makefile zipporah/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile utils/Makefile model/Makefile zipporah/Makefile])

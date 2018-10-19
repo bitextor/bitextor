@@ -10,14 +10,12 @@
 
 import sys
 import base64
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 import langid
 import argparse
 import socket
 import re
 
-#reload(sys)
-#sys.setdefaultencoding("UTF-8")
 
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
 oparser.add_argument("ett_path", metavar="FILE", nargs="?", help="File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)", default=None)
@@ -44,7 +42,7 @@ for line in reader:
       lang, conf = langid.classify(parsed_text)
       if len(langs)==0 or lang in langs:
         linefields.insert(0,lang)
-        e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8"))
+        e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
         del linefields[-1]
         linefields.append(e)
-        print "\t".join(linefields) 
+        print("\t".join(linefields))

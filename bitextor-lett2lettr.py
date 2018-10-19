@@ -15,14 +15,14 @@ import sys
 import base64
 import math
 import fileinput
-import HTMLParser
+import html.parser
 import argparse
 import datetime
 
-class Parser(HTMLParser.HTMLParser):
+class Parser(html.parser.HTMLParser):
 
   def __init__( self ):
-    HTMLParser.HTMLParser.__init__( self )
+    html.parser.HTMLParser.__init__( self )
     self.script = 0
     self.output = []
 
@@ -46,9 +46,6 @@ class Parser(HTMLParser.HTMLParser):
     else:
       self.output.append("_" + tag + "_")
 
-reload(sys)
-sys.setdefaultencoding("utf-8")
-
 oparser = argparse.ArgumentParser(description="Script that obtains an abstract representation of every file in a crawled website. The script reads the output from bitextor-ett2lett, reads the content of each file, and produces the representation, which is later used by bitextor-distancefilter to rank the aligned-document candidates.")
 oparser.add_argument('lett', metavar='LETT', nargs='?', help='File produced by bitextor-ett2lett containing information about the files in the website (if undefined, the script will read from the standard input)', default=None)
 options = oparser.parse_args()
@@ -61,14 +58,14 @@ else:
 for line in reader:
   content=line.strip().split("\t")
   if len(content) >= 6:
-    e = base64.b64decode(content[4])
+    e = base64.b64decode(content[4]).decode("utf8")
     if e != "":
       p=Parser()
       try:
         p.feed(e)
         raspa = "".join(p.output)
         if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in raspa): #Delete entries without *ml in the first tag to avoid things different than HTML or XML as JPGS or PDF, for example.
-          print line.strip()+"\t"+raspa+"\t"+str(datetime.datetime.now().time())
-      except HTMLParser.HTMLParseError:
+          print(line.strip()+"\t"+raspa+"\t"+str(datetime.datetime.now().time()))
+      except html.parser.HTMLParseError:
         pass
 
