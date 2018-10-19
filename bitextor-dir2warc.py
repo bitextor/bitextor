@@ -20,7 +20,7 @@ for line in reader:
       if re.search(rb'<!-- Mirrored from ', line):
         url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
         break
-    warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url})
+    warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8")})
     f = warc.WARCFile(fileobj=sys.stdout.buffer)
     f.write_record(warc_record)
 
