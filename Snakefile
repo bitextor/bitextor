@@ -381,9 +381,17 @@ rule bicleaner:
 	input:
 		"{target}.segclean"
 	output:
+		"{target}.bicleaner.scores"
+	shell:
+		'python3  {BITEXTOR}/bin/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} {input} {output} {BICLEANER_CONFIG}'
+
+rule bicleanerfilter:
+	input:
+		"{target}.bicleaner.scores"
+	output:
 		"{target}.bicleaner"
 	shell:
-		'python3  {BITEXTOR}/bin/bicleaner-classifier-full.py {input} {output} -m {BICLEANER_CONFIG} -s {LANG1} -t {LANG2} --threshold {BICLEANER_THRESHOLD};'
+		'{BITEXTOR}/bin/bitextor-filterbicleaner --threshold {BICLEANER_THRESHOLD} < {input} > {output}'
 
 rule elrc:
 	input:
