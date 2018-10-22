@@ -1,4 +1,4 @@
-BITEXTOR='/home/mespla/local7'
+BITEXTOR=config["bitextor"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
