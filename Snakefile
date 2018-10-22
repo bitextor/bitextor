@@ -341,7 +341,7 @@ rule aligndocumentsbitextor:
 
 rule hunaligndic:
 	input:
-		'/home/mespla/en-fr.dic'
+		expand("{dic}", dic=DIC)
 	output:
 		'hunalign_dic'
 	shell:
