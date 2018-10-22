@@ -1,0 +1,14 @@
+{
+  "urls": 
+         {
+            "/tmp/elenacafenew": "http://www.elenacaffe1863.com/",
+            "/tmp/vadenew": "http://vade-retro.fr"
+         },
+  "temp": "/tmp",
+  "lang1": "en",
+  "lang2": "fr",
+  "nltk": "y",
+  "dic": "/home/mespla/en-fr.dic",
+  "minquality": "0",
+  "maxlines": "5"
+}
