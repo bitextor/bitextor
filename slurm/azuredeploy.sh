@@ -48,7 +48,17 @@ fi
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
 # Bitextor installation
-sudo apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install pkg-config -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install openjdk-8-jdk -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install python3 python3-pip python3-magic -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install libbz2-dev liblzma-dev zlib1g-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install libboost-all-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+
 sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
 sudo -u $ADMIN_USERNAME sh -c "git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/bitextor; cd ~/bitextor; ./autogen.sh --prefix=/home/lpla/local && make && make install"
 
@@ -125,7 +135,18 @@ do
       sudo cp -f /tmp/slurm.conf /etc/slurm-llnl/slurm.conf
       sudo chown slurm /etc/slurm-llnl/slurm.conf
       sudo slurmd
-      sudo apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+
+      sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install pkg-config -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install openjdk-8-jdk -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install python3 python3-pip python3-magic -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install libbz2-dev liblzma-dev zlib1g-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install libboost-all-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+
       sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
       mkdir /home/$ADMIN_USERNAME/workspace
       sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace workspace/
