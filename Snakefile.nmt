@@ -1,0 +1,73 @@
+from os.path import join
+
+sw_root = "~/workspace/software"
+marian = "{0}/marian-dev".format(sw_root)
+subword_nmt = "{0}/subword-nmt".format(sw_root)
+moses = "{0}/mosesdecoder".format(sw_root)
+
+##########################################################################################################
+
+vocabSize = 30000
+
+langs = ["so", "en"]
+
+tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, langs[1]),
+             "{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, langs[1])]
+
+detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, langs[1])
+
+dataDir = "/home/s0565741/workspace/experiment/paracrawl/so-en/data"
+
+devices = "0"
+
+trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
+          + " -c {0}/config.deep.yml".format(dataDir) \
+          + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+          + " --valid-log model/valid.log" \
+          + " --log model/train.log"
+
+#trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
+#	  + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+#          + " --valid-log model/valid.log" \
+#          + " --log model/train.log" \
+#	  + " --type amun"
+
+translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
+
+trainPath = ['{0}/train.txt.{1}.gz'.format(dataDir, langs[0]),
+             '{0}/train.txt.{1}.gz'.format(dataDir, langs[1])
+            ]
+
+#concatTrainPath = {
+#                "materiel": ['{0}/train.txt.{1}.gz'.format(dataDir, langs[0]),
+#                             '{0}/train.txt.{1}.gz'.format(dataDir, langs[1])]
+#                ,
+#                "small":    ['{0}/train.1k.{1}'.format(dataDir, langs[0]),
+#                             '{0}/train.1k.{1}'.format(dataDir, langs[1])]
+#                }
+
+devPath = ['{0}/dev.txt.{1}'.format(dataDir, langs[0]),
+           '{0}/dev.txt.{1}'.format(dataDir, langs[1])]
+
+testPath = ['{0}/test.small.{1}'.format(dataDir, langs[0]),
+            '{0}/test.small.{1}'.format(dataDir, langs[1]),
+            '{0}/test.txt.{1}'.format(dataDir, langs[0]),
+            '{0}/test.txt.{1}'.format(dataDir, langs[1]),
+            '{0}/dev.txt.{1}'.format(dataDir, langs[0]),
+            '{0}/dev.txt.{1}'.format(dataDir, langs[1])
+            ]
+
+
+##########################################################################################################
+
+workdir: "/home/s0565741/workspace/experiment/paracrawl/so-en/nmt"
+include:  "/home/s0565741/workspace/software/Malign/crawl/nmt/Snakefile.base"
+
+rule train:
+    input:  "evaluation/report"
+
+rule translate:
+    run:
+        print("need to translate something")
+        #for line in sys.stdin:
+        #    print("translation of:", line)
