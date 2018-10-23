@@ -1,0 +1,383 @@
+from os.path import join
+
+
+##########################################################################################################
+def systemCheck(cmd):
+    sys.stderr.write("Executing:" + cmd + "\n")
+    sys.stderr.flush()
+
+    subprocess.check_call(cmd, shell=True)
+
+def compressExt(fullPath):
+    name = os.path.basename(fullPath)
+    nameExt = os.path.splitext(name)
+    #print("fullPath", fullPath, "name", name)
+
+    if nameExt[1] == ".gz":
+        return "gz"
+    else:
+        return ""
+
+def nameExclCompression(fullPath):
+    # keep lang id but chop of .gz if it exist
+    name = os.path.basename(fullPath)
+    nameExt = os.path.splitext(name)
+    #print("fullPath", fullPath, "name", name)
+
+    if nameExt[1] == ".gz":
+        return nameExt[0]
+    else:
+        return name
+
+def namePrefix(fullPath):
+    # chop of lang id and .gz
+    name = nameExclCompression(fullPath)
+    nameExt = os.path.splitext(name)
+    #print("fullPath", fullPath, "nameExt", nameExt)
+
+    return nameExt[0]
+
+def createParallelPrefixList(list):
+    assert(len(list) % 2 == 0)
+
+    ret = [namePrefix(ofile) for ofile in list]
+
+    l = len(list)
+    for i in range(l, 0, -2):
+        #print("i", i)
+        assert(ret[i-1] == ret[i-2])
+        del ret[i-1]
+
+
+    #print("ret", ret)
+    assert(len(list) / 2 == len(ret))
+
+    return ret
+
+def mergeLists(listOfLists):
+    ret = []
+
+    for l in listOfLists:
+        ret = list(set(ret + l))
+
+    return ret;
+
+def getFullPath(fileName, files, fullPaths):
+
+    for i in range(len(files)):
+        file = files[i]
+        if fileName == file:
+            return fullPaths[i]
+
+    return None
+
+##########################################################################################################
+if 'trainPath' in locals():
+    #print("trainPath is defined")
+    concatTrainPathFlattened = []
+else:
+    #print("trainPath is NOT defined")
+    assert(concatTrainPath != None)
+
+    numCorpora = len(concatTrainPath)
+    #print("numCorpora", numCorpora)
+
+    concatName = ""
+    concatTrainPathFlattened = []
+
+    for key, value in concatTrainPath.items():
+        #print(key, value)
+        if concatName != "":
+            concatName += "+"
+        concatName += key
+
+        assert(len(value) == 2)
+        sourceFile = value[0]
+        targetFile = value[1]
+        concatTrainPathFlattened.append(sourceFile)
+        concatTrainPathFlattened.append(targetFile)
+
+    trainPath = ["corpus/concat/{0}.{1}".format(concatName, {LANG1}),
+                 "corpus/concat/{0}.{1}".format(concatName, {LANG2})
+                ]
+
+    #print("concatName", concatName)
+    print("concatTrainPathFlattened", concatTrainPathFlattened)
+    print("trainPath", trainPath)
+
+
+##########################################################################################################
+
+allPaths = mergeLists([trainPath, devPath, testPath])
+#print("allPaths", allPaths)
+
+allFiles = [nameExclCompression(ofile) for ofile in allPaths]
+
+trainPrefix = createParallelPrefixList(trainPath)
+devPrefix = createParallelPrefixList(devPath)
+testPrefix = createParallelPrefixList(testPath)
+
+#print("allFiles", allFiles)
+#print("trainPrefix", trainPrefix)
+#print("devPrefix", devPrefix)
+#print("testPrefix", testPrefix)
+
+rule report:
+    input:
+        ["evaluation/{0}.bleu".format(ofile) for ofile in testPrefix]
+    output:
+        "evaluation/report"
+    run:
+        #print("input", input)
+
+        with open(output[0], "wt") as outHandle:
+            for file in input:
+                #print("file", file, namePrefix(file))
+                with open(file, "rt") as inHandle:
+                    str = inHandle.read()
+                    outHandle.write(namePrefix(file))
+                    outHandle.write("\t")
+                    outHandle.write(str)
+
+rule multibleu:
+    input:
+        trans=["evaluation/{0}.detokenized".format(ofile) for ofile in testPrefix]
+        ,
+        ref=["corpus/{0}.{1}".format(ofile, {LANG2}) for ofile in testPrefix]
+    output:
+        ["evaluation/{0}.bleu".format(ofile) for ofile in testPrefix]
+    run:
+        #print("trans", input.trans)
+        #print("ref", input.ref)
+        #print("output", output)
+        assert(len(input.trans) == len(input.ref))
+        assert(len(input.trans) == len(output))
+
+        for i in range(len(input.trans)):
+            cmd = "cat {0} | {1}/scripts/generic/multi-bleu.perl {2} > {3}".format(input.trans[i], moses, input.ref[i], output[i])
+            #print("i", i, cmd)
+            systemCheck(cmd)
+
+rule detok:
+    input:
+        "evaluation/{name}.detruecased"
+    output:
+        "evaluation/{name}.detokenized"
+    shell:
+        "cat {input} | {detokenizer} > {output}"
+
+rule detruecase:
+    input:
+        "evaluation/{name}.debpe"
+    output:
+        "evaluation/{name}.detruecased"
+    shell:
+        "cat {0} | {1}/scripts/recaser/detruecase.perl > {2}".format("{input}", "{moses}", "{output}")
+
+
+rule debpe:
+    input:
+        "evaluation/{name}.output"
+    output:
+        "evaluation/{name}.debpe"
+    shell:
+        "cat {input} | sed -r 's/(@@ )|(@@ ?$)//g' > {output}"
+
+##########################################  RUNNING MT ENGINE ##########################################
+
+rule translate_test:
+    input:
+        model=directory("model/marian")
+        ,
+        test="corpus/{0}.bpe.{1}".format("{name}", {LANG1})
+    output:
+        "evaluation/{0}.output".format("{name}")
+    shell:
+        #"echo translate {input.valid[0]} to {output}"
+        "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
+
+rule train_nmt:
+    input:
+        vocab='model/vocab.yml'
+        ,
+        train=["corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG1}),
+               "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG2})]
+        ,
+        valid=["corpus/{0}.bpe.{1}".format(devPrefix[0], {LANG1}),
+               "corpus/{0}.bpe.{1}".format(devPrefix[0], {LANG2})]
+
+    output:
+        directory("model/marian")
+    shell:
+        #"echo {trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 \
+        #&& mkdir {output}"
+        "mkdir {output} && {trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
+
+##################################################################################################################
+
+rule make_vocab_yml:
+    input:
+        "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG1})
+        ,
+        "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG2})
+    output:
+        'model/vocab.yml'
+    shell:
+        "cat {input} | {marian}/build/marian-vocab --max-size {vocabSize} > {output}"
+
+############################################## BPE ##############################################
+
+rule apply_bpe:
+    input:
+        file=['corpus/{0}.tc.{1}'.format("{name}", {LANG1})
+              ,
+              'corpus/{0}.tc.{1}'.format("{name}", {LANG2})]
+        ,
+        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+    output:
+        'corpus/{0}.bpe.{1}'.format("{name}", {LANG1})
+        ,
+        'corpus/{0}.bpe.{1}'.format("{name}", {LANG2})
+    shell:
+        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
+         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
+
+rule apply_bpe_train:
+    input:
+        file=['corpus/{0}.tc-train.{1}'.format("{name}", {LANG1})
+              ,
+              'corpus/{0}.tc-train.{1}'.format("{name}", {LANG2})]
+        ,
+        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+    output:
+        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG1})
+        ,
+        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG2})
+    shell:
+        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
+         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
+
+rule learn_bpe:
+    input:
+        "corpus/{0}.clean.{1}".format(trainPrefix[0], {LANG1})
+        ,
+        "corpus/{0}.clean.{1}".format(trainPrefix[0], {LANG2})
+    output:
+        'vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+    shell:
+        "cat {input} | {subword_nmt}/subword_nmt/learn_bpe.py -s {vocabSize}  > {output}"
+
+##################################################################################################################
+
+rule copy_files:
+    input:
+        allPaths
+    output:
+        ["corpus/{}".format(ofile) for ofile in allFiles]
+    run:
+        assert(len(input) == len(output))
+
+        for i in range(len(input)):
+            fullPath = allPaths[i]
+            cmpExt = compressExt(fullPath)
+            #print("i", i, cmpExt, input[i], output[i])
+
+            if cmpExt == "gz":
+                shell("zcat {0} > {1}".format(input[i], output[i]))
+            else:
+                assert(cmpExt == "")
+                cmd = "ln -s {0} {1}".format(os.path.abspath(input[i]), output[i])
+                #print("cmd", cmd)
+                shell(cmd)
+
+rule concat_training:
+    input:
+        concatTrainPathFlattened
+    output:
+        trainPath
+    run:
+        assert(len(trainPath) == 2)
+        assert(len(concatTrainPathFlattened) >= 2)
+        assert(len(concatTrainPathFlattened) % 2 == 0)
+
+        numCorpora = int(len(concatTrainPathFlattened) / 2)
+
+        for i in range(numCorpora):
+            sourceFile = concatTrainPathFlattened[2*i]
+            targetFile = concatTrainPathFlattened[2*i + 1]
+            #print("i", i, cmpExt, input[i], output[i])
+
+            cmpExt = compressExt(sourceFile)
+            if cmpExt == "gz":
+                shell("zcat {0} >> {1}".format(sourceFile, output[0]))
+            else:
+                assert(cmpExt == "")
+                shell("cat {0} >> {1}".format(sourceFile, output[0]))
+
+            cmpExt = compressExt(targetFile)
+            if cmpExt == "gz":
+                shell("zcat {0} >> {1}".format(targetFile, output[1]))
+            else:
+                assert(cmpExt == "")
+                shell("cat {0} >> {1}".format(targetFile, output[1]))
+
+
+
+
+
+
+####################################################### PREPROCESSING ###########################################################
+
+rule apply_truecaser:
+    input:
+        file='corpus/{0}.tok.{1}'.format("{name}", "{lang}")
+        ,
+        model='truecaser/truecase-model.{0}'.format("{lang}")
+    output:
+        'corpus/{0}.tc.{1}'.format("{name}", "{lang}")
+    shell:
+        "cat {0} | {1}/scripts/recaser/truecase.perl -model {2} > {3}".format("{input.file}", moses, "{input.model}", "{output}")
+
+rule apply_truecaser_train:
+    input:
+        file='corpus/{0}.clean.{1}'.format("{name}", "{lang}")
+        ,
+        model='truecaser/truecase-model.{0}'.format("{lang}")
+    output:
+        'corpus/{0}.tc-train.{1}'.format("{name}", "{lang}")
+    shell:
+        "cat {0} | {1}/scripts/recaser/truecase.perl -model {2} > {3}".format("{input.file}", moses, "{input.model}", "{output}")
+
+rule learn_truecaser:
+    input:
+        "corpus/{0}.clean.{1}".format(trainPrefix[0], "{lang}")
+    output:
+        'truecaser/truecase-model.{0}'.format("{lang}")
+    shell:
+        "{0}/scripts/recaser/train-truecaser.perl -corpus {1} -model {2}".format(moses, "{input}", "{output}")
+
+rule clean_training:
+    input:
+        source="corpus/{0}.tok.{1}".format("{name}", {LANG1})
+        ,
+        target="corpus/{0}.tok.{1}".format("{name}", {LANG2})
+    output:
+        source="corpus/{0}.clean.{1}".format("{name}", {LANG1})
+        ,
+        target="corpus/{0}.clean.{1}".format("{name}", {LANG2})
+    shell:
+        "{0}/scripts/training/clean-corpus-n.perl corpus/{1}.tok {2} {3} corpus/{1}.clean 1 80 corpus/{1}.lines-retained" \
+            .format(moses, trainPrefix[0], {LANG1}, {LANG2})
+
+rule tokenize_file:
+    input:
+        source="{CORPUSDIR}/{name}.{LANG1}"
+        ,
+        target="{CORPUSDIR}/{name}.{LANG2}"
+    output:
+        source="{CORPUSDIR}/{name}.tok.{LANG1}
+        ,
+        target="{CORPUSDIR}/{name}.tok.{LANG2}
+    shell:
+        "cat {input.source} | {tokenizer[0]} > {output.source} && \
+         cat {input.target} | {tokenizer[1]} > {output.target}"
