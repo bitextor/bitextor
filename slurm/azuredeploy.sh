@@ -47,21 +47,25 @@ fi
 # Install sshpass to automate ssh-copy-id action
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
+installBitextor() {
 # Bitextor installation
-sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install pkg-config -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install openjdk-8-jdk -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install python3 python3-pip python3-magic -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install libbz2-dev liblzma-dev zlib1g-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install libboost-all-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
-sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install pkg-config -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install openjdk-8-jdk -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install python3 python3-pip python3-magic -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install libbz2-dev liblzma-dev zlib1g-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install libboost-all-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
+    sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install" >> /tmp/azuredeploy.log.$$ 2>&1
+}
 
-sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
-sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install" >> /tmp/azuredeploy.log.$$ 2>&1
+installBitextor &
+
 
 # Loop through all worker nodes, update hosts file and copy ssh public key to it
 # The script make the assumption that the node is called %WORKER+<index> and have
@@ -111,10 +115,8 @@ sudo chown $ADMIN_USERNAME $mungekey
 
 echo "Start looping all workers" >> /tmp/azuredeploy.log.$$ 2>&1 
 
-i=0
-while [ $i -lt $NUM_OF_VM ]
-do
-   worker=$WORKER_NAME$i
+installWorker(){
+   worker=$1
 
    echo "SCP to $worker"  >> /tmp/azuredeploy.log.$$ 2>&1 
    sudo -u $ADMIN_USERNAME scp $mungekey $ADMIN_USERNAME@$worker:/tmp/munge.key >> /tmp/azuredeploy.log.$$ 2>&1 
@@ -152,9 +154,16 @@ do
       sudo sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/" >> /tmp/azuredeploy.log.$$ 2>&1
       python3 -c "import nltk; nltk.download('punkt')" >> /tmp/azuredeploy.log.$$ 2>&1
 ENDSSH1
+}
+
+i=0
+while [ $i -lt $NUM_OF_VM ]
+do
+   installWorker $WORKER_NAME$i &
 
    i=`expr $i + 1`
 done
+wait
 rm -f $mungekey
 
 # Restart slurm service on all nodes
