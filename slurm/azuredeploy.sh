@@ -39,12 +39,6 @@ echo $MASTER_IP $MASTER_NAME > /tmp/hosts.$$
 sudo -u $ADMIN_USERNAME sh -c "mkdir /home/$ADMIN_USERNAME/.ssh/;echo Host worker\* > /home/$ADMIN_USERNAME/.ssh/config; echo StrictHostKeyChecking no >> /home/$ADMIN_USERNAME/.ssh/config; echo UserKnownHostsFile=/dev/null >> /home/$ADMIN_USERNAME/.ssh/config"
 
 
-# Bitextor installation
-sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common
-sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-sudo -u $ADMIN_USERNAME sh -c "git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/bitextor; cd ~/bitextor; ./autogen.sh --prefix=/home/lpla/local && make && make install"
-
-
 # Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
 if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
     sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f /home/$ADMIN_USERNAME/.ssh/id_rsa -t rsa -N ''"
@@ -52,6 +46,11 @@ fi
 
 # Install sshpass to automate ssh-copy-id action
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
+
+# Bitextor installation
+sudo apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
+sudo -u $ADMIN_USERNAME sh -c "git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/bitextor; cd ~/bitextor; ./autogen.sh --prefix=/home/lpla/local && make && make install"
 
 # Loop through all worker nodes, update hosts file and copy ssh public key to it
 # The script make the assumption that the node is called %WORKER+<index> and have
@@ -126,7 +125,7 @@ do
       sudo cp -f /tmp/slurm.conf /etc/slurm-llnl/slurm.conf
       sudo chown slurm /etc/slurm-llnl/slurm.conf
       sudo slurmd
-      sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common -y
+      sudo apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
       sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
       mkdir /home/$ADMIN_USERNAME/workspace
       sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace workspace/
