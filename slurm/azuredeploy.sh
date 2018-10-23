@@ -60,7 +60,7 @@ sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
 sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
-sudo -u $ADMIN_USERNAME sh -c "mkdir ~/workspace/software git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
+sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
 
 # Loop through all worker nodes, update hosts file and copy ssh public key to it
 # The script make the assumption that the node is called %WORKER+<index> and have
@@ -148,8 +148,8 @@ do
       sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
       sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-      mkdir /home/$ADMIN_USERNAME/workspace
-      sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace workspace/
+      sudo -u $ADMIN_USERNAME sh -c "mkdir /home/$ADMIN_USERNAME/workspace"
+      sudo -u $ADMIN_USERNAME sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/"
       
 ENDSSH1
 
