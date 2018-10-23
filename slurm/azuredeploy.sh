@@ -147,10 +147,10 @@ do
       sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
       sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
-      sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-      sudo sh -c "mkdir /home/$ADMIN_USERNAME/workspace"
-      sudo sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/"
-      python3 -c "import nltk; nltk.download('punkt')"
+      sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo sh -c "mkdir /home/$ADMIN_USERNAME/workspace" >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/" >> /tmp/azuredeploy.log.$$ 2>&1
+      python3 -c "import nltk; nltk.download('punkt')" >> /tmp/azuredeploy.log.$$ 2>&1
 ENDSSH1
 
    i=`expr $i + 1`
