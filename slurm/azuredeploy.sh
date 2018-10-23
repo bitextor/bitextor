@@ -148,9 +148,9 @@ do
       sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
       sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-      sudo -u $ADMIN_USERNAME sh -c "mkdir /home/$ADMIN_USERNAME/workspace"
-      sudo -u $ADMIN_USERNAME sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/"
-      
+      sudo sh -c "mkdir /home/$ADMIN_USERNAME/workspace"
+      sudo sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/"
+      python3 -c "import nltk; nltk.download('punkt')"
 ENDSSH1
 
    i=`expr $i + 1`
