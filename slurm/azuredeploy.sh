@@ -48,6 +48,7 @@ fi
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
 # Bitextor installation
+sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
@@ -60,7 +61,7 @@ sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
 sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
-sudo -u $ADMIN_USERNAME sh -c "mkdir ~/workspace/software git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
+sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install" >> /tmp/azuredeploy.log.$$ 2>&1
 
 # Loop through all worker nodes, update hosts file and copy ssh public key to it
 # The script make the assumption that the node is called %WORKER+<index> and have
@@ -80,7 +81,6 @@ done
 ###################################
 
 # Install the package
-sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
 sudo chmod g-w /var/log >> /tmp/azuredeploy.log.$$ 2>&1 # Must do this before munge will generate key
 sudo apt-get install slurm-llnl -y >> /tmp/azuredeploy.log.$$ 2>&1
 
@@ -147,10 +147,10 @@ do
       sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
       sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
 
-      sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-      mkdir /home/$ADMIN_USERNAME/workspace
-      sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace workspace/
-      
+      sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo sh -c "mkdir /home/$ADMIN_USERNAME/workspace" >> /tmp/azuredeploy.log.$$ 2>&1
+      sudo sh -c "sudo mount $MASTER_IP:/home/$ADMIN_USERNAME/workspace /home/$ADMIN_USERNAME/workspace/" >> /tmp/azuredeploy.log.$$ 2>&1
+      python3 -c "import nltk; nltk.download('punkt')" >> /tmp/azuredeploy.log.$$ 2>&1
 ENDSSH1
 
    i=`expr $i + 1`
