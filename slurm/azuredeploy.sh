@@ -48,6 +48,7 @@ fi
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
 # Bitextor installation
+sudo apt-get update
 sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
