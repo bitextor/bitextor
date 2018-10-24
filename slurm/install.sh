@@ -1,5 +1,5 @@
 apt-get update
-apt-get install -y cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl
+apt-get install -y cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384
 
 AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
@@ -36,18 +36,15 @@ chmod o+w /var/spool
 sudo -u slurm /usr/sbin/slurmctld
 munged --force
 slurmd
+
 mungekey=/tmp/munge.key
 cp -f /etc/munge/munge.key $mungekey
 chown $SUDO_USER $mungekey
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
-echo $MASTER_IP $MASTER_NAME > /tmp/hosts
 
-worker=104.214.90.79
-port=50001
-#sudo -u $SUDO_USER scp -P $port $mungekey $SUDO_USER@$worker:/tmp/munge.key
-#sudo -u $SUDO_USER scp -P $port $SLURMCONF $SUDO_USER@$worker:/tmp/slurm.conf
-#sudo -u $SUDO_USER scp -P $port /tmp/hosts $SUDO_USER@$worker:/tmp/hosts
+worker=10.0.0.12
+port=22
 sudo -u $SUDO_USER scp -P $port $mungekey $SUDO_USER@$worker:/tmp/munge.key
 sudo -u $SUDO_USER scp -P $port /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
 sudo -u $SUDO_USER scp -P $port /etc/hosts $SUDO_USER@$worker:/tmp/hosts
@@ -61,12 +58,12 @@ sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submod
 echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 systemctl restart nfs-kernel-server
 
+sudo -u slurm /usr/sbin/slurmctld
 
 # workers only
 MASTER_NAME=slurm-master
 MASTER_IP=10.0.0.4
 
-cp /tmp/hosts /etc/hosts
 chmod g-w /var/log
 
 cp -f /tmp/munge.key /etc/munge/munge.key
@@ -75,6 +72,7 @@ chgrp munge /etc/munge/munge.key
 #rm -f /tmp/munge.key
 /usr/sbin/munged --force
 
+cp /tmp/hosts /etc/hosts
 cp /tmp/slurm.conf /etc/slurm-llnl/
 # change /etc/hostname to match hosts 
 
@@ -92,7 +90,9 @@ slurmd # use master as a node also
 
 SLAVE
 =====
-chmod o+w /var/spool
-slurmd
+sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 mount 10.0.0.4:/home/hieu/workspace workspace/
+chmod o+w /var/spool
+hostname gpu1
+slurmd
 
