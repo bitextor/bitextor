@@ -101,6 +101,9 @@ SLAVE
 sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 mount 10.0.0.4:/home/hieu/workspace workspace/
 chmod o+w /var/spool
-hostname gpu0
+
+worker=worker0
+hostname $worker
 slurmd
+scontrol update NodeName=$worker State=resume
 
