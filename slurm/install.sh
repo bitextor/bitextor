@@ -21,6 +21,8 @@ tar xvf boost_1_68_0.tar.gz
 cd boost_1_68_0/
 ./bootstrap.sh 
 ./b2 -j16 --layout=system  install || echo FAILURE
+cd ..
+rm -rf boost_1_68_0*
 
 
 pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
