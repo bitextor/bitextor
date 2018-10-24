@@ -58,6 +58,14 @@ sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submod
 echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 systemctl restart nfs-kernel-server
 
+mkdir /var/spool/slurmctld
+chown slurm:slurm /var/spool/slurmctld
+chmod 0755 /var/spool/slurmctld/
+
+mkdir /var/spool/slurmd
+chown slurm:slurm /var/spool/slurmd
+chmod 0755 /var/spool/slurmd
+
 sudo -u slurm /usr/sbin/slurmctld
 
 # workers only
@@ -93,6 +101,6 @@ SLAVE
 sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 mount 10.0.0.4:/home/hieu/workspace workspace/
 chmod o+w /var/spool
-hostname gpu1
+hostname gpu0
 slurmd
 
