@@ -1,12 +1,21 @@
 apt-get update
-apt-get install -y cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384
+apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384
 
 AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
 curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 apt-get update
 apt-get install -y apt-transport-https azure-cli
-apt-get -y  install apt-transport-https azure-cli 
+
+wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
+tar xvf cmake-3.12.3.tar.gz 
+cd cmake-3.12.3/
+./bootstrap 
+make -j
+make install
+cd ..
+rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+
 
 pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
 python3 -c "import nltk; nltk.download('punkt')"
