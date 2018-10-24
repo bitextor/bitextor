@@ -1,5 +1,12 @@
 apt-get update
-apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl -y
+apt-get install -y cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384
+
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
+curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+apt-get update
+apt-get install -y apt-transport-https azure-cli
+apt-get -y  install apt-transport-https azure-cli 
 
 pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
 python3 -c "import nltk; nltk.download('punkt')"
@@ -8,14 +15,13 @@ python3 -c "import nltk; nltk.download('punkt')"
 ADMIN_USERNAME=$SUDO_USER
 
 # Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
-if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
-    sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f /home/$ADMIN_USERNAME/.ssh/id_rsa -t rsa -N ''"
+if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
+    sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
 fi
 
 chmod g-w /var/log # Must do this before munge will generate key
-apt-get install slurm-llnl -y 
 
-SLURMCONF=/tmp/slurm.conf.$$
+SLURMCONF=/tmp/slurm.conf
 TEMPLATE_BASE=https://raw.githubusercontent.com/bitextor/bitextor/bitextor-malign/slurm
 wget $TEMPLATE_BASE/slurm.template.conf -O $SLURMCONF 
 
@@ -30,17 +36,20 @@ chmod o+w /var/spool
 sudo -u slurm /usr/sbin/slurmctld
 munged --force
 slurmd
+
 mungekey=/tmp/munge.key
 cp -f /etc/munge/munge.key $mungekey
 chown $SUDO_USER $mungekey
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
-echo $MASTER_IP $MASTER_NAME > /tmp/hosts
 
-worker=10.0.0.5
-sudo -u $SUDO_USER scp $mungekey $SUDO_USER@$worker:/tmp/munge.key
-sudo -u $SUDO_USER scp $SLURMCONF $SUDO_USER@$worker:/tmp/slurm.conf
-sudo -u $SUDO_USER scp /tmp/hosts $SUDO_USER@$worker:/tmp/hosts
+worker=10.0.0.12
+port=22
+sudo -u $SUDO_USER scp -P $port $mungekey $SUDO_USER@$worker:/tmp/munge.key
+sudo -u $SUDO_USER scp -P $port /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
+sudo -u $SUDO_USER scp -P $port /etc/hosts $SUDO_USER@$worker:/tmp/hosts
+
+
 
 # software
 
@@ -49,21 +58,52 @@ sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submod
 echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 systemctl restart nfs-kernel-server
 
+mkdir /var/spool/slurmctld
+chown slurm:slurm /var/spool/slurmctld
+chmod 0755 /var/spool/slurmctld/
+
+mkdir /var/spool/slurmd
+chown slurm:slurm /var/spool/slurmd
+chmod 0755 /var/spool/slurmd
+
+sudo -u slurm /usr/sbin/slurmctld
 
 # workers only
 MASTER_NAME=slurm-master
 MASTER_IP=10.0.0.4
 
-sh -c "cat /tmp/hosts >> /etc/hosts"
 chmod g-w /var/log
 
 cp -f /tmp/munge.key /etc/munge/munge.key
 chown munge /etc/munge/munge.key
 chgrp munge /etc/munge/munge.key
 #rm -f /tmp/munge.key
+/usr/sbin/munged --force
+
+cp /tmp/hosts /etc/hosts
+cp /tmp/slurm.conf /etc/slurm-llnl/
+# change /etc/hostname to match hosts 
 
 # nfs
 sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
 
+==========================================================================
+after restart
+MASTER
+========
+chmod o+w /var/spool
+sudo -u slurm /usr/sbin/slurmctld
+slurmd # use master as a node also 
+
+SLAVE
+=====
+sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
+mount 10.0.0.4:/home/hieu/workspace workspace/
+chmod o+w /var/spool
+
+worker=worker0
+hostname $worker
+slurmd
+scontrol update NodeName=$worker State=resume
 
