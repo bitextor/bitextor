@@ -45,26 +45,14 @@ if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
 fi
 
 # Install sshpass to automate ssh-copy-id action
+sudo apt-get clean >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
 sudo apt-get install sshpass -y >> /tmp/azuredeploy.log.$$ 2>&1
 
-installBitextor() {
-# Bitextor installation
-    sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install cmake -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install g++ -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install automake -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install pkg-config -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install openjdk-8-jdk -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install python3 python3-pip python3-magic -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install libbz2-dev liblzma-dev zlib1g-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install libboost-all-dev -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install maven -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo apt-get install nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
-    sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install" >> /tmp/azuredeploy.log.$$ 2>&1
-}
-
-installBitextor &
+sudo apt-get update >> /tmp/azuredeploy.log.$$ 2>&1
+sudo apt-get install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common -y >> /tmp/azuredeploy.log.$$ 2>&1
+sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet >> /tmp/azuredeploy.log.$$ 2>&1
+sudo -u $ADMIN_USERNAME sh -c "mkdir -p ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install" >> /tmp/azuredeploy.log.$$ 2>&1
 
 
 # Loop through all worker nodes, update hosts file and copy ssh public key to it
