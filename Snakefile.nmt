@@ -3,20 +3,24 @@ from os.path import join
 sw_root = "~/workspace/software"
 marian = "{0}/marian-dev".format(sw_root)
 subword_nmt = "{0}/subword-nmt".format(sw_root)
-moses = "{0}/mosesdecoder".format(sw_root)
+moses = "/tmp/mosesdecoder"
+
+corpus="/tmp/corpus"
 
 ##########################################################################################################
 
 vocabSize = 30000
 
-langs = ["so", "en"]
+LANG1="en"
+LANG2="fr"
 
-tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, langs[1]),
-             "{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, langs[1])]
+tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG1),
+             "{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG2)]
 
-detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, langs[1])
+detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, LANG2)
 
-dataDir = "/home/s0565741/workspace/experiment/paracrawl/so-en/data"
+dataDir = "/tmp/data"
+modelDir = "/tmp/model"
 
 devices = "0"
 
@@ -34,40 +38,38 @@ trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
 
 translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
 
-trainPath = ['{0}/train.txt.{1}.gz'.format(dataDir, langs[0]),
-             '{0}/train.txt.{1}.gz'.format(dataDir, langs[1])
+trainPath = ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
+             '{0}/train.txt.{1}.gz'.format(dataDir, {LANG2})
             ]
 
 #concatTrainPath = {
-#                "materiel": ['{0}/train.txt.{1}.gz'.format(dataDir, langs[0]),
-#                             '{0}/train.txt.{1}.gz'.format(dataDir, langs[1])]
+#                "materiel": ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
+#                             '{0}/train.txt.{1}.gz'.format(dataDir, {LANG2})]
 #                ,
-#                "small":    ['{0}/train.1k.{1}'.format(dataDir, langs[0]),
-#                             '{0}/train.1k.{1}'.format(dataDir, langs[1])]
+#                "small":    ['{0}/train.1k.{1}'.format(dataDir, {LANG1}),
+#                             '{0}/train.1k.{1}'.format(dataDir, {LANG2})]
 #                }
 
-devPath = ['{0}/dev.txt.{1}'.format(dataDir, langs[0]),
-           '{0}/dev.txt.{1}'.format(dataDir, langs[1])]
+devPath = ['{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
+           '{0}/dev.txt.{1}'.format(dataDir, {LANG2})]
 
-testPath = ['{0}/test.small.{1}'.format(dataDir, langs[0]),
-            '{0}/test.small.{1}'.format(dataDir, langs[1]),
-            '{0}/test.txt.{1}'.format(dataDir, langs[0]),
-            '{0}/test.txt.{1}'.format(dataDir, langs[1]),
-            '{0}/dev.txt.{1}'.format(dataDir, langs[0]),
-            '{0}/dev.txt.{1}'.format(dataDir, langs[1])
+testPath = ['{0}/test.small.{1}'.format(dataDir, {LANG1}),
+            '{0}/test.small.{1}'.format(dataDir, {LANG2}),
+            '{0}/test.txt.{1}'.format(dataDir, {LANG1}),
+            '{0}/test.txt.{1}'.format(dataDir, {LANG2}),
+            '{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
+            '{0}/dev.txt.{1}'.format(dataDir, {LANG2})
             ]
 
 
 ##########################################################################################################
 
-workdir: "/home/s0565741/workspace/experiment/paracrawl/so-en/nmt"
-include:  "/home/s0565741/workspace/software/Malign/crawl/nmt/Snakefile.base"
-
-rule train:
-    input:  "evaluation/report"
+#rule train:
+rule all:
+    input: "/tmp/corpus/train/corpus.tc.en", "/tmp/corpus/dev/corpus.tc.en", "/tmp/corpus/test/corpus.tc.en"
 
 rule translate:
     run:
         print("need to translate something")
-        #for line in sys.stdin:
-        #    print("translation of:", line)
+
+include:"/home/mespla/Projects/bitextor-malign/Snakefile.base"

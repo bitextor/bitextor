@@ -330,54 +330,49 @@ rule concat_training:
 
 rule apply_truecaser:
     input:
-        file='corpus/{0}.tok.{1}'.format("{name}", "{lang}")
+        file='{path}/{name}.tok.{lang}'
         ,
-        model='truecaser/truecase-model.{0}'.format("{lang}")
+        model="{dir}/truecaser/".format(dir=modelDir)+"{name}.truecase-model.{lang}"
     output:
-        'corpus/{0}.tc.{1}'.format("{name}", "{lang}")
+        '{path}/{name}.tc.{lang}'
     shell:
-        "cat {0} | {1}/scripts/recaser/truecase.perl -model {2} > {3}".format("{input.file}", moses, "{input.model}", "{output}")
+        "cat {input.file} | {moses}/scripts/recaser/truecase.perl -model {input.model} > {output}"
 
-rule apply_truecaser_train:
-    input:
-        file='corpus/{0}.clean.{1}'.format("{name}", "{lang}")
-        ,
-        model='truecaser/truecase-model.{0}'.format("{lang}")
-    output:
-        'corpus/{0}.tc-train.{1}'.format("{name}", "{lang}")
-    shell:
-        "cat {0} | {1}/scripts/recaser/truecase.perl -model {2} > {3}".format("{input.file}", moses, "{input.model}", "{output}")
+#rule apply_truecaser_train:
+#    input:
+#        file="{fname}.clean.{lang}"
+#        ,
+#        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
+#    output:
+#        "{fname}.tc-train.{lang}"
+#    shell:
+#        "{moses}/scripts/recaser/truecase.perl -model {input.model} < {input} > {output}"
 
 rule learn_truecaser:
     input:
-        "corpus/{0}.clean.{1}".format(trainPrefix[0], "{lang}")
+        "{corpus}/train/".format(corpus=corpus)+"{name}.clean.{lang}"
     output:
-        'truecaser/truecase-model.{0}'.format("{lang}")
+        "{dir}/truecaser/".format(dir=modelDir)+"{name}.truecase-model.{lang}"
     shell:
-        "{0}/scripts/recaser/train-truecaser.perl -corpus {1} -model {2}".format(moses, "{input}", "{output}")
+        "mkdir -p {modelDir}/truecaser;"
+        "{moses}/scripts/recaser/train-truecaser.perl -corpus {input} -model {output}"
 
 rule clean_training:
     input:
-        source="corpus/{0}.tok.{1}".format("{name}", {LANG1})
+        "{name}.tok."+"{lang1}".format(lang1=LANG1)
         ,
-        target="corpus/{0}.tok.{1}".format("{name}", {LANG2})
+        "{name}.tok."+"{lang2}".format(lang2=LANG2)
     output:
-        source="corpus/{0}.clean.{1}".format("{name}", {LANG1})
+        "{name}.clean."+"{lang1}".format(lang1=LANG1)
         ,
-        target="corpus/{0}.clean.{1}".format("{name}", {LANG2})
+        "{name}.clean."+"{lang2}".format(lang2=LANG2)
     shell:
-        "{0}/scripts/training/clean-corpus-n.perl corpus/{1}.tok {2} {3} corpus/{1}.clean 1 80 corpus/{1}.lines-retained" \
-            .format(moses, trainPrefix[0], {LANG1}, {LANG2})
+        "{moses}/scripts/training/clean-corpus-n.perl {wildcards.name}.tok {LANG1} {LANG2} {wildcards.name}.clean 1 80 {wildcards.name}.lines-retained"
 
 rule tokenize_file:
-    input:
-        source="{CORPUSDIR}/{name}.{LANG1}"
-        ,
-        target="{CORPUSDIR}/{name}.{LANG2}"
+    input: 
+        "{name}.{lang}"
     output:
-        source="{CORPUSDIR}/{name}.tok.{LANG1}
-        ,
-        target="{CORPUSDIR}/{name}.tok.{LANG2}
+        "{name}.tok.{lang}"
     shell:
-        "cat {input.source} | {tokenizer[0]} > {output.source} && \
-         cat {input.target} | {tokenizer[1]} > {output.target}"
+        "cat {input} | {tokenizer[0]} > {output}"
