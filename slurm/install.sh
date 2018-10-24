@@ -1,5 +1,5 @@
 apt-get update
-apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384
+apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-llnl ubuntu-drivers-common nvidia-384 libicu-dev 
 
 AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
@@ -15,6 +15,12 @@ make -j
 make install
 cd ..
 rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+
+wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+tar xvf boost_1_68_0.tar.gz 
+cd boost_1_68_0/
+./bootstrap.sh 
+./b2 -j16 --layout=system  install || echo FAILURE
 
 
 pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
