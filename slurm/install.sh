@@ -97,6 +97,9 @@ mungekey=/tmp/munge.key
 cp -f /etc/munge/munge.key $mungekey
 chown $SUDO_USER $mungekey
 
+#Create the scaleset
+az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME
+
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
 
@@ -108,7 +111,7 @@ copykeys(){
         sudo -u $SUDO_USER scp /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
 
-for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
     copykeys $worker $SUDO_USER &
 done
 
