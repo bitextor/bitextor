@@ -20,7 +20,14 @@ installdependencies(){
         rm -f /tmp/${CUDA_REPO_PKG}
         sudo apt-get update
         sudo apt-get install -y cuda
+
+	AZ_REPO=$(lsb_release -cs)
+	echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
+	curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+	apt-get update
+	apt-get install -y apt-transport-https azure-cli
         
+
         echo "CUDA_ROOT=/usr/local/cuda" >> /etc/environment
         echo "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin\"" >> /etc/environment
         echo "LD_LIBRARY_PATH=\"/usr/local/cuda/lib64\"" >> /etc/environment
@@ -41,12 +48,6 @@ for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d '
 done
 
 wait
-
-#AZ_REPO=$(lsb_release -cs)
-#echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
-#curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-#apt-get update
-#apt-get install -y apt-transport-https azure-cli
 
 #wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
 #tar xvf cmake-3.12.3.tar.gz 
