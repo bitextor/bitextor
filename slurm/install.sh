@@ -75,16 +75,12 @@ if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
     sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
 fi
 
-chmod g-w /var/log # Must do this before munge will generate key
-
 SLURMCONF=/tmp/slurm.conf
 TEMPLATE_BASE=https://raw.githubusercontent.com/bitextor/bitextor/bitextor-malign/slurm
 wget $TEMPLATE_BASE/slurm.template.conf -O $SLURMCONF 
 
 MASTER_NAME=$HOSTNAME
 MASTER_IP=`hostname -I`
-
-sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF >> /tmp/azuredeploy.log.$$ 2>&1
 
 chmod g-w /var/log # Must do this before munge will generate key
 cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf
