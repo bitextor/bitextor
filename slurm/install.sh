@@ -1,5 +1,8 @@
 #!/bin/bash
 
+RESOURCE_GROUP=$1
+VMSS_NAME=$2
+
 installdependencies(){
         apt-get update
         apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev 
@@ -95,6 +98,7 @@ cp -f /etc/munge/munge.key $mungekey
 chown $SUDO_USER $mungekey
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
+paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
 
 copykeys(){
         worker=$1
@@ -148,7 +152,7 @@ slurmworkersetup(){
     mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
 }
 
-for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
     ssh $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
 done
 
