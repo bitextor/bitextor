@@ -25,8 +25,8 @@ endif ()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DU_USING_ICU_NAMESPACE=1")
 
-include_directories(third_party/preprocess)
-add_subdirectory(third_party/preprocess)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../preprocess)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../preprocess preprocess-bin)
 
 
 # find *.h and *.cpp files

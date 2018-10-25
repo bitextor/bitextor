@@ -3,7 +3,7 @@
 #define FAST_BLEUALIGN_COMMON_H
 
 
-#include "../../third_party/preprocess/util/string_piece.hh"
+#include "util/string_piece.hh"
 
 #include <iostream>
 #include <cstdio>
