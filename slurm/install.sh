@@ -10,7 +10,7 @@ installdependencies(){
         sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub 
         rm -f /tmp/${CUDA_REPO_PKG}
         sudo apt-get update
-        sudo apt-get install -y cuda-drivers
+        sudo apt-get install -y cuda
 
         pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
         python3 -c "import nltk; nltk.download('punkt')"
