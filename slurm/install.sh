@@ -7,22 +7,22 @@ curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
 apt-get update
 apt-get install -y apt-transport-https azure-cli
 
-wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
-tar xvf cmake-3.12.3.tar.gz 
-cd cmake-3.12.3/
-./bootstrap 
-make -j
-make install
-cd ..
-rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+#wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
+#tar xvf cmake-3.12.3.tar.gz 
+#cd cmake-3.12.3/
+#./bootstrap 
+#make -j
+#make install
+#cd ..
+#rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
 
-wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
-tar xvf boost_1_68_0.tar.gz 
-cd boost_1_68_0/
-./bootstrap.sh 
-./b2 -j16 --layout=system  install || echo FAILURE
-cd ..
-rm -rf boost_1_68_0*
+#wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+#tar xvf boost_1_68_0.tar.gz 
+#cd boost_1_68_0/
+#./bootstrap.sh 
+#./b2 -j16 --layout=system  install || echo FAILURE
+#cd ..
+#rm -rf boost_1_68_0*
 
 
 pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
@@ -42,8 +42,8 @@ SLURMCONF=/tmp/slurm.conf
 TEMPLATE_BASE=https://raw.githubusercontent.com/bitextor/bitextor/bitextor-malign/slurm
 wget $TEMPLATE_BASE/slurm.template.conf -O $SLURMCONF 
 
-MASTER_NAME=slurm-master
-MASTER_IP=10.0.0.4
+MASTER_NAME=$HOSTNAME
+MASTER_IP=`hostname -I`
 
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF >> /tmp/azuredeploy.log.$$ 2>&1
 
@@ -60,17 +60,22 @@ chown $SUDO_USER $mungekey
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 
-worker=10.0.0.12
-port=22
-sudo -u $SUDO_USER scp -P $port $mungekey $SUDO_USER@$worker:/tmp/munge.key
-sudo -u $SUDO_USER scp -P $port /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
-sudo -u $SUDO_USER scp -P $port /etc/hosts $SUDO_USER@$worker:/tmp/hosts
+copykeys(){
+worker=$1
+sudo -u $SUDO_USER scp $mungekey $SUDO_USER@$worker:/tmp/munge.key
+sudo -u $SUDO_USER scp /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
+sudo -u $SUDO_USER scp /etc/hosts $SUDO_USER@$worker:/tmp/hosts
+}
 
+for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+    copykeys $worker &
+done
 
+wait
 
 # software
 
-sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
+#sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
 
 echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 systemctl restart nfs-kernel-server
@@ -85,42 +90,49 @@ chmod 0755 /var/spool/slurmd
 
 sudo -u slurm /usr/sbin/slurmctld
 
-# workers only
-MASTER_NAME=slurm-master
-MASTER_IP=10.0.0.4
 
-chmod g-w /var/log
+slurmworkersetup(){
+    SUDO_USER=$1
+    MASTER_IP=$2
+    chmod g-w /var/log
 
-cp -f /tmp/munge.key /etc/munge/munge.key
-chown munge /etc/munge/munge.key
-chgrp munge /etc/munge/munge.key
-#rm -f /tmp/munge.key
-/usr/sbin/munged --force
+    cp -f /tmp/munge.key /etc/munge/munge.key
+    chown munge /etc/munge/munge.key
+    chgrp munge /etc/munge/munge.key
+    #rm -f /tmp/munge.key
+    /usr/sbin/munged --force
 
-cp /tmp/hosts /etc/hosts
-cp /tmp/slurm.conf /etc/slurm-llnl/
-# change /etc/hostname to match hosts 
+    cp /tmp/hosts /etc/hosts
+    cp /tmp/slurm.conf /etc/slurm-llnl/
+    # change /etc/hostname to match hosts 
 
-# nfs
-sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
+    # nfs
+    sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
+    mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
+}
 
-==========================================================================
-after restart
-MASTER
-========
-chmod o+w /var/spool
-sudo -u slurm /usr/sbin/slurmctld
-slurmd # use master as a node also 
+for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+    ssh $worker "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
+done
 
-SLAVE
-=====
-sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-mount 10.0.0.4:/home/hieu/workspace workspace/
-chmod o+w /var/spool
+wait
 
-worker=worker0
-hostname $worker
-slurmd
-scontrol update NodeName=$worker State=resume
+#==========================================================================
+#after restart
+#MASTER
+#========
+#chmod o+w /var/spool
+#sudo -u slurm /usr/sbin/slurmctld
+#slurmd # use master as a node also
+#
+#SLAVE
+#=====
+#sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
+#mount 10.0.0.4:/home/hieu/workspace workspace/
+#chmod o+w /var/spool
+#
+#worker=worker0
+#hostname $worker
+#slurmd
+#scontrol update NodeName=$worker State=resume
 
