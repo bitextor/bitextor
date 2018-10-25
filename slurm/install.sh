@@ -49,11 +49,17 @@ installdependencies &
 # master only
 ADMIN_USERNAME=$SUDO_USER
 
+
+# Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
+if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
+    sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
+fi
+
 #Create the scaleset
 az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --vm-sku Standard_H16 --admin-username $ADMIN_USERNAME
 
 for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-    ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 done
 
 wait
@@ -76,10 +82,6 @@ wait
 #rm -rf boost_1_68_0*
 
 
-# Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
-if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
-    sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
-fi
 
 SLURMCONF=/tmp/slurm.conf
 TEMPLATE_BASE=https://raw.githubusercontent.com/bitextor/bitextor/bitextor-malign/slurm
