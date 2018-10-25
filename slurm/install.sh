@@ -46,7 +46,7 @@ installdependencies(){
 
 installdependencies &
 
-for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
     ssh $worker "$(typeset -f installdependencies); installdependencies" &
 done
 
