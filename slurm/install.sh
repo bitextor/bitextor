@@ -11,7 +11,16 @@ installdependencies(){
         rm -f /tmp/${CUDA_REPO_PKG}
         sudo apt-get update
         sudo apt-get install -y cuda
-
+        
+        echo "CUDA_ROOT=/usr/local/cuda" >> /etc/environment
+        echo "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin\"" >> /etc/environment
+        echo "LD_LIBRARY_PATH=\"/usr/local/cuda/lib64\"" >> /etc/environment
+        echo "LIBRARY_PATH=\"/usr/local/cuda/lib64\"" >> /etc/environment
+        PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin"
+        CUDA_ROOT="/usr/local/cuda"
+        LD_LIBRARY_PATH="/usr/local/cuda/lib64"
+        LIBRARY_PATH="/usr/local/cuda/lib64"
+        
         pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
         python3 -c "import nltk; nltk.download('punkt')"
 }
