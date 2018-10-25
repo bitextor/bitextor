@@ -67,6 +67,7 @@ MASTER_IP=`hostname -I`
 
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF >> /tmp/azuredeploy.log.$$ 2>&1
 
+chmod g-w /var/log # Must do this before munge will generate key
 cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf
 chown slurm /etc/slurm-llnl/slurm.conf
 chmod o+w /var/spool
