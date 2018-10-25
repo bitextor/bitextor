@@ -106,9 +106,9 @@ paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME
 copykeys(){
         worker=$1
         SUDO_USER=$2
-        sudo -u $SUDO_USER scp $mungekey $SUDO_USER@$worker:/tmp/munge.key
-        sudo -u $SUDO_USER scp /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
-        sudo -u $SUDO_USER scp /etc/hosts $SUDO_USER@$worker:/tmp/hosts
+        sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no $mungekey $SUDO_USER@$worker:/tmp/munge.key
+        sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
+        sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
 
 for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
@@ -172,7 +172,7 @@ wait
 #SLAVE
 #=====
 #sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-#mount 10.0.0.4:/home/hieu/workspace workspace/
+#mount 10.0.0.9:/home/hieu/workspace workspace/
 #chmod o+w /var/spool
 #
 #worker=worker0
