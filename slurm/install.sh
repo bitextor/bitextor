@@ -4,6 +4,15 @@ installdependencies(){
         apt-get update
         apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev 
 
+	wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
+   	tar xvf cmake-3.12.3.tar.gz 
+   	cd cmake-3.12.3/
+   	./bootstrap 
+   	make -j
+   	make install
+	cd ..
+	rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+
         CUDA_REPO_PKG=cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
         wget -O /tmp/${CUDA_REPO_PKG} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/${CUDA_REPO_PKG} 
         sudo dpkg -i /tmp/${CUDA_REPO_PKG}
