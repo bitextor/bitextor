@@ -81,11 +81,11 @@ chown $SUDO_USER $mungekey
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 
 copykeys(){
-worker=$1
-SUDO_USER=$2
-sudo -u $SUDO_USER scp $mungekey $SUDO_USER@$worker:/tmp/munge.key
-sudo -u $SUDO_USER scp /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
-sudo -u $SUDO_USER scp /etc/hosts $SUDO_USER@$worker:/tmp/hosts
+        worker=$1
+        SUDO_USER=$2
+        sudo -u $SUDO_USER scp $mungekey $SUDO_USER@$worker:/tmp/munge.key
+        sudo -u $SUDO_USER scp /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
+        sudo -u $SUDO_USER scp /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
 
 for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
