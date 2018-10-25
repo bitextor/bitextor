@@ -1,11 +1,32 @@
-apt-get update
-apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common nvidia-384 libicu-dev 
+installdependencies(){
+        apt-get update
+        apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev 
 
-AZ_REPO=$(lsb_release -cs)
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
-curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-apt-get update
-apt-get install -y apt-transport-https azure-cli
+        CUDA_REPO_PKG=cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+        wget -O /tmp/${CUDA_REPO_PKG} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/${CUDA_REPO_PKG} 
+        sudo dpkg -i /tmp/${CUDA_REPO_PKG}
+        sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub 
+        rm -f /tmp/${CUDA_REPO_PKG}
+        sudo apt-get update
+        sudo apt-get install cuda-drivers
+
+        pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
+        python3 -c "import nltk; nltk.download('punkt')"
+}
+
+installdependencies &
+
+for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
+    ssh $worker "$(typeset -f installdependencies); installdependencies" &
+done
+
+wait
+
+#AZ_REPO=$(lsb_release -cs)
+#echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
+#curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+#apt-get update
+#apt-get install -y apt-transport-https azure-cli
 
 #wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
 #tar xvf cmake-3.12.3.tar.gz 
@@ -24,9 +45,6 @@ apt-get install -y apt-transport-https azure-cli
 #cd ..
 #rm -rf boost_1_68_0*
 
-
-pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
-python3 -c "import nltk; nltk.download('punkt')"
 
 # master only
 ADMIN_USERNAME=$SUDO_USER
@@ -112,7 +130,7 @@ slurmworkersetup(){
 }
 
 for worker in `ip neigh | grep -v 'FAILED' | grep -v 'REACHABLE' | cut -f 1 -d ' '`; do
-    ssh $worker "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
+    ssh $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
 done
 
 wait
