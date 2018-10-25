@@ -1,5 +1,7 @@
 from os.path import join
 
+LANG1="en"
+LANG2="fr"
 
 ##########################################################################################################
 def systemCheck(cmd):
@@ -44,7 +46,6 @@ def createParallelPrefixList(list):
 
     l = len(list)
     for i in range(l, 0, -2):
-        #print("i", i)
         assert(ret[i-1] == ret[i-2])
         del ret[i-1]
 
@@ -106,33 +107,31 @@ else:
     print("trainPath", trainPath)
 
 
-##########################################################################################################
+############################################# EVALUATION #############################################################
 
 allPaths = mergeLists([trainPath, devPath, testPath])
-#print("allPaths", allPaths)
 
 allFiles = [nameExclCompression(ofile) for ofile in allPaths]
 
-trainPrefix = createParallelPrefixList(trainPath)
-devPrefix = createParallelPrefixList(devPath)
-testPrefix = createParallelPrefixList(testPath)
+trainPrefix="{dir}/train/corpus".format(dir=dataDir)
+devPrefix="{dir}/dev/corpus".format(dir=dataDir)
+testPrefix="{dir}/test/corpus".format(dir=dataDir)
 
-#print("allFiles", allFiles)
-#print("trainPrefix", trainPrefix)
-#print("devPrefix", devPrefix)
-#print("testPrefix", testPrefix)
+
+def allTestNames(dataset):
+    names = []
+    for f in dataset:
+        names.append(os.path.basename(f))
+    return names
 
 rule report:
     input:
-        ["evaluation/{0}.bleu".format(ofile) for ofile in testPrefix]
+        expand("{dir}/{name}.bleu", dir=evaluation, name=allTestNames(testPrefix))
     output:
-        "evaluation/report"
+        "{dir}/report".format(dir=evaluation)
     run:
-        #print("input", input)
-
-        with open(output[0], "wt") as outHandle:
+        with open(output, "wt") as outHandle:
             for file in input:
-                #print("file", file, namePrefix(file))
                 with open(file, "rt") as inHandle:
                     str = inHandle.read()
                     outHandle.write(namePrefix(file))
@@ -141,234 +140,194 @@ rule report:
 
 rule multibleu:
     input:
-        trans=["evaluation/{0}.detokenized".format(ofile) for ofile in testPrefix]
+        trans="{dir}".format(dir=evaluation)+"/{name}.output.detokenized"
         ,
-        ref=["corpus/{0}.{1}".format(ofile, {LANG2}) for ofile in testPrefix]
+        ref="{dir}".format(dir=corpus)+"/{name}."+"{lang}".format(lang=LANG2)
     output:
-        ["evaluation/{0}.bleu".format(ofile) for ofile in testPrefix]
-    run:
-        #print("trans", input.trans)
-        #print("ref", input.ref)
-        #print("output", output)
-        assert(len(input.trans) == len(input.ref))
-        assert(len(input.trans) == len(output))
-
-        for i in range(len(input.trans)):
-            cmd = "cat {0} | {1}/scripts/generic/multi-bleu.perl {2} > {3}".format(input.trans[i], moses, input.ref[i], output[i])
-            #print("i", i, cmd)
-            systemCheck(cmd)
-
-rule detok:
-    input:
-        "evaluation/{name}.detruecased"
-    output:
-        "evaluation/{name}.detokenized"
+        "{dir}".format(dir=evaluation)+"/{name}.bleu"
     shell:
-        "cat {input} | {detokenizer} > {output}"
-
-rule detruecase:
-    input:
-        "evaluation/{name}.debpe"
-    output:
-        "evaluation/{name}.detruecased"
-    shell:
-        "cat {0} | {1}/scripts/recaser/detruecase.perl > {2}".format("{input}", "{moses}", "{output}")
-
-
-rule debpe:
-    input:
-        "evaluation/{name}.output"
-    output:
-        "evaluation/{name}.debpe"
-    shell:
-        "cat {input} | sed -r 's/(@@ )|(@@ ?$)//g' > {output}"
+        "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
 
 ##########################################  RUNNING MT ENGINE ##########################################
 
 rule translate_test:
     input:
-        model=directory("model/marian")
+        model=directory("{dir}/marian".format(dir=modelDir))
         ,
-        test="corpus/{0}.bpe.{1}".format("{name}", {LANG1})
+        test="{pref}/test/".format(pref=corpus)+"{name}.bpe."+"{lang}".format(lang=LANG1)
     output:
-        "evaluation/{0}.output".format("{name}")
+        "{evaluation}".format(evaluation=evaluation)+"/{name}.output"
     shell:
-        #"echo translate {input.valid[0]} to {output}"
         "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
 
 rule train_nmt:
     input:
-        vocab="{dir}".format(dir=modelDir)+"/{name}.vocab.yml"
+        vocab="{dir}/vocab.yml".format(dir=modelDir)
         ,
-        train=["{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG1),
-               "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG2)]
+        train=["{pref}/train.bpe.{lang}".format(pref=corpus,lang=LANG1),
+               "{pref}/train.bpe.{lang}".format(pref=corpus,lang=LANG2)]
         ,
-        valid=["{dir}".format(dir=corpus)+"/dev/{name}.bpe."+"{lang}".format(lang=LANG1),
-               "{dir}".format(dir=corpus)+"/dev/{name}.bpe."+"{lang}".format(lang=LANG2)]
+        valid=["{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG1),
+               "{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG2)]
 
     output:
-        directory("{dir}".format(dir=modelDir)+"/marian.{name}")
+        directory("{dir}".format(dir=modelDir)+"/marian")
     shell:
-        #"echo {trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 \
-        #&& mkdir {output}"
         "mkdir -p {output};"
 	"{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
 
-##################################################################################################################
+################################################## MARIAN VOCAB ################################################################
 
 rule make_vocab_yml:
     input:
-        "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG1)
+        "{pref}".format(pref=corpus)+"/train.bpe."+"{lang}".format(lang=LANG1)
         ,
-        "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG2)
+        "{pref}".format(pref=corpus)+"/train.bpe."+"{lang}".format(lang=LANG2)
     output:
-        '{dir}'.format(dir=modelDir)+'/{name}.vocab.yml'
+        '{pref}'.format(pref=modelDir)+'/vocab.yml'
     shell:
         "cat {input} | {marian}/build/marian-vocab --max-size {vocabSize} > {output}"
-
-############################################## BPE ##############################################
-
-rule apply_bpe:
-    input:
-        file="{dir}/{name}.tc.{lang}"
-        ,
-        vocab="{dir}/".format(dir=modelDir)+"{name}"+".vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
-    output:
-        "{dir}/{name}.bpe.{lang}"
-    shell:
-        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file} > {output}"
-
-#rule apply_bpe_train:
-#    input:
-#        file=['corpus/{0}.tc-train.{1}'.format("{name}", {LANG1})
-#              ,
-#              'corpus/{0}.tc-train.{1}'.format("{name}", {LANG2})]
-#        ,
-#        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
-#    output:
-#        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG1})
-#        ,
-#        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG2})
-#    shell:
-#        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
-#         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
-
-rule learn_bpe:
-    input:
-        "{dir}".format(dir=corpus)+"/train/{name}.clean."+"{lang}".format(lang=LANG1)
-        ,
-        "{dir}".format(dir=corpus)+"/train/{name}.clean."+"{lang}".format(lang=LANG2)
-    output:
-        '{dir}'.format(dir=modelDir)+'/{name}.vocab.'+'{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
-    shell:
-        "cat {input} | {subword_nmt}/subword_nmt/learn_bpe.py -s {vocabSize}  > {output}"
-
-##################################################################################################################
-
-rule copy_files:
-    input:
-        allPaths
-    output:
-        ["corpus/{}".format(ofile) for ofile in allFiles]
-    run:
-        assert(len(input) == len(output))
-
-        for i in range(len(input)):
-            fullPath = allPaths[i]
-            cmpExt = compressExt(fullPath)
-            #print("i", i, cmpExt, input[i], output[i])
-
-            if cmpExt == "gz":
-                shell("zcat {0} > {1}".format(input[i], output[i]))
-            else:
-                assert(cmpExt == "")
-                cmd = "ln -s {0} {1}".format(os.path.abspath(input[i]), output[i])
-                #print("cmd", cmd)
-                shell(cmd)
-
-rule concat_training:
-    input:
-        concatTrainPathFlattened
-    output:
-        trainPath
-    run:
-        assert(len(trainPath) == 2)
-        assert(len(concatTrainPathFlattened) >= 2)
-        assert(len(concatTrainPathFlattened) % 2 == 0)
-
-        numCorpora = int(len(concatTrainPathFlattened) / 2)
-
-        for i in range(numCorpora):
-            sourceFile = concatTrainPathFlattened[2*i]
-            targetFile = concatTrainPathFlattened[2*i + 1]
-            #print("i", i, cmpExt, input[i], output[i])
-
-            cmpExt = compressExt(sourceFile)
-            if cmpExt == "gz":
-                shell("zcat {0} >> {1}".format(sourceFile, output[0]))
-            else:
-                assert(cmpExt == "")
-                shell("cat {0} >> {1}".format(sourceFile, output[0]))
-
-            cmpExt = compressExt(targetFile)
-            if cmpExt == "gz":
-                shell("zcat {0} >> {1}".format(targetFile, output[1]))
-            else:
-                assert(cmpExt == "")
-                shell("cat {0} >> {1}".format(targetFile, output[1]))
-
-
-
-
-
 
 ####################################################### PREPROCESSING ###########################################################
 
 rule apply_truecaser:
     input:
-        file='{path}/{name}.tok.{lang}'
+        file='{name}.tok.{lang}'
         ,
-        model="{dir}/truecaser/".format(dir=modelDir)+"{name}.truecase-model.{lang}"
+        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     output:
-        '{path}/{name}.tc.{lang}'
+        '{name}.tc.{lang}'
     shell:
         "cat {input.file} | {moses}/scripts/recaser/truecase.perl -model {input.model} > {output}"
 
-#rule apply_truecaser_train:
-#    input:
-#        file="{fname}.clean.{lang}"
-#        ,
-#        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
-#    output:
-#        "{fname}.tc-train.{lang}"
-#    shell:
-#        "{moses}/scripts/recaser/truecase.perl -model {input.model} < {input} > {output}"
-
 rule learn_truecaser:
     input:
-        "{corpus}/train/".format(corpus=corpus)+"{name}.clean.{lang}"
+        "{corpus}".format(corpus=corpus)+"/train.clean.{lang}"
     output:
-        "{dir}/truecaser/".format(dir=modelDir)+"{name}.truecase-model.{lang}"
+        "{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     shell:
         "mkdir -p {modelDir}/truecaser;"
         "{moses}/scripts/recaser/train-truecaser.perl -corpus {input} -model {output}"
 
-rule clean_training:
+rule clean:
     input:
-        "{name}.tok."+"{lang1}".format(lang1=LANG1)
+        "{pref}.tok."+"{lang1}".format(lang1=LANG1)
         ,
-        "{name}.tok."+"{lang2}".format(lang2=LANG2)
+        "{pref}.tok."+"{lang2}".format(lang2=LANG2)
     output:
-        "{name}.clean."+"{lang1}".format(lang1=LANG1)
+        "{pref}.clean."+"{lang1}".format(lang1=LANG1)
         ,
-        "{name}.clean."+"{lang2}".format(lang2=LANG2)
+        "{pref}.clean."+"{lang2}".format(lang2=LANG2)
     shell:
-        "{moses}/scripts/training/clean-corpus-n.perl {wildcards.name}.tok {LANG1} {LANG2} {wildcards.name}.clean 1 80 {wildcards.name}.lines-retained"
+        "{moses}/scripts/training/clean-corpus-n.perl {wildcards.pref}.tok {LANG1} {LANG2} {wildcards.pref}.clean 1 80 {wildcards.pref}.lines-retained"
 
-rule tokenize_file:
+rule tokenize_file_l1:
     input: 
-        "{name}.{lang}"
+        "{pref}."+"{lang}".format(lang=LANG1)
     output:
-        "{name}.tok.{lang}"
+        "{pref}.tok."+"{lang}".format(lang=LANG1)
     shell:
         "cat {input} | {tokenizer[0]} > {output}"
+
+rule tokenize_file_l2:
+    input:
+        "{pref}."+"{lang}".format(lang=LANG2)
+    output:
+        "{pref}.tok."+"{lang}".format(lang=LANG2)
+    shell:
+        "cat {input} | {tokenizer[1]} > {output}"
+
+
+####################################################### POSTPROCESSING ###########################################################
+
+rule detok:
+    input:
+        "{pref}.detruecased"
+    output:
+        "{pref}.detokenized"
+    shell:
+        "cat {input} | {detokenizer} > {output}"
+
+rule detruecase:
+    input:
+        "{pref}.debpe"
+    output:
+        "{pref}.detruecased"
+    shell:
+        "cat {input} | {moses}/scripts/recaser/detruecase.perl > {output}"
+
+rule debpe:
+    input:
+        "{pref}.output"
+    output:
+        "{pref}.debpe"
+    shell:
+        "cat {input} | sed -r 's/(@@ )|(@@ ?$)//g' > {output}"
+
+############################################## BPE ##############################################
+
+rule apply_bpe:
+    input:
+        file="{pref}.tc.{lang}"
+        ,
+        vocab="{dir}/".format(dir=modelDir)+"vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
+    output:
+        "{pref}.bpe.{lang}"
+    shell:
+        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file} > {output}"
+
+rule learn_bpe:
+    input:
+        "{pref}".format(pref=corpus)+"/train.clean."+"{lang}".format(lang=LANG1)
+        ,
+        "{pref}".format(pref=corpus)+"/train.clean."+"{lang}".format(lang=LANG2)
+    output:
+        '{dir}'.format(dir=modelDir)+'/vocab.'+'{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
+    shell:
+        "cat {input} | {subword_nmt}/subword_nmt/learn_bpe.py -s {vocabSize}  > {output}"
+
+###################################### PREPARE DATA ##############################################
+
+rule prepare_traindata:
+    input:
+         l1=expand("{dataset}.{lang}", dataset=trainPath, lang=LANG1)
+         ,
+         l2=expand("{dataset}.{lang}", dataset=trainPath, lang=LANG2)
+    output:
+         l1="{corpus}/train.{lang}".format(corpus=corpus, lang=LANG1)
+         ,
+         l2="{corpus}/train.{lang}".format(corpus=corpus, lang=LANG2)
+    shell:
+         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l1} > {output.l2}"
+
+rule prepare_devdata:
+    input: 
+         l1=expand("{dataset}.{lang}", dataset=devPath, lang=LANG1)
+         ,
+         l2=expand("{dataset}.{lang}", dataset=devPath, lang=LANG2)
+    output: 
+         l1="{corpus}/dev.{lang}".format(corpus=corpus, lang=LANG1)
+         ,
+         l2="{corpus}/dev.{lang}".format(corpus=corpus, lang=LANG2)
+    shell:
+         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
+
+rule prepare_test:
+    input:
+         l1=expand("{dataset}.{lang}", dataset=testPath, lang=LANG1)
+         ,
+         l2=expand("{dataset}.{lang}", dataset=testPath, lang=LANG2)
+    output:
+         directory("{corpus}/test".format(corpus=corpus))
+    shell:
+         "mkdir -p {corpus}/test; cp -r {input.l1} {input.l2} {output}"
+
+rule decompress:
+    input:
+         "{pref}.{lang}.gz"
+    output:
+         temp("{pref}.{lang}")
+    wildcard_constraints:
+         lang="({l1}|{l2})".format(l1=LANG1, l2=LANG2)
+    shell:
+         "zcat {input} > {output}"

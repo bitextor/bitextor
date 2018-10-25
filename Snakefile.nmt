@@ -5,7 +5,8 @@ marian = "/home/mespla/Software/marian-dev"
 subword_nmt = "/home/mespla/Software/subword-nmt"
 moses = "/home/mespla/Software/mosesdecoder"
 
-corpus="/home/mespla/TMP/corpus"
+evaluation="/home/mespla/TMP/evaluation"
+corpus="/home/mespla/TMP/processed_corpus"
 
 ##########################################################################################################
 
@@ -19,10 +20,10 @@ tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG1),
 
 detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, LANG2)
 
-dataDir = "/home/mespla/TMP/data"
+dataDir = "/home/mespla/TMP/corpus"
 modelDir = "/home/mespla/TMP/model"
 
-devices = "1"
+devices = "0"
 
 trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
@@ -38,9 +39,7 @@ trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
 
 translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
 
-trainPath = ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
-             '{0}/train.txt.{1}.gz'.format(dataDir, {LANG2})
-            ]
+trainPath = ['{dir}/train/corpus'.format(dir=dataDir)]
 
 #concatTrainPath = {
 #                "materiel": ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
@@ -50,23 +49,25 @@ trainPath = ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
 #                             '{0}/train.1k.{1}'.format(dataDir, {LANG2})]
 #                }
 
-devPath = ['{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
-           '{0}/dev.txt.{1}'.format(dataDir, {LANG2})]
 
-testPath = ['{0}/test.small.{1}'.format(dataDir, {LANG1}),
-            '{0}/test.small.{1}'.format(dataDir, {LANG2}),
-            '{0}/test.txt.{1}'.format(dataDir, {LANG1}),
-            '{0}/test.txt.{1}'.format(dataDir, {LANG2}),
-            '{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
-            '{0}/dev.txt.{1}'.format(dataDir, {LANG2})
-            ]
+devPath = ['{dir}/dev/corpus'.format(dir=dataDir)]
 
+#testPath = ['{0}/test.small.{1}'.format(dataDir, {LANG1}),
+#            '{0}/test.small.{1}'.format(dataDir, {LANG2}),
+#            '{0}/test.txt.{1}'.format(dataDir, {LANG1}),
+#            '{0}/test.txt.{1}'.format(dataDir, {LANG2}),
+#            '{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
+#            '{0}/dev.txt.{1}'.format(dataDir, {LANG2})
+#            ]
+
+testPath = ['{dir}/test/corpus'.format(dir=dataDir, lang=LANG1)]
 
 ##########################################################################################################
 
 #rule train:
 rule all:
-    input: "/home/mespla/TMP/model/marian.corpus"
+    input: "/home/mespla/TMP/processed_corpus/test"
+#    input: "/home/mespla/TMP/model/marian"
 
 rule translate:
     run:
