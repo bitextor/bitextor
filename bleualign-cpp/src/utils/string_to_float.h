@@ -2,7 +2,7 @@
 #ifndef FAST_BLEUALIGN_STRING_TO_FLOAT_H
 #define FAST_BLEUALIGN_STRING_TO_FLOAT_H
 
-#include "../../third_party/preprocess/util/string_piece.hh"
+#include "util/string_piece.hh"
 
 
 namespace utils {

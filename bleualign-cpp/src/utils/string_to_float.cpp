@@ -1,9 +1,9 @@
 
 #include "string_to_float.h"
 
-#include "../../third_party/preprocess/util/string_piece.hh"
-#include "../../third_party/preprocess/util/double-conversion/double-conversion.h"
-#include "../../third_party/preprocess/util/double-conversion/utils.h"
+#include "util/string_piece.hh"
+#include "util/double-conversion/double-conversion.h"
+#include "util/double-conversion/utils.h"
 
 namespace utils {
 
