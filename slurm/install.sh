@@ -11,7 +11,7 @@ installdependencies(){
    	tar xvf cmake-3.12.3.tar.gz 
    	cd cmake-3.12.3/
    	./bootstrap 
-   	make -j
+   	make -j4
    	make install
 	cd ..
 	rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
