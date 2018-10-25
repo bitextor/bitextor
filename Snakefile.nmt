@@ -1,11 +1,11 @@
 from os.path import join
 
-sw_root = "~/workspace/software"
-marian = "{0}/marian-dev".format(sw_root)
-subword_nmt = "{0}/subword-nmt".format(sw_root)
-moses = "/tmp/mosesdecoder"
+sw_root = "/home/mespla/Software"
+marian = "/home/mespla/Software/marian-dev"
+subword_nmt = "/home/mespla/Software/subword-nmt"
+moses = "/home/mespla/Software/mosesdecoder"
 
-corpus="/tmp/corpus"
+corpus="/home/mespla/TMP/corpus"
 
 ##########################################################################################################
 
@@ -19,16 +19,16 @@ tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG1),
 
 detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, LANG2)
 
-dataDir = "/tmp/data"
-modelDir = "/tmp/model"
+dataDir = "/home/mespla/TMP/data"
+modelDir = "/home/mespla/TMP/model"
 
-devices = "0"
+devices = "1"
 
 trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
-          + " -c {0}/config.deep.yml".format(dataDir) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
-          + " --valid-log model/valid.log" \
-          + " --log model/train.log"
+          + " --valid-log {dir}/valid.log".format(dir=modelDir) \
+          + " --log {dir}/train.log".format(dir=modelDir)
+#          + " -c {0}/config.deep.yml".format(dataDir) \
 
 #trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
 #	  + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
@@ -66,10 +66,10 @@ testPath = ['{0}/test.small.{1}'.format(dataDir, {LANG1}),
 
 #rule train:
 rule all:
-    input: "/tmp/corpus/train/corpus.tc.en", "/tmp/corpus/dev/corpus.tc.en", "/tmp/corpus/test/corpus.tc.en"
+    input: "/home/mespla/TMP/model/marian.corpus"
 
 rule translate:
     run:
         print("need to translate something")
 
-include:"/home/mespla/Projects/bitextor-malign/Snakefile.base"
+include:"/home/mespla/bitextor/Snakefile.base"

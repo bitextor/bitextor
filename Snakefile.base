@@ -198,30 +198,31 @@ rule translate_test:
 
 rule train_nmt:
     input:
-        vocab='model/vocab.yml'
+        vocab="{dir}".format(dir=modelDir)+"/{name}.vocab.yml"
         ,
-        train=["corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG1}),
-               "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG2})]
+        train=["{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG1),
+               "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG2)]
         ,
-        valid=["corpus/{0}.bpe.{1}".format(devPrefix[0], {LANG1}),
-               "corpus/{0}.bpe.{1}".format(devPrefix[0], {LANG2})]
+        valid=["{dir}".format(dir=corpus)+"/dev/{name}.bpe."+"{lang}".format(lang=LANG1),
+               "{dir}".format(dir=corpus)+"/dev/{name}.bpe."+"{lang}".format(lang=LANG2)]
 
     output:
-        directory("model/marian")
+        directory("{dir}".format(dir=modelDir)+"/marian.{name}")
     shell:
         #"echo {trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 \
         #&& mkdir {output}"
-        "mkdir {output} && {trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
+        "mkdir -p {output};"
+	"{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
 
 ##################################################################################################################
 
 rule make_vocab_yml:
     input:
-        "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG1})
+        "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG1)
         ,
-        "corpus/{0}.bpe-train.{1}".format(trainPrefix[0], {LANG2})
+        "{dir}".format(dir=corpus)+"/train/{name}.bpe."+"{lang}".format(lang=LANG2)
     output:
-        'model/vocab.yml'
+        '{dir}'.format(dir=modelDir)+'/{name}.vocab.yml'
     shell:
         "cat {input} | {marian}/build/marian-vocab --max-size {vocabSize} > {output}"
 
@@ -229,41 +230,36 @@ rule make_vocab_yml:
 
 rule apply_bpe:
     input:
-        file=['corpus/{0}.tc.{1}'.format("{name}", {LANG1})
-              ,
-              'corpus/{0}.tc.{1}'.format("{name}", {LANG2})]
+        file="{dir}/{name}.tc.{lang}"
         ,
-        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+        vocab="{dir}/".format(dir=modelDir)+"{name}"+".vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
     output:
-        'corpus/{0}.bpe.{1}'.format("{name}", {LANG1})
-        ,
-        'corpus/{0}.bpe.{1}'.format("{name}", {LANG2})
+        "{dir}/{name}.bpe.{lang}"
     shell:
-        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
-         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
+        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file} > {output}"
 
-rule apply_bpe_train:
-    input:
-        file=['corpus/{0}.tc-train.{1}'.format("{name}", {LANG1})
-              ,
-              'corpus/{0}.tc-train.{1}'.format("{name}", {LANG2})]
-        ,
-        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
-    output:
-        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG1})
-        ,
-        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG2})
-    shell:
-        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
-         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
+#rule apply_bpe_train:
+#    input:
+#        file=['corpus/{0}.tc-train.{1}'.format("{name}", {LANG1})
+#              ,
+#              'corpus/{0}.tc-train.{1}'.format("{name}", {LANG2})]
+#        ,
+#        vocab='vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+#    output:
+#        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG1})
+#        ,
+#        'corpus/{0}.bpe-train.{1}'.format("{name}", {LANG2})
+#    shell:
+#        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[0]} > {output[0]} && \
+#         {subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file[1]} > {output[1]}"
 
 rule learn_bpe:
     input:
-        "corpus/{0}.clean.{1}".format(trainPrefix[0], {LANG1})
+        "{dir}".format(dir=corpus)+"/train/{name}.clean."+"{lang}".format(lang=LANG1)
         ,
-        "corpus/{0}.clean.{1}".format(trainPrefix[0], {LANG2})
+        "{dir}".format(dir=corpus)+"/train/{name}.clean."+"{lang}".format(lang=LANG2)
     output:
-        'vocab/vocab.{0}{1}'.format({LANG1}, {LANG2})
+        '{dir}'.format(dir=modelDir)+'/{name}.vocab.'+'{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
     shell:
         "cat {input} | {subword_nmt}/subword_nmt/learn_bpe.py -s {vocabSize}  > {output}"
 
