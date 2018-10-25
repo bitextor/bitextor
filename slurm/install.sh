@@ -46,6 +46,10 @@ installdependencies(){
 
 installdependencies &
 
+
+#Create the scaleset
+az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --size Standard_H16
+
 for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
     ssh $worker "$(typeset -f installdependencies); installdependencies" &
 done
@@ -96,9 +100,6 @@ slurmd
 mungekey=/tmp/munge.key
 cp -f /etc/munge/munge.key $mungekey
 chown $SUDO_USER $mungekey
-
-#Create the scaleset
-az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
