@@ -1,3 +1,5 @@
+from tld import get_tld
+
 BITEXTOR=config["bitextor"]
 
 LANG1=config["lang1"]
@@ -8,6 +10,9 @@ TMPDIR=config["temp"]
 MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
 
+#Working paths
+permanent=config["permanent"]
+intermediate=config["intermediate"]
 
 #Dictionary
 if "dic" in config:
@@ -35,9 +40,9 @@ else:
 
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
-  CRAWLTARGET="httracktt"
+  CRAWLTARGET="httrack"
 else:
-  CRAWLTARGET="tt"
+  CRAWLTARGET="creepy"
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -113,68 +118,96 @@ if "elrc" in config and config["elrc"]==True:
 else:
   ELRCSCORES=BICLEANER
 
+#========================= MAPPING URLS AND OUTPUT FILES =========================#
+
+def getSubDomainsFromURLs():
+	subdomains={}
+	for url in config["urls"]:
+		proc_url=get_tld(url, as_object=True)
+		if proc_url.subdomain == "":
+			subdomain=proc_url.fld
+		else:
+			subdomain=proc_url.subdomain+"."+proc_url.fld
+		subdomains[subdomain]=url
+	return subdomains
+
+def getDomainsFromURLs():
+	domains={}
+	for url in config["urls"]:
+		proc_url=get_tld(url, as_object=True)
+		domain=proc_url.fld
+		if domain not in domains:
+			domains[proc_url.fld]=[]
+		if proc_url.subdomain == "":
+			subdomain=proc_url.fld
+		else:
+			subdomain=proc_url.subdomain+"."+proc_url.fld
+		domains[proc_url.fld].append(subdomain)
+	return domains
+
+subdomain_url_map=getSubDomainsFromURLs()
+domain_subdomain_map=getDomainsFromURLs()
 
 #================================== TARGET FILES ==================================#
 rule all:
 	input:
-		expand("{target}.tmx", target=config["urls"])
+		expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
 
 #================================== PREPROCESSING ==================================#
 
-rule download:
-	output:
-		'{target}.warc'
+rule creepy_download:
 	params:
-		url=lambda w: config["urls"].get(w.target)
+		url=lambda w: subdomain_url_map[w.target]
+	output:
+		'{dir}/{target}.creepy.warc'
 	shell:
+		'mkdir -p {intermediate}; '
 		'python3 {BITEXTOR}/bin/bitextor-crawl {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} > {output}'
 
-rule httrack:
+rule httrack_download:
 	output:
-		'{target}.httracktt'
+		'{dir}/{target}.httrack.warc'
 	params:
-		url=lambda w: config["urls"].get(w.target)
+		url=lambda w: subdomain_url_map[w.target]
 	shell:
-		'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-                '{BITEXTOR}/bin/bitextor-downloadweb {params.url} $DIRNAME; '
-		'{BITEXTOR}/bin/bitextor-webdir2ett $DIRNAME > {output}; '
-		'rm -rf $DIRNAME '
-
-rule httrack2tar:
-	output:
-		'{target}.tar'
-	params:
-		url=lambda w: config["urls"].get(w.target)
-	shell:
+		'mkdir -p {intermediate}; '
 		'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
 		'{BITEXTOR}/bin/bitextor-downloadweb {params.url} $DIRNAME; '
-		'tar czf {output} -C $DIRNAME/ .; '
+		'{BITEXTOR}/bin/bitextor-webdir2warc $DIRNAME > {output}; '
+		'rm -rf $DIRNAME;'
 
-
-rule warc2crawl:
+rule concat_subdomains:
 	input:
-		'{target}.warc'
+		lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=w.dir, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
 	output:
-		'{target}.crawl'
+		"{dir}/{target}.warc.concat"
 	shell:
-		'{BITEXTOR}/bin/bitextor-warc2ett < {input} > {output}'
+		'cat {input} > {output}'
 
-rule crawl2tt:
+rule warc2tt:
 	input:
-		'{target}.crawl'
+		'{target}.warc.concat'
 	output:
 		'{target}.tt'
+	shell:
+		'{BITEXTOR}/bin/bitextor-warc2tt < {input} > {output}'
+
+rule tt2ttmime:
+	input:
+		'{target}.tt'
+	output:
+		'{target}.ttmime'
 	shell:
 		'{BITEXTOR}/bin/bitextor-identifyMIME < {input} > {output}'
 
 rule tt2xtt:
 	input:
 		#If HTTRACK is enalbed, httrack rule is run; otherwise, download rule is applied
-		expand("{{target}}.{crawltgt}", crawltgt=CRAWLTARGET)
+		'{target}.ttmime'
 	output:
 		'{target}.xtt'
 	shell:
-		'/usr/bin/java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -x < {input} > {output}'
+		'java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -x < {input} > {output}'
 
 rule xtt2boiler:
 	input:
@@ -183,7 +216,7 @@ rule xtt2boiler:
 		'{target}.boiler'
 	shell:
 		"if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-		"  /usr/bin/java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar < {input} > {output}; "
+		"  java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar < {input} > {output}; "
 		"else "
 		"  cat {input} > {output}; "
 		"fi"
@@ -202,7 +235,7 @@ rule ett2tika:
 	output:
 		'{target}.tika'
 	shell:
-		'/usr/bin/java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -t < {input} > {output}'
+		'java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -t < {input} > {output}'
 
 rule ett2lett:
 	input:
@@ -343,68 +376,73 @@ rule hunaligndic:
 	input:
 		expand("{dic}", dic=DIC)
 	output:
-		'hunalign_dic'
+		'{dir}/hunalign_dic'.format(dir=intermediate)
 	shell:
 		'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
 
 
-#==================================  ==================================#
+#================================== SEGMENT ALIGNMENT ==================================#
 
 rule alignsegments:
 	input:
-		'hunalign_dic',
-		expand("{{target}}.docalign.{extension}", extension=DOCALIGNEXT)
+		'{dir}/hunalign_dic'.format(dir=intermediate),
+		"{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
 	output:
-		'{target}.segalign'
+		'{name}.segalign'
 	shell:
 		'{BITEXTOR}/bin/bitextor-align-segments -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} < {input[1]} > {output}'
+
+rule concat_segs:
+	input:
+		expand("{{dir}}/{webdomain}.segalign", webdomain=domain_subdomain_map.keys())
+	output:
+		"{dir}/segaligned.concat"
+	shell:
+		"cat {input} > {output}"
 
 
 rule cleansegments:
 	input:
-		'{target}.segalign'
+		"{dir}/segaligned.concat"
 	output:
-		'{target}.segclean'
+		"{dir}/segaligned.segclean"
 	shell:
 		'{BITEXTOR}/bin/bitextor-cleantextalign -q {MINQUALITY} -m {MAXLINES} -s < {input} > {output}'
-
-
-
-
 
 #================================== POST PROCESSING ==================================#
 
 #NOTE: did not add zipporah since it will be deprecated in version 7 of bitextor
 #TODO: Add Bicleaner, add deduplication
+
 rule bicleaner:
 	input:
-		"{target}.segclean"
+		"{dir}/segaligned.segclean"
 	output:
-		"{target}.bicleaner.scores"
+		"{dir}/segaligned.bicleaner.scores"
 	shell:
 		'python3  {BITEXTOR}/bin/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} {input} {output} {BICLEANER_CONFIG}'
 
 rule bicleanerfilter:
 	input:
-		"{target}.bicleaner.scores"
+		"{dir}/segaligned.bicleaner.scores"
 	output:
-		"{target}.bicleaner"
+		"{dir}/segaligned.bicleaner"
 	shell:
 		'{BITEXTOR}/bin/bitextor-filterbicleaner --threshold {BICLEANER_THRESHOLD} < {input} > {output}'
 
 rule elrc:
 	input:
-		expand("{{target}}.{extension}", extension=BICLEANER)
+		"{dir}/"+"segaligned.{extension}".format(extension=BICLEANER)
 	output:
-		"{target}.elrc"
+		"{dir}/segaligned.elrc"
 	shell:
 		'{BITEXTOR}/bin/bitextor-elrc-filtering -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s < {input} > {output}'
 
 rule tmx:
 	input:
-		"{target}.elrc"
+		"{dir}/segaligned.elrc".format(dir=config["intermediate"])
 	output:
-		"{target}.tmx"
+		"{dir}".format(dir=config["permanent"])+"/{l1}-{l2}.tmx"
 	shell:
 		"{BITEXTOR}/bin/bitextor-buildTMX --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION},lengthratio,numTokensSL,numTokensTL,idnumber < {input} > {output}"

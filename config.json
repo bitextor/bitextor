@@ -1,11 +1,9 @@
 {
   "bitextor":"/home/mespla/local7",
-  "urls": 
-         {
-            "/tmp/elenacafenew": "http://www.elenacaffe1863.com/",
-            "/tmp/vadenew": "http://vade-retro.fr"
-         },
+  "urls": ["http://www.pawpeds.com","http://pawpeds.com"],
   "temp": "/tmp",
+  "permanent": "/home/mespla",
+  "intermediate": "/tmp/crawling_temp",
   "lang1": "en",
   "lang2": "fr",
   "nltk": "y",
