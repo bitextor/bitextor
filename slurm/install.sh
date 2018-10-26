@@ -149,6 +149,7 @@ wait
 # software
 
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
+sudo -u $SUDO_USER sh -c "mkdir ~/workspace"
 if grep -q "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" /etc/exports ; then
 	:
 else
