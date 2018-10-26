@@ -13,7 +13,7 @@ bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py \
-            bitextor-buildTMX-dedup.py bitextor-buildTMX-dedupRAM.py bitextor-warc2ett.py bitextor-webdir2warc.sh
+            bitextor-buildTMX-dedup.py bitextor-buildTMX-dedupRAM.py bitextor-warc2ett.py bitextor-webdir2warc.sh bitextor-filterbicleaner.py
 
 bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-ett2lett bitextor-lett-language-detector bitextor-crawl bitextor-train-document-alignment bitextor-identifyMIME bitextor-dedup \
@@ -21,7 +21,7 @@ bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering bitextor-dir2warc \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison \
-            bitextor-buildTMX-dedup bitextor-buildTMX-dedupRAM bitextor-warc2ett bitextor-webdir2warc
+            bitextor-buildTMX-dedup bitextor-buildTMX-dedupRAM bitextor-warc2ett bitextor-webdir2warc bitextor-filterbicleaner
             
 EXTRA_DIST= $(bitextor_SOURCEFILES) utils \
             model
@@ -44,7 +44,7 @@ install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
 	cp textsanitizer.py $(prefix)/bin/.
-	cp bicleaner/*.py $(prefix)/bin/.
+	cp bicleaner/bicleaner/*.py $(prefix)/bin/.
 	cp document-aligner/*.sh $(prefix)/bin/.
 	cp document-aligner/*.py $(prefix)/bin/.
 	cp -R document-aligner/utils $(prefix)/bin/.
@@ -167,6 +167,10 @@ bitextor-align-documents: bitextor-align-documents.py
 	sed "s!__ENV__!$(ENV)!g" >$@
 
 bitextor-cleantextalign: bitextor-cleantextalign.py
+	sed "s!__ENV__!$(ENV)!g" $< | \
+	sed "s!__PYTHON__!$(PYTHON)!g" >$@
+
+bitextor-filterbicleaner: bitextor-filterbicleaner.py
 	sed "s!__ENV__!$(ENV)!g" $< | \
 	sed "s!__PYTHON__!$(PYTHON)!g" >$@
 

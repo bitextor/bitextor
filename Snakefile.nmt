@@ -1,0 +1,76 @@
+from os.path import join
+
+sw_root = "/home/mespla/Software"
+marian = "/home/mespla/Software/marian-dev"
+subword_nmt = "/home/mespla/Software/subword-nmt"
+moses = "/home/mespla/Software/mosesdecoder"
+
+evaluation="/home/mespla/TMP/evaluation"
+corpus="/home/mespla/TMP/processed_corpus"
+
+##########################################################################################################
+
+vocabSize = 30000
+
+LANG1="en"
+LANG2="fr"
+
+tokenizer = ["{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG1),
+             "{0}/scripts/tokenizer/tokenizer.perl -l {1}".format(moses, LANG2)]
+
+detokenizer = "{0}/scripts/tokenizer/detokenizer.perl -l {1}".format(moses, LANG2)
+
+dataDir = "/home/mespla/TMP/corpus"
+modelDir = "/home/mespla/TMP/model"
+
+devices = "0"
+
+trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
+          + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+          + " --valid-log {dir}/valid.log".format(dir=modelDir) \
+          + " --log {dir}/train.log".format(dir=modelDir)
+#          + " -c {0}/config.deep.yml".format(dataDir) \
+
+#trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
+#	  + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+#          + " --valid-log model/valid.log" \
+#          + " --log model/train.log" \
+#	  + " --type amun"
+
+translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
+
+trainPath = ['{dir}/train/corpus'.format(dir=dataDir)]
+
+#concatTrainPath = {
+#                "materiel": ['{0}/train.txt.{1}.gz'.format(dataDir, {LANG1}),
+#                             '{0}/train.txt.{1}.gz'.format(dataDir, {LANG2})]
+#                ,
+#                "small":    ['{0}/train.1k.{1}'.format(dataDir, {LANG1}),
+#                             '{0}/train.1k.{1}'.format(dataDir, {LANG2})]
+#                }
+
+
+devPath = ['{dir}/dev/corpus'.format(dir=dataDir)]
+
+#testPath = ['{0}/test.small.{1}'.format(dataDir, {LANG1}),
+#            '{0}/test.small.{1}'.format(dataDir, {LANG2}),
+#            '{0}/test.txt.{1}'.format(dataDir, {LANG1}),
+#            '{0}/test.txt.{1}'.format(dataDir, {LANG2}),
+#            '{0}/dev.txt.{1}'.format(dataDir, {LANG1}),
+#            '{0}/dev.txt.{1}'.format(dataDir, {LANG2})
+#            ]
+
+testPath = ['{dir}/test/corpus'.format(dir=dataDir, lang=LANG1)]
+
+##########################################################################################################
+
+#rule train:
+rule all:
+    input: "/home/mespla/TMP/processed_corpus/test"
+#    input: "/home/mespla/TMP/model/marian"
+
+rule translate:
+    run:
+        print("need to translate something")
+
+include:"/home/mespla/bitextor/Snakefile.base"

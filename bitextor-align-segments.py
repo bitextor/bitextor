@@ -54,7 +54,7 @@ def runAnalyse(morph, text):
 
 def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, morphanal):
   tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext).decode("utf-8").split("\n"):
+  for origseg in base64.b64decode(encodedtext).decode("utf-8").replace("\t"," ").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       try:
