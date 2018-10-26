@@ -154,23 +154,23 @@ rule all:
 		expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
 
 #================================== PREPROCESSING ==================================#
-
+#"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
 	params:
 		url=lambda w: subdomain_url_map[w.target]
 	output:
-		'{dir}/{target}.creepy.warc'
+		'{dir}'.format(dir=permanent)+'/{target}.creepy.warc'
 	shell:
-		'mkdir -p {intermediate}; '
+		'mkdir -p {permanent}; '
 		'python3 {BITEXTOR}/bin/bitextor-crawl {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} > {output}'
 
 rule httrack_download:
 	output:
-		'{dir}/{target}.httrack.warc'
+		'{dir}'.format(dir=permanent)+'/{target}.httrack.warc'
 	params:
 		url=lambda w: subdomain_url_map[w.target]
 	shell:
-		'mkdir -p {intermediate}; '
+		'mkdir -p {permanent}; '
 		'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
 		'{BITEXTOR}/bin/bitextor-downloadweb {params.url} $DIRNAME; '
 		'{BITEXTOR}/bin/bitextor-webdir2warc $DIRNAME > {output}; '
@@ -178,9 +178,9 @@ rule httrack_download:
 
 rule concat_subdomains:
 	input:
-		lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=w.dir, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
+		lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
 	output:
-		"{dir}/{target}.warc.concat"
+		"{dir}".format(dir=intermediate)+"/{target}.warc.concat"
 	shell:
 		'cat {input} > {output}'
 
