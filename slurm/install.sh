@@ -1,7 +1,7 @@
 #!/bin/bash
 
 RESOURCE_GROUP=$1
-VMSS_NAME=$2
+vmssnames="${@:2}" #If GPU, use examplevmss:gpu:tesla:1 syntax
 
 installdependencies(){
         sudo apt-get update
@@ -57,13 +57,14 @@ if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
     sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
 fi
 
-#Create the scaleset
-az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --vm-sku Standard_H16 --admin-username $ADMIN_USERNAME
-
-for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+for vmminfo in $vmssnames; do
+	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	#Create the scaleset
+	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --vm-sku Standard_H16 --admin-username $ADMIN_USERNAME
+	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+	done
 done
-
 wait
 
 #wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
@@ -94,8 +95,26 @@ MASTER_IP=`hostname -I`
 
 
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
-lastvm=`expr $NUM_OF_VM - 1`
-sed -i -- 's/__WORKERNODES__/'"$WORKER_NAME"'[0-'"$lastvm"']/g' $SLURMCONF
+
+echo "GresTypes=gpu" >> $SLURMCONF
+allworkernames=""
+for vmminfo in $vmssnames; do
+	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	if [ ":gpu:" in "$vmssinfo" ]; then
+		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
+		allworkernames="$allworkernames,$workernames"
+		gpuinfo=`echo $VMSS_NAME | cut -f 2- -d ':'`
+		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
+	else
+		workernames=``az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
+		allworkernames="$allworkernames,$workernames"
+		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN" >> $SLURMCONF
+	fi
+done
+echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP" >> $SLURMCONF
+echo "DebugFlags=NO_CONF_HASH" >> $SLURMCONF
+
+
 sudo chmod g-w /var/log # Must do this before munge will generate key
 sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf
 sudo chown slurm /etc/slurm-llnl/slurm.conf
@@ -109,7 +128,6 @@ sudo cp -f /etc/munge/munge.key $mungekey
 sudo chown $SUDO_USER $mungekey
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
-paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
 
 copykeys(){
         worker=$1
@@ -118,17 +136,21 @@ copykeys(){
         sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
         sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
-
-for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-    copykeys $worker $SUDO_USER &
+for vmminfo in $vmssnames; do
+	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
+	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+		copykeys $worker $SUDO_USER &
+	done
 done
-
 wait
 
 # software
 
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
-sudo -u $SUDO_USER sh -c "mkdir ~/workspace/"
+if [ "$(grep -c "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" /etc/exports)" == 0 ]; then
+    sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
+fi
 sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 sudo systemctl restart nfs-kernel-server
 
@@ -162,11 +184,12 @@ slurmworkersetup(){
     sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
     sudo mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
 }
-
-for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-    sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
+for vmminfo in $vmssnames; do
+	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+		sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
+	done
 done
-
 wait
 
 #==========================================================================
