@@ -19,5 +19,7 @@
   "permanent-dir":"/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign/snakemake/output",
   "intermediate-dir":"/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign/snakemake/intermediate",
   #"bicleaner-threshold": 0.7,
-  #"bicleaner":"~/Baixades/bicleaner-en-fr/training.en-fr.yaml"
+  #"bicleaner":"~/Baixades/bicleaner-en-fr/training.en-fr.yaml",
+  "permanent": "/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign/snakemake/permanent",
+  "intermediate": "/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign/snakemake/intermediate",
 }
