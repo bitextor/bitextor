@@ -57,7 +57,7 @@ if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
     sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
 fi
 
-for vmminfo in $vmssnames; do
+for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	#Create the scaleset
 	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --vm-sku Standard_H16 --admin-username $ADMIN_USERNAME
@@ -98,7 +98,7 @@ sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames=""
-for vmminfo in $vmssnames; do
+for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	echo "$LIST" | grep -q "$SOURCE";
 	if echo "$vmssinfo" | grep -q ":gpu:" ; then
@@ -137,7 +137,7 @@ copykeys(){
         sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
         sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
-for vmminfo in $vmssnames; do
+for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
@@ -184,7 +184,7 @@ slurmworkersetup(){
     sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
     sudo mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
 }
-for vmminfo in $vmssnames; do
+for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
 		sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
