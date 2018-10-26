@@ -106,7 +106,7 @@ for vmminfo in $vmssnames; do
 		gpuinfo=`echo $VMSS_NAME | cut -f 2- -d ':'`
 		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
 	else
-		workernames=``az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
+		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
 		allworkernames="$allworkernames,$workernames"
 		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN" >> $SLURMCONF
 	fi
