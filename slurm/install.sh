@@ -100,7 +100,8 @@ echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames=""
 for vmminfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
-	if [ ":gpu:" in "$vmssinfo" ]; then
+	echo "$LIST" | grep -q "$SOURCE";
+	if echo "$vmssinfo" | grep -q ":gpu:" ; then
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
 		allworkernames="$allworkernames,$workernames"
 		gpuinfo=`echo $VMSS_NAME | cut -f 2- -d ':'`
