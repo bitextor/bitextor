@@ -151,7 +151,6 @@ wait
 if [ "$(grep -c "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" /etc/exports)" == 0 ]; then
     sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 fi
-sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 sudo systemctl restart nfs-kernel-server
 
 sudo mkdir /var/spool/slurmctld
