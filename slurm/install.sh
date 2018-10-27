@@ -1,5 +1,6 @@
 #!/bin/bash
-#  sudo ./install.sh hieu-foo southcentralus scale-cpu18:Standard_H16m:16 scale-gpu18:Standard_NV6:6:gpu:tesla:1
+#  sudo ./install.sh hieu-foo southcentralus scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
+# Scaleset params = NAME:SIZE:count:num-cpu:[gpu-string]
 
 RESOURCE_GROUP=$1
 REGION=$2
@@ -69,10 +70,11 @@ fi
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	VM_SKU=`echo $vmssinfo | cut -f 2 -d ':'`
-	echo "VMSS_NAME=$VMSS_NAME VM_SKU=$VM_SKU"
+	VM_COUNT=`echo $vmssinfo | cut -f 3 -d ':'`
+	echo "VMSS_NAME=$VMSS_NAME VM_SKU=$VM_SKU VM_COUNT=$VM_COUNT"
 	
 	#Create the scaleset
-	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --admin-username $ADMIN_USERNAME
+	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
 		print "installing worker $worker"
 		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
@@ -113,8 +115,8 @@ echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames=""
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
-	CPUs=`echo $vmssinfo | cut -f 3 -d ':'`
-	gpuinfo=`echo $vmssinfo | cut -f 4- -d ':'`
+	CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
+	gpuinfo=`echo $vmssinfo | cut -f 5- -d ':'`
 	echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
 	
 	echo "$LIST" | grep -q "$SOURCE";
