@@ -12,5 +12,5 @@ az vm create --resource-group ${USER}-foo --name slurm-master18 \
 
 ./vmss_create.sh --resource-group hieu-foo --name scale-gpu18 --ssh-key-value ~/.ssh/id_rsa.pub --instance-count 2 --vm-sku Standard_NV6 -l southcentralus --image Canonical:UbuntuServer:18.04-LTS:18.04.201810030
 
- ./install.sh hieu-foo scale-cpu18 scale-gpu18:gpu:tesla:1
+./install.sh hieu-foo scale-cpu18 scale-gpu18:gpu:tesla:1
 
