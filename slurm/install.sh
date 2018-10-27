@@ -1,5 +1,5 @@
 #!/bin/bash
-# ./install.sh hieu-foo southcentralus scale-cpu18 scale-gpu18:gpu:tesla:1
+#  sudo ./install.sh hieu-foo southcentralus scale-cpu18:Standard_H16m scale-gpu18:Standard_NV6:gpu:tesla:1
 
 RESOURCE_GROUP=$1
 REGION=$2
@@ -71,12 +71,13 @@ for vmssinfo in $vmssnames; do
 	VM_SKU=`echo $vmssinfo | cut -f 2 -d ':'`
 	echo "VMSS_NAME  $VMSS_NAME"
 	echo "VM_SKU  $VM_SKU"
-	exit
+	#exit
 
 	#Create the scaleset
-	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --admin-username $ADMIN_USERNAME
+	#az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --admin-username $ADMIN_USERNAME
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+		print "worker $worker"
+		#sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 	done
 done
 wait
@@ -114,11 +115,15 @@ echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames=""
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	echo "VMSS_NAME  $VMSS_NAME"
+	
 	echo "$LIST" | grep -q "$SOURCE";
 	if echo "$vmssinfo" | grep -q ":gpu:" ; then
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
 		allworkernames="$allworkernames,$workernames"
-		gpuinfo=`echo $VMSS_NAME | cut -f 2- -d ':'`
+		gpuinfo=`echo $vmssinfo | cut -f 3- -d ':'`
+		echo "gpuinfo $gpuinfo"
+
 		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
 	else
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
