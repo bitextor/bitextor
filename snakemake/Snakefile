@@ -441,8 +441,8 @@ rule elrc:
 
 rule tmx:
 	input:
-		"{dir}/segaligned.elrc".format(dir=config["volatile"])
+		"{dir}/segaligned.elrc".format(dir=config["volatile-dir"])
 	output:
-		"{dir}".format(dir=config["permanent"])+"/{l1}-{l2}.tmx"
+		"{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
 	shell:
 		"{BITEXTOR}/bin/bitextor-buildTMX --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION},lengthratio,numTokensSL,numTokensTL,idnumber < {input} > {output}"
