@@ -1,7 +1,12 @@
 #!/bin/bash
+# ./install.sh hieu-foo southcentralus scale-cpu18 scale-gpu18:gpu:tesla:1
 
 RESOURCE_GROUP=$1
-vmssnames="${@:2}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+REGION=$2
+vmssnames="${@:3}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+echo "RESOURCE_GROUP $RESOURCE_GROUP"
+echo "REGION $REGION"
+echo "vmssnames $vmssnames"
 
 installdependencies(){
         sudo apt-get update
@@ -60,7 +65,7 @@ fi
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	#Create the scaleset
-	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l southcentralus --vm-sku Standard_H16m --admin-username $ADMIN_USERNAME
+	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku Standard_H16m --admin-username $ADMIN_USERNAME
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
 		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 	done
