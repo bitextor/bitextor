@@ -57,7 +57,7 @@ installdependencies(){
 
 }
 
-#installdependencies
+installdependencies
 
 # master only
 ADMIN_USERNAME=$SUDO_USER
