@@ -11,8 +11,8 @@ MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
 
 #Working paths
-permanent=config["permanent"]
-intermediate=config["intermediate"]
+permanent=config["permanent-dir"]
+volatile=config["volatile-dir"]
 
 #Dictionary
 if "dic" in config:
@@ -180,7 +180,7 @@ rule concat_subdomains:
 	input:
 		lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
 	output:
-		"{dir}".format(dir=intermediate)+"/{target}.warc.concat"
+		"{dir}".format(dir=volatile)+"/{target}.warc.concat"
 	shell:
 		'cat {input} > {output}'
 
@@ -376,7 +376,7 @@ rule hunaligndic:
 	input:
 		expand("{dic}", dic=DIC)
 	output:
-		'{dir}/hunalign_dic'.format(dir=intermediate)
+		'{dir}/hunalign_dic'.format(dir=volatile)
 	shell:
 		'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
@@ -386,7 +386,7 @@ rule hunaligndic:
 
 rule alignsegments:
 	input:
-		'{dir}/hunalign_dic'.format(dir=intermediate),
+		'{dir}/hunalign_dic'.format(dir=volatile),
 		"{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
 	output:
 		'{name}.segalign'
@@ -441,7 +441,7 @@ rule elrc:
 
 rule tmx:
 	input:
-		"{dir}/segaligned.elrc".format(dir=config["intermediate"])
+		"{dir}/segaligned.elrc".format(dir=config["volatile"])
 	output:
 		"{dir}".format(dir=config["permanent"])+"/{l1}-{l2}.tmx"
 	shell:
