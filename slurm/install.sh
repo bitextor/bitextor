@@ -55,29 +55,26 @@ installdependencies(){
 	sudo rm /tmp/munge.key /tmp/slurm.conf /tmp/hosts
 
 }
-echo "HH1"
 
 #installdependencies
 
 # master only
 ADMIN_USERNAME=$SUDO_USER
 
-echo "HH2"
-
 # Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
 if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
     sudo -u $SUDO_USER sh -c "ssh-keygen -f /home/$SUDO_USER/.ssh/id_rsa -t rsa -N ''"
 fi
 
-echo "HH3"
-
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	VM_SKU=`echo $vmssinfo | cut -f 2 -d ':'`
 	echo "VMSS_NAME  $VMSS_NAME"
+	echo "VM_SKU  $VM_SKU"
 	exit
 
 	#Create the scaleset
-	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku Standard_H16m --admin-username $ADMIN_USERNAME
+	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --admin-username $ADMIN_USERNAME
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
 		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 	done
