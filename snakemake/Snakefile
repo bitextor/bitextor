@@ -11,8 +11,8 @@ MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
 
 #Working paths
-permanent=config["permanent-dir"]
-volatile=config["volatile-dir"]
+permanent=config["permanent"]
+intermediate=config["intermediate"]
 
 #Dictionary
 if "dic" in config:
@@ -135,7 +135,7 @@ def getDomainsFromURLs():
 	domains={}
 	for url in config["urls"]:
 		proc_url=get_tld(url, as_object=True)
-		domain=proc_url.fld
+		domain=proc_url.domain
 		if domain not in domains:
 			domains[proc_url.fld]=[]
 		if proc_url.subdomain == "":
@@ -180,7 +180,7 @@ rule concat_subdomains:
 	input:
 		lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
 	output:
-		"{dir}".format(dir=volatile)+"/{target}.warc.concat"
+		"{dir}".format(dir=intermediate)+"/{target}.warc.concat"
 	shell:
 		'cat {input} > {output}'
 
@@ -376,7 +376,7 @@ rule hunaligndic:
 	input:
 		expand("{dic}", dic=DIC)
 	output:
-		'{dir}/hunalign_dic'.format(dir=volatile)
+		'{dir}/hunalign_dic'.format(dir=intermediate)
 	shell:
 		'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
@@ -386,7 +386,7 @@ rule hunaligndic:
 
 rule alignsegments:
 	input:
-		'{dir}/hunalign_dic'.format(dir=volatile),
+		'{dir}/hunalign_dic'.format(dir=intermediate),
 		"{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
 	output:
 		'{name}.segalign'
@@ -397,16 +397,16 @@ rule concat_segs:
 	input:
 		expand("{{dir}}/{webdomain}.segalign", webdomain=domain_subdomain_map.keys())
 	output:
-		"{dir}/segaligned.concat"
+		"{dir}/{l1}-{l2}.sent"
 	shell:
 		"cat {input} > {output}"
 
 
 rule cleansegments:
 	input:
-		"{dir}/segaligned.concat"
+		"{dir}/{l1}-{l2}.sent"
 	output:
-		"{dir}/segaligned.segclean"
+		"{dir}/{l1}-{l2}.segclean"
 	shell:
 		'{BITEXTOR}/bin/bitextor-cleantextalign -q {MINQUALITY} -m {MAXLINES} -s < {input} > {output}'
 
@@ -417,32 +417,32 @@ rule cleansegments:
 
 rule bicleaner:
 	input:
-		"{dir}/segaligned.segclean"
+		"{dir}/{l1}-{l2}.segclean"
 	output:
-		"{dir}/segaligned.bicleaner.scores"
+		"{dir}/{l1}-{l2}.bicleaner.scores"
 	shell:
 		'python3  {BITEXTOR}/bin/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} {input} {output} {BICLEANER_CONFIG}'
 
 rule bicleanerfilter:
 	input:
-		"{dir}/segaligned.bicleaner.scores"
+		"{dir}/{l1}-{l2}.bicleaner.scores"
 	output:
-		"{dir}/segaligned.bicleaner"
+		"{dir}/{l1}-{l2}.bicleaner"
 	shell:
 		'{BITEXTOR}/bin/bitextor-filterbicleaner --threshold {BICLEANER_THRESHOLD} < {input} > {output}'
 
 rule elrc:
 	input:
-		"{dir}/"+"segaligned.{extension}".format(extension=BICLEANER)
+		"{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)
 	output:
-		"{dir}/segaligned.elrc"
+		"{dir}/{l1}-{l2}.elrc"
 	shell:
 		'{BITEXTOR}/bin/bitextor-elrc-filtering -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s < {input} > {output}'
 
 rule tmx:
 	input:
-		"{dir}/segaligned.elrc".format(dir=config["volatile-dir"])
+		"{dir}".format(dir=config["intermediate"])+"/{l1}-{l2}.elrc"
 	output:
-		"{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
+		"{dir}".format(dir=config["permanent"])+"/{l1}-{l2}.tmx"
 	shell:
 		"{BITEXTOR}/bin/bitextor-buildTMX --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION},lengthratio,numTokensSL,numTokensTL,idnumber < {input} > {output}"
