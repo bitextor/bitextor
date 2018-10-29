@@ -1,5 +1,5 @@
 {
-  "bitextor":"/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign",
+  "bitextor":"/home/hieu/workspace/github/paracrawl/bitextor.malign",
   "urls": ["http://www.elenacaffe1863.com/","http://vade-retro.fr"],
   "temp": "/tmp",
   "permanent-dir": "/home/hieu/workspace/github/paracrawl/bitextor.bitextor-malign/snakemake/permanent",
