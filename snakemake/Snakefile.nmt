@@ -32,10 +32,10 @@ trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
 #          + " -c {0}/config.deep.yml".format(dataDir) \
 
 #trainCmd = "{0}/build/marian -d {1}".format(marian, devices) \
-#	  + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+#     + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
 #          + " --valid-log model/valid.log" \
 #          + " --log model/train.log" \
-#	  + " --type amun"
+#     + " --type amun"
 
 translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
 
