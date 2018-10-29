@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. The tool reads as an imput the output of Bitextor and formats it in TMX format

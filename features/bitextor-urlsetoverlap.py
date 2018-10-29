@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. Leer .lettr y cargarlo en memoria

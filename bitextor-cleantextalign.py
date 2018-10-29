@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. All the alignments produced by bitextor-alignsegments are checked and those with an alignemnt confidence score lower than a given threshold are discarded (also those unaligned segments are discarded)

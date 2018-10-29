@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 OUTPUT=/dev/stdout
 exit_program()
 {
@@ -38,5 +38,5 @@ case $# in
     ;;
 esac
 
-cat $FILE | __JAVA__ -jar "$(dirname "$0")"/../share/java/piped-tika.jar -t 2> /dev/null | \
+cat $FILE | java -jar "$(dirname "$0")"/../share/java/piped-tika.jar -t 2> /dev/null | \
 "$(dirname "$0")"/bitextor-lett-language-detector $langs

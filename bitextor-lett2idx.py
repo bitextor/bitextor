@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #
@@ -57,14 +57,14 @@ for line in reader:
     #Decoding base 64:
     text = base64.b64decode(fields[5]).decode("utf-8")
     if len(text.strip()) != 0 and options.morphanal1 != None and lang == options.lang1:
-      morphanalyser = ["__BASH__", options.morphanal1]
+      morphanalyser = ["/bin/bash", options.morphanal1]
       spmorph = subprocess.Popen(morphanalyser, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
       morph_stdout,error = spmorph.communicate(input=text)
       if len(error.strip()) == 0:
         text =  re.sub(r"\^\*?", r"", re.sub(r"[/<][^$]*\$", r"", morph_stdout.decode("utf-8")))
 
     if len(text.strip()) != 0 and options.morphanal2 != None and lang == options.lang2:
-      morphanalyser = ["__BASH__", options.morphanal2]
+      morphanalyser = ["/bin/bash", options.morphanal2]
       tpmorph = subprocess.Popen(morphanalyser, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
       morph_stdout,error = tpmorph.communicate(input=text)
       if len(error.strip()) == 0:

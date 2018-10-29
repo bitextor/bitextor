@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 
 set -o pipefail
 
@@ -504,7 +504,7 @@ align_documents_and_segments(){
         "$(dirname "$0")"/bitextor-urlsetoverlap -l $LETTR | \
 	"$(dirname "$0")"/bitextor-rank $DOCSIMTHRESHOLD -m "$MODEL" -w "$WEIGHTS" 2> >(grep -v 'Using TensorFlow backend.' > $DISTANCEFILTER12LOG) | tee $DISTANCEFILTER12OUT | \
         "$(dirname "$0")"/bitextor-align-documents  -i converge -l $LETTR 2> $ALIGNDOCUMENTSLOG | tee $ALIGNDOCUMENTSOUT | \
-        "$(dirname "$0")"/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC > $output_pipe &
+        "$(dirname "$0")"/bitextor-score-document-alignment -t $TMPDIR --lang1 $LANG1 --lang2 $LANG2 -d $HUNALIGN_DIC  $output_pipe &
     fi
   fi
   convert_to_tmx < $output_pipe > $OUTPUT

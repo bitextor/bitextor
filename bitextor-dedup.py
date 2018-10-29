@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. This script reads a tab-separated list of documents, only containing two fields: the content of the document encoded with base64 and the URL
