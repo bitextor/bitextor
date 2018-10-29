@@ -14,7 +14,7 @@
   "elrc": true,
   "crawler-num-threads": 2,
   "crawl-tld": false,
-  "bicleaner-threshold": 0.7,
-  "bicleaner":"/home/hieu/workspace/github/paracrawl/bitextor-data/bicleaner/en-fr"
+  #"bicleaner-threshold": 0.7,
+  #"bicleaner":"/home/hieu/workspace/github/paracrawl/bitextor-data/bicleaner/en-fr"
 
 }

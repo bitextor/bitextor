@@ -129,6 +129,7 @@ def getSubDomainsFromURLs():
 		else:
 			subdomain=proc_url.subdomain+"."+proc_url.fld
 		subdomains[subdomain]=url
+		print("url", url)
 	return subdomains
 
 def getDomainsFromURLs():
@@ -143,6 +144,7 @@ def getDomainsFromURLs():
 		else:
 			subdomain=proc_url.subdomain+"."+proc_url.fld
 		domains[proc_url.fld].append(subdomain)
+		print("subdomain", proc_url.fld, subdomain)
 	return domains
 
 subdomain_url_map=getSubDomainsFromURLs()
@@ -161,6 +163,7 @@ rule creepy_download:
 	output:
 		'{dir}'.format(dir=permanent)+'/{target}.creepy.warc'
 	shell:
+		'echo {params.url}'
 		'mkdir -p {permanent}; '
 		'python3 {BITEXTOR}/bin/bitextor-crawl {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} > {output}'
 
