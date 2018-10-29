@@ -387,6 +387,7 @@ print (var)" 2> /dev/null`
   AC_MSG_CHECKING([for libmagic for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import magic; \
+m=magic.open(magic.MAGIC_NONE); \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
