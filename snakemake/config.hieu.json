@@ -15,6 +15,6 @@
   "crawler-num-threads": 2,
   "crawl-tld": false,
   "bicleaner-threshold": 0.7,
-  "bicleaner":"~/Baixades/bicleaner-en-fr/training.en-fr.yaml"
+  "bicleaner":"/home/hieu/workspace/github/paracrawl/bitextor-data/bicleaner/en-fr"
 
 }
