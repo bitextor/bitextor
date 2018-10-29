@@ -1,7 +1,18 @@
 #!/bin/bash
+#  sudo ./install.sh hieu-foo southcentralus scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
+# Scaleset params = NAME:SIZE:count:num-cpu:[gpu-string]
 
 RESOURCE_GROUP=$1
-vmssnames="${@:2}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+REGION=$2
+vmssnames="${@:3}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+echo "RESOURCE_GROUP $RESOURCE_GROUP"
+echo "REGION $REGION"
+echo "vmssnames $vmssnames"
+
+if ! [ $SUDO_USER ]; then
+	echo "must run as sudo. Exiting"
+	exit
+fi
 
 installdependencies(){
         sudo apt-get update
@@ -40,17 +51,16 @@ installdependencies(){
         LD_LIBRARY_PATH="/usr/local/cuda/lib64"
         LIBRARY_PATH="/usr/local/cuda/lib64"
         
-        sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake
+        sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld
         python3 -c "import nltk; nltk.download('punkt')"
 	sudo rm /tmp/munge.key /tmp/slurm.conf /tmp/hosts
 
 }
 
-installdependencies &
+installdependencies
 
 # master only
 ADMIN_USERNAME=$SUDO_USER
-
 
 # Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
 if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
@@ -59,9 +69,14 @@ fi
 
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	VM_SKU=`echo $vmssinfo | cut -f 2 -d ':'`
+	VM_COUNT=`echo $vmssinfo | cut -f 3 -d ':'`
+	echo "VMSS_NAME=$VMSS_NAME VM_SKU=$VM_SKU VM_COUNT=$VM_COUNT"
+	
 	#Create the scaleset
-	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" --vm-sku Standard_H16 --admin-username $ADMIN_USERNAME
+	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
 	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+		print "installing worker $worker"
 		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 	done
 done
@@ -100,16 +115,20 @@ echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames=""
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
+	CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
+	gpuinfo=`echo $vmssinfo | cut -f 5- -d ':'`
+	echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
+	
 	echo "$LIST" | grep -q "$SOURCE";
 	if echo "$vmssinfo" | grep -q ":gpu:" ; then
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
 		allworkernames="$allworkernames,$workernames"
-		gpuinfo=`echo $VMSS_NAME | cut -f 2- -d ':'`
-		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
+
+		echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
 	else
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | tr '\n' ','`
 		allworkernames="$allworkernames,$workernames"
-		echo "NodeName=${workernames} CPUs=6 State=UNKNOWN" >> $SLURMCONF
+		echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN" >> $SLURMCONF
 	fi
 done
 echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP" >> $SLURMCONF
@@ -149,6 +168,7 @@ wait
 # software
 
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
+sudo -u $SUDO_USER sh -c "mkdir ~/workspace"
 if grep -q "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" /etc/exports ; then
 	:
 else
