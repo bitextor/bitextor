@@ -17,8 +17,8 @@ Requirements
 
 ~~~~~~
 git submodule update --init --recursive
-sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic libboost-all-dev maven
-sudo pip install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py
+sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic python3-magic libboost-all-dev maven
+sudo pip3 install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet
 #If you don't want to be bleeding edge with pip
 sudo pip install -r requirements.txt
 #If you are using Ubuntu 14.04 install tensorflow 1.4.1:
