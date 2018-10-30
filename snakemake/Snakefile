@@ -181,7 +181,7 @@ def loadDomains(file_path):
 
     return domains
 
-def getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
     domains = defaultdict(dict)
@@ -206,7 +206,7 @@ def getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
                 pbar.update(1)
     #print("Loaded ", langstat_path, file=sys.stderr)
 
-    urls_to_crawl = []
+    domains_to_crawl = []
     for k, v in domains.items():
         if tldextract.extract(k).domain in excluded_set:
             continue
@@ -216,9 +216,9 @@ def getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
             lang2_bytes = int(v[l12[1]])
             if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
                 #print("k", k)
-                urls_to_crawl.append(k)
-    print(len(urls_to_crawl), " domains found", file=sys.stderr)
-    return urls_to_crawl
+                domains_to_crawl.append(k)
+    print(len(domains_to_crawl), " domains found", file=sys.stderr)
+    return domains_to_crawl
 
 if "urls" in config:
     print("urls given")
@@ -232,13 +232,13 @@ elif "langstat" in config:
     threshold = config["langstat-threshold"]
     exclude_path = config["langstat-exclude-domains"]
 
-    urls = getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+    urls = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 else:
     print("Need list of urls or langstat file")
     exit()
 
-domain_subdomain_map=getDomainsFromURLs(urls)
-print("domain_subdomain_map", domain_subdomain_map)
+domain_2_fulldomains=getDomainsFromURLs(urls)
+print("domain_2_fulldomains", domain_2_fulldomains)
 
 #================================== TARGET FILES ==================================#
 rule all:
@@ -271,7 +271,7 @@ rule httrack_download:
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=volatile)+"/{target}.warc.concat"
     shell:
@@ -488,7 +488,7 @@ rule alignsegments:
 
 rule concat_segs:
     input:
-        expand("{{dir}}/{webdomain}.segalign", webdomain=domain_subdomain_map.keys())
+        expand("{{dir}}/{webdomain}.segalign", webdomain=domain_2_fulldomains.keys())
     output:
         "{dir}/{l1}-{l2}.sent"
     shell:
