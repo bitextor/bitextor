@@ -26,7 +26,7 @@ seen_md5={}
 for i in reader:
   fields = i.strip().split("\t")
   try:
-    e = base64.b64encode(fields[4].encode("utf8")).decode("utf8")
+    e = fields[4]
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
     c.update(e.encode("utf8"))

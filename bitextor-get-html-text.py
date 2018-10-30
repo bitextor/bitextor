@@ -10,6 +10,7 @@ import re
 import argparse
 import ftfy
 from lxml.html.clean import Cleaner
+from bs4 import BeautifulSoup
 
 #Inline tags that don't start on a new line and only take up as much width as necessary. From https://www.w3schools.com/html/html_blocks.asp
 inline_tags={"a","abbr","acronym","b","bdo","big","br","button","cite","code","dfn","em","i","img","input","kbd","label","map","object","q","samp","script","select","small","span","strong","sub","sup","textarea","time","tt","var"}
@@ -67,13 +68,18 @@ args = parser.parse_args()
 for line in sys.stdin:
     fields=line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
-    try:
-        document = html5lib.parse(ftfy.fix_text(Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False).clean_html(base64.b64decode(fields[3]).decode('utf8'))),treebuilder="lxml",namespaceHTMLElements=False) #We use lxml treebuilder because of getelementpath function and iteration through elements
-    except:
-        continue
     if args.text:
-        documenttext = getDocumentText(document)
-        fields.append(base64.b64encode(re.sub("[\n\t]+", "\n", re.sub("[ ]+", " ",documenttext)).encode()).decode('utf8'))
+        soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf8"), "lxml")
+        for script in soup(["script", "style", "img"]):
+            script.extract()    # rip it out
+
+        # get text
+        text = soup.get_text()
+        text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
+        fields.append(base64.b64encode(text.encode()).decode("utf8"))
     else:
-        fields.append(etree.tostring(document).decode('utf8').replace("\t"," ").replace("\n"," "))
+        document = html5lib.parse(ftfy.fix_text(Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False).clean_html(base64.b64decode(fields[3]).decode("utf8"))),treebuilder="lxml",namespaceHTMLElements=False)
+        tree=etree.tostring(document)
+        cleantree=tree.decode("utf8").replace("\t"," ")
+        fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
     print('\t'.join(fields))
