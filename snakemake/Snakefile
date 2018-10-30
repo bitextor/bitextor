@@ -164,16 +164,11 @@ else:
 def getDomainsFromURLs(urls):
     domains={}
     for url in urls:
-        proc_url=get_tld(url, as_object=True)
-        domain=proc_url.domain
+        domain = tldextract.extract(url).domain
         if domain not in domains:
-            domains[proc_url.fld]=[]
-        if proc_url.subdomain == "":
-            subdomain=proc_url.fld
-        else:
-            subdomain=proc_url.subdomain+"."+proc_url.fld
-        domains[proc_url.fld].append(subdomain)
-        #print("subdomain", proc_url.fld, subdomain)
+            domains[domain]=[]
+        domains[domain].append(url)
+        #print("subdomain", domain, url)
     return domains
 
 def loadDomains(file_path):
@@ -221,8 +216,8 @@ def getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
             lang2_bytes = int(v[l12[1]])
             if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
                 #print("k", k)
-                urls_to_crawl.append("http://" + k)
-    print(len(urls_to_crawl), " domains found.\nDone.\n", file=sys.stderr)
+                urls_to_crawl.append(k)
+    print(len(urls_to_crawl), " domains found", file=sys.stderr)
     return urls_to_crawl
 
 if "urls" in config:
