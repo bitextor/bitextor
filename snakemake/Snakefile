@@ -120,9 +120,9 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def getSubDomainsFromURLs():
+def getSubDomainsFromURLs(urls):
     subdomains={}
-    for url in config["urls"]:
+    for url in urls:
         proc_url=get_tld(url, as_object=True)
         if proc_url.subdomain == "":
             subdomain=proc_url.fld
@@ -132,9 +132,9 @@ def getSubDomainsFromURLs():
         print("url", url)
     return subdomains
 
-def getDomainsFromURLs():
+def getDomainsFromURLs(urls):
     domains={}
-    for url in config["urls"]:
+    for url in urls:
         proc_url=get_tld(url, as_object=True)
         domain=proc_url.domain
         if domain not in domains:
@@ -147,8 +147,14 @@ def getDomainsFromURLs():
         print("subdomain", proc_url.fld, subdomain)
     return domains
 
-subdomain_url_map=getSubDomainsFromURLs()
-domain_subdomain_map=getDomainsFromURLs()
+if "urls" in config:
+    print("urls given")
+    urls = config["urls"]
+else:
+    print("find urls in langstat")
+
+subdomain_url_map=getSubDomainsFromURLs(urls)
+domain_subdomain_map=getDomainsFromURLs(urls)
 
 #================================== TARGET FILES ==================================#
 rule all:
