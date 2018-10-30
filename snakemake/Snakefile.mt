@@ -1,5 +1,19 @@
 from os.path import join
 
+evaluation="{dir}/evaluation".format(dir=config["mtdata"])
+corpus="{dir}/processed_corpus".format(dir=config["mtdata"])
+modelDir="{dir}/model".format(dir=config["mtdata"])
+
+trainCmd = "{0}/build/marian -d {1}".format(config["marian"], config["gpu-id"]) \
+          + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+          + " --valid-log {dir}/valid.log".format(dir=modelDir) \
+          + " --log {dir}/train.log".format(dir=modelDir)
+
+translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
+
+tokenizer_l1= config["LANG1-tokenizer"]
+tokenizer_l2= config["LANG2-tokenizer"]
+
 ##########################################################################################################
 
 if 'trainPath' in locals():
@@ -147,7 +161,7 @@ rule tokenize_file_l1:
     output:
         "{pref}.tok."+"{lang}".format(lang=LANG1)
     shell:
-        "cat {input} | {tokenizer[0]} > {output}"
+        "cat {input} | {tokenizer_l1} > {output}"
 
 rule tokenize_file_l2:
     input:
@@ -155,7 +169,7 @@ rule tokenize_file_l2:
     output:
         "{pref}.tok."+"{lang}".format(lang=LANG2)
     shell:
-        "cat {input} | {tokenizer[1]} > {output}"
+        "cat {input} | {tokenizer_l2} > {output}"
 
 
 ####################################################### POSTPROCESSING ###########################################################
@@ -253,3 +267,5 @@ rule decompress:
          lang="({l1}|{l2})".format(l1=LANG1, l2=LANG2)
     shell:
          "zcat {input} > {output}"
+
+include:"/home/mespla/bitextor/Snakefile.base"
