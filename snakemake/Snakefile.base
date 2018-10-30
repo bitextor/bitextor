@@ -1,78 +1,7 @@
 from os.path import join
 
-LANG1="en"
-LANG2="fr"
-
 ##########################################################################################################
-def systemCheck(cmd):
-    sys.stderr.write("Executing:" + cmd + "\n")
-    sys.stderr.flush()
 
-    subprocess.check_call(cmd, shell=True)
-
-def compressExt(fullPath):
-    name = os.path.basename(fullPath)
-    nameExt = os.path.splitext(name)
-    #print("fullPath", fullPath, "name", name)
-
-    if nameExt[1] == ".gz":
-        return "gz"
-    else:
-        return ""
-
-def nameExclCompression(fullPath):
-    # keep lang id but chop of .gz if it exist
-    name = os.path.basename(fullPath)
-    nameExt = os.path.splitext(name)
-    #print("fullPath", fullPath, "name", name)
-
-    if nameExt[1] == ".gz":
-        return nameExt[0]
-    else:
-        return name
-
-def namePrefix(fullPath):
-    # chop of lang id and .gz
-    name = nameExclCompression(fullPath)
-    nameExt = os.path.splitext(name)
-    #print("fullPath", fullPath, "nameExt", nameExt)
-
-    return nameExt[0]
-
-def createParallelPrefixList(list):
-    assert(len(list) % 2 == 0)
-
-    ret = [namePrefix(ofile) for ofile in list]
-
-    l = len(list)
-    for i in range(l, 0, -2):
-        assert(ret[i-1] == ret[i-2])
-        del ret[i-1]
-
-
-    #print("ret", ret)
-    assert(len(list) / 2 == len(ret))
-
-    return ret
-
-def mergeLists(listOfLists):
-    ret = []
-
-    for l in listOfLists:
-        ret = list(set(ret + l))
-
-    return ret;
-
-def getFullPath(fileName, files, fullPaths):
-
-    for i in range(len(files)):
-        file = files[i]
-        if fileName == file:
-            return fullPaths[i]
-
-    return None
-
-##########################################################################################################
 if 'trainPath' in locals():
     #print("trainPath is defined")
     concatTrainPathFlattened = []
@@ -109,15 +38,6 @@ else:
 
 ############################################# EVALUATION #############################################################
 
-allPaths = mergeLists([trainPath, devPath, testPath])
-
-allFiles = [nameExclCompression(ofile) for ofile in allPaths]
-
-trainPrefix="{dir}/train/corpus".format(dir=dataDir)
-devPrefix="{dir}/dev/corpus".format(dir=dataDir)
-testPrefix="{dir}/test/corpus".format(dir=dataDir)
-
-
 def allTestNames(dataset):
     names = []
     for f in dataset:
@@ -126,15 +46,15 @@ def allTestNames(dataset):
 
 rule report:
     input:
-        expand("{dir}/{name}.bleu", dir=evaluation, name=allTestNames(testPrefix))
+        expand("{dir}/{name}.bleu", dir=evaluation, name=allTestNames(testPath))
     output:
         "{dir}/report".format(dir=evaluation)
     run:
-        with open(output, "wt") as outHandle:
+        with open(output[0], "wt") as outHandle:
             for file in input:
                 with open(file, "rt") as inHandle:
                     str = inHandle.read()
-                    outHandle.write(namePrefix(file))
+                    outHandle.write(os.path.basename(file).replace(".bleu",""))
                     outHandle.write("\t")
                     outHandle.write(str)
 
@@ -142,7 +62,7 @@ rule multibleu:
     input:
         trans="{dir}".format(dir=evaluation)+"/{name}.output.detokenized"
         ,
-        ref="{dir}".format(dir=corpus)+"/{name}."+"{lang}".format(lang=LANG2)
+        ref="{dir}".format(dir=corpus)+"/test/{name}."+"{lang}".format(lang=LANG2)
     output:
         "{dir}".format(dir=evaluation)+"/{name}.bleu"
     shell:
@@ -174,7 +94,7 @@ rule train_nmt:
         directory("{dir}".format(dir=modelDir)+"/marian")
     shell:
         "mkdir -p {output};"
-    "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
+	"{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
 
 ################################################## MARIAN VOCAB ################################################################
 
@@ -242,17 +162,17 @@ rule tokenize_file_l2:
 
 rule detok:
     input:
-        "{pref}.detruecased"
+        "{pref}.output.detruecased"
     output:
-        "{pref}.detokenized"
+        "{pref}.output.detokenized"
     shell:
         "cat {input} | {detokenizer} > {output}"
 
 rule detruecase:
     input:
-        "{pref}.debpe"
+        "{pref}.output.debpe"
     output:
-        "{pref}.detruecased"
+        "{pref}.output.detruecased"
     shell:
         "cat {input} | {moses}/scripts/recaser/detruecase.perl > {output}"
 
@@ -260,7 +180,7 @@ rule debpe:
     input:
         "{pref}.output"
     output:
-        "{pref}.debpe"
+        "{pref}.output.debpe"
     shell:
         "cat {input} | sed -r 's/(@@ )|(@@ ?$)//g' > {output}"
 
@@ -318,9 +238,11 @@ rule prepare_test:
          ,
          l2=expand("{dataset}.{lang}", dataset=testPath, lang=LANG2)
     output:
-         directory("{corpus}/test".format(corpus=corpus))
+         expand("{corpus}/test/{name}.{lang}", corpus=corpus, name=allTestNames(testPath), lang=LANG1)
+         ,
+         expand("{corpus}/test/{name}.{lang}", corpus=corpus, name=allTestNames(testPath), lang=LANG2)
     shell:
-         "mkdir -p {corpus}/test; cp -r {input.l1} {input.l2} {output}"
+         "mkdir -p {corpus}/test; cp -r {input.l1} {input.l2} {corpus}/test"
 
 rule decompress:
     input:
