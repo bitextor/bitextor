@@ -1,18 +1,34 @@
 from os.path import join
 
-evaluation="{dir}/evaluation".format(dir=config["mtdata"])
-corpus="{dir}/processed_corpus".format(dir=config["mtdata"])
-modelDir="{dir}/model".format(dir=config["mtdata"])
+#Output dirs
+evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
+print(evaluation)
+corpus="{dir}/processed_corpus".format(dir=config["nmt-dir"])
+modelDir="{dir}/model".format(dir=config["nmt-dir"])
 
-trainCmd = "{0}/build/marian -d {1}".format(config["marian"], config["gpu-id"]) \
+marian=config["marian-dir"]
+moses=config["moses-dir"]
+subword_nmt=config["subword-nmt-dir"]
+vocabSize=config["nmt-vocabSize"]
+detokenizer=config["LANG2-detokenizer"]
+
+#NMT commands
+trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpu-id"]) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
           + " --valid-log {dir}/valid.log".format(dir=modelDir) \
+          + " --after-epochs 10 " \
           + " --log {dir}/train.log".format(dir=modelDir)
 
-translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, devices)
+translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, config["gpu-id"])
 
+#Tokenization
 tokenizer_l1= config["LANG1-tokenizer"]
 tokenizer_l2= config["LANG2-tokenizer"]
+
+#Input data prefixes
+trainPath=config["nmt-train-prefix"]
+devPath=config["nmt-dev-prefix"]
+testPath=config["nmt-test-prefix"]
 
 ##########################################################################################################
 
@@ -267,5 +283,3 @@ rule decompress:
          lang="({l1}|{l2})".format(l1=LANG1, l2=LANG2)
     shell:
          "zcat {input} > {output}"
-
-include:"/home/mespla/bitextor/Snakefile.base"
