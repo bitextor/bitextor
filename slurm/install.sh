@@ -1,10 +1,11 @@
 #!/bin/bash
-#  sudo ./install.sh hieu-foo southcentralus scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
+#  sudo ./install.sh hieu-foo southcentralus installall scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu:[gpu-string]
 
 RESOURCE_GROUP=$1
 REGION=$2
-vmssnames="${@:3}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+INSTALL=$3 #'whatever' string to install everything, 'no' to avoid all installation process
+vmssnames="${@:4}" #If GPU, use examplevmss:gpu:tesla:1 syntax
 echo "RESOURCE_GROUP $RESOURCE_GROUP"
 echo "REGION $REGION"
 echo "vmssnames $vmssnames"
@@ -57,7 +58,9 @@ installdependencies(){
 
 }
 
-installdependencies
+if [ "$INSTALL" != "no" ]; then
+	installdependencies
+fi
 
 # master only
 ADMIN_USERNAME=$SUDO_USER
@@ -75,10 +78,12 @@ for vmssinfo in $vmssnames; do
 	
 	#Create the scaleset
 	az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
-	for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-		print "installing worker $worker"
-		sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
-	done
+	if [ "$INSTALL" != "no" ]; then
+		for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+			print "installing worker $worker"
+			sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+		done
+	fi
 done
 wait
 
