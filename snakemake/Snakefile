@@ -161,7 +161,7 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def getDomainsFromURLs(urls):
+def createDomainMap(urls):
     domains={}
     for url in urls:
         domain = tldextract.extract(url).domain
@@ -220,24 +220,24 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
     print(len(domains_to_crawl), " domains found", file=sys.stderr)
     return domains_to_crawl
 
-if "urls" in config:
-    print("urls given")
-    urls = config["urls"]
-    print("urls", type(urls))
+if "domains" in config:
+    print("domains given")
+    domains = config["domains"]
+    print("domains", type(domains))
 elif "langstat" in config:
-    print("find urls in langstat")
+    print("find domains in langstat")
     langstat_path = config["langstat"]
     lang1 = config["lang1"]
     lang2 = config["lang2"]
     threshold = config["langstat-threshold"]
     exclude_path = config["langstat-exclude-domains"]
 
-    urls = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+    domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 else:
     print("Need list of urls or langstat file")
     exit()
 
-domain_2_fulldomains=getDomainsFromURLs(urls)
+domain_2_fulldomains = createDomainMap(domains)
 print("domain_2_fulldomains", domain_2_fulldomains)
 
 #================================== TARGET FILES ==================================#
