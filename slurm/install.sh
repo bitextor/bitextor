@@ -112,7 +112,7 @@ MASTER_IP=`hostname -I`
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
-allworkernames=""
+allworkernames="$MASTER_NAME"
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
@@ -122,20 +122,11 @@ for vmssinfo in $vmssnames; do
 	echo "$LIST" | grep -q "$SOURCE";
 	if echo "$vmssinfo" | grep -q ":gpu:" ; then
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-		if [ "$allworkernames" == "" ]; then
-			allworkernames="$workernames"
-		else
-			allworkernames="$allworkernames,$workernames"
-		fi
-
+		allworkernames="$allworkernames,$workernames"
 		echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
 	else
 		workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-		if [ "$allworkernames" == "" ]; then
-			allworkernames="$workernames"
-		else
-			allworkernames="$allworkernames,$workernames"
-		fi
+		allworkernames="$allworkernames,$workernames"
 		echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN" >> $SLURMCONF
 	fi
 done
