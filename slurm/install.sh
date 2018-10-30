@@ -167,7 +167,6 @@ wait
 
 # software
 
-#sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
 sudo -u $SUDO_USER sh -c "mkdir ~/workspace"
 if grep -q "/home/$SUDO_USER/workspace \*(rw,sync,no_subtree_check)" /etc/exports ; then
 	:
@@ -213,6 +212,9 @@ for vmssinfo in $vmssnames; do
 	done
 done
 wait
+
+#Uncomment to install Bitextor
+#sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; cd ~/workspace/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/workspace/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/workspace/software/bitextor/bin:\$PATH"
 
 #==========================================================================
 #after restart
