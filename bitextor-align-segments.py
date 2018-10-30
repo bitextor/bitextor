@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 
 # 1. Reading from STDIN a set of aligned documents. The input format is:

@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. The tool takes the output of bitextor-cleanalignments and formats it in TMX format

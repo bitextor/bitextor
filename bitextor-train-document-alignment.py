@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a dictionary. It is possible to provide two ridx files and combine them

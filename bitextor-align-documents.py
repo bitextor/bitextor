@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 # 1. Two RIDX files and and LETT file are taken as the input by this script. LETT contains information about all the files in the website. Each RIDX files contains, for each document in a language, the list of most promising files in another language to be parallel and a confidence score.
 # 2. RIDX files are read and most promising document pairs are aligned.
