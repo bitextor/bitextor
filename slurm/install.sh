@@ -172,7 +172,7 @@ wait
 
 # software
 
-sudo -u $SUDO_USER sh -c "mkdir ~/workspace"
+sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 if grep -q "/home/$SUDO_USER/workspace \*(rw,sync,no_subtree_check)" /etc/exports ; then
     :
 else
@@ -180,11 +180,11 @@ else
 fi
 sudo systemctl restart nfs-kernel-server
 
-sudo mkdir /var/spool/slurmctld
+sudo mkdir -p /var/spool/slurmctld
 sudo chown slurm:slurm /var/spool/slurmctld
 sudo chmod 0755 /var/spool/slurmctld/
 
-sudo mkdir /var/spool/slurmd
+sudo mkdir -p /var/spool/slurmd
 sudo chown slurm:slurm /var/spool/slurmd
 sudo chmod 0755 /var/spool/slurmd
 
