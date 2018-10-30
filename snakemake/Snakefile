@@ -12,7 +12,7 @@ MAXLINES=config["maxlines"]
 
 #Working paths
 permanent=config["permanent-dir"]
-volatile=config["volatile-dir"]
+transient=config["transient-dir"]
 
 #Dictionary
 if "dic" in config:
@@ -150,10 +150,15 @@ def getDomainsFromURLs():
 subdomain_url_map=getSubDomainsFromURLs()
 domain_subdomain_map=getDomainsFromURLs()
 
+
+include:"/home/mespla/bitextor/snakemake/Snakefile.mt"
+
+
 #================================== TARGET FILES ==================================#
 rule all:
     input:
-        expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
+        "/home/mespla/TMP/evaluation/report"
+#        expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
 
 #================================== PREPROCESSING ==================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
@@ -183,7 +188,7 @@ rule concat_subdomains:
     input:
         lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
     output:
-        "{dir}".format(dir=volatile)+"/{target}.warc.concat"
+        "{dir}".format(dir=transient)+"/{target}.warc.concat"
     shell:
         'cat {input} > {output}'
 
@@ -379,7 +384,7 @@ rule hunaligndic:
     input:
         expand("{dic}", dic=DIC)
     output:
-        '{dir}/hunalign_dic'.format(dir=volatile)
+        '{dir}/hunalign_dic'.format(dir=transient)
     shell:
         'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
@@ -389,7 +394,7 @@ rule hunaligndic:
 
 rule alignsegments:
     input:
-        '{dir}/hunalign_dic'.format(dir=volatile),
+        '{dir}/hunalign_dic'.format(dir=transient),
         "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
     output:
         '{name}.segalign'
@@ -444,7 +449,7 @@ rule elrc:
 
 rule tmx:
     input:
-        "{dir}".format(dir=config["volatile-dir"])+"/{l1}-{l2}.elrc"
+        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}.elrc"
     output:
         "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
     shell:

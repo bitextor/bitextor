@@ -2,8 +2,8 @@
   "bitextor":"/home/mespla/local7",
   "urls": ["http://www.pawpeds.com","http://pawpeds.com"],
   "temp": "/tmp",
-  "permanent-dir": "/home/mespla",
-  "volatile-dir": "/tmp/crawling_temp",
+  "permanent-dir": "/home/mespla/crawling_output",
+  "transient-dir": "/tmp/crawling_temp",
   "lang1": "en",
   "lang2": "fr",
   "nltk": "y",
@@ -15,6 +15,21 @@
   "crawler-num-threads": 2,
   "crawl-tld": false,
   "bicleaner-threshold": 0.7,
-  "bicleaner":"~/Baixades/bicleaner-en-fr/training.en-fr.yaml"
+  "bicleaner":"~/Baixades/bicleaner-en-fr/training.en-fr.yaml",
+
+  "marian-dir": "/home/mespla/Software/marian-dev",
+  "subword-nmt-dir": "/home/mespla/Software/subword-nmt",
+  "moses-dir": "/home/mespla/Software/mosesdecoder",
+  "nmt-dir":"/home/mespla/TMP",
+
+  "nmt-train-prefix": ["/home/mespla/TMP/corpus/train/train"],
+  "nmt-dev-prefix": ["/home/mespla/TMP/corpus/dev/dev"],
+  "nmt-test-prefix": ["/home/mespla/TMP/corpus/test/test"],
+
+  "gpu-id": "0",
+  "LANG1-tokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
+  "LANG2-tokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l fr",
+  "LANG2-detokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr",
+  "nmt-vocabSize": 30000
 
 }
