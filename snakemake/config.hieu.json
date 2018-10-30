@@ -6,7 +6,7 @@
   "langstat-exclude-domains":"/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains",
   "temp": "/tmp",
   "permanent-dir": "/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/permanent",
-  "volatile-dir": "/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/intermediate",
+  "transient-dir": "/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/transient",
   "lang1": "en",
   "lang2": "fr",
   "nltk": "y",
@@ -19,5 +19,20 @@
   "crawl-tld": false,
   #"bicleaner-threshold": 0.7,
   #"bicleaner":"/home/hieu/workspace/github/paracrawl/bitextor-data/bicleaner/en-fr"
+
+  "marian-dir": "/home/hieu/workspace/github/marian-dev",
+  "subword-nmt-dir": "/home/hieu/workspace/github/subword-nmt",
+  "moses-dir": "/home/hieu/workspace/github/mosesdecoder",
+  "nmt-dir":"/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/nmt-dir",
+
+  "nmt-train-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/10k/europarl-v7.fr-en"],
+  "nmt-dev-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/dev2006"],
+  "nmt-test-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/nc-dev2007"],
+
+  "gpu-id": "0",
+  "LANG1-tokenizer": "/home/hieu/workspace/github/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
+  "LANG2-tokenizer": "/home/hieu/workspace/github/mosesdecoder/scripts/tokenizer/tokenizer.perl -l fr",
+  "LANG2-detokenizer": "/home/hieu/workspace/github/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr",
+  "nmt-vocabSize": 30000
 
 }
