@@ -1,6 +1,6 @@
 {
   "bitextor":"/home/mespla/local7",
-  "urls": ["http://www.pawpeds.com","http://pawpeds.com"],
+  "domains": ["www.pawpeds.com","pawpeds.com"],
   "temp": "/tmp",
   "permanent-dir": "/home/mespla/crawling_output",
   "transient-dir": "/tmp/crawling_temp",

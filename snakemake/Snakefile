@@ -1,4 +1,45 @@
+import gzip
+import lzma
+import tldextract
+
 from tld import get_tld
+from tqdm import tqdm
+from collections import defaultdict
+from contextlib import contextmanager
+from pathlib import Path
+
+###########################################################
+# UTILS 
+
+@contextmanager
+def open_gzip_or_plain(file_path):
+
+    def decode_text(file_handler):
+        for line in file_handler:
+            yield line.decode('utf-8')
+
+    f = None
+    try:
+        #print("file_path", file_path)
+        if file_path[-3:] == ".gz":
+            f = gzip.open(file_path, 'rb')
+            yield decode_text(f)
+        elif file_path[-3:] == ".xz":
+            f = lzma.open(file_path, 'rb')
+            yield decode_text(f)
+        else:
+            f = open(file_path, 'r')
+            yield f
+
+    except Exception:
+        raise Exception("Error occured while loading a file!")
+
+    finally:
+        if f:
+            f.close()
+
+
+###########################################################
 
 BITEXTOR=config["bitextor"]
 
@@ -120,35 +161,84 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def getSubDomainsFromURLs():
-    subdomains={}
-    for url in config["urls"]:
-        proc_url=get_tld(url, as_object=True)
-        if proc_url.subdomain == "":
-            subdomain=proc_url.fld
-        else:
-            subdomain=proc_url.subdomain+"."+proc_url.fld
-        subdomains[subdomain]=url
-        print("url", url)
-    return subdomains
-
-def getDomainsFromURLs():
+def createDomainMap(urls):
     domains={}
-    for url in config["urls"]:
-        proc_url=get_tld(url, as_object=True)
-        domain=proc_url.domain
+    for url in urls:
+        domain = tldextract.extract(url).domain
         if domain not in domains:
-            domains[proc_url.fld]=[]
-        if proc_url.subdomain == "":
-            subdomain=proc_url.fld
-        else:
-            subdomain=proc_url.subdomain+"."+proc_url.fld
-        domains[proc_url.fld].append(subdomain)
-        print("subdomain", proc_url.fld, subdomain)
+            domains[domain]=[]
+        domains[domain].append(url)
+        #print("subdomain", domain, url)
     return domains
 
-subdomain_url_map=getSubDomainsFromURLs()
-domain_subdomain_map=getDomainsFromURLs()
+def loadDomains(file_path):
+    domains = set()
+    with file_path.open("r") as f:
+        for line in f:
+            line = line.strip()
+            if len(line):
+                domains.add(line)
+
+    return domains
+
+def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+    print("langstat_path", langstat_path, file=sys.stderr)
+    l12 = [lang1.lower(), lang2.lower()]
+    domains = defaultdict(dict)
+
+    excluded_set = set()
+    if exclude_path:
+        excluded_set = loadDomains(Path(exclude_path))
+
+    sys.stderr.write(
+        "Gathering domain information for {0} and {1}...\n".format(*l12))
+    with tqdm(total=None) as pbar:
+        with open_gzip_or_plain(langstat_path) as f:
+            for line in f:
+                split_line = line.strip().split()
+                if len(split_line) != 3:
+                    continue
+
+                domain, lang, byte_len = split_line
+                if lang.lower() in l12:
+                    domains[domain][lang.lower()] = byte_len
+
+                pbar.update(1)
+    #print("Loaded ", langstat_path, file=sys.stderr)
+
+    domains_to_crawl = []
+    for k, v in domains.items():
+        if tldextract.extract(k).domain in excluded_set:
+            continue
+
+        if len(v) == 2:
+            lang1_bytes = int(v[l12[0]])
+            lang2_bytes = int(v[l12[1]])
+            if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
+                #print("k", k)
+                domains_to_crawl.append(k)
+    print(len(domains_to_crawl), " domains found", file=sys.stderr)
+    return domains_to_crawl
+
+if "domains" in config:
+    print("domains given")
+    domains = config["domains"]
+    print("domains", type(domains))
+elif "langstat" in config:
+    print("find domains in langstat")
+    langstat_path = config["langstat"]
+    lang1 = config["lang1"]
+    lang2 = config["lang2"]
+    threshold = config["langstat-threshold"]
+    exclude_path = config["langstat-exclude-domains"]
+
+    domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+else:
+    print("Need list of urls or langstat file")
+    exit()
+
+domain_2_fulldomains = createDomainMap(domains)
+print("domain_2_fulldomains", domain_2_fulldomains)
 
 
 include:"/home/mespla/bitextor/snakemake/Snakefile.mt"
@@ -164,7 +254,7 @@ rule all:
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
     params:
-        url=lambda w: subdomain_url_map[w.target]
+        url="http://{target}"
     output:
         '{dir}'.format(dir=permanent)+'/{target}.creepy.warc'
     shell:
@@ -176,7 +266,7 @@ rule httrack_download:
     output:
         '{dir}'.format(dir=permanent)+'/{target}.httrack.warc'
     params:
-        url=lambda w: subdomain_url_map[w.target]
+        url="http://{target}"
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
@@ -186,7 +276,7 @@ rule httrack_download:
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_subdomain_map[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=transient)+"/{target}.warc.concat"
     shell:
@@ -403,7 +493,7 @@ rule alignsegments:
 
 rule concat_segs:
     input:
-        expand("{{dir}}/{webdomain}.segalign", webdomain=domain_subdomain_map.keys())
+        expand("{{dir}}/{webdomain}.segalign", webdomain=domain_2_fulldomains.keys())
     output:
         "{dir}/{l1}-{l2}.sent"
     shell:
