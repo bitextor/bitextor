@@ -1,4 +1,45 @@
+import gzip
+import lzma
+import tldextract
+
 from tld import get_tld
+from tqdm import tqdm
+from collections import defaultdict
+from contextlib import contextmanager
+from pathlib import Path
+
+###########################################################
+# UTILS 
+
+@contextmanager
+def open_gzip_or_plain(file_path):
+
+    def decode_text(file_handler):
+        for line in file_handler:
+            yield line.decode('utf-8')
+
+    f = None
+    try:
+        #print("file_path", file_path)
+        if file_path[-3:] == ".gz":
+            f = gzip.open(file_path, 'rb')
+            yield decode_text(f)
+        elif file_path[-3:] == ".xz":
+            f = lzma.open(file_path, 'rb')
+            yield decode_text(f)
+        else:
+            f = open(file_path, 'r')
+            yield f
+
+    except Exception:
+        raise Exception("Error occured while loading a file!")
+
+    finally:
+        if f:
+            f.close()
+
+
+###########################################################
 
 BITEXTOR=config["bitextor"]
 
@@ -147,11 +188,71 @@ def getDomainsFromURLs(urls):
         print("subdomain", proc_url.fld, subdomain)
     return domains
 
+def loadDomains(file_path):
+    domains = set()
+    with file_path.open("r") as f:
+        for line in f:
+            line = line.strip()
+            if len(line):
+                domains.add(line)
+
+    return domains
+
+def getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+    print("langstat_path", langstat_path, file=sys.stderr)
+    l12 = [lang1.lower(), lang2.lower()]
+    domains = defaultdict(dict)
+
+    excluded_set = set()
+    if exclude_path:
+        excluded_set = loadDomains(Path(exclude_path))
+
+    sys.stderr.write(
+        "Gathering domain information for {0} and {1}...\n".format(*l12))
+    with tqdm(total=None) as pbar:
+        with open_gzip_or_plain(langstat_path) as f:
+            for line in f:
+                split_line = line.strip().split()
+                if len(split_line) != 3:
+                    continue
+
+                domain, lang, byte_len = split_line
+                if lang.lower() in l12:
+                    domains[domain][lang.lower()] = byte_len
+
+                pbar.update(1)
+    #print("Loaded ", langstat_path, file=sys.stderr)
+
+    urls_to_crawl = []
+    for k, v in domains.items():
+        if tldextract.extract(k).domain in excluded_set:
+            continue
+
+        if len(v) == 2:
+            lang1_bytes = int(v[l12[0]])
+            lang2_bytes = int(v[l12[1]])
+            if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
+                #print("k", k)
+                urls_to_crawl.append("http://" + k)
+    print(len(urls_to_crawl), " domains found.\nDone.\n", file=sys.stderr)
+    return urls_to_crawl
+
 if "urls" in config:
     print("urls given")
     urls = config["urls"]
-else:
+    print("urls", type(urls))
+elif "langstat" in config:
     print("find urls in langstat")
+    langstat_path = config["langstat"]
+    lang1 = config["lang1"]
+    lang2 = config["lang2"]
+    threshold = config["langstat-threshold"]
+    exclude_path = config["langstat-exclude-domains"]
+
+    urls = getURLsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+else:
+    print("Need list of urls or langstat file")
+    exit()
 
 subdomain_url_map=getSubDomainsFromURLs(urls)
 domain_subdomain_map=getDomainsFromURLs(urls)

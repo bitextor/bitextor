@@ -1,6 +1,9 @@
 {
   "bitextor":"/home/hieu/workspace/github/paracrawl/bitextor.malign",
-  "urls": ["http://www.elenacaffe1863.com/","http://vade-retro.fr"],
+  #"urls": ["http://www.elenacaffe1863.com/","http://vade-retro.fr"],
+  "langstat":"/home/hieu/workspace/experiment/issues/paracrawl/langstat/1k.gz",
+  "langstat-threshold":0.5,
+  "langstat-exclude-domains":"/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains",
   "temp": "/tmp",
   "permanent-dir": "/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/permanent",
   "volatile-dir": "/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/intermediate",
