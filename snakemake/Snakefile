@@ -161,18 +161,6 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def getSubDomainsFromURLs(urls):
-    subdomains={}
-    for url in urls:
-        proc_url=get_tld(url, as_object=True)
-        if proc_url.subdomain == "":
-            subdomain=proc_url.fld
-        else:
-            subdomain=proc_url.subdomain+"."+proc_url.fld
-        subdomains[subdomain]=url
-        print("url", url)
-    return subdomains
-
 def getDomainsFromURLs(urls):
     domains={}
     for url in urls:
@@ -185,7 +173,7 @@ def getDomainsFromURLs(urls):
         else:
             subdomain=proc_url.subdomain+"."+proc_url.fld
         domains[proc_url.fld].append(subdomain)
-        print("subdomain", proc_url.fld, subdomain)
+        #print("subdomain", proc_url.fld, subdomain)
     return domains
 
 def loadDomains(file_path):
@@ -254,8 +242,8 @@ else:
     print("Need list of urls or langstat file")
     exit()
 
-subdomain_url_map=getSubDomainsFromURLs(urls)
 domain_subdomain_map=getDomainsFromURLs(urls)
+print("domain_subdomain_map", domain_subdomain_map)
 
 #================================== TARGET FILES ==================================#
 rule all:
@@ -266,7 +254,7 @@ rule all:
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
     params:
-        url=lambda w: subdomain_url_map[w.target]
+        url="http://{target}"
     output:
         '{dir}'.format(dir=permanent)+'/{target}.creepy.warc'
     shell:
@@ -278,7 +266,7 @@ rule httrack_download:
     output:
         '{dir}'.format(dir=permanent)+'/{target}.httrack.warc'
     params:
-        url=lambda w: subdomain_url_map[w.target]
+        url="http://{target}"
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
