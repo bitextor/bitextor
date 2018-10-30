@@ -113,6 +113,7 @@ sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames="$MASTER_NAME"
+echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
 for vmssinfo in $vmssnames; do
 	VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
 	CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
@@ -168,7 +169,7 @@ wait
 
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=~/workspace/software/bitextor && make && make install"
 sudo -u $SUDO_USER sh -c "mkdir ~/workspace"
-if grep -q "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" /etc/exports ; then
+if grep -q "/home/$SUDO_USER/workspace \*(rw,sync,no_subtree_check)" /etc/exports ; then
 	:
 else
 	sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
