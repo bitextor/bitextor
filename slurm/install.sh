@@ -44,10 +44,10 @@ installdependencies(){
         rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
     fi
 
-    sudo echo "CUDA_ROOT=/usr/local/cuda" >> /etc/environment
-    sudo echo "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin\"" >> /etc/environment
-    sudo echo "LD_LIBRARY_PATH=\"/usr/local/cuda/lib64\"" >> /etc/environment
-    sudo echo "LIBRARY_PATH=\"/usr/local/cuda/lib64\"" >> /etc/environment
+    sudo sh -c 'echo CUDA_ROOT=/usr/local/cuda >> /etc/environment'
+    sudo sh -c 'echo PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin >> /etc/environment'
+    sudo sh -c 'echo LD_LIBRARY_PATH=/usr/local/cuda/lib64 >> /etc/environment'
+    sudo sh -c 'echo LIBRARY_PATH=/usr/local/cuda/lib64 >> /etc/environment'
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin"
     CUDA_ROOT="/usr/local/cuda"
     LD_LIBRARY_PATH="/usr/local/cuda/lib64"
