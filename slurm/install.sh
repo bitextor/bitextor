@@ -209,6 +209,8 @@ slurmworkersetup(){
     # nfs
     sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
     sudo mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
+    
+    sudo slurmd
 }
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
