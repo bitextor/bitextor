@@ -2,6 +2,11 @@
 # sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:10:16 scale-gpu:Standard_NV6:3:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
+if [ ! $SUDO_USER ] || [ $SUDO_USER eq "root" ] ; then
+    echo "must run as sudo, SUDO_USER must not be root. Exiting"
+    exit
+fi
+
 RESOURCE_GROUP=$1
 REGION=$2
 INSTALL=$3 #'whatever' string to install everything, 'no' to avoid all installation process
@@ -9,11 +14,6 @@ vmssnames="${@:4}" #If GPU, use examplevmss:gpu:tesla:1 syntax
 echo "RESOURCE_GROUP $RESOURCE_GROUP"
 echo "REGION $REGION"
 echo "vmssnames $vmssnames"
-
-if ! [ $SUDO_USER ]; then
-    echo "must run as sudo. Exiting"
-    exit
-fi
 
 installdependencies(){
     AZ_REPO=$(lsb_release -cs)
