@@ -2,7 +2,7 @@
 # sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:10:16 scale-gpu:Standard_NV6:3:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
-if [ ! $SUDO_USER ] || [ $SUDO_USER eq "root" ] ; then
+if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
     echo "must run as sudo, SUDO_USER must not be root. Exiting"
     exit
 fi
