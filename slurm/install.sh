@@ -118,7 +118,7 @@ sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
 allworkernames="$MASTER_NAME"
-echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
+#echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
