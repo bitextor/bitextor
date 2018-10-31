@@ -179,7 +179,7 @@ for vmssinfo in $vmssnames; do
         copykeys $worker $SUDO_USER &
 
         name=`ssh -o StrictHostKeyChecking=no $worker hostname`
-        sudo echo "$worker $name" >> /etc/hosts
+        echo "$worker $name" >> /etc/hosts
     done
 done
 wait
