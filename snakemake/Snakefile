@@ -156,8 +156,10 @@ else:
 
 if "elrc" in config and config["elrc"]==True:
   ELRCSCORES="elrc"
+  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL,idnumber"
 else:
   ELRCSCORES=BICLEANER
+  ELRCFIELDS=""
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -240,18 +242,19 @@ else:
 domain_2_fulldomains = createDomainMap(domains)
 print("domain_2_fulldomains", domain_2_fulldomains)
 
+if "nmt-dir" in config:
+  evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
 
-evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
+  #================================== START SNAKEMAKE================================#
 
-#================================== START SNAKEMAKE================================#
-
-include:"Snakefile.mt"
+  include:"Snakefile.mt"
 
 #================================== TARGET FILES ==================================#
 rule all:
     input:
-        "{dir}/report".format(dir=evaluation)
-#        expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
+#        "{dir}/report".format(dir=evaluation)
+        expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
+    shell:
 
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
@@ -498,14 +501,14 @@ rule concat_segs:
     input:
         expand("{{dir}}/{webdomain}.segalign", webdomain=domain_2_fulldomains.keys())
     output:
-        "{dir}/{l1}-{l2}.sent"
+        "{dir}/{l1}-{l2}.sentalg"
     shell:
         "cat {input} > {output}"
 
 
 rule cleansegments:
     input:
-        "{dir}/{l1}-{l2}.sent"
+        "{dir}/{l1}-{l2}.sentalg"
     output:
         "{dir}/{l1}-{l2}.segclean"
     shell:
@@ -540,10 +543,19 @@ rule elrc:
     shell:
         '{BITEXTOR}/bin/bitextor-elrc-filtering -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s < {input} > {output}'
 
+rule sents:
+    input:
+        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
+    output:
+        "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.sent"
+    shell:
+        "cp {input} {output}"
+
+
 rule tmx:
     input:
-        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}.elrc"
+        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
     output:
         "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
     shell:
-        "{BITEXTOR}/bin/bitextor-buildTMX --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION},lengthratio,numTokensSL,numTokensTL,idnumber < {input} > {output}"
+        "{BITEXTOR}/bin/bitextor-buildTMX --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} < {input} > {output}"
