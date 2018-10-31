@@ -25,14 +25,16 @@ installdependencies(){
     sudo apt-get update
     sudo apt-get install -y apt-transport-https azure-cli
 
-    wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
-    tar xvf cmake-3.12.3.tar.gz 
-    cd cmake-3.12.3/
-    ./bootstrap 
-    make -j8
-    sudo make install
-    cd ..
-    rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+    if [ `cmake --version` != "cmake version 3.12.3" ]; then
+        wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
+        tar xvf cmake-3.12.3.tar.gz 
+        cd cmake-3.12.3/
+        ./bootstrap 
+        make -j8
+        sudo make install
+        cd ..
+        rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+    fi
 
     CUDA_REPO_PKG=cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
     wget -O /tmp/${CUDA_REPO_PKG} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/${CUDA_REPO_PKG} 
