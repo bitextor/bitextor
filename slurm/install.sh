@@ -30,7 +30,9 @@ installdependencies(){
 
     sudo apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev curl apt-transport-https azure-cli cuda
 
-    if [ `cmake --version` != "cmake version 3.12.3" ]; then
+    cmake_version=`cmake --version | head -1`
+    if [ "$cmake_version" != "cmake version 3.12.3" ]
+    then
         wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
         tar xvf cmake-3.12.3.tar.gz 
         cd cmake-3.12.3/
