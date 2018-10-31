@@ -88,7 +88,7 @@ for vmssinfo in $vmssnames; do
     	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
     	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
 
-            echo "$worker $name" >> /etc/hosts
+            #echo "$worker $name" >> /etc/hosts
 
     	    ind=`expr $ind + 1`
         done
@@ -176,6 +176,9 @@ for vmssinfo in $vmssnames; do
     #paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
         copykeys $worker $SUDO_USER &
+
+        name=`ssh $worker hostname`
+        echo "$worker $name" >> /etc/hosts
     done
 done
 wait
