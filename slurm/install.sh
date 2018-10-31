@@ -19,11 +19,17 @@ installdependencies(){
     sudo apt-get update
     sudo apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev curl
 
+    AZ_REPO=$(lsb_release -cs)
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
+    curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https azure-cli
+
     wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
     tar xvf cmake-3.12.3.tar.gz 
     cd cmake-3.12.3/
     ./bootstrap 
-    make -j4
+    make -j8
     sudo make install
     cd ..
     rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
@@ -34,14 +40,7 @@ installdependencies(){
     sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub 
     rm -f /tmp/${CUDA_REPO_PKG}
     sudo apt-get update
-    sudo apt-get install -y cuda
-
-    AZ_REPO=$(lsb_release -cs)
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
-    curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https azure-cli
-        
+    sudo apt-get install -y cuda       
 
     sudo echo "CUDA_ROOT=/usr/local/cuda" >> /etc/environment
     sudo echo "PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin\"" >> /etc/environment
