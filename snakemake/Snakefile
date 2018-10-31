@@ -243,8 +243,9 @@ print("domain_2_fulldomains", domain_2_fulldomains)
 
 evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
 
-include:"Snakefile.mt"
+#================================== START SNAKEMAKE================================#
 
+include:"Snakefile.mt"
 
 #================================== TARGET FILES ==================================#
 rule all:
@@ -252,7 +253,7 @@ rule all:
         "{dir}/report".format(dir=evaluation)
 #        expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
 
-#================================== PREPROCESSING ==================================#
+#================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
     params:
