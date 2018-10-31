@@ -1,5 +1,5 @@
 #!/bin/bash
-# sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:10:16 scale-gpu:Standard_NV6:3:6:gpu:tesla:1
+# sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:5:16 scale-gpu:Standard_NV6:2:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
@@ -81,14 +81,16 @@ for vmssinfo in $vmssnames; do
         sudo -u $SUDO_USER az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
 	ind=0
         for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
-            print "installing worker $worker"
+            echo "installing worker $worker"
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 
-	    name="$VMSS_NAME-$ind"
-	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo echo $name > /etc/hostname"
-	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name"
+    	    name="$VMSS_NAME-$ind"
+    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
+    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
 
-	    ind=`expr $ind + 1`
+            echo "$worker $name" >> /etc/hosts
+
+    	    ind=`expr $ind + 1`
         done
     fi
 done
@@ -168,9 +170,10 @@ copykeys(){
     sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
     sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
+
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
-    paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
+    #paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
         copykeys $worker $SUDO_USER &
     done
