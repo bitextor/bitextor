@@ -1,6 +1,6 @@
 #!/bin/bash
 #  sudo ./install.sh hieu-foo southcentralus installall scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
-# Scaleset params = NAME:SIZE:count:num-cpu:[gpu-string]
+# Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 RESOURCE_GROUP=$1
 REGION=$2
@@ -170,14 +170,25 @@ for vmssinfo in $vmssnames; do
 done
 wait
 
-# software
-
+# nfs
 sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
 if grep -q "/home/$SUDO_USER/workspace \*(rw,sync,no_subtree_check)" /etc/exports ; then
     :
 else
     sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
 fi
+
+mkdir /mnt/transient
+chown hieu:hieu /mnt/transient
+if grep -q "/mnt/transient \*(rw,sync,no_subtree_check)" /etc/exports ; then
+    :
+else
+    sudo echo "/mnt/transient *(rw,sync,no_subtree_check)" >> /etc/exports
+fi
+
+ln -s /mnt/transient /home/$SUDO_USER/transient
+
+# software
 sudo systemctl restart nfs-kernel-server
 
 sudo mkdir -p /var/spool/slurmctld
@@ -209,6 +220,9 @@ slurmworkersetup(){
     # nfs
     sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
     sudo mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
+
+    sudo -u $SUDO_USER sh -c "mkdir -p ~/transient"
+    sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
     
     sudo slurmd
 }
