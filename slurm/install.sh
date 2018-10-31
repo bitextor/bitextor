@@ -177,8 +177,8 @@ for vmssinfo in $vmssnames; do
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
         copykeys $worker $SUDO_USER &
 
-        name=`ssh $worker hostname`
-        echo "$worker $name" >> /etc/hosts
+        name=`ssh -o StrictHostKeyChecking=no $worker hostname`
+        sudo echo "$worker $name" >> /etc/hosts
     done
 done
 wait
