@@ -84,11 +84,11 @@ for vmssinfo in $vmssnames; do
             echo "installing worker $worker"
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 
-	    name="$VMSS_NAME-$ind"
-	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
-	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
+    	    name="$VMSS_NAME-$ind"
+    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
+    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
 
-	    ind=`expr $ind + 1`
+    	    ind=`expr $ind + 1`
         done
     fi
 done
