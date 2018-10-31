@@ -225,6 +225,7 @@ slurmworkersetup(){
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
     
     sudo slurmd
+    sudo scontrol update NodeName=$worker State=resume
 }
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
