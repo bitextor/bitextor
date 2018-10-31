@@ -186,6 +186,7 @@ else
     sudo echo "/mnt/transient *(rw,sync,no_subtree_check)" >> /etc/exports
 fi
 
+rm -f /home/$SUDO_USER/transient
 ln -s /mnt/transient /home/$SUDO_USER/transient
 
 # software
