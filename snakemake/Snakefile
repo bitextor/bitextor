@@ -242,11 +242,10 @@ else:
 domain_2_fulldomains = createDomainMap(domains)
 print("domain_2_fulldomains", domain_2_fulldomains)
 
-if "nmt-dir" in config:
-  evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
 
-  #================================== START SNAKEMAKE================================#
-
+#================================== START SNAKEMAKE================================#
+#Since dev prefix must be provided both for evaluation and for training, it is used to decide if Snakemake.mt must be included
+if "nmt-dev-prefix" in config:
   include:"Snakefile.mt"
 
 #================================== TARGET FILES ==================================#
@@ -254,7 +253,6 @@ rule all:
     input:
 #        "{dir}/report".format(dir=evaluation)
         expand("{dir}/{l1}-{l2}.tmx", dir=permanent, l1=LANG1, l2=LANG2)
-    shell:
 
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
