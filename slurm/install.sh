@@ -80,7 +80,7 @@ for vmssinfo in $vmssnames; do
     if [ "$INSTALL" != "no" ]; then
         sudo -u $SUDO_USER az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
         ind=0
-        for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+        for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
             echo "installing worker $worker"
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 
@@ -174,7 +174,7 @@ copykeys(){
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     #paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
-    for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+    for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
         copykeys $worker $SUDO_USER &
 
         name=`ssh $worker hostname`
