@@ -1,5 +1,5 @@
 #!/bin/bash
-#  sudo ./install.sh hieu-foo southcentralus installall scale-cpu18:Standard_H16m:10:16 scale-gpu18:Standard_NV6:3:6:gpu:tesla:1
+# sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:10:16 scale-gpu:Standard_NV6:3:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 RESOURCE_GROUP=$1
