@@ -52,7 +52,7 @@ installdependencies(){
     LD_LIBRARY_PATH="/usr/local/cuda/lib64"
     LIBRARY_PATH="/usr/local/cuda/lib64"
         
-    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld
+    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm
     python3 -c "import nltk; nltk.download('punkt')"
     sudo rm /tmp/munge.key /tmp/slurm.conf /tmp/hosts
 
