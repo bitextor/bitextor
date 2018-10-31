@@ -79,9 +79,16 @@ for vmssinfo in $vmssnames; do
     #Create the scaleset
     if [ "$INSTALL" != "no" ]; then
         sudo -u $SUDO_USER az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
+	ind=0
         for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
             print "installing worker $worker"
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
+
+	    name="$VMSS_NAME-$ind"
+	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo echo $name > /etc/hostname"
+	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name"
+
+	    ind=`expr $ind + 1`
         done
     fi
 done
@@ -231,6 +238,7 @@ slurmworkersetup(){
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
+	echo "worker setup $worker"
         sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
     done
 done
