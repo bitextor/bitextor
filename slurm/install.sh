@@ -88,6 +88,8 @@ for vmssinfo in $vmssnames; do
     	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
     	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
 
+            echo "$worker $name" >> /etc/hosts
+
     	    ind=`expr $ind + 1`
         done
     fi
@@ -168,9 +170,10 @@ copykeys(){
     sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/slurm-llnl/slurm.conf $SUDO_USER@$worker:/tmp/slurm.conf
     sudo -u $SUDO_USER scp -o StrictHostKeyChecking=no /etc/hosts $SUDO_USER@$worker:/tmp/hosts
 }
+
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
-    paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
+    #paste <(az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"') <(az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"') >> /etc/hosts 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME | grep 'privateIpAddress"' | cut -f 2 -d ':' | cut -f 2 -d '"'`; do
         copykeys $worker $SUDO_USER &
     done
