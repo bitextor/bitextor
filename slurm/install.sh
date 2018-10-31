@@ -85,7 +85,7 @@ for vmssinfo in $vmssnames; do
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 
 	    name="$VMSS_NAME-$ind"
-	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo echo $name > /etc/hostname"
+	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name"
 	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name"
 
 	    ind=`expr $ind + 1`
