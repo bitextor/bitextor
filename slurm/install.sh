@@ -3,7 +3,7 @@
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
-    echo "must run as sudo, SUDO_USER must not be root. Exiting"
+    echo "must run as sudo, and SUDO_USER must not be root. Aborting"
     exit
 fi
 
@@ -28,7 +28,8 @@ installdependencies(){
 
     sudo apt-get update
 
-    sudo apt-get install -y g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev curl apt-transport-https azure-cli cuda
+    sudo apt-get install -y g++ make
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev curl apt-transport-https azure-cli cuda &
 
     cmake_version=`cmake --version | head -1`
     if [ "$cmake_version" != "cmake version 3.12.3" ]
@@ -52,6 +53,8 @@ installdependencies(){
     CUDA_ROOT="/usr/local/cuda"
     LD_LIBRARY_PATH="/usr/local/cuda/lib64"
     LIBRARY_PATH="/usr/local/cuda/lib64"
+
+    wait
         
     sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm
     python3 -c "import nltk; nltk.download('punkt')"
