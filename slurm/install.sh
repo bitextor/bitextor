@@ -137,8 +137,10 @@ for vmssinfo in $vmssnames; do
     CPUs=`echo $vmssinfo | cut -f 4 -d ':'`
     gpuinfo=`echo $vmssinfo | cut -f 5- -d ':'`
     echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
-    
-    echo "$LIST" | grep -q "$SOURCE";
+
+    #echo "LIST=$LIST"
+    #echo "$LIST" | grep -q "$SOURCE";
+
     if echo "$vmssinfo" | grep -q ":gpu:" ; then
         workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
         allworkernames="$allworkernames,$workernames"
