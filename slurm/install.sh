@@ -132,7 +132,7 @@ MASTER_IP=`hostname -I`
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
-allworkernames="$MASTER_NAME"
+#allworkernames="$MASTER_NAME"
 #echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
 
 for vmssinfo in $vmssnames; do
@@ -146,17 +146,20 @@ for vmssinfo in $vmssnames; do
 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
         name=`sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker hostname`
-        echo "name=$name"
+	allworkernames="$allworkernames,$name"	
+	echo "name=$name allworkernames=$allworkernames"
+
+	echo "NodeName=$name CPUs=44 State=UNKNOWN" >> $SLURMCONF
     done
 
     if echo "$vmssinfo" | grep -q ":gpu:" ; then
         workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-        allworkernames="$allworkernames,$workernames"
-        echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
+        #allworkernames="$allworkernames,$workernames"
+        #echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
     else
         workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-        allworkernames="$allworkernames,$workernames"
-        echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN" >> $SLURMCONF
+        #allworkernames="$allworkernames,$workernames"
+        #echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN" >> $SLURMCONF
     fi
 done
 echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP" >> $SLURMCONF
