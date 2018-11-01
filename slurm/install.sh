@@ -141,26 +141,18 @@ for vmssinfo in $vmssnames; do
     gpuinfo=`echo $vmssinfo | cut -f 5- -d ':'`
     echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
 
-    #echo "LIST=$LIST"
-    #echo "$LIST" | grep -q "$SOURCE";
+    if echo "$vmssinfo" | grep -q ":gpu:" ; then
+        gpuStr="Gres=$gpuinfo" 
+    fi
 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
         name=`sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker hostname`
 	allworkernames="$allworkernames,$name"	
-	echo "name=$name allworkernames=$allworkernames"
+	#echo "name=$name allworkernames=$allworkernames"
 
-	echo "NodeName=$name CPUs=44 State=UNKNOWN" >> $SLURMCONF
+	echo "NodeName=$name CPUs=$CPUs State=UNKNOWN $gpuStr" >> $SLURMCONF
     done
 
-    if echo "$vmssinfo" | grep -q ":gpu:" ; then
-        workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-        #allworkernames="$allworkernames,$workernames"
-        #echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN Gres=$gpuinfo" >> $SLURMCONF
-    else
-        workernames=`az vmss list-instances --resource-group $RESOURCE_GROUP --name $VMSS_NAME | grep 'computerName' | cut -f 2 -d ':' | cut -f 2 -d '"' | head -c -1 | tr '\n' ','`
-        #allworkernames="$allworkernames,$workernames"
-        #echo "NodeName=${workernames} CPUs=$CPUs State=UNKNOWN" >> $SLURMCONF
-    fi
 done
 echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP" >> $SLURMCONF
 echo "DebugFlags=NO_CONF_HASH" >> $SLURMCONF
@@ -177,6 +169,12 @@ sudo slurmd
 mungekey=/tmp/munge.key
 sudo cp -f /etc/munge/munge.key $mungekey
 sudo chown $SUDO_USER $mungekey
+
+if [ -f /etc/hosts.orig ]; then
+  cp /etc/hosts.orig /etc/hosts
+else
+  cp /etc/hosts /etc/hosts.orig
+fi
 
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 
@@ -289,4 +287,5 @@ wait
 #hostname $worker
 #slurmd
 #scontrol update NodeName=$worker State=resume
+
 
