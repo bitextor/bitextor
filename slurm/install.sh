@@ -164,7 +164,7 @@ sudo chown slurm /etc/slurm-llnl/slurm.conf
 sudo chmod o+w /var/spool
 sudo -u slurm /usr/sbin/slurmctld
 sudo munged --force
-sudo slurmd
+#sudo slurmd
 
 mungekey=/tmp/munge.key
 sudo cp -f /etc/munge/munge.key $mungekey
@@ -255,16 +255,21 @@ slurmworkersetup(){
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
     
     sudo slurmd
-    sudo scontrol update NodeName=$worker State=resume
+
+    name=`hostname`
+    sudo scontrol update NodeName=$name State=resume
 }
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv `; do
-	    echo "worker setup $worker"
+	echo "worker setup $worker"
         sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
+
     done
 done
 wait
+
+echo "Finished"
 
 #Uncomment to install Bitextor
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; cd ~/workspace/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/workspace/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/workspace/software/bitextor/bin:\$PATH"
