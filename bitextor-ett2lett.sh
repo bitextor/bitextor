@@ -39,4 +39,4 @@ case $# in
 esac
 
 cat $FILE | java -jar "$(dirname "$0")"/../share/java/piped-tika.jar -t 2> /dev/null | \
-"$(dirname "$0")"/bitextor-lett-language-detector $langs
+"$(dirname "$0")"/bitextor-lett-language-detector.py $langs
