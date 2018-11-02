@@ -77,7 +77,6 @@ if [ "$INSTALL" != "no" ]; then
 fi
 
 # master only
-ADMIN_USERNAME=$SUDO_USER
 
 # Generate a set of sshkey under /home/azureuser/.ssh if there is not one yet
 if ! [ -f /home/$SUDO_USER/.ssh/id_rsa ]; then
@@ -92,7 +91,7 @@ for vmssinfo in $vmssnames; do
     
     #Create the scaleset
     if [ "$INSTALL" != "no" ]; then
-        sudo -u $SUDO_USER az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $ADMIN_USERNAME
+        sudo -u $SUDO_USER az vmss create --resource-group $RESOURCE_GROUP --name $VMSS_NAME --image "Canonical:UbuntuServer:18.04-LTS:18.04.201810030" -l $REGION --vm-sku $VM_SKU --instance-count $VM_COUNT --admin-username $SUDO_USER
         ind=0
         for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
             echo "installing worker $worker"
