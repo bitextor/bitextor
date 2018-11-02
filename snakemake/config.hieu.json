@@ -13,6 +13,7 @@
   "dic": "/home/hieu/workspace/github/paracrawl/bitextor-data/dics/en-fr.dic",
   "minquality": "0",
   "maxlines": "5",
+  "time-limit": "10s",
 
   "elrc": true,
   "crawler-num-threads": 2,
