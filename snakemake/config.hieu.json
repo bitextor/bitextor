@@ -27,7 +27,7 @@
 
   "nmt-train-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/train/10k/europarl-v7.fr-en"],
   "nmt-dev-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/dev2006"],
-  "nmt-test-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/nc-dev2007"],
+  "nmt-test-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/nc-dev2007", "/home/hieu/workspace/experiment/issues/paracrawl/fr-en/train/10k/europarl-v7.fr-en"],
 
   "gpu-id": "0",
   "LANG1-tokenizer": "/home/hieu/workspace/github/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
