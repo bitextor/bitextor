@@ -16,6 +16,9 @@ echo "REGION $REGION"
 echo "vmssnames $vmssnames"
 
 installdependencies(){
+    sudo apt-get update
+    sudo apt-get install -y curl
+    
     AZ_REPO=$(lsb_release -cs)
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |     sudo tee /etc/apt/sources.list.d/azure-cli.list
     curl -L https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
@@ -29,7 +32,7 @@ installdependencies(){
     sudo apt-get update
 
     sudo apt-get install -y g++ make python3 python3-pip
-    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev curl apt-transport-https azure-cli cuda &
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev apt-transport-https azure-cli cuda &
 
     sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm &
 
