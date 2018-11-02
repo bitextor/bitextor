@@ -257,28 +257,10 @@ for vmssinfo in $vmssnames; do
 done
 wait
 
-echo "Finished"
-
 #Uncomment to install Bitextor
 #sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; cd ~/workspace/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/workspace/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/workspace/software/bitextor/bin:\$PATH"
 
-#==========================================================================
-#after restart
-#MASTER
-#========
-#chmod o+w /var/spool
-#sudo -u slurm /usr/sbin/slurmctld
-#slurmd # use master as a node also
-#
-#SLAVE
-#=====
-#sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-#mount 10.0.0.9:/home/hieu/workspace workspace/
-#chmod o+w /var/spool
-#
-#worker=worker0
-#hostname $worker
-#slurmd
-#scontrol update NodeName=$worker State=resume
+echo "Finished"
+
 
 
