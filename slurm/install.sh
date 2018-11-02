@@ -47,6 +47,14 @@ installdependencies(){
         rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
     fi
 
+    #wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+    #tar xvf boost_1_68_0.tar.gz 
+    #cd boost_1_68_0/
+    #./bootstrap.sh 
+    #./b2 -j16 --layout=system  install || echo FAILURE
+    #cd ..
+    #rm -rf boost_1_68_0*
+
     sudo sh -c 'echo CUDA_ROOT=/usr/local/cuda >> /etc/environment'
     sudo sh -c 'echo PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/cuda/bin >> /etc/environment'
     sudo sh -c 'echo LD_LIBRARY_PATH=/usr/local/cuda/lib64 >> /etc/environment'
@@ -90,36 +98,17 @@ for vmssinfo in $vmssnames; do
             echo "installing worker $worker"
             sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "$(typeset -f installdependencies); installdependencies" &
 
-    	    name="$VMSS_NAME-$ind"
-    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
-    	    sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
+            name="$VMSS_NAME-$ind"
+            sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostnamectl set-hostname $name" &
+            sudo -u $SUDO_USER ssh -o "StrictHostKeyChecking=no" $worker "sudo hostname $name" &
 
             #echo "$worker $name" >> /etc/hosts
 
-    	    ind=`expr $ind + 1`
+            ind=`expr $ind + 1`
         done
     fi
 done
 wait
-
-#wget https://cmake.org/files/v3.12/cmake-3.12.3.tar.gz
-#tar xvf cmake-3.12.3.tar.gz 
-#cd cmake-3.12.3/
-#./bootstrap 
-#make -j
-#make install
-#cd ..
-#rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
-
-#wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
-#tar xvf boost_1_68_0.tar.gz 
-#cd boost_1_68_0/
-#./bootstrap.sh 
-#./b2 -j16 --layout=system  install || echo FAILURE
-#cd ..
-#rm -rf boost_1_68_0*
-
-
 
 SLURMCONF=/tmp/slurm.conf
 TEMPLATE_BASE=https://raw.githubusercontent.com/bitextor/bitextor/bitextor-malign/slurm
@@ -147,10 +136,10 @@ for vmssinfo in $vmssnames; do
 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
         name=`sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker hostname`
-	allworkernames="$allworkernames,$name"	
-	#echo "name=$name allworkernames=$allworkernames"
+        allworkernames="$allworkernames,$name"  
+        #echo "name=$name allworkernames=$allworkernames"
 
-	echo "NodeName=$name CPUs=$CPUs State=UNKNOWN $gpuStr" >> $SLURMCONF
+        echo "NodeName=$name CPUs=$CPUs State=UNKNOWN $gpuStr" >> $SLURMCONF
     done
 
 done
@@ -262,7 +251,7 @@ slurmworkersetup(){
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv `; do
-	echo "worker setup $worker"
+        echo "worker setup $worker"
         sudo -u $SUDO_USER ssh -o StrictHostKeyChecking=no $worker -o "StrictHostKeyChecking no" "$(typeset -f slurmworkersetup); slurmworkersetup $SUDO_USER $MASTER_IP" &
 
     done
