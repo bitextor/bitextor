@@ -109,6 +109,7 @@ rule translate_test:
         "{evaluation}".format(evaluation=evaluation)+"/{name}.output"
     shell:
         "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
+        #"cat {input.test} > {output}"
 
 rule train_nmt:
     input:
