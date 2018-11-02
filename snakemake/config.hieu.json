@@ -14,6 +14,7 @@
   "minquality": "0",
   "maxlines": "5",
   "time-limit": "10s",
+  "tmx": true,
 
   "elrc": true,
   "crawler-num-threads": 2,
