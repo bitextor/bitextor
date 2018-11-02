@@ -23,7 +23,7 @@
   "marian-dir": "/home/hieu/workspace/github/marian-dev",
   "subword-nmt-dir": "/home/hieu/workspace/github/subword-nmt",
   "moses-dir": "/home/hieu/workspace/github/mosesdecoder",
-  "nmt-dir":"/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/nmt-dir",
+  "nmt-dir":"/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/permanent/nmt-dir",
 
   "nmt-train-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/train/10k/europarl-v7.fr-en"],
   "nmt-dev-prefix": ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/dev2006"],
