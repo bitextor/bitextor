@@ -191,11 +191,11 @@ done
 wait
 
 # nfs
-sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-if grep -q "/home/$SUDO_USER/workspace \*(rw,sync,no_subtree_check)" /etc/exports ; then
+sudo -u $SUDO_USER sh -c "mkdir -p ~/permanent"
+if grep -q "/home/$SUDO_USER/permanent \*(rw,sync,no_subtree_check)" /etc/exports ; then
     :
 else
-    sudo echo "/home/$SUDO_USER/workspace *(rw,sync,no_subtree_check)" >> /etc/exports
+    sudo echo "/home/$SUDO_USER/permanent *(rw,sync,no_subtree_check)" >> /etc/exports
 fi
 
 mkdir -p /mnt/transient
@@ -239,8 +239,8 @@ slurmworkersetup(){
     # change /etc/hostname to match hosts 
 
     # nfs
-    sudo -u $SUDO_USER sh -c "mkdir -p ~/workspace"
-    sudo mount $MASTER_IP:/home/$SUDO_USER/workspace /home/$SUDO_USER/workspace
+    sudo -u $SUDO_USER sh -c "mkdir -p ~/permanent"
+    sudo mount $MASTER_IP:/home/$SUDO_USER/permanent /home/$SUDO_USER/permanent
 
     sudo -u $SUDO_USER sh -c "mkdir -p ~/transient"
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
@@ -261,7 +261,7 @@ done
 wait
 
 #Uncomment to install Bitextor
-#sudo -u $SUDO_USER sh -c "mkdir ~/workspace/software; cd ~/workspace/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/workspace/software/bitextor; cd ~/workspace/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/workspace/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/workspace/software/bitextor/bin:\$PATH"
+#sudo -u $SUDO_USER sh -c "mkdir ~/permanent/software; cd ~/permanent/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/permanent/software/bitextor; cd ~/permanent/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/permanent/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/permanent/software/bitextor/bin:\$PATH"
 
 echo "Finished"
 
