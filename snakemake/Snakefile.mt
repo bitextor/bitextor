@@ -143,7 +143,7 @@ rule make_vocab_yml:
 
 rule apply_truecaser:
     input:
-        file='{name}.tok.{lang}'
+        file='{name}.clean.{lang}'
         ,
         model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     output:
@@ -249,7 +249,7 @@ rule prepare_traindata:
          ,
          l2="{corpus}/train.{lang}".format(corpus=corpus, lang=LANG2)
     shell:
-         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l1} > {output.l2}"
+         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
 
 rule prepare_devdata:
     input: 
