@@ -69,7 +69,7 @@ def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, morphan
 
   tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
-    morphanalyser = ["__BASH__", morphanal]
+    morphanalyser = ["/bin/bash", morphanal]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
   tmp_file.write(tokenized_text.lower().encode("utf8")+b"\n")
 
