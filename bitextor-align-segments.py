@@ -35,9 +35,11 @@ from iso639 import languages
 def runAligner(filename1, filename2, dic):
   # option -ppthresh=10?
   if dic == None or dic == "":
-    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", "-realign", "/dev/null", filename1, filename2]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/bin/hunalign", "-realign", "/dev/null", filename1, filename2]
   else:
-    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/hunalign", dic, filename1, filename2]
+    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/bin/hunalign", dic, filename1, filename2]
+
+  print("hunalign", hunalign)
   p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
   for line in p.stdout:
     yield line
