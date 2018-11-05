@@ -115,8 +115,8 @@ rule train_nmt:
     input:
         vocab="{dir}/vocab.yml".format(dir=modelDir)
         ,
-        train=["{pref}/train.bpe.{lang}".format(pref=corpus,lang=LANG1),
-               "{pref}/train.bpe.{lang}".format(pref=corpus,lang=LANG2)]
+        train=["{pref}/train.clean-bpe.{lang}".format(pref=corpus,lang=LANG1),
+               "{pref}/train.clean-bpe.{lang}".format(pref=corpus,lang=LANG2)]
         ,
         valid=["{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG1),
                "{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG2)]
@@ -131,9 +131,9 @@ rule train_nmt:
 
 rule make_vocab_yml:
     input:
-        "{pref}".format(pref=corpus)+"/train.bpe."+"{lang}".format(lang=LANG1)
+        "{pref}".format(pref=corpus)+"/train.clean-bpe."+"{lang}".format(lang=LANG1)
         ,
-        "{pref}".format(pref=corpus)+"/train.bpe."+"{lang}".format(lang=LANG2)
+        "{pref}".format(pref=corpus)+"/train.clean-bpe."+"{lang}".format(lang=LANG2)
     output:
         '{pref}'.format(pref=modelDir)+'/vocab.yml'
     shell:
@@ -143,11 +143,21 @@ rule make_vocab_yml:
 
 rule apply_truecaser:
     input:
-        file='{name}.clean.{lang}'
+        file='{name}.tok.{lang}'
         ,
         model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     output:
         '{name}.tc.{lang}'
+    shell:
+        "cat {input.file} | {moses}/scripts/recaser/truecase.perl -model {input.model} > {output}"
+
+rule apply_truecaser_train:
+    input:
+        file='{name}.clean.{lang}'
+        ,
+        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
+    output:
+        '{name}.clean-tc.{lang}'
     shell:
         "cat {input.file} | {moses}/scripts/recaser/truecase.perl -model {input.model} > {output}"
 
@@ -190,7 +200,7 @@ rule tokenize_file_l2:
     output:
         "{pref}.tok."+"{lang}".format(lang=LANG2)
     shell:
-        "cat {input} | {tokenizer_l2} > {output}"
+        "echo {wildcards.pref} &&  cat {input} | {tokenizer_l2} > {output}"
 
 
 ####################################################### POSTPROCESSING ###########################################################
@@ -228,6 +238,16 @@ rule apply_bpe:
         vocab="{dir}/".format(dir=modelDir)+"vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
     output:
         "{pref}.bpe.{lang}"
+    shell:
+        "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file} > {output}"
+
+rule apply_bpe_train:
+    input:
+        file="{pref}.clean-tc.{lang}"
+        ,
+        vocab="{dir}/".format(dir=modelDir)+"vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
+    output:
+        "{pref}.clean-bpe.{lang}"
     shell:
         "{subword_nmt}/subword_nmt/apply_bpe.py -c {input.vocab} < {input.file} > {output}"
 
