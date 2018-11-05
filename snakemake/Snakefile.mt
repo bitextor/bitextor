@@ -139,7 +139,7 @@ rule make_vocab_yml:
     shell:
         "cat {input} | {marian}/build/marian-vocab --max-size {vocabSize} > {output}"
 
-####################################################### PREPROCESSING ###########################################################
+####################################################### TRUECASE ###########################################################
 
 rule apply_truecaser:
     input:
@@ -160,6 +160,8 @@ rule learn_truecaser:
         "mkdir -p {modelDir}/truecaser;"
         "{moses}/scripts/recaser/train-truecaser.perl -corpus {input} -model {output}"
 
+####################################################### CLEAN ###########################################################
+
 rule clean:
     input:
         "{pref}.tok."+"{lang1}".format(lang1=LANG1)
@@ -171,6 +173,8 @@ rule clean:
         "{pref}.clean."+"{lang2}".format(lang2=LANG2)
     shell:
         "{moses}/scripts/training/clean-corpus-n.perl {wildcards.pref}.tok {LANG1} {LANG2} {wildcards.pref}.clean 1 80 {wildcards.pref}.lines-retained"
+
+####################################################### TOKENIZE ###########################################################
 
 rule tokenize_file_l1:
     input: 
