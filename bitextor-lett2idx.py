@@ -21,7 +21,7 @@ from html.parser import HTMLParser
 import argparse
 import unicodedata
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/utils")
-from unicodepunct import get_unicode_punct
+from utils.unicodepunct import get_unicode_punct
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 import subprocess

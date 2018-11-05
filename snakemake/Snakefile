@@ -443,7 +443,7 @@ rule mutuallylinked2urlscomparison:
     output:
         '{target}.{num}.urlscomparison'
     shell:
-        '{BITEXTOR}/bitextor-urlscomparison -l {wildcards.target}.lettr < {input[0]} > {output}'
+        '{BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr < {input[0]} > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
