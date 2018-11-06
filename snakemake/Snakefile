@@ -240,7 +240,7 @@ else:
     exit()
 
 domain_2_fulldomains = createDomainMap(domains)
-print("domain_2_fulldomains", domain_2_fulldomains)
+#print("domain_2_fulldomains", domain_2_fulldomains)
 
 
 #================================== START SNAKEMAKE================================#
@@ -283,7 +283,7 @@ rule train_nmt_with_crawl_data:
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
             + " --directory {params.workDir}" \
             + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
-        print("cmd", cmd)
+        #print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt:
