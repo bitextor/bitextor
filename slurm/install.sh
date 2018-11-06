@@ -199,7 +199,7 @@ else
 fi
 
 mkdir -p /mnt/transient
-chown hieu:hieu /mnt/transient
+chown ${SUDO_USER}:${SUDO_USER} /mnt/transient
 if grep -q "/mnt/transient \*(rw,sync,no_subtree_check)" /etc/exports ; then
     :
 else
