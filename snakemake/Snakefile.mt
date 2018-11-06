@@ -1,10 +1,8 @@
 from os.path import join
 
 #Output dirs
-evaluation="{dir}/evaluation".format(dir=config["nmt-dir"])
-print(evaluation)
-corpus="{dir}/processed_corpus".format(dir=config["nmt-dir"])
-modelDir="{dir}/model".format(dir=config["nmt-dir"])
+corpus="processed_corpus"
+modelDir="model"
 
 marian=config["marian-dir"]
 moses=config["moses-dir"]
@@ -79,9 +77,9 @@ def allTestNames(dataset):
 
 rule report:
     input:
-        expand("{dir}/{name}.bleu", dir=evaluation, name=allTestNames(testPath))
+        expand("evaluation/{name}.bleu", name=allTestNames(testPath))
     output:
-        "{dir}/report".format(dir=evaluation)
+        "evaluation/report"
     run:
         with open(output[0], "wt") as outHandle:
             for file in input:
@@ -93,11 +91,11 @@ rule report:
 
 rule multibleu:
     input:
-        trans="{dir}".format(dir=evaluation)+"/{name}.output.detokenized"
+        trans="evaluation/{name}.output.detokenized"
         ,
-        ref="{dir}".format(dir=corpus)+"/test/{name}."+"{lang}".format(lang=LANG2)
+        ref="processed_corpus/test/{name}."+"{lang}".format(lang=LANG2)
     output:
-        "{dir}".format(dir=evaluation)+"/{name}.bleu"
+        "evaluation/{name}.bleu"
     shell:
         "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
 
@@ -107,9 +105,9 @@ rule translate_test:
     input:
         model=directory("{dir}/marian".format(dir=modelDir))
         ,
-        test="{pref}/test/".format(pref=corpus)+"{name}.bpe."+"{lang}".format(lang=LANG1)
+        test="processed_corpus/test/{name}.bpe." + "{lang}".format(lang=LANG1)
     output:
-        "{evaluation}".format(evaluation=evaluation)+"/{name}.output"
+        "evaluation/{name}.output"
     shell:
         "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
         #"cat {input.test} > {output}"
@@ -118,11 +116,11 @@ rule train_nmt:
     input:
         vocab="{dir}/vocab.yml".format(dir=modelDir)
         ,
-        train=["{pref}/train.clean-bpe.{lang}".format(pref=corpus,lang=LANG1),
-               "{pref}/train.clean-bpe.{lang}".format(pref=corpus,lang=LANG2)]
+        train=["processed_corpus/train.clean-bpe.{lang}".format(lang=LANG1),
+               "processed_corpus/train.clean-bpe.{lang}".format(lang=LANG2)]
         ,
-        valid=["{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG1),
-               "{pref}/dev.bpe.{lang}".format(pref=corpus,lang=LANG2)]
+        valid=["processed_corpus/dev.bpe.{lang}".format(lang=LANG1),
+               "processed_corpus/dev.bpe.{lang}".format(lang=LANG2)]
 
     output:
         directory("{dir}".format(dir=modelDir)+"/marian")
@@ -134,9 +132,9 @@ rule train_nmt:
 
 rule make_vocab_yml:
     input:
-        "{pref}".format(pref=corpus)+"/train.clean-bpe."+"{lang}".format(lang=LANG1)
+        "processed_corpus/train.clean-bpe."+"{lang}".format(lang=LANG1)
         ,
-        "{pref}".format(pref=corpus)+"/train.clean-bpe."+"{lang}".format(lang=LANG2)
+        "processed_corpus/train.clean-bpe."+"{lang}".format(lang=LANG2)
     output:
         '{pref}'.format(pref=modelDir)+'/vocab.yml'
     shell:
@@ -166,7 +164,7 @@ rule apply_truecaser_train:
 
 rule learn_truecaser:
     input:
-        "{corpus}".format(corpus=corpus)+"/train.clean.{lang}"
+        "processed_corpus/train.clean.{lang}"
     output:
         "{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     shell:
@@ -256,9 +254,9 @@ rule apply_bpe_train:
 
 rule learn_bpe:
     input:
-        "{pref}".format(pref=corpus)+"/train.clean."+"{lang}".format(lang=LANG1)
+        "processed_corpus/train.clean."+"{lang}".format(lang=LANG1)
         ,
-        "{pref}".format(pref=corpus)+"/train.clean."+"{lang}".format(lang=LANG2)
+        "processed_corpus/train.clean."+"{lang}".format(lang=LANG2)
     output:
         '{dir}'.format(dir=modelDir)+'/vocab.'+'{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
     shell:
@@ -272,11 +270,11 @@ rule prepare_traindata:
          ,
          l2=expand("{dataset}.{lang}", dataset=trainPath, lang=LANG2)
     output:
-         l1="{corpus}/train.{lang}".format(corpus=corpus, lang=LANG1)
+         l1="processed_corpus/train.{lang}".format(lang=LANG1)
          ,
-         l2="{corpus}/train.{lang}".format(corpus=corpus, lang=LANG2)
+         l2="processed_corpus/train.{lang}".format(lang=LANG2)
     shell:
-         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
+         "mkdir -p processed_corpus; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
 
 rule prepare_devdata:
     input: 
@@ -284,11 +282,11 @@ rule prepare_devdata:
          ,
          l2=expand("{dataset}.{lang}", dataset=devPath, lang=LANG2)
     output: 
-         l1="{corpus}/dev.{lang}".format(corpus=corpus, lang=LANG1)
+         l1="processed_corpus/dev.{lang}".format(lang=LANG1)
          ,
-         l2="{corpus}/dev.{lang}".format(corpus=corpus, lang=LANG2)
+         l2="processed_corpus/dev.{lang}".format(lang=LANG2)
     shell:
-         "mkdir -p {corpus}; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
+         "mkdir -p processed_corpus; cat {input.l1} > {output.l1} && cat {input.l2} > {output.l2}"
 
 rule prepare_test:
     input:
@@ -296,11 +294,11 @@ rule prepare_test:
          ,
          l2=expand("{dataset}.{lang}", dataset=testPath, lang=LANG2)
     output:
-         expand("{corpus}/test/{name}.{lang}", corpus=corpus, name=allTestNames(testPath), lang=LANG1)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPath), lang=LANG1)
          ,
-         expand("{corpus}/test/{name}.{lang}", corpus=corpus, name=allTestNames(testPath), lang=LANG2)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPath), lang=LANG2)
     shell:
-         "mkdir -p {corpus}/test; cp -r {input.l1} {input.l2} {corpus}/test"
+         "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
 
 rule decompress:
     input:

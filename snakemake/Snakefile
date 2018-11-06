@@ -249,27 +249,47 @@ print("domain_2_fulldomains", domain_2_fulldomains)
 
 rule all:
     input:
-        "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+        tmx = "{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2)
         ,
-        "{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2)
+        sent = "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
         ,
-        "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+        l1 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
         ,
+        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+        ,
+        report = "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+        ,
+        reportCrawl = "{dir}/evaluation/report".format(dir=config["nmt-dir-crawl"])
+
+
+#================================== NMT ======================================#
+
+rule train_nmt_with_crawl_data:
+    input:
         l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
         ,
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
 
-
-
-#================================== NMT ======================================#
+    output:
+        report = "{dir}/evaluation/report".format(dir=config["nmt-dir-crawl"])
+    params:
+        workDir = config["nmt-dir-crawl"]
+    run:
+        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
+            + " --directory {params.workDir}" \
+            #+ " --config nmt-train-prefix=" + str(config["nmt-train-prefix"])
+        print("cmd", cmd)
+        shell(cmd)
 
 rule train_nmt:
     output:
         report = "{dir}/evaluation/report".format(dir=config["nmt-dir"])
     params:
         workDir = config["nmt-dir"]
-    shell:
-        "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3 --directory {params.workDir}"
+    run:
+        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
+            + " --directory {params.workDir}"
+        shell(cmd)
 
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"

@@ -35,6 +35,9 @@
   "LANG1-tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
   "LANG2-tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l fr",
   "LANG2-detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr",
-  "nmt-vocabSize": 30000
+  "nmt-vocabSize": 30000,
+
+  "nmt-dir-crawl":"/home/hieu/permanent/en-fr/nmt-dir-crawl",
+
 
 }
