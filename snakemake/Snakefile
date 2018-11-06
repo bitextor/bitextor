@@ -300,39 +300,39 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}'.format(dir=permanent)+'/{target}.creepy.warc'
+        '{dir}'.format(dir=permanent)+'/{target}.creepy.warc.xz'
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
-        'python3 {BITEXTOR}/bitextor-crawl.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} > {output}'
+        'python3 {BITEXTOR}/bitextor-crawl.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
 
 rule httrack_download:
     output:
-        '{dir}'.format(dir=permanent)+'/{target}.httrack.warc'
+        '{dir}'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
         '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME; '
-        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME > {output}; '
+        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/{subdomain}.{crawler}.warc', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
-        "{dir}".format(dir=transient)+"/{target}.warc.concat"
+        "{dir}".format(dir=transient)+"/{target}.warc.concat.xz"
     shell:
-        'cat {input} > {output}'
+        'xzcat {input} | xz -c > {output}'
 
 rule warc2tt:
     input:
-        '{target}.warc.concat'
+        '{target}.warc.concat.xz'
     output:
         '{target}.tt'
     shell:
-        '{BITEXTOR}/bitextor-warc2tt.py < {input} > {output}'
+        'xzcat {input} | {BITEXTOR}/bitextor-warc2tt.py > {output}'
 
 rule tt2ttmime:
     input:
