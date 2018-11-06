@@ -100,8 +100,8 @@ else:
   CRAWLSIZELIMIT=""
 
 #If this option is enabled, a time-limit is set for crawling data (for example "time-limit": "1h")
-if "time-limit" in config:
-  CRAWLTIMELIMIT="-t "+config["time-limit"]
+if "crawlTimeLimit" in config:
+  CRAWLTIMELIMIT="-t "+config["crawlTimeLimit"]
 else:
   CRAWLTIMELIMIT=""
 
@@ -257,9 +257,9 @@ rule all:
         ,
         l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
         ,
-        report = "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
         ,
-        reportCrawl = "{dir}/evaluation/report".format(dir=config["nmt-dir-crawl"])
+        reportCrawl = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
 
 
 #================================== NMT ======================================#
@@ -271,9 +271,9 @@ rule train_nmt_with_crawl_data:
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
 
     output:
-        report = "{dir}/evaluation/report".format(dir=config["nmt-dir-crawl"])
+        report = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
     params:
-        workDir = config["nmt-dir-crawl"]
+        workDir = config["nmtDirCrawl"]
     run:
         trainData = config["nmtTrainPrefix"]
         trainData.append(input.l1[:-3])
@@ -286,9 +286,9 @@ rule train_nmt_with_crawl_data:
 
 rule train_nmt:
     output:
-        report = "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
     params:
-        workDir = config["nmt-dir"]
+        workDir = config["nmtDir"]
     run:
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
             + " --directory {params.workDir}"

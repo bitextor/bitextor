@@ -4,33 +4,33 @@ from os.path import join
 corpus="processed_corpus"
 modelDir="model"
 
-marian=config["marian-dir"]
-moses=config["moses-dir"]
-subword_nmt=config["subword-nmt-dir"]
-vocabSize=config["nmt-vocabSize"]
-detokenizer=config["LANG2-detokenizer"]
+marian=config["marianDir"]
+moses=config["mosesDir"]
+subword_nmt=config["subwordNmtDir"]
+subword_nmt=config["subwordNmtDir"]
+vocabSize=config["nmtVocabSize"]
+detokenizer=config["LANG2Detokenizer"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
 
 #NMT commands
-trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpu-id"]) \
+trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
           + " --valid-log {dir}/valid.log".format(dir=modelDir) \
           + " --after-epochs 10 " \
           + " --log {dir}/train.log".format(dir=modelDir)
 
-translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, config["gpu-id"])
+translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, config["gpuId"])
 
 #Tokenization
-tokenizer_l1= config["LANG1-tokenizer"]
-tokenizer_l2= config["LANG2-tokenizer"]
+tokenizer_l1= config["LANG1Tokenizer"]
+tokenizer_l2= config["LANG2Tokenizer"]
 
 #Input data prefixes
 trainPath=config["nmtTrainPrefix"]
-devPath=config["nmt-dev-prefix"]
-testPath=config["nmt-test-prefix"]
-print("trainPath", trainPath)
+devPath=config["nmtDevPrefix"]
+testPath=config["nmtTestPrefix"]
 
 ############################################# EVALUATION #############################################################
 
