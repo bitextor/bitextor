@@ -275,9 +275,12 @@ rule train_nmt_with_crawl_data:
     params:
         workDir = config["nmt-dir-crawl"]
     run:
+        trainData = config["nmt-train-prefix"]
+        trainData.append(input.l1[:-3])
+
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
             + " --directory {params.workDir}" \
-            #+ " --config nmt-train-prefix=" + str(config["nmt-train-prefix"])
+            + " --config nmt-train-prefix=" + str(trainData)
         print("cmd", cmd)
         shell(cmd)
 
