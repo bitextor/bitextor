@@ -27,7 +27,7 @@
   "moses-dir": "/home/hieu/permanent/software/mosesdecoder",
   "nmt-dir":"/home/hieu/permanent/en-fr/nmt-dir",
 
-  "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en", "/home/hieu/permanent/en-fr/crawl"],
+  "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
   "nmt-dev-prefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
   "nmt-test-prefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007", "/home/hieu/permanent/data/fr-en/train/10k/europarl-v7.fr-en"],
 

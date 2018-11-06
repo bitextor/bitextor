@@ -280,7 +280,7 @@ rule train_nmt_with_crawl_data:
 
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
             + " --directory {params.workDir}" \
-            + " --config nmtTrainPrefix=" + str(trainData)
+            + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
         print("cmd", cmd)
         shell(cmd)
 
