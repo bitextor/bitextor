@@ -27,9 +27,10 @@ tokenizer_l1= config["LANG1-tokenizer"]
 tokenizer_l2= config["LANG2-tokenizer"]
 
 #Input data prefixes
-trainPath=config["nmt-train-prefix"]
+trainPath=config["nmtTrainPrefix"]
 devPath=config["nmt-dev-prefix"]
 testPath=config["nmt-test-prefix"]
+print("trainPath", trainPath)
 
 ##########################################################################################################
 

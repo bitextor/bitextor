@@ -2,11 +2,11 @@
   "bitextor":"/home/hieu/permanent/software/bitextor",
   #"domains": ["www.elenacaffe1863.com","vade-retro.fr"],
   "langstat":"/home/hieu/permanent/software/langstat/1k.gz",
-  "langstat-threshold":0.5,
-  "langstat-exclude-domains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
+  "langstatThreshold":0.5,
+  "langstatExcludeDomains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
   "temp": "/tmp",
-  "permanent-dir": "/home/hieu/permanent/en-fr",
-  "transient-dir": "/home/hieu/transient/en-fr",
+  "permanentDir": "/home/hieu/permanent/en-fr",
+  "transientDir": "/home/hieu/transient/en-fr",
   "lang1": "en",
   "lang2": "fr",
   "nltk": "y",
@@ -17,9 +17,9 @@
   "tmx": true,
 
   "elrc": true,
-  "crawler-num-threads": 2,
-  "crawl-tld": false,
-  #"bicleaner-threshold": 0.7,
+  "crawlerNumThreads": 2,
+  "crawlTld": false,
+  #"bicleanerThreshold": 0.7,
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr"
 
   "marian-dir": "/home/hieu/permanent/software/marian-dev",
@@ -27,7 +27,7 @@
   "moses-dir": "/home/hieu/permanent/software/mosesdecoder",
   "nmt-dir":"/home/hieu/permanent/en-fr/nmt-dir",
 
-  "nmt-train-prefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
+  "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en", "/home/hieu/permanent/en-fr/crawl"],
   "nmt-dev-prefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
   "nmt-test-prefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007", "/home/hieu/permanent/data/fr-en/train/10k/europarl-v7.fr-en"],
 
