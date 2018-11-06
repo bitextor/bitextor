@@ -32,42 +32,6 @@ devPath=config["nmt-dev-prefix"]
 testPath=config["nmt-test-prefix"]
 print("trainPath", trainPath)
 
-##########################################################################################################
-
-if 'trainPath' in locals():
-    #print("trainPath is defined")
-    concatTrainPathFlattened = []
-else:
-    #print("trainPath is NOT defined")
-    assert(concatTrainPath != None)
-
-    numCorpora = len(concatTrainPath)
-    #print("numCorpora", numCorpora)
-
-    concatName = ""
-    concatTrainPathFlattened = []
-
-    for key, value in concatTrainPath.items():
-        #print(key, value)
-        if concatName != "":
-            concatName += "+"
-        concatName += key
-
-        assert(len(value) == 2)
-        sourceFile = value[0]
-        targetFile = value[1]
-        concatTrainPathFlattened.append(sourceFile)
-        concatTrainPathFlattened.append(targetFile)
-
-    trainPath = ["corpus/concat/{0}.{1}".format(concatName, {LANG1}),
-                 "corpus/concat/{0}.{1}".format(concatName, {LANG2})
-                ]
-
-    #print("concatName", concatName)
-    print("concatTrainPathFlattened", concatTrainPathFlattened)
-    print("trainPath", trainPath)
-
-
 ############################################# EVALUATION #############################################################
 
 def allTestNames(dataset):
@@ -202,7 +166,7 @@ rule tokenize_file_l2:
     output:
         "{pref}.tok."+"{lang}".format(lang=LANG2)
     shell:
-        "echo {wildcards.pref} &&  cat {input} | {tokenizer_l2} > {output}"
+        "cat {input} | {tokenizer_l2} > {output}"
 
 
 ####################################################### POSTPROCESSING ###########################################################
