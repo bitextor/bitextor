@@ -277,7 +277,7 @@ rule train_nmt_with_crawl_data:
     run:
         trainData = config["nmtTrainPrefix"]
 
-        crawlPref = {dir}/crawl".format(dir=permanent)
+        crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
