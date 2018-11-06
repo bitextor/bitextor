@@ -247,18 +247,19 @@ print("domain_2_fulldomains", domain_2_fulldomains)
 
 #================================== TARGET FILES ==================================#
 
-OUTPUT=[]
-
-if "nmt-test-prefix" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmt-dir"]))
-if "tmx" in config and config["tmx"]:
-    OUTPUT.append("{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2))
-else:
-    OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
-
 rule all:
     input:
-        expand("{target}", target=OUTPUT)
+        "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+        ,
+        "{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2)
+        ,
+        "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+        ,
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+        ,
+        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+
+
 
 #================================== NMT ======================================#
 
@@ -573,3 +574,14 @@ rule tmx:
         "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
     shell:
         "{BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} < {input} > {output}"
+
+rule mt_parallel_data:
+    input:
+         "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+    output:
+         l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+         ,
+         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+    shell:
+         'cat {input} | cut -f 3,4 | sort | uniq > corpus; '
+         "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}"
