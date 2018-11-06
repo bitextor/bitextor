@@ -52,8 +52,8 @@ MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
 
 #Working paths
-permanent=config["permanent-dir"]
-transient=config["transient-dir"]
+permanent=config["permanentDir"]
+transient=config["transientDir"]
 
 #Dictionary
 if "dic" in config:
@@ -88,7 +88,7 @@ else:
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
-if "crawl-tld" in config and config["crawl-tld"]==True:
+if "crawlTld" in config and config["crawlTld"]==True:
   TLD_CRAWL="-D"
 else:
   TLD_CRAWL=""
@@ -100,14 +100,14 @@ else:
   CRAWLSIZELIMIT=""
 
 #If this option is enabled, a time-limit is set for crawling data (for example "time-limit": "1h")
-if "time-limit" in config:
-  CRAWLTIMELIMIT="-t "+config["time-limit"]
+if "crawlTimeLimit" in config:
+  CRAWLTIMELIMIT="-t "+config["crawlTimeLimit"]
 else:
   CRAWLTIMELIMIT=""
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
-if "crawler-num-threads" in config:
-  CRAWLJOBS="-j "+str(config["crawler-num-threads"])
+if "crawlerNumThreads" in config:
+  CRAWLJOBS="-j "+str(config["crawlerNumThreads"])
 else:
   CRAWLJOBS="-j 2"
 
@@ -149,8 +149,8 @@ else:
   BICLEANEROPTION=""
   BICLEANER="segclean"
 
-if "bicleaner-threshold" in config:
-  BICLEANER_THRESHOLD=config["bicleaner-threshold"]
+if "bicleanerThreshold" in config:
+  BICLEANER_THRESHOLD=config["bicleanerThreshold"]
 else:
   BICLEANER_THRESHOLD=0.0
 
@@ -231,8 +231,8 @@ elif "langstat" in config:
     langstat_path = config["langstat"]
     lang1 = config["lang1"]
     lang2 = config["lang2"]
-    threshold = config["langstat-threshold"]
-    exclude_path = config["langstat-exclude-domains"]
+    threshold = config["langstatThreshold"]
+    exclude_path = config["langstatExcludeDomains"]
 
     domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 else:
@@ -244,24 +244,56 @@ print("domain_2_fulldomains", domain_2_fulldomains)
 
 
 #================================== START SNAKEMAKE================================#
-#Since dev prefix must be provided both for evaluation and for training, it is used to decide if Snakemake.mt must be included
-if "nmt-dev-prefix" in config:
-  include:"Snakefile.mt"
 
 #================================== TARGET FILES ==================================#
 
-OUTPUT=[]
-
-if "nmt-test-prefix" in config:
-    OUTPUT.append("{dir}/report".format(dir=evaluation))
-if "tmx" in config and config["tmx"]:
-    OUTPUT.append("{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2))
-else:
-    OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
-
 rule all:
     input:
-        expand("{target}", target=OUTPUT)
+        tmx = "{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2)
+        ,
+        sent = "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+        ,
+        l1 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+        ,
+        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+        ,
+        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
+        ,
+        reportCrawl = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
+
+
+#================================== NMT ======================================#
+
+rule train_nmt_with_crawl_data:
+    input:
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+        ,
+        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+
+    output:
+        report = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
+    params:
+        workDir = config["nmtDirCrawl"]
+    run:
+        trainData = config["nmtTrainPrefix"]
+        trainData.append(input.l1[:-3])
+
+        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
+            + " --directory {params.workDir}" \
+            + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
+        print("cmd", cmd)
+        shell(cmd)
+
+rule train_nmt:
+    output:
+        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
+    params:
+        workDir = config["nmtDir"]
+    run:
+        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
+            + " --directory {params.workDir}"
+        shell(cmd)
+
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
@@ -551,17 +583,28 @@ rule elrc:
 
 rule sents:
     input:
-        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
+        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
     output:
-        "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.sent"
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent"
     shell:
         "cp {input} {output}"
 
 
 rule tmx:
     input:
-        "{dir}".format(dir=config["transient-dir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
+        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
     output:
-        "{dir}".format(dir=config["permanent-dir"])+"/{l1}-{l2}.tmx"
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.tmx"
     shell:
         "{BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} < {input} > {output}"
+
+rule mt_parallel_data:
+    input:
+         "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+    output:
+         l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+         ,
+         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+    shell:
+         'cat {input} | cut -f 3,4 | sort | uniq > corpus; '
+         "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}"
