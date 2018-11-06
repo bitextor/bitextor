@@ -322,13 +322,13 @@ rule concat_subdomains:
     input:
         lambda w: expand('{dir}/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
-        "{dir}".format(dir=transient)+"/{target}.warc.concat.xz"
+        "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
     shell:
         'xzcat {input} | xz -c > {output}'
 
 rule warc2tt:
     input:
-        '{target}.warc.concat.xz'
+        '{target}.concat.warc.xz'
     output:
         '{target}.tt'
     shell:
