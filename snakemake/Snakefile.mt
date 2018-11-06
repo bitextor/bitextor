@@ -12,6 +12,9 @@ subword_nmt=config["subword-nmt-dir"]
 vocabSize=config["nmt-vocabSize"]
 detokenizer=config["LANG2-detokenizer"]
 
+LANG1=config["lang1"]
+LANG2=config["lang2"]
+
 #NMT commands
 trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpu-id"]) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \

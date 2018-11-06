@@ -244,16 +244,13 @@ print("domain_2_fulldomains", domain_2_fulldomains)
 
 
 #================================== START SNAKEMAKE================================#
-#Since dev prefix must be provided both for evaluation and for training, it is used to decide if Snakemake.mt must be included
-if "nmt-dev-prefix" in config:
-  include:"Snakefile.mt"
 
 #================================== TARGET FILES ==================================#
 
 OUTPUT=[]
 
 if "nmt-test-prefix" in config:
-    OUTPUT.append("{dir}/report".format(dir=evaluation))
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmt-dir"]))
 if "tmx" in config and config["tmx"]:
     OUTPUT.append("{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2))
 else:
@@ -262,6 +259,17 @@ else:
 rule all:
     input:
         expand("{target}", target=OUTPUT)
+
+#================================== NMT ======================================#
+
+rule train_nmt:
+    output:
+        report = "{dir}/evaluation/report".format(dir=config["nmt-dir"])
+    params:
+        workDir = config["nmt-dir"]
+    shell:
+        "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3 --directory {params.workDir}"
+
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
