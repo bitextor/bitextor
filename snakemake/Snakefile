@@ -387,7 +387,7 @@ rule ett2lett:
     output:
         '{target}.lett'
     shell:
-        '{BITEXTOR}/bin/bitextor-lett-language-detector -l {LANG1},{LANG2} < {input} > {output}'
+        '{BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} < {input} > {output}'
 
 rule httrack2lett:
     output:
