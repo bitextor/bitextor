@@ -232,10 +232,10 @@ if "domains" in config:
     print("domains given")
     domains = config["domains"]
     print("domains", type(domains))
-elif os.path.isfile(permanent + "/domains.txt"):
+elif os.path.isfile(permanent + "/domains.gz"):
     print("read domains from file")
 
-    with open(permanent + "/domains.txt", 'r') as f:
+    with gzip.open(permanent + "/domains.gz", 'rt') as f:
         domains = f.read().splitlines()
 
 elif "langstat" in config:
@@ -248,7 +248,7 @@ elif "langstat" in config:
 
     domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 
-    with open(permanent + "/domains.txt", 'w') as f:
+    with gzip.open(permanent + "/domains.gz", 'wt') as f:
         for item in domains:
             f.write("%s\n" % item)
 else:
