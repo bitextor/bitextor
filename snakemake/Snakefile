@@ -338,10 +338,12 @@ rule httrack_download:
         '{dir}'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
+        ,
+        crawlTimeLimit = config["crawlTimeLimit"]
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME; '
+        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {params.crawlTimeLimit}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 

@@ -13,8 +13,9 @@
   "dic": "/home/hieu/permanent/software/bitextor-data/dics/en-fr.dic",
   "minquality": "0",
   "maxlines": "5",
-  "crawlTimeLimit": "10s",
+  "crawlTimeLimit": "7s",
   "tmx": true,
+  "httrack": true,
 
   "elrc": true,
   "crawlerNumThreads": 2,
