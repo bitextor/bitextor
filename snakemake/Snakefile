@@ -186,39 +186,45 @@ def loadDomains(file_path):
 def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
-    domains = defaultdict(dict)
 
     excluded_set = set()
     if exclude_path:
         excluded_set = loadDomains(Path(exclude_path))
 
+    domains_to_crawl = []
+
     sys.stderr.write(
         "Gathering domain information for {0} and {1}...\n".format(*l12))
     with tqdm(total=None) as pbar:
         with open_gzip_or_plain(langstat_path) as f:
+
+            prevDomain = ""
+            langContent = {}
+
             for line in f:
                 split_line = line.strip().split()
                 if len(split_line) != 3:
                     continue
 
                 domain, lang, byte_len = split_line
+                #print("processing ", domain, lang.lower(), byte_len)
+
+                if domain != prevDomain:
+                    # start of new domain. Process previous entries
+                    if len(langContent) == 2:
+                        lang1_bytes = int(langContent[l12[0]])
+                        lang2_bytes = int(langContent[l12[1]])
+                        if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
+                            domains_to_crawl.append(prevDomain)
+
+                    prevDomain = domain
+                    langContent = {}
+
                 if lang.lower() in l12:
-                    domains[domain][lang.lower()] = byte_len
+                    langContent[lang.lower()] = byte_len
 
                 pbar.update(1)
-    #print("Loaded ", langstat_path, file=sys.stderr)
 
-    domains_to_crawl = []
-    for k, v in domains.items():
-        if tldextract.extract(k).domain in excluded_set:
-            continue
-
-        if len(v) == 2:
-            lang1_bytes = int(v[l12[0]])
-            lang2_bytes = int(v[l12[1]])
-            if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
-                #print("k", k)
-                domains_to_crawl.append(k)
     print(len(domains_to_crawl), " domains found", file=sys.stderr)
     return domains_to_crawl
 
@@ -252,7 +258,6 @@ else:
 domain_2_fulldomains = createDomainMap(domains)
 #print("domains", domains)
 #print("domain_2_fulldomains", domain_2_fulldomains)
-
 
 #================================== START SNAKEMAKE================================#
 
