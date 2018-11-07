@@ -49,4 +49,4 @@ esac
 #
 
 # Not empty files are searched in WEBDIR and they are printer together with their mime type and their encoding
-find "$WEBDIR" -type f | grep -v 'hts-cache' | python3 "$(dirname "$0")"/bitextor-dir2warc > $OUTPUT
+find "$WEBDIR" -type f | grep -v 'hts-cache' | python3 "$(dirname "$0")"/bitextor-dir2warc.py > $OUTPUT
