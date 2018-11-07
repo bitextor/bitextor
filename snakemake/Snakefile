@@ -1,7 +1,7 @@
 import gzip
 import lzma
 import tldextract
-
+import os.path
 from tld import get_tld
 from tqdm import tqdm
 from collections import defaultdict
@@ -226,6 +226,12 @@ if "domains" in config:
     print("domains given")
     domains = config["domains"]
     print("domains", type(domains))
+elif os.path.isfile(permanent + "/domains.txt"):
+    print("read domains from file")
+
+    with open(permanent + "/domains.txt", 'r') as f:
+        domains = f.read().splitlines()
+
 elif "langstat" in config:
     print("find domains in langstat")
     langstat_path = config["langstat"]
@@ -235,11 +241,16 @@ elif "langstat" in config:
     exclude_path = config["langstatExcludeDomains"]
 
     domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+
+    with open(permanent + "/domains.txt", 'w') as f:
+        for item in domains:
+            f.write("%s\n" % item)
 else:
     print("Need list of urls or langstat file")
     exit()
 
 domain_2_fulldomains = createDomainMap(domains)
+#print("domains", domains)
 #print("domain_2_fulldomains", domain_2_fulldomains)
 
 
