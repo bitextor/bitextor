@@ -208,7 +208,7 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
 
                 domain, lang, byte_len = split_line
                 name = tldextract.extract(domain).domain
-                print("processing ", domain, lang.lower(), byte_len, name)
+                #print("processing ", domain, lang.lower(), byte_len, name)
 
                 if domain != prevDomain:
                     # start of new domain. Process previous entries
