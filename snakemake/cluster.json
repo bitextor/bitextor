@@ -1,0 +1,11 @@
+{
+    "__default__" :
+    {
+        "gres": ""
+    },
+
+    "aligndocumentsparacrawl" :
+    {
+        "gres": "--gres gpu:tesla:1"
+    }
+}
