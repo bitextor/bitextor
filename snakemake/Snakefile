@@ -212,16 +212,16 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
                 if domain != prevDomain:
                     # start of new domain. Process previous entries
                     if len(langContent) == 2:
-                        lang1_bytes = int(langContent[l12[0]])
-                        lang2_bytes = int(langContent[l12[1]])
-                        if lang1_bytes >= int(threshold) and lang2_bytes >= int(threshold):
+                        lang1_bytes = langContent[l12[0]]
+                        lang2_bytes = langContent[l12[1]]
+                        if lang1_bytes >= threshold and lang2_bytes >= threshold:
                             domains_to_crawl.append(prevDomain)
 
                     prevDomain = domain
                     langContent = {}
 
                 if lang.lower() in l12:
-                    langContent[lang.lower()] = byte_len
+                    langContent[lang.lower()] = int(byte_len)
 
                 pbar.update(1)
 
@@ -243,7 +243,7 @@ elif "langstat" in config:
     langstat_path = config["langstat"]
     lang1 = config["lang1"]
     lang2 = config["lang2"]
-    threshold = config["langstatThreshold"]
+    threshold = int(config["langstatThreshold"])
     exclude_path = config["langstatExcludeDomains"]
 
     domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
