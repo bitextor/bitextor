@@ -530,7 +530,7 @@ rule aligndocumentsparacrawl:
     output:
         '{target}.docalign.paracrawl'
     shell:
-        'DOCALIGN=$(mktemp {TMPDIR}/docalign.XXXXXX); '
+        'DOCALIGN=$(mktemp -d {TMPDIR}/docalign.XXXXXX); '
         '{BITEXTOR}/doc_align.sh -f {input} -l {LANG2} -t "{MT_COMMAND}" -d -w $DOCALIGN > {output}'
 
 rule aligndocumentsbitextor:
