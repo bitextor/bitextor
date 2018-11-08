@@ -7,7 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 # options
-option(BUILD_TEST "Build tests" ON)
+option(BUILD_TEST "Build tests" OFF)
 
 
 # flags
