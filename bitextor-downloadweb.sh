@@ -34,7 +34,7 @@ case $# in
     DOWNLOAD_PATH="-O $2"
     CRAWL_TIME="-E$3"
     ;;
-  1)
+  2)
     URL="$1"
     DOWNLOAD_PATH="-O web"
     ;;
