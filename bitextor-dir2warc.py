@@ -10,8 +10,8 @@ options = oparser.parse_args()
 
 reader = sys.stdin
 
-for line in reader:
-    filepath=line.strip()
+for fline in reader:
+    filepath=fline.strip()
     content=None
     url=None
     with open(filepath, 'rb') as content_file:
@@ -20,7 +20,10 @@ for line in reader:
       if re.search(rb'<!-- Mirrored from ', line):
         url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
         break
-    warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8")})
+    if url == None:
+      warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":"unknown"})
+    else:
+      warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8")})
     f = warc.WARCFile(fileobj=sys.stdout.buffer)
     f.write_record(warc_record)
 

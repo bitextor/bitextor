@@ -65,8 +65,6 @@ install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
 
 bitextor-train-document-alignment: bitextor-train-document-alignment.py
-	sed "s!__PYTHON__!$(PYTHON)!g" $< | \
-	sed "s!__ENV__!$(ENV)!g" >$@
 
 install: install-recursive install-smttools install-hunalign install-standoff
 

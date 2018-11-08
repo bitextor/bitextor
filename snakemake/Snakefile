@@ -42,11 +42,15 @@ def open_gzip_or_plain(file_path):
 ###########################################################
 
 BITEXTOR=config["bitextor"]
+if "bitextor-installation" in config:
+  BITEXTORINSTALL=config["bitextor-installation"]
+else:
+  BITEXTORINSTALL=config["bitextor"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
-MODEL='share/bitextor/model/keras.model'
-WEIGHTS='share/bitextor/model/keras.weights'
+MODEL='{BITEXTORINSTALL}/share/bitextor/model/keras.model'
+WEIGHTS='{BITEXTORINSTALL}/share/bitextor/model/keras.weights'
 TMPDIR=config["temp"]
 MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
@@ -272,20 +276,32 @@ domain_2_fulldomains = createDomainMap(domains)
 
 #================================== TARGET FILES ==================================#
 
+OUTPUT=[]
+
+#Two WARC files with documents in lang1 and lang2
+OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
+OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
+
+NMTDIR=""
+#If nmtDir is defined NMT evaluation report is produced
+if "nmtDir" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDir"]))
+    NMTDIR=config["nmtDir"]
+
+NMTDIRCRAWL=""
+if "nmtDirCrawl" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDir"]))
+    NMTDIRCRAWL=config["nmtDirCrawl"]
+
+#Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
+if "tmx" in config and config["tmx"]:
+    OUTPUT.append("{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2))
+else:
+    OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
+
 rule all:
     input:
-        tmx = "{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2)
-        ,
-        sent = "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
-        ,
-        l1 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
-        ,
-        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
-        ,
-        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
-        ,
-        reportCrawl = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
-
+        expand("{target}", target=OUTPUT)
 
 #================================== NMT ======================================#
 
@@ -296,9 +312,7 @@ rule train_nmt_with_crawl_data:
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
 
     output:
-        report = "{dir}/evaluation/report".format(dir=config["nmtDirCrawl"])
-    params:
-        workDir = config["nmtDirCrawl"]
+        report = "{dir}/evaluation/report".format(dir=NMTDIRCRAWL)
     run:
         trainData = config["nmtTrainPrefix"]
 
@@ -306,19 +320,17 @@ rule train_nmt_with_crawl_data:
         trainData.append(crawlPref)
 
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
-            + " --directory {params.workDir}" \
+            + " --directory {NMTDIRCRAWL}" \
             + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
         #print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt:
     output:
-        report = "{dir}/evaluation/report".format(dir=config["nmtDir"])
-    params:
-        workDir = config["nmtDir"]
+        report = "{dir}/evaluation/report".format(dir=NMTDIR)
     run:
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
-            + " --directory {params.workDir}"
+            + " --directory {NMTDIR}"
         shell(cmd)
 
 #================================== CRAWLING ======================================#
@@ -338,12 +350,11 @@ rule httrack_download:
         '{dir}'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
-        ,
-        crawlTimeLimit = config["crawlTimeLimit"]
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {params.crawlTimeLimit}; '
+        'echo "{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {CRAWLTIMELIMIT}"; '
+        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
@@ -378,8 +389,9 @@ rule tt2xtt:
     output:
         '{target}.xtt'
     shell:
-        'java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -x < {input} > {output}'
+        '{BITEXTOR}/bitextor-get-html-text.py -x < {input} > {output}'
 
+#This rule won't work with current non-installation configuration
 rule xtt2boiler:
     input:
         '{target}.xtt'
@@ -387,7 +399,7 @@ rule xtt2boiler:
         '{target}.boiler'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar < {input} > {output}; "
+        "  java -Dfile.encoding=UTF-8 -jar {BITEXTORINSTALL}/share/java/piped-boilerpipe.jar < {input} > {output}; "
         "else "
         "  cat {input} > {output}; "
         "fi"
@@ -406,7 +418,7 @@ rule ett2tika:
     output:
         '{target}.tika'
     shell:
-        'java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-tika.jar -t < {input} > {output}'
+        '{BITEXTOR}/bitextor-get-html-text.py -t < {input} > {output}'
 
 rule ett2lett:
     input:
@@ -531,7 +543,7 @@ rule aligndocumentsparacrawl:
         '{target}.docalign.paracrawl'
     shell:
         'DOCALIGN=$(mktemp -d {TMPDIR}/docalign.XXXXXX); '
-        '{BITEXTOR}/doc_align.sh -f {input} -l {LANG2} -t "{MT_COMMAND}" -d -w $DOCALIGN > {output}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{MT_COMMAND}" -d -w $DOCALIGN > {output}'
 
 rule aligndocumentsbitextor:
     input:
@@ -562,7 +574,7 @@ rule alignsegments:
     output:
         '{name}.segalign'
     shell:
-        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} < {input[1]} > {output}'
+        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTORINSTALL}/bin" < {input[1]} > {output}'
 
 rule concat_segs:
     input:
