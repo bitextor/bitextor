@@ -42,15 +42,9 @@ def open_gzip_or_plain(file_path):
 ###########################################################
 
 BITEXTOR=config["bitextor"]
-if "bitextor-installation" in config:
-  BITEXTORINSTALL=config["bitextor-installation"]
-else:
-  BITEXTORINSTALL=config["bitextor"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
-MODEL='{BITEXTORINSTALL}/share/bitextor/model/keras.model'
-WEIGHTS='{BITEXTORINSTALL}/share/bitextor/model/keras.weights'
 TMPDIR=config["temp"]
 MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
@@ -350,11 +344,12 @@ rule httrack_download:
         '{dir}'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
+        ,
+        crawlTimeLimit = config["crawlTimeLimit"]
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-        'echo "{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {CRAWLTIMELIMIT}"; '
-        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {CRAWLTIMELIMIT}; '
+        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {params.crawlTimeLimit}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
@@ -399,7 +394,7 @@ rule xtt2boiler:
         '{target}.boiler'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  java -Dfile.encoding=UTF-8 -jar {BITEXTORINSTALL}/share/java/piped-boilerpipe.jar < {input} > {output}; "
+        "  java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar < {input} > {output}; "
         "else "
         "  cat {input} > {output}; "
         "fi"
@@ -534,7 +529,7 @@ rule urlsoverlap2rank:
     output:
         '{target}.{num}.rank'
     shell:
-        '{BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/{MODEL} -w {BITEXTOR}/{WEIGHTS} < {input[0]} > {output}'
+        '{BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights < {input[0]} > {output}'
 
 rule aligndocumentsparacrawl:
     input:
@@ -574,7 +569,7 @@ rule alignsegments:
     output:
         '{name}.segalign'
     shell:
-        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTORINSTALL}/bin" < {input[1]} > {output}'
+        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" < {input[1]} > {output}'
 
 rule concat_segs:
     input:
