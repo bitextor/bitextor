@@ -333,7 +333,7 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}'.format(dir=permanent)+'/{target}.creepy.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}.creepy.warc.xz'
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
@@ -341,7 +341,7 @@ rule creepy_download:
 
 rule httrack_download:
     output:
-        '{dir}'.format(dir=permanent)+'/{target}.httrack.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
         ,
@@ -355,7 +355,7 @@ rule httrack_download:
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/warc/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
     shell:
