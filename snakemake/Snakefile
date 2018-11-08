@@ -11,6 +11,12 @@ from pathlib import Path
 ###########################################################
 # UTILS 
 
+def systemCheck(cmd):
+    sys.stderr.write("Executing:" + cmd + "\n")
+    sys.stderr.flush()
+
+    subprocess.check_call(cmd, shell=True)
+
 @contextmanager
 def open_gzip_or_plain(file_path):
 
@@ -52,6 +58,9 @@ MAXLINES=config["maxlines"]
 #Working paths
 permanent=config["permanentDir"]
 transient=config["transientDir"]
+
+systemCheck("mkdir -p " + permanent)
+systemCheck("mkdir -p " + transient)
 
 #Dictionary
 if "dic" in config:
