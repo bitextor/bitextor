@@ -78,7 +78,10 @@ for line in sys.stdin:
         text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
         fields.append(base64.b64encode(text.encode()).decode("utf8"))
     else:
-        document = html5lib.parse(ftfy.fix_text(Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False).clean_html(base64.b64decode(fields[3]).decode("utf8"))),treebuilder="lxml",namespaceHTMLElements=False)
+        cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
+        b64t=base64.b64decode(fields[3]).decode("utf-8").encode("utf-8")
+        cleanhtml=cleaner.clean_html(b64t)
+        document = html5lib.parse(ftfy.fix_text(cleanhtml.decode("utf-8")),treebuilder="lxml",namespaceHTMLElements=False)
         tree=etree.tostring(document)
         cleantree=tree.decode("utf8").replace("\t"," ")
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
