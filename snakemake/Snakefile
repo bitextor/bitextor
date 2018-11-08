@@ -284,7 +284,7 @@ if "nmtDir" in config:
 
 NMTDIRCRAWL=""
 if "nmtDirCrawl" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDir"]))
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDirCrawl"]))
     NMTDIRCRAWL=config["nmtDirCrawl"]
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
