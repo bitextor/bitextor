@@ -34,7 +34,7 @@ installdependencies(){
     sudo apt-get install -y g++ make python3 python3-pip
     sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic libbz2-dev liblzma-dev zlib1g-dev libboost-all-dev maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common libicu-dev apt-transport-https azure-cli cuda httrack &
 
-    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm &
+    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm lxml html5lib ftfy &
 
     cmake_version=`cmake --version | head -1`
     if [ "$cmake_version" != "cmake version 3.12.3" ]
