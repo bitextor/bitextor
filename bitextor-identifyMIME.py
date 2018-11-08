@@ -30,11 +30,15 @@ for line in reader:
     content=fields[0]
     #~Mime and encodign
     m.setflags(16|1024)
-    magicoutput=m.buffer(base64.b64decode(content)).split(" ")
+    #print("content", content)
+    d = base64.b64decode(content + "==")
+    #print("d", d)
+
+    magicoutput=m.buffer(d).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
     try:
-      magicoutput.append(base64.b64encode(base64.b64decode(content).decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8"))
+      magicoutput.append(base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8"))
       print("\t".join(magicoutput))
     except LookupError as e:
       sys.stderr.write("Unknown character encoding in file "+url+": "+str(e)+"\n")
