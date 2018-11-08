@@ -1,34 +1,22 @@
 {
-  "bitextor":"/home/mespla/local",
+  "bitextor":"/home/lpla/permanent/bitextor-malign",
+  "bitextor-installation":"/home/lpla/permanent/local-malign",
   "domains": ["www.elenacaffe1863.com"],
-  "temp": "/tmp",
-  "permanent-dir": "/home/mespla/crawling_output",
-  "transient-dir": "/tmp/crawling_temp",
-  "lang1": "fr",
-  "lang2": "en",
+  "temp": "/home/lpla/transient",
+  "httrack": true,
+  "permanentDir": "/home/lpla/permanent/bitextor-output",
+  "transientDir": "/home/lpla/transient",
+  "lang1": "en",
+  "lang2": "fr",
   "nltk": "y",
-  "dic": "/home/mespla/en-fr.dic",
+  "dic": "/home/lpla/permanent/en-fr.dic",
   "minquality": "0",
   "maxlines": "5",
-
+  "paracrawl-aligner-command": "/home/lpla/permanent/mosesdecoder/translate.sh",
   "elrc": true,
   "crawler-num-threads": 2,
   "crawl-tld": false,
-  "tmx": true,
 
-  "nmt-dev-prefix": ["/home/mespla/TMP/corpus/dev/dev"],
-  "nmt-test-prefix": ["/home/mespla/TMP/corpus/test/test"],
-
-  "marian-dir": "/home/mespla/Software/marian-dev",
-  "subword-nmt-dir": "/home/mespla/Software/subword-nmt",
-  "moses-dir": "/home/mespla/Software/mosesdecoder",
-
-  "gpu-id": "0",
-  "nmt-vocabSize": 30000,
-
-  "LANG2-detokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr",
-
-  "LANG1-tokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
-  "LANG2-tokenizer": "/home/mespla/Software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l fr"
+  "tmx": true
 
 }
