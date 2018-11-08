@@ -36,7 +36,7 @@ case $# in
     ;;
   2)
     URL="$1"
-    DOWNLOAD_PATH="-O web"
+    DOWNLOAD_PATH="-O $2"
     ;;
   *)
     exit_program $(basename $0)
