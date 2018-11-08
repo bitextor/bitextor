@@ -347,7 +347,7 @@ rule httrack_download:
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-        '{BITEXTOR}/bitextor-downloadweb.sh {params.url} $DIRNAME {CRAWLTIMELIMIT}; '
+        '{BITEXTOR}/bitextor-downloadweb.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
