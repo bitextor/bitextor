@@ -32,14 +32,19 @@ import gzip
 from iso639 import languages
 
 
-def runAligner(filename1, filename2, dic):
+def runAligner(filename1, filename2, dic, hunaligndir):
   # option -ppthresh=10?
   if dic == None or dic == "":
-    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/bin/hunalign", "-realign", "/dev/null", filename1, filename2]
+    if hunaligndir == None:
+      hunalign = [os.path.dirname(os.path.abspath(__file__))+"hunalign", "-realign", "/dev/null", filename1, filename2]
+    else:
+      hunalign = [hunaligndir+"/hunalign", "-realign", "/dev/null", filename1, filename2]
   else:
-    hunalign = [os.path.dirname(os.path.abspath(__file__))+"/bin/hunalign", dic, filename1, filename2]
+    if hunaligndir == None:
+      hunalign = [os.path.dirname(os.path.abspath(__file__))+"hunalign", dic, filename1, filename2]
+    else:
+      hunalign = [hunaligndir+"/hunalign", dic, filename1, filename2]
 
-  print("hunalign", hunalign)
   p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
   for line in p.stdout:
     yield line
@@ -79,7 +84,7 @@ def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
   filereader1=open(file1orig, "r")
   filereader2=open(file2orig, "r")
 
-  hunalign_output=runAligner(file1, file2, dic)
+  hunalign_output=runAligner(file1, file2, dic, options.hunaligndir)
   try :
     prev_hun=next(hunalign_output).strip()
     prev_fields=prev_hun.split(b"\t")
@@ -129,6 +134,7 @@ oparser = argparse.ArgumentParser(description="Tool that reads the output of bit
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?', help='File containing the set of aliged documents provided by the script bitextor-align-documents (if undefined, the script reads from the standard input)', default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+oparser.add_argument("--hunalign-dir", help="Path to the installation of hunalign (for example: '/usr/local/bin'. If this option is not defined, the executable will be searched in the same directory where this scritp is placed.", dest="hunaligndir", required=False, default=None)
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False, default=None)
 oparser.add_argument("-t", "--tmp-dir", help="Temporary directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)

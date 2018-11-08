@@ -42,11 +42,15 @@ def open_gzip_or_plain(file_path):
 ###########################################################
 
 BITEXTOR=config["bitextor"]
+if "bitextor-installation" in config:
+  BITEXTORINSTALL=config["bitextor-installation"]
+else:
+  BITEXTORINSTALL=config["bitextor"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
-MODEL='share/bitextor/model/keras.model'
-WEIGHTS='share/bitextor/model/keras.weights'
+MODEL='{BITEXTORINSTALL}/share/bitextor/model/keras.model'
+WEIGHTS='{BITEXTORINSTALL}/share/bitextor/model/keras.weights'
 TMPDIR=config["temp"]
 MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
@@ -395,7 +399,7 @@ rule xtt2boiler:
         '{target}.boiler'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar < {input} > {output}; "
+        "  java -Dfile.encoding=UTF-8 -jar {BITEXTORINSTALL}/share/java/piped-boilerpipe.jar < {input} > {output}; "
         "else "
         "  cat {input} > {output}; "
         "fi"
@@ -570,7 +574,7 @@ rule alignsegments:
     output:
         '{name}.segalign'
     shell:
-        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} < {input[1]} > {output}'
+        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTORINSTALL}/bin" < {input[1]} > {output}'
 
 rule concat_segs:
     input:
