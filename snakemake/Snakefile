@@ -290,11 +290,13 @@ NMTDIR=""
 if "nmtTransientDir" in config:
     OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtTransientDir"]))
     NMTDIR=config["nmtTransientDir"]
+    nmtPermanentDir=config["nmtPermanentDir"]
 
 NMTDIRCRAWL=""
 if "nmtCrawlTransientDir" in config:
     OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtCrawlTransientDir"]))
     NMTDIRCRAWL=config["nmtCrawlTransientDir"]
+    nmtCrawlPermanentDir=config["nmtCrawlPermanentDir"]
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
@@ -324,8 +326,9 @@ rule train_nmt_with_crawl_data:
 
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
             + " --directory {NMTDIRCRAWL}" \
-            + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
-        #print("cmd", cmd)
+            + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
+            + " permanentDir={nmtCrawlPermanentDir}"
+        print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt:
@@ -333,7 +336,8 @@ rule train_nmt:
         report = "{dir}/evaluation/report".format(dir=NMTDIR)
     run:
         cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
-            + " --directory {NMTDIR}"
+            + " --directory {NMTDIR}" \
+            + " --config permanentDir={nmtPermanentDir}"
         shell(cmd)
 
 #================================== CRAWLING ======================================#
