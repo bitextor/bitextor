@@ -1,8 +1,8 @@
 from os.path import join
 
 #Output dirs
-corpus="processed_corpus"
-modelDir="model"
+permanentDir = config["permanentDir"]
+modelDir = permanentDir + "/model"
 
 marian=config["marianDir"]
 moses=config["mosesDir"]
@@ -17,9 +17,9 @@ LANG2=config["lang2"]
 #NMT commands
 trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
-          + " --valid-log {dir}/valid.log".format(dir=modelDir) \
+          + " --valid-log valid.log" \
           + " --after-epochs 10 " \
-          + " --log {dir}/train.log".format(dir=modelDir)
+          + " --log train.log"
 
 translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, config["gpuId"])
 

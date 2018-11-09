@@ -49,6 +49,9 @@ Some external Python libraries should also be installed before starting the inst
 - **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
 using `pip3 install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
 - **iso-639**: Python package to convert between language names and ISO-639 codes
+- **ftfy**: Python package to fix encoding conversion issues
+- **lxml**: Python package to parse XML
+- **html5lib**: Python package used to parse HTML 
 
 Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
 - **bs4**: BeautifulSoup4 is a Python package for HTML/XML processing and cleaning
@@ -112,6 +115,20 @@ user@pc:~$ ./autogen.sh --prefix=LOCALDIR --with-apertium
 user@pc:~$ make
 user@pc:~$ make install
 ```
+
+Compiling the bleualign implementation provided in Bitextor requieres having libboost installed. However, some installations of libboost do not contain all the libraries required to manage xz compressed files. In case of having difficulties during installation, remove your current installation and perform a manual installation in the following way:
+```
+wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
+tar xvf boost_1_66_0.tar.gz
+cd boost_1_66_0/
+./bootstrap.sh
+sudo ./b2 -j16 --layout=system install || echo FAILURE
+cd ..
+rm -rf boost_1_66_0*
+```
+
+
+
 
 Some more tools are included in the bitextor package and will be installed together with bitextor:
 - hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)

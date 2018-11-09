@@ -286,15 +286,17 @@ OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
 NMTDIR=""
-#If nmtDir is defined NMT evaluation report is produced
-if "nmtDir" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDir"]))
-    NMTDIR=config["nmtDir"]
+#If nmtTransientDir is defined NMT evaluation report is produced
+if "nmtTransientDir" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtTransientDir"]))
+    NMTDIR=config["nmtTransientDir"]
+    nmtPermanentDir=config["nmtPermanentDir"]
 
 NMTDIRCRAWL=""
-if "nmtDirCrawl" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDirCrawl"]))
-    NMTDIRCRAWL=config["nmtDirCrawl"]
+if "nmtCrawlTransientDir" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtCrawlTransientDir"]))
+    NMTDIRCRAWL=config["nmtCrawlTransientDir"]
+    nmtCrawlPermanentDir=config["nmtCrawlPermanentDir"]
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
@@ -322,18 +324,20 @@ rule train_nmt_with_crawl_data:
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
+        cmd = "snakemake --snakefile Snakefile.nmt --configfile config.hieu.json -k -j3" \
             + " --directory {NMTDIRCRAWL}" \
-            + " --config nmtTrainPrefix=\"" + str(trainData) + "\""
-        #print("cmd", cmd)
+            + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
+            + " permanentDir={nmtCrawlPermanentDir}"
+        print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt:
     output:
         report = "{dir}/evaluation/report".format(dir=NMTDIR)
     run:
-        cmd = "snakemake --snakefile Snakefile.mt --configfile config.hieu.json -k -j3" \
-            + " --directory {NMTDIR}"
+        cmd = "snakemake --snakefile Snakefile.nmt --configfile config.hieu.json -k -j3" \
+            + " --directory {NMTDIR}" \
+            + " --config permanentDir={nmtPermanentDir}"
         shell(cmd)
 
 #================================== CRAWLING ======================================#
