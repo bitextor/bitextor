@@ -286,15 +286,15 @@ OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
 NMTDIR=""
-#If nmtDir is defined NMT evaluation report is produced
-if "nmtDir" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDir"]))
-    NMTDIR=config["nmtDir"]
+#If nmtTransientDir is defined NMT evaluation report is produced
+if "nmtTransientDir" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtTransientDir"]))
+    NMTDIR=config["nmtTransientDir"]
 
 NMTDIRCRAWL=""
-if "nmtDirCrawl" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtDirCrawl"]))
-    NMTDIRCRAWL=config["nmtDirCrawl"]
+if "nmtCrawlTransientDir" in config:
+    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtCrawlTransientDir"]))
+    NMTDIRCRAWL=config["nmtCrawlTransientDir"]
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
