@@ -16,6 +16,7 @@ LANG2=config["lang2"]
 #NMT commands
 trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
           + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+          + " --overwrite --keep-best --valid-metrics perplexity" \
           + " --valid-log valid.log" \
           + " --after-epochs 10 " \
           + " --log train.log"
