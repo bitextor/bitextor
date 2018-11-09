@@ -77,12 +77,16 @@ for line in sys.stdin:
         text = soup.get_text()
         text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
         fields.append(base64.b64encode(text.encode()).decode("utf8"))
+        print('\t'.join(fields))
     else:
         cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
         b64t=base64.b64decode(fields[3]).decode("utf-8").encode("utf-8")
-        cleanhtml=cleaner.clean_html(b64t)
-        document = html5lib.parse(ftfy.fix_text(cleanhtml.decode("utf-8")),treebuilder="lxml",namespaceHTMLElements=False)
-        tree=etree.tostring(document)
-        cleantree=tree.decode("utf8").replace("\t"," ")
-        fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
-    print('\t'.join(fields))
+        try:
+            cleanhtml=cleaner.clean_html(b64t)
+            document = html5lib.parse(ftfy.fix_text(cleanhtml.decode("utf-8")),treebuilder="lxml",namespaceHTMLElements=False)
+            tree=etree.tostring(document)
+            cleantree=tree.decode("utf8").replace("\t"," ")
+            fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
+            print('\t'.join(fields))
+        except etree.ParserError as err:
+            sys.stderr.write("HTML parsing error for document with URL '{1}': {0}\n".format(err, fields[2]))
