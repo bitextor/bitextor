@@ -315,6 +315,7 @@ rule train_nmt_with_crawl_data:
         l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
         ,
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+    priority: 50
 
     output:
         report = "{dir}/evaluation/report".format(dir=NMTDIRCRAWL)
@@ -334,6 +335,7 @@ rule train_nmt_with_crawl_data:
 rule train_nmt:
     output:
         report = "{dir}/evaluation/report".format(dir=NMTDIR)
+    priority: 50
     run:
         cmd = "snakemake --snakefile Snakefile.nmt --configfile config.hieu.json -k -j3" \
             + " --directory {NMTDIR}" \
