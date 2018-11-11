@@ -11,4 +11,3 @@ tokenize = MosesTokenizer('en')
 
 toks = tokenize('Hello World!')
 print("toks", toks)
-exit()
