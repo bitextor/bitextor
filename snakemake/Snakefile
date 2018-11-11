@@ -349,6 +349,7 @@ rule creepy_download:
         url="http://{target}"
     output:
         '{dir}/warc'.format(dir=permanent)+'/{target}.creepy.warc.xz'
+    priority: 10
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
@@ -359,6 +360,7 @@ rule httrack_download:
         '{dir}/warc'.format(dir=permanent)+'/{target}.httrack.warc.xz'
     params:
         url="http://{target}"
+    priority: 10
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
