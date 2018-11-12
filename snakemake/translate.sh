@@ -13,7 +13,7 @@ tee in |
  LC_ALL=C $MOSES/scripts/tokenizer/tokenizer.perl -l $LANG |
  LC_ALL=C $MOSES/scripts/recaser/truecase.perl -model $TC_MODEL |
  $SUBWORD_NMT/subword_nmt/apply_bpe.py -c $BPE_MODEL | tee in.2 |
- $MARIAN/build/marian-decoder -c $MARIAN_MODEL --beam-size 1 --mini-batch 1 --maxi-batch 1 |
+ $MARIAN/build/marian-decoder -c $MARIAN_MODEL --beam-size 1 --mini-batch 1 --maxi-batch 1 --max-length-crop --max-length 50 |
  tee out
 
 
