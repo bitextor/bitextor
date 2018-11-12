@@ -32,9 +32,18 @@ installdependencies(){
     sudo apt-get update
 
     sudo apt-get install -y g++ make python3 python3-pip libbz2-dev liblzma-dev zlib1g-dev libicu-dev python-dev
-    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack &
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev &
 
-    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm lxml html5lib ftfy bs4 toolwrapper docopt openfile &
+    sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm lxml html5lib ftfy bs4 toolwrapper docopt openfile pycld2 sklearn &
+
+    wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
+    tar xzvf chared-1.2.2.tar.gz chared-1.2.2
+    rm chared-1.2.2.tar.gz
+    cd chared-1.2.2
+    python3 setup.py install
+    cd ..
+    rm -rf chared-1.2.2
+
 
     cmake_version=`cmake --version | head -1`
     if [ "$cmake_version" != "cmake version 3.12.3" ]
