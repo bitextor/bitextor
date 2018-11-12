@@ -507,6 +507,7 @@ rule structuredistance2urldistance:
         '{target}.lettr'
     output:
         '{target}.{num}.urldistance'
+    priority: 8
     shell:
         '{BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr < {input[0]} > {output}'
 
