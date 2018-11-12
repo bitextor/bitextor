@@ -141,7 +141,7 @@ else:
 
 if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
-  DOCALIGNEXT="paracrawl"
+  DOCALIGNEXT="marek"
 else:
   MT_COMMAND=""
   DOCALIGNEXT="bitextor"
@@ -547,16 +547,16 @@ rule urlsoverlap2rank:
     shell:
         '{BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights < {input[0]} > {output}'
 
-rule aligndocumentsparacrawl:
+rule aligndocumentsMarek:
     input:
         '{target}.lett'
     output:
-        '{target}.docalign.paracrawl'
+        '{target}.docalign.marek'
     shell:
         'DOCALIGN=$(mktemp -d {TMPDIR}/docalign.XXXXXX); '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{MT_COMMAND}" -d -w $DOCALIGN > {output}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {LANG1} {LANG2}" -d -w $DOCALIGN > {output}'
 
-rule aligndocumentsbitextor:
+rule aligndocumentsBitextor:
     input:
         '{target}.1.rank',
         '{target}.2.rank',
