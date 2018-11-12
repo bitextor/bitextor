@@ -16,6 +16,8 @@ BPE_MODEL=~/permanent/en-fr/nmt-dir/model/vocab.enfr
 MARIAN_MODEL=~/permanent/data/fr-en/model/marian/model.npz.decoder.yml
 #AMUN_MODEL=~/permanent/data/fr-en/model/marian/model.npz.amun.yml
 
+nvidia-smi -c 1
+
 #tee in |
 LC_ALL=C $MOSES/scripts/tokenizer/tokenizer.perl -l $LANG1 |
 LC_ALL=C $MOSES/scripts/recaser/truecase.perl -model $TC_MODEL |
