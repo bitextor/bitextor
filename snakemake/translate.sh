@@ -1,11 +1,14 @@
 
 
+LANG1=$1
+LANG2=$2
+#echo "LANG1=$LANG1"
+#echo "LANG2=$LANG2"
+
 MOSES=~/permanent/software/mosesdecoder
 MARIAN=~/permanent/software/marian-dev
 SUBWORD_NMT=~/permanent/software/subword-nmt
 
-LANG1=en
-LANG2=fr
 TC_MODEL=~/permanent/en-fr/nmt-dir/model/truecaser/truecase-model.en
 BPE_MODEL=~/permanent/en-fr/nmt-dir/model/vocab.enfr
 MARIAN_MODEL=~/permanent/data/fr-en/model/marian/model.npz.decoder.yml
