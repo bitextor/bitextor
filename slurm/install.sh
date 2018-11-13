@@ -156,7 +156,8 @@ for vmssinfo in $vmssnames; do
         allworkernames="$allworkernames,$name"  
         #echo "name=$name allworkernames=$allworkernames"
 
-        echo "NodeName=$name CPUs=$CPUs Boards=1 SocketsPerBoard=1 CoresPerSocket=$CPUs ThreadsPerCore=1 State=UNKNOWN $gpuStr" >> $SLURMCONF
+	echo "NodeName=$name CPUs=$CPUs State=UNKNOWN $gpuStr" >> $SLURMCONF
+        #echo "NodeName=$name CPUs=$CPUs Boards=1 SocketsPerBoard=1 CoresPerSocket=$CPUs ThreadsPerCore=1 State=UNKNOWN $gpuStr" >> $SLURMCONF
     done
 
 done
