@@ -1,6 +1,6 @@
 #!/bin/bash
 
 sleep 2
-ifconfig | grep "inet addr:"
+ifconfig | grep "inet "
 sleep 2
 

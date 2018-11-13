@@ -7,5 +7,21 @@
     "aligndocumentsparacrawl" :
     {
         "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt_with_crawl_data":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+    
+    "translate_test":
+    {
+        "gres": "--gres gpu:tesla:1"
     }
+
 }

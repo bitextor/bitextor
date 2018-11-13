@@ -74,6 +74,7 @@ rule translate_test:
     output:
         "evaluation/{name}.output"
     shell:
+      	"hostname;"
         "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
         #"cat {input.test} > {output}"
 
@@ -90,6 +91,7 @@ rule train_nmt:
     output:
         directory("{dir}".format(dir=modelDir)+"/marian")
     shell:
+        "hostname;"
         "mkdir -p {output};"
         "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
 
