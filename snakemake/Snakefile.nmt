@@ -64,19 +64,18 @@ rule multibleu:
     shell:
         "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
 
-##########################################  RUNNING MT ENGINE ##########################################
-
 rule translate_blind:
     input:
-        model=directory("{dir}/marian".format(dir=modelDir))
-        ,
-        test="processed_corpus/test/in.bpe." + "{lang}".format(lang=LANG1)
+        trans="evaluation/in.output.detokenized"
+
     output:
-        "evaluation/in.output"
+        "evaluation/hieu"
     shell:
       	"hostname;"
-        "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
-        #"cat {input.test} > {output}"
+        "touch {output}"
+
+##########################################  RUNNING MT ENGINE ##########################################
+
 
 rule translate_test:
     input:
