@@ -1,3 +1,5 @@
+# nohup snakemake --configfile config.hieu.json --cluster "sbatch {cluster.gres}" --cluster-config cluster.json -j 1111 --cores 1111 -k &
+
 import gzip
 import lzma
 import tldextract
