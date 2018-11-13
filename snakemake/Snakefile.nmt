@@ -71,7 +71,7 @@ rule translate_only:
     output:
         "evaluation/output"
     shell:
-      	"hostname;"
+      	#"hostname;"
         "cp {input} {output}"
 
 ##########################################  RUNNING MT ENGINE ##########################################
@@ -85,7 +85,7 @@ rule translate_test:
     output:
         "evaluation/{name}.output"
     shell:
-      	"hostname;"
+      	#"hostname;"
         "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
         #"cat {input.test} > {output}"
 
@@ -102,7 +102,7 @@ rule train_nmt:
     output:
         directory("{dir}".format(dir=modelDir)+"/marian")
     shell:
-        "hostname;"
+        #"hostname;"
         "mkdir -p {output};"
         "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
 
@@ -278,9 +278,9 @@ rule prepare_test:
     shell:
          "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
 
-rule prepare_l1_only:
+rule prepare_translate_only:
     input:
-         l1="/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/in"
+         l1="in"
     output:
          "processed_corpus/test/in.{lang}".format(lang=LANG1)
     shell:
