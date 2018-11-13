@@ -168,7 +168,7 @@ sudo chmod g-w /var/log # Must do this before munge will generate key
 sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf
 sudo chown slurm /etc/slurm-llnl/slurm.conf
 sudo chmod o+w /var/spool
-sudo -u slurm /usr/sbin/slurmctld
+sudo -u slurm /usr/sbin/slurmctld -i
 sudo munged --force
 #sudo slurmd
 
@@ -235,7 +235,7 @@ sudo mkdir -p /var/spool/slurmd
 sudo chown slurm:slurm /var/spool/slurmd
 sudo chmod 0755 /var/spool/slurmd
 
-sudo -u slurm /usr/sbin/slurmctld
+sudo -u slurm /usr/sbin/slurmctld -i
 
 
 slurmworkersetup(){
