@@ -64,15 +64,15 @@ rule multibleu:
     shell:
         "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
 
-rule translate_blind:
+rule translate_only:
     input:
         trans="evaluation/in.output.detokenized"
 
     output:
-        "evaluation/hieu"
+        "evaluation/output"
     shell:
       	"hostname;"
-        "touch {output}"
+        "cp {input} {output}"
 
 ##########################################  RUNNING MT ENGINE ##########################################
 
@@ -278,7 +278,7 @@ rule prepare_test:
     shell:
          "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
 
-rule prepare_blind:
+rule prepare_l1_only:
     input:
          l1="/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/in"
     output:
