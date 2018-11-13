@@ -40,7 +40,7 @@ installdependencies(){
     tar xzvf chared-1.2.2.tar.gz chared-1.2.2
     rm chared-1.2.2.tar.gz
     cd chared-1.2.2
-    python3 setup.py install
+    sudo python3 setup.py install
     cd ..
     rm -rf chared-1.2.2
 
@@ -56,7 +56,7 @@ installdependencies(){
         make -j8
         sudo make install
         cd ..
-        rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
+        sudo rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
     fi
 
     if [ ! -f /usr/local/include/boost/version.hpp ] && [ ! -f /usr/include/boost/version.hpp ]
@@ -65,9 +65,9 @@ installdependencies(){
         tar xvf boost_1_66_0.tar.gz
         cd boost_1_66_0/
         ./bootstrap.sh
-        ./b2 -j16 --layout=system  install || echo FAILURE
+        sudo ./b2 -j16 --layout=system  install || echo FAILURE
         cd ..
-        rm -rf boost_1_66_0*
+        sudo rm -rf boost_1_66_0*
     fi
 
     sudo sh -c 'echo CUDA_ROOT=/usr/local/cuda >> /etc/environment'
