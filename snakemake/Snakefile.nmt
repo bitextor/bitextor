@@ -79,14 +79,14 @@ rule translate_only:
 
 rule translate_test:
     input:
-        model=directory("{dir}/marian".format(dir=modelDir))
+        model="{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
         ,
         test="processed_corpus/test/{name}.bpe." + "{lang}".format(lang=LANG1)
     output:
         "evaluation/{name}.output"
     shell:
       	#"hostname;"
-        "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
+        "cat {input.test} | {translateCmd} -c {input.model} > {output}"
         #"cat {input.test} > {output}"
 
 rule train_nmt:
@@ -100,7 +100,7 @@ rule train_nmt:
                "processed_corpus/dev.bpe.{lang}".format(lang=LANG2)]
 
     output:
-        directory("{dir}".format(dir=modelDir)+"/marian")
+        "{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
     shell:
         #"hostname;"
         "mkdir -p {output};"
