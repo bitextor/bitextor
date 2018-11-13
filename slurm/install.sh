@@ -136,7 +136,7 @@ sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
 echo "SelectType=select/cons_res" >> $SLURMCONF
-echo "SelectTypeParameters=CR_Core" >> $SLURMCONF
+echo "SelectTypeParameters=CR_CPU" >> $SLURMCONF
 
 #allworkernames="$MASTER_NAME"
 #echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
