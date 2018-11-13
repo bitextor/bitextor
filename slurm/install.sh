@@ -42,7 +42,7 @@ installdependencies(){
     cd chared-1.2.2
     sudo python3 setup.py install
     cd ..
-    rm -rf chared-1.2.2
+    sudo rm -rf chared-1.2.2
 
 
     cmake_version=`cmake --version | head -1`
