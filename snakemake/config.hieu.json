@@ -27,7 +27,7 @@
   "crawlTld": false,
   #"bicleanerThreshold": 0.7,
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
-  "paracrawl-aligner-command": "tee dd",
+  #"paracrawl-aligner-command": "/home/lpla/permanent/mosesdecoder/translate.sh",
 
   "nmtPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir",
   "nmtCrawlPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir-crawl",
