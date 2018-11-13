@@ -21,7 +21,7 @@ trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
           + " --after-epochs 10 " \
           + " --log train.log"
 
-translateCmd = "{0}/build/marian-decoder -d {1}".format(marian, config["gpuId"])
+translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1}".format(marian, config["gpuId"])
 
 #Tokenization
 tokenizer_l1= config["LANG1Tokenizer"]
@@ -65,6 +65,18 @@ rule multibleu:
         "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
 
 ##########################################  RUNNING MT ENGINE ##########################################
+
+rule translate_blind:
+    input:
+        model=directory("{dir}/marian".format(dir=modelDir))
+        ,
+        test="processed_corpus/test/in.bpe." + "{lang}".format(lang=LANG1)
+    output:
+        "evaluation/in.output"
+    shell:
+      	"hostname;"
+        "cat {input.test} | {translateCmd} -c {input.model}/model.npz.decoder.yml > {output}"
+        #"cat {input.test} > {output}"
 
 rule translate_test:
     input:
@@ -266,6 +278,14 @@ rule prepare_test:
          expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPath), lang=LANG2)
     shell:
          "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
+
+rule prepare_blind:
+    input:
+         l1="/home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/in"
+    output:
+         "processed_corpus/test/in.{lang}".format(lang=LANG1)
+    shell:
+         "cp {input} {output}"
 
 rule decompress:
     input:
