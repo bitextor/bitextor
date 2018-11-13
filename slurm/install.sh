@@ -135,6 +135,9 @@ MASTER_IP=`hostname -I`
 sed -i -- 's/__MASTERNODE__/'"$MASTER_NAME"'/g' $SLURMCONF
 
 echo "GresTypes=gpu" >> $SLURMCONF
+echo "SelectType=select/cons_res" >> $SLURMCONF
+echo "SelectTypeParameters=CR_Core" >> $SLURMCONF
+
 #allworkernames="$MASTER_NAME"
 #echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
 
@@ -153,7 +156,7 @@ for vmssinfo in $vmssnames; do
         allworkernames="$allworkernames,$name"  
         #echo "name=$name allworkernames=$allworkernames"
 
-        echo "NodeName=$name CPUs=$CPUs State=UNKNOWN $gpuStr" >> $SLURMCONF
+        echo "NodeName=$name CPUs=$CPUs Boards=1 SocketsPerBoard=1 CoresPerSocket=$CPUs ThreadsPerCore=1 State=UNKNOWN $gpuStr" >> $SLURMCONF
     done
 
 done
