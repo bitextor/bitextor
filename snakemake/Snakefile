@@ -53,6 +53,13 @@ BITEXTOR=config["bitextor"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
+
+if LANG1 == "en":
+  FLANG=LANG2
+else:
+  FLANG=LANG1
+
+
 TMPDIR=config["temp"]
 MINQUALITY=config["minquality"]
 MAXLINES=config["maxlines"]
@@ -150,6 +157,15 @@ if "paracrawl-aligner-command" in config:
 else:
   MT_COMMAND=""
   DOCALIGNEXT="bitextor"
+
+if "bleualign" in config and config["bleualign"]:
+  SEGMENTALIGNER="bleualign"
+else:
+  SEGMENTALIGNER="hunalign"
+
+#This options can be added to the config fil
+DOC_THRESHOLD=0
+BLEU_THRESHOLD=0
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
@@ -558,7 +574,7 @@ rule aligndocumentsMarek:
     output:
         '{target}.docalign.marek'
     shell:
-        'mkdir {wildcards.target}.docalign; '
+        'mkdir -p {wildcards.target}.docalign; '
         '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.txt {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output}'
 
 rule aligndocumentsBitextor:
@@ -583,23 +599,30 @@ rule hunaligndic:
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
-rule alignsegments:
+rule alignsegments_hunalign:
     input:
         '{dir}/hunalign_dic'.format(dir=transient),
         "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
     output:
-        '{name}.segalign'
+        '{name}.hunalign.segalign'
     shell:
         '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" < {input[1]} > {output}'
 
+rule alignsegments_bleualign:
+    input:
+        "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
+    output:
+        '{name}.bleualign.segalign'
+    shell:
+        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output}'
+
 rule concat_segs:
     input:
-        expand("{{dir}}/{webdomain}.segalign", webdomain=domain_2_fulldomains.keys())
+        expand("{{dir}}/{webdomain}.{segaligner}.segalign", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
     output:
         "{dir}/{l1}-{l2}.sentalg"
     shell:
         "cat {input} > {output}"
-
 
 rule cleansegments:
     input:

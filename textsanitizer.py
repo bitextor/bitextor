@@ -3,7 +3,8 @@
 
 from bs4 import UnicodeDammit
 import chared.detector
-import pycld2
+#import cld2
+import pycld2 as cld2
 import re
 import sys
 import unicodedata
@@ -51,7 +52,6 @@ class TextSanitizer():
     def clean_whitespace(s, linesep=u'\n'):
         """ Cleans empty lines and repeated whitespace """
         # remove empty lines
-        assert isinstance(s, unicode)
         s = s.replace('\r\n', '\n')
         s = [l.strip() for l in s.split(u'\n') if l.strip()]
         return linesep.join(re.sub("\s+", " ", l) for l in s)
@@ -69,7 +69,6 @@ class TextSanitizer():
     @staticmethod
     def clean_utf8(s):
         """ Removes most funny characters from Unicode """
-        assert isinstance(s, unicode)
         s = unicodedata.normalize('NFC', s)
         sanitized_lines = []
         for line in s.split(u"\n"):
@@ -78,10 +77,16 @@ class TextSanitizer():
         return u"\n".join(sanitized_lines)
 
     @staticmethod
-    def guess_lang_from_data(data, is_html, default_lang='en'):
-        assert isinstance(data, unicode)
+    def guess_lang_from_data2(data, is_html, default_lang='en'):
         data = TextSanitizer.clean_utf8(data)  # cld2 needs clean input
-        reliable, text_bytes, detected_languages = pycld2.detect(
+        reliable, text_bytes, detected_languages = cld2.detect(
+            data.encode('utf-8', 'ignore'), isPlainText=(not is_html))
+        return detected_languages[0][1]
+
+    @staticmethod
+    def guess_lang_from_data(data, is_html, default_lang='en'):
+        data = TextSanitizer.clean_utf8(data)  # cld2 needs clean input
+        reliable, text_bytes, detected_languages = cld2.detect(
             data.encode('utf-8', 'ignore'), isPlainText=(not is_html),
             useFullLangTables=True, bestEffort=True)
         if not reliable:
@@ -145,12 +150,10 @@ class TextSanitizer():
     def clean_text(text, sanitize=True, clean_whitespace=True):
         """ Input: unicode string,
             Output: sanitized & cleaned unicode string """
-        assert isinstance(text, unicode)
         if sanitize:
             text = TextSanitizer.clean_utf8(text)
         if clean_whitespace:
             text = TextSanitizer.clean_whitespace(text)
-        assert isinstance(text, unicode)
         return text
 
     @staticmethod
@@ -161,7 +164,6 @@ class TextSanitizer():
             return u''
         text = TextSanitizer.to_unicode(text)
         text = TextSanitizer.clean_text(text, sanitize, clean_whitespace)
-        assert isinstance(text, unicode)
         return text
 
     @staticmethod
@@ -189,20 +191,6 @@ if __name__ == "__main__":
                         help='fix mixed UTF-8 and windows-1252 encodings')
     args = parser.parse_args()
 
-    # valid_models = []
-    # for lang in TextSanitizer.lang2name:
-    #     model_path = chared.detector.get_model_path(
-    #         TextSanitizer.lang2name[lang])
-    #     try:
-    #         model = chared.detector.EncodingDetector.load(model_path)
-    #         valid_models.append(lang)
-    #     except ValueError:
-    #         sys.stderr.write("Cannot read model: %s\n" % (model_path))
-
-    # print {k: v for k, v in TextSanitizer.lang2name.items() if k in
-    # valid_models}
-
-    # sys.exit()
 
     data = args.infile.read()
     unicode_data = TextSanitizer.to_unicode(data, is_html=args.html,

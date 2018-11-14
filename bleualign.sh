@@ -65,7 +65,7 @@ check_required_files() {
 
   if [ ! -z ${langs_to_extract} ]; then
     echo "# Extracting ${langs_to_extract} from the LETT file $F_LETT_FILE"
-    pv ${F_LETT_FILE} | ${COMPRESSION} -cd | \
+    cat ${F_LETT_FILE} | \
       python3 ${mydir}/bin/utils/extract_lett.py \
       --langs ${langs_to_extract} \
       --splitter ${MOSES_DIR}/ems/support/split-sentences.perl \
@@ -106,6 +106,10 @@ else
     --output-dir ${SEN_DIR}
 
   echo "# Collecting data"
-  xzcat ${SEN_DIR}/aligned.*.xz > ${OUTPUT}
+  xzcat ${WDIR}/${BLEU_DIR}/align.info.xz | while read line; do
+    id=$(echo $line | cut -d ' ' -f 1)
+    prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
+    xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
+  done
 
 fi
