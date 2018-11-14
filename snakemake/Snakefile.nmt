@@ -3,6 +3,7 @@ from os.path import join
 #Output dirs
 permanentDir = config["permanentDir"]
 modelDir = permanentDir + "/model"
+#print("permanentDir", permanentDir)
 
 marian=config["marianDir"]
 moses=config["mosesDir"]
