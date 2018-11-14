@@ -362,7 +362,7 @@ rule train_nmt_all:
     run:
         cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.json -k -j3" \
             + " --directory {NMTDIR}" \
-            + " --config permanentDir='{nmtPermanentDir}'"
+            + " --config permanentDir={nmtPermanentDir}"
         shell(cmd)
 
 #================================== CRAWLING ======================================#
