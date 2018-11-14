@@ -21,7 +21,6 @@ OUTPUT=${6}
 
 mydir=`dirname $0`
 BLEU_DIR="bleualign"
-WDIR=`dirname ${LETT_FILE}`
 SEN_DIR=${WDIR}/${BLEU_DIR}
 PROCESS_PARALLELISE=1
 
