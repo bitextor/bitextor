@@ -68,7 +68,7 @@ MAXLINES=config["maxlines"]
 permanent=config["permanentDir"]
 transient=config["transientDir"]
 
-with open(transient + "/config.txt", "wt") as configFile:
+with open(transient + "/config.json", "wt") as configFile:
     configFile.write(str(config))
 
 systemCheck("mkdir -p " + permanent)
@@ -346,7 +346,7 @@ rule train_nmt_with_crawl_data:
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.txt -k -j3" \
+        cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.json -k -j3" \
             + " --directory {NMTDIRCRAWL}" \
             + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
             + " permanentDir={nmtCrawlPermanentDir}"
@@ -360,7 +360,7 @@ rule train_nmt:
         model = "{0}/model/marian/model.npz.decoder.yml".format(nmtPermanentDir)
     priority: 50
     run:
-        cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.txt -k -j3" \
+        cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.json -k -j3" \
             + " --directory {NMTDIR}" \
             + " --config permanentDir={nmtPermanentDir}"
         shell(cmd)
@@ -580,7 +580,7 @@ rule aligndocumentsMarek:
         '{target}.docalign.marek'
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.txt {wildcards.target}.docalign {input.nmtModel}" -d -w {wildcards.target}.docalign > {output.lett}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {input.nmtModel}" -d -w {wildcards.target}.docalign > {output.lett}'
 
 rule aligndocumentsBitextor:
     input:
