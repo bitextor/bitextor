@@ -40,6 +40,9 @@ compile-truecaser:
 compile-kenlm:
 	cd kenlm && cmake . && make -j4
 
+compile-bleualign:
+	cd bleualign-cpp && cmake . && make
+
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
