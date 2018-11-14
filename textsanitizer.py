@@ -3,7 +3,7 @@
 
 from bs4 import UnicodeDammit
 import chared.detector
-import cld2
+import pycld2
 import re
 import sys
 import unicodedata
@@ -81,7 +81,7 @@ class TextSanitizer():
     def guess_lang_from_data(data, is_html, default_lang='en'):
         assert isinstance(data, unicode)
         data = TextSanitizer.clean_utf8(data)  # cld2 needs clean input
-        reliable, text_bytes, detected_languages = cld2.detect(
+        reliable, text_bytes, detected_languages = pycld2.detect(
             data.encode('utf-8', 'ignore'), isPlainText=(not is_html),
             useFullLangTables=True, bestEffort=True)
         if not reliable:
