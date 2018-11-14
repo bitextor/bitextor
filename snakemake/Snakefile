@@ -356,6 +356,8 @@ rule train_nmt_with_crawl_data:
 rule train_nmt:
     output:
         report = "{dir}/evaluation/report".format(dir=NMTDIR)
+        ,
+        model = "{0}/model/marian/model.npz.decoder.yml".format(nmtPermanentDir)
     priority: 50
     run:
         cmd = "snakemake --snakefile Snakefile.nmt --configfile {transient}/config.txt -k -j3" \
@@ -570,12 +572,15 @@ rule urlsoverlap2rank:
 
 rule aligndocumentsMarek:
     input:
-        '{target}.lett'
+        lett = '{target}.lett'
+        ,
+        nmtModel = "{0}/model/marian/model.npz.decoder.yml".format(nmtPermanentDir)
+
     output:
         '{target}.docalign.marek'
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.txt {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.txt {wildcards.target}.docalign {input.nmtModel}" -d -w {wildcards.target}.docalign > {output.lett}'
 
 rule aligndocumentsBitextor:
     input:
