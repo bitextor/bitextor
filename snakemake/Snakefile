@@ -68,11 +68,11 @@ MAXLINES=config["maxlines"]
 permanent=config["permanentDir"]
 transient=config["transientDir"]
 
-with open(transient + "/config.json", "wt") as configFile:
-    configFile.write(str(config))
-
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)
+
+with open(transient + "/config.json", "wt") as configFile:
+    configFile.write(str(config))
 
 #Dictionary
 if "dic" in config:
