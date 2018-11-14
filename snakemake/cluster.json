@@ -4,11 +4,6 @@
         "gres": ""
     },
 
-    "aligndocumentsparacrawl" :
-    {
-        "gres": "--gres gpu:tesla:1"
-    },
-
     "aligndocumentsMarek" :
     {
         "gres": "--gres gpu:tesla:1"
