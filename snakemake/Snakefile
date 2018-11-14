@@ -579,7 +579,7 @@ rule aligndocumentsMarek:
         '{target}.docalign.marek'
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {input[1]}" -d -w {wildcards.target}.docalign > {output[0]}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {input[1]}" -d -w {wildcards.target}.docalign > {output[0]}'
 
 rule aligndocumentsBitextor:
     input:
