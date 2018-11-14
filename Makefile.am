@@ -9,7 +9,7 @@ SUBDIRS= zipporah utils piped-boilerpipe piped-tika model
 bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
             bitextor-ett2lett.sh bitextor-lett-language-detector.py bitextor-idx2ridx.py bitextor-lett2idx.py bitextor-identifyMIME.py bitextor-dir2warc.py \
-            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.sh \
+            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.py \
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py \
@@ -129,7 +129,7 @@ bitextor-builddics: bitextor-builddics.sh nltk_data
 
 bitextor-elrc-filtering: bitextor-elrc-filtering.py
 
-bitextor-downloadweb: bitextor-downloadweb.sh
+bitextor-downloadweb: bitextor-downloadweb.py
 
 zipporah-classifier: zipporah-classifier.sh
 
