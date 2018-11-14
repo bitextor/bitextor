@@ -555,8 +555,8 @@ rule aligndocumentsMarek:
     output:
         '{target}.docalign.marek'
     shell:
-        'DOCALIGN=$(mktemp -d {TMPDIR}/docalign.XXXXXX); '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {LANG1} {LANG2}" -d -w $DOCALIGN > {output}'
+        'mkdir {wildcards.target}.docalign; '
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {LANG1} {LANG2}" -d -w {wildcards.target}.docalign > {output}'
 
 rule aligndocumentsBitextor:
     input:

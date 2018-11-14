@@ -4,27 +4,25 @@
 # ./bleualign.sh ${LETT_FILE} ${FR_LANG} ${DOC_THRESHOLD} ${BLEU_THRESHOLD} ${DIR_NAME=bleualign} {MOSES_DIR}
 #
 
-if [ -z ${5} ]; then BLEU_DIR="bleualign"; else BLEU_DIR=${5}; fi
-if [ -z ${6} ]; then MOSES_DIR="modules/bleualign-cpp/third_party/preprocess/moses/"; else MOSES_DIR=${5}; fi
+if [ -z ${7} ]; then MOSES_DIR="modules/bleualign-cpp/third_party/preprocess/moses/"; else MOSES_DIR=${7}; fi
 
 set -e
 set -u
 
-mydir=`dirname $0`
-
-COMPRESSION="xz"
-CSUFFIX="xz"
+COMPRESSION="gzip"
+CSUFFIX="gz"
 
 LETT_FILE=${1}
 WLANG=${2}
-DOC_THRESHOLD=${3}
-BLEU_THRESHOLD=${4}
+WDIR=${3}
+DOC_THRESHOLD=${4}
+BLEU_THRESHOLD=${5}
+OUTPUT=${6}
 
 mydir=`dirname $0`
-WDIR=`dirname ${LETT_FILE}`
+BLEU_DIR="bleualign"
 SEN_DIR=${WDIR}/${BLEU_DIR}
 PROCESS_PARALLELISE=1
-
 
 echoerr() { echo "$@" 1>&2; }
 export -f echoerr
@@ -66,11 +64,11 @@ check_required_files() {
   fi
 
   if [ ! -z ${langs_to_extract} ]; then
-    echo "# Extracting ${langs_to_extract} from the LETT file"
+    echo "# Extracting ${langs_to_extract} from the LETT file $F_LETT_FILE"
     pv ${F_LETT_FILE} | ${COMPRESSION} -cd | \
-      python ${mydir}/utils/extract_lett.py \
+      python3 ${mydir}/bin/utils/extract_lett.py \
       --langs ${langs_to_extract} \
-      --splitter ${MOSES_DIR}/scripts/ems/support/split-sentences.perl \
+      --splitter ${MOSES_DIR}/ems/support/split-sentences.perl \
       --prune_type "words" \
       --prune 80 \
       --output_dir ${WDIR}
@@ -98,7 +96,7 @@ else
   mkdir ${SEN_DIR}
 
   echo "# Running Bleualign"
-  time ${mydir}/modules/bleualign-cpp/build/bleualign_cpp \
+  time ${mydir}/bleualign-cpp/bleualign_cpp \
     --text1 ${WDIR}/en.extracted.${CSUFFIX} \
     --text2 ${WDIR}/${WLANG}.extracted.${CSUFFIX} \
     --text2translated ${WDIR}/${WLANG}.extracted.translated.${CSUFFIX} \
@@ -108,6 +106,6 @@ else
     --output-dir ${SEN_DIR}
 
   echo "# Collecting data"
-  cat ${SEN_DIR}/aligned.*.${CSUFFIX} | ${COMPRESSION} -cd | sort | uniq | ${COMPRESSION} -c > ${WDIR}/all.aligned.deduped.${CSUFFIX}
+  xzcat ${SEN_DIR}/aligned.*.xz > ${OUTPUT}
 
 fi
