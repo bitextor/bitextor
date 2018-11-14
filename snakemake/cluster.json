@@ -17,7 +17,7 @@
     "train_nmt_all":
     {
         "gres": "--gres gpu:tesla:1"
-    }.
+    },
     
     "train_nmt":
     {
