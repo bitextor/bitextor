@@ -106,6 +106,10 @@ else
     --output-dir ${SEN_DIR}
 
   echo "# Collecting data"
-  xzcat ${SEN_DIR}/aligned.*.xz > ${OUTPUT}
+  xzcat ${WDIR}/${BLEU_DIR}/align.info.xz | while read line; do
+    id=$(echo $line | cut -d ' ' -f 1)
+    prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
+    xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
+  done
 
 fi
