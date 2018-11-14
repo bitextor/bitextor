@@ -572,15 +572,14 @@ rule urlsoverlap2rank:
 
 rule aligndocumentsMarek:
     input:
-        lett = '{target}.lett'
-        ,
-        nmtModel = "{0}/model/marian/model.npz.decoder.yml".format(nmtPermanentDir)
+        "{target}.lett",
+        "{0}/model/marian/model.npz.decoder.yml".format(nmtPermanentDir)
 
     output:
         '{target}.docalign.marek'
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {input.nmtModel}" -d -w {wildcards.target}.docalign > {output.lett}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {input[1]}" -d -w {wildcards.target}.docalign > {output[0]}'
 
 rule aligndocumentsBitextor:
     input:
