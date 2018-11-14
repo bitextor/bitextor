@@ -9,6 +9,11 @@
         "gres": "--gres gpu:tesla:1"
     },
 
+    "aligndocumentsMarek" :
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
     "train_nmt_with_crawl_data":
     {
         "gres": "--gres gpu:tesla:1"
