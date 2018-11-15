@@ -31,13 +31,14 @@ namespace utils {
 
         inner first;
         inner second;
+	double score;
 
-        match() : first(0, 0), second(0, 0) {};
+        match() : first(0, 0), second(0, 0) {score=0;};
 
-        match(size_t a, size_t b, size_t c, size_t d) : first(a, b), second(c, d) {};
+        match(size_t a, size_t b, size_t c, size_t d, double s) : first(a, b), second(c, d) {score=s;};
 
         void print() {
-          printf("(%zu, %zu) -> (%zu, %zu)\n", first.from, first.to, second.from, second.to);
+          printf("(%zu, %zu) -> (%zu, %zu): %f\n", first.from, first.to, second.from, second.to, score);
         }
 
         bool operator==(const match &rhs) const {
