@@ -42,7 +42,7 @@
 
   "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
   "nmtDevPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
-  "nmtTestPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007", "/home/hieu/permanent/data/fr-en/train/10k/europarl-v7.fr-en"],
+  "nmtTestPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007", "/home/hieu/permanent/data/fr-en/train/10/europarl-v7.fr-en"],
 
   "gpuId": "0",
   "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
