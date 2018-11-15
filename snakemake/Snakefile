@@ -688,5 +688,6 @@ rule mt_parallel_data:
          ,
          l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
     shell:
-         'cat {input} | cut -f 3,4 | sort | uniq > corpus; '
-         "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}"
+         "cat {input} | cut -f 3,4 | sort | uniq > corpus; "
+         "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
+         "rm corpus"
