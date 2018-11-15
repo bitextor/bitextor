@@ -154,7 +154,7 @@ else:
 if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
 
-  if MT_COMMAND == "nmt":
+  if MT_COMMAND == "marek-nmt":
       DOCALIGNEXT="marek"
   else:
       DOCALIGNEXT="marek-customMT"
