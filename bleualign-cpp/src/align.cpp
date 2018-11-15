@@ -200,11 +200,12 @@ namespace align {
 
           // update match
           if (max_val != -1) {
+
             m = utils::match(
                     merged_pos_translated.at(max_pos_translate).first,
                     merged_pos_translated.at(max_pos_translate).second,
                     merged_pos_text1.at(max_pos_text1).first,
-                    merged_pos_text1.at(max_pos_text1).second);
+                    merged_pos_text1.at(max_pos_text1).second, max_val);
           }
 
 
@@ -313,6 +314,10 @@ namespace align {
         for (size_t i = m.first.from; i <= m.first.to; ++i) {
           ss << text2_doc.at(i);
         }
+
+        ss << "\t";
+
+        ss << m.score;
 
         ss << "\n";
 
