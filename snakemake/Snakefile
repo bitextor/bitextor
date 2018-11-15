@@ -581,7 +581,7 @@ rule aligndocumentsMarek:
         '{target}.docalign.marek'
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output[0]}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
