@@ -153,7 +153,11 @@ else:
 
 if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
-  DOCALIGNEXT="marek"
+
+  if MT_COMMAND == "nmt":
+      DOCALIGNEXT="marek"
+  else:
+      DOCALIGNEXT="marek-customMT"
 else:
   MT_COMMAND=""
   DOCALIGNEXT="bitextor"
@@ -578,6 +582,16 @@ rule aligndocumentsMarek:
     shell:
         'mkdir -p {wildcards.target}.docalign; '
         '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/translate.sh {transient}/config.json {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output[0]}'
+
+rule aligndocumentsMarekCustomMT:
+    input:
+        "{target}.lett",
+
+    output:
+        '{target}.docalign.marek-customMT'
+    shell:
+        'mkdir -p {wildcards.target}.docalign; '
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{MT_COMMAND}" -d -w {wildcards.target}.docalign > {output[0]}'
 
 rule aligndocumentsBitextor:
     input:
