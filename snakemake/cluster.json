@@ -4,7 +4,7 @@
         "gres": ""
     },
 
-    "aligndocumentsparacrawl" :
+    "aligndocumentsMarek" :
     {
         "gres": "--gres gpu:tesla:1"
     },
@@ -14,6 +14,11 @@
         "gres": "--gres gpu:tesla:1"
     },
 
+    "train_nmt_all":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+    
     "train_nmt":
     {
         "gres": "--gres gpu:tesla:1"

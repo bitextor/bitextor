@@ -3,6 +3,7 @@ from os.path import join
 #Output dirs
 permanentDir = config["permanentDir"]
 modelDir = permanentDir + "/model"
+#print("permanentDir", permanentDir)
 
 marian=config["marianDir"]
 moses=config["mosesDir"]
@@ -102,9 +103,7 @@ rule train_nmt:
     output:
         "{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
     shell:
-        #"hostname;"
-        "mkdir -p {output};"
-        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {output}/model.npz"
+        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {modelDir}/marian/model.npz"
 
 ################################################## MARIAN VOCAB ################################################################
 
