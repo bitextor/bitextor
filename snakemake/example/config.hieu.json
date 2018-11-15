@@ -29,6 +29,7 @@
   #"bicleanerThreshold": 0.7,
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
   "paracrawl-aligner-command": "marek-nmt",
+  "bleualign": true,
 
   "nmtPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir",
   "nmtCrawlPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir-crawl",
