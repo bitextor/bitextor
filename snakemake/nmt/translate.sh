@@ -1,12 +1,14 @@
 
 
+THIS_DIR=$(dirname "$0")
+
 CONFIGFILE=$1
-DIRNAME=$2
-PERMANENTDIR=$3
-#echo $DIRNAME
+WORK_DIR=$2
+PERMANENT_NMT_DIR=$3
+#echo $WORK_DIR
 
-cat /dev/stdin > $DIRNAME/in
-snakemake --snakefile Snakefile.nmt --directory $DIRNAME --configfile $CONFIGFILE \
-          --config permanentDir=$PERMANENTDIR -k -j 4 translate_only
+cat /dev/stdin > $WORK_DIR/in
+snakemake --snakefile $THIS_DIR/Snakefile --directory $WORK_DIR --configfile $CONFIGFILE \
+          --config permanentDir=$PERMANENT_NMT_DIR -k -j 4 translate_only
 
-cat $DIRNAME/evaluation/output
+cat $WORK_DIR/evaluation/output
