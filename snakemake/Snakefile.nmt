@@ -103,7 +103,7 @@ rule train_nmt:
     output:
         "{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
     shell:
-        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {modelDir}/model.npz"
+        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {modelDir}/marian/model.npz"
 
 ################################################## MARIAN VOCAB ################################################################
 
