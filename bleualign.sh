@@ -86,30 +86,26 @@ check_required_files() {
 export -f check_required_files
 
 
-if [ -d "${SEN_DIR}" ]; then
-  echoerr "Folder ${SEN_DIR} already exists!"
-else
+echo "# Searching for required files in ${WDIR}"
+check_required_files ${WDIR} ${LETT_FILE} ${WLANG}
 
-  echo "# Searching for required files in ${WDIR}"
-  check_required_files ${WDIR} ${LETT_FILE} ${WLANG}
+rm -rf ${SEN_DIR}
+mkdir ${SEN_DIR}
 
-  mkdir ${SEN_DIR}
+echo "# Running Bleualign"
+time ${mydir}/bleualign-cpp/build/bleualign_cpp \
+--text1 ${WDIR}/en.extracted.${CSUFFIX} \
+--text2 ${WDIR}/${WLANG}.extracted.${CSUFFIX} \
+--text2translated ${WDIR}/${WLANG}.extracted.translated.${CSUFFIX} \
+--matches ${WDIR}/en-${WLANG}.matches \
+--doc-threshold ${DOC_THRESHOLD} \
+--bleu-threshold ${BLEU_THRESHOLD} \
+--output-dir ${SEN_DIR}
 
-  echo "# Running Bleualign"
-  time ${mydir}/bleualign-cpp/bleualign_cpp \
-    --text1 ${WDIR}/en.extracted.${CSUFFIX} \
-    --text2 ${WDIR}/${WLANG}.extracted.${CSUFFIX} \
-    --text2translated ${WDIR}/${WLANG}.extracted.translated.${CSUFFIX} \
-    --matches ${WDIR}/en-${WLANG}.matches \
-    --doc-threshold ${DOC_THRESHOLD} \
-    --bleu-threshold ${BLEU_THRESHOLD} \
-    --output-dir ${SEN_DIR}
+echo "# Collecting data"
+xzcat ${WDIR}/${BLEU_DIR}/align.info.xz | while read line; do
+id=$(echo $line | cut -d ' ' -f 1)
+prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
+xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
+done
 
-  echo "# Collecting data"
-  xzcat ${WDIR}/${BLEU_DIR}/align.info.xz | while read line; do
-    id=$(echo $line | cut -d ' ' -f 1)
-    prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
-    xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
-  done
-
-fi
