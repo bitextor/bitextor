@@ -579,6 +579,8 @@ rule aligndocumentsMarek:
 
     output:
         '{target}.docalign.marek'
+    priority: 40
+
     shell:
         'mkdir -p {wildcards.target}.docalign; '
         '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output}'
