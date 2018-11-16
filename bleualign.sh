@@ -104,8 +104,10 @@ time ${mydir}/bleualign-cpp/build/bleualign_cpp \
 
 echo "# Collecting data"
 xzcat ${WDIR}/${BLEU_DIR}/align.info.xz | while read line; do
-id=$(echo $line | cut -d ' ' -f 1)
-prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
-xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
+    id=$(echo $line | cut -d ' ' -f 1)
+    prefix=$(echo $line | cut -d ' ' -f 2,3 | sed 's/\//\\\//g' | tr ' ' '\t')
+    xzcat ${WDIR}/${BLEU_DIR}/aligned.$id.xz | sed "s/^/$prefix\t/g" >> $OUTPUT
 done
 
+# in case no docs are aligned. Still need sent align file for snakemake
+touch $OUTPUT
