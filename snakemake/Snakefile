@@ -310,8 +310,8 @@ OUTPUT=[]
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
-OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=config["transient"]))
-OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=config["transient"]))
+OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
+OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
