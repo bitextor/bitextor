@@ -310,18 +310,8 @@ OUTPUT=[]
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
-NMTDIR=""
-#If nmtTransientDir is defined NMT evaluation report is produced
-if "nmtTransientDir" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtTransientDir"]))
-    NMTDIR=config["nmtTransientDir"]
-    nmtPermanentDir=config["nmtPermanentDir"]
-
-NMTDIRCRAWL=""
-if "nmtCrawlTransientDir" in config:
-    OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtCrawlTransientDir"]))
-    NMTDIRCRAWL=config["nmtCrawlTransientDir"]
-    nmtCrawlPermanentDir=config["nmtCrawlPermanentDir"]
+OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtTransientDir"]))
+OUTPUT.append("{dir}/evaluation/report".format(dir=config["nmtCrawlTransientDir"]))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
@@ -343,7 +333,7 @@ rule train_nmt_with_crawl_data:
     priority: 50
 
     output:
-        report = "{dir}/evaluation/report".format(dir=NMTDIRCRAWL)
+        report = "{dir}/nmt-dir/evaluation/report".format(dir=transient)
     run:
         trainData = config["nmtTrainPrefix"]
 
@@ -351,20 +341,20 @@ rule train_nmt_with_crawl_data:
         trainData.append(crawlPref)
 
         cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {transient}/config.json -k -j3" \
-            + " --directory {NMTDIRCRAWL}" \
+            + " --directory {transient}/nmt-dir-crawl" \
             + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
-            + " permanentDir={nmtCrawlPermanentDir}"
+            + " permanentDir={permanent}/nmt-dir-crawl"
         print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt_all:
     output:
-        report = "{dir}/evaluation/report".format(dir=NMTDIR)
+        report = "{dir}/nmt-dir/evaluation/report".format(dir=transient)
     priority: 50
     run:
         cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {transient}/config.json -k -j3" \
-            + " --directory {NMTDIR}" \
-            + " --config permanentDir={nmtPermanentDir}"
+            + " --directory {transient}/nmt-dir" \
+            + " --config permanentDir={permanent}/nmt-dir"
         shell(cmd)
 
 #================================== CRAWLING ======================================#
@@ -575,7 +565,7 @@ rule urlsoverlap2rank:
 rule aligndocumentsMarek:
     input:
         "{target}.lett",
-        "{dir}/evaluation/report".format(dir=NMTDIR)
+        "{dir}/nmt-dir/evaluation/report".format(dir=transient)
 
     output:
         '{target}.docalign.marek'
@@ -583,7 +573,7 @@ rule aligndocumentsMarek:
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {nmtPermanentDir}" -d -w {wildcards.target}.docalign > {output}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {permanent}/nmt-dir" -d -w {wildcards.target}.docalign > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:

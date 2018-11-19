@@ -31,12 +31,6 @@
   "paracrawl-aligner-command": "marek-nmt",
   "bleualign": true,
 
-  "nmtPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir",
-  "nmtCrawlPermanentDir":"/home/hieu/permanent/en-fr/nmt-dir-crawl",
-
-  "nmtTransientDir":"/home/hieu/transient/en-fr/nmt-dir",
-  "nmtCrawlTransientDir":"/home/hieu/transient/en-fr/nmt-dir-crawl",
-
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",
   "mosesDir": "/home/hieu/permanent/software/mosesdecoder",
