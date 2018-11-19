@@ -1,0 +1,56 @@
+
+{
+  "bitextor":"/home/hieu/permanent/software/bitextor",
+  #"domains": ["www.elenacaffe1863.com","vade-retro.fr"],
+
+  #"langstat":"/home/hieu/permanent/software/langstat/1k.gz",
+  #"langstatThreshold":10,
+    
+  "langstat":"/home/hieu/permanent/software/langstat/langstats.all.gz",
+  "langstatThreshold":50000,
+
+  "langstatExcludeDomains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
+  "temp": "/tmp",
+  "permanentDir": "/home/hieu/permanent/en-so",
+  "transientDir": "/home/hieu/transient/en-so",
+  "lang1": "en",
+  "lang2": "so",
+  "nltk": "y",
+  #"dic": "/home/hieu/permanent/software/bitextor-data/dics/en-fr.dic",
+  "minquality": "0",
+  "maxlines": "5",
+  "crawlTimeLimit": "3600s",
+  "tmx": true,
+  "httrack": true,
+
+  "elrc": true,
+  "crawlerNumThreads": 2,
+  "crawlTld": false,
+  #"bicleanerThreshold": 0.7,
+  #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
+  "paracrawl-aligner-command": "marek-nmt",
+  "bleualign": true,
+
+  "nmtPermanentDir":"/home/hieu/permanent/en-so/nmt-dir",
+  "nmtCrawlPermanentDir":"/home/hieu/permanent/en-so/nmt-dir-crawl",
+
+  "nmtTransientDir":"/home/hieu/transient/en-fr/nmt-dir",
+  "nmtCrawlTransientDir":"/home/hieu/transient/en-fr/nmt-dir-crawl",
+
+  "marianDir": "/home/hieu/permanent/software/marian-dev",
+  "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",
+  "mosesDir": "/home/hieu/permanent/software/mosesdecoder",
+
+  "nmtTrainPrefix": ["/home/hieu/permanent/data/so-en/material-only/train.txt"],
+  "nmtDevPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt"],
+  "nmtTestPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt", "/home/hieu/permanent/data/so-en/material-only/test.txt"],
+
+  "gpuId": "0",
+  "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
+  "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
+  "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l so",
+  "nmtVocabSize": 30000,
+
+
+
+}
