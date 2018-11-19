@@ -333,7 +333,7 @@ rule train_nmt_with_crawl_data:
     priority: 50
 
     output:
-        report = "{dir}/nmt-dir/evaluation/report".format(dir=transient)
+        report = "{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient)
     run:
         trainData = config["nmtTrainPrefix"]
 
