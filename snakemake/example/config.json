@@ -16,6 +16,6 @@
   "crawler-num-threads": 2,
   "crawl-tld": false,
   "bleualign": true,
-  "paracrawl-aligner-command": "/home/lpla/permanent/bitextor/snakemake/example/translate.sh",
+  "paracrawl-aligner-command": "/home/lpla/permanent/bitextor-malign/snakemake/example/translate.sh",
   "tmx": true
 }
