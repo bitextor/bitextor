@@ -16,11 +16,11 @@ LANG2=config["lang2"]
 
 #NMT commands
 trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
-          + " --mini-batch-fit -w 2000 --optimizer-delay 2 --mini-batch 1000 --maxi-batch 1000" \
+          + " -w 2000 --optimizer-delay 2 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000" \
           + " --overwrite --keep-best --valid-metrics perplexity" \
-          + " --valid-log valid.log" \
-          + " --after-epochs 10 " \
-          + " --log train.log"
+          + " --valid-log valid.log --log train.log" \
+	  + " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 " \
+	  + " --valid-freq 100u --early-stopping 20"
 
 translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1}".format(marian, config["gpuId"])
 
@@ -103,7 +103,7 @@ rule train_nmt:
     output:
         "{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
     shell:
-        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} --early-stopping 10 -m {modelDir}/marian/model.npz"
+        "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} -m {modelDir}/marian/model.npz"
 
 ################################################## MARIAN VOCAB ################################################################
 
