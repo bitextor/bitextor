@@ -458,7 +458,7 @@ rule ett2tika:
     shell:
         'zcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | gzip > {output}'
 
-rule ett2lett:
+rule tika2lett:
     input:
         '{target}.tika.gz'
     output:
