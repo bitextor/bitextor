@@ -71,9 +71,6 @@ transient=config["transientDir"]
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)
 
-with open(transient + "/config.json", "wt") as configFile:
-    configFile.write(str(config))
-
 #Dictionary
 if "dic" in config:
   DIC=config["dic"]
@@ -330,17 +327,20 @@ rule train_nmt_with_crawl_data:
         l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
         ,
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
-    priority: 50
+        ,
+        config = "{dir}/config.json".format(dir=transient)
 
     output:
         report = "{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient)
+
+    priority: 50
     run:
         trainData = config["nmtTrainPrefix"]
 
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {transient}/config.json -k -j3" \
+        cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {input.config} -k -j3" \
             + " --directory {transient}/nmt-dir-crawl" \
             + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
             + " permanentDir={permanent}/nmt-dir-crawl"
@@ -348,14 +348,27 @@ rule train_nmt_with_crawl_data:
         shell(cmd)
 
 rule train_nmt_all:
+    input:
+        config = "{dir}/config.json".format(dir=transient)
+
     output:
         report = "{dir}/nmt-dir/evaluation/report".format(dir=transient)
+
     priority: 50
     run:
-        cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {transient}/config.json -k -j3" \
+        cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {input.config} -k -j3" \
             + " --directory {transient}/nmt-dir" \
             + " --config permanentDir={permanent}/nmt-dir"
         shell(cmd)
+
+rule create_config:
+    output:
+        config = "{dir}/config.json".format(dir=transient)
+    run:
+        print("Hello world")
+        with open(output.config, "wt") as configFile:
+            configFile.write(str(config))
+
 
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
