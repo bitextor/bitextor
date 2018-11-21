@@ -416,63 +416,63 @@ rule tt2ttmime:
     input:
         '{target}.tt'
     output:
-        '{target}.ttmime'
+        '{target}.ttmime.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-identifyMIME.py | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-identifyMIME.py | gzip > {output}'
 
 rule tt2xtt:
     input:
         #If HTTRACK is enalbed, httrack rule is run; otherwise, download rule is applied
-        '{target}.ttmime'
+        '{target}.ttmime.gz'
     output:
-        '{target}.xtt'
+        '{target}.xtt.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-get-html-text.py -x | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | gzip > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
     input:
-        '{target}.xtt'
+        '{target}.xtt.gz'
     output:
-        '{target}.boiler'
+        '{target}.boiler.gz'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  zcat -f | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar | gzip < {input} > {output}; "
+        "  zcat -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar | gzip > {output}; "
         "else "
         "  cat {input} > {output}; "
         "fi"
 
 rule boiler2ett:
     input:
-        '{target}.boiler'
+        '{target}.boiler.gz'
     output:
-        '{target}.ett'
+        '{target}.ett.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-dedup.py | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-dedup.py | gzip > {output}'
 
 rule ett2tika:
     input:
-        '{target}.ett'
+        '{target}.ett.gz'
     output:
-        '{target}.tika'
+        '{target}.tika.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-get-html-text.py -t | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | gzip > {output}'
 
 rule ett2lett:
     input:
-        '{target}.tika'
+        '{target}.tika.gz'
     output:
-        '{target}.lett'
+        '{target}.lett.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | gzip > {output}'
 
 rule httrack2lett:
     output:
-        '{target}.jlett'
+        '{target}.jlett.gz'
     input:
-        '{target}.tar'
+        '{target}.tar.gz'
     shell:
-        'zcat -f | {BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | gzip > {output}'
+        '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | gzip > {output}'
 
 rule lett2lettr:
     input:
@@ -480,15 +480,15 @@ rule lett2lettr:
     output:
         '{target}.lettr'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-lett2lettr.py < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-lett2lettr.py > {output}'
 
 rule lettr2idx:
     input:
         '{target}.lettr'
     output:
-        '{target}.idx'
+        '{target}.idx.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | gzip > {output}'
 
 
 
@@ -497,87 +497,87 @@ rule lettr2idx:
 
 rule idx2ridx_l1tol2:
     input:
-        '{target}.idx'
+        '{target}.idx.gz'
     output:
-        '{target}.1.ridx'
+        '{target}.1.ridx.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | gzip  > {output}'
 
 rule idx2ridx_l2tol1:
     input:
-        '{target}.idx'
+        '{target}.idx.gz'
     output:
-        '{target}.2.ridx'
+        '{target}.2.ridx.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | gzip > {output}'
 
 rule ridx2imagesetoverlap:
     input:
-        '{target}.{num}.ridx',
+        '{target}.{num}.ridx.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.imgoverlap'
+        '{target}.{num}.imgoverlap.gz'
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
-        '{target}.{num}.imgoverlap',
+        '{target}.{num}.imgoverlap.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.structuredistance'
+        '{target}.{num}.structuredistance.gz'
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule structuredistance2urldistance:
     input:
-        '{target}.{num}.structuredistance',
+        '{target}.{num}.structuredistance.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.urldistance'
+        '{target}.{num}.urldistance.gz'
     priority: 8
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule urldistance2mutuallylinked:
     input:
-        '{target}.{num}.urldistance',
+        '{target}.{num}.urldistance.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.mutuallylinked'
+        '{target}.{num}.mutuallylinked.gz'
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
-        '{target}.{num}.mutuallylinked',
+        '{target}.{num}.mutuallylinked.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.urlscomparison'
+        '{target}.{num}.urlscomparison.gz'
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
-        '{target}.{num}.urlscomparison',
+        '{target}.{num}.urlscomparison.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.urlsoverlap'
+        '{target}.{num}.urlsoverlap.gz'
     shell:
-        'zcat -f | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr | gzip > {output}'
 
 rule urlsoverlap2rank:
     input:
-        '{target}.{num}.urlsoverlap',
+        '{target}.{num}.urlsoverlap.gz',
         '{target}.lettr'
     output:
-        '{target}.{num}.rank'
+        '{target}.{num}.rank.gz'
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | gzip < {input[0]} > {output}'
+        'zcat -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | gzip > {output}'
 
 rule aligndocumentsMarek:
     input:
-        "{target}.lett",
+        "{target}.lett.gz",
         "{dir}/nmt-dir/evaluation/report".format(dir=transient)
 
     output:
@@ -590,7 +590,7 @@ rule aligndocumentsMarek:
 
 rule aligndocumentsMarekCustomMT:
     input:
-        "{target}.lett",
+        "{target}.lett.gz",
 
     output:
         '{target}.docalign.marek-customMT'
@@ -600,8 +600,8 @@ rule aligndocumentsMarekCustomMT:
 
 rule aligndocumentsBitextor:
     input:
-        '{target}.1.rank',
-        '{target}.2.rank',
+        '{target}.1.rank.gz',
+        '{target}.2.rank.gz',
         '{target}.lettr'
     output:
         '{target}.docalign.bitextor'
@@ -627,7 +627,7 @@ rule alignsegments_hunalign:
     output:
         '{name}.hunalign.segalign'
     shell:
-        '{BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" < {input[1]} > {output}'
+        'zcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" > {output}'
 
 rule alignsegments_bleualign:
     input:
@@ -641,17 +641,17 @@ rule concat_segs:
     input:
         expand("{{dir}}/{webdomain}.{segaligner}.segalign", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
     output:
-        "{dir}/{l1}-{l2}.sentalg"
+        "{dir}/{l1}-{l2}.sentalg.gz"
     shell:
         "cat {input} | gzip > {output}"
 
 rule cleansegments:
     input:
-        "{dir}/{l1}-{l2}.sentalg"
+        "{dir}/{l1}-{l2}.sentalg.gz"
     output:
         "{dir}/{l1}-{l2}.segclean"
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s > {output}'
 
 #================================== POST PROCESSING ==================================#
 
@@ -670,38 +670,38 @@ rule bicleanerfilter:
     input:
         "{dir}/{l1}-{l2}.bicleaner.scores"
     output:
-        "{dir}/{l1}-{l2}.bicleaner"
+        "{dir}/{l1}-{l2}.bicleaner.gz"
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | gzip > {output}'
 
 rule elrc:
     input:
-        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)
+        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)+".gz"
     output:
-        "{dir}/{l1}-{l2}.elrc"
+        "{dir}/{l1}-{l2}.elrc.gz"
     shell:
-        'zcat -f | {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | gzip < {input} > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | gzip > {output}'
 
 rule sents:
     input:
-        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
+        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)+".gz"
     output:
-        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent"
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.gz"
     shell:
         "cp {input} {output}"
 
 
 rule tmx:
     input:
-        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)
+        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)+".gz"
     output:
-        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.tmx"
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.tmx.gz"
     shell:
-        "zcat -f | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | gzip < {input} > {output}"
+        "zcat -f {input} | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | gzip > {output}"
 
 rule mt_parallel_data:
     input:
-         "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)
+         "{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2)+".gz"
     output:
          l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
          ,
