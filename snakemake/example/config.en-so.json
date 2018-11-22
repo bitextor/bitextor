@@ -21,6 +21,7 @@
   "maxlines": "5",
   "crawlTimeLimit": "3600s",
   "tmx": true,
+  "nmt": true,
   "httrack": true,
 
   "elrc": true,

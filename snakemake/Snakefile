@@ -307,7 +307,7 @@ OUTPUT=[]
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
 OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
-if DOCALIGNEXT=="marek":
+if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
@@ -318,6 +318,7 @@ else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
 
 rule all:
+    input:
     input:
         expand("{target}", target=OUTPUT)
 
