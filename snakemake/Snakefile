@@ -689,7 +689,7 @@ rule sents:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
-        "ln -s {input} {output}"
+        "cp {input} {output}"
 
 
 rule tmx:
