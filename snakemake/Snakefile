@@ -319,7 +319,6 @@ else:
 
 rule all:
     input:
-    input:
         expand("{target}", target=OUTPUT)
 
 #================================== NMT ======================================#
@@ -636,7 +635,7 @@ rule alignsegments_bleualign:
     output:
         '{name}.bleualign.segalign'
     shell:
-        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output}'
+        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett.xz {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output}'
 
 rule concat_segs:
     input:
