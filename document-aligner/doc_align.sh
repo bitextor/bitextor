@@ -58,7 +58,7 @@ check_required_files() {
   else
     >&2 echo "`basename ${F_LETT_FILE}`: FOUND"
   fi
-  LETT_PRINT_COMMAND="zcat -f ${F_LETT_FILE} $VERBOSE"
+  LETT_PRINT_COMMAND="xzcat -f ${F_LETT_FILE} $VERBOSE"
 
   # Extracted
   langs_to_extract=""
@@ -110,7 +110,7 @@ python3 ${mydir}/compute_matches.py \
 
 if [ "${BUILD_DOCS}" != "" ]; then
   >&2 echo "# Extracting matched documents (threshold=${SCORE_THRESHOLD})"
-  zcat -f $LETT_FILE | python3 ${mydir}/build_docs.py --matches ${WDIR}/en-${WLANG}.matches ${SCORE_THRESHOLD_COMMAND}
+  xzcat -f $LETT_FILE | python3 ${mydir}/build_docs.py --matches ${WDIR}/en-${WLANG}.matches ${SCORE_THRESHOLD_COMMAND}
 fi
 
 >&2 echo "# Done"
