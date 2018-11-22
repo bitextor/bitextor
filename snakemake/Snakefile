@@ -313,7 +313,7 @@ if DOCALIGNEXT=="marek":
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
-    OUTPUT.append("{dir}/{l1}-{l2}.tmx.gz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    OUTPUT.append("{dir}/{l1}-{l2}.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
 
@@ -676,7 +676,7 @@ rule bicleanerfilter:
 
 rule elrc:
     input:
-        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)+".xz"
+        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)
     output:
         "{dir}/{l1}-{l2}.elrc.xz"
     shell:
