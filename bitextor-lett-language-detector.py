@@ -20,7 +20,7 @@ import re
 
 def guess_lang_from_data2(data):
   reliable, text_bytes, detected_languages = cld2.detect(
-    data.encode('utf-8', 'ignore'), isPlainText=True)
+    data, isPlainText=False)
   #print("detected_languages", detected_languages)
   return detected_languages[0][1]
 
@@ -40,21 +40,30 @@ else:
   reader = sys.stdin
 
 #Reading line by line from the standard output
+lineNum = 0
 for line in reader:
+  #print("lineNum", lineNum)
   linefields=line.strip().split("\t")
   #decoding the b64 original webpage
   if len(linefields)>=5:
-    parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
-    if len(parsed_text)>0:
+    html_text = base64.b64decode(linefields[3])
+    #print("html_text", html_text)
+
+    if len(html_text)>0:
       #detecting language
       #lang, conf = langid.classify(parsed_text)
-      lang = guess_lang_from_data2(parsed_text)
+      lang = guess_lang_from_data2(html_text)
       #print(lang, linefields[2])
 
 
       if len(langs)==0 or lang in langs:
+        parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
+        # print("parsed_text", parsed_text)
+
         linefields.insert(0,lang)
         e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
         del linefields[-1]
         linefields.append(e)
         print("\t".join(linefields))
+
+  lineNum += 1

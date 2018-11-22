@@ -318,6 +318,7 @@ else:
 
 rule all:
     input:
+    input:
         expand("{target}", target=OUTPUT)
 
 #================================== NMT ======================================#
