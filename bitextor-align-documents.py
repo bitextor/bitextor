@@ -11,6 +11,7 @@
 import sys
 import argparse
 from operator import itemgetter
+import lzma
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from the standard input) and produces a list of aligned documents. If two ridx files are provided, a bidirectional alignment is performed between them.")
 oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang1 to lang2', default=None)
@@ -28,11 +29,20 @@ if options.ridx2 == None:
   if options.ridx1 == None:
     reader = sys.stdin
   else:
-    reader = open(options.ridx1,"r")
+    if options.ridx1[-3:-1] == ".xz":
+      reader = lzma.open(options.ridx1,"r")
+    else:
+      reader = open(options.ridx1,"r")
 else:
   combine = True
-  reader1 = open(options.ridx1,"r")
-  reader2 = open(options.ridx2,"r")
+  if options.ridx1[-3:-1] == ".xz":
+    reader1 = lzma.open(options.ridx1,"r")
+  else:
+    reader1 = open(options.ridx1,"r")
+  if options.ridx2[-3:-1] == ".xz":
+    reader2 = lzma.open(options.ridx2,"r")
+  else:
+    reader2 = open(options.ridx2,"r")
 
 indices = {}
 indicesProb = {}
