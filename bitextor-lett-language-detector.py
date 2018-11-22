@@ -12,9 +12,17 @@ import sys
 import base64
 from html.parser import HTMLParser
 import langid
+import pycld2 as cld2
 import argparse
 import socket
 import re
+
+
+def guess_lang_from_data2(data):
+  reliable, text_bytes, detected_languages = cld2.detect(
+    data.encode('utf-8', 'ignore'), isPlainText=True)
+  #print("detected_languages", detected_languages)
+  return detected_languages[0][1]
 
 
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
@@ -39,7 +47,11 @@ for line in reader:
     parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
     if len(parsed_text)>0:
       #detecting language
-      lang, conf = langid.classify(parsed_text)
+      #lang, conf = langid.classify(parsed_text)
+      lang = guess_lang_from_data2(parsed_text)
+      #print(lang, linefields[2])
+
+
       if len(langs)==0 or lang in langs:
         linefields.insert(0,lang)
         e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")

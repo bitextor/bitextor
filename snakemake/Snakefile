@@ -312,7 +312,7 @@ OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
-    OUTPUT.append("{dir}/{l1}-{l2}.tmx".format(dir=permanent, l1=LANG1, l2=LANG2))
+    OUTPUT.append("{dir}/{l1}-{l2}.tmx.gz".format(dir=permanent, l1=LANG1, l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
 
@@ -458,7 +458,7 @@ rule ett2tika:
     shell:
         'zcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | gzip > {output}'
 
-rule ett2lett:
+rule tika2lett:
     input:
         '{target}.tika.gz'
     output:
@@ -649,9 +649,9 @@ rule cleansegments:
     input:
         "{dir}/{l1}-{l2}.sentalg.gz"
     output:
-        "{dir}/{l1}-{l2}.segclean"
+        "{dir}/{l1}-{l2}.segclean.gz"
     shell:
-        'zcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s > {output}'
+        'zcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | gzip -c > {output}'
 
 #================================== POST PROCESSING ==================================#
 
@@ -660,7 +660,7 @@ rule cleansegments:
 
 rule bicleaner:
     input:
-        "{dir}/{l1}-{l2}.segclean"
+        "{dir}/{l1}-{l2}.segclean.gz"
     output:
         "{dir}/{l1}-{l2}.bicleaner.scores"
     shell:
