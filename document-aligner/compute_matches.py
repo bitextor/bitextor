@@ -8,7 +8,6 @@ import os.path
 from collections import defaultdict
 
 import numpy as np
-from nltk.tokenize import wordpunct_tokenize
 
 from scorer import CosineDistanceScorer, EnglishWordExtractor, _ngram_helper
 
@@ -104,8 +103,6 @@ if __name__ == "__main__":
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
     parser.add_argument('--tfidfsmooth', type=int, default=20)
-    parser.add_argument(
-        '--ignore', help='n-grams from this corpus will be ignored in distance scorer')
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
@@ -127,15 +124,8 @@ if __name__ == "__main__":
         obj_english = map_dic2list(docs_english)
         obj_translated = map_dic2list(docs_translated)
     
-        to_ignore = None
-        if args.ignore:
-            with open(args.ignore, 'r') as f:
-                content = f.read().replace('\n', ' ').replace('  ', ' ')
-                to_ignore = set(_ngram_helper(
-                    wordpunct_tokenize(content), args.ngram_size, False))
-    
         word_extractor = EnglishWordExtractor(
-            n=args.ngram_size, ignore_set=to_ignore)
+            n=args.ngram_size, ignore_set=None)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
                                       metric='cosine',
