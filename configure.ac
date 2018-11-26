@@ -205,16 +205,6 @@ then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
 
-AC_PATH_PROG(MVN, mvn, no)
-if test x$ac_cv_path_MVN = x
-then
-  AC_MSG_ERROR([You don't have mvn (maven) installed.])
-fi
-if test x$ac_cv_path_MVN = xno
-then
-  AC_MSG_ERROR([You don't have mvn (maven) installed.])
-fi
-
 AC_ARG_WITH([apertium],
             [AS_HELP_STRING([--with-apertium],
               [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
