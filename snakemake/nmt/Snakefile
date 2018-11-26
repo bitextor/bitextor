@@ -15,12 +15,7 @@ LANG1=config["lang1"]
 LANG2=config["lang2"]
 
 #NMT commands
-trainCmd = "{0}/build/marian -d {1}".format(marian, config["gpuId"]) \
-          + " -w 2000 --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000" \
-          + " --overwrite --keep-best --valid-metrics perplexity" \
-          + " --valid-log valid.log --log train.log" \
-	  + " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 " 
-
+trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + config["marianArgs"]
 
 translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1}".format(marian, config["gpuId"])
 
