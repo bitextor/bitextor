@@ -315,7 +315,7 @@ if "nmt" in config and config["nmt"]:
 if "tmx" in config and config["tmx"]:
     OUTPUT.append("{dir}/{l1}-{l2}.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 else:
-    OUTPUT.append("{dir}/{l1}-{l2}.sent".format(dir=permanent, l1=LANG1, l2=LANG2))
+    OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 
 rule all:
     input:
@@ -649,9 +649,9 @@ rule cleansegments:
     input:
         "{dir}/{l1}-{l2}.sentalg.xz"
     output:
-        "{dir}/{l1}-{l2}.segclean"
+        "{dir}/{l1}-{l2}.segclean.xz"
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s > {output}'
+        'xzcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz > {output}'
 
 #================================== POST PROCESSING ==================================#
 
@@ -660,15 +660,15 @@ rule cleansegments:
 
 rule bicleaner:
     input:
-        "{dir}/{l1}-{l2}.segclean"
+        "{dir}/{l1}-{l2}.segclean.xz"
     output:
-        "{dir}/{l1}-{l2}.bicleaner.scores"
+        "{dir}/{l1}-{l2}.bicleaner.scores.xz"
     shell:
-        'python3  {BITEXTOR}/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} {input} {output} {BICLEANER_CONFIG}'
+        'xzcat -f {input} | python3  {BITEXTOR}/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}'
 
 rule bicleanerfilter:
     input:
-        "{dir}/{l1}-{l2}.bicleaner.scores"
+        "{dir}/{l1}-{l2}.bicleaner.scores.xz"
     output:
         "{dir}/{l1}-{l2}.bicleaner.xz"
     shell:
@@ -676,7 +676,7 @@ rule bicleanerfilter:
 
 rule elrc:
     input:
-        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)
+        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)+".xz"
     output:
         "{dir}/{l1}-{l2}.elrc.xz"
     shell:
