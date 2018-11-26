@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.5.0)
 project(bleualign-cpp)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -18,7 +18,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -pthread -g -std=c++11")
 
 
 # Boost
-find_package(Boost REQUIRED COMPONENTS filesystem program_options system iostreams)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options system iostreams regex)
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif ()
