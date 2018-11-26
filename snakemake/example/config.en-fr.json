@@ -26,6 +26,7 @@
 
   "tmx": true,
   "nmt": true,
+  "smt": true,
   "httrack": true,
 
   "elrc": true,
