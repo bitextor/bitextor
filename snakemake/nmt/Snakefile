@@ -75,15 +75,16 @@ rule translate_only:
 
 rule translate_test:
     input:
-        model="{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
+        modelPrevious="{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
         ,
         test="processed_corpus/test/{name}.bpe." + "{lang}".format(lang=LANG1)
     output:
         "evaluation/{name}.output"
+    params:
+        model="{dir}/marian/{modelFile}".format(dir=modelDir, modelFile=config["marianModelFile"])
+
     shell:
-      	#"hostname;"
-        "cat {input.test} | {translateCmd} -c {input.model} > {output}"
-        #"cat {input.test} > {output}"
+        "cat {input.test} | {translateCmd} -c {params.model} > {output}"
 
 rule train_nmt:
     input:

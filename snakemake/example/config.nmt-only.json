@@ -13,6 +13,7 @@
                    " --valid-log valid.log --log train.log",
                    " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 "
                 ],
+  "marianModelFile": "model.npz.best-perplexity.npz.decoder.yml",
 
 
   "nmtTrainPrefix": ["/home/hieu/permanent/data/so-en/material-only/train.txt"],
