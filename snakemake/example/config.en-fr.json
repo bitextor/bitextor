@@ -20,8 +20,8 @@
   "minquality": "0",
   "maxlines": "5",
 
-  #"crawlTimeLimit": "5s",
-  "crawlTimeLimit": "900s",
+  "crawlTimeLimit": "5s",
+  #"crawlTimeLimit": "900s",
   #"crawlTimeLimit": "60m",
 
   "tmx": true,
@@ -39,6 +39,12 @@
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",
   "mosesDir": "/home/hieu/permanent/software/mosesdecoder",
+
+  "marianArgs": [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
+                   " --overwrite --keep-best --valid-metrics perplexity",
+                   " --valid-log valid.log --log train.log",
+                   " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 "
+                ],
 
   "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
   "nmtDevPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
