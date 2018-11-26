@@ -15,7 +15,7 @@ LANG1=config["lang1"]
 LANG2=config["lang2"]
 
 #NMT commands
-trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + config["marianArgs"]
+trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join(config["marianArgs"])
 
 translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1}".format(marian, config["gpuId"])
 
