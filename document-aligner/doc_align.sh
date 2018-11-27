@@ -7,7 +7,7 @@ BATCH_SIZE_COMMAND=""
 
 usage() { echo -e "Usage: $0 <[options]>\nOptions:\n\t-f <lett_file>\n\t-l <foreign_language>\n\t-t <translation_script>\n\t-w <working_directory>\n\t[-s <score_threshold>]\n\t[-b <batch_size>]\n\t[-d]\n\t[-v]\n" 1>&2; exit 1; }
 
-while getopts ":f:l:t:w:s:b:dv" arg; do
+while getopts ":f:l:t:w:s:b:p:dv" arg; do
     case "${arg}" in
         f)
             LETT_FILE=${OPTARG}
@@ -30,6 +30,9 @@ while getopts ":f:l:t:w:s:b:dv" arg; do
         d)
             BUILD_DOCS="true"
             ;;
+        p)
+            SENTENCE_SPLITTER="${OPTARG}"
+            ;;
         v)
             VERBOSE="| pv"
             ;;
@@ -40,11 +43,15 @@ while getopts ":f:l:t:w:s:b:dv" arg; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${LETT_FILE}" ] || [ -z "${WLANG}" ] || [ -z "${TRANSLATE_SCRIPT}" ] || [ -z "${WDIR}" ]; then
+if [ -z "${LETT_FILE}" ] || [ -z "${WLANG}" ] || [ -z "${TRANSLATE_SCRIPT}" ] || [ -z "${WDIR}" ] || [ -z "${SENTENCE_SPLITTER}" ]; then
     usage
 fi
 
 mydir=`dirname $0`
+
+COMPRESSION="xz"
+CSUFFIX="xz"
+
 
 check_required_files() {
   F_WDIR=${1}
@@ -62,22 +69,22 @@ check_required_files() {
 
   # Extracted
   langs_to_extract=""
-  if [ ! -f ${F_WDIR}/en.extracted.gz ]; then
+  if [ ! -f ${F_WDIR}/en.extracted.$CSUFFIX ]; then
     langs_to_extract="en,"$langs_to_extract
   else
-    >&2 echo "en.extracted.gz: FOUND"
+    >&2 echo "en.extracted.$CSUFFIX: FOUND"
   fi
-  if [ ! -f ${F_WDIR}/${F_FLANG}.extracted.gz ]; then
+  if [ ! -f ${F_WDIR}/${F_FLANG}.extracted.$CSUFFIX ]; then
     langs_to_extract="${F_FLANG},"$langs_to_extract
   else
-    >&2 echo "${F_FLANG}.extracted.gz: FOUND"
+    >&2 echo "${F_FLANG}.extracted.$CSUFFIX: FOUND"
   fi
   if [ ! -z ${langs_to_extract} ]; then
     >&2 echo "# Extracting ${langs_to_extract} from the LETT file"
     eval $LETT_PRINT_COMMAND | \
-      python3 ${mydir}/utils/extract_lett.py \
+      python3 ${mydir}/utils/extract_lett.py -x \
       --langs ${langs_to_extract} \
-      --splitter ${mydir}/utils/split-sentences.perl \
+      --splitter ${SENTENCE_SPLITTER} \
       --prune_type "words" \
       --prune 80 \
       --output_dir ${WDIR}
@@ -90,7 +97,7 @@ check_required_files() {
 check_required_files ${WDIR} ${LETT_FILE} ${WLANG}
 
 >&2 echo "# Translating ${WLANG} to English"
-${mydir}/translate_extracted.sh ${WDIR}/${WLANG}.extracted.gz "${TRANSLATE_SCRIPT}"
+$COMPRESSION -cd ${WDIR}/${WLANG}.extracted.$CSUFFIX | ${mydir}/translate_extracted.sh "${TRANSLATE_SCRIPT}" "${WDIR}/${WLANG}.extracted"
 
 if [ "${SCORE_THRESHOLD}" != "" ]; then
   SCORE_THRESHOLD_COMMAND="--threshold ${SCORE_THRESHOLD}"
@@ -102,8 +109,8 @@ fi
 
 >&2 echo "# Computing distances and matching"
 python3 ${mydir}/compute_matches.py \
-  --english ${WDIR}/en.extracted.gz \
-  --translated ${WDIR}/${WLANG}.extracted.translated.gz \
+  --english ${WDIR}/en.extracted.$CSUFFIX \
+  --translated ${WDIR}/${WLANG}.extracted.translated.$CSUFFIX \
   --output_matches ${WDIR}/en-${WLANG}.matches \
   ${SCORE_THRESHOLD_COMMAND} \
   ${BATCH_SIZE_COMMAND}

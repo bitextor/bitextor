@@ -1,10 +1,13 @@
-
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
 import gzip
 from contextlib import contextmanager
 
 
 @contextmanager
-def open_gzip_or_plain(file_path):
+def open_xz_or_gzip_or_plain(file_path):
 
     def decode_text(file_handler):
         for line in file_handler:
@@ -14,6 +17,9 @@ def open_gzip_or_plain(file_path):
     try:
         if file_path[-3:] == ".gz":
             f = gzip.open(file_path, 'rb')
+            yield decode_text(f)
+        elif file_path[-3:] == ".xz":
+            f = lzma.open(file_path, 'rb')
             yield decode_text(f)
         else:
             f = open(file_path, 'r')
@@ -40,7 +46,7 @@ def build_mappings(file_path_from, file_path_to, column=None, dem='\t'):
 
         return text
 
-    with open_gzip_or_plain(file_path_from) as f_from, open_gzip_or_plain(file_path_to) as f_to:
+    with open_xz_or_gzip_or_plain(file_path_from) as f_from, open_xz_or_gzip_or_plain(file_path_to) as f_to:
         line_from = next_or_next_in_column(f_from)
         line_to = next_or_next_in_column(f_to)
 
@@ -57,11 +63,11 @@ def build_mappings(file_path_from, file_path_to, column=None, dem='\t'):
 def check_lengths(file_path_from, file_path_to, throw=True):
     f1_lines = 0
     f2_lines = 0
-    with open_gzip_or_plain(file_path_from) as f:
+    with open_xz_or_gzip_or_plain(file_path_from) as f:
         for _ in f:
             f1_lines += 1
 
-    with open_gzip_or_plain(file_path_to) as f:
+    with open_xz_or_gzip_or_plain(file_path_to) as f:
         for _ in f:
             f2_lines += 1
 

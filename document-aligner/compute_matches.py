@@ -12,7 +12,7 @@ import numpy as np
 from scorer import CosineDistanceScorer, EnglishWordExtractor, _ngram_helper
 
 sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
-from utils.common import open_gzip_or_plain
+from utils.common import open_xz_or_gzip_or_plain
 
 def munge_file_path(filepath):
   if os.path.isfile(filepath):
@@ -32,7 +32,7 @@ def load_extracted(filepath):
     filepath = munge_file_path(filepath)
     #print("AFTER filepath", filepath)
     
-    with open_gzip_or_plain(filepath) as f:
+    with open_xz_or_gzip_or_plain(filepath) as f:
         documents = defaultdict(list)
 
         for line in f:

@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
 import argparse
 import base64
 import gzip
@@ -43,6 +48,8 @@ if __name__ == "__main__":
                         default="words", help="Prune sentences either by words or charaters", required=False)
     parser.add_argument("--check_lang", dest="check_lang", action='store_true',
                         help="Runs language identification on text segments and throws away those that do not match with the lang field", required=False)
+    parser.add_argument("-x", "--xz", dest="xz", action="store_true",
+                        help="Use xz as the compression tool")
 
     args = parser.parse_args()
 
@@ -51,9 +58,12 @@ if __name__ == "__main__":
     for l in langs_parse:
         if not l.strip():
             continue
-
-        lang_file[l] = gzip.open(os.path.join(
-            args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
+        if args.xz:
+            lang_file[l] = lzma.open(os.path.join(
+                args.output_dir, "{0}{1}.extracted.xz".format(args.output_prefix,l)), "wb")
+        else:
+            lang_file[l] = gzip.open(os.path.join(
+                args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
     for line in sys.stdin:
         line_split = line.strip().split("\t")

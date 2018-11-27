@@ -4,36 +4,37 @@ set -e
 set -u
 mydir=`dirname $0`
 
-FR_EXTRACTED=`basename ${1%.gz}`
-TRANSLATE_SCRIPT=${2}
-WDIR=`dirname ${1}`
+TRANSLATE_SCRIPT=${1}
+PREFFIX=${2}
 
+COMPRESSION="xz"
+CSUFFIX="xz"
 
 # Deduplicate input senteces
-zcat ${WDIR}/${FR_EXTRACTED}.gz | \
+cat /dev/stdin | \
   cut -d$'\t' -f 2 | \
   sort | uniq | \
-  gzip -c > ${WDIR}/${FR_EXTRACTED}.deduped.gz
+  $COMPRESSION -c > ${PREFFIX}.deduped.$CSUFFIX
 
 # Translate deduplicated to English
 >&2 echo "Translating the foreign text to English..."
-zcat ${WDIR}/${FR_EXTRACTED}.deduped.gz | \
+$COMPRESSION -cd ${PREFFIX}.deduped.$CSUFFIX | \
   eval ${TRANSLATE_SCRIPT} | \
-  gzip -c > ${WDIR}/${FR_EXTRACTED}.deduped.translated.gz
+  $COMPRESSION -c > ${PREFFIX}.deduped.translated.$CSUFFIX
 
 # Substitute original foreign text (before deduplication) with translated text
 >&2 echo "Substituting..."
-zcat ${WDIR}/${FR_EXTRACTED}.gz | \
-  python3 ${mydir}/substitute_translated.py --deduplicated ${WDIR}/${FR_EXTRACTED}.deduped.gz --translated ${WDIR}/${FR_EXTRACTED}.deduped.translated.gz | \
-  gzip -c > ${WDIR}/${FR_EXTRACTED}.translated.gz
+$COMPRESSION -cd ${PREFFIX}.$CSUFFIX | \
+  python3 ${mydir}/substitute_translated.py --deduplicated ${PREFFIX}.deduped.$CSUFFIX --translated ${PREFFIX}.deduped.translated.$CSUFFIX | \
+  $COMPRESSION -c > ${PREFFIX}.translated.$CSUFFIX
 >&2 echo "Done."
 
 # Clean
-rm ${WDIR}/${FR_EXTRACTED}.deduped.gz
-rm ${WDIR}/${FR_EXTRACTED}.deduped.translated.gz
+rm ${PREFFIX}.deduped.$CSUFFIX
+rm ${PREFFIX}.deduped.translated.$CSUFFIX
 
 # Check the number of lines
-if [ "$(zcat ${WDIR}/${FR_EXTRACTED}.gz | wc -l)" -eq "$(zcat ${WDIR}/${FR_EXTRACTED}.translated.gz | wc -l)" ];
+if [ "$($COMPRESSION -cd ${PREFFIX}.$CSUFFIX | wc -l)" -eq "$($COMPRESSION -cd ${PREFFIX}.translated.$CSUFFIX | wc -l)" ];
 then
   >&2 echo "Translation successfully finished."
 else
