@@ -26,6 +26,7 @@
 
   "tmx": true,
   "nmt": true,
+  "smt": true,
   "httrack": true,
 
   "elrc": true,
@@ -45,6 +46,7 @@
                    " --valid-log valid.log --log train.log",
                    " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 "
                 ],
+  "marianModelFile": "model.npz.best-perplexity.npz.decoder.yml",
 
   "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
   "nmtDevPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],

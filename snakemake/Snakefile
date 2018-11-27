@@ -152,7 +152,7 @@ if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
 
   if MT_COMMAND == "marek-nmt":
-      DOCALIGNEXT="marek"
+      DOCALIGNEXT="marek-nmt"
   else:
       DOCALIGNEXT="marek-customMT"
 else:
@@ -311,6 +311,10 @@ if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
+if "smt" in config and config["smt"]:
+    OUTPUT.append("{dir}/smt-dir/evaluation/report".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir-crawl/evaluation/report".format(dir=transient))
+
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
     OUTPUT.append("{dir}/{l1}-{l2}.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
@@ -320,6 +324,30 @@ else:
 rule all:
     input:
         expand("{target}", target=OUTPUT)
+
+#================================== SMT ======================================#
+
+rule train_smt_with_crawl_data:
+    input:
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+        ,
+        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+        ,
+        config = "{dir}/config.json".format(dir=transient)
+
+    output:
+        report = "{dir}/smt-dir-crawl/evaluation/report".format(dir=transient)
+    run:
+        print("HELLO WORLD again")
+
+rule train_smt_all:
+    input:
+        config = "{dir}/config.json".format(dir=transient)
+
+    output:
+        report = "{dir}/smt-dir/evaluation/report".format(dir=transient)
+    run:
+        print("HELLO WORLD")
 
 #================================== NMT ======================================#
 
@@ -581,7 +609,7 @@ rule aligndocumentsMarek:
         "{target}.lett.xz",
         "{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
-        '{target}.docalign.marek'
+        '{target}.docalign.marek-nmt'
     priority: 40
 
     shell:
