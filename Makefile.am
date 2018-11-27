@@ -50,6 +50,7 @@ install-smttools:
 	cp bicleaner/*.py $(prefix)/bin/.
 	cp document-aligner/*.sh $(prefix)/bin/.
 	cp document-aligner/*.py $(prefix)/bin/.
+	cp document-aligner/util/*.py $(prefix)/bin/.
 	cp -R document-aligner/utils $(prefix)/bin/.
 	touch $(prefix)/bin/__init__.py
 	chmod a+x $(prefix)/share/bitextor/zipporah/*
