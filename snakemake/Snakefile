@@ -426,6 +426,8 @@ rule train_smt_all:
         with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
             file.write("\n".join(lines))
 
+        cmd = "cd {transient}/smt-dir &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+        shell(cmd)
 
 #================================== NMT ======================================#
 
