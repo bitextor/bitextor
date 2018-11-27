@@ -614,7 +614,7 @@ rule aligndocumentsMarek:
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {permanent}/nmt-dir" -d -w {wildcards.target}.docalign > {output}'
+        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {permanent}/nmt-dir" -d -w {wildcards.target}.docalign -p {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
@@ -663,7 +663,7 @@ rule alignsegments_bleualign:
     output:
         '{name}.bleualign.segalign'
     shell:
-        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett.xz {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output}'
+        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett.xz {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output} {BITEXTOR}/preprocess/moses'
 
 rule concat_segs:
     input:
