@@ -523,4 +523,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile piped-tika/Makefile utils/Makefile model/Makefile zipporah/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile utils/Makefile model/Makefile zipporah/Makefile])
