@@ -363,6 +363,7 @@ rule train_smt_all:
         lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
         lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=config["mgiza"])
         lines[79] = "jobs = 10"
+        lines[310] = "training-options = \"-mgiza -mgiza-cpus 8\""
 
         # DELETES
         lines[30] = ""
