@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= zipporah utils piped-boilerpipe piped-tika model 
+SUBDIRS= zipporah utils piped-boilerpipe model 
 
 bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
@@ -13,7 +13,7 @@ bitextor_SOURCEFILES=bitextor.sh zipporah-classifier.sh bitextor-align-documents
             bitextor-buildTMX.sh bitextor-score-document-alignment.py bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py \
-            bitextor-buildTMX-dedup.py bitextor-buildTMX-dedupRAM.py bitextor-warc2tt.py bitextor-webdir2warc.sh
+            bitextor-buildTMX-dedup.py bitextor-buildTMX-dedupRAM.py bitextor-warc2tt.py bitextor-webdir2warc.sh bitextor-get-html-text.py
 
 bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
             bitextor-ett2lett bitextor-lett-language-detector bitextor-crawl bitextor-train-document-alignment bitextor-identifyMIME bitextor-dedup \
@@ -21,7 +21,7 @@ bin_SCRIPTS=bitextor zipporah-classifier bitextor-align-documents bitextor-align
             bitextor-ridx2filenames bitextor-buildTMX bitextor-score-document-alignment bitextor-elrc-filtering bitextor-dir2warc \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison \
-            bitextor-buildTMX-dedup bitextor-buildTMX-dedupRAM bitextor-warc2tt bitextor-webdir2warc
+            bitextor-buildTMX-dedup bitextor-buildTMX-dedupRAM bitextor-get-html-text bitextor-warc2tt bitextor-webdir2warc
             
 EXTRA_DIST= $(bitextor_SOURCEFILES) utils \
             model
@@ -87,6 +87,8 @@ bitextor-dir2warc: bitextor-dir2warc.py
 bitextor-dedup: bitextor-dedup.py
 
 bitextor-warc2tt: bitextor-warc2tt.py
+
+bitextor-get-html-text: bitextor-get-html-text.py
 
 bitextor-identifyMIME: bitextor-identifyMIME.py
 
