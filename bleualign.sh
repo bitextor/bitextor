@@ -93,7 +93,7 @@ rm -rf ${SEN_DIR}
 mkdir ${SEN_DIR}
 
 echo "# Running Bleualign"
-time ${mydir}/bleualign-cpp/build/bleualign_cpp \
+time ${mydir}/bleualign-cpp/bleualign_cpp \
 --text1 ${WDIR}/en.extracted.${CSUFFIX} \
 --text2 ${WDIR}/${WLANG}.extracted.${CSUFFIX} \
 --text2translated ${WDIR}/${WLANG}.extracted.translated.${CSUFFIX} \

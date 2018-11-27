@@ -692,7 +692,7 @@ rule bicleaner:
     output:
         "{dir}/{l1}-{l2}.bicleaner.scores.xz"
     shell:
-        'xzcat -f {input} | python3  {BITEXTOR}/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}'
+        'xzcat -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}'
 
 rule bicleanerfilter:
     input:
