@@ -352,13 +352,36 @@ rule train_smt_all:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
-        with open("{mosesDir}/scripts/ems/example/config.basic".format(mosesDir=config["mosesDir"]), "r") as file:
+        mosesDir = config["mosesDir"]
+
+        with open("{mosesDir}/scripts/ems/example/config.basic".format(mosesDir=mosesDir), "r") as file:
             lines = file.read().split("\n")
             print("lines", len(lines))
             #print("lines", lines)
 
         lines[8] = "working-dir = {transient}/smt-dir".format(transient=transient)
+        lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
+        lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=config["mgiza"])
+        lines[30] = ""
+        lines[33] = ""
+        lines[36] = ""
+        lines[39] = ""
+        lines[39] = ""
 
+        # corpus
+        lines[132] = lines[132] + " IGNORE"
+        lines[133] = lines[133] + " IGNORE"
+
+        # lm
+        lines[206] = lines[206] + " IGNORE"
+        lines[207] = lines[207] + " IGNORE"
+
+        # tuning
+        lines[522] = ""
+        lines[528] = ""
+
+        # eval
+        lines[680] = lines[680] + " IGNORE"
 
         with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
             file.write("\n".join(lines))

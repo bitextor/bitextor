@@ -64,6 +64,7 @@
   "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr",
   "nmtVocabSize": 30000,
 
+  "mgiza": "/home/hieu/permanent/software/mgiza",
 
 
 }
