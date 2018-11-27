@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 
 if [[ -z $TMPDIR ]]; then
   TMPDIR="/tmp"

@@ -31,9 +31,9 @@ It is worth noting that each of these steps can be run separately.
 
 Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. Also **maven** for some dependencies. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
 
-For these system libraries and tools we used apt because we are in a Debian-like environment and tested them in Ubuntu 14.04, 16.04 and 18.04. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+For these system libraries and tools we used apt because we are in a Debian-like environment and tested them in Ubuntu 14.04, 16.04 and 18.04. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip3 (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
-`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic libboost-all-dev maven`
+`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev libffi-dev`
 
 Most of the scripts in bitextor are written in Python 3 syntax. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
 
@@ -47,27 +47,27 @@ Some external Python libraries should also be installed before starting the inst
 - **keras**: Python package for implementing neural networks for deep learning.
 - **h5py**: Pythonic interface to the HDF5 binary data format.
 - **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
-using `pip install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
+using `pip3 install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
 - **iso-639**: Python package to convert between language names and ISO-639 codes
 
 Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
 - **bs4**: BeautifulSoup4 is a Python package for HTML/XML processing and cleaning
 - **html2txt**: text extractor from HTML, created by Aaron Swartz
-- **cld2**: Chromium language detector, by Google. Install through pip package `cld2-cffi`
+- **cld2**: Chromium language detector, by Google. Install through pip3 package `cld2-cffi`
 
-We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run (if `pip` points to `python2` installation, otherwise, use the `pip` version for that, sometimes named `pip2.7`):
+We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip3 (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run:
 
-`user@pc:~$ sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py ftfy`
+`user@pc:~$ sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py ftfy warc3-wet`
 
 To ensure you are using the minimum required versions of the needed libraries, if you didn't run the previous command, you should run:
 
-`user@pc:~$ sudo pip install -r requirements.txt`
+`user@pc:~$ sudo pip3 install -r requirements.txt`
 
 If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0), also do that if you are using an [AMD CPU and you are having errors when importing](https://github.com/tensorflow/tensorflow/issues/17411):
 
-`sudo pip install tensorflow==1.4.1`
+`sudo pip3 install tensorflow==1.4.1`
 
-Most of these pip packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
+Most of these pip3 packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
 
 
 ### Optional dependences
@@ -76,19 +76,6 @@ In case you want to use HTTrack instead of integrated Creepy crawler just:
 `sudo apt install httrack`
 
 In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
-
-For the alternative HTTrack to [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) process script named with `--jhu-lett`, some Python 2 dependences are needed:
-
-`sudo pip3 install html2text bs4`
-
-`sudo CFLAGS="-Wno-narrowing" pip3 install --upgrade cld2-cffi`
-
-```bash
-wget http://corpus.tools/raw-attachment/wiki/Downloads/chared-1.2.2.tar.gz
-tar xzvf chared-1.2.2.tar.gz
-cd chared-1.2.2/
-python3 setup.py install
-```
 
 For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
 

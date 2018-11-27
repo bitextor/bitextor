@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 
 OUTPUT=/dev/stdout
 

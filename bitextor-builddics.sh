@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 
 OUTPUT=/dev/stdout
 
@@ -99,7 +99,7 @@ if [ "$(file $SL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
 else
     cattool="cat"
 fi
-$cattool $SL_CORPUS | __PYTHON__ -c 'import sys
+$cattool $SL_CORPUS | python3 -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
@@ -110,7 +110,7 @@ if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
 else
     cattool="cat"
 fi
-$cattool $TL_CORPUS | __PYTHON__ -c 'import sys
+$cattool $TL_CORPUS | python3 -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
@@ -163,7 +163,7 @@ wait
 echo -e "${SL}\t${TL}" > $DIC
 
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
-__PYTHON__ -c '
+python3 -c '
 import sys
 
 

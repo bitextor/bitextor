@@ -1,4 +1,4 @@
-#!__ENV__ __PYTHON__
+#!/usr/bin/env python3
 
 #
 # 1. Output from bitextor-lett2idx is read and an IDX file is obtained with an index of all the words in both languages and the list of documents where they occur

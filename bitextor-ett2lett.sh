@@ -1,4 +1,4 @@
-#!__BASH__
+#!/bin/bash
 OUTPUT=/dev/stdout
 exit_program()
 {
@@ -39,4 +39,4 @@ case $# in
 esac
 
 cat $FILE | python3 "$(dirname "$0")"/bitextor-get-html-text -t | \
-$(dirname $0)/bitextor-lett-language-detector $langs
+"$(dirname "$0")"/bitextor-lett-language-detector $langs
