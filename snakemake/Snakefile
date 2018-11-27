@@ -388,22 +388,39 @@ rule train_smt_all:
         # ADD
         # eval
         lines.insert(708, "")
-        lines.insert(709, "[EVALUATION:test]")
-        lines.insert(710, "raw-input = blah")
-        lines.insert(711, "raw-reference = blah")
+
+        line = 709
+        for path in config["nmtTestPrefix"]:
+            name = os.path.basename(path)
+            lines.insert(line, "[EVALUATION:{name}]".format(name=name))
+            lines.insert(line + 1, "raw-input = {path}.{lang}".format(path=path, lang=LANG1))
+            lines.insert(line + 2, "raw-reference = {path}.{lang}".format(path=path, lang=LANG2))
+
+            line += 3
 
         # tuning
-        lines[523] = "raw-input = blah"
-        lines[529] = "raw-reference = blah"
+        lines[523] = "raw-input = {path}.{lang}".format(path=config["nmtDevPrefix"][0], lang=LANG1)
+        lines[529] = "raw-reference = {path}.{lang}".format(path=config["nmtDevPrefix"][0], lang=LANG2)
 
         # lm
-        lines.insert(215, "[LM:train]")
-        lines.insert(216, "raw-corpus = blah")
+        line = 215
+        for path in config["nmtTrainPrefix"]:
+            name = os.path.basename(path)
+            lines.insert(line, "[LM:{name}]".format(name=name))
+            lines.insert(line + 1, "raw-corpus = {path}.{lang}".format(path=path, lang=LANG2))
+
+            line += 2
 
         # corpus
         lines.insert(137, "")
-        lines.insert(138, "[CORPUS:train]")
-        lines.insert(139, "raw-stem = blah")
+
+        line = 138
+        for path in config["nmtTrainPrefix"]:
+            name = os.path.basename(path)
+            lines.insert(line, "[CORPUS:{name}]".format(name=name))
+            lines.insert(line + 1, "raw-stem = {path}".format(path=path))
+
+            line += 2
 
 
         with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
