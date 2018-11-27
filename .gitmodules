@@ -22,6 +22,3 @@
 [submodule "standoff"]
 	path = standoff
 	url = https://github.com/Lesbinary/standoff
-[submodule "bleualign-cpp/third_party/preprocess"]
-	path = bleualign-cpp/third_party/preprocess
-	url = https://github.com/kpu/preprocess
