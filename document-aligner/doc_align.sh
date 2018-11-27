@@ -5,7 +5,7 @@ set -e
 SCORE_THRESHOLD_COMMAND=""
 BATCH_SIZE_COMMAND=""
 
-usage() { echo -e "Usage: $0 <[options]>\nOptions:\n\t-f <lett_file>\n\t-l <foreign_language>\n\t-t <translation_script>\n\t-w <working_directory>\n\t[-s <score_threshold>]\n\t[-b <batch_size>]\n\t[-d]\n\t[-v]\n" 1>&2; exit 1; }
+usage() { echo -e "Usage: $0 <[options]>\nOptions:\n\t-f <lett_file>\n\t-l <foreign_language>\n\t-t <translation_script>\n\t-w <working_directory>\n\t[-s <score_threshold>]\n\t[-b <batch_size>]\n\t[-p <segment_splitter>]\n\t[-d]\n\t[-v]\n" 1>&2; exit 1; }
 
 while getopts ":f:l:t:w:s:b:p:dv" arg; do
     case "${arg}" in

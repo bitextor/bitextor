@@ -9,8 +9,8 @@ if [ -z ${7} ]; then MOSES_DIR="modules/bleualign-cpp/third_party/preprocess/mos
 set -e
 set -u
 
-COMPRESSION="gzip"
-CSUFFIX="gz"
+COMPRESSION="xz"
+CSUFFIX="xz"
 
 LETT_FILE=${1}
 WLANG=${2}
@@ -65,7 +65,7 @@ check_required_files() {
 
   if [ ! -z ${langs_to_extract} ]; then
     echo "# Extracting ${langs_to_extract} from the LETT file $F_LETT_FILE"
-    cat ${F_LETT_FILE} | \
+    $COMPRESSION -cd ${F_LETT_FILE} | \
       python3 ${mydir}/bin/utils/extract_lett.py \
       --langs ${langs_to_extract} \
       --splitter ${MOSES_DIR}/ems/support/split-sentences.perl \
