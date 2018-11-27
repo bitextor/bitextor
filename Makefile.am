@@ -71,7 +71,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign install-standoff
 
-bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compile-kenlm
+bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compile-kenlm compile-bleualign
 
 nltk_data:
 	python3 install_nltk_data.py
