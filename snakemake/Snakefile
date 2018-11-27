@@ -362,6 +362,8 @@ rule train_smt_all:
         lines[8] = "working-dir = {transient}/smt-dir".format(transient=transient)
         lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
         lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=config["mgiza"])
+
+        # DELETES
         lines[30] = ""
         lines[33] = ""
         lines[36] = ""
@@ -382,6 +384,27 @@ rule train_smt_all:
 
         # eval
         lines[680] = lines[680] + " IGNORE"
+
+        # ADD
+        # eval
+        lines.insert(708, "")
+        lines.insert(709, "[EVALUATION:test]")
+        lines.insert(710, "raw-input = blah")
+        lines.insert(711, "raw-reference = blah")
+
+        # tuning
+        lines[523] = "raw-input = blah"
+        lines[529] = "raw-reference = blah"
+
+        # lm
+        lines.insert(215, "[LM:train]")
+        lines.insert(216, "raw-corpus = blah")
+
+        # corpus
+        lines.insert(137, "")
+        lines.insert(138, "[CORPUS:train]")
+        lines.insert(139, "raw-stem = blah")
+
 
         with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
             file.write("\n".join(lines))
