@@ -349,6 +349,21 @@ rule train_smt_all:
     run:
         print("HELLO WORLD")
 
+        cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
+        shell(cmd)
+
+        with open("{mosesDir}/scripts/ems/example/config.basic".format(mosesDir=config["mosesDir"]), "r") as file:
+            lines = file.read().split("\n")
+            print("lines", len(lines))
+            #print("lines", lines)
+
+        lines[8] = "working-dir = {transient}/smt-dir".format(transient=transient)
+
+
+        with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
+            file.write("\n".join(lines))
+
+
 #================================== NMT ======================================#
 
 rule train_nmt_with_crawl_data:
