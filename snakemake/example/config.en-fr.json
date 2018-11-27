@@ -42,9 +42,11 @@
   "mosesDir": "/home/hieu/permanent/software/mosesdecoder",
 
   "marianArgs": [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
-                   " --overwrite --keep-best --valid-metrics perplexity",
-                   " --valid-log valid.log --log train.log",
-                   " --dropout-rnn 0.1 --dropout-src 0.1 --dropout-trg 0.1 "
+                 " --overwrite --keep-best --valid-metrics perplexity",
+                 " --valid-log valid.log --log train.log",
+                 " --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2 ",
+                 "--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings",
+                 "--valid-metrics bleu"
                 ],
 #  "marianModelFile": "model.npz.decoder.yml",
 #  "marianModelFile": "model.npz.best-perplexity.npz.decoder.yml",
