@@ -385,6 +385,11 @@ rule train_smt_all:
         lines[528] = ""
 
         # eval
+        lines[640] = "#" + lines[640]
+        lines[641] = "#" + lines[641]
+        lines[642] = 'multi-bleu = "$moses-script-dir/generic/multi-bleu.perl -lc"'
+        lines[643] = 'multi-bleu-c = $moses-script-dir/generic/multi-bleu.perl'
+
         lines[680] = lines[680] + " IGNORE"
 
         # ADD
