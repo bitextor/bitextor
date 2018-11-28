@@ -711,13 +711,12 @@ rule aligndocumentsMarek:
 
 rule aligndocumentsMarekCustomMT:
     input:
-        "{target}.lett.xz",
-
+        lett="{target}.lett.xz",
+        matches="{target}.docalign/"+"{l1}-{l2}.matches".format(l1=LANG1,l2=LANG2)
     output:
         '{target}.docalign.marek-customMT'
     shell:
-        'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{MT_COMMAND}" -d -w {wildcards.target}.docalign -p {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl > {output[0]}'
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsBitextor:
     input:
@@ -831,3 +830,52 @@ rule mt_parallel_data:
          "xzcat -f {input} | cut -f 3,4 | sort | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
+
+################# DOCALIGN RULES
+
+rule docaling_extracted:
+    input:
+        "{prefix}.lett.xz"
+    output:
+        "{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+    shell:
+        'mkdir -p {wildcards.prefix}.docalign; '
+        'xzcat -f {input} | {BITEXTOR}/bin/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
+
+rule docaling_deduped:
+    input:
+        "{target}.extracted.xz"
+    output:
+        "{target}.extracted.deduped.xz"
+    shell:
+        "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
+
+rule docaling_translated:
+    input:
+        "{target}.extracted.deduped.xz",
+    output:
+        "{target}.extracted.deduped.translated.xz"
+    shell:
+        'xzcat {input} | {MT_COMMAND} | xz -c > {output}'
+
+
+rule docaling_substitute_translated:
+    input:
+        extracted="{target}.extracted.xz",
+        deduped="{target}.extracted.deduped.xz",
+        translated="{target}.extracted.deduped.translated.xz"
+    output:
+        "{target}.extracted.translated.xz"
+    shell:
+        'xzcat {input.extracted} | python3 {BITEXTOR}/bin/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
+
+rule docaling_matches:
+    input:
+        extracted="{dir}/"+"{l1}.extracted.xz".format(l1=LANG1),
+        translated="{dir}/"+"{l2}.extracted.translated.xz".format(l2=LANG2)
+    output:
+        "{dir}/"+"{l1}-{l2}.matches".format(l1=LANG1,l2=LANG2)
+    shell:
+        "python3 {BITEXTOR}/bin/compute_matches.py --english {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
+
