@@ -360,6 +360,10 @@ rule train_smt_all:
             #print("lines", lines)
 
         lines[8] = "working-dir = {transient}/smt-dir".format(transient=transient)
+        lines[11] = "input-extension = " + LANG1
+        lines[12] = "output-extension = " + LANG2
+        lines[13] = "#" + lines[13]
+
         lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
         lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=config["mgiza"])
         lines[79] = "jobs = 10"
@@ -385,6 +389,13 @@ rule train_smt_all:
         lines[528] = ""
 
         # eval
+        lines[640] = "#" + lines[640]
+        lines[641] = "#" + lines[641]
+        lines[642] = 'multi-bleu = "$moses-script-dir/generic/multi-bleu.perl -lc"'
+        lines[643] = 'multi-bleu-c = $moses-script-dir/generic/multi-bleu.perl'
+        lines[662] = "#" + lines[662]
+        lines[668] = "#" + lines[668]
+
         lines[680] = lines[680] + " IGNORE"
 
         # ADD
