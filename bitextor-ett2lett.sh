@@ -38,5 +38,5 @@ case $# in
     ;;
 esac
 
-cat $FILE | java -jar "$(dirname "$0")"/share/java/piped-tika.jar -t 2> /dev/null | \
+cat $FILE | python3 "$(dirname "$0")"/bitextor-get-html-text.py -t | \
 "$(dirname "$0")"/bitextor-lett-language-detector.py $langs
