@@ -11,10 +11,10 @@
 
   "langstatExcludeDomains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
   "temp": "/tmp",
-  "permanentDir": "/home/hieu/permanent/en-so",
-  "transientDir": "/home/hieu/transient/en-so",
-  "lang1": "en",
-  "lang2": "so",
+  "permanentDir": "/home/hieu/permanent/so-en",
+  "transientDir": "/home/hieu/transient/so-en",
+  "lang1": "so",
+  "lang2": "en",
   "nltk": "y",
   #"dic": "/home/hieu/permanent/software/bitextor-data/dics/en-fr.dic",
   "minquality": "0",
@@ -53,9 +53,9 @@
   "nmtTestPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt", "/home/hieu/permanent/data/so-en/material-only/test.txt"],
 
   "gpuId": "0",
-  "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
-  "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
-  "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l so",
+  "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
+  "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
+  "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en",
   "nmtVocabSize": 30000,
 
 
