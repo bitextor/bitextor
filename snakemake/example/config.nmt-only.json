@@ -1,8 +1,8 @@
 {
   "permanentDir": ".",
 
-  "lang1": "en",
-  "lang2": "so",
+  "lang1": "so",
+  "lang2": "en",
     
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",
@@ -23,9 +23,9 @@
   "nmtDevPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt"],
   "nmtTestPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt", "/home/hieu/permanent/data/so-en/material-only/test.txt"],
 
-  "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
-  "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
-  "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l so",
+  "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
+  "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
+  "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en",
   "nmtVocabSize": 30000,
   "gpuId": "0",
     
