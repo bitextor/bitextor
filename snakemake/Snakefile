@@ -847,7 +847,7 @@ rule docaling_deduped:
     input:
         "{target}.extracted.xz"
     output:
-        "{target}.extracted.deduped.xz"
+        temp("{target}.extracted.deduped.xz")
     shell:
         "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
 
@@ -855,9 +855,10 @@ rule docaling_translated:
     input:
         "{target}.extracted.deduped.xz",
     output:
-        "{target}.extracted.deduped.translated.xz"
+        temp("{target}.extracted.deduped.translated.xz")
     shell:
-        'xzcat {input} | {MT_COMMAND} | xz -c > {output}'
+        'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
+        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_substitute_translated:
