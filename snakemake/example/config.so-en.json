@@ -48,9 +48,9 @@
 #  "marianModelFile": "model.npz.best-perplexity.npz.decoder.yml",
   "marianModelFile": "model.npz.best-bleu.npz.decoder.yml",
 
-  "nmtTrainPrefix": ["/home/hieu/permanent/data/so-en/material-only/train.txt"],
-  "nmtDevPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt"],
-  "nmtTestPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt", "/home/hieu/permanent/data/so-en/material-only/test.txt"],
+  "initCorpusTrainPrefix": ["/home/hieu/permanent/data/so-en/material-only/train.txt"],
+  "initCorpusDevPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt"],
+  "initCorpusTestPrefix": ["/home/hieu/permanent/data/so-en/material-only/dev.txt", "/home/hieu/permanent/data/so-en/material-only/test.txt"],
 
   "gpuId": "0",
   "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
