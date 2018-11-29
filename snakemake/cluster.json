@@ -4,7 +4,7 @@
         "gres": ""
     },
 
-    "aligndocumentsMarek" :
+    "docaling_translated" :
     {
         "gres": "--gres gpu:tesla:1"
     },
