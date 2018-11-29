@@ -357,6 +357,7 @@ def createMosesEMSConfig(mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes
         line += 3
 
     # tuning
+    assert(len(devPrefix) == 1)
     lines[523] = "raw-input = {path}.{lang}".format(path=devPrefix[0], lang=LANG1)
     lines[529] = "raw-reference = {path}.{lang}".format(path=devPrefix[0], lang=LANG2)
 
