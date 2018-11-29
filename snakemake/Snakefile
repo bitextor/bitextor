@@ -40,6 +40,7 @@ def open_gzip_or_plain(file_path):
             yield f
 
     except Exception as ex:
+        sys.stderr.write(str(ex)+"\n")
         raise Exception("Error occured while loading a file {}".format(file_path))
 
     finally:
@@ -777,17 +778,17 @@ rule docaling_substitute_translated:
 
 rule docaling_matches:
     input:
-        extracted="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz"
+        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz",
+        l2="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2)
     output:
-        "{dir}/"+"{l2}-{l1}".format(l2=LANG2,l1=LANG1)+".{mttype}.matches"
+        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "python3 {BITEXTOR}/document-aligner/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 rule aligndocumentsMarek:
     input:
         lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT),
+        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
         '{target}.docalign.marek-nmt'
@@ -799,7 +800,7 @@ rule aligndocumentsMarek:
 rule aligndocumentsMarekCustomMT:
     input:
         lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT)
+        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
         '{target}.docalign.marek-customMT'
     shell:
@@ -929,9 +930,9 @@ rule bleualign:
         extracted_l1="{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         extracted_l2="{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
         translated="{prefix}.docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{prefix}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT)
+        matches="{prefix}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
         "{prefix}.bleualign/align.info.xz"
     shell:
         "mkdir -p {wildcards.prefix}.bleualign; "
-        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l2} --text2 {input.extracted_l1} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
+        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
