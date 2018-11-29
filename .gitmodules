@@ -10,9 +10,6 @@
 [submodule "bicleaner"]
 	path = bicleaner
 	url = https://github.com/bitextor/bicleaner
-[submodule "zipporah/zipporah"]
-	path = zipporah/zipporah
-	url = https://github.com/hainan-xv/zipporah
 [submodule "preprocess"]
 	path = preprocess
 	url = https://github.com/kpu/preprocess

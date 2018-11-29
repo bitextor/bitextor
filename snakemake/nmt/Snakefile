@@ -24,9 +24,10 @@ tokenizer_l1= config["LANG1Tokenizer"]
 tokenizer_l2= config["LANG2Tokenizer"]
 
 #Input data prefixes
-trainPath=config["nmtTrainPrefix"]
-devPath=config["nmtDevPrefix"]
-testPath=config["nmtTestPrefix"]
+trainPrefixes=config["initCorpusTrainPrefix"]
+devPrefix=config["initCorpusDevPrefix"]
+testPrefixes=config["initCorpusTestPrefix"]
+assert(len(devPrefix) == 1)
 
 ############################################# EVALUATION #############################################################
 
@@ -38,7 +39,7 @@ def allTestNames(dataset):
 
 rule report:
     input:
-        expand("evaluation/{name}.bleu", name=allTestNames(testPath))
+        expand("evaluation/{name}.bleu", name=allTestNames(testPrefixes))
     output:
         "evaluation/report"
     run:
@@ -239,9 +240,9 @@ rule learn_bpe:
 
 rule prepare_traindata:
     input:
-         l1=expand("{dataset}.{lang}", dataset=trainPath, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=trainPrefixes, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=trainPath, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=trainPrefixes, lang=LANG2)
     output:
          l1="processed_corpus/train.{lang}".format(lang=LANG1)
          ,
@@ -251,9 +252,9 @@ rule prepare_traindata:
 
 rule prepare_devdata:
     input: 
-         l1=expand("{dataset}.{lang}", dataset=devPath, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=devPrefix, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=devPath, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=devPrefix, lang=LANG2)
     output: 
          l1="processed_corpus/dev.{lang}".format(lang=LANG1)
          ,
@@ -263,13 +264,13 @@ rule prepare_devdata:
 
 rule prepare_test:
     input:
-         l1=expand("{dataset}.{lang}", dataset=testPath, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=testPrefixes, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=testPath, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=testPrefixes, lang=LANG2)
     output:
-         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPath), lang=LANG1)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPrefixes), lang=LANG1)
          ,
-         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPath), lang=LANG2)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPrefixes), lang=LANG2)
     shell:
          "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
 
