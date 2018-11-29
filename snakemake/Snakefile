@@ -430,7 +430,7 @@ rule train_smt_with_crawl_data:
         config = "{dir}/config.json".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir-crawl/evaluation/report".format(dir=transient)
+        report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
     run:
         print("HELLO WORLD again")
         cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
@@ -456,7 +456,7 @@ rule train_smt_all:
         config = "{dir}/config.json".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir/evaluation/report".format(dir=transient)
+        report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
     run:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
