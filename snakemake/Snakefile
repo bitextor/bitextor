@@ -317,7 +317,10 @@ if "smt" in config and config["smt"]:
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
-    OUTPUT.append("{dir}/{l1}-{l2}.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    if "deduped" in config and config["deduped"]:
+        OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    else:
+        OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 
@@ -879,15 +882,23 @@ rule sents:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
-        "cp {input} {output}"
+        "xzcat {input} | xz > {output}"
 
 rule tmx:
     input:
         expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
-        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.tmx.xz"
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
         "xzcat -f {input} | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
+
+rule deduped_tmx:
+    input:
+        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+    output:
+        "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
+    shell:
+        "xzcat -f {input} | LC_ALL=C sort -k3 -k4 --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
 
 rule mt_parallel_data:
     input:

@@ -12,17 +12,13 @@ import argparse
 import time
 import locale
 import re
-from sets import Set
 from xml.sax.saxutils import escape
-
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 
 def printTU(columns, fieldsdict, urls1, urls2):
   print("   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">")
   infoTag=[]
   if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
-    print("    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>")
+    print("    <prop type=\"score-aligner\">"+fieldsdict['hunalign']+"</prop>")
   if 'zipporah' in fieldsdict and fieldsdict['zipporah'] != "":
     print("    <prop type=\"score-zipporah\">"+fieldsdict['zipporah']+"</prop>")
   if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
@@ -43,16 +39,16 @@ def printTU(columns, fieldsdict, urls1, urls2):
   print("    <tuv xml:lang=\""+options.lang1+"\">")
   for url in urls1:
     print("     <prop type=\"source-document\">"+url.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>")
-  print("     <seg>"+fieldsdict['seg1'].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
+  print("     <seg>"+fieldsdict['seg1'].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
   if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"])<int(options.mint):
     infoTagSL.append("very short segments, shorter than "+str(options.mint))
   if len(infoTagSL) > 0:
     print("    <prop type=\"info\">"+"|".join(infoTagSL)+"</prop>")
   print("    </tuv>")
   print("    <tuv xml:lang=\""+options.lang2+"\">")
-  for url in urls1:
+  for url in urls2:
     print("     <prop type=\"source-document\">"+url.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</prop>")
-  print("     <seg>"+fieldsdict["seg2"].decode("utf-8").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
+  print("     <seg>"+fieldsdict["seg2"].replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&apos;")+"</seg>")
   if "numTokensTL" in fieldsdict and fieldsdict["numTokensTL"] != "" and int(fieldsdict["numTokensTL"])<int(options.mint):
     infoTagTL.append("very short segments, shorter than "+str(options.mint))
   if len(infoTagTL) > 0:
@@ -102,8 +98,8 @@ for field,column in zip(prevfields,columns):
 
 prevfieldsdict=fieldsdict
 previd = fieldsdict['seg1']+"\t"+fieldsdict['seg2']
-urls1 = Set()
-urls2 = Set()
+urls1 = set()
+urls2 = set()
 urls1.add(fieldsdict['url1'])
 urls2.add(fieldsdict['url2'])
 for line in reader:
@@ -121,8 +117,8 @@ for line in reader:
   if curid != previd:
     printTU(columns, prevfieldsdict, urls1, urls2) 
     prevfieldsdict=fieldsdict
-    urls1=Set()
-    urls2=Set()
+    urls1=set()
+    urls2=set()
   urls1.add(fieldsdict['url1'])
   urls2.add(fieldsdict['url2'])
 
