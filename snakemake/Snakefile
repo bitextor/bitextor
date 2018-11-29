@@ -748,7 +748,7 @@ rule docaling_translated:
     priority: 40
 
     shell:
-        'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
+        'xzcat {input} | {BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
         'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
