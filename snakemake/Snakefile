@@ -749,7 +749,7 @@ rule docaling_translated:
 
     shell:
         'xzcat {input} | {BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
-        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_custom_translated:
@@ -759,7 +759,7 @@ rule docaling_custom_translated:
         temp("{target}.marek-customMT.extracted.deduped.translated.xz")
     shell:
         'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
-        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_substitute_translated:
