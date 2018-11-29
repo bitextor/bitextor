@@ -615,7 +615,7 @@ rule lettr2idx:
 
 
 
-#================================== DOCUMENT ALIGNMENT ==================================#
+#================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 
 rule idx2ridx_l1tol2:
     input:
@@ -697,28 +697,6 @@ rule urlsoverlap2rank:
     shell:
         'xzcat -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | xz > {output}'
 
-rule aligndocumentsMarek:
-    input:
-        lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
-    output:
-        '{target}.docalign.marek-nmt'
-    priority: 40
-
-    shell:
-        'mkdir -p {wildcards.target}.docalign; '
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
-
-rule aligndocumentsMarekCustomMT:
-    input:
-        lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
-    output:
-        '{target}.docalign.marek-customMT'
-    shell:
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
-
 rule aligndocumentsBitextor:
     input:
         '{target}.1.rank.xz',
@@ -729,6 +707,94 @@ rule aligndocumentsBitextor:
     shell:
         '{BITEXTOR}/bitextor-align-documents.py -l {input[2]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
 
+
+
+################# MT-BASED DOCUMENT ALIGNMENT #################
+
+rule docaling_extracted:
+    input:
+        "{prefix}.lett.xz"
+    output:
+        "{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+    shell:
+        'mkdir -p {wildcards.prefix}.docalign; '
+        'xzcat -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
+
+rule docaling_deduped:
+    input:
+        "{target}/{lang}.extracted.xz"
+    output:
+        temp("{target}/{lang}.extracted.deduped.xz")
+    shell:
+        "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
+
+rule docaling_translated:
+    input:
+        "{dir}/{prefix}.extracted.deduped.xz",
+    output:
+        temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
+
+    priority: 40
+
+    shell:
+        'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
+        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+
+
+rule docaling_custom_translated:
+    input:
+        "{target}.extracted.deduped.xz",
+    output:
+        temp("{target}.marek-customMT.extracted.deduped.translated.xz")
+    shell:
+        'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
+        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+
+
+rule docaling_substitute_translated:
+    input:
+        extracted="{target}.extracted.xz",
+        deduped="{target}.extracted.deduped.xz",
+        translated="{target}.{mttype}.extracted.deduped.translated.xz"
+    output:
+        "{target}.{mttype}.extracted.translated.xz"
+    shell:
+        'xzcat {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
+
+rule docaling_matches:
+    input:
+        extracted="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2),
+        translated="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz"
+    output:
+        "{dir}/"+"{l2}-{l1}".format(l2=LANG2,l1=LANG1)+".{mttype}.matches"
+    shell:
+        "python3 {BITEXTOR}/document-aligner/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
+
+rule aligndocumentsMarek:
+    input:
+        lett="{target}.lett.xz",
+        matches="{target}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT),
+        report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
+    output:
+        '{target}.docalign.marek-nmt'
+
+    shell:
+        'mkdir -p {wildcards.target}.docalign; '
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+
+rule aligndocumentsMarekCustomMT:
+    input:
+        lett="{target}.lett.xz",
+        matches="{target}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT)
+    output:
+        '{target}.docalign.marek-customMT'
+    shell:
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+
+
+#================================== SEGMENT ALIGNMENT ==================================#
+
 rule hunaligndic:
     input:
         expand("{dic}", dic=DIC)
@@ -736,10 +802,6 @@ rule hunaligndic:
         '{dir}/hunalign_dic'.format(dir=transient)
     shell:
         'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
-
-
-
-#================================== SEGMENT ALIGNMENT ==================================#
 
 rule alignsegments_hunalign:
     input:
@@ -766,19 +828,19 @@ rule alignsegments_bleualign:
                         for line in sentFile:
                             algFile.write(urls+"\t"+line)
 
-rule concat_segs:
-    input:
-        expand("{{dir}}/{webdomain}.{segaligner}.segalign.xz", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
-    output:
-        "{dir}/{l1}-{l2}.sentalg.xz"
-    shell:
-        "xzcat {input} | xz > {output}"
+#rule concat_segs:
+#    input:
+#        expand("{{dir}}/{webdomain}.{segaligner}.segalign.xz", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
+#    output:
+#        "{dir}/{l1}-{l2}.sentalg.xz"
+#    shell:
+#        "xzcat {input} | xz > {output}"
 
 rule cleansegments:
     input:
-        "{dir}/{l1}-{l2}.sentalg.xz"
+        "{target}.segalign.xz"
     output:
-        "{dir}/{l1}-{l2}.segclean.xz"
+        "{target}.segclean.xz"
     shell:
         'xzcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz > {output}'
 
@@ -789,40 +851,39 @@ rule cleansegments:
 
 rule bicleaner:
     input:
-        "{dir}/{l1}-{l2}.segclean.xz"
+        "{target}.segclean.xz"
     output:
-        "{dir}/{l1}-{l2}.bicleaner.scores.xz"
+        "{target}.bicleaner.scores.xz"
     shell:
         'xzcat -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}'
 
 rule bicleanerfilter:
     input:
-        "{dir}/{l1}-{l2}.bicleaner.scores.xz"
+        "{target}.bicleaner.scores.xz"
     output:
-        "{dir}/{l1}-{l2}.bicleaner.xz"
+        "{target}.bicleaner.xz"
     shell:
         'xzcat -f {input} | {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz > {output}'
 
 rule elrc:
     input:
-        "{dir}/{l1}-{l2}."+"{extension}".format(extension=BICLEANER)+".xz"
+        "{target}."+"{extension}".format(extension=BICLEANER)+".xz"
     output:
-        "{dir}/{l1}-{l2}.elrc.xz"
+        "{target}.elrc.xz"
     shell:
         'xzcat -f {input} | {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | xz > {output}'
 
 rule sents:
     input:
-        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)+".xz"
+        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
         "cp {input} {output}"
 
-
 rule tmx:
     input:
-        "{dir}".format(dir=config["transientDir"])+"/{l1}-{l2}."+"{ext}".format(ext=ELRCSCORES)+".xz"
+        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.tmx.xz"
     shell:
@@ -840,75 +901,16 @@ rule mt_parallel_data:
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
-################# DOCALIGN RULES #################
-
-rule docaling_extracted:
-    input:
-        "{prefix}.lett.xz"
-    output:
-        "{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
-    shell:
-        'mkdir -p {wildcards.prefix}.docalign; '
-        'xzcat -f {input} | {BITEXTOR}/bin/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
-
-rule docaling_deduped:
-    input:
-        "{target}/{lang}.extracted.xz"
-    output:
-        temp("{target}/{lang}.extracted.deduped.xz")
-    shell:
-        "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
-
-rule docaling_translated:
-    input:
-        "{dir}/{prefix}.extracted.deduped.xz",
-    output:
-        temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
-    shell:
-        'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
-        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
-
-
-rule docaling_custom_translated:
-    input:
-        "{target}.extracted.deduped.xz",
-    output:
-        temp("{target}.marek-customMT.extracted.deduped.translated.xz")
-    shell:
-        'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
-        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
-
-
-rule docaling_substitute_translated:
-    input:
-        extracted="{target}.extracted.xz",
-        deduped="{target}.extracted.deduped.xz",
-        translated="{target}.{mttype}.extracted.deduped.translated.xz"
-    output:
-        "{target}.{mttype}.extracted.translated.xz"
-    shell:
-        'xzcat {input.extracted} | python3 {BITEXTOR}/bin/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
-
-rule docaling_matches:
-    input:
-        extracted="{dir}/"+"{l1}.extracted.xz".format(l1=LANG1),
-        translated="{dir}/"+"{l2}".format(l2=LANG2)+".{mttype}.extracted.translated.xz"
-    output:
-        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
-    shell:
-        "python3 {BITEXTOR}/bin/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
-
 ################# BLEUALIGN RULES #################
 
 rule bleualign:
     input:
         extracted_l1="{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         extracted_l2="{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{prefix}.docalign/"+"{l2}.{mttype}.extracted.translated.xz".format(l2=LANG2,mttype=DOCALIGNEXT),
-        matches="{prefix}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        translated="{prefix}.docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
+        matches="{prefix}.docalign/"+"{l2}-{l1}.{mttype}.matches".format(l2=LANG2,l1=LANG1,mttype=DOCALIGNEXT)
     output:
         "{prefix}.bleualign/align.info.xz"
     shell:
         "mkdir -p {wildcards.prefix}.bleualign; "
-        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
+        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l2} --text2 {input.extracted_l1} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"

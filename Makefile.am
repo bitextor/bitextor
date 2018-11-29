@@ -46,10 +46,6 @@ compile-bleualign:
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
-	cp textsanitizer.py $(prefix)/bin/.
-	cp bicleaner/*.py $(prefix)/bin/.
-	cp document-aligner/*.py $(prefix)/bin/.
-	cp -R document-aligner/utils $(prefix)/bin/.
 	touch $(prefix)/bin/__init__.py
 	cp -R preprocess/moses $(prefix)/share/moses
 	cp preprocess/bin/truecase $(prefix)/bin/.
