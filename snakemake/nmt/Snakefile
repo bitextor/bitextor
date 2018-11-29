@@ -24,9 +24,9 @@ tokenizer_l1= config["LANG1Tokenizer"]
 tokenizer_l2= config["LANG2Tokenizer"]
 
 #Input data prefixes
-trainPath=config["nmtTrainPrefix"]
-devPath=config["nmtDevPrefix"]
-testPath=config["nmtTestPrefix"]
+trainPath=config["initCorpusTrainPrefix"]
+devPath=config["initCorpusDevPrefix"]
+testPath=config["initCorpusTestPrefix"]
 
 ############################################# EVALUATION #############################################################
 

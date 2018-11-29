@@ -444,9 +444,9 @@ rule train_smt_all:
         mosesDir = config["mosesDir"]
 
         createMosesEMSConfig(mosesDir, config["mgiza"],
-                            config["nmtTrainPrefix"],
-                            config["nmtDevPrefix"],
-                            config["nmtTestPrefix"])
+                            config["initCorpusTrainPrefix"],
+                            config["initCorpusDevPrefix"],
+                            config["initCorpusTestPrefix"])
 
         cmd = "cd {transient}/smt-dir &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
         shell(cmd)
@@ -466,14 +466,14 @@ rule train_nmt_with_crawl_data:
 
     priority: 50
     run:
-        trainData = config["nmtTrainPrefix"]
+        trainData = config["initCorpusTrainPrefix"]
 
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
         cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {input.config} -k -j3" \
             + " --directory {transient}/nmt-dir-crawl" \
-            + " --config nmtTrainPrefix=\"" + str(trainData) + "\"" \
+            + " --config initCorpusTrainPrefix=\"" + str(trainData) + "\"" \
             + " permanentDir={permanent}/nmt-dir-crawl"
         print("cmd", cmd)
         shell(cmd)

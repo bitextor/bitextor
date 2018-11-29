@@ -52,9 +52,9 @@
 #  "marianModelFile": "model.npz.best-perplexity.npz.decoder.yml",
   "marianModelFile": "model.npz.best-bleu.npz.decoder.yml",
 
-  "nmtTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
-  "nmtDevPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
-  "nmtTestPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
+  "initCorpusTrainPrefix": ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"],
+  "initCorpusDevPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"],
+  "initCorpusTestPrefix": ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
                     "/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007",
                     ],
 
