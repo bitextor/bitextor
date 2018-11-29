@@ -432,7 +432,6 @@ rule train_smt_with_crawl_data:
     output:
         report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
     run:
-        print("HELLO WORLD again")
         cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
         shell(cmd)
 
