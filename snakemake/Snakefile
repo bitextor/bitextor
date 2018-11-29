@@ -298,13 +298,13 @@ domain_2_fulldomains = createDomainMap(domains)
 #print("domain_2_fulldomains", domain_2_fulldomains)
 
 #================================== Creater Moses EMS config========================#
-def createMosesEMSConfig(mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
+def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
     with open("{mosesDir}/scripts/ems/example/config.basic".format(mosesDir=mosesDir), "r") as file:
         lines = file.read().split("\n")
         print("lines", len(lines))
         #print("lines", lines)
 
-    lines[8] = "working-dir = {transient}/smt-dir".format(transient=transient)
+    lines[8] = "working-dir = {0}".format(workDir)
     lines[11] = "input-extension = " + LANG1
     lines[12] = "output-extension = " + LANG2
     lines[13] = "#" + lines[13]
@@ -382,7 +382,7 @@ def createMosesEMSConfig(mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes
         line += 2
 
 
-    with open("{transient}/smt-dir/steps/1/config.1".format(transient=transient), "w") as file:
+    with open("{0}/steps/1/config.1".format(workDir), "w") as file:
         file.write("\n".join(lines))
 
 
@@ -432,6 +432,23 @@ rule train_smt_with_crawl_data:
         report = "{dir}/smt-dir-crawl/evaluation/report".format(dir=transient)
     run:
         print("HELLO WORLD again")
+        cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
+        shell(cmd)
+
+        mosesDir = config["mosesDir"]
+        trainData = config["initCorpusTrainPrefix"]
+
+        crawlPref = "{dir}/crawl".format(dir=permanent)
+        trainData.append(crawlPref)
+
+        createMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
+                            mosesDir, config["mgiza"],
+                            trainData,
+                            config["initCorpusDevPrefix"],
+                            config["initCorpusTestPrefix"])
+
+        cmd = "cd {transient}/smt-dir-crawl &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+        shell(cmd)
 
 rule train_smt_all:
     input:
@@ -440,14 +457,13 @@ rule train_smt_all:
     output:
         report = "{dir}/smt-dir/evaluation/report".format(dir=transient)
     run:
-        print("HELLO WORLD")
-
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
         mosesDir = config["mosesDir"]
 
-        createMosesEMSConfig(mosesDir, config["mgiza"],
+        createMosesEMSConfig("{0}/smt-dir".format(transient),
+                            mosesDir, config["mgiza"],
                             config["initCorpusTrainPrefix"],
                             config["initCorpusDevPrefix"],
                             config["initCorpusTestPrefix"])
