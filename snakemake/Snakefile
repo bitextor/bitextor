@@ -699,20 +699,21 @@ rule urlsoverlap2rank:
 
 rule aligndocumentsMarek:
     input:
-        "{target}.lett.xz",
-        "{dir}/nmt-dir/evaluation/report".format(dir=transient)
+        lett="{target}.lett.xz",
+        matches="{target}.docalign/"+"{l1}-{l2}.selftrained.matches".format(l1=LANG1,l2=LANG2),
+        report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
         '{target}.docalign.marek-nmt'
     priority: 40
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        '{BITEXTOR}/document-aligner/doc_align.sh -f {input[0]} -l {LANG2} -t "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.target}.docalign {permanent}/nmt-dir" -d -w {wildcards.target}.docalign -p {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl > {output}'
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
         lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.matches".format(l1=LANG1,l2=LANG2)
+        matches="{target}.docalign/"+"{l1}-{l2}.custom.matches".format(l1=LANG1,l2=LANG2)
     output:
         '{target}.docalign.marek-customMT'
     shell:
@@ -853,9 +854,19 @@ rule docaling_deduped:
 
 rule docaling_translated:
     input:
+        "{dir}/{prefix}.extracted.deduped.xz",
+    output:
+        temp("{dir}/{prefix}.selftrained.extracted.deduped.translated.xz")
+    shell:
+        'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
+        'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+
+
+rule docaling_custom_translated:
+    input:
         "{target}.extracted.deduped.xz",
     output:
-        temp("{target}.extracted.deduped.translated.xz")
+        temp("{target}.custom.extracted.deduped.translated.xz")
     shell:
         'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
         'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
@@ -874,9 +885,9 @@ rule docaling_substitute_translated:
 rule docaling_matches:
     input:
         extracted="{dir}/"+"{l1}.extracted.xz".format(l1=LANG1),
-        translated="{dir}/"+"{l2}.extracted.translated.xz".format(l2=LANG2)
+        translated="{dir}/"+"{l2}.{type}.extracted.translated.xz".format(l2=LANG2)
     output:
-        "{dir}/"+"{l1}-{l2}.matches".format(l1=LANG1,l2=LANG2)
+        "{dir}/"+"{l1}-{l2}.{type}.matches".format(l1=LANG1,l2=LANG2)
     shell:
         "python3 {BITEXTOR}/bin/compute_matches.py --english {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
