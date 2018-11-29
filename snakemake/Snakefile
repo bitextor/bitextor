@@ -700,7 +700,7 @@ rule urlsoverlap2rank:
 rule aligndocumentsMarek:
     input:
         lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.selftrained.matches".format(l1=LANG1,l2=LANG2),
+        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
         '{target}.docalign.marek-nmt'
@@ -713,7 +713,7 @@ rule aligndocumentsMarek:
 rule aligndocumentsMarekCustomMT:
     input:
         lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.custom.matches".format(l1=LANG1,l2=LANG2)
+        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
         '{target}.docalign.marek-customMT'
     shell:
@@ -864,7 +864,7 @@ rule docaling_translated:
     input:
         "{dir}/{prefix}.extracted.deduped.xz",
     output:
-        temp("{dir}/{prefix}.selftrained.extracted.deduped.translated.xz")
+        temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
     shell:
         'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
         'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
@@ -874,7 +874,7 @@ rule docaling_custom_translated:
     input:
         "{target}.extracted.deduped.xz",
     output:
-        temp("{target}.custom.extracted.deduped.translated.xz")
+        temp("{target}.marek-customMT.extracted.deduped.translated.xz")
     shell:
         'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
         'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
@@ -884,18 +884,18 @@ rule docaling_substitute_translated:
     input:
         extracted="{target}.extracted.xz",
         deduped="{target}.extracted.deduped.xz",
-        translated="{target}.{translationtype}.extracted.deduped.translated.xz"
+        translated="{target}.{mttype}.extracted.deduped.translated.xz"
     output:
-        "{target}.{translationtype}.extracted.translated.xz"
+        "{target}.{mttype}.extracted.translated.xz"
     shell:
         'xzcat {input.extracted} | python3 {BITEXTOR}/bin/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
 
 rule docaling_matches:
     input:
         extracted="{dir}/"+"{l1}.extracted.xz".format(l1=LANG1),
-        translated="{dir}/"+"{l2}".format(l2=LANG2)+".{translationtype}.extracted.translated.xz"
+        translated="{dir}/"+"{l2}".format(l2=LANG2)+".{mttype}.extracted.translated.xz"
     output:
-        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{translationtype}.matches"
+        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
         "python3 {BITEXTOR}/bin/compute_matches.py --english {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
@@ -905,8 +905,8 @@ rule bleualign:
     input:
         extracted_l1="{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         extracted_l2="{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{prefix}.docalign/"+"{l2}.custom.extracted.translated.xz".format(l2=LANG2),
-        matches="{prefix}.docalign/"+"{l1}-{l2}.custom.matches".format(l1=LANG1,l2=LANG2)
+        translated="{prefix}.docalign/"+"{l2}.{mttype}.extracted.translated.xz".format(l2=LANG2,mttype=DOCALIGNEXT),
+        matches="{prefix}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
         "{prefix}.bleualign/align.info.xz"
     shell:
