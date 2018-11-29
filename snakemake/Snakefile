@@ -403,8 +403,8 @@ if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
 if "smt" in config and config["smt"]:
-    OUTPUT.append("{dir}/smt-dir/evaluation/report".format(dir=transient))
-    OUTPUT.append("{dir}/smt-dir-crawl/evaluation/report".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir/evaluation/report.1".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
