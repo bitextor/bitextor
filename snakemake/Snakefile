@@ -708,7 +708,7 @@ rule aligndocumentsMarek:
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
@@ -717,7 +717,7 @@ rule aligndocumentsMarekCustomMT:
     output:
         '{target}.docalign.marek-customMT'
     shell:
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/bin/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsBitextor:
     input:
@@ -850,7 +850,7 @@ rule docaling_extracted:
         "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.prefix}.docalign; '
-        'xzcat -f {input} | {BITEXTOR}/bin/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
+        'xzcat -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
 
 rule docaling_deduped:
     input:
@@ -888,7 +888,7 @@ rule docaling_substitute_translated:
     output:
         "{target}.{mttype}.extracted.translated.xz"
     shell:
-        'xzcat {input.extracted} | python3 {BITEXTOR}/bin/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
+        'xzcat {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
 
 rule docaling_matches:
     input:
@@ -897,7 +897,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "python3 {BITEXTOR}/bin/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "python3 {BITEXTOR}/document-aligner/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 ################# BLEUALIGN RULES #################
 
