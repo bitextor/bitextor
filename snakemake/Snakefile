@@ -704,7 +704,6 @@ rule aligndocumentsMarek:
         report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
         '{target}.docalign.marek-nmt'
-    priority: 40
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
@@ -865,6 +864,9 @@ rule docaling_translated:
         "{dir}/{prefix}.extracted.deduped.xz",
     output:
         temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
+
+    priority: 40
+
     shell:
         'xzcat {input} | "{BITEXTOR}/snakemake/nmt/translate.sh {transient}/config.json {wildcards.dir} {permanent}/nmt-dir" | xz -c > {output}; '
         'if [ "$(zcat {input} | wc -l)" -ne "$(zcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
