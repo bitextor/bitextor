@@ -39,7 +39,7 @@ def open_gzip_or_plain(file_path):
             f = open(file_path, 'r')
             yield f
 
-    except Exception:
+    except Exception as ex:
         raise Exception("Error occured while loading a file {}".format(file_path))
 
     finally:
@@ -746,25 +746,33 @@ rule alignsegments_hunalign:
         '{dir}/hunalign_dic'.format(dir=transient),
         "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
     output:
-        '{name}.hunalign.segalign'
+        '{name}.hunalign.segalign.xz'
     shell:
-        'xzcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" > {output}'
+        'xzcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" | xz > {output}'
 
 rule alignsegments_bleualign:
     input:
-        "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
+        aligned_urls="{prefix}.bleualign/align.info.xz"
     output:
-        '{name}.bleualign.segalign'
-    shell:
-        '{BITEXTOR}/bleualign.sh {wildcards.name}.lett.xz {FLANG} {wildcards.name}.docalign {DOC_THRESHOLD} {BLEU_THRESHOLD} {output} {BITEXTOR}/preprocess/moses'
+        alignments='{prefix}.bleualign.segalign.xz'
+    run:
+        with lzma.open(output.alignments, "wt") as algFile:
+            with open_gzip_or_plain(input.aligned_urls) as urlsFile:
+                for urlAlg in urlsFile:
+                    id=urlAlg.split("\t")[0]
+                    urls="\t".join(urlAlg.strip().split("\t")[1:])
+                    filename=wildcards.prefix+".bleualign/aligned."+str(id)+".xz"
+                    with open_gzip_or_plain(filename) as sentFile:
+                        for line in sentFile:
+                            algFile.write(urls+"\t"+line)
 
 rule concat_segs:
     input:
-        expand("{{dir}}/{webdomain}.{segaligner}.segalign", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
+        expand("{{dir}}/{webdomain}.{segaligner}.segalign.xz", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
     output:
         "{dir}/{l1}-{l2}.sentalg.xz"
     shell:
-        "cat {input} | xz > {output}"
+        "xzcat {input} | xz > {output}"
 
 rule cleansegments:
     input:
@@ -832,7 +840,7 @@ rule mt_parallel_data:
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
-################# DOCALIGN RULES
+################# DOCALIGN RULES #################
 
 rule docaling_extracted:
     input:
@@ -846,9 +854,9 @@ rule docaling_extracted:
 
 rule docaling_deduped:
     input:
-        "{target}.extracted.xz"
+        "{target}/{lang}.extracted.xz"
     output:
-        temp("{target}.extracted.deduped.xz")
+        temp("{target}/{lang}.extracted.deduped.xz")
     shell:
         "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
 
@@ -876,18 +884,31 @@ rule docaling_substitute_translated:
     input:
         extracted="{target}.extracted.xz",
         deduped="{target}.extracted.deduped.xz",
-        translated="{target}.extracted.deduped.translated.xz"
+        translated="{target}.{translationtype}.extracted.deduped.translated.xz"
     output:
-        "{target}.extracted.translated.xz"
+        "{target}.{translationtype}.extracted.translated.xz"
     shell:
         'xzcat {input.extracted} | python3 {BITEXTOR}/bin/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
 
 rule docaling_matches:
     input:
         extracted="{dir}/"+"{l1}.extracted.xz".format(l1=LANG1),
-        translated="{dir}/"+"{l2}.{type}.extracted.translated.xz".format(l2=LANG2)
+        translated="{dir}/"+"{l2}".format(l2=LANG2)+".{translationtype}.extracted.translated.xz"
     output:
-        "{dir}/"+"{l1}-{l2}.{type}.matches".format(l1=LANG1,l2=LANG2)
+        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{translationtype}.matches"
     shell:
         "python3 {BITEXTOR}/bin/compute_matches.py --english {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
+################# BLEUALIGN RULES #################
+
+rule bleualign:
+    input:
+        extracted_l1="{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
+        translated="{prefix}.docalign/"+"{l2}.custom.extracted.translated.xz".format(l2=LANG2),
+        matches="{prefix}.docalign/"+"{l1}-{l2}.custom.matches".format(l1=LANG1,l2=LANG2)
+    output:
+        "{prefix}.bleualign/align.info.xz"
+    shell:
+        "mkdir -p {wildcards.prefix}.bleualign; "
+        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
