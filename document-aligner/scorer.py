@@ -22,7 +22,7 @@ def _ngram_helper(words, n, hash_values):
     return ngrams
 
 
-def english_ngrams_from_text(n, hash_values, ignore_set, page):
+def ngrams_from_text(n, hash_values, ignore_set, page):
     words = wordpunct_tokenize(page)
     ngrams = _ngram_helper(words, n, hash_values)
 
@@ -52,11 +52,11 @@ class ExtractionMapper(object):
         return self.extract(corpus)
 
 
-class EnglishWordExtractor(ExtractionMapper):
+class WordExtractor(ExtractionMapper):
 
     def __init__(self, n=1, hash_values=False, ignore_set=None):
-        super(EnglishWordExtractor, self).__init__(
-            extraction_function=partial(english_ngrams_from_text,
+        super(WordExtractor, self).__init__(
+            extraction_function=partial(ngrams_from_text,
                                         n, hash_values, ignore_set))
 
 

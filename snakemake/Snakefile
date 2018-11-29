@@ -897,7 +897,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "python3 {BITEXTOR}/bin/compute_matches.py --english {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "python3 {BITEXTOR}/bin/compute_matches.py --original {input.extracted} --translated {input.translated} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 ################# BLEUALIGN RULES #################
 

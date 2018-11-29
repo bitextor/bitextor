@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from scorer import CosineDistanceScorer, EnglishWordExtractor, _ngram_helper
+from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
 
 sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
 from utils.common import open_xz_or_gzip_or_plain
@@ -97,7 +97,7 @@ def match(score_matrix_csr, threshold):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--english', help='path to the extracted English text', required=True)
+        '--original', help='path to the extracted text', required=True)
     parser.add_argument(
         '--translated', help='path to the translated foreign text', required=True)
     parser.add_argument('--min_count', type=int, default=2)
@@ -112,19 +112,19 @@ if __name__ == "__main__":
     sys.stderr.write("threshold: {0}\n".format(args.threshold))
     sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 
-    docs_english = load_extracted(args.english)
+    docs_original = load_extracted(args.original)
     docs_translated = load_extracted(args.translated)
 
-    if len(docs_translated) == 0 or len(docs_english) == 0:
-        sys.stderr.write("No document alignments feasible: "+str(len(docs_translated))+" documents in foreign language and "+str(len(docs_english))+" documents in English.\n")
+    if len(docs_translated) == 0 or len(docs_original) == 0:
+        sys.stderr.write("No document alignments feasible: "+str(len(docs_translated))+" documents in foreign language and "+str(len(docs_original))+" documents in source language.\n")
         open(args.output_matches, 'a').close()
 
     else:
 
-        obj_english = map_dic2list(docs_english)
+        obj_original = map_dic2list(docs_original)
         obj_translated = map_dic2list(docs_translated)
     
-        word_extractor = EnglishWordExtractor(
+        word_extractor = WordExtractor(
             n=args.ngram_size, ignore_set=None)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
@@ -132,7 +132,7 @@ if __name__ == "__main__":
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
                                       batch_size=args.batch_size)
-        m_csr = scorer.score(obj_english['text'], obj_translated['text'])
+        m_csr = scorer.score(obj_original['text'], obj_translated['text'])
         if m_csr == None:
             sys.stderr.write("Documents do not contain any useful information to be used in alignment.\n")
             open(args.output_matches, 'a').close()
@@ -141,6 +141,6 @@ if __name__ == "__main__":
     
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):
-                    surl = obj_english['mapping'][matches[idx][0]]
+                    surl = obj_original['mapping'][matches[idx][0]]
                     turl = obj_translated['mapping'][matches[idx][1]]
                     f.write("{0:.5f}\t{1}\t{2}\n".format(match_costs[idx], surl, turl))

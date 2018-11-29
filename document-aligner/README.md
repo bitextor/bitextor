@@ -49,7 +49,7 @@ pip3 install -r requirements.txt
 
 ### Document alignment
 
-The document aligner takes a LETT file and produces *en-\*.matches* file containing a list of references to the aligned documents. Optionally, the content of the matched documents can be written in the standard output.
+The document aligner takes a LETT file and produces *'SL'-\*.matches* file containing a list of references to the aligned documents. Optionally, the content of the matched documents can be written in the standard output.
 
 ```bash
 doc_align.sh -f <lett_file> -l <foreign_language> -t <translation_script> -w <working_directory> [-s <score_threshold>] [-b <batch_size>] [-d]
@@ -58,8 +58,8 @@ doc_align.sh -f <lett_file> -l <foreign_language> -t <translation_script> -w <wo
 ##### Required Parameters
 * **-f <string>**: An input file in the LETT format.
 * **-l <string>**: A language code of the foreign language occurring in the LETT file.
-* **-t <string>**: A path to a bash script that takes text in the foreign language as its standard input and outputs an English translation to its standard output.
-* **-w <string>**: A path to the working directory. The *en-\*.matches* file will be outputted there.
+* **-t <string>**: A path to a bash script that takes text in the foreign language as its standard input and outputs an source language translation to its standard output.
+* **-w <string>**: A path to the working directory. The *'SL'-\*.matches* file will be outputted there.
 
 ##### Optional Parameters
 * **-s <float>**: Documents that score lower than the threshold will be skipped. Default: 0.1
