@@ -17,7 +17,7 @@ LANG2=config["lang2"]
 #NMT commands
 trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join(config["marianArgs"])
 
-translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1}".format(marian, config["gpuId"])
+translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1} --quiet-translation ".format(marian, config["gpuId"])
 
 #Tokenization
 tokenizer_l1= config["LANG1Tokenizer"]
