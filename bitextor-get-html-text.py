@@ -69,7 +69,7 @@ for line in sys.stdin:
     fields=line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
     if args.text:
-        soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf8"), "lxml")
+        soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf-8"), "lxml", from_encoding='utf-8')
         for script in soup(["script", "style", "img"]):
             script.extract()    # rip it out
 
@@ -82,8 +82,8 @@ for line in sys.stdin:
         cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
         b64t=base64.b64decode(fields[3]).decode("utf-8").encode("utf-8")
         try:
-            cleanhtml=cleaner.clean_html(b64t)
-            document = html5lib.parse(ftfy.fix_text(cleanhtml.decode("utf-8")),treebuilder="lxml",namespaceHTMLElements=False)
+            cleanhtml=cleaner.clean_html(b64t.decode("utf-8"))
+            document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
             tree=etree.tostring(document)
             cleantree=tree.decode("utf8").replace("\t"," ")
             fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
