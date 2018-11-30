@@ -316,6 +316,7 @@ def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=mgiza)
     lines[79] = "jobs = 10"
     lines[310] = "training-options = \"-mgiza -mgiza-cpus 8\""
+    lines[384] = "binarize-all = $moses-script-dir/training/binarize-model.perl"
 
     # DELETES
     lines[30] = ""
@@ -429,10 +430,26 @@ rule train_smt_with_crawl_data:
         ,
         l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
         ,
-        config = "{dir}/config.json".format(dir=transient)
+        emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
 
     output:
         report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
+    run:
+        mosesDir = config["mosesDir"]
+
+        cmd = "cd {transient}/smt-dir-crawl &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+        shell(cmd)
+
+rule train_smt_with_crawl_data_create_config:
+    input:
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
+        ,
+        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
+        ,
+        config = "{dir}/config.json".format(dir=transient)
+
+    output:
+        emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
     run:
         cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
         shell(cmd)
@@ -449,15 +466,23 @@ rule train_smt_with_crawl_data:
                             config["initCorpusDevPrefix"],
                             config["initCorpusTestPrefix"])
 
-        cmd = "cd {transient}/smt-dir-crawl &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+rule train_smt_all:
+    input:
+        emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
+
+    output:
+        report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
+    run:
+        mosesDir = config["mosesDir"]
+        cmd = "cd {transient}/smt-dir &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
         shell(cmd)
 
-rule train_smt_all:
+rule train_smt_all_create_config:
     input:
         config = "{dir}/config.json".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
+        emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
     run:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
@@ -470,10 +495,8 @@ rule train_smt_all:
                             config["initCorpusDevPrefix"],
                             config["initCorpusTestPrefix"])
 
-        cmd = "cd {transient}/smt-dir &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
-        shell(cmd)
-
 #================================== NMT ======================================#
+
 
 rule train_nmt_with_crawl_data:
     input:
