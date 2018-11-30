@@ -175,8 +175,10 @@ if "bicleaner" in config:
   BICLEANEROPTION=",bicleaner"
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
+  BICLEANER_SORT="-r -k6,6 -k3,4"
 else:
   BICLEANEROPTION=""
+  BICLEANER_SORT="-k3,4"
   BICLEANER="segclean"
 
 if "bicleanerThreshold" in config:
@@ -884,7 +886,12 @@ rule bicleaner:
     output:
         "{target}.bicleaner.scores.xz"
     shell:
-        'xzcat -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}'
+        'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
+        'if [ "$slang" == "{LANG1}" ]; then '
+        '  xzcat -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}; '
+        'else '
+        '  xzcat -f {input} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz > {output}; '
+        'fi'
 
 rule bicleanerfilter:
     input:
@@ -924,7 +931,7 @@ rule deduped_tmx:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
-        "xzcat -f {input} | LC_ALL=C sort -k3 -k4 --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
+        "xzcat -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
 
 rule mt_parallel_data:
     input:
