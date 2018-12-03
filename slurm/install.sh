@@ -1,5 +1,5 @@
 #!/bin/bash
-# sudo ./install.sh hieu-foo southcentralus installall scale-cpu:Standard_H16m:5:16 scale-gpu:Standard_NV6:2:6:gpu:tesla:1
+# sudo ./install.sh 16 hieu-foo southcentralus installall scale-cpu:Standard_H16m:5:16 scale-gpu:Standard_NV6:2:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
@@ -7,10 +7,11 @@ if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
     exit
 fi
 
-RESOURCE_GROUP=$1
-REGION=$2
-INSTALL=$3 #'whatever' string to install everything, 'no' to avoid all installation process
-vmssnames="${@:4}" #If GPU, use examplevmss:gpu:tesla:1 syntax
+LOCAL_CPU=$1
+RESOURCE_GROUP=$2
+REGION=$3
+INSTALL=$4 #'whatever' string to install everything, 'no' to avoid all installation process
+vmssnames="${@:5}" #If GPU, use examplevmss:gpu:tesla:1 syntax
 echo "RESOURCE_GROUP $RESOURCE_GROUP"
 echo "REGION $REGION"
 echo "vmssnames $vmssnames"
@@ -138,8 +139,10 @@ echo "GresTypes=gpu" >> $SLURMCONF
 echo "SelectType=select/cons_res" >> $SLURMCONF
 echo "SelectTypeParameters=CR_CPU" >> $SLURMCONF
 
-#allworkernames="$MASTER_NAME"
-#echo "NodeName=${MASTER_NAME} CPUs=1 State=UNKNOWN" >> $SLURMCONF
+if [ "$LOCAL_CPU" -gt "0" ]; then
+  allworkernames="$MASTER_NAME"
+  echo "NodeName=${MASTER_NAME} CPUs=${LOCAL_CPU} State=UNKNOWN" >> $SLURMCONF
+fi
 
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
