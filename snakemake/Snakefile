@@ -808,10 +808,15 @@ rule docaling_translate_smt:
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
 
-    priority: 40
+    params:
+        lang1 = config["lang1"]
+        ,
+        mosesDir = config["mosesDir"]
+        ,
+        smtDir = "{0}/smt-dir".format(config["transientDir"])
 
     shell:
-        'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.config} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
+        'xzcat {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {params.lang1} {params.mosesDir} {params.smtDir} | xz -c > {output}; '
         'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
