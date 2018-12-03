@@ -152,8 +152,8 @@ else:
 if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
 
-  if MT_COMMAND == "marek-nmt":
-      DOCALIGNEXT="marek-nmt"
+  if MT_COMMAND in {"marek-nmt", "marek-smt"}:
+      DOCALIGNEXT = MT_COMMAND
   else:
       DOCALIGNEXT="marek-customMT"
 else:
@@ -784,7 +784,7 @@ rule docaling_deduped:
     shell:
         "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
 
-rule docaling_translated:
+rule docaling_translate_nmt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
@@ -799,8 +799,23 @@ rule docaling_translated:
         'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.config} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
         'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
+rule docaling_translate_smt:
+    input:
+        source = "{dir}/{prefix}.extracted.deduped.xz"
+        ,
+        config = "{dir}/config.json".format(dir=transient)
 
-rule docaling_custom_translated:
+    output:
+        temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
+
+    priority: 40
+
+    shell:
+        'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.config} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
+        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+
+
+rule docaling_custom_translate:
     input:
         "{target}.extracted.deduped.xz",
     output:

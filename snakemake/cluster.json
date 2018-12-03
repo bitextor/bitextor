@@ -4,7 +4,7 @@
         "gres": ""
     },
 
-    "docaling_translated" :
+    "docaling_translate_nmt" :
     {
         "gres": "--gres gpu:tesla:1"
     },
