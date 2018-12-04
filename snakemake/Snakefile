@@ -151,7 +151,7 @@ else:
 
 if "mosesDir" in config:
   MOSESDIR = config["mosesDir"]
-else
+else:
   MOSESDIR = ""
 
 if "paracrawl-aligner-command" in config:
