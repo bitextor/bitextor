@@ -20,3 +20,4 @@ snakemake==5.2.2
 tqdm==4.28.1
 tldextract==2.2.0
 ftfy==5.5.0
+sacrebleu==1.2.12
