@@ -788,7 +788,7 @@ rule docaling_translate_nmt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
-        config = "{dir}/config.json".format(dir=transient)
+        configFile = "{dir}/config.json".format(dir=transient)
 
     output:
         temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
@@ -796,14 +796,12 @@ rule docaling_translate_nmt:
     priority: 40
 
     shell:
-        'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.config} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
+        'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
         'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 rule docaling_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
-        ,
-        config = "{dir}/config.json".format(dir=transient)
 
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
