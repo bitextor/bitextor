@@ -790,7 +790,7 @@ rule docaling_translate_nmt:
         ,
         configFile = "{dir}/config.json".format(dir=transient)
         ,
-        report = "{transient}/nmt-dir/evaluation/report"
+        report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
 
     output:
         temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
@@ -805,7 +805,7 @@ rule docaling_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
-        report = "{transient}/smt-dir/evaluation/report.1"
+        report = "{transient}/smt-dir/evaluation/report.1".format(transient=transient)
 
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
