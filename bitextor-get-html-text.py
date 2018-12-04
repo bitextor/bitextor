@@ -80,9 +80,9 @@ for line in sys.stdin:
         print('\t'.join(fields))
     else:
         cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
-        b64t=base64.b64decode(fields[3]).decode("utf-8").encode("utf-8")
+        b64t=base64.b64decode(fields[3]).decode("utf-8")
         try:
-            cleanhtml=cleaner.clean_html(b64t.decode("utf-8"))
+            cleanhtml=cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', b64t, flags=re.IGNORECASE))
             document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
             tree=etree.tostring(document)
             cleantree=tree.decode("utf8").replace("\t"," ")
