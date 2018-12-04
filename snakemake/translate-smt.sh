@@ -4,7 +4,7 @@ LANG1=$1
 MOSES=$2
 smtDir=$3
 
-TRUECASE_MODEL=$smtDir/truecaser/truecase-model.1.fr
+TRUECASE_MODEL=$smtDir/truecaser/truecase-model.1.$LANG1
 MOSES_MODEL=$smtDir/tuning/moses.tuned.ini.1
 
 cat /dev/stdin |

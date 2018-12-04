@@ -30,7 +30,7 @@
   "crawlTld": false,
   #"bicleanerThreshold": 0.7,
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
-  "paracrawl-aligner-command": "marek-nmt",
+  "paracrawl-aligner-command": "marek-smt",
   "bleualign": true,
 
   "marianDir": "/home/hieu/permanent/software/marian-dev",
