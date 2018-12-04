@@ -526,10 +526,10 @@ rule train_nmt_with_crawl_data:
 
 rule train_nmt_all:
     input:
-        config = "{dir}/config.json".format(dir=transient)
+        config = "{transient}/config.json"
 
     output:
-        report = "{dir}/nmt-dir/evaluation/report".format(dir=transient)
+        report = "{transient}/nmt-dir/evaluation/report"
 
     priority: 50
     run:
@@ -789,6 +789,8 @@ rule docaling_translate_nmt:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
         configFile = "{dir}/config.json".format(dir=transient)
+        ,
+        report = "{transient}/nmt-dir/evaluation/report"
 
     output:
         temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
@@ -802,6 +804,8 @@ rule docaling_translate_nmt:
 rule docaling_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
+        ,
+        report = "{transient}/smt-dir/evaluation/report.1"
 
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
