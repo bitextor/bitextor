@@ -346,18 +346,18 @@ def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     # eval
     lines[640] = "#" + lines[640]
     lines[641] = "#" + lines[641]
-    lines[642] = 'multi-bleu = "$moses-script-dir/generic/multi-bleu.perl -lc"'
-    lines[643] = 'multi-bleu-c = $moses-script-dir/generic/multi-bleu.perl'
-    lines[662] = "#" + lines[662]
-    lines[668] = "#" + lines[668]
+    lines[645] = 'sacre-bleu = "sacrebleu -lc"'
+    lines[646] = 'sacre-bleu-c = "sacrebleu"'
+    lines[664] = "#" + lines[664]
+    lines[670] = "#" + lines[670]
 
-    lines[680] = lines[680] + " IGNORE"
+    lines[682] = lines[682] + " IGNORE"
 
     # ADD
     # eval
-    lines.insert(708, "")
+    lines.insert(710, "")
 
-    line = 709
+    line = 711
     for path in testPrefixes:
         name = os.path.basename(path)
         lines.insert(line, "[EVALUATION:{name}]".format(name=name))
