@@ -149,6 +149,11 @@ else:
 
 ############ OPTIONS FOR THE MALIGN ALIGNER ############
 
+if "mosesDir" in config:
+  MOSESDIR = config["mosesDir"]
+else
+  MOSESDIR = ""
+
 if "paracrawl-aligner-command" in config:
   MT_COMMAND=config["paracrawl-aligner-command"]
 
@@ -436,9 +441,7 @@ rule train_smt_with_crawl_data:
     output:
         report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
     run:
-        mosesDir = config["mosesDir"]
-
-        cmd = "cd {transient}/smt-dir-crawl &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+        cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
 
 rule train_smt_with_crawl_data_create_config:
@@ -455,14 +458,13 @@ rule train_smt_with_crawl_data_create_config:
         cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
         shell(cmd)
 
-        mosesDir = config["mosesDir"]
         trainData = config["initCorpusTrainPrefix"]
 
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
         createMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
-                            mosesDir, config["mgiza"],
+                            MOSESDIR, config["mgiza"],
                             trainData,
                             config["initCorpusDevPrefix"],
                             config["initCorpusTestPrefix"])
@@ -474,8 +476,7 @@ rule train_smt_all:
     output:
         report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
     run:
-        mosesDir = config["mosesDir"]
-        cmd = "cd {transient}/smt-dir &&  {mosesDir}/scripts/ems/experiment.perl --continue 1 --exec".format(transient=transient, mosesDir=mosesDir)
+        cmd = "cd {transient}/smt-dir &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
 
 rule train_smt_all_create_config:
@@ -488,10 +489,8 @@ rule train_smt_all_create_config:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
-        mosesDir = config["mosesDir"]
-
         createMosesEMSConfig("{0}/smt-dir".format(transient),
-                            mosesDir, config["mgiza"],
+                            MOSESDIR, config["mgiza"],
                             config["initCorpusTrainPrefix"],
                             config["initCorpusDevPrefix"],
                             config["initCorpusTestPrefix"])
@@ -809,14 +808,10 @@ rule docaling_translate_smt:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
 
     params:
-        lang1 = config["lang1"]
-        ,
-        mosesDir = config["mosesDir"]
-        ,
         smtDir = "{0}/smt-dir".format(config["transientDir"])
 
     shell:
-        'xzcat {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {params.lang1} {params.mosesDir} {params.smtDir} | xz -c > {output}; '
+        'xzcat {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c > {output}; '
         'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
