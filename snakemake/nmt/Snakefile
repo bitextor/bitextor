@@ -59,7 +59,7 @@ rule multibleu:
     output:
         "evaluation/{name}.bleu"
     shell:
-        "cat {input.trans} | {moses}/scripts/generic/multi-bleu.perl {input.ref} > {output}"
+        "cat {input.trans} | sacrebleu {input.ref} > {output}"
 
 rule translate_only:
     input:
