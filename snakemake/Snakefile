@@ -655,7 +655,7 @@ rule httrack2lett:
 
 rule lett2lettr:
     input:
-        expand("{{target}}.{extension}", extension=LETT)
+        expand("{{target}}.{extension}.xz", extension=LETT)
     output:
         '{target}.lettr'
     shell:
@@ -878,8 +878,23 @@ rule hunaligndic:
         expand("{dic}", dic=DIC)
     output:
         '{dir}/hunalign_dic'.format(dir=transient)
-    shell:
-        'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
+    run:
+        with open(output[0], "wt") as outw:
+            with open(input[0], "rt") as inr:
+                header=inr.readline().strip()
+                langs=header.split("\t")
+                if langs[0] == LANG1 and langs[1] == LANG2:
+                    inverse=True
+                else:
+                    inverse=False
+                for inline in inr:
+                    columns=inline.strip().split("\t")
+                    if inverse:
+                        outw.write(columns[1]+" @ "+columns[0]+"\n")
+                    else:
+                        outw.write(columns[0]+" @ "+columns[1]+"\n")
+#    shell:
+#        'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
 rule alignsegments_hunalign:
     input:
