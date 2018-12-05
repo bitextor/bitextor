@@ -893,7 +893,7 @@ rule alignsegments_hunalign:
 
 rule alignsegments_bleualign:
     input:
-        aligned_urls="{prefix}.bleualign/align.info.xz"
+        aligned_urls="{prefix}.bleualign/align.info.gz"
     output:
         alignments='{prefix}.bleualign.segalign.xz'
     run:
@@ -902,7 +902,7 @@ rule alignsegments_bleualign:
                 for urlAlg in urlsFile:
                     id=urlAlg.split("\t")[0]
                     urls="\t".join(urlAlg.strip().split("\t")[1:])
-                    filename=wildcards.prefix+".bleualign/aligned."+str(id)+".xz"
+                    filename=wildcards.prefix+".bleualign/aligned."+str(id)+".gz"
                     with open_gzip_or_plain(filename) as sentFile:
                         for line in sentFile:
                             algFile.write(urls+"\t"+line)
@@ -1002,7 +1002,7 @@ rule bleualign:
         translated="{prefix}.docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
         matches="{prefix}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
-        "{prefix}.bleualign/align.info.xz"
+        "{prefix}.bleualign/align.info.gz"
     shell:
         "mkdir -p {wildcards.prefix}.bleualign; "
         "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"

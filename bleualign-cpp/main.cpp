@@ -115,7 +115,7 @@ std::string MakeOutputPath(const std::string &path_dir, const std::string &suffi
 void WriteAlignedTextToFile(const std::string &output_dir, const utils::matches_list &matches) {
 
   std::stringstream ss;
-  utils::CompressedWriter gw(output_dir + "/align.info.xz");
+  utils::CompressedWriter gw(output_dir + "/align.info.gz");
   for (size_t i = 0; i < matches.size(); ++i) {
     ss.str("");
 
