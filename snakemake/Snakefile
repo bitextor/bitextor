@@ -560,7 +560,7 @@ rule creepy_download:
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
-        'python3 {BITEXTOR}/bitextor-crawl.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
+        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
 
 rule httrack_download:
     output:
@@ -571,7 +571,7 @@ rule httrack_download:
     shell:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {transient}/downloaded_websites.XXXXXX); '
-        '{BITEXTOR}/bitextor-downloadweb.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
+        '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
