@@ -277,7 +277,6 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
 if "domains" in config:
     print("domains given")
     domains = config["domains"]
-    print("domains", type(domains))
 elif os.path.isfile(permanent + "/domains.gz"):
     print("read domains from file")
 
@@ -571,7 +570,7 @@ rule httrack_download:
     priority: 10
     shell:
         'mkdir -p {permanent}; '
-        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
+        'DIRNAME=$(mktemp -d {transient}/downloaded_websites.XXXXXX); '
         '{BITEXTOR}/bitextor-downloadweb.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
