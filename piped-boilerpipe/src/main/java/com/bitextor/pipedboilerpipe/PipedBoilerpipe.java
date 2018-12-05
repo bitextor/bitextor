@@ -9,7 +9,8 @@ import java.io.StringReader;
 import java.util.Scanner;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
+import java.util.Base64;
+import java.io.UnsupportedEncodingException;
 /**
  * Java tool that reads HTML documents from STDIN (one per line) and applies
  * the ArticleExtractor in BoilerPipe to clean it. Java tool that reads HTML
@@ -30,23 +31,32 @@ public class PipedBoilerpipe {
                 String[] fields=stdin.nextLine().split("\t");
                 if(fields.length==5){
                     //Reading a line
-                    String line=fields[4];
-                    //Processing XHTML
-                    StringReader reader = new StringReader(line);
-                    TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
-                    //Processing XHTML to remove boilerplates
-                    ArticleExtractor extractor=ArticleExtractor.INSTANCE;
-                    extractor.process(source);
-                    //Producing clean XHTML
-                    HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-                    fields[4]=h.process(source, line).replace("\n", " ");
-                    StringBuilder sb=new StringBuilder();
-                    for(String f: fields){
-                        sb.append(f);
-                        sb.append("\t");
+                    try{
+                        String line = new String(Base64.getDecoder().decode(fields[4]), "UTF-8");
+                        System.err.println(line);
+                        //Processing XHTML
+                        StringReader reader = new StringReader(line);
+                        TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
+                        //Processing XHTML to remove boilerplates
+                        ArticleExtractor extractor=ArticleExtractor.INSTANCE;
+                        extractor.process(source);
+                        //Producing clean XHTML
+                        HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
+
+                        byte[] bytes = h.process(source, line).getBytes("UTF-8");
+                        String encoded = Base64.getEncoder().encodeToString(bytes);
+                        fields[4]=encoded;
+                        StringBuilder sb=new StringBuilder();
+                        for(String f: fields){
+                            sb.append(f);
+                            sb.append("\t");
+                        }
+                        sb.deleteCharAt(sb.length()-1);
+                        System.out.println(sb.toString());
+                    } catch (UnsupportedEncodingException ex){
+                        ex.printStackTrace(System.err);
                     }
-                    sb.deleteCharAt(sb.length()-1);
-                    System.out.println(sb.toString());
+
                 }
             } catch (SAXException ex) {
                 ex.printStackTrace(System.err);
