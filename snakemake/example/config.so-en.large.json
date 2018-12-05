@@ -6,7 +6,7 @@
   #"langstat":"/home/hieu/permanent/software/langstat/1k.gz",
   #"langstatThreshold":10,
     
-  "langstat":"/home/hieu/permanent/software/langstat/langstats.all.gz",
+  "langstat":"/home/hieu/transient/langstat/langstats.all.gz",
   "langstatThreshold":5000,
 
   "langstatExcludeDomains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
