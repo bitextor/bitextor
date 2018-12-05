@@ -395,7 +395,7 @@ align_documents_and_segments(){
 
   if [ "$VOCABULARY" != "" ]; then
     HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
+    tail -n +2 $VOCABULARY | "s/^([^[:space:]]+)\t([^[:space:]]+)$/\2 @ \1/g" > $HUNALIGN_DIC
   fi
 
   if [ "$TRANSLATIONCOMMAND" != "" ]; then
