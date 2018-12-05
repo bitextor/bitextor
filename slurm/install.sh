@@ -140,7 +140,9 @@ for vmssinfo in $vmssnames; do
     echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
 
     if echo "$vmssinfo" | grep -q ":gpu:" ; then
-        gpuStr="Gres=$gpuinfo" 
+        gpuStr="Gres=$gpuinfo"
+    else
+        gpuStr=""
     fi
 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
