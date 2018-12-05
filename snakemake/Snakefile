@@ -277,7 +277,6 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
 if "domains" in config:
     print("domains given")
     domains = config["domains"]
-    print("domains", type(domains))
 elif os.path.isfile(permanent + "/domains.gz"):
     print("read domains from file")
 
@@ -561,7 +560,7 @@ rule creepy_download:
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
-        'python3 {BITEXTOR}/bitextor-crawl.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
+        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
 
 rule httrack_download:
     output:
@@ -571,8 +570,8 @@ rule httrack_download:
     priority: 10
     shell:
         'mkdir -p {permanent}; '
-        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded_websites.XXXXXX); '
-        '{BITEXTOR}/bitextor-downloadweb.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
+        'DIRNAME=$(mktemp -d {transient}/downloaded_websites.XXXXXX); '
+        '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
         'rm -rf $DIRNAME;'
 
@@ -879,8 +878,23 @@ rule hunaligndic:
         expand("{dic}", dic=DIC)
     output:
         '{dir}/hunalign_dic'.format(dir=transient)
-    shell:
-        'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
+    run:
+        with open(output[0], "wt") as outw:
+            with open(input[0], "rt") as inr:
+                header=inr.readline().strip()
+                langs=header.split("\t")
+                if langs[0] == LANG1 and langs[1] == LANG2:
+                    inverse=True
+                else:
+                    inverse=False
+                for inline in inr:
+                    columns=inline.strip().split("\t")
+                    if inverse:
+                        outw.write(columns[1]+" @ "+columns[0]+"\n")
+                    else:
+                        outw.write(columns[0]+" @ "+columns[1]+"\n")
+#    shell:
+#        'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
 rule alignsegments_hunalign:
     input:

@@ -27,7 +27,7 @@
   "tmx": true,
   "nmt": true,
   "smt": true,
-  "httrack": true,
+  "httrack": false,
 
   "elrc": true,
   "crawlerNumThreads": 2,
