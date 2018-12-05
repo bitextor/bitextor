@@ -454,6 +454,8 @@ rule train_smt_with_crawl_data_create_config:
 
     output:
         emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
+    priority: 40
+
     run:
         cmd = "mkdir -p {dir}/smt-dir-crawl/steps/1".format(dir=transient)
         shell(cmd)
@@ -485,6 +487,8 @@ rule train_smt_all_create_config:
 
     output:
         emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
+    priority: 40
+
     run:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
