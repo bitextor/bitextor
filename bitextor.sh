@@ -383,7 +383,7 @@ align_documents_and_segments(){
 
   if [ "$VOCABULARY" != "" ]; then
     HUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-    tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $HUNALIGN_DIC
+    tail -n +2 $VOCABULARY | awk 'begin {fs=ofs="\t"} {print $2, "@", $1}' > $HUNALIGN_DIC
   fi
 
   if [ "$TRANSLATIONCOMMAND" != "" ]; then
@@ -889,7 +889,7 @@ case $INPUTMODE in
   5)
     if [ "$VOCABULARY" != "" ]; then
       TEMPHUNALIGN_DIC=$(mktemp $BUILDDICTTMP/hunalign_dic.XXXXXX)
-      tail -n +2 $VOCABULARY | sed -r 's/^([^\s]+)\t([^\s]+)$/\2 @ \1/g' > $TEMPHUNALIGN_DIC
+      tail -n +2 $VOCABULARY | awk 'begin {fs=ofs="\t"} {print $2, "@", $1}' > $TEMPHUNALIGN_DIC
     fi
     cat $ALIGNEDDOCINPUT | align_segments $TEMPHUNALIGN_DIC | clean_segments | convert_to_tmx
     rm -rf $TEMPHUNALIGN_DIC
