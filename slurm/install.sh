@@ -33,7 +33,7 @@ installdependencies(){
     sudo apt-get update
 
     sudo apt-get install -y g++ make python3 python3-pip libbz2-dev liblzma-dev zlib1g-dev libicu-dev python-dev
-    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev &
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev libboost-all-dev &
 
     sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm lxml html5lib ftfy bs4 toolwrapper docopt openfile pycld2 sklearn sacrebleu &
 
@@ -58,17 +58,6 @@ installdependencies(){
         sudo make install
         cd ..
         sudo rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
-    fi
-
-    if [ ! -f /usr/local/include/boost/version.hpp ] && [ ! -f /usr/include/boost/version.hpp ]
-    then
-        wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
-        tar xvf boost_1_66_0.tar.gz
-        cd boost_1_66_0/
-        ./bootstrap.sh
-        sudo ./b2 -j16 --layout=system  install || echo FAILURE
-        cd ..
-        sudo rm -rf boost_1_66_0*
     fi
 
     sudo sh -c 'echo CUDA_ROOT=/usr/local/cuda >> /etc/environment'
