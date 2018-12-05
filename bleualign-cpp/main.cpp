@@ -27,9 +27,11 @@ std::string MungeFilePath(const std::string &filePath)
   else if (boost::filesystem::exists(filePath + ".gz")) {
     return filePath + ".gz";
   }
+#ifdef XZ_COMPRESS
   else if (boost::filesystem::exists(filePath + ".xz")) {
     return filePath + ".xz";
   }
+#endif
   else {
     UTIL_THROW(util::FileOpenException, "File does not exist");
   }
@@ -102,7 +104,11 @@ void Process(const utils::Config &cfg) {
 
 std::string MakeOutputPath(const std::string &path_dir, const std::string &suffix) {
   std::stringstream ss;
+#ifdef XZ_COMPRESS
   ss << path_dir << "/aligned." << suffix << ".xz";
+#else
+  ss << path_dir << "/aligned." << suffix << ".gz";
+#endif
   return ss.str();
 }
 
