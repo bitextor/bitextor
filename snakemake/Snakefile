@@ -656,7 +656,7 @@ rule httrack2lett:
 
 rule lett2lettr:
     input:
-        expand("{{target}}.{extension}", extension=LETT)
+        expand("{{target}}.{extension}.xz", extension=LETT)
     output:
         '{target}.lettr'
     shell:
