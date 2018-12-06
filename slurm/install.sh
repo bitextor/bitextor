@@ -219,6 +219,10 @@ fi
 rm -f /home/$SUDO_USER/transient
 ln -s /mnt/transient /home/$SUDO_USER/transient
 
+# tmp dir
+sudo mkdir -p /mnt/tmp
+sudo chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
+
 # software
 sudo systemctl restart nfs-kernel-server
 
