@@ -817,7 +817,7 @@ rule docaling_translate_smt:
 
     shell:
         'xzcat {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c > {output}; '
-        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'if [ "$(xzcat {input.source} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_custom_translate:
