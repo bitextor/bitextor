@@ -254,7 +254,12 @@ slurmworkersetup(){
 
     sudo -u $SUDO_USER sh -c "mkdir -p ~/transient"
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
-    
+
+    # tmp dir
+    mkdir -p /mnt/tmp
+    chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
+
+    # slurm
     sudo slurmd
 
     name=`hostname`
