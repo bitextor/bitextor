@@ -256,8 +256,8 @@ slurmworkersetup(){
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
 
     # tmp dir
-    mkdir -p /mnt/tmp
-    chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
+    sudo mkdir -p /mnt/tmp
+    sudo chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
 
     # slurm
     sudo slurmd
