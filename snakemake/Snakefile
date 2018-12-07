@@ -572,7 +572,7 @@ rule httrack_download:
         'mkdir -p {permanent}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
-        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c > {output}; '
+        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
 rule concat_subdomains:
@@ -581,7 +581,7 @@ rule concat_subdomains:
     output:
         "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
     shell:
-        'xzcat {input} -f | xz -c > {output}'
+        'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
 
 rule warc2tt:
     input:
@@ -589,7 +589,7 @@ rule warc2tt:
     output:
         '{target}.tt.xz'
     shell:
-        'xzcat {input} -f | {BITEXTOR}/bitextor-warc2tt.py | xz > {output}'
+        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py | xz -T 0 > {output}'
 
 rule tt2ttmime:
     input:
@@ -597,7 +597,7 @@ rule tt2ttmime:
     output:
         '{target}.ttmime.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-identifyMIME.py | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-identifyMIME.py | xz -T 0 > {output}'
 
 rule tt2xtt:
     input:
@@ -606,7 +606,7 @@ rule tt2xtt:
     output:
         '{target}.xtt.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
@@ -616,7 +616,7 @@ rule xtt2boiler:
         '{target}.boiler.xz'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  xzcat -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar | xz > {output}; "
+        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar | xz -T 0 > {output}; "
         "else "
         "  ln -s {input} {output}; "
         "fi"
@@ -627,7 +627,7 @@ rule boiler2ett:
     output:
         '{target}.ett.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-dedup.py | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz > {output}'
 
 rule ett2tika:
     input:
@@ -635,7 +635,7 @@ rule ett2tika:
     output:
         '{target}.tika.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz -T 0 > {output}'
 
 rule tika2lett:
     input:
@@ -643,7 +643,7 @@ rule tika2lett:
     output:
         '{target}.lett.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | xz -T 0 > {output}'
 
 rule httrack2lett:
     output:
@@ -651,7 +651,7 @@ rule httrack2lett:
     input:
         '{target}.tar.gz'
     shell:
-        '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | xz > {output}'
+        '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | xz -T 0 > {output}'
 
 rule lett2lettr:
     input:
@@ -659,7 +659,7 @@ rule lett2lettr:
     output:
         '{target}.lettr'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-lett2lettr.py > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2lettr.py > {output}'
 
 rule lettr2idx:
     input:
@@ -667,7 +667,7 @@ rule lettr2idx:
     output:
         '{target}.idx.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | xz -T 0 > {output}'
 
 
 
@@ -680,7 +680,7 @@ rule idx2ridx_l1tol2:
     output:
         '{target}.1.ridx.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | xz  > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | xz -T 0 > {output}'
 
 rule idx2ridx_l2tol1:
     input:
@@ -688,7 +688,7 @@ rule idx2ridx_l2tol1:
     output:
         '{target}.2.ridx.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | xz -T 0 > {output}'
 
 rule ridx2imagesetoverlap:
     input:
@@ -697,7 +697,7 @@ rule ridx2imagesetoverlap:
     output:
         '{target}.{num}.imgoverlap.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
@@ -706,7 +706,7 @@ rule imagesetoverlap2structuredistance:
     output:
         '{target}.{num}.structuredistance.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule structuredistance2urldistance:
     input:
@@ -716,7 +716,7 @@ rule structuredistance2urldistance:
         '{target}.{num}.urldistance.xz'
     priority: 8
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
@@ -725,7 +725,7 @@ rule urldistance2mutuallylinked:
     output:
         '{target}.{num}.mutuallylinked.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
@@ -734,7 +734,7 @@ rule mutuallylinked2urlscomparison:
     output:
         '{target}.{num}.urlscomparison.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
@@ -743,7 +743,7 @@ rule urlscomparison2urlsoverlap:
     output:
         '{target}.{num}.urlsoverlap.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
 
 rule urlsoverlap2rank:
     input:
@@ -752,7 +752,7 @@ rule urlsoverlap2rank:
     output:
         '{target}.{num}.rank.xz'
     shell:
-        'xzcat -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | xz > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | xz -T 0 > {output}'
 
 rule aligndocumentsBitextor:
     input:
@@ -776,7 +776,7 @@ rule docaling_extracted:
         "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.prefix}.docalign; '
-        'xzcat -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
 
 rule docaling_deduped:
     input:
@@ -784,7 +784,7 @@ rule docaling_deduped:
     output:
         temp("{target}/{lang}.extracted.deduped.xz")
     shell:
-        "xzcat {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c > {output}"
+        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c -T 0 > {output}"
 
 rule docaling_translate_nmt:
     input:
@@ -800,8 +800,8 @@ rule docaling_translate_nmt:
     priority: 40
 
     shell:
-        'xzcat {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c > {output}; '
-        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'xzcat -T 0 {input.source} | {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 rule docaling_translate_smt:
     input:
@@ -816,8 +816,8 @@ rule docaling_translate_smt:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
 
     shell:
-        'xzcat {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c > {output}; '
-        'if [ "$(xzcat {input.source} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
+        'xzcat -T 0 {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_custom_translate:
@@ -826,8 +826,8 @@ rule docaling_custom_translate:
     output:
         temp("{target}.marek-customMT.extracted.deduped.translated.xz")
     shell:
-        'xzcat {input} | {MT_COMMAND} | xz -c > {output}; '
-        'if [ "$(xzcat {input} | wc -l)" -ne "$(xzcat {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
 rule docaling_substitute_translated:
@@ -838,7 +838,7 @@ rule docaling_substitute_translated:
     output:
         "{target}.{mttype}.extracted.translated.xz"
     shell:
-        'xzcat {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c > {output}'
+        'xzcat -T 0 {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
 rule docaling_matches:
     input:
@@ -859,7 +859,7 @@ rule aligndocumentsMarek:
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
@@ -868,7 +868,7 @@ rule aligndocumentsMarekCustomMT:
     output:
         '{target}.docalign.marek-customMT'
     shell:
-        'xzcat -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 
 #================================== SEGMENT ALIGNMENT ==================================#
@@ -903,7 +903,7 @@ rule alignsegments_hunalign:
     output:
         '{name}.hunalign.segalign.xz'
     shell:
-        'xzcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" | xz > {output}'
+        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
@@ -927,7 +927,7 @@ rule alignsegments_bleualign:
 #    output:
 #        "{dir}/{l1}-{l2}.sentalg.xz"
 #    shell:
-#        "xzcat {input} | xz > {output}"
+#        "xzcat -T 0 {input} | xz -T 0 > {output}"
 
 rule cleansegments:
     input:
@@ -935,7 +935,7 @@ rule cleansegments:
     output:
         "{target}.segclean.xz"
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
 #================================== POST PROCESSING ==================================#
 
@@ -950,9 +950,9 @@ rule bicleaner:
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz > {output}; '
+        '  xzcat -T 0 -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
         'else '
-        '  xzcat -f {input} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz > {output}; '
+        '  xzcat -T 0 -f {input} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
         'fi'
 
 rule bicleanerfilter:
@@ -961,7 +961,7 @@ rule bicleanerfilter:
     output:
         "{target}.bicleaner.xz"
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz -T 0 > {output}'
 
 rule elrc:
     input:
@@ -969,7 +969,7 @@ rule elrc:
     output:
         "{target}.elrc.xz"
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
 rule sents:
     input:
@@ -977,7 +977,7 @@ rule sents:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
-        "xzcat {input} | xz > {output}"
+        "xzcat -T 0 {input} | xz -T 0 > {output}"
 
 rule tmx:
     input:
@@ -985,7 +985,7 @@ rule tmx:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
-        "xzcat -f {input} | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
+        "xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
     input:
@@ -993,7 +993,7 @@ rule deduped_tmx:
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
-        "xzcat -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz > {output}"
+        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule mt_parallel_data:
     input:
@@ -1003,7 +1003,7 @@ rule mt_parallel_data:
          ,
          l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
     shell:
-         "xzcat -f {input} | cut -f 3,4 | sort | uniq > corpus; "
+         "xzcat -T 0 -f {input} | cut -f 3,4 | sort | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
