@@ -1,5 +1,5 @@
 #!/bin/bash
-# sudo ./install.sh 16 hieu-foo southcentralus installall scale-cpu:Standard_H16m:5:16 scale-gpu:Standard_NV6:2:6:gpu:tesla:1
+# sudo ./install.sh 16 hieu-foo southcentralus installall ss-cpu:Standard_H16m:20:16 ss-gpu:Standard_NV6:4:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
