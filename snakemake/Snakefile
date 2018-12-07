@@ -1,4 +1,4 @@
-# nohup snakemake --configfile config.hieu.json --cluster "sbatch {cluster.gres}" --cluster-config cluster.json -j 1111 --cores 1111 -k &
+# nohup snakemake --snakefile ../Snakefile --cores 2222 -j 2222 -k --configfile config.fr-en.json --cluster "sbatch {cluster.gres}" --cluster-config ../cluster.json  &
 
 import gzip
 import lzma
