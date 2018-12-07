@@ -42,10 +42,12 @@ for i in reader:
         campos.pop(4)
       segment_list.append("\t".join(campos))
     else:
-      sys.stderr.write("CONFIDENCE SCORE TOO LOW FOR PAIR OF SEGMENTS: " + i)
+      #sys.stderr.write("CONFIDENCE SCORE TOO LOW FOR PAIR OF SEGMENTS: " + i)
       error_count=error_count+1
   else:
-    sys.stderr.write("UNALIGNED SEGMENT: " + i)
+    #sys.stderr.write("UNALIGNED SEGMENT: " + i)
+    pass
+
 #reader.close()
 if len(segment_list)>0:
   print("\n".join(segment_list))
