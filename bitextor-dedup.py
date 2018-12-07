@@ -39,3 +39,4 @@ for i in reader:
       print("{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e))
   except UnicodeDecodeError:
     #sys.stderr.write("File "+fields[2]+" produced a character encoding error")
+    pass
