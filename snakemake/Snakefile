@@ -102,6 +102,27 @@ if "httrack" in config and config["httrack"]==True:
 else:
   CRAWLTARGET="creepy"
 
+#Tokenisers
+if "word-tokeniser1" in config:
+  WORDTOK1=config["word-tokeniser1"]
+else:
+  WORDTOK1=None
+
+if "word-tokeniser2" in config:
+  WORDTOK2=config["word-tokeniser2"]
+else:
+  WORDTOK2=None
+
+if "sent-tokeniser1" in config:
+  SENTTOK1=config["sent-tokeniser1"]
+else:
+  SENTTOK1=None
+
+if "sent-tokeniser2" in config:
+  SENTTOK2=config["sent-tokeniser2"]
+else:
+  SENTTOK2=None
+
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
@@ -656,7 +677,7 @@ rule httrack2lett:
 
 rule lett2lettr:
     input:
-        expand("{{target}}.{extension}", extension=LETT)
+        expand("{{target}}.{extension}.xz", extension=LETT)
     output:
         '{target}.lettr'
     shell:
@@ -668,7 +689,7 @@ rule lettr2idx:
     output:
         '{target}.idx.xz'
     shell:
-        'xzcat -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | xz > {output}'
+        'xzcat -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 {WORDTOK1} --wordtokeniser2 {WORDTOK2} -m 15 | xz > {output}'
 
 
 
@@ -848,7 +869,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser {WORDTOK1}"
 
 rule aligndocumentsMarek:
     input:
@@ -889,7 +910,7 @@ rule alignsegments_hunalign:
     output:
         '{name}.hunalign.segalign.xz'
     shell:
-        'xzcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" | xz > {output}'
+        'xzcat -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz > {output}'
 
 rule alignsegments_bleualign:
     input:

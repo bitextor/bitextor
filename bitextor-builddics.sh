@@ -12,6 +12,9 @@ exit_program()
   echo "   SL_FILE               file containing the source language segments (can be gzipped)"
   echo "   TL_FILE               file containing the target language segments (can be gzipped)"
   echo "   DIC                   output dictionary"
+  echo "   WORDTOKENISER         script used to tokenise words"
+  echo "   LANGTOKSL             source language for word tokenisation"
+  echo "   LANGTOKTL             target language for word tokenisation"
   echo "   PREPROCESSED_CORPUS   folder to store the resulting pre-processed files (tokenised, lowercased and leared). If no folder is specified, a temporal folder is created"
   echo "   PRODUCED_MODELS       folder to store the resulting models obtained as a by-product of the dictionaries building. If no folder is specified, a temporal folder is created"
   exit 1
@@ -43,41 +46,47 @@ do
 done
 
 case $# in
-  5)
-    SL="$1"
-    TL="$2"
-    SL_CORPUS="$3"
-    TL_CORPUS="$4"
-    DIC=$5
-    PREPROCCORPUS=$(mktemp -d $TMPDIR/tempcorpuspreproc.XXXXX)
-    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
-    ;;
-  6)
-    SL="$1"
-    TL="$2"
-    SL_CORPUS="$3"
-    TL_CORPUS="$4"
-    DIC=$5
-    PREPROCCORPUS=$6
-    if [ ! -d $6 ]; then
-      echo "The path specified for storing the preprocessed files for the corpus is not valid."
-      exit_program $(basename $0)
-    fi
-    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
-    ;;
   7)
     SL="$1"
     TL="$2"
     SL_CORPUS="$3"
     TL_CORPUS="$4"
     DIC=$5
-    PREPROCCORPUS=$6
-    if [ ! -d $6 ]; then
+    WORDTOKENISERSL="$6"
+    WORDTOKENISERTL="$7"
+    PREPROCCORPUS=$(mktemp -d $TMPDIR/tempcorpuspreproc.XXXXX)
+    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
+    ;;
+  8)
+    SL="$1"
+    TL="$2"
+    SL_CORPUS="$3"
+    TL_CORPUS="$4"
+    DIC=$5
+    WORDTOKENISERSL="$6"
+    WORDTOKENISERTL="$7"
+    PREPROCCORPUS=$8
+    if [ ! -d $8 ]; then
       echo "The path specified for storing the preprocessed files for the corpus is not valid."
       exit_program $(basename $0)
     fi
-    MODELSDIR=$7
-    if [ ! -d $7 ]; then
+    MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
+    ;;
+  9)
+    SL="$1"
+    TL="$2"
+    SL_CORPUS="$3"
+    TL_CORPUS="$4"
+    DIC=$5
+    WORDTOKENISERSL="$6"
+    WORDTOKENISERTL="$7"
+    PREPROCCORPUS=$8
+    if [ ! -d $8 ]; then
+      echo "The path specified for storing the preprocessed files for the corpus is not valid."
+      exit_program $(basename $0)
+    fi
+    MODELSDIR=$9
+    if [ ! -d $9 ]; then
       echo "The path specified for storing the models produced by GIZA++ is not valid."
       exit_program $(basename $0)
     fi
@@ -94,33 +103,15 @@ TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 
 #Tokenising the corpus
 echo "TOKENISING THE CORPUS..."
-if [ "$(file $SL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
-    cattool="zcat"
-else
-    cattool="cat"
-fi
-$cattool $SL_CORPUS | python3 -c 'import sys
-#from nltk.tokenize.punkt import PunktWordTokenizer
-from nltk import wordpunct_tokenize
-for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+zcat -f $SL_CORPUS | $WORDTOKENISERSL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
-if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
-    cattool="zcat"
-else
-    cattool="cat"
-fi
-$cattool $TL_CORPUS | python3 -c 'import sys
-#from nltk.tokenize.punkt import PunktWordTokenizer
-from nltk import wordpunct_tokenize
-for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+zcat -f $TL_CORPUS | $WORDTOKENISERTL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED & 
 wait
 
 #Lowercasing the corpus
 echo "LOWERCASING THE CORPUS..."
 cat $SL_TOKENISED | perl "$(dirname "$0")"/../share/moses/tokenizer/lowercase.perl > $SL_LOW_TOKENISED 2> /dev/null &
-cat $TL_TOKENISED | perl "$(dirname "$0")"/../share/moses/tokenizer/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null
+cat $TL_TOKENISED | perl "$(dirname "$0")"/../share/moses/tokenizer/lowercase.perl > $TL_LOW_TOKENISED 2> /dev/null &
 wait
 
 #Cleaning the corpus

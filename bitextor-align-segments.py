@@ -23,13 +23,12 @@ import subprocess
 import re
 import pickle
 import codecs
-from nltk import wordpunct_tokenize
-from nltk.tokenize import sent_tokenize
 import site
 import traceback
 from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages
+from external_processor import ExternalTextProcessor
 
 
 def runAligner(filename1, filename2, dic, hunaligndir):
@@ -54,25 +53,21 @@ def runAnalyse(morph, text):
   panalyse = subprocess.Popen(morph, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
   morph_stdout,error = panalyse.communicate(input=text)
   if len(error.strip()) == 0:
-    tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout))
+    tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout)) #Not a good tokenisation
     return tokenized_text
   else:
     return text
 
-def extract_encoded_text(encodedtext, lang, tmp_file, tmp_file_origtext, morphanal):
+def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, sent_tokeniser, word_tokeniser):
   tmp_tok_segs=[]
   for origseg in base64.b64decode(encodedtext).decode("utf-8").replace("\t"," ").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      try:
-        for seg in sent_tokenize(trimorigseg,languages.get(alpha2=lang).name.lower()):
-          tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
-      except LookupError:
-        # No language-specific sentence splitter available
-        for seg in sent_tokenize(trimorigseg):
-          tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-          tmp_tok_segs.append(u" ".join(wordpunct_tokenize(seg)))
+      proc = ExternalTextProcessor(sent_tokeniser.split(' '))
+      for seg in proc.process(trimorigseg).split('\n'):
+        tmp_file_origtext.write(seg.encode("utf8")+b"\n")
+        proc_word = ExternalTextProcessor([word_tokeniser])
+        tmp_tok_segs.append(u" ".join(proc.process(seg).split('\n')))
 
   tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
@@ -139,6 +134,12 @@ oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scor
 oparser.add_argument("-t", "--tmp-dir", help="Temporary directory to be used for internal temporary files (/tmp by default)", dest="tmpdir", required=False, default="/tmp")
 oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL", dest="morphanal1", default=None)
 oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL", dest="morphanal2", default=None)
+oparser.add_argument("--sent-tokeniser_sl", help="Path to the sentence tokeniser for SL", dest="senttok1", default=None)
+oparser.add_argument("--sent-tokeniser_tl", help="Path to the sentence tokeniser for TL", dest="senttok2", default=None)
+oparser.add_argument("--word-tokeniser_sl", help="Path to the word tokeniser for SL", dest="wordtok1", default=None)
+oparser.add_argument("--word-tokeniser_tl", help="Path to the word tokeniser for TL", dest="wordtok2", default=None)
+
+
 
 options = oparser.parse_args()
 
@@ -164,9 +165,9 @@ for line in reader_list:
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-
-  extract_encoded_text(encodedtext1, options.lang1, tmp_file1, tmp_file1_origtext, options.morphanal1)
-  extract_encoded_text(encodedtext2, options.lang2, tmp_file2, tmp_file2_origtext, options.morphanal2)
+  
+  extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
+  extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
 
   tmp_file1_name=tmp_file1.name
   tmp_file2_name=tmp_file2.name

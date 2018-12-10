@@ -106,6 +106,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
+    parser.add_argument('--word_tokeniser', help='Word tokeniser executable path', required=True)
 
     args = parser.parse_args()
 
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         obj_lang1 = map_dic2list(docs_lang1)
     
         word_extractor = WordExtractor(
-            n=args.ngram_size, ignore_set=None)
+            n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
                                       metric='cosine',

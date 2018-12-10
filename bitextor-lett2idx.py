@@ -22,8 +22,7 @@ import argparse
 import unicodedata
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/../share/bitextor/utils")
 from utils.unicodepunct import get_unicode_punct
-#from nltk.tokenize.punkt import PunktWordTokenizer
-from nltk import wordpunct_tokenize
+from external_processor import ExternalTextProcessor
 import subprocess
 import re
 
@@ -35,6 +34,9 @@ oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morpholo
 oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL", dest="morphanal2", default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1", required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2", required=True)
+oparser.add_argument("--wordtokeniser1", help="Word tokeniser script for language 1", dest="wordtokeniser1", required=True)
+oparser.add_argument("--wordtokeniser2", help="Word tokeniser script for language 2", dest="wordtokeniser2", required=True)
+
 
 options = oparser.parse_args()
 
@@ -70,7 +72,12 @@ for line in reader:
       if len(error.strip()) == 0:
         text =  re.sub(r"\^\*?", r"", re.sub(r"[/<][^$]*\$", r"", morph_stdout.decode("utf-8")))
     #Getting the bag of words in the document
-    sorted_uniq_wordlist = set(" ".join(wordpunct_tokenize(text)).lower().split())
+    if lang == options.lang1:
+      proc = ExternalTextProcessor(options.wordtokeniser1.split(' '))
+    elif lang == options.lang2:
+      proc = ExternalTextProcessor(options.wordtokeniser2.split(' '))
+
+    sorted_uniq_wordlist = set(" ".join(proc.process(text)).lower().split())
     #Trimming non-aplphanumerics:
     clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
     sorted_uniq_wordlist=clean_sorted_uniq_wordlist

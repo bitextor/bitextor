@@ -29,18 +29,18 @@ if options.ridx2 == None:
   if options.ridx1 == None:
     reader = sys.stdin
   else:
-    if options.ridx1[-3:-1] == ".xz":
-      reader = lzma.open(options.ridx1,"r")
+    if options.ridx1[-3:] == ".xz":
+      reader = lzma.open(options.ridx1,"rt")
     else:
       reader = open(options.ridx1,"r")
 else:
   combine = True
-  if options.ridx1[-3:-1] == ".xz":
-    reader1 = lzma.open(options.ridx1,"r")
+  if options.ridx1[-3:] == ".xz":
+    reader1 = lzma.open(options.ridx1,"rt")
   else:
     reader1 = open(options.ridx1,"r")
-  if options.ridx2[-3:-1] == ".xz":
-    reader2 = lzma.open(options.ridx2,"r")
+  if options.ridx2[-3:] == ".xz":
+    reader2 = lzma.open(options.ridx2,"rt")
   else:
     reader2 = open(options.ridx2,"r")
 
