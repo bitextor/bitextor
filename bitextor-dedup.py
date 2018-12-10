@@ -32,9 +32,11 @@ for i in reader:
     c.update(e.encode("utf8"))
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
-      sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+      pass
+      #sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
       seen_md5[c.hexdigest()]=fields[2]
       print("{0}\t{1}\t{2}\t{3}".format(fields[0].strip(),fields[1],fields[2],e))
   except UnicodeDecodeError:
-    sys.stderr.write("File "+fields[2]+" produced a character encoding error")
+    #sys.stderr.write("File "+fields[2]+" produced a character encoding error")
+    pass

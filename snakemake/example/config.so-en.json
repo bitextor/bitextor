@@ -10,7 +10,7 @@
   "langstatThreshold":50000,
 
   "langstatExcludeDomains":"/home/hieu/permanent/software/bitextor/snakemake/exclude-domains",
-  "temp": "/tmp",
+  "temp": "/mnt/tmp",
   "permanentDir": "/home/hieu/permanent/so-en",
   "transientDir": "/home/hieu/transient/so-en",
   "lang1": "so",
