@@ -102,6 +102,7 @@ else:
     
     #Reading the .ridx file with the preliminary alignment in one of the directions
     for line_ridx2 in reader2:
+      line_ridx2=line_ridx2.decode("utf-8")
       fields=line_ridx2.strip().split("\t");
       if len(fields) >= 2:
         num_candidates=min(len(fields)-1,options.candidate_num)
@@ -123,6 +124,7 @@ else:
     #Reading the .ridx file with the preliminary alignment in the other direction and combining this information with the previous one
     pairedDocsLine=set()
     for line_ridx1 in reader1:
+      line_ridx1=line_ridx1.decode("utf-8")
       new_candidate_list = {}
       fields=line_ridx1.strip().split("\t")
       if len(fields) >= 2:

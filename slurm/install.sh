@@ -1,5 +1,5 @@
 #!/bin/bash
-# sudo ./install.sh 16 hieu-foo southcentralus installall scale-cpu:Standard_H16m:5:16 scale-gpu:Standard_NV6:2:6:gpu:tesla:1
+# sudo ./install.sh 16 hieu-foo southcentralus installall ss-cpu:Standard_H16m:20:16 ss-gpu:Standard_NV6:4:6:gpu:tesla:1
 # Scaleset params = NAME:SIZE:count:num-cpu[:gpu-string]
 
 if [ ! $SUDO_USER ] || [ $SUDO_USER == "root" ] ; then
@@ -33,7 +33,7 @@ installdependencies(){
     sudo apt-get update
 
     sudo apt-get install -y g++ make python3 python3-pip libbz2-dev liblzma-dev zlib1g-dev libicu-dev python-dev
-    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev &
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev libboost-all-dev libxmlrpc-c++ libcmph-dev &
 
     sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet snakemake tld tldextract tqdm lxml html5lib ftfy bs4 toolwrapper docopt openfile pycld2 sklearn sacrebleu &
 
@@ -58,17 +58,6 @@ installdependencies(){
         sudo make install
         cd ..
         sudo rm -rf cmake-3.12.3.tar.gz cmake-3.12.3
-    fi
-
-    if [ ! -f /usr/local/include/boost/version.hpp ] && [ ! -f /usr/include/boost/version.hpp ]
-    then
-        wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
-        tar xvf boost_1_66_0.tar.gz
-        cd boost_1_66_0/
-        ./bootstrap.sh
-        sudo ./b2 -j16 --layout=system  install || echo FAILURE
-        cd ..
-        sudo rm -rf boost_1_66_0*
     fi
 
     sudo sh -c 'echo CUDA_ROOT=/usr/local/cuda >> /etc/environment'
@@ -151,7 +140,9 @@ for vmssinfo in $vmssnames; do
     echo "VMSS_NAME=$VMSS_NAME CPUs=$CPUs gpuinfo=$gpuinfo"
 
     if echo "$vmssinfo" | grep -q ":gpu:" ; then
-        gpuStr="Gres=$gpuinfo" 
+        gpuStr="Gres=$gpuinfo"
+    else
+        gpuStr=""
     fi
 
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv`; do
@@ -228,6 +219,10 @@ fi
 rm -f /home/$SUDO_USER/transient
 ln -s /mnt/transient /home/$SUDO_USER/transient
 
+# tmp dir
+sudo mkdir -p /mnt/tmp
+sudo chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
+
 # software
 sudo systemctl restart nfs-kernel-server
 
@@ -263,7 +258,12 @@ slurmworkersetup(){
 
     sudo -u $SUDO_USER sh -c "mkdir -p ~/transient"
     sudo mount $MASTER_IP:/mnt/transient /home/$SUDO_USER/transient
-    
+
+    # tmp dir
+    sudo mkdir -p /mnt/tmp
+    sudo chown ${SUDO_USER}:${SUDO_USER} /mnt/tmp
+
+    # slurm
     sudo slurmd
 
     name=`hostname`

@@ -27,9 +27,11 @@ std::string MungeFilePath(const std::string &filePath)
   else if (boost::filesystem::exists(filePath + ".gz")) {
     return filePath + ".gz";
   }
+#ifdef XZ_COMPRESS
   else if (boost::filesystem::exists(filePath + ".xz")) {
     return filePath + ".xz";
   }
+#endif
   else {
     UTIL_THROW(util::FileOpenException, "File does not exist");
   }
@@ -102,14 +104,18 @@ void Process(const utils::Config &cfg) {
 
 std::string MakeOutputPath(const std::string &path_dir, const std::string &suffix) {
   std::stringstream ss;
+#ifdef XZ_COMPRESS
   ss << path_dir << "/aligned." << suffix << ".xz";
+#else
+  ss << path_dir << "/aligned." << suffix << ".gz";
+#endif
   return ss.str();
 }
 
 void WriteAlignedTextToFile(const std::string &output_dir, const utils::matches_list &matches) {
 
   std::stringstream ss;
-  utils::CompressedWriter gw(output_dir + "/align.info.xz");
+  utils::CompressedWriter gw(output_dir + "/align.info.gz");
   for (size_t i = 0; i < matches.size(); ++i) {
     ss.str("");
 
