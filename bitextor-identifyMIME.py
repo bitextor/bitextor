@@ -38,9 +38,18 @@ for line in reader:
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
     try:
-      magicoutput.append(base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8"))
-      print("\t".join(magicoutput))
+      str = base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8")
+      magicoutput.append(str)
+
+      #sys.stderr.write(str)
     except LookupError as e:
-      sys.stderr.write("Unknown character encoding in file "+url+": "+str(e)+"\n")
+      sys.stderr.write("Unknown character encoding in file " + url + ": " + str(e) + "\n")
+
+    except:
+      sys.stderr.write("Dunno")
+      magicoutput.append("ZHVubm8K") # dunno
+
+    print("\t".join(magicoutput))
+
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
