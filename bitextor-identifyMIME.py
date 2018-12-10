@@ -42,11 +42,8 @@ for line in reader:
       magicoutput.append(str)
 
       #sys.stderr.write(str)
-    except LookupError as e:
-      sys.stderr.write("Unknown character encoding in file " + url + ": " + str(e) + "\n")
-
     except:
-      sys.stderr.write("Dunno")
+      sys.stderr.write("Error in file " + url + "\n")
       magicoutput.append("ZHVubm8K") # dunno
 
     print("\t".join(magicoutput))
