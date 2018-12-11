@@ -1124,7 +1124,7 @@ rule mgiza:
     output:
         "{prefix}.{l2}-{l1}.t3.final"
     shell:
-        "{BITEXTOR}/bin/mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null"
+        "{BITEXTOR}/mgiza/mgizapp/bin/mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null"
 
 
 rule snt2cooc:
@@ -1137,7 +1137,7 @@ rule snt2cooc:
     output:
         "{prefix}.{l2}-{l1}.cooc"
     shell:
-        "{BITEXTOR}/bin/snt2cooc {output} {input.vcb1} {input.vcb2} {input.snt} 2> /dev/null"
+        "{BITEXTOR}/mgiza/mgizapp/bin/snt2cooc {output} {input.vcb1} {input.vcb2} {input.snt} 2> /dev/null"
 
 rule mkcls:
     input:
@@ -1145,7 +1145,7 @@ rule mkcls:
     output:
         "{dir}/corpus.{{lang}}.vcb.classes".format(dir=mgizaModelDir)
     shell:
-        "{BITEXTOR}/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
+        "{BITEXTOR}/clustercat/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
 
 rule plain2snt:
     input:
@@ -1158,7 +1158,7 @@ rule plain2snt:
         vcb2="{dir}/corpus.{l2}.vcb".format(dir=mgizaModelDir, l2=LANG2)
     shell:
         "mkdir -p {mgizaModelDir}; "
-        "{BITEXTOR}/bin/plain2snt {input.l1} {input.l2} 2> /dev/null > /dev/null; "
+        "{BITEXTOR}/mgiza/mgizapp/bin/plain2snt {input.l1} {input.l2} 2> /dev/null > /dev/null; "
         "mv {preprocCorpusDir}/corpus.clean.{LANG1}_corpus.clean.{LANG2}.snt {output.snt_2_1}; "
         "mv {preprocCorpusDir}/corpus.clean.{LANG2}_corpus.clean.{LANG1}.snt {output.snt_1_2}; "
         "cp {preprocCorpusDir}/corpus.clean.{LANG1}.vcb {output.vcb1}; "
