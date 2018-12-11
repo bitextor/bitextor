@@ -616,7 +616,7 @@ rule xtt2boiler:
         '{target}.boiler.xz'
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
-        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/share/java/piped-boilerpipe.jar | xz -T 0 > {output}; "
+        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
         "else "
         "  ln -s {input} {output}; "
         "fi"
@@ -752,7 +752,7 @@ rule urlsoverlap2rank:
     output:
         '{target}.{num}.rank.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/share/bitextor/model/keras.model -w {BITEXTOR}/share/bitextor/model/keras.weights | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/model/keras.model -w {BITEXTOR}/model/keras.weights | xz -T 0 > {output}'
 
 rule aligndocumentsBitextor:
     input:
@@ -941,6 +941,14 @@ rule cleansegments:
 
 #NOTE: did not add zipporah since it will be deprecated in version 7 of bitextor
 #TODO: Add Bicleaner, add deduplication
+
+#rule bicleaner:
+#    input:
+#        "{target}.segclean.xz"
+#    output:
+#        "{target}.bicleaner.scores.xz"
+#    shell:
+#        "python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner-train.py corpus.en-cs.train --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d dict-en.gz -D dict-cs.gz -b 1000 -c en-cs.classifier -g 50000 -w 50000 -m training.en-cs.yaml --classifier_type random_forest"
 
 rule bicleaner:
     input:
@@ -1168,7 +1176,7 @@ rule clean:
         ,
         "{pref}.clean."+"{lang2}".format(lang2=LANG2)
     shell:
-        "perl {BITEXTOR}/share/bitextor/utils/clean-corpus-n.perl {wildcards.pref}.tok.low {LANG1} {LANG2} {wildcards.pref}.clean 1 80 {wildcards.pref}.lines-retained"
+        "perl {BITEXTOR}/utils/clean-corpus-n.perl {wildcards.pref}.tok.low {LANG1} {LANG2} {wildcards.pref}.clean 1 80 {wildcards.pref}.lines-retained"
 
 #Lowercase corpus
 
@@ -1178,7 +1186,7 @@ rule lowercase:
     output:
         "{pref}.tok.low.{lang}"
     shell:
-        "xzcat {input} | {BITEXTOR}/share/moses/tokenizer/lowercase.perl > {output}"
+        "xzcat {input} | {BITEXTOR}/preprocess/moses/tokenizer/lowercase.perl > {output}"
 
 #Tokenize corpus
 
