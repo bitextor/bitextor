@@ -182,7 +182,7 @@ for line in reader_list:
 
   align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, filename1, filename2, options.dic)
 
-  #os.remove(tmp_file1.name)
-  #os.remove(tmp_file1_origtext.name)
-  #os.remove(tmp_file2.name)
-  #os.remove(tmp_file2_origtext.name)
+  os.remove(tmp_file1.name)
+  os.remove(tmp_file1_origtext.name)
+  os.remove(tmp_file2.name)
+  os.remove(tmp_file2_origtext.name)

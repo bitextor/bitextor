@@ -1,7 +1,7 @@
 {
   "bitextor":"/home/lpla/permanent/bitextor-malign",
   "bitextor-installation":"/home/lpla/permanent/bitextor-malign",
-  "domains": ["www.elenacaffe1863.com"],
+  "domains": ["www.elenacaffe1863.com","vade-retro.fr"],
   "temp": "/home/lpla/transient",
   "httrack": true,
   "permanentDir": "/home/lpla/permanent/bitextor-output",
