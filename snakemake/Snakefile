@@ -1028,11 +1028,21 @@ preprocCorpusDir=transient+"/tempcorpuspreproc."+LANG1+"-"+LANG2
 mgizaModelDir=transient+"/tempgizamodel."+LANG1+"-"+LANG2
 
 #Input data prefixes
-trainPrefixes=config["initCorpusTrainPrefix"]
+if "initCorpusTrainPrefix" in config:
+    trainPrefixes=config["initCorpusTrainPrefix"]
+else:
+    trainPrefixes=None
 
 #Tokenization
-tokenizer_l1= config["LANG1Tokenizer"]
-tokenizer_l2= config["LANG2Tokenizer"]
+if "LANG1Tokenizer" in config:
+    tokenizer_l1=config["LANG1Tokenizer"]
+else:
+    tokenizer_l1=None
+
+if "LANG2Tokenizer" in config:
+    tokenizer_l2=config["LANG2Tokenizer"]
+else:
+    tokenizer_l2=None
 
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 rule symmetrise_dic:
