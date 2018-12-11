@@ -9,15 +9,15 @@ SUBDIRS= utils piped-boilerpipe model
 bitextor_SOURCEFILES=bitextor-align-documents.py bitextor-align-segments.py bitextor-dedup.py \
             bitextor-cleantextalign.py bitextor-crawl2ett.sh bitextor-rank.py bitextor-train-document-alignment.py \
             bitextor-ett2lett.sh bitextor-lett-language-detector.py bitextor-idx2ridx.py bitextor-lett2idx.py bitextor-identifyMIME.py bitextor-dir2warc.py \
-            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-crawl.py bitextor-downloadweb.py \
+            bitextor-lett2lettr.py bitextor-ridx2filenames.py bitextor-creepy.py bitextor-httrack.py \
             bitextor-buildTMX.sh bitextor-builddics.sh install_nltk_data.py \
             features/bitextor-structuredistance.py features/bitextor-urlsetoverlap.py features/bitextor-urlsdistance.py \
             features/bitextor-imagesetoverlap.py features/bitextor-mutuallylinked.py features/bitextor-urlscomparison.py \
             bitextor-buildTMX-dedup.py bitextor-buildTMX-dedupRAM.py bitextor-warc2tt.py bitextor-webdir2warc.sh bitextor-get-html-text.py
 
 bin_SCRIPTS=bitextor bitextor-align-documents bitextor-align-segments bitextor-cleantextalign bitextor-rank \
-            bitextor-ett2lett bitextor-lett-language-detector bitextor-crawl bitextor-train-document-alignment bitextor-identifyMIME bitextor-dedup \
-            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-downloadweb \
+            bitextor-ett2lett bitextor-lett-language-detector bitextor-creepy bitextor-train-document-alignment bitextor-identifyMIME bitextor-dedup \
+            bitextor-idx2ridx bitextor-lett2idx bitextor-lett2lettr bitextor-builddics bitextor-crawl2ett bitextor-httrack \
             bitextor-ridx2filenames bitextor-buildTMX bitextor-elrc-filtering bitextor-dir2warc \
             features/bitextor-structuredistance features/bitextor-urlsetoverlap features/bitextor-urlsdistance \
             features/bitextor-imagesetoverlap features/bitextor-mutuallylinked features/bitextor-urlscomparison \
@@ -94,7 +94,7 @@ features/bitextor-imagesetoverlap: features/bitextor-imagesetoverlap.py
 
 features/bitextor-urlsdistance: features/bitextor-urlsdistance.py
 
-bitextor-crawl: bitextor-crawl.py
+bitextor-creepy: bitextor-creepy.py
 
 bitextor-crawl2ett: bitextor-crawl2ett.sh
 
@@ -126,7 +126,7 @@ bitextor-builddics: bitextor-builddics.sh nltk_data
 
 bitextor-elrc-filtering: bitextor-elrc-filtering.py
 
-bitextor-downloadweb: bitextor-downloadweb.py
+bitextor-httrack: bitextor-httrack.py
 
 bitextor-webdir2warc: bitextor-webdir2warc.sh
 
