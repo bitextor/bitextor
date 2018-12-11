@@ -228,7 +228,7 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
     if exclude_path:
         excluded_set = loadDomains(Path(exclude_path))
 
-    domains_to_crawl = []
+    domains_to_crawl = set()
 
     sys.stderr.write(
         "Gathering domain information for {0} and {1}...\n".format(*l12))
@@ -253,7 +253,7 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
                         lang1_bytes = langContent[l12[0]]
                         lang2_bytes = langContent[l12[1]]
                         if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                            domains_to_crawl.append(prevDomain)
+                            domains_to_crawl.add(prevDomain)
 
                     prevDomain = domain
                     langContent = {}
@@ -268,7 +268,7 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
                 lang1_bytes = langContent[l12[0]]
                 lang2_bytes = langContent[l12[1]]
                 if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                    domains_to_crawl.append(prevDomain)
+                    domains_to_crawl.add(prevDomain)
 
 
     print(len(domains_to_crawl), " domains found", file=sys.stderr)
