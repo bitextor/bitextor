@@ -40,6 +40,9 @@ compile-truecaser:
 compile-kenlm:
 	cd kenlm && cmake . && make -j4
 
+compile-clustercat:
+	cd clustercat && make 
+
 install-smttools:
 	cp mgiza/mgizapp/bin/* $(prefix)/bin/.
 	cp clustercat/bin/* $(prefix)/bin/.
@@ -70,75 +73,105 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign install-standoff
 
-bitextor: bitextor.sh compile-smttools compile-hunalign compile-truecaser compile-kenlm
+bitextor: bitextor.sh compile-clustercat compile-smttools compile-hunalign compile-truecaser compile-kenlm
+	cp $< $@
 
 nltk_data:
 	python3 install_nltk_data.py
 
 features/bitextor-urlscomparison: features/bitextor-urlscomparison.py
+	cp $< $@
 
 features/bitextor-structuredistance: features/bitextor-structuredistance.py
+	cp $< $@
 
 features/bitextor-mutuallylinked: features/bitextor-mutuallylinked.py
+	cp $< $@
 
 bitextor-dir2warc: bitextor-dir2warc.py
+	cp $< $@
 
 bitextor-dedup: bitextor-dedup.py
+	cp $< $@
 
 bitextor-get-html-text: bitextor-get-html-text.py
-	sed "s!__PREFIX__!$(prefix)!g" $< | \
-	sed "s!__PYTHON__!$(PYTHON)!g" | \
-	sed "s!__ENV__!$(ENV)!g" >$@
+	cp $< $@
 
 bitextor-warc2ett: bitextor-warc2ett.py
+	cp $< $@
 
 bitextor-identifyMIME: bitextor-identifyMIME.py
+	cp $< $@
 
 bitextor-rank: bitextor-rank.py
+	cp $< $@
 
 features/bitextor-urlsetoverlap: features/bitextor-urlsetoverlap.py
+	cp $< $@
 
 features/bitextor-imagesetoverlap: features/bitextor-imagesetoverlap.py
+	cp $< $@
 
 features/bitextor-urlsdistance: features/bitextor-urlsdistance.py
+	cp $< $@
 
 bitextor-crawl: bitextor-crawl.py
+	cp $< $@
 
 bitextor-crawl2ett: bitextor-crawl2ett.sh
+	cp $< $@
 
 bitextor-buildTMX: bitextor-buildTMX.py
+	cp $< $@
 
 bitextor-buildTMX-dedup: bitextor-buildTMX-dedup.py
+	cp $< $@
 
 bitextor-buildTMX-dedupRAM: bitextor-buildTMX-dedupRAM.py
+	cp $< $@
 
 bitextor-ridx2filenames: bitextor-ridx2filenames.py
+	cp $< $@
 
 bitextor-align-segments: bitextor-align-segments.py
+	cp $< $@
 
 bitextor-score-document-alignment: bitextor-score-document-alignment.py
+	cp $< $@
 
 bitextor-align-documents: bitextor-align-documents.py
+	cp $< $@
 
 bitextor-cleantextalign: bitextor-cleantextalign.py
+	cp $< $@
 
 bitextor-ett2lett: bitextor-ett2lett.sh
+	cp $< $@
 
 bitextor-lett-language-detector: bitextor-lett-language-detector.py
+	cp $< $@
 
 bitextor-idx2ridx: bitextor-idx2ridx.py
+	cp $< $@
 
 bitextor-lett2idx: bitextor-lett2idx.py nltk_data
+	cp $< $@
 
 bitextor-lett2lettr: bitextor-lett2lettr.py
+	cp $< $@
 
 bitextor-builddics: bitextor-builddics.sh nltk_data
+	cp $< $@
 
 bitextor-elrc-filtering: bitextor-elrc-filtering.py
+	cp $< $@
 
 bitextor-downloadweb: bitextor-downloadweb.sh
+	cp $< $@
 
 zipporah-classifier: zipporah-classifier.sh
+	cp $< $@
 
 bitextor-webdir2warc: bitextor-webdir2warc.sh
+	cp $< $@
 
