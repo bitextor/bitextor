@@ -64,10 +64,12 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
     trimorigseg=origseg.strip()
     if trimorigseg != "":
       proc = ExternalTextProcessor(sent_tokeniser.split(' '))
-      for seg in proc.process(trimorigseg).split('\n'):
+      for seg in proc.process(trimorigseg).replace('\r','').split('\n'):
+        if seg is "":
+            continue
         tmp_file_origtext.write(seg.encode("utf8")+b"\n")
         proc_word = ExternalTextProcessor([word_tokeniser])
-        tmp_tok_segs.append(u" ".join(proc.process(seg).split('\n')))
+        tmp_tok_segs.append(proc_word.process(seg))
 
   tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
@@ -165,7 +167,7 @@ for line in reader_list:
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-  
+   
   extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
   extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
 

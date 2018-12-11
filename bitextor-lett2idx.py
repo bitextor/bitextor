@@ -77,7 +77,7 @@ for line in reader:
     elif lang == options.lang2:
       proc = ExternalTextProcessor(options.wordtokeniser2.split(' '))
 
-    sorted_uniq_wordlist = set(" ".join(proc.process(text)).lower().split())
+    sorted_uniq_wordlist = set(proc.process(text).lower().split())
     #Trimming non-aplphanumerics:
     clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
     sorted_uniq_wordlist=clean_sorted_uniq_wordlist
