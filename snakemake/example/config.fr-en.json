@@ -36,6 +36,8 @@
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
   "paracrawl-aligner-command": "marek-smt",
   "bleualign": true,
+  "docAlignThreshold": 0.1,
+  "bleuAlignThreshold": 0.1,
 
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",

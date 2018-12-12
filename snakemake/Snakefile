@@ -191,9 +191,10 @@ if "bleualign" in config and config["bleualign"]:
 else:
   SEGMENTALIGNER="hunalign"
 
-#This options can be added to the config fil
-DOC_THRESHOLD=0
-BLEU_THRESHOLD=0
+# Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
+DOC_THRESHOLD  = config["docAlignThreshold"]
+BLEU_THRESHOLD = config["bleuAlignThreshold"]
+#print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
