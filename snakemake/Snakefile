@@ -939,28 +939,19 @@ rule cleansegments:
 
 #================================== POST PROCESSING ==================================#
 
-#NOTE: did not add zipporah since it will be deprecated in version 7 of bitextor
-#TODO: Add Bicleaner, add deduplication
-
-#rule bicleaner:
-#    input:
-#        "{target}.segclean.xz"
-#    output:
-#        "{target}.bicleaner.scores.xz"
-#    shell:
-#        "python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner-train.py corpus.en-cs.train --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d dict-en.gz -D dict-cs.gz -b 1000 -c en-cs.classifier -g 50000 -w 50000 -m training.en-cs.yaml --classifier_type random_forest"
 
 rule bicleaner:
     input:
-        "{target}.segclean.xz"
+        segclean="{target}.segclean.xz",
+        model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{target}.bicleaner.scores.xz"
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
         'else '
-        '  xzcat -T 0 -f {input} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
         'fi'
 
 rule bicleanerfilter:
@@ -1207,3 +1198,28 @@ rule tokenize_file_l2:
     shell:
         "mkdir -p preprocCorpusDir; "
         "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {tokenizer_l2} | xz > {output}"
+
+
+
+rule bicleaner_train_model:
+    input:
+        corpusl1=expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG1),
+        corpusl2=expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG2),
+        t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
+        t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
+    output:
+        "{model}".format(model=BICLEANER_CONFIG)
+    shell:
+        "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "
+        "paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training; "
+        "DIR=$(dirname {BICLEANER_CONFIG}); "
+        "echo $DIR; "
+        "cp {input.t3_1} $DIR/{LANG1}.dic; "
+        "cp {input.t3_2} $DIR/{LANG2}.dic; "
+        "gzip $DIR/{LANG1}.dic $DIR/{LANG2}.dic; "
+        "lines=$(cat $training | wc -l); "
+        "trainlines=$(echo \"$lines*4/10\" | bc); "
+        "testlines=$(echo \"($lines-2*$trainlines)/2\" | bc); "
+        "python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d $DIR/{LANG1}.dic.gz -D $DIR/{LANG2}.dic.gz -b 1000 -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; "
+        "rm $training"
+
