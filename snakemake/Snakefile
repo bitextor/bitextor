@@ -192,8 +192,15 @@ else:
   SEGMENTALIGNER="hunalign"
 
 # Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
-DOC_THRESHOLD  = config["docAlignThreshold"]
-BLEU_THRESHOLD = config["bleuAlignThreshold"]
+if "docAlignThreshold" in config:
+    DOC_THRESHOLD  = config["docAlignThreshold"]
+else:
+    DOC_THRESHOLD = 0.0
+
+if "bleuAlignThreshold" in config:
+    BLEU_THRESHOLD = config["bleuAlignThreshold"]
+else:
+    BLEU_THRESHOLD = 0.0
 #print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
