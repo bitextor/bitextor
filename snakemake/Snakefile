@@ -696,7 +696,7 @@ rule lettr2idx:
     output:
         '{target}.idx.xz'
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 {WORDTOK1} --wordtokeniser2 {WORDTOK2} -m 15 | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 | xz -T 0 > {output}'
 
 
 
