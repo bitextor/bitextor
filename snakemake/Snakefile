@@ -103,23 +103,23 @@ else:
   CRAWLTARGET="creepy"
 
 #Tokenisers
-if "word-tokeniser1" in config:
-  WORDTOK1=config["word-tokeniser1"]
+if "LANG1Tokenizer" in config:
+  WORDTOK1=config["LANG1Tokenizer"]
 else:
   WORDTOK1=None
 
-if "word-tokeniser2" in config:
-  WORDTOK2=config["word-tokeniser2"]
+if "LANG2Tokenizer" in config:
+  WORDTOK2=config["LANG2Tokenizer"]
 else:
   WORDTOK2=None
 
-if "sent-tokeniser1" in config:
-  SENTTOK1=config["sent-tokeniser1"]
+if "LANG1SentenceSplitter" in config:
+  SENTTOK1=config["LANG1SentenceSplitter"]
 else:
   SENTTOK1=None
 
-if "sent-tokeniser2" in config:
-  SENTTOK2=config["sent-tokeniser2"]
+if "LANG2SentenceSplitter" in config:
+  SENTTOK2=config["LANG2SentenceSplitter"]
 else:
   SENTTOK2=None
 
@@ -1063,17 +1063,6 @@ if "initCorpusTrainPrefix" in config:
 else:
     trainPrefixes=None
 
-#Tokenization
-if "LANG1Tokenizer" in config:
-    tokenizer_l1=config["LANG1Tokenizer"]
-else:
-    tokenizer_l1=None
-
-if "LANG2Tokenizer" in config:
-    tokenizer_l2=config["LANG2Tokenizer"]
-else:
-    tokenizer_l2=None
-
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 rule symmetrise_dic:
     input:
@@ -1219,7 +1208,7 @@ rule tokenize_file_l1:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p preprocCorpusDir; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {tokenizer_l1} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz > {output}"
 
 rule tokenize_file_l2:
     input:
@@ -1228,4 +1217,4 @@ rule tokenize_file_l2:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p preprocCorpusDir; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {tokenizer_l2} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
