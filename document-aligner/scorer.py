@@ -5,11 +5,12 @@ import time
 from collections import Counter
 from functools import partial
 
-from nltk.tokenize import wordpunct_tokenize
 from numpy import float32, isnan
 from scipy.sparse import vstack as sp_vstack
 from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from external_processor import ExternalTextProcessor
+
 
 
 def _ngram_helper(words, n, hash_values):
@@ -22,8 +23,9 @@ def _ngram_helper(words, n, hash_values):
     return ngrams
 
 
-def ngrams_from_text(n, hash_values, ignore_set, page):
-    words = wordpunct_tokenize(page)
+def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, page):
+    proc = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
+    words = proc.process(page).split("\n")
     ngrams = _ngram_helper(words, n, hash_values)
 
     if ignore_set:
@@ -54,10 +56,10 @@ class ExtractionMapper(object):
 
 class WordExtractor(ExtractionMapper):
 
-    def __init__(self, n=1, hash_values=False, ignore_set=None):
+    def __init__(self, word_tokeniser_cmd, n=1, hash_values=False, ignore_set=None):
         super(WordExtractor, self).__init__(
             extraction_function=partial(ngrams_from_text,
-                                        n, hash_values, ignore_set))
+                                        n, hash_values, ignore_set, word_tokeniser_cmd))
 
 
 class DocumentVectorExtractor(object):

@@ -30,17 +30,17 @@ if options.ridx2 == None:
     reader = sys.stdin
   else:
     if options.ridx1[-3:] == ".xz":
-      reader = lzma.open(options.ridx1,"r")
+      reader = lzma.open(options.ridx1,"rt")
     else:
       reader = open(options.ridx1,"r")
 else:
   combine = True
   if options.ridx1[-3:] == ".xz":
-    reader1 = lzma.open(options.ridx1,"r")
+    reader1 = lzma.open(options.ridx1,"rt")
   else:
     reader1 = open(options.ridx1,"r")
   if options.ridx2[-3:] == ".xz":
-    reader2 = lzma.open(options.ridx2,"r")
+    reader2 = lzma.open(options.ridx2,"rt")
   else:
     reader2 = open(options.ridx2,"r")
 
@@ -102,7 +102,6 @@ else:
     
     #Reading the .ridx file with the preliminary alignment in one of the directions
     for line_ridx2 in reader2:
-      line_ridx2=line_ridx2.decode("utf-8")
       fields=line_ridx2.strip().split("\t");
       if len(fields) >= 2:
         num_candidates=min(len(fields)-1,options.candidate_num)
@@ -124,7 +123,6 @@ else:
     #Reading the .ridx file with the preliminary alignment in the other direction and combining this information with the previous one
     pairedDocsLine=set()
     for line_ridx1 in reader1:
-      line_ridx1=line_ridx1.decode("utf-8")
       new_candidate_list = {}
       fields=line_ridx1.strip().split("\t")
       if len(fields) >= 2:

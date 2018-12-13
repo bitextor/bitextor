@@ -102,6 +102,27 @@ if "httrack" in config and config["httrack"]==True:
 else:
   CRAWLTARGET="creepy"
 
+#Tokenisers
+if "LANG1Tokenizer" in config:
+  WORDTOK1=config["LANG1Tokenizer"]
+else:
+  WORDTOK1=None
+
+if "LANG2Tokenizer" in config:
+  WORDTOK2=config["LANG2Tokenizer"]
+else:
+  WORDTOK2=None
+
+if "LANG1SentenceSplitter" in config:
+  SENTTOK1=config["LANG1SentenceSplitter"]
+else:
+  SENTTOK1=None
+
+if "LANG2SentenceSplitter" in config:
+  SENTTOK2=config["LANG2SentenceSplitter"]
+else:
+  SENTTOK2=None
+
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
@@ -154,8 +175,8 @@ if "mosesDir" in config:
 else:
   MOSESDIR = ""
 
-if "paracrawl-aligner-command" in config:
-  MT_COMMAND=config["paracrawl-aligner-command"]
+if "alignerCmd" in config:
+  MT_COMMAND=config["alignerCmd"]
 
   if MT_COMMAND in {"marek-nmt", "marek-smt"}:
       DOCALIGNEXT = MT_COMMAND
@@ -170,9 +191,10 @@ if "bleualign" in config and config["bleualign"]:
 else:
   SEGMENTALIGNER="hunalign"
 
-#This options can be added to the config fil
-DOC_THRESHOLD=0
-BLEU_THRESHOLD=0
+# Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
+DOC_THRESHOLD  = config["docAlignThreshold"]
+BLEU_THRESHOLD = config["bleuAlignThreshold"]
+#print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
@@ -411,8 +433,8 @@ if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
 if "smt" in config and config["smt"]:
-    OUTPUT.append("{dir}/smt-dir/evaluation/report.1".format(dir=transient))
-    OUTPUT.append("{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
@@ -438,7 +460,7 @@ rule train_smt_with_crawl_data:
         emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
+        report = "{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
@@ -475,7 +497,7 @@ rule train_smt_all:
         emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
+        report = "{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
@@ -667,7 +689,7 @@ rule lettr2idx:
     output:
         '{target}.idx.xz'
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 {WORDTOK1} --wordtokeniser2 {WORDTOK2} -m 15 | xz -T 0 > {output}'
 
 
 
@@ -807,7 +829,7 @@ rule docaling_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
-        report = "{transient}/smt-dir/evaluation/report.1".format(transient=transient)
+        report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
@@ -847,7 +869,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
 
 rule aligndocumentsMarek:
     input:
@@ -903,7 +925,7 @@ rule alignsegments_hunalign:
     output:
         '{name}.hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
@@ -1031,17 +1053,6 @@ if "initCorpusTrainPrefix" in config:
     trainPrefixes=config["initCorpusTrainPrefix"]
 else:
     trainPrefixes=None
-
-#Tokenization
-if "LANG1Tokenizer" in config:
-    tokenizer_l1=config["LANG1Tokenizer"]
-else:
-    tokenizer_l1=None
-
-if "LANG2Tokenizer" in config:
-    tokenizer_l2=config["LANG2Tokenizer"]
-else:
-    tokenizer_l2=None
 
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 rule symmetrise_dic:
@@ -1188,7 +1199,7 @@ rule tokenize_file_l1:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p preprocCorpusDir; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {tokenizer_l1} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz > {output}"
 
 rule tokenize_file_l2:
     input:
@@ -1197,9 +1208,7 @@ rule tokenize_file_l2:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p preprocCorpusDir; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {tokenizer_l2} | xz > {output}"
-
-
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
 
 rule bicleaner_train_model:
     input:
@@ -1222,4 +1231,3 @@ rule bicleaner_train_model:
         "testlines=$(echo \"($lines-2*$trainlines)/2\" | bc); "
         "python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d $DIR/{LANG1}.dic.gz -D $DIR/{LANG2}.dic.gz -b 1000 -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; "
         "rm $training"
-
