@@ -86,7 +86,8 @@ case $# in
     exit_program $(basename $0)
     ;;
 esac
-
+echo $PREPROCCORPUS
+echo $MODELSDIR
 SL_TOKENISED="$PREPROCCORPUS/corpus.tok.$SL"
 TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
 SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
@@ -100,10 +101,9 @@ else
     cattool="cat"
 fi
 $cattool $SL_CORPUS | python3 -c 'import sys
-#from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+  print(" ".join(wordpunct_tokenize(line.strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
 if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
     cattool="zcat"
@@ -111,10 +111,9 @@ else
     cattool="cat"
 fi
 $cattool $TL_CORPUS | python3 -c 'import sys
-#from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+  print(" ".join(wordpunct_tokenize(line.strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus
@@ -205,5 +204,5 @@ for line in t3s:
 
 echo "DONE!"
 
-rm -rf $PREPROCCORPUS
-rm -rf $MODELSDIR
+#rm -rf $PREPROCCORPUS
+#rm -rf $MODELSDIR
