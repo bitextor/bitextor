@@ -67,7 +67,7 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
       for seg in proc.process(trimorigseg).split('\n'):
         if seg.strip() != "":
           tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-          proc_word = ExternalTextProcessor([word_tokeniser])
+          proc_word = ExternalTextProcessor(word_tokeniser.split(' '))
           tmp_tok_segs.append(proc_word.process(seg).strip())
 
   tokenized_text=u"\n".join(tmp_tok_segs)
