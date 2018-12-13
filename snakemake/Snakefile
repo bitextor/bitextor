@@ -1,3 +1,4 @@
+
 # nohup snakemake --snakefile ../Snakefile --cores 2222 -j 2222 -k --configfile config.fr-en.json --cluster "sbatch {cluster.gres}" --cluster-config ../cluster.json  &
 
 import gzip
@@ -214,6 +215,7 @@ else:
   BICLEANEROPTION=""
   BICLEANER_SORT="-k3,4"
   BICLEANER="segclean"
+  BICLEANER_CONFIG=""
 
 if "bicleanerThreshold" in config:
   BICLEANER_THRESHOLD=config["bicleanerThreshold"]
@@ -335,7 +337,7 @@ domain_2_fulldomains = createDomainMap(domains)
 
 #================================== Creater Moses EMS config========================#
 def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
-    with open("{mosesDir}/scripts/ems/example/config.basic".format(mosesDir=mosesDir), "r") as file:
+    with open("{mosesDir}/scripts/ems/example/config.basic.moses2".format(mosesDir=mosesDir), "r") as file:
         lines = file.read().split("\n")
         print("lines", len(lines))
         #print("lines", lines)
