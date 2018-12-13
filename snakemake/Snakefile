@@ -191,9 +191,10 @@ if "bleualign" in config and config["bleualign"]:
 else:
   SEGMENTALIGNER="hunalign"
 
-#This options can be added to the config fil
-DOC_THRESHOLD=0
-BLEU_THRESHOLD=0
+# Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
+DOC_THRESHOLD  = config["docAlignThreshold"]
+BLEU_THRESHOLD = config["bleuAlignThreshold"]
+#print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
@@ -432,8 +433,8 @@ if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
 
 if "smt" in config and config["smt"]:
-    OUTPUT.append("{dir}/smt-dir/evaluation/report.1".format(dir=transient))
-    OUTPUT.append("{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+    OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
 
 #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
 if "tmx" in config and config["tmx"]:
@@ -459,7 +460,7 @@ rule train_smt_with_crawl_data:
         emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir-crawl/evaluation/report.1".format(dir=transient)
+        report = "{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
@@ -496,7 +497,7 @@ rule train_smt_all:
         emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir/evaluation/report.1".format(dir=transient)
+        report = "{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
@@ -828,7 +829,7 @@ rule docaling_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
-        report = "{transient}/smt-dir/evaluation/report.1".format(transient=transient)
+        report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
         temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")

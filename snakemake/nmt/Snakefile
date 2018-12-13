@@ -282,7 +282,7 @@ rule prepare_translate_only:
     shell:
          "cp {input} {output}"
 
-rule decompress:
+rule decompressGZ:
     input:
          "{pref}.{lang}.gz"
     output:
@@ -291,3 +291,13 @@ rule decompress:
          lang="({l1}|{l2})".format(l1=LANG1, l2=LANG2)
     shell:
          "zcat {input} > {output}"
+
+rule decompressXZ:
+    input:
+         "{pref}.{lang}.xz"
+    output:
+         temp("{pref}.{lang}")
+    wildcard_constraints:
+         lang="({l1}|{l2})".format(l1=LANG1, l2=LANG2)
+    shell:
+         "xzcat -T 0 {input} > {output}"
