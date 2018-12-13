@@ -30,7 +30,7 @@
   "crawlTld": false,
   #"bicleanerThreshold": 0.7,
   #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
-  "paracrawl-aligner-command": "marek-smt",
+  "alignerCmd": "marek-smt",
   "bleualign": true,
   "docAlignThreshold": 0.1,
   "bleuAlignThreshold": 0.1,

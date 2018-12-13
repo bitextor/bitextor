@@ -175,8 +175,8 @@ if "mosesDir" in config:
 else:
   MOSESDIR = ""
 
-if "paracrawl-aligner-command" in config:
-  MT_COMMAND=config["paracrawl-aligner-command"]
+if "alignerCmd" in config:
+  MT_COMMAND=config["alignerCmd"]
 
   if MT_COMMAND in {"marek-nmt", "marek-smt"}:
       DOCALIGNEXT = MT_COMMAND
