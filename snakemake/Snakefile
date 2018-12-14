@@ -1219,10 +1219,15 @@ rule tokenize_file_l2:
         "mkdir -p preprocCorpusDir; "
         "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
 
+if "bicleanerCorpusTrainingPrefix" in config:
+    bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
+else:
+    bicleanerTrainPrefixes=None
+
 rule bicleaner_train_model:
     input:
-        corpusl1=expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG1),
-        corpusl2=expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG2),
+        corpusl1=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG1),
+        corpusl2=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG2),
         t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
         t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
     output:
