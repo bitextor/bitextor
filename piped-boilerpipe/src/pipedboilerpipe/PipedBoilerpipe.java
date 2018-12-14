@@ -39,7 +39,6 @@ public class PipedBoilerpipe {
                     //Reading a line
                     try{
                         String line = new String(Base64.getDecoder().decode(fields[4]), "UTF-8");
-                        System.err.println(line);
                         //Processing XHTML
                         StringReader reader = new StringReader(line);
                         TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
