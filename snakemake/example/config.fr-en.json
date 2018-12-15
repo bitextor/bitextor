@@ -37,7 +37,7 @@
   "alignerCmd": "marek-smt",
   "bleualign": true,
   "docAlignThreshold": 0.1,
-  "bleuAlignThreshold": 0.1,
+  "bleuAlignThreshold": 0.2,
 
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",

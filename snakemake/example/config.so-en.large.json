@@ -29,11 +29,12 @@
   "crawlerNumThreads": 2,
   "crawlTld": false,
   #"bicleanerThreshold": 0.7,
-  #"bicleaner":"/home/hieu/permanent/software/bitextor-data/bicleaner/en-fr",
+  "bicleaner":"/home/hieu/transient/so-en.large/bicleaner/en-so.yaml",
+  "bicleanerCorpusTrainingPrefix": ["/home/hieu/permanent/data/so-en/material-only/train.txt"],
   "alignerCmd": "marek-smt",
   "bleualign": true,
   "docAlignThreshold": 0.1,
-  "bleuAlignThreshold": 0.1,
+  "bleuAlignThreshold": 0.2,
 
   "marianDir": "/home/hieu/permanent/software/marian-dev",
   "subwordNmtDir": "/home/hieu/permanent/software/subword-nmt",
@@ -58,6 +59,9 @@
   "LANG1Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so",
   "LANG2Tokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en",
   "LANG2Detokenizer": "/home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en",
+  "LANG1SentenceSplitter":"/home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l so",
+  "LANG2SentenceSplitter":"/home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en",
+
   "nmtVocabSize": 30000,
 
 
