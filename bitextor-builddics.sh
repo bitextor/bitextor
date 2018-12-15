@@ -95,7 +95,8 @@ case $# in
     exit_program $(basename $0)
     ;;
 esac
-
+echo $PREPROCCORPUS
+echo $MODELSDIR
 SL_TOKENISED="$PREPROCCORPUS/corpus.tok.$SL"
 TL_TOKENISED="$PREPROCCORPUS/corpus.tok.$TL"
 SL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$SL"
@@ -196,5 +197,5 @@ for line in t3s:
 
 echo "DONE!"
 
-rm -rf $PREPROCCORPUS
-rm -rf $MODELSDIR
+#rm -rf $PREPROCCORPUS
+#rm -rf $MODELSDIR
