@@ -611,9 +611,14 @@ rule concat_subdomains:
         lambda w: expand('{dir}/warc/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
-    shell:
-        'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
-
+    run:
+        assert(len(input))
+        if len(input) == 1:
+            cmd = "ln -s {input} {output}"
+        else:
+            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
+        shell(cmd)
+	 
 rule warc2tt:
     input:
         '{target}.concat.warc.xz'
