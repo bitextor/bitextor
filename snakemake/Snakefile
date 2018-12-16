@@ -611,6 +611,7 @@ rule concat_subdomains:
         lambda w: expand('{dir}/warc/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
+    priority: 9
     run:
         assert(len(input))
         if len(input) == 1:
@@ -624,6 +625,7 @@ rule warc2tt:
         '{target}.concat.warc.xz'
     output:
         '{target}.tt.xz'
+    priority: 8
     shell:
         'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py | xz -T 0 > {output}'
 
@@ -632,6 +634,7 @@ rule tt2ttmime:
         '{target}.tt.xz'
     output:
         '{target}.ttmime.xz'
+    priority: 7
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-identifyMIME.py | xz -T 0 > {output}'
 
@@ -641,6 +644,7 @@ rule tt2xtt:
         '{target}.ttmime.xz'
     output:
         '{target}.xtt.xz'
+    priority: 6
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | xz -T 0 > {output}'
 
@@ -650,6 +654,7 @@ rule xtt2boiler:
         '{target}.xtt.xz'
     output:
         '{target}.boiler.xz'
+    priority: 5
     shell:
         "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
         "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
@@ -662,6 +667,7 @@ rule boiler2ett:
         '{target}.boiler.xz'
     output:
         '{target}.ett.xz'
+    priority: 4
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz > {output}'
 
@@ -670,6 +676,7 @@ rule ett2tika:
         '{target}.ett.xz'
     output:
         '{target}.tika.xz'
+    priority: 3
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz -T 0 > {output}'
 
@@ -678,6 +685,7 @@ rule tika2lett:
         '{target}.tika.xz'
     output:
         '{target}.lett.xz'
+    priority: 2
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | xz -T 0 > {output}'
 
@@ -1160,6 +1168,8 @@ rule mkcls:
         "{dir}/corpus.clean.{{lang}}".format(dir=preprocCorpusDir)
     output:
         "{dir}/corpus.{{lang}}.vcb.classes".format(dir=mgizaModelDir)
+    priority: 40
+
     shell:
         "{BITEXTOR}/clustercat/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
 
@@ -1172,6 +1182,8 @@ rule plain2snt:
         snt_1_2="{dir}/corpus.{l1}-{l2}-int-train.snt".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
         vcb1="{dir}/corpus.{l1}.vcb".format(dir=mgizaModelDir, l1=LANG1),
         vcb2="{dir}/corpus.{l2}.vcb".format(dir=mgizaModelDir, l2=LANG2)
+    priority: 40
+
     shell:
         "mkdir -p {mgizaModelDir}; "
         "{BITEXTOR}/mgiza/mgizapp/bin/plain2snt {input.l1} {input.l2} 2> /dev/null > /dev/null; "
@@ -1237,6 +1249,8 @@ rule bicleaner_train_model:
         t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
     output:
         "{model}".format(model=BICLEANER_CONFIG)
+    priority: 40
+
     shell:
         "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "
         "paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training; "
