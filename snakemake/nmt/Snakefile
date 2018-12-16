@@ -282,6 +282,8 @@ rule prepare_translate_only:
     shell:
          "cp {input} {output}"
 
+ruleorder: decompressGZ > decompressXZ
+
 rule decompressGZ:
     input:
          "{pref}.{lang}.gz"
