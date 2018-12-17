@@ -79,12 +79,6 @@ if "dic" in config:
 else:
   DIC=None
 
-#Option to use the NLTK tokenizer
-if "nltk" in config and (config["nltk"]==True):
-  USENLTK='--nltk'
-else:
-  USENLTK=''
-
 #Option to ignore Boilerpipie: if the option is enabled, boilerpipe is not used
 if "ignore-boilerpipe-cleaning" in config and config["ignore-boilerpipe-cleaning"]==True:
   IGNOREBOILER="1"
@@ -947,7 +941,7 @@ rule alignsegments_hunalign:
     output:
         '{name}.hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} {USENLTK} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
