@@ -11,23 +11,17 @@
   "lang1": "fr",
   "lang2": "en",
   "nltk": "y",
-  "dic": "/tmp/persistent/en-fr.dic",
+  "dic": "/home/mespla/en-fr.dic",
   "minquality": "0",
   "maxlines": "5",
   "elrc": true,
   "crawler-num-threads": 2,
   "crawl-tld": false,
+  "bleualign": true,
   "bicleaner": "/home/mespla/en-fr/training.en-fr.yaml",
+  "paracrawl-aligner-command": "/home/mespla/Projects/bitextor-malign/snakemake/example/translate.miquel.sh",
   "mosesDir": "/home/mespla/Programari/mosesdecoder-RELEASE-4.0",
   "tmx":true,
-  "initCorpusTrainPrefix": ["/tmp/persistent/EUconst.en-fr"],
-  "documentAligner": "DIC",
-  "LANG1Tokenizer": "/home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -l fr",
-  "LANG2Tokenizer": "/home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -l en",
-  "LANG1SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l fr",
-  "LANG2SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l en",
-
-
   "deduped": true
 }
 
