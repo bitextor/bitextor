@@ -1236,7 +1236,7 @@ rule tokenize_file_l1:
     output:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
-        "mkdir -p preprocCorpusDir; "
+        "mkdir -p {preprocCorpusDir}; "
         "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz > {output}"
 
 rule tokenize_file_l2:
@@ -1245,7 +1245,7 @@ rule tokenize_file_l2:
     output:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
-        "mkdir -p preprocCorpusDir; "
+        "mkdir -p {preprocCorpusDir}; "
         "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
 
 if "bicleanerCorpusTrainingPrefix" in config:
