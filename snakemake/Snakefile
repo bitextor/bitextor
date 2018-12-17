@@ -56,15 +56,16 @@ BITEXTOR=config["bitextor"]
 LANG1=config["lang1"]
 LANG2=config["lang2"]
 
-if LANG1 == "en":
-  FLANG=LANG2
-else:
-  FLANG=LANG1
-
-
 TMPDIR=config["temp"]
-MINQUALITY=config["minquality"]
-MAXLINES=config["maxlines"]
+if "minquality" in config:
+  MINQUALITY=config["minquality"]
+else:
+  MINQUALITY=0.0
+
+if "maxlines" in config:
+  MAXLINES=config["maxlines"]
+else:
+  MAXLINES=-1
 
 #Working paths
 permanent=config["permanentDir"]
@@ -127,14 +128,14 @@ else:
   TLD_CRAWL=""
 
 #If this option is enabled, a size-limit is set for crawled data (for example "size-limit": "1G")
-if "size-limit" in config:
-  CRAWLSIZELIMIT="-s "+config["size-limit"]
+if "crawlSizeLimit" in config:
+  CRAWLSIZELIMIT="-s "+config["crawlSizeLimit"]
 else:
   CRAWLSIZELIMIT=""
 
 #If this option is enabled, a time-limit is set for crawling data (for example "time-limit": "1h")
 if "crawlTimeLimit" in config:
-  CRAWLTIMELIMIT="-t "+config["crawlTimeLimit"]
+  CRAWLTIMELIMIT="-t "+str(config["crawlTimeLimit"])
 else:
   CRAWLTIMELIMIT=""
 
@@ -145,41 +146,58 @@ else:
   CRAWLJOBS="-j 2"
 
 #Connection timeout in the crawler
-if "timeout-crawl" in config:
-  CRAWLTIMEOUT="-o "+config["timeout-crawl"]
+if "crawlerConnectionTimeout" in config:
+  CRAWLTIMEOUT="-o "+str(config["crawlerConnectionTimeout"])
 else:
   CRAWLTIMEOUT=""
 
 #If this option is set, the "crawler" object will be dump as a pickle, so crawling can be continued afterwards
-if "write-crawling-file" in config:
-  CRAWLDUMPARGS="-d "+config["write-crawling-file"]
+if "dumpCurrentCrawl" in config:
+  CRAWLDUMPARGS="-d "+config["dumpCurrentCrawl"]
 else:
   CRAWLDUMPARGS=""
 
 #If this option is set, crawling will be continued from the pickle object dumped in a previous crawl
-if "continue-crawling-file" in config:
-  CONTINUECRAWL="-l "+config["continue-crawling-file"]
+if "resumePreviousCrawl" in config:
+  CONTINUECRAWL="-l "+config["resumePreviousCrawl"]
 else:
   CONTINUECRAWL=""
 
 
 ############ OPTIONS FOR THE MALIGN ALIGNER ############
 
+if "documentAligner" in config:
+  if config["documentAligner"] == "externalMT":
+    MT_COMMAND=config["alignerCmd"]
+    DOCALIGNEXT="marek-customMT"
+  elif config["documentAligner"] == "SMT":
+    MT_COMMAND="marek-smt"
+    DOCALIGNEXT="marek-smt"
+  elif config["documentAligner"] == "NMT":
+    MT_COMMAND="marek-nmt"
+    DOCALIGNEXT="marek-nmt"
+  else:
+    MT_COMMAND=""
+    DOCALIGNEXT="bitextor"
+else:
+  MT_COMMAND=""
+  DOCALIGNEXT="bitextor"
+
 if "mosesDir" in config:
   MOSESDIR = config["mosesDir"]
 else:
   MOSESDIR = ""
 
-if "alignerCmd" in config:
-  MT_COMMAND=config["alignerCmd"]
-
-  if MT_COMMAND in {"marek-nmt", "marek-smt"}:
-      DOCALIGNEXT = MT_COMMAND
-  else:
-      DOCALIGNEXT="marek-customMT"
-else:
-  MT_COMMAND=""
-  DOCALIGNEXT="bitextor"
+#if "alignerCmd" in config:
+#  MT_COMMAND=config["alignerCmd"]
+#
+#  if MT_COMMAND in {"marek-nmt", "marek-smt"}:
+#      DOCALIGNEXT = MT_COMMAND
+#  else:
+#      DOCALIGNEXT="marek-customMT"
+#else:
+#  MT_COMMAND=""
+#  DOCALIGNEXT="bitextor"
 
 if "bleualign" in config and config["bleualign"]:
   SEGMENTALIGNER="bleualign"
