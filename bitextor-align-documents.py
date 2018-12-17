@@ -8,10 +8,16 @@
 #   file_lang1	file_lang2	plaintext_encoded_base64_lang1	plaintext_encoded_base64_lang2
 #
 
+import os
 import sys
 import argparse
 from operator import itemgetter
 import lzma
+
+pathname = os.path.dirname(sys.argv[0])
+sys.path.append(pathname + "/document-aligner")
+from utils.common import open_xz_or_gzip_or_plain
+#print("pathname", pathname)
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from the standard input) and produces a list of aligned documents. If two ridx files are provided, a bidirectional alignment is performed between them.")
 oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang1 to lang2', default=None)
@@ -51,7 +57,7 @@ documentsFile2=set()
 
 # File .lett is read extracting the URL and the base64 encoded content
 counter = 1
-file = open(options.lettr,"r")
+file = open_xz_or_gzip_or_plain(options.lettr)
 for j in file:
   fields = j.split("\t")
   if len(fields) > 4:

@@ -15,14 +15,20 @@
 # Genera .ridx -> reverse index
 #
 
+import os
 import sys
 import argparse
 from operator import itemgetter
 import Levenshtein
 import base64
 
+pathname = os.path.dirname(sys.argv[0])
+sys.path.append(pathname + "/../document-aligner")
+from utils.common import open_xz_or_gzip_or_plain
+#print("pathname", pathname)
+
 def readLETT(f, docs):
-  file = open(f, "r")
+  file = open_xz_or_gzip_or_plain(f)
   fileid = 1
   for i in file:
     fields = i.strip().split("\t")

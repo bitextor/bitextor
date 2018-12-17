@@ -695,13 +695,13 @@ rule lett2lettr:
     input:
         expand("{{target}}.{extension}.xz", extension=LETT)
     output:
-        '{target}.lettr'
+        '{target}.lettr.xz'
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2lettr.py > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2lettr.py | xz -T 0 > {output}'
 
 rule lettr2idx:
     input:
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.idx.xz'
     shell:
@@ -731,62 +731,62 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{target}.{num}.ridx.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.imgoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
         '{target}.{num}.imgoverlap.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.structuredistance.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule structuredistance2urldistance:
     input:
         '{target}.{num}.structuredistance.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.urldistance.xz'
     priority: 8
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
         '{target}.{num}.urldistance.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.mutuallylinked.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
         '{target}.{num}.mutuallylinked.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.urlscomparison.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
         '{target}.{num}.urlscomparison.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.urlsoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
 
 rule urlsoverlap2rank:
     input:
         '{target}.{num}.urlsoverlap.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.{num}.rank.xz'
     shell:
@@ -796,7 +796,7 @@ rule aligndocumentsBitextor:
     input:
         '{target}.1.rank.xz',
         '{target}.2.rank.xz',
-        '{target}.lettr'
+        '{target}.lettr.xz'
     output:
         '{target}.docalign.bitextor'
     shell:
