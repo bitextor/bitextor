@@ -12,6 +12,7 @@
   "minquality": "0",
   "maxlines": "5",
   "elrc": true,
+  "documentAligner": "DIC",
   "crawlTld": false,
   "bleualign": false,
   "bicleaner": "/home/lpla/bicleaner-model/en-fr/training.en-fr.yaml",
