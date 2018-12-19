@@ -603,7 +603,7 @@ rule creepy_download:
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
-        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
+        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
@@ -681,7 +681,7 @@ rule boiler2ett:
         '{target}.ett.xz'
     priority: 4
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz -T 0 > {output}'
 
 rule ett2tika:
     input:
@@ -1237,7 +1237,7 @@ rule tokenize_file_l1:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}"
 
 rule tokenize_file_l2:
     input:
@@ -1246,7 +1246,7 @@ rule tokenize_file_l2:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}"
 
 if "bicleanerCorpusTrainingPrefix" in config:
     bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
