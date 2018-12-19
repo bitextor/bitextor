@@ -996,9 +996,9 @@ rule bicleaner:
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
         'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_full.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
         'fi'
 
 rule bicleanerfilter:
