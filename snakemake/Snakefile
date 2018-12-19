@@ -949,8 +949,6 @@ rule hunaligndic:
                         outw.write(columns[1]+" @ "+columns[0]+"\n")
                     else:
                         outw.write(columns[0]+" @ "+columns[1]+"\n")
-#    shell:
-#        'tail -n +2 {input} | sed -r "s/\t/ @ x/g" > {output}'
 
 rule alignsegments_hunalign:
     input:
@@ -977,19 +975,12 @@ rule alignsegments_bleualign:
                         for line in sentFile:
                             algFile.write(urls+"\t"+line)
 
-#rule concat_segs:
-#    input:
-#        expand("{{dir}}/{webdomain}.{segaligner}.segalign.xz", webdomain=domain_2_fulldomains.keys(), segaligner={SEGMENTALIGNER})
-#    output:
-#        "{dir}/{l1}-{l2}.sentalg.xz"
-#    shell:
-#        "xzcat -T 0 {input} | xz -T 0 > {output}"
 
 rule cleansegments:
     input:
         "{target}." + SEGMENTALIGNER + ".segalign.xz"
     output:
-        "{target}.segclean.xz"
+        "{target}."  + SEGMENTALIGNER + ".segclean.xz"
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
