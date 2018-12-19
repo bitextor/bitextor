@@ -80,14 +80,14 @@ if "dic" in config:
 else:
   DIC=None
 
-#Option to ignore Boilerpipie: if the option is enabled, boilerpipe is not used
-if "ignore-boilerpipe-cleaning" in config and config["ignore-boilerpipe-cleaning"]==True:
-  IGNOREBOILER="1"
+#Option to remove Boilerpipe html: if the option is enabled, boilerpipe is not used
+if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
+  boilerpipeCleaning="1"
 else:
-  IGNOREBOILER="0"
+  boilerpipeCleaning="0"
 
 #Option to use the JHU-pipeline pre-processing tool; it can be only used with HTTrack
-if "jhu-lett" in config and config["jhu-lett"]==True:
+if "jhuLett" in config and config["jhuLett"]==True:
   LETT="jlett"
 else:
   LETT="lett"
@@ -603,7 +603,7 @@ rule creepy_download:
     shell:
         'echo {params.url}'
         'mkdir -p {permanent}; '
-        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c > {output}'
+        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
@@ -668,7 +668,7 @@ rule xtt2boiler:
         '{target}.boiler.xz'
     priority: 5
     shell:
-        "if [ \"{IGNOREBOILER}\" == \"1\" ]; then "
+        "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
         "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
         "else "
         "  ln -s {input} {output}; "
@@ -681,7 +681,7 @@ rule boiler2ett:
         '{target}.ett.xz'
     priority: 4
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz -T 0 > {output}'
 
 rule ett2tika:
     input:
@@ -987,7 +987,7 @@ rule alignsegments_bleualign:
 
 rule cleansegments:
     input:
-        "{target}.segalign.xz"
+        "{target}." + SEGMENTALIGNER + ".segalign.xz"
     output:
         "{target}.segclean.xz"
     shell:
@@ -1237,7 +1237,7 @@ rule tokenize_file_l1:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}"
 
 rule tokenize_file_l2:
     input:
@@ -1246,7 +1246,7 @@ rule tokenize_file_l2:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz > {output}"
+        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}"
 
 if "bicleanerCorpusTrainingPrefix" in config:
     bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]

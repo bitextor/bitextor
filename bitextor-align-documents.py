@@ -57,13 +57,12 @@ documentsFile2=set()
 
 # File .lett is read extracting the URL and the base64 encoded content
 counter = 1
-file = open_xz_or_gzip_or_plain(options.lettr)
-for j in file:
-  fields = j.split("\t")
-  if len(fields) > 4:
-    documents[counter] = (fields[3], fields[5]) # URL parsed_text_base64
-  counter += 1
-file.close()
+with open_xz_or_gzip_or_plain(options.lettr) as fd:
+  for j in fd:
+    fields = j.split("\t")
+    if len(fields) > 4:
+      documents[counter] = (fields[3], fields[5]) # URL parsed_text_base64
+    counter += 1
 
 if combine == False:
   #Reading the .ridx file with the preliminary alignment

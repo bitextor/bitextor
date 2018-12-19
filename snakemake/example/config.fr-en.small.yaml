@@ -17,6 +17,11 @@ dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
 minquality: 0
 maxlines: 5
 
+###### BOILERPIPE CLEANING #####
+#If enabled, boilerpipe is not used
+boilerpipeCleaning: true
+jhuLett: false
+
 crawlTimeLimit: 5s
   #"crawlTimeLimit: 900s
   #"crawlTimeLimit: 60m

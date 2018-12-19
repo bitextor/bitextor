@@ -29,21 +29,20 @@ from utils.common import open_xz_or_gzip_or_plain
 #print("pathname", pathname)
 
 def readLETT(f, docs):
-  file = open_xz_or_gzip_or_plain(f)
-  fileid = 1
-  for i in file:
-    fields = i.strip().split("\t")
-    #Checking if format is crrect
-    if len(fields) >= 5:
-      rx = re.match('(https?://[^/:]+)', fields[3])
-      if rx != None:
-        url_domain = rx.group(1)
-        url = fields[3].replace(url_domain,"")
-      else:
-        url = fields[3]
-      docs[fileid] = url
-    fileid += 1
-  file.close()
+  with open_xz_or_gzip_or_plain(f) as fd:
+    fileid = 1
+    for i in fd:
+      fields = i.strip().split("\t")
+      #Checking if format is crrect
+      if len(fields) >= 5:
+        rx = re.match('(https?://[^/:]+)', fields[3])
+        if rx != None:
+          url_domain = rx.group(1)
+          url = fields[3].replace(url_domain,"")
+        else:
+          url = fields[3]
+        docs[fileid] = url
+      fileid += 1
 
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
 oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
