@@ -987,7 +987,7 @@ rule alignsegments_bleualign:
 
 rule cleansegments:
     input:
-        "{target}.segalign.xz"
+        "{target}." + SEGMENTALIGNER + ".segalign.xz"
     output:
         "{target}.segclean.xz"
     shell:
