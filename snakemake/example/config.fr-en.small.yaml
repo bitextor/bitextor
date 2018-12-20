@@ -8,7 +8,7 @@ domains: ["www.elenacaffe1863.com","vade-retro.fr"]
   #"langstatThreshold":50000000,
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
-temp: /mnt/tmp
+temp: /tmp
 permanentDir: /home/hieu/permanent/fr-en
 transientDir: /home/hieu/transient/fr-en
 lang1: fr
@@ -22,14 +22,14 @@ maxlines: 5
 boilerpipeCleaning: true
 jhuLett: false
 
-crawlTimeLimit: 5s
+crawlTimeLimit: 30s
   #"crawlTimeLimit: 900s
   #"crawlTimeLimit: 60m
 
 tmx: true
   #"nmt: true,
   #"smt: true,
-httrack: false
+httrack: true
 
 elrc: true
 crawlerNumThreads: 2
