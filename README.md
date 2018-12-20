@@ -21,7 +21,7 @@ The tool works following a sequence of steps (scripts sorted by default use):
   * The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
   * The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
 * or Paracrawl document aligner `document-aligner/doc_align`
-5. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `zipporah-classifier` and `bicleaner/bicleaner-classifier-full`
+5. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `bicleaner/bicleaner-classifier-full`
 6. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
 
 It is worth noting that each of these steps can be run separately.
@@ -82,11 +82,7 @@ In addition to the Python libraries, the tool Apertium (http://www.apertium.org/
 
 For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
 
-For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
-
-`sudo pip3 install --upgrade matplotlib sklearn numpy && sudo apt install python3-tk`
-
-For optional document aligner from Paracrawl team read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
+For optional document aligner from Paracrawl team read the document-aligner/README.md file to install all dependencies in Python 3.
 
 ## Install
 
