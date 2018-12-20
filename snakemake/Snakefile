@@ -651,7 +651,8 @@ rule warc2tt:
         '{target}/tt.xz'
     priority: 8
     shell:
-        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py | xz -T 0 > {output}'
+        'mkdir -p {wildcards.target}/raw-html; '
+        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py --out-dir {wildcards.target}/raw-html | xz -T 0 > {output}'
 
 rule tt2ttmime:
     input:
