@@ -598,21 +598,21 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}.creepy.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.xz'
     priority: 10
     shell:
-        'echo {params.url}'
-        'mkdir -p {permanent}; '
+        'echo {params.url}; '
+        'mkdir -p {permanent}/{wildcards.target}; '
         'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}.httrack.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.xz'
     params:
         url="http://{target}"
     priority: 10
     shell:
-        'mkdir -p {permanent}; '
+        'mkdir -p {permanent}/{wildcards.target}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
@@ -620,9 +620,9 @@ rule httrack_download:
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/warc/{subdomain}.{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
     output:
-        "{dir}".format(dir=transient)+"/{target}.concat.warc.xz"
+        "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
     priority: 9
     run:
         assert(len(input))
@@ -634,18 +634,18 @@ rule concat_subdomains:
 	 
 rule warc2tt:
     input:
-        '{target}.concat.warc.xz'
+        '{target}/concat.warc.xz'
     output:
-        '{target}.tt.xz'
+        '{target}/tt.xz'
     priority: 8
     shell:
         'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py | xz -T 0 > {output}'
 
 rule tt2ttmime:
     input:
-        '{target}.tt.xz'
+        '{target}/tt.xz'
     output:
-        '{target}.ttmime.xz'
+        '{target}/ttmime.xz'
     priority: 7
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-identifyMIME.py | xz -T 0 > {output}'
@@ -653,9 +653,9 @@ rule tt2ttmime:
 rule tt2xtt:
     input:
         #If HTTRACK is enalbed, httrack rule is run; otherwise, download rule is applied
-        '{target}.ttmime.xz'
+        '{target}/ttmime.xz'
     output:
-        '{target}.xtt.xz'
+        '{target}/xtt.xz'
     priority: 6
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | xz -T 0 > {output}'
@@ -663,9 +663,9 @@ rule tt2xtt:
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
     input:
-        '{target}.xtt.xz'
+        '{target}/xtt.xz'
     output:
-        '{target}.boiler.xz'
+        '{target}/boiler.xz'
     priority: 5
     shell:
         "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
@@ -676,52 +676,52 @@ rule xtt2boiler:
 
 rule boiler2ett:
     input:
-        '{target}.boiler.xz'
+        '{target}/boiler.xz'
     output:
-        '{target}.ett.xz'
+        '{target}/ett.xz'
     priority: 4
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz -T 0 > {output}'
 
 rule ett2tika:
     input:
-        '{target}.ett.xz'
+        '{target}/ett.xz'
     output:
-        '{target}.tika.xz'
+        '{target}/tika.xz'
     priority: 3
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz -T 0 > {output}'
 
 rule tika2lett:
     input:
-        '{target}.tika.xz'
+        '{target}/tika.xz'
     output:
-        '{target}.lett.xz'
+        '{target}/lett.xz'
     priority: 2
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | xz -T 0 > {output}'
 
 rule httrack2lett:
     output:
-        '{target}.jlett.xz'
+        '{target}/jlett.xz'
     input:
-        '{target}.tar.gz'
+        '{target}/tar.gz'
     shell:
         '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | xz -T 0 > {output}'
 
 rule lett2lettr:
     input:
-        expand("{{target}}.{extension}.xz", extension=LETT)
+        expand("{{target}}/{extension}.xz", extension=LETT)
     output:
-        '{target}.lettr.xz'
+        '{target}/lettr.xz'
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2lettr.py | xz -T 0 > {output}'
 
 rule lettr2idx:
     input:
-        '{target}.lettr.xz'
+        '{target}/lettr.xz'
     output:
-        '{target}.idx.xz'
+        '{target}/idx.xz'
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 | xz -T 0 > {output}'
 
@@ -732,91 +732,91 @@ rule lettr2idx:
 
 rule idx2ridx_l1tol2:
     input:
-        '{target}.idx.xz'
+        '{target}/idx.xz'
     output:
-        '{target}.1.ridx.xz'
+        '{target}/1.ridx.xz'
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | xz -T 0 > {output}'
 
 rule idx2ridx_l2tol1:
     input:
-        '{target}.idx.xz'
+        '{target}/idx.xz'
     output:
-        '{target}.2.ridx.xz'
+        '{target}/2.ridx.xz'
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | xz -T 0 > {output}'
 
 rule ridx2imagesetoverlap:
     input:
-        '{target}.{num}.ridx.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.ridx.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.imgoverlap.xz'
+        '{target}/{num}.imgoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
-        '{target}.{num}.imgoverlap.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.imgoverlap.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.structuredistance.xz'
+        '{target}/{num}.structuredistance.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule structuredistance2urldistance:
     input:
-        '{target}.{num}.structuredistance.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.structuredistance.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.urldistance.xz'
+        '{target}/{num}.urldistance.xz'
     priority: 8
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
-        '{target}.{num}.urldistance.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.urldistance.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.mutuallylinked.xz'
+        '{target}/{num}.mutuallylinked.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
-        '{target}.{num}.mutuallylinked.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.mutuallylinked.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.urlscomparison.xz'
+        '{target}/{num}.urlscomparison.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
-        '{target}.{num}.urlscomparison.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.urlscomparison.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.urlsoverlap.xz'
+        '{target}/{num}.urlsoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}.lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
 
 rule urlsoverlap2rank:
     input:
-        '{target}.{num}.urlsoverlap.xz',
-        '{target}.lettr.xz'
+        '{target}/{num}.urlsoverlap.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.{num}.rank.xz'
+        '{target}/{num}.rank.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/model/keras.model -w {BITEXTOR}/model/keras.weights | xz -T 0 > {output}'
 
 rule aligndocumentsBitextor:
     input:
-        '{target}.1.rank.xz',
-        '{target}.2.rank.xz',
-        '{target}.lettr.xz'
+        '{target}/1.rank.xz',
+        '{target}/2.rank.xz',
+        '{target}/lettr.xz'
     output:
-        '{target}.docalign.bitextor'
+        '{target}/docalign.bitextor'
     shell:
         '{BITEXTOR}/bitextor-align-documents.py -l {input[2]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
 
@@ -826,12 +826,12 @@ rule aligndocumentsBitextor:
 
 rule docaling_extracted:
     input:
-        "{prefix}.lett.xz"
+        "{prefix}/lett.xz"
     output:
-        "{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        "{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+        "{prefix}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {wildcards.prefix}.docalign; '
+        'mkdir -p {wildcards.prefix}/docalign; '
         'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
 
 rule docaling_deduped:
@@ -844,14 +844,14 @@ rule docaling_deduped:
 
 rule docaling_translate_nmt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
+        source = "{dir}/{prefix}/extracted.deduped.xz"
         ,
         configFile = "{dir}/config.json".format(dir=transient)
         ,
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
+        temp("{dir}/{prefix}/marek-nmt.extracted.deduped.translated.xz")
 
     priority: 40
 
@@ -861,12 +861,12 @@ rule docaling_translate_nmt:
 
 rule docaling_translate_smt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
+        source = "{dir}/{prefix}/extracted.deduped.xz"
         ,
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
+        temp("{dir}/{prefix}/marek-smt.extracted.deduped.translated.xz")
 
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
@@ -878,9 +878,9 @@ rule docaling_translate_smt:
 
 rule docaling_custom_translate:
     input:
-        "{target}.extracted.deduped.xz",
+        "{target}/extracted.deduped.xz",
     output:
-        temp("{target}.marek-customMT.extracted.deduped.translated.xz")
+        temp("{target}/marek-customMT.extracted.deduped.translated.xz")
     shell:
         'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
@@ -888,11 +888,11 @@ rule docaling_custom_translate:
 
 rule docaling_substitute_translated:
     input:
-        extracted="{target}.extracted.xz",
-        deduped="{target}.extracted.deduped.xz",
-        translated="{target}.{mttype}.extracted.deduped.translated.xz"
+        extracted="{target}/extracted.xz",
+        deduped="{target}/extracted.deduped.xz",
+        translated="{target}/{mttype}.extracted.deduped.translated.xz"
     output:
-        "{target}.{mttype}.extracted.translated.xz"
+        "{target}/{mttype}.extracted.translated.xz"
     shell:
         'xzcat -T 0 {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
@@ -907,11 +907,11 @@ rule docaling_matches:
 
 rule aligndocumentsMarek:
     input:
-        lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        lett="{target}/lett.xz",
+        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
-        '{target}.docalign.marek-nmt'
+        '{target}/docalign.marek-nmt'
 
     shell:
         'mkdir -p {wildcards.target}.docalign; '
@@ -919,10 +919,10 @@ rule aligndocumentsMarek:
 
 rule aligndocumentsMarekCustomMT:
     input:
-        lett="{target}.lett.xz",
-        matches="{target}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        lett="{target}/lett.xz",
+        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
-        '{target}.docalign.marek-customMT'
+        '{target}/docalign.marek-customMT'
     shell:
         'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
@@ -953,17 +953,17 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{dir}/hunalign_dic'.format(dir=transient),
-        "{name}.docalign."+"{extension}".format(extension=DOCALIGNEXT)
+        "{prefix}/docalign."+"{extension}".format(extension=DOCALIGNEXT)
     output:
-        '{name}.hunalign.segalign.xz'
+        '{prefix}/hunalign.segalign.xz'
     shell:
         'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
-        aligned_urls="{prefix}.bleualign/align.info.gz"
+        aligned_urls="{prefix}/bleualign/align.info.gz"
     output:
-        alignments='{prefix}.bleualign.segalign.xz'
+        alignments='{prefix}/bleualign.segalign.xz'
     run:
         with lzma.open(output.alignments, "wt") as algFile:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
@@ -978,9 +978,9 @@ rule alignsegments_bleualign:
 
 rule cleansegments:
     input:
-        "{target}." + SEGMENTALIGNER + ".segalign.xz"
+        "{target}/" + SEGMENTALIGNER + ".segalign.xz"
     output:
-        "{target}."  + SEGMENTALIGNER + ".segclean.xz"
+        "{target}/"  + SEGMENTALIGNER + ".segclean.xz"
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
@@ -1019,7 +1019,7 @@ rule elrc:
 
 rule sents:
     input:
-        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
@@ -1027,7 +1027,7 @@ rule sents:
 
 rule tmx:
     input:
-        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
@@ -1035,7 +1035,7 @@ rule tmx:
 
 rule deduped_tmx:
     input:
-        expand("{dir}/{webdomain}.{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
@@ -1057,12 +1057,12 @@ rule mt_parallel_data:
 
 rule bleualign:
     input:
-        extracted_l1="{prefix}.docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        extracted_l2="{prefix}.docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{prefix}.docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{prefix}.docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        extracted_l1="{prefix}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
+        translated="{prefix}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
+        matches="{prefix}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
-        "{prefix}.bleualign/align.info.gz"
+        "{prefix}/bleualign/align.info.gz"
     shell:
         "mkdir -p {wildcards.prefix}.bleualign; "
         "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
