@@ -10,9 +10,20 @@ from tqdm import tqdm
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
+from toolwrapper import ToolWrapper
+from func_timeout import func_timeout, FunctionTimedOut
 
 ###########################################################
 # UTILS 
+
+def tokeniserCheck(cmd):
+    proc = ToolWrapper(cmd.split())
+    line = proc.writeline('test.test')
+    try:
+        tokline = func_timeout(5, proc.readline)
+    except FunctionTimedOut:
+        sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
+        exit(1)
 
 def systemCheck(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
@@ -118,6 +129,9 @@ if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
 else:
   SENTTOK2=None
+
+tokeniserCheck(WORDTOK1)
+tokeniserCheck(WORDTOK2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
