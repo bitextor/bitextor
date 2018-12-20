@@ -615,8 +615,7 @@ rule creepy_download:
         '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.xz'
     priority: 10
     shell:
-        'echo {params.url}; '
-        'mkdir -p {permanent}/{wildcards.target}; '
+        #'echo {params.url}; '
         'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
@@ -626,7 +625,6 @@ rule httrack_download:
         url="http://{target}"
     priority: 10
     shell:
-        'mkdir -p {permanent}/{wildcards.target}; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
@@ -875,7 +873,7 @@ rule docaling_translate_nmt:
 
 rule docaling_translate_smt:
     input:
-        source = "{dir}/{prefix}/extracted.deduped.xz"
+        source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
