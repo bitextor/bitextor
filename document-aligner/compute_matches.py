@@ -1,5 +1,4 @@
-
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import sys
@@ -124,7 +123,7 @@ if __name__ == "__main__":
 
         obj_lang2 = map_dic2list(docs_lang2)
         obj_lang1 = map_dic2list(docs_lang1)
-    
+
         word_extractor = WordExtractor(
             n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
@@ -133,6 +132,7 @@ if __name__ == "__main__":
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
                                       batch_size=args.batch_size)
+ 
         m_csr = scorer.score(obj_lang2['text'], obj_lang1['text'])
         if m_csr == None:
             sys.stderr.write("Documents do not contain any useful information to be used in alignment.\n")
