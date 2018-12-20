@@ -26,3 +26,7 @@ for record in f:
     print(text+"\t"+record.url+"\t"+record.date)
 
     lineNum += 1
+
+file = open("{outDir}/count".format(outDir=args.outDir), "w")
+file.write(str(lineNum) +  "\n")
+file.close()
