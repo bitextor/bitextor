@@ -24,8 +24,8 @@ initCorpusDevPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt"]
 initCorpusTestPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt",
                         "/home/hieu/permanent/data/so-en/material-only/test.txt"]
 
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l so
-LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -l en
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l so
+LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
 nmtVocabSize: 30000,
 gpuId: 0
