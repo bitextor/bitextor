@@ -832,7 +832,7 @@ rule docaling_extracted:
         "{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.prefix}/docalign; '
-        'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}.docalign'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}/docalign'
 
 rule docaling_deduped:
     input:
@@ -851,7 +851,7 @@ rule docaling_translate_nmt:
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}/marek-nmt.extracted.deduped.translated.xz")
+        temp("{dir}/{prefix}.marek-nmt.extracted.deduped.translated.xz")
 
     priority: 40
 
@@ -866,7 +866,7 @@ rule docaling_translate_smt:
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}/marek-smt.extracted.deduped.translated.xz")
+        temp("{dir}/{prefix}.marek-smt.extracted.deduped.translated.xz")
 
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
@@ -878,9 +878,9 @@ rule docaling_translate_smt:
 
 rule docaling_custom_translate:
     input:
-        "{target}/extracted.deduped.xz",
+        "{target}.extracted.deduped.xz",
     output:
-        temp("{target}/marek-customMT.extracted.deduped.translated.xz")
+        temp("{target}.marek-customMT.extracted.deduped.translated.xz")
     shell:
         'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
@@ -888,11 +888,11 @@ rule docaling_custom_translate:
 
 rule docaling_substitute_translated:
     input:
-        extracted="{target}/extracted.xz",
-        deduped="{target}/extracted.deduped.xz",
-        translated="{target}/{mttype}.extracted.deduped.translated.xz"
+        extracted="{target}.extracted.xz",
+        deduped="{target}.extracted.deduped.xz",
+        translated="{target}.{mttype}.extracted.deduped.translated.xz"
     output:
-        "{target}/{mttype}.extracted.translated.xz"
+        "{target}.{mttype}.extracted.translated.xz"
     shell:
         'xzcat -T 0 {input.extracted} | python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
@@ -903,6 +903,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
+        "echo \"{BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'\"; "
         "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
 
 rule aligndocumentsMarek:
@@ -914,7 +915,7 @@ rule aligndocumentsMarek:
         '{target}/docalign.marek-nmt'
 
     shell:
-        'mkdir -p {wildcards.target}.docalign; '
+        'mkdir -p {wildcards.target}/docalign; '
         'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 rule aligndocumentsMarekCustomMT:
@@ -970,7 +971,7 @@ rule alignsegments_bleualign:
                 for urlAlg in urlsFile:
                     id=urlAlg.split("\t")[0]
                     urls="\t".join(urlAlg.strip().split("\t")[1:])
-                    filename=wildcards.prefix+".bleualign/aligned."+str(id)+".gz"
+                    filename=wildcards.prefix+"/bleualign/aligned."+str(id)+".gz"
                     with open_gzip_or_plain(filename) as sentFile:
                         for line in sentFile:
                             algFile.write(urls+"\t"+line)
@@ -1064,8 +1065,8 @@ rule bleualign:
     output:
         "{prefix}/bleualign/align.info.gz"
     shell:
-        "mkdir -p {wildcards.prefix}.bleualign; "
-        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}.bleualign"
+        "mkdir -p {wildcards.prefix}/bleualign; "
+        "{BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text2translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.prefix}/bleualign"
 
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
@@ -1265,5 +1266,5 @@ rule bicleaner_train_model:
         "lines=$(cat $training | wc -l); "
         "trainlines=$(echo \"$lines*4/10\" | bc); "
         "testlines=$(echo \"($lines-2*$trainlines)/2\" | bc); "
-        "python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d $DIR/{LANG1}.dic.gz -D $DIR/{LANG2}.dic.gz -b 1000 -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; "
+        'python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d $DIR/{LANG1}.dic.gz -D $DIR/{LANG2}.dic.gz -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; '
         "rm $training"
