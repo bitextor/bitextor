@@ -4,6 +4,20 @@ import warc
 import base64
 import sys
 import argparse
+import cchardet
+
+#############################################################################
+def convert_encoding(data, new_coding = 'UTF-8'):
+  encoding = cchardet.detect(data)['encoding']
+
+  if new_coding.upper() != encoding.upper():
+    #print("convert", encoding, "to", new_coding)
+    data = data.decode(encoding).encode(new_coding)
+
+  #print("data", type(data))
+  return data
+
+#############################################################################
 
 parser = argparse.ArgumentParser(description='Extract html from warc files')
 parser.add_argument('--out-dir', dest='outDir',
@@ -15,13 +29,15 @@ f = warc.WARCFile(fileobj=sys.stdin.buffer)
 
 lineNum = 0
 for record in f:
-    text = base64.b64encode(record.payload.read()).decode('utf8')
+    text = record.payload.read() #.decode('utf8')
+    text = convert_encoding(text)
 
     # write file
     file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
-    file.write(text)
+    file.write(text.decode())
     file.close()
 
+    text = base64.b64encode(text).decode('utf8')
     text = text.replace("\t"," ")
     print(text+"\t"+record.url+"\t"+record.date)
 
