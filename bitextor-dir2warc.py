@@ -19,6 +19,7 @@ for fline in reader:
     if os.path.isfile(filepath): # protect again extraneous 'Binary file (standard input) matches' at the end of stream
         content=None
         url=None
+        date=None
         with open(filepath, 'rb') as content_file:
             content = content_file.read()
         for line in content.split(b"\n"):

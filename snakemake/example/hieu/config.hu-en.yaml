@@ -27,7 +27,7 @@ crawlerNumThreads: 2
 crawlTld: false
   #"bicleanerThreshold: 0.7
 bicleaner: /home/hieu/transient/hu-en/bicleaner/en-hu.yaml
-bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/so-en/material-only/train.txt"]
+bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/hu-en/train/Books.en-hu"]
 documentAligner: SMT
 alignerCmd: marek-smt
 bleualign: true,
@@ -49,7 +49,22 @@ marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-bat
 #marianModelFile: model.npz.best-perplexity.npz.decoder.yml
 marianModelFile: model.npz.best-bleu.npz.decoder.yml
 
-initCorpusTrainPrefix: ["/home/hieu/permanent/data/hu-en/train/Books.en-hu"]
+initCorpusTrainPrefix: ["/home/hieu/permanent/data/hu-en/train/Books.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/DGT.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/ECB.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/EMEA.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/EUbookshop.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/EUconst.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/Europarl.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/GNOME.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/GlobalVoices.en-hu.train",
+                        "/home/hieu/permanent/data/hu-en/train/JRC-Acquis.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/OpenSubtitles2018.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/PHP.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/Tatoeba.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/Ubuntu.en-hu",
+                        "/home/hieu/permanent/data/hu-en/train/Wikipedia.en-hu"
+                       ]
 initCorpusDevPrefix: ["/home/hieu/permanent/data/hu-en/dev/GlobalVoices.en-hu.dev"]
 initCorpusTestPrefix: ["/home/hieu/permanent/data/hu-en/dev/GlobalVoices.en-hu.dev",
                        "/home/hieu/permanent/data/hu-en/test/GlobalVoices.en-hu.test"]
