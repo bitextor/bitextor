@@ -67,6 +67,11 @@ if "maxlines" in config:
 else:
   MAXLINES=-1
 
+if "alcazar" in config and config["alcazar"]:
+  TEXTEXTRACT="alcazar"
+else:
+  TEXTEXTRACT="tika" # NB, tika not actually used, but name lives on
+
 #Working paths
 permanent=config["permanentDir"]
 transient=config["transientDir"]
@@ -692,9 +697,18 @@ rule ett2tika:
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz -T 0 > {output}'
 
-rule tika2lett:
+rule xtt2alcazar:
+  input:
+    '{target}.xtt.xz' 
+  output:
+    '{target}.alcazar.xz'
+  priority: 3
+  shell:
+      'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text-alcazar-dedupe.py  | xz -T 0 > {output}'
+
+rule html2lett:
     input:
-        '{target}.tika.xz'
+        '{target}.' + TEXTEXTRACT + '.xz'
     output:
         '{target}.lett.xz'
     priority: 2
