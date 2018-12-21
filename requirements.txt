@@ -28,3 +28,4 @@ docopt==0.6.2
 openfile==0.0.7
 pycld2==0.31
 python-dateutil==2.7.5
+cchardet==2.1.4
