@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from bs4 import UnicodeDammit
 import chared.detector
-#import cld2
-import pycld2 as cld2
+import cld2
 import re
 import sys
 import unicodedata

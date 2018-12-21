@@ -8,11 +8,12 @@ import os.path
 from collections import defaultdict
 
 import numpy as np
+from nltk.tokenize import wordpunct_tokenize
 
-from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
+from scorer import CosineDistanceScorer, EnglishWordExtractor, _ngram_helper
 
 sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
-from utils.common import open_xz_or_gzip_or_plain
+from utils.common import open_gzip_or_plain
 
 def munge_file_path(filepath):
   if os.path.isfile(filepath):
@@ -32,7 +33,7 @@ def load_extracted(filepath):
     filepath = munge_file_path(filepath)
     #print("AFTER filepath", filepath)
     
-    with open_xz_or_gzip_or_plain(filepath) as f:
+    with open_gzip_or_plain(filepath) as f:
         documents = defaultdict(list)
 
         for line in f:
@@ -97,43 +98,51 @@ def match(score_matrix_csr, threshold):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--lang2', help='path to the extracted text', required=True)
+        '--english', help='path to the extracted English text', required=True)
     parser.add_argument(
-        '--lang1', help='path to the translated foreign text', required=True)
+        '--translated', help='path to the translated foreign text', required=True)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
     parser.add_argument('--tfidfsmooth', type=int, default=20)
+    parser.add_argument(
+        '--ignore', help='n-grams from this corpus will be ignored in distance scorer')
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
-    parser.add_argument('--word_tokeniser', help='Word tokeniser executable path', required=True)
 
     args = parser.parse_args()
 
     sys.stderr.write("threshold: {0}\n".format(args.threshold))
     sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 
-    docs_lang2 = load_extracted(args.lang2)
-    docs_lang1 = load_extracted(args.lang1)
+    docs_english = load_extracted(args.english)
+    docs_translated = load_extracted(args.translated)
 
-    if len(docs_lang1) == 0 or len(docs_lang2) == 0:
-        sys.stderr.write("No document alignments feasible: "+str(len(docs_lang1))+" documents in foreign language and "+str(len(docs_lang2))+" documents in source language.\n")
+    if len(docs_translated) == 0 or len(docs_english) == 0:
+        sys.stderr.write("No document alignments feasible: "+str(len(docs_translated))+" documents in foreign language and "+str(len(docs_english))+" documents in English.\n")
         open(args.output_matches, 'a').close()
 
     else:
 
-        obj_lang2 = map_dic2list(docs_lang2)
-        obj_lang1 = map_dic2list(docs_lang1)
+        obj_english = map_dic2list(docs_english)
+        obj_translated = map_dic2list(docs_translated)
     
-        word_extractor = WordExtractor(
-            n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser)
+        to_ignore = None
+        if args.ignore:
+            with open(args.ignore, 'r') as f:
+                content = f.read().replace('\n', ' ').replace('  ', ' ')
+                to_ignore = set(_ngram_helper(
+                    wordpunct_tokenize(content), args.ngram_size, False))
+    
+        word_extractor = EnglishWordExtractor(
+            n=args.ngram_size, ignore_set=to_ignore)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
                                       metric='cosine',
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
                                       batch_size=args.batch_size)
-        m_csr = scorer.score(obj_lang2['text'], obj_lang1['text'])
+        m_csr = scorer.score(obj_english['text'], obj_translated['text'])
         if m_csr == None:
             sys.stderr.write("Documents do not contain any useful information to be used in alignment.\n")
             open(args.output_matches, 'a').close()
@@ -142,6 +151,6 @@ if __name__ == "__main__":
     
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):
-                    turl = obj_lang2['mapping'][matches[idx][0]]
-                    surl = obj_lang1['mapping'][matches[idx][1]]
+                    surl = obj_english['mapping'][matches[idx][0]]
+                    turl = obj_translated['mapping'][matches[idx][1]]
                     f.write("{0:.5f}\t{1}\t{2}\n".format(match_costs[idx], surl, turl))
