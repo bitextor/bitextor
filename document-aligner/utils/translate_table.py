@@ -3,12 +3,12 @@
 import argparse
 import sys
 
-from common import open_xz_or_gzip_or_plain
+from common import open_gzip_or_plain
 
 
 def build_translations(translation_file):
     table = {}
-    with open_xz_or_gzip_or_plain(translation_file) as f:
+    with open_gzip_or_plain(translation_file) as f:
         for line in f:
             line_split = line.strip().split('\t', 1)
             if len(line_split) != 2:
