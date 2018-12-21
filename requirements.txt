@@ -1,5 +1,4 @@
 bs4==0.0.1
-cld2-cffi==0.1.4
 h5py==2.8.0
 html2text==2018.1.9
 iso-639==0.4.5
@@ -21,3 +20,11 @@ tqdm==4.28.1
 tldextract==2.2.0
 ftfy==5.5.0
 sacrebleu==1.2.12
+func_timeout==4.3.0
+lxml==4.2.5
+html5lib==1.0.1
+toolwrapper==0.3.0
+docopt==0.6.2
+openfile==0.0.7
+pycld2==0.31
+python-dateutil==2.7.5

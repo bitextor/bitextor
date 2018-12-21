@@ -5,6 +5,9 @@ import re
 import sys
 import argparse
 import warc
+from dateutil.parser import parse
+import dateutil
+from datetime import datetime
 
 oparser = argparse.ArgumentParser(description="Script that takes a list of file paths from HTTrack crawled folder")
 options = oparser.parse_args()
@@ -16,16 +19,22 @@ for fline in reader:
     if os.path.isfile(filepath): # protect again extraneous 'Binary file (standard input) matches' at the end of stream
         content=None
         url=None
+        date=None
         with open(filepath, 'rb') as content_file:
             content = content_file.read()
         for line in content.split(b"\n"):
           if re.search(rb'<!-- Mirrored from ', line):
               url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
+              date = re.sub(rb'.*by HTTrack Website[^,]+, ', b'', re.sub(rb' -->.*', b'', line))
               break
-        if url == None:
-            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":"unknown"})
+        if date == None:
+            dvalue=datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
-            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8")})
+            dvalue=parse(date.decode("utf8")).strftime('%Y-%m-%dT%H:%M:%SZ')
+        if url == None:
+            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":"unknown","WARC-Date":dvalue})
+        else:
+            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8"),"WARC-Date":dvalue})
         f = warc.WARCFile(fileobj=sys.stdout.buffer)
         f.write_record(warc_record)
 

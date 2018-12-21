@@ -25,7 +25,10 @@ def _ngram_helper(words, n, hash_values):
 
 def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, page):
     proc = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
-    words = proc.process(page).split("\n")
+    segments = proc.process(page).split("\n")
+    words=[]
+    for s in segments:
+      words.extend(s.split(' '))
     ngrams = _ngram_helper(words, n, hash_values)
 
     if ignore_set:

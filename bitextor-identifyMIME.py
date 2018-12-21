@@ -33,7 +33,6 @@ for line in reader:
     #print("content", content)
     d = base64.b64decode(content + "==")
     #print("d", d)
-
     magicoutput=m.buffer(d).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
@@ -43,8 +42,12 @@ for line in reader:
 
       #sys.stderr.write(str)
     except:
-      sys.stderr.write("Error in file " + url + "\n")
-      magicoutput.append("ZHVubm8K") # dunno
+      try:
+        str = base64.b64encode(base64.b64decode(content + "==").decode('iso-8859-1').encode("utf8")).decode("utf8")
+        magicoutput.append(str)
+      except:
+        sys.stderr.write("Error in file " + url + "\n")
+        magicoutput.append("ZHVubm8K") # dunno
 
     print("\t".join(magicoutput))
 

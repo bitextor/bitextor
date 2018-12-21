@@ -72,6 +72,7 @@ class Crawler(object):
         self.interrupt = False
         self.timeout = 10
         self.TLdomain = ""
+        self.verbose=False
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -150,6 +151,8 @@ class Crawler(object):
           sys.stderr.write(str(sys.exc_info()[0])+"\n")
 
         self._spawn_new_worker()
+        if self.verbose:
+          sys.stderr.write("Starting thread\n")
 
         while self.threads:
             try:
@@ -158,6 +161,8 @@ class Crawler(object):
                         t.join(1)
                         if not t.isAlive():
                             self.threads.remove(t)
+                            if self.verbose:
+                              sys.stderr.write("Killing thread\n")
                     except RuntimeError:
                         pass
 
@@ -272,18 +277,24 @@ class Crawler(object):
             if self.interrupt:
                 break
             else:
+                url = None
                 self.targets_lock.acquire()
                 if len(self.targets)>0:
+                    url = self.targets.pop()
+                    if url not in self.visited:
+                        self.visited[url] = 1
+                self.targets_lock.release()
+
+                if url != None:
                     try:
-                        url = self.targets.pop()
                         logging.debug('url: %s' % url)
-                        if url not in self.visited:
-                          self.visited[url] = 1
-                        self.targets_lock.release()
 
                         if not self.robotsparser.can_fetch("*", url):
                             sys.stderr.write("robots.txt forbids crawling URL: "+url+"\n")
                         else:
+                            if self.verbose:
+                              sys.stderr.write("Crawling URL: "+url+"\n")
+
                             rx = re.match('(https?)://([^/]+)(.*)', url)
                             protocol = rx.group(1)
                             host = rx.group(2)
@@ -329,6 +340,8 @@ class Crawler(object):
                                 self._add_target(rlink)
 
                             if self.concurrency < self.max_outstanding:
+                                if self.verbose:
+                                  sys.stderr.write("Starting thread\n")
                                 self._spawn_new_worker()
                     except KeyError as e:
                         # Pop from an empty set
@@ -354,7 +367,8 @@ class Crawler(object):
                             self.targets_lock.release()
                 else:
                     self.targets_lock.release()
-
+            if crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
+                self.interrupt=True
 
         self.concurrency_lock.acquire()
         self.concurrency -= 1
@@ -374,6 +388,7 @@ oparser.add_argument("-d", help="Dump crawling status if program is stopped by S
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
+oparser.add_argument("-v", help="Verbose mode.", dest="verbose", action='store_true')
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -429,6 +444,7 @@ if not options.URL.startswith("http"):
     options.URL = "http://" + options.URL
 
 crawler = MyCrawler()
+crawler.verbose=options.verbose
 crawler.set_concurrency_level(options.jobs)
 if options.crawltld:
   crawler.set_follow_mode(Crawler.F_TLD)
