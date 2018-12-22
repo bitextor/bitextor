@@ -605,6 +605,8 @@ rule train_nmt_all:
 rule create_config:
     output:
         config = temp("{dir}/config.json".format(dir=transient))
+
+    priority: 50
     run:
         print("Hello world")
         with open(output.config, "wt") as configFile:
