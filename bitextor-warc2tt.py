@@ -37,9 +37,7 @@ for record in f:
     file.write(text.decode())
     file.close()
 
-    text = base64.b64encode(text).decode('utf8')
-    text = text.replace("\t"," ")
-    print(text+"\t"+record.url+"\t"+record.date)
+    print(record.url+"\t"+record.date)
 
     lineNum += 1
 

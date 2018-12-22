@@ -33,8 +33,8 @@ for line in reader:
   #sys.stderr.write("lineNum " + str(lineNum) + "\n")
 
   fields=line.strip().split("\t")
-  if len(fields)>=2:
-    url=fields[1]
+  if len(fields)>=1:
+    url=fields[0]
 
     #~Mime and encodign
     m.setflags(16|1024)
