@@ -155,7 +155,7 @@ for vmssinfo in $vmssnames; do
     done
 
 done
-echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP" >> $SLURMCONF
+echo "PartitionName=debug Nodes=${allworkernames} Default=YES MaxTime=INFINITE State=UP OverSubscribe=YES" >> $SLURMCONF
 echo "DebugFlags=NO_CONF_HASH" >> $SLURMCONF
 
 
