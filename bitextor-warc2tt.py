@@ -11,7 +11,7 @@ def convert_encoding(data, new_coding = 'UTF-8'):
   encoding = cchardet.detect(data)['encoding']
 
   if new_coding.upper() != encoding.upper():
-    #print("convert", encoding, "to", new_coding)
+    #sys.stderr.write("convert " + encoding + " to " + new_coding + "\n")
     data = data.decode(encoding).encode(new_coding)
 
   #print("data", type(data))
