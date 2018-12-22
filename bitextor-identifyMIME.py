@@ -26,6 +26,7 @@ else:
 
 m=magic.open(magic.MAGIC_NONE)
 m.load()
+#sys.stderr.write("m:" + str(m) + "\n")
 
 lineNum = 0
 for line in reader:
@@ -35,42 +36,23 @@ for line in reader:
   if len(fields)>=2:
     url=fields[1]
 
-    content=fields[0]
-
     #~Mime and encodign
     m.setflags(16|1024)
-    #print("content", content)
-    d = base64.b64decode(content + "==")
-    #print("d", d)
-    magicoutput=m.buffer(d).split(" ")
+
+    # read file
+    file = open("{inDir}/{name}.txt".format(inDir=options.inDir, name=lineNum), "r")
+    text = file.read()
+    file.close()
+    #sys.stderr.write("text " + str(type(text)) + "\n")
+
+    magicoutput=m.buffer(text.encode()).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
-    try:
-      #str1 = base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8")
-      #magicoutput.append(str1)
+    #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 
-      # read file
-      file = open("{inDir}/{name}.txt".format(inDir=options.inDir, name=lineNum), "r")
-      str2 = file.read()
-      file.close()
-      str2 = base64.b64encode(str2.encode()).decode()
-      magicoutput.append(str2)
+    text = base64.b64encode(text.encode()).decode()
 
-      #sys.stderr.write("str1 " + str(len(str1)) + "\n")
-      #sys.stderr.write("str2 " + str(len(str2)) + "\n")
-      #sys.stderr.write("str1 " + str1 + "\n")
-      #sys.stderr.write("str2 " + str2 + "\n")
-      #sys.stderr.write("HH2\n")
-
-
-      #sys.stderr.write(str)
-    except:
-      try:
-        str1 = base64.b64encode(base64.b64decode(content + "==").decode('iso-8859-1').encode("utf8")).decode("utf8")
-        magicoutput.append(str1)
-      except:
-        sys.stderr.write("Error in file " + url + "\n")
-        magicoutput.append("ZHVubm8K") # dunno
+    magicoutput.append(text)
 
     print("\t".join(magicoutput))
 
