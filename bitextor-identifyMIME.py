@@ -46,15 +46,15 @@ for line in reader:
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
     try:
-      str1 = base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8")
-      magicoutput.append(str1)
+      #str1 = base64.b64encode(base64.b64decode(content + "==").decode(magicoutput[1].split("=")[1].replace("unknown-8bit","iso-8859-1").replace('us-ascii','iso-8859-1')).encode("utf8")).decode("utf8")
+      #magicoutput.append(str1)
 
-      # write file
-      #file = open("{inDir}/{name}.txt".format(inDir=options.inDir, name=lineNum), "r")
-      #str2 = file.read()
-      #file.close()
-      #str2 = base64.b64encode(str2.encode()).decode()
-      #magicoutput.append(str2)
+      # read file
+      file = open("{inDir}/{name}.txt".format(inDir=options.inDir, name=lineNum), "r")
+      str2 = file.read()
+      file.close()
+      str2 = base64.b64encode(str2.encode()).decode()
+      magicoutput.append(str2)
 
       #sys.stderr.write("str1 " + str(len(str1)) + "\n")
       #sys.stderr.write("str2 " + str(len(str2)) + "\n")
