@@ -608,7 +608,6 @@ rule create_config:
 
     priority: 50
     run:
-        print("Hello world")
         with open(output.config, "wt") as configFile:
             configFile.write(str(config))
 
