@@ -73,8 +73,9 @@ mimeFile.close()
 lineNum = 0
 for line in sys.stdin:
     #sys.stderr.write("lineNum:" + str(lineNum) + "\n")
-    fields=line.split('\t')
+    fields = line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
+    #sys.stderr.write("fields:" + str(len(fields)) + "\n")
 
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
 
@@ -89,6 +90,11 @@ for line in sys.stdin:
         document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
         tree=etree.tostring(document)
         cleantree=tree.decode("utf8").replace("\t"," ")
+
+        b64t = base64.b64encode(b64t.encode()).decode()
+        #sys.stderr.write("b64t:" + str(b64t) + "\n")
+        fields.append(b64t)
+
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
 
         mime = mimes[lineNum]

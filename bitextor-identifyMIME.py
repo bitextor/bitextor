@@ -58,10 +58,6 @@ for line in reader:
 
     outFile.write(mimeEncode[0] + "\t" + mimeEncode[1] + "\n")
 
-    text = base64.b64encode(text.encode()).decode()
-
-    magicoutput.append(text)
-
     print("\t".join(magicoutput))
 
   else:
