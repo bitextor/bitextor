@@ -54,8 +54,6 @@ def getDocumentText(document):
 
 
 parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annotation of HTML documents given in Bitextor crawl format (stdin)')
-parser.add_argument('-t', '--text', dest='text', action='store_true')
-parser.add_argument('-x', '--xml', dest='text', action='store_false')
 
 args = parser.parse_args()
 
@@ -68,25 +66,13 @@ args = parser.parse_args()
 for line in sys.stdin:
     fields=line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
-    if args.text:
-        soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf-8"), "lxml", from_encoding='utf-8')
-        for script in soup(["script", "style", "img"]):
-            script.extract()    # rip it out
 
-        # get text
-        text = soup.get_text()
-        text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
-        fields.append(base64.b64encode(text.encode()).decode("utf8"))
-        print('\t'.join(fields))
-    else:
-        cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
-        b64t=base64.b64decode(fields[3]).decode("utf-8")
-        try:
-            cleanhtml=cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', b64t, flags=re.IGNORECASE))
-            document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
-            tree=etree.tostring(document)
-            cleantree=tree.decode("utf8").replace("\t"," ")
-            fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
-            print('\t'.join(fields))
-        except etree.ParserError as err:
-            sys.stderr.write("HTML parsing error for document with URL '{1}': {0}\n".format(err, fields[2]))
+    soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf-8"), "lxml", from_encoding='utf-8')
+    for script in soup(["script", "style", "img"]):
+        script.extract()    # rip it out
+
+    # get text
+    text = soup.get_text()
+    text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
+    fields.append(base64.b64encode(text.encode()).decode("utf8"))
+    print('\t'.join(fields))

@@ -709,7 +709,7 @@ rule ett2tika:
         '{target}/tika.xz'
     priority: 3
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -t | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text.py | xz -T 0 > {output}'
 
 rule xtt2alcazar:
   input:
