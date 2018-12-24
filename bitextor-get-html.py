@@ -57,6 +57,7 @@ parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annot
 
 parser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
 parser.add_argument('--in-file', dest='inFile', help='File with MIME type on each line')
+parser.add_argument('--out-dir', dest='outDir', help='Directory of cleaned html files')
 args = parser.parse_args()
 
 mimeFile = open("{inFile}".format(inFile=args.inFile), "rt")
@@ -89,8 +90,13 @@ for line in sys.stdin:
         cleanhtml=cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', b64t, flags=re.IGNORECASE))
         document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
         tree=etree.tostring(document)
-        cleantree=tree.decode("utf8").replace("\t"," ")
+        cleantree=tree.decode("utf8")
 
+        file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
+        file.write(cleantree)
+        file.close()
+
+        cleantree.replace("\t", " ")
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
 
         mime = mimes[lineNum]
