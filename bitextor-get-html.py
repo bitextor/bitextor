@@ -96,7 +96,7 @@ for line in sys.stdin:
         file.write(cleantree)
         file.close()
 
-        cleantree.replace("\t", " ")
+        cleantree = cleantree.replace("\t", " ")
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
 
         mime = mimes[lineNum]
