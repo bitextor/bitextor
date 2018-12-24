@@ -25,6 +25,8 @@ parser.add_argument('--out-dir', dest='outDir',
 args = parser.parse_args()
 #print("outDir", args.outDir)
 
+pageFile = open("{outDir}/page".format(outDir=args.outDir), "w")
+
 f = warc.WARCFile(fileobj=sys.stdin.buffer)
 
 lineNum = 0
@@ -37,10 +39,13 @@ for record in f:
     file.write(text.decode())
     file.close()
 
+    pageFile.write(record.url+"\t"+record.date + "\n")
     print(record.url+"\t"+record.date)
 
     lineNum += 1
 
-file = open("{outDir}/count".format(outDir=args.outDir), "w")
-file.write(str(lineNum) +  "\n")
-file.close()
+pageFile.close()
+
+countFile = open("{outDir}/count".format(outDir=args.outDir), "w")
+countFile.write(str(lineNum) +  "\n")
+countFile.close()
