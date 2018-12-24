@@ -91,10 +91,6 @@ for line in sys.stdin:
         tree=etree.tostring(document)
         cleantree=tree.decode("utf8").replace("\t"," ")
 
-        b64t = base64.b64encode(b64t.encode()).decode()
-        #sys.stderr.write("b64t:" + str(b64t) + "\n")
-        fields.append(b64t)
-
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
 
         mime = mimes[lineNum]

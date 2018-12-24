@@ -35,10 +35,10 @@ public class PipedBoilerpipe {
         {
             try {
                 String[] fields=stdin.nextLine().split("\t");
-                if(fields.length==5){
+                if(fields.length==4){
                     //Reading a line
                     try{
-                        String line = new String(Base64.getDecoder().decode(fields[4]), "UTF-8");
+                        String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
                         //Processing XHTML
                         StringReader reader = new StringReader(line);
                         TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
@@ -50,7 +50,7 @@ public class PipedBoilerpipe {
 
                         byte[] bytes = h.process(source, line).getBytes("UTF-8");
                         String encoded = Base64.getEncoder().encodeToString(bytes);
-                        fields[4]=encoded;
+                        fields[3]=encoded;
                         StringBuilder sb=new StringBuilder();
                         for(String f: fields){
                             sb.append(f);
