@@ -55,6 +55,7 @@ def getDocumentText(document):
 
 parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annotation of HTML documents given in Bitextor crawl format (stdin)')
 
+parser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
 parser.add_argument('--in-file', dest='inFile', help='File with MIME type on each line')
 args = parser.parse_args()
 
@@ -71,11 +72,18 @@ mimeFile.close()
 
 lineNum = 0
 for line in sys.stdin:
+    #sys.stderr.write("lineNum:" + str(lineNum) + "\n")
     fields=line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
 
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
-    b64t=base64.b64decode(fields[1]).decode("utf-8")
+
+    # read file
+    file = open("{inDir}/{name}.txt".format(inDir=args.inDir, name=lineNum), "r")
+    b64t = file.read()
+    file.close()
+    #sys.stderr.write("b64t:" + b64t + "\n")
+
     try:
         cleanhtml=cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', b64t, flags=re.IGNORECASE))
         document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
