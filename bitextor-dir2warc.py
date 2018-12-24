@@ -34,7 +34,15 @@ for fline in reader:
         if url == None:
             warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":"unknown","WARC-Date":dvalue})
         else:
-            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":url.decode("utf8"),"WARC-Date":dvalue})
+            try:
+                urlStr = url.decode("utf8")
+                #print("HH1", urlStr)
+            except:
+                urlStr = "unknown"
+                #print("HH2", urlStr)
+
+            warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":urlStr,"WARC-Date":dvalue})
+
         f = warc.WARCFile(fileobj=sys.stdout.buffer)
         f.write_record(warc_record)
 
