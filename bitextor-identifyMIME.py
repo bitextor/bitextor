@@ -51,7 +51,8 @@ for line in reader:
     mimeEncode[0] = mimeEncode[0][:-1]
     #sys.stderr.write("mimeEncode:" + str(mimeEncode) + "\n")
 
-    magicoutput = mimeEncode
+    #magicoutput = mimeEncode
+    magicoutput = []
     magicoutput.append(url)
     #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 

@@ -677,7 +677,7 @@ rule tt2xtt:
         '{target}/xtt.xz'
     priority: 6
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html.py | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html.py --in-file {wildcards.target}/mime.txt | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:

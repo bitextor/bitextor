@@ -55,7 +55,13 @@ def getDocumentText(document):
 
 parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annotation of HTML documents given in Bitextor crawl format (stdin)')
 
+parser.add_argument('--in-file', dest='inFile', help='File with MIME type on each line')
 args = parser.parse_args()
+
+mimeFile = open("{inFile}".format(inFile=args.inFile), "rt")
+mimes = mimeFile.read().split("\n")
+mimeFile.close()
+#sys.stderr.write("mimes:" + str(mimes) + "\n")
 
 #Input (stdin) in Bitextor crawl format:
 #mime      encoding      url     html_content(base_64)       timestamp
@@ -63,18 +69,28 @@ args = parser.parse_args()
 #Output (stdout):
 #mime      encoding      url     html_content(base_64)       timestamp     html_text(base_64)
 
+lineNum = 0
 for line in sys.stdin:
     fields=line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
 
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
-    b64t=base64.b64decode(fields[3]).decode("utf-8")
+    b64t=base64.b64decode(fields[1]).decode("utf-8")
     try:
         cleanhtml=cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', b64t, flags=re.IGNORECASE))
         document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
         tree=etree.tostring(document)
         cleantree=tree.decode("utf8").replace("\t"," ")
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
-        print('\t'.join(fields))
+
+        mime = mimes[lineNum]
+        mime = mime.split("\t")
+        #sys.stderr.write("mime:" + str(mime) + "\n")
+
+        mime = mime + fields
+        print('\t'.join(mime))
+
     except etree.ParserError as err:
-        sys.stderr.write("HTML parsing error for document with URL '{1}': {0}\n".format(err, fields[2]))
+        sys.stderr.write("HTML parsing error for document with URL '{1}': {0}\n".format(err, fields[0]))
+
+    lineNum += 1
