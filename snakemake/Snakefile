@@ -667,7 +667,7 @@ rule tt2ttmime:
         '{target}/ttmime.xz'
     priority: 7
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html --out-file {wildcards.target}/mime.txt | xz -T 0 > {output}'
 
 rule tt2xtt:
     input:

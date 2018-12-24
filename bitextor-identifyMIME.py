@@ -14,8 +14,8 @@ import argparse
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
 oparser.add_argument('crawl', metavar='CRAWL', nargs='?', help='Output of the bitextor-crawl script that provides a tab-separated list of documents, only containing two fields: the content of the document encoded with base64 and the URL.', default=None)
-oparser.add_argument('--in-dir', dest='inDir',
-                    help='Directory of raw html files')
+oparser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
+oparser.add_argument('--out-file', dest='outFile', help='File with MIME type on each line')
 
 options = oparser.parse_args()
 
@@ -23,6 +23,8 @@ if options.crawl == None:
   reader = sys.stdin
 else:
   reader = open(options.crawl,"r")
+
+outFile = open("{outFile}".format(outFile=options.outFile), "wt")
 
 m=magic.open(magic.MAGIC_NONE)
 m.load()
@@ -48,7 +50,9 @@ for line in reader:
     magicoutput=m.buffer(text.encode()).split(" ")
     magicoutput[0]=magicoutput[0][:-1]
     magicoutput.append(url)
-    #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
+    #sys.stderr.write("magicoutput:" + str(magicoutput[0]) + "\n")
+
+    outFile.write(magicoutput[0] + "\n")
 
     text = base64.b64encode(text.encode()).decode()
 
@@ -60,3 +64,6 @@ for line in reader:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
 
   lineNum += 1
+
+
+outFile.close()
