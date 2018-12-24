@@ -47,12 +47,15 @@ for line in reader:
     file.close()
     #sys.stderr.write("text " + str(type(text)) + "\n")
 
-    magicoutput=m.buffer(text.encode()).split(" ")
-    magicoutput[0]=magicoutput[0][:-1]
-    magicoutput.append(url)
-    #sys.stderr.write("magicoutput:" + str(magicoutput[0]) + "\n")
+    mimeEncode = m.buffer(text.encode()).split(" ")
+    mimeEncode[0] = mimeEncode[0][:-1]
+    #sys.stderr.write("mimeEncode:" + str(mimeEncode) + "\n")
 
-    outFile.write(magicoutput[0] + "\n")
+    magicoutput = mimeEncode
+    magicoutput.append(url)
+    #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
+
+    outFile.write(mimeEncode[0] + "\t" + mimeEncode[1] + "\n")
 
     text = base64.b64encode(text.encode()).decode()
 
