@@ -22,7 +22,7 @@ maxlines: 5
 boilerpipeCleaning: true
 jhuLett: false
 
-crawlTimeLimit: 5s
+crawlTimeLimit: 30s
   #"crawlTimeLimit: 900s
   #"crawlTimeLimit: 60m
 
