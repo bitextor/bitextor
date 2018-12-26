@@ -1,5 +1,5 @@
 bitextor: /home/hieu/permanent/software/bitextor
-domains: ["www.elenacaffe1863.com","vade-retro.fr"]
+domains: ["www.elenacaffe1863.com","vade-retro.fr", "108.hu"]
 
   #"langstat: /home/hieu/permanent/software/langstat/1k.gz
   #"langstatThreshold":10,
@@ -22,7 +22,7 @@ maxlines: 5
 boilerpipeCleaning: true
 jhuLett: false
 
-crawlTimeLimit: 30s
+crawlTimeLimit: 5s
   #"crawlTimeLimit: 900s
   #"crawlTimeLimit: 60m
 

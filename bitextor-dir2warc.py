@@ -36,10 +36,10 @@ for fline in reader:
         else:
             try:
                 urlStr = url.decode("utf8")
-                #print("HH1", urlStr)
+                #sys.stderr.write("HH1 " + urlStr + "\n")
             except:
-                urlStr = "unknown"
-                #print("HH2", urlStr)
+                urlStr = "unknown-encoding"
+                #sys.stderr.write("HH2 " + urlStr + "\n")
 
             warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":urlStr,"WARC-Date":dvalue})
 
