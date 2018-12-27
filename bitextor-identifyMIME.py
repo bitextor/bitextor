@@ -13,16 +13,10 @@ import base64
 import argparse
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
-oparser.add_argument('crawl', metavar='CRAWL', nargs='?', help='Output of the bitextor-crawl script that provides a tab-separated list of documents, only containing two fields: the content of the document encoded with base64 and the URL.', default=None)
 oparser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
 oparser.add_argument('--out-file', dest='outFile', help='File with MIME type on each line')
 
 options = oparser.parse_args()
-
-if options.crawl == None:
-  reader = sys.stdin
-else:
-  reader = open(options.crawl,"r")
 
 outFile = open("{outFile}".format(outFile=options.outFile), "wt")
 
@@ -30,8 +24,14 @@ m=magic.open(magic.MAGIC_NONE)
 m.load()
 #sys.stderr.write("m:" + str(m) + "\n")
 
+pageFile = open("{inDir}/page".format(inDir=options.inDir), "r")
+pages = pageFile.read().strip().split("\n")
+pageFile.close()
+#sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
+
+
 lineNum = 0
-for line in reader:
+for line in pages:
   #sys.stderr.write("lineNum " + str(lineNum) + "\n")
 
   fields=line.strip().split("\t")
