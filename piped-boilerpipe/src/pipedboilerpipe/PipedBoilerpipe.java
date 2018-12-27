@@ -6,6 +6,7 @@
 
 package pipedboilerpipe;
 
+import java.io.*;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
@@ -35,12 +36,24 @@ public class PipedBoilerpipe {
         System.err.println(rootDir);
 
         Scanner stdin = new Scanner(System.in);
+        int lineNum = 0;
         while(stdin.hasNextLine())
         {
             String[] fields=stdin.nextLine().split("\t");
             if(fields.length==4){
+                String file = rootDir + "/cleaned-html/" + lineNum + ".txt";
+                BufferedReader fileReader = new BufferedReader(new FileReader(file));
+
+                String lineFile = "";
+                String st;
+                while ((st = fileReader.readLine()) != null) {
+                    //System.err.println(st);
+                    lineFile += st + "\n";
+                }
+                String line = lineFile;
+
                 //Reading a line
-                String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
+                //String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
                 //Processing XHTML
                 StringReader reader = new StringReader(line);
                 TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
@@ -62,6 +75,8 @@ public class PipedBoilerpipe {
                 System.out.println(sb.toString());
 
             }
+
+            ++lineNum;
         }
     }
 }
