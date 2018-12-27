@@ -48,7 +48,6 @@ for record in f:
         file.close()
 
         pageFile.write(record.url + "\t" + record.date + "\n")
-        print(record.url+"\t"+record.date)
 
         lineNum += 1
 
