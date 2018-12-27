@@ -71,12 +71,17 @@ mimeFile.close()
 #Output (stdout):
 #mime      encoding      url     html_content(base_64)       timestamp     html_text(base_64)
 
+pageFile = open("{inDir}/page".format(inDir=args.inDir), "r")
+pages = pageFile.read().strip().split("\n")
+pageFile.close()
+
 lineNum = 0
-for line in sys.stdin:
+for line in pages:
     #sys.stderr.write("lineNum:" + str(lineNum) + "\n")
     fields = line.split('\t')
     fields = list(map(str.strip, fields)) #Strip all elements
-    #sys.stderr.write("fields:" + str(len(fields)) + "\n")
+    del fields[-1]
+    #sys.stderr.write("fields:" + str(len(fields)) + " " + str(fields) + "\n")
 
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
 
