@@ -9,6 +9,7 @@ import cchardet
 #############################################################################
 def convert_encoding(data, new_coding = 'UTF-8'):
   encoding = cchardet.detect(data)['encoding']
+  #sys.stderr.write("convert " + encoding + " to " + new_coding + "\n")
 
   if new_coding.upper() != encoding.upper():
     #sys.stderr.write("convert " + encoding + " to " + new_coding + "\n")
@@ -31,18 +32,25 @@ f = warc.WARCFile(fileobj=sys.stdin.buffer)
 
 lineNum = 0
 for record in f:
+    #sys.stderr.write("lineNum " + str(lineNum) \
+    #                 + " " + record.url \
+    #                 + " " + record.date + "\n")
+
     text = record.payload.read() #.decode('utf8')
-    text = convert_encoding(text)
+    #sys.stderr.write("text" + str(len(text)) + "\n")
 
-    # write file
-    file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
-    file.write(text.decode())
-    file.close()
+    if len(text) > 0:
+        text = convert_encoding(text)
 
-    pageFile.write(record.url+"\t"+record.date + "\n")
-    print(record.url+"\t"+record.date)
+        # write file
+        file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
+        file.write(text.decode())
+        file.close()
 
-    lineNum += 1
+        pageFile.write(record.url + "\t" + record.date + "\n")
+        print(record.url+"\t"+record.date)
+
+        lineNum += 1
 
 pageFile.close()
 
