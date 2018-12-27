@@ -107,7 +107,7 @@ for line in pages:
         mime = mimes[lineNum]
         mime = mime.split("\t")
         mime = mime + fields
-        sys.stderr.write("mime:" + str(mime) + "\n")
+        #sys.stderr.write("mime:" + str(mime) + "\n")
 
         print('\t'.join(mime))
 
