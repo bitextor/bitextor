@@ -29,44 +29,38 @@ public class PipedBoilerpipe {
      * the ArticleExtractor in BoilerPipe to clean it
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception
+    {
+        String rootDir = args[0];
+        System.err.println(rootDir);
+
         Scanner stdin = new Scanner(System.in);
         while(stdin.hasNextLine())
         {
-            try {
-                String[] fields=stdin.nextLine().split("\t");
-                if(fields.length==4){
-                    //Reading a line
-                    try{
-                        String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
-                        //Processing XHTML
-                        StringReader reader = new StringReader(line);
-                        TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
-                        //Processing XHTML to remove boilerplates
-                        ArticleExtractor extractor=ArticleExtractor.INSTANCE;
-                        extractor.process(source);
-                        //Producing clean XHTML
-                        HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
+            String[] fields=stdin.nextLine().split("\t");
+            if(fields.length==4){
+                //Reading a line
+                String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
+                //Processing XHTML
+                StringReader reader = new StringReader(line);
+                TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
+                //Processing XHTML to remove boilerplates
+                ArticleExtractor extractor=ArticleExtractor.INSTANCE;
+                extractor.process(source);
+                //Producing clean XHTML
+                HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
 
-                        byte[] bytes = h.process(source, line).getBytes("UTF-8");
-                        String encoded = Base64.getEncoder().encodeToString(bytes);
-                        fields[3]=encoded;
-                        StringBuilder sb=new StringBuilder();
-                        for(String f: fields){
-                            sb.append(f);
-                            sb.append("\t");
-                        }
-                        sb.deleteCharAt(sb.length()-1);
-                        System.out.println(sb.toString());
-                    } catch (UnsupportedEncodingException ex){
-                        ex.printStackTrace(System.err);
-                    }
-
+                byte[] bytes = h.process(source, line).getBytes("UTF-8");
+                String encoded = Base64.getEncoder().encodeToString(bytes);
+                fields[3]=encoded;
+                StringBuilder sb=new StringBuilder();
+                for(String f: fields){
+                    sb.append(f);
+                    sb.append("\t");
                 }
-            } catch (SAXException ex) {
-                ex.printStackTrace(System.err);
-            } catch (BoilerpipeProcessingException ex){
-                ex.printStackTrace(System.err);
+                sb.deleteCharAt(sb.length()-1);
+                System.out.println(sb.toString());
+
             }
         }
     }
