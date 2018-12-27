@@ -30,67 +30,65 @@ public class PipedBoilerpipe {
      * the ArticleExtractor in BoilerPipe to clean it
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception
+    {
         String rootDir = args[0];
         System.err.println(rootDir);
 
         Scanner stdin = new Scanner(System.in);
+
         int lineNum = 0;
+
+        /*
+        String filePage = rootDir + "/raw-html/page";
+        BufferedReader pageReader = new BufferedReader(new FileReader(filePage));
+
+        String pageLine;
+        while ((pageLine = pageReader.readLine()) != null) {
+
+        }
+        */
         while(stdin.hasNextLine())
         {
-            try {
-                String[] fields=stdin.nextLine().split("\t");
-                if(fields.length==4){
-                    //Reading a line
-                    try{
-                        String file = rootDir + "/cleaned-html/" + lineNum + ".txt";
-                        BufferedReader fileReader = new BufferedReader(new FileReader(file));
+            String[] fields=stdin.nextLine().split("\t");
+            if(fields.length==4){
+                //Reading a line
+                String file = rootDir + "/cleaned-html/" + lineNum + ".txt";
+                BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
-                        String lineFile = "";
-                        String st;
-                        while ((st = fileReader.readLine()) != null) {
-                            //System.err.println(st);
-                            lineFile += st + "\n";
-                        }
-                        String line = lineFile;
-
-                        //String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
-                        //boolean lineEqual = line == lineFile;
-                        //System.err.println(lineEqual + "\nHH1:" + lineFile + "\nHH2:" + line);
-                        //System.exit(1);
-
-                        //Processing XHTML
-                        StringReader reader = new StringReader(line);
-                        TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
-                        //Processing XHTML to remove boilerplates
-                        ArticleExtractor extractor=ArticleExtractor.INSTANCE;
-                        extractor.process(source);
-                        //Producing clean XHTML
-                        HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-
-                        byte[] bytes = h.process(source, line).getBytes("UTF-8");
-                        String encoded = Base64.getEncoder().encodeToString(bytes);
-                        fields[3]=encoded;
-                        StringBuilder sb=new StringBuilder();
-                        for(String f: fields){
-                            sb.append(f);
-                            sb.append("\t");
-                        }
-                        sb.deleteCharAt(sb.length()-1);
-                        System.out.println(sb.toString());
-                    } catch (UnsupportedEncodingException ex){
-                        ex.printStackTrace(System.err);
-                    }
-
+                String lineFile = "";
+                String st;
+                while ((st = fileReader.readLine()) != null) {
+                    //System.err.println(st);
+                    lineFile += st + "\n";
                 }
-            } catch (SAXException ex) {
-                ex.printStackTrace(System.err);
-            } catch (BoilerpipeProcessingException ex){
-                ex.printStackTrace(System.err);
-            } catch (FileNotFoundException ex) {
-                ex.printStackTrace(System.err);
-            } catch (IOException ex) {
-                        ex.printStackTrace(System.err);
+                String line = lineFile;
+
+                //String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
+                //boolean lineEqual = line == lineFile;
+                //System.err.println(lineEqual + "\nHH1:" + lineFile + "\nHH2:" + line);
+                //System.exit(1);
+
+                //Processing XHTML
+                StringReader reader = new StringReader(line);
+                TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
+                //Processing XHTML to remove boilerplates
+                ArticleExtractor extractor=ArticleExtractor.INSTANCE;
+                extractor.process(source);
+                //Producing clean XHTML
+                HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
+
+                byte[] bytes = h.process(source, line).getBytes("UTF-8");
+                String encoded = Base64.getEncoder().encodeToString(bytes);
+                fields[3]=encoded;
+                StringBuilder sb=new StringBuilder();
+                for(String f: fields){
+                    sb.append(f);
+                    sb.append("\t");
+                }
+                sb.deleteCharAt(sb.length()-1);
+                System.out.println(sb.toString());
+
             }
 
             ++lineNum;
