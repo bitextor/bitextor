@@ -96,19 +96,19 @@ for line in pages:
         document = html5lib.parse(ftfy.fix_text(cleanhtml),treebuilder="lxml",namespaceHTMLElements=False)
         tree=etree.tostring(document)
         cleantree=tree.decode("utf8")
+        cleantree = cleantree.replace("\t", " ")
 
         file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
         file.write(cleantree)
         file.close()
 
-        cleantree = cleantree.replace("\t", " ")
         fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
 
         mime = mimes[lineNum]
         mime = mime.split("\t")
-        #sys.stderr.write("mime:" + str(mime) + "\n")
-
         mime = mime + fields
+        sys.stderr.write("mime:" + str(mime) + "\n")
+
         print('\t'.join(mime))
 
     except etree.ParserError as err:

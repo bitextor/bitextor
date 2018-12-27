@@ -6,6 +6,7 @@
 
 package pipedboilerpipe;
 
+import java.io.*;
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
@@ -30,7 +31,11 @@ public class PipedBoilerpipe {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        String rootDir = args[0];
+        System.err.println(rootDir);
+
         Scanner stdin = new Scanner(System.in);
+        int lineNum = 0;
         while(stdin.hasNextLine())
         {
             try {
@@ -38,7 +43,22 @@ public class PipedBoilerpipe {
                 if(fields.length==4){
                     //Reading a line
                     try{
-                        String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
+                        String file = rootDir + "/cleaned-html/" + lineNum + ".txt";
+                        BufferedReader fileReader = new BufferedReader(new FileReader(file));
+
+                        String lineFile = "";
+                        String st;
+                        while ((st = fileReader.readLine()) != null) {
+                            //System.err.println(st);
+                            lineFile += st + "\n";
+                        }
+                        String line = lineFile;
+
+                        //String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
+                        //boolean lineEqual = line == lineFile;
+                        //System.err.println(lineEqual + "\nHH1:" + lineFile + "\nHH2:" + line);
+                        //System.exit(1);
+
                         //Processing XHTML
                         StringReader reader = new StringReader(line);
                         TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
@@ -67,7 +87,13 @@ public class PipedBoilerpipe {
                 ex.printStackTrace(System.err);
             } catch (BoilerpipeProcessingException ex){
                 ex.printStackTrace(System.err);
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace(System.err);
+            } catch (IOException ex) {
+                        ex.printStackTrace(System.err);
             }
+
+            ++lineNum;
         }
     }
 }

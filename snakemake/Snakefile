@@ -689,7 +689,7 @@ rule xtt2boiler:
     priority: 5
     shell:
         "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
-        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
+        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {wildcards.target} | xz -T 0 > {output}; "
         "else "
         "  ln -s {input} {output}; "
         "fi"
