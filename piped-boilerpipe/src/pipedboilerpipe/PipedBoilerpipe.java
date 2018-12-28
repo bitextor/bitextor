@@ -35,18 +35,25 @@ public class PipedBoilerpipe {
         String rootDir = args[0];
         System.err.println("rootDir=" + rootDir);
 
+        String mimeFile = rootDir + "/mime.txt";
+        BufferedReader mimeReader = new BufferedReader(new FileReader(mimeFile));
+
         Scanner stdin = new Scanner(System.in);
         int lineNum = 0;
         while(stdin.hasNextLine())
         {
             String[] fields = new String[4];
 
+            String mimeLine = mimeReader.readLine();
+            assert(mimeLine != null);
+            String[] toksMime = mimeLine.split("\t");
+            assert(toksMime.length == 2);
+            fields[0] = toksMime[0];
+            fields[1] = toksMime[1];
+
             String[] toks = stdin.nextLine().split("\t");
             assert(toks.length == 4);
-            fields[0] = toks[0];
-            fields[1] = toks[1];
             fields[2] = toks[2];
-            fields[3] = toks[3];
 
             //System.err.println(fields.length);
 
