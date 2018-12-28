@@ -23,9 +23,9 @@ for fline in reader:
         with open(filepath, 'rb') as content_file:
             content = content_file.read()
         for line in content.split(b"\n"):
-          if re.search(rb'<!-- Mirrored from ', line):
+          if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier', line):
               url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
-              date = re.sub(rb'.*by HTTrack Website[^,]+, ', b'', re.sub(rb' -->.*', b'', line))
+              date = re.sub(rb'.+by HTTrack Website[^,]+, ', b'', re.sub(rb' -->.*', b'', line))
               break
         if date == None:
             dvalue=datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
