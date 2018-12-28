@@ -48,12 +48,11 @@ mimeFile = open("{rootDir}/mime.txt".format(rootDir=options.rootDir), "r")
 mimes = mimeFile.read().strip().split("\n")
 mimeFile.close()
 
-#Reading line by line from the standard output
-for line in reader:
-  linefields=line.strip().split("\t")
-  assert(len(linefields) == 6)
+dedupedFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "r")
+lineNums = dedupedFile.read().strip().split("\n")
+dedupedFile.close()
 
-  lineNum = linefields[5]
+for lineNum in lineNums:
   lineNum = int(lineNum)
   #sys.stderr.write(lineNum + "\n")
 

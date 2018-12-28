@@ -730,7 +730,7 @@ rule html2lett:
         '{target}/lett.xz'
     priority: 2
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 rule httrack2lett:
     output:
