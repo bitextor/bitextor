@@ -105,5 +105,6 @@ for lineNum in lineNums:
                  mimeToks[1],
                  pageToks[0],
                  base64.b64encode(html.encode()).decode("utf8"),
-                 base64.b64encode(text.encode()).decode("utf8") ]
+                 base64.b64encode(text.encode()).decode("utf8"),
+                 str(lineNum) ]
     print('\t'.join(outFields))
