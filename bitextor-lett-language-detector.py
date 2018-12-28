@@ -69,10 +69,14 @@ for line in reader:
       parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
       # print("parsed_text", parsed_text)
 
-      linefields.insert(0,lang)
       e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
-      del linefields[-1]
-      del linefields[-1]
-      linefields.append(e)
-      print("\t".join(linefields))
+
+      outFields = [lang,
+                   linefields[0],
+                   linefields[1],
+                   linefields[2],
+                   linefields[3],
+                   e]
+
+      print("\t".join(outFields))
 
