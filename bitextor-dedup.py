@@ -24,19 +24,26 @@ if options.ett == None:
 else:
   reader = open(options.ett,"r")
 
+pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
+pages = pageFile.read().strip().split("\n")
+pageFile.close()
+
 outFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "wt")
 
 lineNum = 0
 seen_md5={}
 for i in reader:
   fields = i.strip().split("\t")
+
+  pageLine = pages[lineNum]
+  pageToks = pageLine.split("\t")
+
   try:
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
     e = deboiledFile.read()
     deboiledFile.close()
     e = base64.b64encode(e.encode()).decode()
 
-    #e = fields[3]
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
     c.update(e.encode("utf8"))
@@ -45,13 +52,13 @@ for i in reader:
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
       pass
-      #sys.stderr.write("Repeated file:\t"+fields[2]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+      #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
       outFile.write(str(lineNum) + "\n")
 
-      seen_md5[c.hexdigest()]=fields[2]
+      seen_md5[c.hexdigest()]=pageToks[0]
   except UnicodeDecodeError:
-    #sys.stderr.write("File "+fields[2]+" produced a character encoding error")
+    #sys.stderr.write("File "+pageToks[0]+" produced a character encoding error")
     pass
 
   lineNum += 1
