@@ -88,5 +88,11 @@ for line in sys.stdin:
     # get text
     text = soup.get_text()
     text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
+    #sys.stderr.write(text + "\n")
+
+    textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "wt")
+    textFile.write(text)
+    textFile.close()
+
     fields.append(base64.b64encode(text.encode()).decode("utf8"))
     print('\t'.join(fields))
