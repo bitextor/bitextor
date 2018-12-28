@@ -52,22 +52,15 @@ for line in reader:
   html_text = deboiledFile.read()
   deboiledFile.close()
 
-  #decoding the b64 original webpage
-  html_text_old = base64.b64decode(linefields[3])
-  assert(html_text == html_text_old.decode())
-  #sys.stderr.write(html_text + "\n")
-  #sys.stderr.write(html_text_old.decode() + "\n")
-
   if len(html_text)>0:
     #detecting language
     #lang, conf = langid.classify(parsed_text)
     lang = guess_lang_from_data2(html_text)
-    #print(lang, linefields[2])
-
 
     if len(langs)==0 or lang in langs:
-      parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
-      # print("parsed_text", parsed_text)
+      textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "rt")
+      parsed_text = textFile.read()
+      textFile.close()
 
       e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
 
