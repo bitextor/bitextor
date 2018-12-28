@@ -71,8 +71,6 @@ for line in sys.stdin:
     fields = list(map(str.strip, fields)) #Strip all elements
 
     lineNum = fields[-1]
-    del fields[-1]
-    #sys.stderr.write(lineNum + "\n")
 
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=args.rootDir, name=lineNum), "r")
     html = deboiledFile.read()
@@ -94,5 +92,9 @@ for line in sys.stdin:
     textFile.write(text)
     textFile.close()
 
-    fields.append(base64.b64encode(text.encode()).decode("utf8"))
-    print('\t'.join(fields))
+    outFields = [fields[0],
+                 fields[1],
+                 fields[2],
+                 base64.b64encode(html.encode()).decode("utf8"),
+                 base64.b64encode(text.encode()).decode("utf8") ]
+    print('\t'.join(outFields))
