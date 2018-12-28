@@ -81,6 +81,12 @@ public class PipedBoilerpipe {
             HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
 
             byte[] bytes = h.process(source, line).getBytes("UTF-8");
+
+            String outFile = rootDir + "/deboiler/" + lineNum;
+            OutputStream outStream = new FileOutputStream(outFile);
+            outStream.write(bytes);
+            outStream.close();
+
             String encoded = Base64.getEncoder().encodeToString(bytes);
             fields[3]=encoded;
             StringBuilder sb=new StringBuilder();
