@@ -40,7 +40,7 @@ for i in reader:
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
     c.update(e.encode("utf8"))
-    sys.stderr.write(c.hexdigest() + "\n")
+    #sys.stderr.write(c.hexdigest() + "\n")
 
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
@@ -50,7 +50,6 @@ for i in reader:
       outFile.write(str(lineNum) + "\n")
 
       seen_md5[c.hexdigest()]=fields[2]
-      print("{0}\t{1}\t{2}\t{3}\t{4}".format(fields[0].strip(),fields[1],fields[2],e, lineNum))
   except UnicodeDecodeError:
     #sys.stderr.write("File "+fields[2]+" produced a character encoding error")
     pass

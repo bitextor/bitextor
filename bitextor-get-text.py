@@ -72,20 +72,15 @@ mimeFile = open("{rootDir}/mime.txt".format(rootDir=args.rootDir), "r")
 mimes = mimeFile.read().strip().split("\n")
 mimeFile.close()
 
-for line in sys.stdin:
-    fields=line.split('\t')
-    assert(len(fields) == 5)
+dedupedFile = open("{rootDir}/deduped".format(rootDir=args.rootDir), "r")
+lineNums = dedupedFile.read().strip().split("\n")
+dedupedFile.close()
 
-    fields = list(map(str.strip, fields)) #Strip all elements
-
-    lineNum = int(fields[-1])
-
+for lineNum in lineNums:
+    lineNum = int(lineNum)
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=args.rootDir, name=lineNum), "r")
     html = deboiledFile.read()
     deboiledFile.close()
-
-    #html = base64.b64decode(fields[3]).decode("utf-8")
-    #sys.stderr.write(str(type(html)))
 
     soup = BeautifulSoup(html, "lxml", from_encoding='utf-8')
     for script in soup(["script", "style", "img"]):
