@@ -90,7 +90,7 @@ for line in reader:
                    mimeToks[0],
                    mimeToks[1],
                    pageToks[0],
-                   linefields[3],
+                   html,
                    e]
 
       print("\t".join(outFields))
