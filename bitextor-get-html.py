@@ -101,16 +101,6 @@ for line in pages:
         file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
         file.write(cleantree)
         file.close()
-
-        fields.append(base64.b64encode(cleantree.encode()).decode("utf8"))
-
-        mime = mimes[lineNum]
-        mime = mime.split("\t")
-        #sys.stderr.write("mime:" + str(mime) + "\n")
-
-        mime = mime + fields
-        print('\t'.join(mime))
-
     except etree.ParserError as err:
         sys.stderr.write("HTML parsing error for document with URL '{1}': {0}\n".format(err, fields[0]))
 
