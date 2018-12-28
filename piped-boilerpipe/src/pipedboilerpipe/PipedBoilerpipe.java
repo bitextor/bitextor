@@ -33,13 +33,21 @@ public class PipedBoilerpipe {
     public static void main(String[] args) throws Exception
     {
         String rootDir = args[0];
-        System.err.println(rootDir);
+        System.err.println("rootDir=" + rootDir);
 
         Scanner stdin = new Scanner(System.in);
         int lineNum = 0;
         while(stdin.hasNextLine())
         {
-            String[] fields=stdin.nextLine().split("\t");
+            String[] fields = new String[4];
+
+            String[] toks = stdin.nextLine().split("\t");
+            assert(toks.length == 4);
+            fields[0] = toks[0];
+            fields[1] = toks[1];
+            fields[2] = toks[2];
+            fields[3] = toks[3];
+
             //System.err.println(fields.length);
 
             String file = rootDir + "/cleaned-html/" + lineNum + ".txt";
@@ -53,8 +61,6 @@ public class PipedBoilerpipe {
             }
             String line = lineFile;
 
-            //Reading a line
-            //String line = new String(Base64.getDecoder().decode(fields[3]), "UTF-8");
             //Processing XHTML
             StringReader reader = new StringReader(line);
             TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
