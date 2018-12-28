@@ -87,17 +87,6 @@ public class PipedBoilerpipe {
             outStream.write(bytes);
             outStream.close();
 
-            String encoded = Base64.getEncoder().encodeToString(bytes);
-            fields[3]=encoded;
-            StringBuilder sb=new StringBuilder();
-            for(String f: fields){
-                sb.append(f);
-                sb.append("\t");
-            }
-            sb.deleteCharAt(sb.length()-1);
-            System.out.println(sb.toString());
-
-
             ++lineNum;
         }
     }
