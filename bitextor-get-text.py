@@ -64,13 +64,21 @@ args = parser.parse_args()
 #Output (stdout):
 #mime      encoding      url     html_content(base_64)       timestamp     html_text(base_64)
 
+pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "r")
+pages = pageFile.read().strip().split("\n")
+pageFile.close()
+
+mimeFile = open("{rootDir}/mime.txt".format(rootDir=args.rootDir), "r")
+mimes = mimeFile.read().strip().split("\n")
+mimeFile.close()
+
 for line in sys.stdin:
     fields=line.split('\t')
     assert(len(fields) == 5)
 
     fields = list(map(str.strip, fields)) #Strip all elements
 
-    lineNum = fields[-1]
+    lineNum = int(fields[-1])
 
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=args.rootDir, name=lineNum), "r")
     html = deboiledFile.read()
@@ -92,9 +100,15 @@ for line in sys.stdin:
     textFile.write(text)
     textFile.close()
 
-    outFields = [fields[0],
-                 fields[1],
-                 fields[2],
+    pageToks = pages[lineNum].split("\t")
+    assert(len(pageToks) == 2)
+
+    mimeToks = mimes[lineNum].split("\t")
+    assert(len(mimeToks) == 2)
+
+    outFields = [mimeToks[0],
+                 mimeToks[1],
+                 pageToks[0],
                  base64.b64encode(html.encode()).decode("utf8"),
                  base64.b64encode(text.encode()).decode("utf8") ]
     print('\t'.join(outFields))
