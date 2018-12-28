@@ -28,6 +28,7 @@ def guess_lang_from_data2(data):
 oparser = argparse.ArgumentParser(description="Script that reads the output of bitextor-webdir2ett and, for each line (lines correspond to files in de website) the language of the document is detected and this information is added to the information about the documents.")
 oparser.add_argument("ett_path", metavar="FILE", nargs="?", help="File containing the output of bitextor-webdir2ett (if undefined, the script reads from the standard input)", default=None)
 oparser.add_argument("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
+oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 options = oparser.parse_args()
 
 langs=[]
@@ -42,26 +43,26 @@ else:
 #Reading line by line from the standard output
 for line in reader:
   linefields=line.strip().split("\t")
+  assert(len(linefields) == 6)
   #decoding the b64 original webpage
-  if len(linefields)>=5:
-    html_text = base64.b64decode(linefields[3])
-    #print("html_text", html_text)
+  html_text = base64.b64decode(linefields[3])
+  #print("html_text", html_text)
 
-    if len(html_text)>0:
-      #detecting language
-      #lang, conf = langid.classify(parsed_text)
-      lang = guess_lang_from_data2(html_text)
-      #print(lang, linefields[2])
+  if len(html_text)>0:
+    #detecting language
+    #lang, conf = langid.classify(parsed_text)
+    lang = guess_lang_from_data2(html_text)
+    #print(lang, linefields[2])
 
 
-      if len(langs)==0 or lang in langs:
-        parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
-        # print("parsed_text", parsed_text)
+    if len(langs)==0 or lang in langs:
+      parsed_text=base64.b64decode(linefields[4]).decode("utf-8")
+      # print("parsed_text", parsed_text)
 
-        linefields.insert(0,lang)
-        e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
-        del linefields[-1]
-        del linefields[-1]
-        linefields.append(e)
-        print("\t".join(linefields))
+      linefields.insert(0,lang)
+      e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
+      del linefields[-1]
+      del linefields[-1]
+      linefields.append(e)
+      print("\t".join(linefields))
 
