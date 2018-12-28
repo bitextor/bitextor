@@ -41,11 +41,15 @@ public class PipedBoilerpipe {
         String pageFile = rootDir + "/raw-html/page";
         BufferedReader pageReader = new BufferedReader(new FileReader(pageFile));
 
-        Scanner stdin = new Scanner(System.in);
+        String pageLine;
         int lineNum = 0;
-        while(stdin.hasNextLine())
-        {
+        while ((pageLine = pageReader.readLine()) != null) {
             String[] fields = new String[4];
+
+            assert(pageLine != null);
+            String[] toksPage = pageLine.split("\t");
+            assert(toksPage.length == 2);
+            fields[2] = toksPage[0];
 
             String mimeLine = mimeReader.readLine();
             assert(mimeLine != null);
@@ -53,15 +57,6 @@ public class PipedBoilerpipe {
             assert(toksMime.length == 2);
             fields[0] = toksMime[0];
             fields[1] = toksMime[1];
-
-            String pageLine = pageReader.readLine();
-            assert(pageLine != null);
-            String[] toksPage = pageLine.split("\t");
-            assert(toksPage.length == 2);
-            fields[2] = toksPage[0];
-
-            String[] toks = stdin.nextLine().split("\t");
-            assert(toks.length == 4);
 
             //System.err.println(fields.length);
 
