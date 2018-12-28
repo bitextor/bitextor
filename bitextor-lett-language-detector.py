@@ -79,6 +79,13 @@ for line in reader:
       mimeToks = mimes[lineNum].split("\t")
       assert (len(mimeToks) == 2)
 
+      deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+      html = deboiledFile.read()
+      deboiledFile.close()
+
+      html = base64.b64encode(html.encode()).decode()
+      #sys.stderr.write(html + "\n")
+
       outFields = [lang,
                    mimeToks[0],
                    mimeToks[1],
