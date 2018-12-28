@@ -40,12 +40,21 @@ if options.ett_path != None:
 else:
   reader = sys.stdin
 
+pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
+pages = pageFile.read().strip().split("\n")
+pageFile.close()
+
+mimeFile = open("{rootDir}/mime.txt".format(rootDir=options.rootDir), "r")
+mimes = mimeFile.read().strip().split("\n")
+mimeFile.close()
+
 #Reading line by line from the standard output
 for line in reader:
   linefields=line.strip().split("\t")
   assert(len(linefields) == 6)
 
   lineNum = linefields[5]
+  lineNum = int(lineNum)
   #sys.stderr.write(lineNum + "\n")
 
   deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
@@ -64,10 +73,16 @@ for line in reader:
 
       e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
 
+      pageToks = pages[lineNum].split("\t")
+      assert (len(pageToks) == 2)
+
+      mimeToks = mimes[lineNum].split("\t")
+      assert (len(mimeToks) == 2)
+
       outFields = [lang,
-                   linefields[0],
-                   linefields[1],
-                   linefields[2],
+                   mimeToks[0],
+                   mimeToks[1],
+                   pageToks[0],
                    linefields[3],
                    e]
 
