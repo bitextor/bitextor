@@ -82,7 +82,7 @@ public class PipedBoilerpipe {
 
             byte[] bytes = h.process(source, line).getBytes("UTF-8");
 
-            String outFile = rootDir + "/deboiler/" + lineNum;
+            String outFile = rootDir + "/deboiled/" + lineNum;
             OutputStream outStream = new FileOutputStream(outFile);
             outStream.write(bytes);
             outStream.close();

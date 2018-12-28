@@ -688,7 +688,7 @@ rule xtt2boiler:
         '{target}/boiler.xz'
     priority: 5
     run:
-        shell("mkdir -p {wildcards.target}/deboiler")
+        shell("mkdir -p {wildcards.target}/deboiled")
         if boilerpipeCleaning:
             cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {wildcards.target} | xz -T 0 > {output} "
         else:
@@ -702,7 +702,7 @@ rule boiler2ett:
         '{target}/ett.xz'
     priority: 4
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 rule ett2tika:
     input:
