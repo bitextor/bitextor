@@ -15,7 +15,8 @@ options = oparser.parse_args()
 reader = sys.stdin
 
 for fline in reader:
-    filepath=fline.strip()
+    filepath = fline.strip()
+    #sys.stderr.write("filepath=" + filepath + "\n")
     if os.path.isfile(filepath): # protect again extraneous 'Binary file (standard input) matches' at the end of stream
         content=None
         url=None
