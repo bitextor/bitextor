@@ -44,9 +44,19 @@ else:
 for line in reader:
   linefields=line.strip().split("\t")
   assert(len(linefields) == 6)
+
+  lineNum = linefields[5]
+  #sys.stderr.write(lineNum + "\n")
+
+  deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+  html_text = deboiledFile.read()
+  deboiledFile.close()
+
   #decoding the b64 original webpage
-  html_text = base64.b64decode(linefields[3])
-  #print("html_text", html_text)
+  html_text_old = base64.b64decode(linefields[3])
+  assert(html_text == html_text_old.decode())
+  #sys.stderr.write(html_text + "\n")
+  #sys.stderr.write(html_text_old.decode() + "\n")
 
   if len(html_text)>0:
     #detecting language
