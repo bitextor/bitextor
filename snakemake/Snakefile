@@ -702,7 +702,7 @@ rule boiler2ett:
         '{target}/ett.xz'
     priority: 4
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-dedup.py --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-dedup.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 rule ett2tika:
     input:

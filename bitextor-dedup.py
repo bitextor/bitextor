@@ -32,11 +32,8 @@ outFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "wt")
 
 lineNum = 0
 seen_md5={}
-for i in reader:
-  fields = i.strip().split("\t")
-
-  pageLine = pages[lineNum]
-  pageToks = pageLine.split("\t")
+for line in pages:
+  pageToks = line.split("\t")
 
   try:
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
