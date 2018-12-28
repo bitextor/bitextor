@@ -54,6 +54,7 @@ def getDocumentText(document):
 
 
 parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annotation of HTML documents given in Bitextor crawl format (stdin)')
+parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 
 args = parser.parse_args()
 
@@ -65,9 +66,22 @@ args = parser.parse_args()
 
 for line in sys.stdin:
     fields=line.split('\t')
+    assert(len(fields) == 5)
+
     fields = list(map(str.strip, fields)) #Strip all elements
 
-    soup = BeautifulSoup(base64.b64decode(fields[3]).decode("utf-8"), "lxml", from_encoding='utf-8')
+    lineNum = fields[-1]
+    del fields[-1]
+    #sys.stderr.write(lineNum + "\n")
+
+    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=args.rootDir, name=lineNum), "r")
+    html = deboiledFile.read()
+    deboiledFile.close()
+
+    #html = base64.b64decode(fields[3]).decode("utf-8")
+    #sys.stderr.write(str(type(html)))
+
+    soup = BeautifulSoup(html, "lxml", from_encoding='utf-8')
     for script in soup(["script", "style", "img"]):
         script.extract()    # rip it out
 
