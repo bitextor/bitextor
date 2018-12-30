@@ -691,9 +691,19 @@ rule xtt2boiler:
         shell("mkdir -p {wildcards.target}/deboiled")
         if boilerpipeCleaning:
             cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {wildcards.target} | xz -T 0 > {output} "
+            shell(cmd)
         else:
-            cmd = "ln -s {input} {output}; "
-        shell(cmd)
+            pageFile = open("{rootDir}/raw-html/page".format(rootDir=wildcards.target), "r")
+            pages = pageFile.read().strip().split("\n")
+            pageFile.close()
+
+            lineNum = 0
+            for line in pages:
+                cmd = "ln -s {wildcards.target}/norm-html/{lineNum}.txt  {wildcards.target}/deboiled/{lineNum}"
+                shell(cmd)
+
+                lineNum += 1
+            shell("touch {output}")
 
 rule boiler2ett:
     input:

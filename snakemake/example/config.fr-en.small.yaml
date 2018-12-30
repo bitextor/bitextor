@@ -19,7 +19,7 @@ maxlines: 5
 
 ###### BOILERPIPE CLEANING #####
 #If enabled, boilerpipe is not used
-boilerpipeCleaning: true
+boilerpipeCleaning: false
 jhuLett: false
 
 crawlTimeLimit: 30s
