@@ -677,8 +677,8 @@ rule tt2xtt:
         '{target}/xtt.xz'
     priority: 6
     shell:
-        'mkdir -p {wildcards.target}/cleaned-html; '
-        '{BITEXTOR}/bitextor-get-html.py --in-dir {wildcards.target}/raw-html --in-file {wildcards.target}/mime.txt --out-dir {wildcards.target}/cleaned-html | xz -T 0 > {output}'
+        'mkdir -p {wildcards.target}/norm-html; '
+        '{BITEXTOR}/bitextor-get-html.py --in-dir {wildcards.target}/raw-html --in-file {wildcards.target}/mime.txt --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
