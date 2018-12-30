@@ -86,7 +86,7 @@ for line in pages:
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
 
     # read file
-    file = open("{inDir}/{name}.txt".format(inDir=args.inDir, name=lineNum), "r")
+    file = open("{inDir}/{name}".format(inDir=args.inDir, name=lineNum), "r")
     b64t = file.read()
     file.close()
     #sys.stderr.write("b64t:" + b64t + "\n")
@@ -98,7 +98,7 @@ for line in pages:
         cleantree=tree.decode("utf8")
         cleantree = cleantree.replace("\t", " ")
 
-        file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
+        file = open("{outDir}/{name}".format(outDir=args.outDir, name=lineNum), "w")
         file.write(cleantree)
         file.close()
     except etree.ParserError as err:

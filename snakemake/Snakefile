@@ -699,7 +699,7 @@ rule xtt2boiler:
 
             lineNum = 0
             for line in pages:
-                cmd = "ln -s {wildcards.target}/norm-html/{lineNum}.txt  {wildcards.target}/deboiled/{lineNum}"
+                cmd = "ln -s {wildcards.target}/norm-html/{lineNum}  {wildcards.target}/deboiled/{lineNum}"
                 shell(cmd)
 
                 lineNum += 1

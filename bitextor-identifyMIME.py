@@ -42,7 +42,7 @@ for line in pages:
     m.setflags(16|1024)
 
     # read file
-    file = open("{inDir}/{name}.txt".format(inDir=options.inDir, name=lineNum), "r")
+    file = open("{inDir}/{name}".format(inDir=options.inDir, name=lineNum), "r")
     text = file.read()
     file.close()
     #sys.stderr.write("text " + str(type(text)) + "\n")

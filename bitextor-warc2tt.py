@@ -43,7 +43,7 @@ for record in f:
         text = convert_encoding(text)
 
         # write file
-        file = open("{outDir}/{name}.txt".format(outDir=args.outDir, name=lineNum), "w")
+        file = open("{outDir}/{name}".format(outDir=args.outDir, name=lineNum), "w")
         file.write(text.decode())
         file.close()
 

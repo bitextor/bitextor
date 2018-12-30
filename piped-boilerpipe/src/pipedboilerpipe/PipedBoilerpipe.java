@@ -60,7 +60,7 @@ public class PipedBoilerpipe {
 
             //System.err.println(fields.length);
 
-            String file = rootDir + "/norm-html/" + lineNum + ".txt";
+            String file = rootDir + "/norm-html/" + lineNum;
             BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
             String lineFile = "";
