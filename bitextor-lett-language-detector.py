@@ -96,6 +96,6 @@ for lineNum in lineNums:
                    html,
                    e]
 
-      print("\t".join(outFields))
+      #print("\t".join(outFields))
 
 langIdFile.close()
