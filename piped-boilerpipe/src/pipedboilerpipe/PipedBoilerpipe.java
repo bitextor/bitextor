@@ -35,7 +35,7 @@ public class PipedBoilerpipe {
         String rootDir = args[0];
         System.err.println("rootDir=" + rootDir);
 
-        String mimeFile = rootDir + "/mime.txt";
+        String mimeFile = rootDir + "/mime";
         BufferedReader mimeReader = new BufferedReader(new FileReader(mimeFile));
 
         String pageFile = rootDir + "/raw-html/page";

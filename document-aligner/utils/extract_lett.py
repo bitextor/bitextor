@@ -50,8 +50,12 @@ if __name__ == "__main__":
                         help="Runs language identification on text segments and throws away those that do not match with the lang field", required=False)
     parser.add_argument("-x", "--xz", dest="xz", action="store_true",
                         help="Use xz as the compression tool")
+    parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 
     args = parser.parse_args()
+
+    langIdFile = open("{rootDir}/langid".format(rootDir=args.rootDir), "rt")
+    sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
 
     langs_parse = args.languages.strip().split(',')
     lang_file = {}

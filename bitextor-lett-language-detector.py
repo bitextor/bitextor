@@ -52,6 +52,8 @@ dedupedFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "r")
 lineNums = dedupedFile.read().strip().split("\n")
 dedupedFile.close()
 
+langIdFile = open("{rootDir}/langid".format(rootDir=options.rootDir), "wt")
+
 for lineNum in lineNums:
   lineNum = int(lineNum)
   #sys.stderr.write(lineNum + "\n")
@@ -66,6 +68,8 @@ for lineNum in lineNums:
     lang = guess_lang_from_data2(html_text)
 
     if len(langs)==0 or lang in langs:
+      langIdFile.write(lang + "\n")
+
       textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "rt")
       parsed_text = textFile.read()
       textFile.close()
@@ -94,3 +98,4 @@ for lineNum in lineNums:
 
       print("\t".join(outFields))
 
+langIdFile.close()
