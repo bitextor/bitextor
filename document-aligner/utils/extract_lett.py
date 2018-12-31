@@ -89,6 +89,10 @@ if __name__ == "__main__":
         assert(len(pageToks) == 2)
         #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
 
+        textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt")
+        parsed_text = textFile.read()
+        textFile.close()
+
         line_split = line.strip().split("\t")
         assert(len(line_split) == 6)
 
@@ -103,6 +107,7 @@ if __name__ == "__main__":
             continue
 
         extracted_text = base64.b64decode(text).decode("utf-8")
+        assert(extracted_text == parsed_text)
         if not extracted_text.strip():
             continue
 
