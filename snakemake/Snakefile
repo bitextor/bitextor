@@ -873,7 +873,7 @@ rule docaling_extracted:
         "{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.prefix}/docalign; '
-        'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --root-dir {wildcards.prefix} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}/docalign'
+        '{BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --root-dir {wildcards.prefix} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}/docalign'
 
 rule docaling_deduped:
     input:

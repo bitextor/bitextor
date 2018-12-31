@@ -76,9 +76,8 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
-    idx = 0
-    for line in sys.stdin:
-        langIdToks = langIds[idx].split("\t")
+    for line in langIds:
+        langIdToks = line.split("\t")
         #sys.stderr.write("langIdToks=" + str(langIdToks) + "\n")
         assert(len(langIdToks) == 2)
 
@@ -127,8 +126,6 @@ if __name__ == "__main__":
 
             lang_file[lang].write("{0}\t{1}\n".format(
                 uri, extracted_line).encode("utf-8"))
-
-        idx += 1
 
     for f in lang_file:
         lang_file[f].close()
