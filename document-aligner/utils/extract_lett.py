@@ -55,7 +55,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     langIdFile = open("{rootDir}/langid".format(rootDir=args.rootDir), "rt")
-    sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
+    langIds = langIdFile.read().strip().split("\n")
+    langIdFile.close()
+
+    pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "rt")
+    pages = pageFile.read().strip().split("\n")
+    pageFile.close()
+
+    #sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
 
     langs_parse = args.languages.strip().split(',')
     lang_file = {}
@@ -69,12 +76,26 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
+    idx = 0
     for line in sys.stdin:
+        langIdToks = langIds[idx].split("\t")
+        #sys.stderr.write("langIdToks=" + str(langIdToks) + "\n")
+        assert(len(langIdToks) == 2)
+
+        lineNum = int(langIdToks[0])
+        #sys.stderr.write("lineNum=" + str(lineNum) + "\n")
+
+        pageToks = pages[lineNum].split("\t")
+        assert(len(pageToks) == 2)
+        #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
+
         line_split = line.strip().split("\t")
-        if len(line_split) != 6:
-            continue
+        assert(len(line_split) == 6)
 
         lang, _, _, uri, _, text = line_split
+        assert(lang == langIdToks[1])
+        assert(uri == pageToks[0])
+
         if lang not in langs_parse:
             continue
 
@@ -110,6 +131,8 @@ if __name__ == "__main__":
 
             lang_file[lang].write("{0}\t{1}\n".format(
                 uri, extracted_line).encode("utf-8"))
+
+        idx += 1
 
     for f in lang_file:
         lang_file[f].close()

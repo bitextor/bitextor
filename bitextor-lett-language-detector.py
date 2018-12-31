@@ -68,7 +68,7 @@ for lineNum in lineNums:
     lang = guess_lang_from_data2(html_text)
 
     if len(langs)==0 or lang in langs:
-      langIdFile.write(lang + "\n")
+      langIdFile.write(str(lineNum) + "\t" + lang + "\n")
 
       textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "rt")
       parsed_text = textFile.read()
