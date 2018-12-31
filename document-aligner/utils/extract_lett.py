@@ -90,15 +90,11 @@ if __name__ == "__main__":
         #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
 
         textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt")
-        parsed_text = textFile.read()
+        text = textFile.read()
         textFile.close()
 
-        line_split = line.strip().split("\t")
-        assert(len(line_split) == 6)
-
-        lang, _, _, uri, _, text = line_split
-        assert(lang == langIdToks[1])
-        assert(uri == pageToks[0])
+        lang = langIdToks[1]
+        uri = pageToks[0]
 
         if lang not in langs_parse:
             continue
@@ -106,15 +102,10 @@ if __name__ == "__main__":
         if not text.strip():
             continue
 
-        extracted_text = base64.b64decode(text).decode("utf-8")
-        assert(extracted_text == parsed_text)
-        if not extracted_text.strip():
-            continue
-
         # clean the UTF8 text
-        extracted_text = TextSanitizer.clean_text(extracted_text)
+        text = TextSanitizer.clean_text(text)
 
-        for extracted_line in split_sentences(extracted_text, args.splitter, lang):
+        for extracted_line in split_sentences(text, args.splitter, lang):
             extracted_line = extracted_line.strip()
             if not extracted_line:
                 continue
