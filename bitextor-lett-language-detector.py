@@ -44,7 +44,7 @@ pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
-mimeFile = open("{rootDir}/mime.txt".format(rootDir=options.rootDir), "r")
+mimeFile = open("{rootDir}/mime".format(rootDir=options.rootDir), "r")
 mimes = mimeFile.read().strip().split("\n")
 mimeFile.close()
 

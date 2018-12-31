@@ -68,7 +68,7 @@ pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
-mimeFile = open("{rootDir}/mime.txt".format(rootDir=args.rootDir), "r")
+mimeFile = open("{rootDir}/mime".format(rootDir=args.rootDir), "r")
 mimes = mimeFile.read().strip().split("\n")
 mimeFile.close()
 
