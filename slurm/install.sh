@@ -33,7 +33,7 @@ installdependencies(){
     sudo apt-get update
 
     sudo apt-get install -y g++ make python3 python3-pip libbz2-dev liblzma-dev zlib1g-dev libicu-dev python-dev
-    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev libboost-all-dev libxmlrpc-c++ libcmph-dev unzip &
+    sudo apt-get install -y automake pkg-config openjdk-8-jdk python3-magic maven nfs-kernel-server nfs-common parallel sshpass emacs munge slurm-wlm ubuntu-drivers-common apt-transport-https azure-cli cuda httrack libcld2-dev libsparsehash-dev libboost-all-dev libxmlrpc-c++ libcmph-dev unzip pigz &
     wget wget -O /tmp/requirements.txt https://github.com/bitextor/bitextor/raw/bitextor-malign/requirements.txt
     sudo pip3 install -r /tmp/requirements.txt &
 
