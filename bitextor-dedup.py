@@ -35,28 +35,24 @@ seen_md5={}
 for line in pages:
   pageToks = line.split("\t")
 
-  try:
-    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
-    e = deboiledFile.read()
-    deboiledFile.close()
-    e = base64.b64encode(e.encode()).decode()
+  deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+  e = deboiledFile.read()
+  deboiledFile.close()
+  e = base64.b64encode(e.encode()).decode()
 
-    #We compute MD5 signature to compare files and detect duplicates
-    c = hashlib.md5()
-    c.update(e.encode("utf8"))
-    #sys.stderr.write(c.hexdigest() + "\n")
+  #We compute MD5 signature to compare files and detect duplicates
+  c = hashlib.md5()
+  c.update(e.encode("utf8"))
+  #sys.stderr.write(c.hexdigest() + "\n")
 
-    #checking for duplicate content (duplicates are discarded)
-    if c.hexdigest() in seen_md5:
-      pass
-      #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
-    else:
-      outFile.write(str(lineNum) + "\n")
-
-      seen_md5[c.hexdigest()]=pageToks[0]
-  except UnicodeDecodeError:
-    #sys.stderr.write("File "+pageToks[0]+" produced a character encoding error")
+  #checking for duplicate content (duplicates are discarded)
+  if c.hexdigest() in seen_md5:
     pass
+    #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+  else:
+    outFile.write(str(lineNum) + "\n")
+
+    seen_md5[c.hexdigest()]=pageToks[0]
 
   lineNum += 1
 
