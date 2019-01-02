@@ -41,17 +41,6 @@ public class PipedBoilerpipe {
         String pageLine;
         int lineNum = 0;
         while ((pageLine = pageReader.readLine()) != null) {
-            String[] fields = new String[4];
-
-            assert(pageLine != null);
-            String[] toksPage = pageLine.split("\t");
-            assert(toksPage.length == 4);
-            fields[0] = toksPage[2];
-            fields[1] = toksPage[3];
-            fields[2] = toksPage[0];
-
-            //System.err.println(fields.length);
-
             String file = rootDir + "/norm-html/" + lineNum;
             BufferedReader fileReader = new BufferedReader(new FileReader(file));
 
