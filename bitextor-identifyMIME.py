@@ -57,6 +57,8 @@ for line in pages:
     #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 
     outFile.write(mimeEncode[0] + "\t" + mimeEncode[1] + "\n")
+    pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1]
+
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
 
@@ -64,3 +66,7 @@ for line in pages:
 
 
 outFile.close()
+
+with open("{inDir}/page".format(inDir=options.inDir), "wt") as pageFile:
+  pageFile.write("\n".join(pages))
+  pageFile.write("\n")

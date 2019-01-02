@@ -85,7 +85,7 @@ if __name__ == "__main__":
         #sys.stderr.write("lineNum=" + str(lineNum) + "\n")
 
         pageToks = pages[lineNum].split("\t")
-        assert(len(pageToks) == 2)
+        assert(len(pageToks) == 4)
         #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
 
         textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt")

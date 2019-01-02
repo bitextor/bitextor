@@ -96,7 +96,7 @@ for lineNum in lineNums:
     textFile.close()
 
     pageToks = pages[lineNum].split("\t")
-    assert(len(pageToks) == 2)
+    assert(len(pageToks) == 4)
 
     mimeToks = mimes[lineNum].split("\t")
     assert(len(mimeToks) == 2)

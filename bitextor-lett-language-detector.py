@@ -77,7 +77,8 @@ for lineNum in lineNums:
       e = base64.b64encode(parsed_text.replace("\t", " ").encode("utf-8")).decode("utf8")
 
       pageToks = pages[lineNum].split("\t")
-      assert (len(pageToks) == 2)
+
+
 
       mimeToks = mimes[lineNum].split("\t")
       assert (len(mimeToks) == 2)
