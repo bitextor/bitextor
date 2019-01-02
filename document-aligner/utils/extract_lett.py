@@ -50,8 +50,19 @@ if __name__ == "__main__":
                         help="Runs language identification on text segments and throws away those that do not match with the lang field", required=False)
     parser.add_argument("-x", "--xz", dest="xz", action="store_true",
                         help="Use xz as the compression tool")
+    parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 
     args = parser.parse_args()
+
+    langIdFile = open("{rootDir}/langid".format(rootDir=args.rootDir), "rt")
+    langIds = langIdFile.read().strip().split("\n")
+    langIdFile.close()
+
+    pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "rt")
+    pages = pageFile.read().strip().split("\n")
+    pageFile.close()
+
+    #sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
 
     langs_parse = args.languages.strip().split(',')
     lang_file = {}
@@ -65,26 +76,35 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
-    for line in sys.stdin:
-        line_split = line.strip().split("\t")
-        if len(line_split) != 6:
-            continue
+    for line in langIds:
+        langIdToks = line.split("\t")
+        #sys.stderr.write("langIdToks=" + str(langIdToks) + "\n")
+        assert(len(langIdToks) == 2)
 
-        lang, _, _, uri, _, text = line_split
+        lineNum = int(langIdToks[0])
+        #sys.stderr.write("lineNum=" + str(lineNum) + "\n")
+
+        pageToks = pages[lineNum].split("\t")
+        assert(len(pageToks) == 2)
+        #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
+
+        textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt")
+        text = textFile.read()
+        textFile.close()
+
+        lang = langIdToks[1]
+        uri = pageToks[0]
+
         if lang not in langs_parse:
             continue
 
         if not text.strip():
             continue
 
-        extracted_text = base64.b64decode(text).decode("utf-8")
-        if not extracted_text.strip():
-            continue
-
         # clean the UTF8 text
-        extracted_text = TextSanitizer.clean_text(extracted_text)
+        text = TextSanitizer.clean_text(text)
 
-        for extracted_line in split_sentences(extracted_text, args.splitter, lang):
+        for extracted_line in split_sentences(text, args.splitter, lang):
             extracted_line = extracted_line.strip()
             if not extracted_line:
                 continue

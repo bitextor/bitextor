@@ -667,7 +667,7 @@ rule tt2ttmime:
         '{target}/ttmime.xz'
     priority: 7
     shell:
-        '{BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html --out-file {wildcards.target}/mime.txt | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html --out-file {wildcards.target}/mime | xz -T 0 > {output}'
 
 rule tt2xtt:
     input:
@@ -678,7 +678,7 @@ rule tt2xtt:
     priority: 6
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
-        '{BITEXTOR}/bitextor-get-html.py --in-dir {wildcards.target}/raw-html --in-file {wildcards.target}/mime.txt --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-get-html.py --in-dir {wildcards.target}/raw-html --in-file {wildcards.target}/mime --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
@@ -873,7 +873,7 @@ rule docaling_extracted:
         "{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.prefix}/docalign; '
-        'xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}/docalign'
+        '{BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --root-dir {wildcards.prefix} --splitter {BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl --prune_type "words" --prune 80 --output_dir {wildcards.prefix}/docalign'
 
 rule docaling_deduped:
     input:
@@ -944,7 +944,6 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "echo \"{BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'\"; "
         "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
 
 rule aligndocumentsMarek:
@@ -957,7 +956,7 @@ rule aligndocumentsMarek:
 
     shell:
         'mkdir -p {wildcards.target}/docalign; '
-        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} --root-dir {wildcards.target} > {output}'
 
 rule aligndocumentsMarekCustomMT:
     input:
@@ -966,7 +965,7 @@ rule aligndocumentsMarekCustomMT:
     output:
         '{target}/docalign.marek-customMT'
     shell:
-        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} --root-dir {wildcards.target} > {output}'
 
 
 #================================== SEGMENT ALIGNMENT ==================================#

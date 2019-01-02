@@ -44,13 +44,15 @@ pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
-mimeFile = open("{rootDir}/mime.txt".format(rootDir=options.rootDir), "r")
+mimeFile = open("{rootDir}/mime".format(rootDir=options.rootDir), "r")
 mimes = mimeFile.read().strip().split("\n")
 mimeFile.close()
 
 dedupedFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "r")
 lineNums = dedupedFile.read().strip().split("\n")
 dedupedFile.close()
+
+langIdFile = open("{rootDir}/langid".format(rootDir=options.rootDir), "wt")
 
 for lineNum in lineNums:
   lineNum = int(lineNum)
@@ -66,6 +68,8 @@ for lineNum in lineNums:
     lang = guess_lang_from_data2(html_text)
 
     if len(langs)==0 or lang in langs:
+      langIdFile.write(str(lineNum) + "\t" + lang + "\n")
+
       textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "rt")
       parsed_text = textFile.read()
       textFile.close()
@@ -92,5 +96,6 @@ for lineNum in lineNums:
                    html,
                    e]
 
-      print("\t".join(outFields))
+      #print("\t".join(outFields))
 
+langIdFile.close()

@@ -29,7 +29,10 @@ def print_docs(docs):
             sys.stderr.write("{0}\n".format(n))
 
 
-def load_docs(matches_filepath, threshold):
+def load_docs(matches_filepath, threshold, rootDir):
+    langIdFile = open("{rootDir}/langid".format(rootDir=rootDir), "rt")
+    sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
+
     map_e2f = {}
     map_f2e = {}
 
@@ -62,8 +65,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--matches', help='path to the file with matched documents', required=True)
     parser.add_argument('--threshold', help='documents with lower TF-IDF score will be skipped', default=0.1, type=float, required=False)
+    parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 
     args = parser.parse_args()
 
-    docs = load_docs(args.matches, args.threshold)
+    docs = load_docs(args.matches, args.threshold, args.rootDir)
     print_docs(docs)
