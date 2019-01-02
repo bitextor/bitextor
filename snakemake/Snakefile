@@ -670,7 +670,7 @@ rule tt2ttmime:
         'mkdir -p {wildcards.target}/norm-html; '
         'mkdir -p {wildcards.target}/deboiled; '
         'mkdir -p {wildcards.target}/text; '
-        '{BITEXTOR}/bitextor-identifyMIME.py --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-process-html.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 rule boiler2ett:
     input:
@@ -679,7 +679,7 @@ rule boiler2ett:
         '{target}/ett.xz'
     priority: 4
     shell:
-        '{BITEXTOR}/bitextor-dedup.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-filter.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 #rule xtt2alcazar:
 #  input:
