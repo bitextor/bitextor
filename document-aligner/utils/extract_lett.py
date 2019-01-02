@@ -54,13 +54,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    langIdFile = open("{rootDir}/langid".format(rootDir=args.rootDir), "rt")
-    langIds = langIdFile.read().strip().split("\n")
-    langIdFile.close()
+    with open("{rootDir}/deduped".format(rootDir=args.rootDir), "rt") as dedupedFile:
+        dedupeds = dedupedFile.read().strip().split("\n")
 
-    pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "rt")
-    pages = pageFile.read().strip().split("\n")
-    pageFile.close()
+    with open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "rt") as pageFile:
+        pages = pageFile.read().strip().split("\n")
 
     #sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
 
@@ -76,23 +74,18 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
-    for line in langIds:
-        langIdToks = line.split("\t")
-        #sys.stderr.write("langIdToks=" + str(langIdToks) + "\n")
-        assert(len(langIdToks) == 2)
-
-        lineNum = int(langIdToks[0])
+    for line in dedupeds:
+        lineNum = int(line)
         #sys.stderr.write("lineNum=" + str(lineNum) + "\n")
 
         pageToks = pages[lineNum].split("\t")
         assert(len(pageToks) == 5)
         #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
 
-        textFile = open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt")
-        text = textFile.read()
-        textFile.close()
+        with open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt") as textFile:
+            text = textFile.read()
 
-        lang = langIdToks[1]
+        lang = pageToks[4]
         uri = pageToks[0]
 
         if lang not in langs_parse:
