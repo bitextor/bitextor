@@ -669,6 +669,7 @@ rule tt2ttmime:
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
         'mkdir -p {wildcards.target}/deboiled; '
+        'mkdir -p {wildcards.target}/text; '
         '{BITEXTOR}/bitextor-identifyMIME.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 rule boiler2ett:
@@ -680,28 +681,18 @@ rule boiler2ett:
     shell:
         '{BITEXTOR}/bitextor-dedup.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
-rule ett2tika:
-    input:
-        '{target}/ett.xz'
-    output:
-        '{target}/tika.xz'
-    priority: 3
-    shell:
-        'mkdir -p {wildcards.target}/text; '
-        '{BITEXTOR}/bitextor-get-text.py --root-dir {wildcards.target} | xz -T 0 > {output}'
-
-rule xtt2alcazar:
-  input:
-    '{target}/xtt.xz' 
-  output:
-    '{target}/alcazar.xz'
-  priority: 3
-  shell:
-      'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text-alcazar-dedupe.py  | xz -T 0 > {output}'
+#rule xtt2alcazar:
+#  input:
+#    '{target}/xtt.xz'
+#  output:
+#    '{target}/alcazar.xz'
+#  priority: 3
+#  shell:
+#      'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text-alcazar-dedupe.py  | xz -T 0 > {output}'
 
 rule html2lett:
     input:
-        '{target}/' + TEXTEXTRACT + '.xz'
+        '{target}/ett.xz'
     output:
         '{target}/lett.xz'
     priority: 2

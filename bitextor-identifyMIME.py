@@ -133,6 +133,23 @@ for line in pages:
     cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir}/norm-html/{name} {rootDir}/deboiled/{name}".format(BITEXTOR=dir, rootDir=options.rootDir, name=lineNum)
     os.system(cmd)
 
+    # get text
+    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+    html = deboiledFile.read()
+    deboiledFile.close()
+
+    soup = BeautifulSoup(html, "lxml", from_encoding='utf-8')
+    for script in soup(["script", "style", "img"]):
+        script.extract()    # rip it out
+
+    text = soup.get_text()
+    text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
+    #sys.stderr.write(text + "\n")
+
+    textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "wt")
+    textFile.write(text)
+    textFile.close()
+
     # lang id
     lang = guess_lang_from_data2(cleantree)
 
