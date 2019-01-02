@@ -38,13 +38,12 @@ for line in pages:
   lang = pageToks[4]
   if lang in langs:
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
-    e = deboiledFile.read()
+    html_text = deboiledFile.read()
     deboiledFile.close()
-    e = base64.b64encode(e.encode()).decode()
 
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
-    c.update(e.encode("utf8"))
+    c.update(html_text.encode("utf8"))
     #sys.stderr.write(c.hexdigest() + "\n")
 
     #checking for duplicate content (duplicates are discarded)

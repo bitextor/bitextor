@@ -151,7 +151,7 @@ for line in pages:
     textFile.close()
 
     # lang id
-    lang = guess_lang_from_data2(cleantree)
+    lang = guess_lang_from_data2(html)
 
     pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1] + "\t" + lang
 
