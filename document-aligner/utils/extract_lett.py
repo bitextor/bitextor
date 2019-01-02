@@ -57,7 +57,7 @@ if __name__ == "__main__":
     with open("{rootDir}/deduped".format(rootDir=args.rootDir), "rt") as dedupedFile:
         dedupeds = dedupedFile.read().strip().split("\n")
 
-    with open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "rt") as pageFile:
+    with open("{rootDir}/page".format(rootDir=args.rootDir), "rt") as pageFile:
         pages = pageFile.read().strip().split("\n")
 
     #sys.stderr.write("args.rootDir=" + args.rootDir + "\n")

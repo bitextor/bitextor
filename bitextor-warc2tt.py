@@ -21,12 +21,11 @@ def convert_encoding(data, new_coding = 'UTF-8'):
 #############################################################################
 
 parser = argparse.ArgumentParser(description='Extract html from warc files')
-parser.add_argument('--out-dir', dest='outDir',
-                    help='Directory to output html files')
+parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 args = parser.parse_args()
 #print("outDir", args.outDir)
 
-pageFile = open("{outDir}/page".format(outDir=args.outDir), "w")
+pageFile = open("{rootDir}/page".format(rootDir=args.rootDir), "w")
 
 f = warc.WARCFile(fileobj=sys.stdin.buffer)
 
@@ -43,7 +42,7 @@ for record in f:
         text = convert_encoding(text)
 
         # write file
-        file = open("{outDir}/{name}".format(outDir=args.outDir, name=lineNum), "w")
+        file = open("{rootDir}/raw-html/{name}".format(rootDir=args.rootDir, name=lineNum), "w")
         file.write(text.decode())
         file.close()
 

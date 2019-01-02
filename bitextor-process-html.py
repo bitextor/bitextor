@@ -83,7 +83,7 @@ m=magic.open(magic.MAGIC_NONE)
 m.load()
 #sys.stderr.write("m:" + str(m) + "\n")
 
-with open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "rt") as pageFile:
+with open("{rootDir}/page".format(rootDir=options.rootDir), "rt") as pageFile:
   pages = pageFile.read().strip().split("\n")
   #sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
 
@@ -160,6 +160,6 @@ for line in pages:
 
   lineNum += 1
 
-with open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "wt") as pageFile:
+with open("{rootDir}/page".format(rootDir=options.rootDir), "wt") as pageFile:
   pageFile.write("\n".join(pages))
   pageFile.write("\n")

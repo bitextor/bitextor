@@ -23,7 +23,7 @@ langs=[]
 if options.langlist != None:
   langs=options.langlist.strip().split(",")
 
-pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
+pageFile = open("{rootDir}/page".format(rootDir=options.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
