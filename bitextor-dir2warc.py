@@ -27,8 +27,6 @@ for fline in reader:
           if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier.*\[.*\],', line):
               url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
               date = re.sub(rb'.+by HTTrack Website.+\[.+\][^,]*, ', b'', re.sub(rb' -->.*', b'', line))
-              sys.stderr.write(line.decode("utf8")+"\n")
-              sys.stderr.write(date.decode("utf8")+"\n")
               break
         if date == None:
             dvalue=datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
