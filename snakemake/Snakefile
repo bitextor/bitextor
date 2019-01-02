@@ -664,21 +664,11 @@ rule tt2ttmime:
     input:
         '{target}/tt.xz'
     output:
-        '{target}/ttmime.xz'
+        '{target}/xtt.xz'
     priority: 7
     shell:
-        '{BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html | xz -T 0 > {output}'
-
-rule tt2xtt:
-    input:
-        #If HTTRACK is enalbed, httrack rule is run; otherwise, download rule is applied
-        '{target}/ttmime.xz'
-    output:
-        '{target}/xtt.xz'
-    priority: 6
-    shell:
         'mkdir -p {wildcards.target}/norm-html; '
-        '{BITEXTOR}/bitextor-get-html.py --in-dir {wildcards.target}/raw-html --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:

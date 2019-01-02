@@ -11,9 +11,62 @@ import sys
 import magic
 import base64
 import argparse
+import re
+import html5lib
+import ftfy
+from lxml.html.clean import Cleaner
+from bs4 import BeautifulSoup
+from lxml import etree
+
+# Inline tags that don't start on a new line and only take up as much width as necessary. From https://www.w3schools.com/html/html_blocks.asp
+inline_tags = {"a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code", "dfn", "em", "i", "img",
+               "input", "kbd", "label", "map", "object", "q", "samp", "script", "select", "small", "span", "strong",
+               "sub", "sup", "textarea", "time", "tt", "var"}
+
+
+def getElementText(element, document):
+  """Returns a list with word plain text of a tree element of lxml and the corresponding text
+  """
+  # Return variables for plain text
+  text = ""
+  if element.text != None:  # If we have text in tag
+    # Add interpreted space for non-inline tags
+    if element.tag not in inline_tags:
+      text = "\n"  # Add artificial separation as browser parser does if tag is not inline
+    text = text + element.text
+
+  # Now we recursively iterate through the childs
+  for child in element:
+    if type(child) is etree._Element and child.tag != "script" and child.tag != "style":
+      text = text + getElementText(child, document)
+
+  # Add interpreted space for non-inline tags after all processing of the actual tag content
+  if element.tag not in inline_tags:
+    text = text + "\n"
+  elif element.tag == "br":
+    text = text + "\n"
+
+  # Processing parent text (A.K.A. element.tail) similarly as the actual tag
+  if element.tail != None:  # If we have tail parent text (text after the closing tag until the next open/close tag)
+    text = text + element.tail
+
+  return text
+
+
+def getDocumentText(document):
+  """Returns a list with word plain text of a document tree in lxml format
+  """
+  docplaintext = ""
+  for element in document.getroot():
+    if type(
+            element) is etree._Element and element.tag != "script" and element.tag != "style":  # Only elements, not scripts or other kind of tags without proper text
+      docplaintext = docplaintext + getElementText(element, document)
+  return docplaintext
+
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
 oparser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
+oparser.add_argument('--out-dir', dest='outDir', help='Directory of normalized html files')
 
 options = oparser.parse_args()
 
@@ -53,6 +106,18 @@ for line in pages:
     #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 
     pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1]
+
+    cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
+
+    cleanhtml = cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
+    document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
+    tree = etree.tostring(document)
+    cleantree = tree.decode("utf8")
+    cleantree = cleantree.replace("\t", " ")
+
+    file = open("{outDir}/{name}".format(outDir=options.outDir, name=lineNum), "w")
+    file.write(cleantree)
+    file.close()
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
