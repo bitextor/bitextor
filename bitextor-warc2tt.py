@@ -52,7 +52,3 @@ for record in f:
         lineNum += 1
 
 pageFile.close()
-
-countFile = open("{outDir}/count".format(outDir=args.outDir), "w")
-countFile.write(str(lineNum) +  "\n")
-countFile.close()
