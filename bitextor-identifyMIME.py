@@ -6,7 +6,7 @@
 # 3. The output produced is:
 #    character_encoding     MIME    URL    content_base64
 #
-
+import os
 import sys
 import magic
 import base64
@@ -65,8 +65,7 @@ def getDocumentText(document):
 
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
-oparser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
-oparser.add_argument('--out-dir', dest='outDir', help='Directory of normalized html files')
+oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
 
 options = oparser.parse_args()
 
@@ -74,7 +73,7 @@ m=magic.open(magic.MAGIC_NONE)
 m.load()
 #sys.stderr.write("m:" + str(m) + "\n")
 
-with open("{inDir}/page".format(inDir=options.inDir), "rt") as pageFile:
+with open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "rt") as pageFile:
   pages = pageFile.read().strip().split("\n")
   #sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
 
@@ -91,7 +90,7 @@ for line in pages:
     m.setflags(16|1024)
 
     # read file
-    file = open("{inDir}/{name}".format(inDir=options.inDir, name=lineNum), "r")
+    file = open("{rootDir}/raw-html/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
     text = file.read()
     file.close()
     #sys.stderr.write("text " + str(type(text)) + "\n")
@@ -115,15 +114,19 @@ for line in pages:
     cleantree = tree.decode("utf8")
     cleantree = cleantree.replace("\t", " ")
 
-    file = open("{outDir}/{name}".format(outDir=options.outDir, name=lineNum), "w")
+    file = open("{rootDir}/norm-html/{name}".format(rootDir=options.rootDir, name=lineNum), "w")
     file.write(cleantree)
     file.close()
+
+    dir = os.path.dirname(os.path.abspath(__file__))
+    cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir} | xz -T 0 > temp ".format(BITEXTOR=dir, rootDir=options.rootDir)
+    sys.stderr.write("cmd=" + cmd + "\n")
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
 
   lineNum += 1
 
-with open("{inDir}/page".format(inDir=options.inDir), "wt") as pageFile:
+with open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "wt") as pageFile:
   pageFile.write("\n".join(pages))
   pageFile.write("\n")

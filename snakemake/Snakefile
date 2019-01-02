@@ -668,7 +668,7 @@ rule tt2ttmime:
     priority: 7
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
-        '{BITEXTOR}/bitextor-identifyMIME.py --in-dir {wildcards.target}/raw-html --out-dir {wildcards.target}/norm-html | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-identifyMIME.py --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 #This rule won't work with current non-installation configuration
 rule xtt2boiler:
