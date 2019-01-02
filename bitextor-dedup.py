@@ -14,15 +14,14 @@ import argparse
 
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl2ett and removes duplicate files.")
-oparser.add_argument('ett', metavar='ETT', nargs='?', help='Output of the bitextor-crawl2ett script (in format ETT).', default=None)
 oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
+oparser.add_argument("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
 
 options = oparser.parse_args()
 
-if options.ett == None:
-  reader = sys.stdin
-else:
-  reader = open(options.ett,"r")
+langs=[]
+if options.langlist != None:
+  langs=options.langlist.strip().split(",")
 
 pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
@@ -34,25 +33,28 @@ lineNum = 0
 seen_md5={}
 for line in pages:
   pageToks = line.split("\t")
+  assert (len(pageToks) == 5)
 
-  deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
-  e = deboiledFile.read()
-  deboiledFile.close()
-  e = base64.b64encode(e.encode()).decode()
+  lang = pageToks[4]
+  if lang in langs:
+    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+    e = deboiledFile.read()
+    deboiledFile.close()
+    e = base64.b64encode(e.encode()).decode()
 
-  #We compute MD5 signature to compare files and detect duplicates
-  c = hashlib.md5()
-  c.update(e.encode("utf8"))
-  #sys.stderr.write(c.hexdigest() + "\n")
+    #We compute MD5 signature to compare files and detect duplicates
+    c = hashlib.md5()
+    c.update(e.encode("utf8"))
+    #sys.stderr.write(c.hexdigest() + "\n")
 
-  #checking for duplicate content (duplicates are discarded)
-  if c.hexdigest() in seen_md5:
-    pass
-    #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
-  else:
-    outFile.write(str(lineNum) + "\n")
+    #checking for duplicate content (duplicates are discarded)
+    if c.hexdigest() in seen_md5:
+      pass
+      #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+    else:
+      outFile.write(str(lineNum) + "\n")
 
-    seen_md5[c.hexdigest()]=pageToks[0]
+      seen_md5[c.hexdigest()]=pageToks[0]
 
   lineNum += 1
 

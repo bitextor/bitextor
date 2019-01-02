@@ -679,7 +679,7 @@ rule boiler2ett:
         '{target}/ett.xz'
     priority: 4
     shell:
-        '{BITEXTOR}/bitextor-dedup.py --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-dedup.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
 
 #rule xtt2alcazar:
 #  input:
