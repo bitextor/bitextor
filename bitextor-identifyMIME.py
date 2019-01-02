@@ -14,9 +14,12 @@ import argparse
 import re
 import html5lib
 import ftfy
+import pycld2 as cld2
 from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 from lxml import etree
+
+######################################################################################
 
 # Inline tags that don't start on a new line and only take up as much width as necessary. From https://www.w3schools.com/html/html_blocks.asp
 inline_tags = {"a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code", "dfn", "em", "i", "img",
@@ -63,6 +66,13 @@ def getDocumentText(document):
       docplaintext = docplaintext + getElementText(element, document)
   return docplaintext
 
+def guess_lang_from_data2(data):
+  reliable, text_bytes, detected_languages = cld2.detect(
+    data, isPlainText=False)
+  #print("detected_languages", detected_languages)
+  return detected_languages[0][1]
+
+######################################################################################
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
 oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
@@ -95,6 +105,7 @@ for line in pages:
     file.close()
     #sys.stderr.write("text " + str(type(text)) + "\n")
 
+    # encoding and char set
     mimeEncode = m.buffer(text.encode()).split(" ")
     mimeEncode[0] = mimeEncode[0][:-1]
     #sys.stderr.write("mimeEncode:" + str(mimeEncode) + "\n")
@@ -104,8 +115,7 @@ for line in pages:
     magicoutput.append(url)
     #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 
-    pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1]
-
+    # normalize html
     cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
 
     cleanhtml = cleaner.clean_html(re.sub(r'encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
@@ -118,9 +128,15 @@ for line in pages:
     file.write(cleantree)
     file.close()
 
+    # remove boilerplate html
     dir = os.path.dirname(os.path.abspath(__file__))
     cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir}/norm-html/{name} {rootDir}/deboiled/{name}".format(BITEXTOR=dir, rootDir=options.rootDir, name=lineNum)
     os.system(cmd)
+
+    # lang id
+    lang = guess_lang_from_data2(cleantree)
+
+    pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1] + "\t" + lang
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")

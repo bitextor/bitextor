@@ -92,7 +92,7 @@ for lineNum in lineNums:
     textFile.close()
 
     pageToks = pages[lineNum].split("\t")
-    assert(len(pageToks) == 4)
+    assert(len(pageToks) == 5)
 
     outFields = [pageToks[2],
                  pageToks[3],
@@ -100,3 +100,5 @@ for lineNum in lineNums:
                  base64.b64encode(html.encode()).decode("utf8"),
                  base64.b64encode(text.encode()).decode("utf8"),
                  str(lineNum) ]
+
+
