@@ -56,14 +56,8 @@ def getDocumentText(document):
 parser = argparse.ArgumentParser(description='Generates (stdout) Stand-off Annotation of HTML documents given in Bitextor crawl format (stdin)')
 
 parser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
-parser.add_argument('--in-file', dest='inFile', help='File with MIME type on each line')
 parser.add_argument('--out-dir', dest='outDir', help='Directory of cleaned html files')
 args = parser.parse_args()
-
-mimeFile = open("{inFile}".format(inFile=args.inFile), "rt")
-mimes = mimeFile.read().split("\n")
-mimeFile.close()
-#sys.stderr.write("mimes:" + str(mimes) + "\n")
 
 #Input (stdin) in Bitextor crawl format:
 #mime      encoding      url     html_content(base_64)       timestamp

@@ -44,10 +44,6 @@ pageFile = open("{rootDir}/raw-html/page".format(rootDir=options.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
-mimeFile = open("{rootDir}/mime".format(rootDir=options.rootDir), "r")
-mimes = mimeFile.read().strip().split("\n")
-mimeFile.close()
-
 dedupedFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "r")
 lineNums = dedupedFile.read().strip().split("\n")
 dedupedFile.close()
@@ -78,11 +74,6 @@ for lineNum in lineNums:
 
       pageToks = pages[lineNum].split("\t")
 
-
-
-      mimeToks = mimes[lineNum].split("\t")
-      assert (len(mimeToks) == 2)
-
       deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
       html = deboiledFile.read()
       deboiledFile.close()
@@ -91,8 +82,8 @@ for lineNum in lineNums:
       #sys.stderr.write(html + "\n")
 
       outFields = [lang,
-                   mimeToks[0],
-                   mimeToks[1],
+                   pageToks[2],
+                   pageToks[3],
                    pageToks[0],
                    html,
                    e]

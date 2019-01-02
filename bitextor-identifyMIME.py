@@ -14,20 +14,16 @@ import argparse
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
 oparser.add_argument('--in-dir', dest='inDir', help='Directory of raw html files')
-oparser.add_argument('--out-file', dest='outFile', help='File with MIME type on each line')
 
 options = oparser.parse_args()
-
-outFile = open("{outFile}".format(outFile=options.outFile), "wt")
 
 m=magic.open(magic.MAGIC_NONE)
 m.load()
 #sys.stderr.write("m:" + str(m) + "\n")
 
-pageFile = open("{inDir}/page".format(inDir=options.inDir), "r")
-pages = pageFile.read().strip().split("\n")
-pageFile.close()
-#sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
+with open("{inDir}/page".format(inDir=options.inDir), "rt") as pageFile:
+  pages = pageFile.read().strip().split("\n")
+  #sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
 
 
 lineNum = 0
@@ -56,16 +52,12 @@ for line in pages:
     magicoutput.append(url)
     #sys.stderr.write("magicoutput:" + str(magicoutput) + "\n")
 
-    outFile.write(mimeEncode[0] + "\t" + mimeEncode[1] + "\n")
     pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1]
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
 
   lineNum += 1
-
-
-outFile.close()
 
 with open("{inDir}/page".format(inDir=options.inDir), "wt") as pageFile:
   pageFile.write("\n".join(pages))

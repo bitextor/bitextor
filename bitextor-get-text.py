@@ -68,10 +68,6 @@ pageFile = open("{rootDir}/raw-html/page".format(rootDir=args.rootDir), "r")
 pages = pageFile.read().strip().split("\n")
 pageFile.close()
 
-mimeFile = open("{rootDir}/mime".format(rootDir=args.rootDir), "r")
-mimes = mimeFile.read().strip().split("\n")
-mimeFile.close()
-
 dedupedFile = open("{rootDir}/deduped".format(rootDir=args.rootDir), "r")
 lineNums = dedupedFile.read().strip().split("\n")
 dedupedFile.close()
@@ -98,11 +94,8 @@ for lineNum in lineNums:
     pageToks = pages[lineNum].split("\t")
     assert(len(pageToks) == 4)
 
-    mimeToks = mimes[lineNum].split("\t")
-    assert(len(mimeToks) == 2)
-
-    outFields = [mimeToks[0],
-                 mimeToks[1],
+    outFields = [pageToks[2],
+                 pageToks[3],
                  pageToks[0],
                  base64.b64encode(html.encode()).decode("utf8"),
                  base64.b64encode(text.encode()).decode("utf8"),
