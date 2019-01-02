@@ -32,43 +32,32 @@ public class PipedBoilerpipe {
      */
     public static void main(String[] args) throws Exception
     {
-        String rootDir = args[0];
-        System.err.println("rootDir=" + rootDir);
+        String file = args[0];
+        String outFile = args[1];
 
-        String pageFile = rootDir + "/raw-html/page";
-        BufferedReader pageReader = new BufferedReader(new FileReader(pageFile));
+        BufferedReader fileReader = new BufferedReader(new FileReader(file));
+        OutputStream outStream = new FileOutputStream(outFile);
 
-        String pageLine;
-        int lineNum = 0;
-        while ((pageLine = pageReader.readLine()) != null) {
-            String file = rootDir + "/norm-html/" + lineNum;
-            BufferedReader fileReader = new BufferedReader(new FileReader(file));
-
-            String lineFile = "";
-            String st;
-            while ((st = fileReader.readLine()) != null) {
-                //System.err.println(st);
-                lineFile += st + "\n";
-            }
-            String line = lineFile;
-
-            //Processing XHTML
-            StringReader reader = new StringReader(line);
-            TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
-            //Processing XHTML to remove boilerplates
-            ArticleExtractor extractor=ArticleExtractor.INSTANCE;
-            extractor.process(source);
-            //Producing clean XHTML
-            HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
-
-            byte[] bytes = h.process(source, line).getBytes("UTF-8");
-
-            String outFile = rootDir + "/deboiled/" + lineNum;
-            OutputStream outStream = new FileOutputStream(outFile);
-            outStream.write(bytes);
-            outStream.close();
-
-            ++lineNum;
+        String lineFile = "";
+        String st;
+        while ((st = fileReader.readLine()) != null) {
+            //System.err.println(st);
+            lineFile += st + "\n";
         }
+        String line = lineFile;
+
+        //Processing XHTML
+        StringReader reader = new StringReader(line);
+        TextDocument source = new BoilerpipeSAXInput(new InputSource(reader)).getTextDocument();
+        //Processing XHTML to remove boilerplates
+        ArticleExtractor extractor=ArticleExtractor.INSTANCE;
+        extractor.process(source);
+        //Producing clean XHTML
+        HTMLHighlighter h=HTMLHighlighter.newExtractingInstance();
+
+        byte[] bytes = h.process(source, line).getBytes("UTF-8");
+
+        outStream.write(bytes);
+        outStream.close();
     }
 }

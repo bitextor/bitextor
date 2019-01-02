@@ -119,8 +119,8 @@ for line in pages:
     file.close()
 
     dir = os.path.dirname(os.path.abspath(__file__))
-    cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir} | xz -T 0 > temp ".format(BITEXTOR=dir, rootDir=options.rootDir)
-    sys.stderr.write("cmd=" + cmd + "\n")
+    cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir}/norm-html/{name} {rootDir}/deboiled/{name}".format(BITEXTOR=dir, rootDir=options.rootDir, name=lineNum)
+    os.system(cmd)
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")

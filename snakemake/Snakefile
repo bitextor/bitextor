@@ -668,36 +668,12 @@ rule tt2ttmime:
     priority: 7
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
+        'mkdir -p {wildcards.target}/deboiled; '
         '{BITEXTOR}/bitextor-identifyMIME.py --root-dir {wildcards.target} | xz -T 0 > {output}'
-
-#This rule won't work with current non-installation configuration
-rule xtt2boiler:
-    input:
-        '{target}/xtt.xz'
-    output:
-        '{target}/boiler.xz'
-    priority: 5
-    run:
-        shell("mkdir -p {wildcards.target}/deboiled")
-        if boilerpipeCleaning:
-            cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {wildcards.target} | xz -T 0 > {output} "
-            shell(cmd)
-        else:
-            pageFile = open("{rootDir}/raw-html/page".format(rootDir=wildcards.target), "r")
-            pages = pageFile.read().strip().split("\n")
-            pageFile.close()
-
-            lineNum = 0
-            for line in pages:
-                cmd = "ln -s {wildcards.target}/norm-html/{lineNum}  {wildcards.target}/deboiled/{lineNum}"
-                shell(cmd)
-
-                lineNum += 1
-            shell("touch {output}")
 
 rule boiler2ett:
     input:
-        '{target}/boiler.xz'
+        '{target}/xtt.xz'
     output:
         '{target}/ett.xz'
     priority: 4
