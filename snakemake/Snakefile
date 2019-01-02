@@ -690,15 +690,6 @@ rule boiler2ett:
 #  shell:
 #      'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text-alcazar-dedupe.py  | xz -T 0 > {output}'
 
-rule html2lett:
-    input:
-        '{target}/ett.xz'
-    output:
-        '{target}/lett.xz'
-    priority: 2
-    shell:
-        '{BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
-
 rule httrack2lett:
     output:
         '{target}/jlett.xz'
@@ -824,7 +815,7 @@ rule aligndocumentsBitextor:
 
 rule docaling_extracted:
     input:
-        "{prefix}/lett.xz"
+        "{prefix}/ett.xz"
     output:
         "{prefix}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         "{prefix}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
@@ -905,7 +896,7 @@ rule docaling_matches:
 
 rule aligndocumentsMarek:
     input:
-        lett="{target}/lett.xz",
+        lett="{target}/ett.xz",
         matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         report="{dir}/nmt-dir/evaluation/report".format(dir=transient)
     output:
@@ -917,7 +908,7 @@ rule aligndocumentsMarek:
 
 rule aligndocumentsMarekCustomMT:
     input:
-        lett="{target}/lett.xz",
+        lett="{target}/ett.xz",
         matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
         '{target}/docalign.marek-customMT'
