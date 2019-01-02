@@ -31,7 +31,10 @@ for fline in reader:
         if date == None:
             dvalue=datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
-            dvalue=parse(date.decode("utf8")).strftime('%Y-%m-%dT%H:%M:%SZ')
+            try:
+                dvalue=parse(date.decode("utf8")).strftime('%Y-%m-%dT%H:%M:%SZ')
+            except ValueError:
+                dvalue=datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         if url == None:
             warc_record = warc.WARCRecord(payload=content,headers={"WARC-Target-URI":"unknown","WARC-Date":dvalue})
         else:
