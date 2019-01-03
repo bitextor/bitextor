@@ -664,17 +664,21 @@ rule tt2ttmime:
     input:
         directory('{target}/raw-html/')
     output:
-        '{target}/xtt.xz'
+        directory('{target}/norm-html/'),
+        directory('{target}/deboiled/'),
+        directory('{target}/text/')
     priority: 7
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
         'mkdir -p {wildcards.target}/deboiled; '
         'mkdir -p {wildcards.target}/text; '
-        '{BITEXTOR}/bitextor-process-html.py --root-dir {wildcards.target} | xz -T 0 > {output}'
+        '{BITEXTOR}/bitextor-process-html.py --root-dir {wildcards.target}'
 
 rule boiler2ett:
     input:
-        '{target}/xtt.xz'
+        directory('{target}/norm-html/'),
+        directory('{target}/deboiled/'),
+        directory('{target}/text/')
     output:
         '{target}/ett.xz'
     priority: 4
