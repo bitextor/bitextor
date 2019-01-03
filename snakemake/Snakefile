@@ -654,15 +654,15 @@ rule warc2tt:
     input:
         '{target}/concat.warc.xz'
     output:
-        '{target}/tt.xz'
+        directory('{target}/raw-html/')
     priority: 8
     shell:
         'mkdir -p {wildcards.target}/raw-html; '
-        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py --root-dir {wildcards.target} | xz -T 0 > {output}'
+        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2tt.py --root-dir {wildcards.target}'
 
 rule tt2ttmime:
     input:
-        '{target}/tt.xz'
+        directory('{target}/raw-html/')
     output:
         '{target}/xtt.xz'
     priority: 7
