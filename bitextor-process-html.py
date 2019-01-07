@@ -18,6 +18,7 @@ import pycld2 as cld2
 from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 from lxml import etree
+from boilerpipe.extract import Extractor
 
 ######################################################################################
 
@@ -129,9 +130,14 @@ for line in pages:
     file.close()
 
     # remove boilerplate html
-    dir = os.path.dirname(os.path.abspath(__file__))
-    cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir}/norm-html/{name} {rootDir}/deboiled/{name}".format(BITEXTOR=dir, rootDir=options.rootDir, name=lineNum)
-    os.system(cmd)
+    #dir = os.path.dirname(os.path.abspath(__file__))
+    #cmd = "java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar {rootDir}/norm-html/{name} {rootDir}/deboiled/{name}".format(BITEXTOR=dir, rootDir=options.rootDir, name=lineNum)
+    #os.system(cmd)
+    extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
+    extracted_text = extractor.getHTML()
+    file = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "w")
+    file.write(extracted_text)
+    file.close()
 
     # get text
     deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
