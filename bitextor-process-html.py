@@ -82,8 +82,11 @@ oparser.add_argument('--normhtml', dest='normhtml', help='Output file with norma
 oparser.add_argument('--deboiled', dest='deboiled', help='Output file with HTML where boilerplates have been removed')
 oparser.add_argument('--text', dest='text', help='Output file with plain text from normalized HTML without boilerplates')
 oparser.add_argument('--info', dest='info', help='Output file with information about the file: lang, URL, MIME, etc.')
+oparser.add_argument("--alcazar", action="store_true", default=False, help="Use alcazar bodytext to do the de-boiling")
 
 options = oparser.parse_args()
+if options.alcazar:
+  import alcazar.bodytext
 
 m=magic.open(magic.MAGIC_NONE)
 m.load()
@@ -140,18 +143,26 @@ with open("{metadata}".format(metadata=options.metadata), "rt") as metadata:
     file.write(extracted_text)
     file.close()
 
-    # get text
     deboiledFile = open(options.deboiled, "r")
     html = deboiledFile.read()
     deboiledFile.close()
 
-    soup = BeautifulSoup(html, "lxml", from_encoding='utf-8')
-    for script in soup(["script", "style", "img"]):
-        script.extract()    # rip it out
+    # get text
+    if alcazar:
+      text = alcazar.bodytext.parse_article(cleantree)
+      if text.body_text:
+        text = text.body_text
+      else:
+        text = ""
+    else:
 
-    text = soup.get_text()
-    text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
-    #sys.stderr.write(text + "\n")
+      soup = BeautifulSoup(html, "lxml", from_encoding='utf-8')
+      for script in soup(["script", "style", "img"]):
+          script.extract()    # rip it out
+
+      text = soup.get_text()
+      text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
+      #sys.stderr.write(text + "\n")
 
     textFile = open(options.text, "wt")
     textFile.write(text)
