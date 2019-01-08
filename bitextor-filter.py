@@ -14,7 +14,8 @@ import argparse
 
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl2ett and removes duplicate files.")
-oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
+oparser.add_argument('--html-dir', dest='htmlDir', help='Directory containing files to compare')
+oparser.add_argument('--text-dir', dest='textDir', help='Directory containing files in plain text')
 oparser.add_argument("-l", "--languages", help="List accepted languages represented as a comma separated language codes list", dest="langlist", default=None)
 
 options = oparser.parse_args()
@@ -23,23 +24,16 @@ langs=[]
 if options.langlist != None:
   langs=options.langlist.strip().split(",")
 
-pageFile = open("{rootDir}/page".format(rootDir=options.rootDir), "r")
-pages = pageFile.read().strip().split("\n")
-pageFile.close()
-
-outFile = open("{rootDir}/deduped".format(rootDir=options.rootDir), "wt")
-
-lineNum = 0
 seen_md5={}
-for line in pages:
-  pageToks = line.split("\t")
+for line in sys.stdin:
+  pageToks = line.strip().split("\t")
   assert (len(pageToks) == 5)
 
-  lang = pageToks[4]
+  lang = pageToks[0]
   if lang in langs:
-    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
-    html_text = deboiledFile.read()
-    deboiledFile.close()
+    htmlFile = open("{htmlDir}/{name}.html".format(htmlDir=options.htmlDir, name=pageToks[4]), "r")
+    html_text = htmlFile.read()
+    htmlFile.close()
 
     #We compute MD5 signature to compare files and detect duplicates
     c = hashlib.md5()
@@ -49,12 +43,11 @@ for line in pages:
     #checking for duplicate content (duplicates are discarded)
     if c.hexdigest() in seen_md5:
       pass
-      #sys.stderr.write("Repeated file:\t"+pageToks[0]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
+      #sys.stderr.write("Repeated file:\t"+pageToks[4]+"\tfirst occurrence\t"+seen_md5[c.hexdigest()]+"\n")
     else:
-      outFile.write(str(lineNum) + "\n")
+      textFile = open("{textDir}/{name}".format(textDir=options.textDir, name=pageToks[4]), "r")
+      text = textFile.read()
+      textFile.close()
 
-      seen_md5[c.hexdigest()]=pageToks[0]
-
-  lineNum += 1
-
-outFile.close()
+      print("\t".join(pageToks[0:4])+"\t"+base64.b64encode(html_text.encode("utf-8")).decode("utf-8")+"\t"+base64.b64encode(text.encode("utf-8")).decode("utf-8")+"\n")
+      seen_md5[c.hexdigest()]=pageToks[-1]

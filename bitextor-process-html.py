@@ -76,7 +76,12 @@ def guess_lang_from_data2(data):
 ######################################################################################
 
 oparser = argparse.ArgumentParser(description="Script that takes the output of bitextor-crawl and adds to the list of fields the MIME type and the character encoding detected.")
-oparser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
+oparser.add_argument('--input', dest='input', help='Input HTML file')
+oparser.add_argument('--metadata', dest='metadata', help='Input file containing the URL and crawling time for the input file')
+oparser.add_argument('--normhtml', dest='normhtml', help='Output file with normalised HTML')
+oparser.add_argument('--deboiled', dest='deboiled', help='Output file with HTML where boilerplates have been removed')
+oparser.add_argument('--text', dest='text', help='Output file with plain text from normalized HTML without boilerplates')
+oparser.add_argument('--info', dest='info', help='Output file with information about the file: lang, URL, MIME, etc.')
 
 options = oparser.parse_args()
 
@@ -84,16 +89,12 @@ m=magic.open(magic.MAGIC_NONE)
 m.load()
 #sys.stderr.write("m:" + str(m) + "\n")
 
-with open("{rootDir}/page".format(rootDir=options.rootDir), "rt") as pageFile:
-  pages = pageFile.read().strip().split("\n")
-  #sys.stderr.write("pages:" + str(len(pages)) + " " + str(pages) + "\n")
+filename=os.path.basename(options.input)
 
+with open("{metadata}".format(metadata=options.metadata), "rt") as metadata:
+  #Reading URL and date from metadata file
+  fields = metadata.read().strip().split("\t")
 
-lineNum = 0
-for line in pages:
-  #sys.stderr.write("lineNum " + str(lineNum) + "\n")
-
-  fields=line.strip().split("\t")
   if len(fields)>=1:
     url=fields[0]
 
@@ -101,7 +102,7 @@ for line in pages:
     m.setflags(16|1024)
 
     # read file
-    file = open("{rootDir}/raw-html/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+    file = open(options.input, "r")
     text = file.read()
     file.close()
     #sys.stderr.write("text " + str(type(text)) + "\n")
@@ -125,7 +126,7 @@ for line in pages:
     cleantree = tree.decode("utf8")
     cleantree = cleantree.replace("\t", " ")
 
-    file = open("{rootDir}/norm-html/{name}".format(rootDir=options.rootDir, name=lineNum), "w")
+    file = open(options.normhtml, "w")
     file.write(cleantree)
     file.close()
 
@@ -135,12 +136,12 @@ for line in pages:
     #os.system(cmd)
     extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
     extracted_text = extractor.getHTML()
-    file = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "w")
+    file = open(options.deboiled, "w")
     file.write(extracted_text)
     file.close()
 
     # get text
-    deboiledFile = open("{rootDir}/deboiled/{name}".format(rootDir=options.rootDir, name=lineNum), "r")
+    deboiledFile = open(options.deboiled, "r")
     html = deboiledFile.read()
     deboiledFile.close()
 
@@ -152,20 +153,21 @@ for line in pages:
     text = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", text))))
     #sys.stderr.write(text + "\n")
 
-    textFile = open("{rootDir}/text/{name}".format(rootDir=options.rootDir, name=lineNum), "wt")
+    textFile = open(options.text, "wt")
     textFile.write(text)
     textFile.close()
 
     # lang id
     lang = guess_lang_from_data2(html)
 
-    pages[lineNum] = line + "\t" + mimeEncode[0] + "\t" + mimeEncode[1] + "\t" + lang
+    file = open(options.info, "w")
+    file.write(lang + "\t" +  mimeEncode[0] + "\t" + mimeEncode[1] + "\t" + url + "\t" + str(filename).split(".")[0] + "\n")
+    file.close()
 
   else:
     sys.stderr.write("Wrong line: "+line.strip()+"\n")
 
-  lineNum += 1
 
-with open("{rootDir}/page".format(rootDir=options.rootDir), "wt") as pageFile:
-  pageFile.write("\n".join(pages))
-  pageFile.write("\n")
+#with open("{rootDir}/page".format(rootDir=options.rootDir), "wt") as pageFile:
+#  pageFile.write("\n".join(pages))
+#  pageFile.write("\n")

@@ -1,6 +1,8 @@
 
 # nohup snakemake --snakefile ../Snakefile --cores 2222 -j 2222 -k --configfile config.fr-en.json --cluster "sbatch {cluster.gres}" --cluster-config ../cluster.json  &
 
+import sys
+import re
 import gzip
 import lzma
 import tldextract
@@ -649,41 +651,53 @@ rule concat_subdomains:
         else:
             cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
         shell(cmd)
-	 
-rule warc2tt:
+
+
+checkpoint warc2tt:
     input:
         '{target}/concat.warc.xz'
     output:
-        directory('{target}/raw-html/')
+        directory("{target}/raw-html/")
     priority: 8
     shell:
         'mkdir -p {wildcards.target}/raw-html; '
-        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2html.py --root-dir {wildcards.target}'
+        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2html.py --output-dir {output}'
 
 rule tt2ttmime:
     input:
-        directory('{target}/raw-html/')
+        file='{target}/raw-html/{name}.html',
+        metadata='{target}/raw-html/{name}.metadata'
     output:
-        directory('{target}/norm-html/'),
-        directory('{target}/deboiled/'),
-        directory('{target}/text/')
+        normhtml='{target}/norm-html/{name}',
+        deboiled='{target}/deboiled/{name}.html',
+        text='{target}/text/{name}',
+        lett='{target}/lett/{name}'
     priority: 7
     shell:
         'mkdir -p {wildcards.target}/norm-html; '
         'mkdir -p {wildcards.target}/deboiled; '
         'mkdir -p {wildcards.target}/text; '
-        '{BITEXTOR}/bitextor-process-html.py --root-dir {wildcards.target}'
+        'mkdir -p {wildcards.target}/lett; '
+        '{BITEXTOR}/bitextor-process-html.py --input {input.file} --metadata {input.metadata} --normhtml {output.normhtml} --deboiled {output.deboiled} --text {output.text} --info {output.lett}'
+
+def independenthtml(wildcards):
+    checkpoint_output = checkpoints.warc2tt.get(**wildcards).output[0]
+    content=lzma.open(wildcards.target+"/concat.warc.xz", 'rb').read()
+    num=len([m.start() for m in re.finditer(b'WARC-Record-ID:', content)])
+    return expand("{target}/lett/{num}", target=wildcards.target, num=[str(i) for i in list(range(0,num))])
 
 rule boiler2ett:
     input:
-        directory('{target}/norm-html/'),
-        directory('{target}/deboiled/'),
-        directory('{target}/text/')
+        aggregate=independenthtml
     output:
-        '{target}/ett.xz'
+        '{target}/lett.xz'
     priority: 4
     shell:
-        '{BITEXTOR}/bitextor-filter.py -l {LANG1},{LANG2} --root-dir {wildcards.target} | xz -T 0 > {output}'
+        'if [ "{boilerpipeCleaning}" == "True" ]; then '
+        '  cat {input.aggregate} | {BITEXTOR}/bitextor-filter.py --html-dir {wildcards.target}/deboiled --text-dir {wildcards.target}/text -l {LANG1},{LANG2} | xz -T 0 > {output}; '
+        'else '
+        '  cat {input.aggregate} | {BITEXTOR}/bitextor-filter.py --html-dir {wildcards.target}/raw-html --text-dir {wildcards.target}/text -l {LANG1},{LANG2} | xz -T 0 > {output}; '
+        'fi '
 
 #rule xtt2alcazar:
 #  input:
@@ -704,7 +718,8 @@ rule httrack2lett:
 
 rule lett2lettr:
     input:
-        expand("{{target}}/{extension}.xz", extension=LETT)
+        expand("{{target}}/lett.xz", extension=LETT)
+#        expand("{{target}}/{extension}.xz", extension=LETT)
     output:
         '{target}/lettr.xz'
     shell:
