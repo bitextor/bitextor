@@ -2,7 +2,7 @@
 # nohup snakemake --snakefile ../Snakefile --cores 2222 -j 2222 -k --configfile config.fr-en.json --cluster "sbatch {cluster.gres}" --cluster-config ../cluster.json  &
 
 import sys
-import re
+import glob
 import gzip
 import lzma
 import tldextract
@@ -682,9 +682,8 @@ rule tt2ttmime:
 
 def independenthtml(wildcards):
     checkpoint_output = checkpoints.warc2tt.get(**wildcards).output[0]
-    content=lzma.open(wildcards.target+"/concat.warc.xz", 'rb').read()
-    num=len([m.start() for m in re.finditer(b'WARC-Record-ID:', content)])
-    return expand("{target}/lett/{num}", target=wildcards.target, num=[str(i) for i in list(range(0,num))])
+    filenames=[os.path.basename(f).split(".")[0] for f in glob.glob(wildcards.target+"/raw-html/*.html")]
+    return expand("{target}/lett/{num}", target=wildcards.target, num=filenames)
 
 rule boiler2ett:
     input:

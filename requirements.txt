@@ -15,7 +15,7 @@ sklearn==0.0
 tensorflow==1.8.0
 warc3-wet==0.2.3
 tld==0.9.1
-snakemake==5.2.2
+snakemake==5.4.0
 tqdm==4.28.1
 tldextract==2.2.0
 ftfy==5.5.0
@@ -29,3 +29,4 @@ openfile==0.0.7
 pycld2==0.31
 python-dateutil==2.7.5
 cchardet==2.1.4
+boilerpipe3==1.1
