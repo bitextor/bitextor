@@ -130,9 +130,6 @@ if "LANG2SentenceSplitter" in config:
 else:
   SENTTOK2=None
 
-tokeniserCheck(WORDTOK1)
-tokeniserCheck(WORDTOK2)
-
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
@@ -237,6 +234,9 @@ if "bicleaner" in config:
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
   BICLEANER_SORT="-r -k6,6 -k3,4"
+  tokeniserCheck(WORDTOK1)
+  tokeniserCheck(WORDTOK2)
+
 else:
   BICLEANEROPTION=""
   BICLEANER_SORT="-k3,4"
