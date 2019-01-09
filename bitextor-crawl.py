@@ -34,7 +34,7 @@ import random
 import signal
 import pickle
 import warc
-
+import time
 
 class Document(object):
     def __init__(self, res, url):
@@ -72,6 +72,8 @@ class Crawler(object):
         self.interrupt = False
         self.timeout = 10
         self.TLdomain = ""
+        self.verbose=False
+        self.delay=0
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -80,6 +82,7 @@ class Crawler(object):
 
         self.targets_lock = Lock()
         self.concurrency_lock = Lock()
+        self.delay_lock = Lock()
 
         logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
 
@@ -150,6 +153,8 @@ class Crawler(object):
           sys.stderr.write(str(sys.exc_info()[0])+"\n")
 
         self._spawn_new_worker()
+        if self.verbose:
+          sys.stderr.write("Starting thread\n")
 
         while self.threads:
             try:
@@ -158,6 +163,8 @@ class Crawler(object):
                         t.join(1)
                         if not t.isAlive():
                             self.threads.remove(t)
+                            if self.verbose:
+                              sys.stderr.write("Killing thread\n")
                     except RuntimeError:
                         pass
 
@@ -174,6 +181,10 @@ class Crawler(object):
             return '.'.join(parts[1:])
 
     def _follow_link(self, url, link):
+        #Longer than limit set by the standard RFC7230 are discarded
+        if len(link) > 2000:
+            return None
+
         # Remove anchor
         link = re.sub(r'#[^#]*$', '', link)
 
@@ -272,23 +283,31 @@ class Crawler(object):
             if self.interrupt:
                 break
             else:
+                url = None
                 self.targets_lock.acquire()
                 if len(self.targets)>0:
+                    url = self.targets.pop()
+                    if url not in self.visited:
+                        self.visited[url] = 1
+                self.targets_lock.release()
+
+                if url != None:
                     try:
-                        url = self.targets.pop()
                         logging.debug('url: %s' % url)
-                        if url not in self.visited:
-                          self.visited[url] = 1
-                        self.targets_lock.release()
 
                         if not self.robotsparser.can_fetch("*", url):
                             sys.stderr.write("robots.txt forbids crawling URL: "+url+"\n")
                         else:
+                            if self.verbose:
+                              sys.stderr.write("Crawling URL: "+url+"\n")
+
                             rx = re.match('(https?)://([^/]+)(.*)', url)
                             protocol = rx.group(1)
                             host = rx.group(2)
                             path = rx.group(3)
 
+                            #Connections are done with a delay to avoid blocking the server
+                            self.delay_lock.acquire()
                             if protocol == 'http':
                                 conn = http.client.HTTPConnection(host, timeout=self.timeout)
                             else:
@@ -301,6 +320,9 @@ class Crawler(object):
                                 rlink = self._follow_link(url, res.getheader('location'))
                                 self._add_target(rlink)
                                 logging.info('redirect: %s -> %s' % (url, rlink))
+                                conn.close()
+                                time.sleep(self.delay)
+                                self.delay_lock.release()
                                 continue
 
                             # Check content type
@@ -308,18 +330,37 @@ class Crawler(object):
                                 if not re.search(self.content_type_filter,
                                     res.getheader('Content-Type')):
                                     sys.stderr.write(url+" discarded: wrong file type\n")
+                                    conn.close()
+                                    time.sleep(self.delay)
+                                    self.delay_lock.release()
                                     continue
                             except TypeError: # getheader result is None
+                                conn.close()
+                                time.sleep(self.delay)
+                                self.delay_lock.release()
                                 continue
 
                             doc = Document(res, url)
+                            conn.close()
+                            time.sleep(self.delay)
+                            self.delay_lock.release()
+
+
                             # Make unique list (these are the links in the document)
                             try:
-                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
-                                    doc.text.decode('utf8'))
+                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('utf8'))
+                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('utf8'))
                             except:
-                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
-                                    doc.text.decode('latin1'))
+                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('latin1'))
+
+                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('latin1'))
+
+                                #sys.stderr.write(str(content)+"\n")
+
+                                #content = re.sub('<head>.*</head>', '', content)
+                                #links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
+                                #      content)
+
                             linksset = list(set(links))
                             random.shuffle(linksset)
                             self.process_document(doc)
@@ -329,11 +370,14 @@ class Crawler(object):
                                 self._add_target(rlink)
 
                             if self.concurrency < self.max_outstanding:
-                                self._spawn_new_worker()
-                    except KeyError as e:
-                        # Pop from an empty set
-                        break
+                                if self.verbose:
+                                    sys.stderr.write("Starting thread\n")
+                                    self._spawn_new_worker()
+
                     except (http.client.HTTPException, EnvironmentError) as e:
+                        time.sleep(self.delay)
+                        self.delay_lock.release()
+
                         if self.sizelimit != None and self.crawlsize > self.sizelimit:
                             self.concurrency_lock.acquire()
                             self.interrupt=True
@@ -354,7 +398,8 @@ class Crawler(object):
                             self.targets_lock.release()
                 else:
                     self.targets_lock.release()
-
+            if crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
+                self.interrupt=True
 
         self.concurrency_lock.acquire()
         self.concurrency -= 1
@@ -371,9 +416,11 @@ oparser.add_argument("-s", help="Total size limit; once it is reached the crawli
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
+oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 5s", dest="delay", required=False, default=5)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
+oparser.add_argument("-v", help="Verbose mode.", dest="verbose", action='store_true')
 options = oparser.parse_args()
 
 class MyCrawler(Crawler):
@@ -429,7 +476,9 @@ if not options.URL.startswith("http"):
     options.URL = "http://" + options.URL
 
 crawler = MyCrawler()
+crawler.verbose=options.verbose
 crawler.set_concurrency_level(options.jobs)
+crawler.delay=options.delay
 if options.crawltld:
   crawler.set_follow_mode(Crawler.F_TLD)
 else:
