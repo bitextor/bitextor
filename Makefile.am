@@ -4,7 +4,7 @@ bitextordir = $(prefix)/share/bitextor
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = bitextor-git.pc
 
-SUBDIRS= utils piped-boilerpipe model 
+SUBDIRS= utils model 
 
 
 bin_SCRIPTS=bitextor

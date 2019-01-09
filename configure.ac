@@ -165,36 +165,6 @@ then
   AC_MSG_ERROR([You don't have cmake installed.])
 fi
 
-AC_PATH_PROG(JAVA, java, no)
-if test x$ac_cv_path_JAVA = x
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-if test x$ac_cv_path_JAVA = xno
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-
-AC_PATH_PROG(JAVAC, javac, no)
-if test x$ac_cv_path_JAVAC = x
-then
-  AC_MSG_ERROR([You don't have javac installed.])
-fi
-if test x$ac_cv_path_JAVAC = xno
-then
-  AC_MSG_ERROR([You don't have javac installed.])
-fi
-
-AC_PATH_PROG(JAR, jar, no)
-if test x$ac_cv_path_JAR = x
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-if test x$ac_cv_path_JAR = xno
-then
-  AC_MSG_ERROR([You don't have jar installed.])
-fi
-
 AC_PATH_PROG(HTTRACK, httrack, no)
 if test x$ac_cv_path_HTTRACK = x
 then

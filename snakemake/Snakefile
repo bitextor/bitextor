@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
+from boilerpipe.extract import Extractor
 
 ###########################################################
 # UTILS 
@@ -681,11 +682,12 @@ rule xtt2boiler:
         '{target}/boiler.xz'
     priority: 5
     shell:
-        "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
-        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
-        "else "
-        "  ln -s {input} {output}; "
-        "fi"
+        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-boilerpipe.py | xz -T 0 > {output}'
+#        "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
+#        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
+#        "else "
+#        "  ln -s {input} {output}; "
+#        "fi"
 
 rule boiler2ett:
     input:
@@ -971,7 +973,7 @@ rule alignsegments_hunalign:
     output:
         '{prefix}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/bin" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
