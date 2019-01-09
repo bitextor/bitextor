@@ -16,20 +16,17 @@ if options.aligned_seg != None:
 else:
   reader = sys.stdin
 
-idcounter=0
 columns = options.columns.split(',')
 
 for i in reader:
-  idcounter = idcounter+1
   fields = i.split("\t")
   fields[-1]=fields[-1].strip()
   fieldsdict = dict()
-  extracolumns=["idnumber"]
 
   for field,column in zip(fields,columns):
     fieldsdict[column]=field
   if options.isPrintingStats:
-    extracolumns=["lengthratio","numTokensSL","numTokensTL","idnumber"]
+    extracolumns=["lengthratio","numTokensSL","numTokensTL"]
     if len(fieldsdict["seg2"]) == 0:
       lengthRatio=0
     else:
@@ -46,10 +43,7 @@ for i in reader:
         fieldsdict["bicleaner"]=str(round(float(fieldsdict["bicleaner"]),4))
       if int(fieldsdict["numTokensSL"]) >= 200 or int(fieldsdict["numTokensTL"]) >= 200 or fieldsdict["seg1"].strip() == '' or fieldsdict["seg2"].strip() == '' or float(fieldsdict["lengthratio"]) >= 6 or float(fieldsdict["lengthratio"]) <= 0.1666: 
         continue
-  fieldsdict["idnumber"]=str(idcounter)
   fieldstoprint=[]
   for column in columns+extracolumns:
     fieldstoprint.append(fieldsdict[column])
   print("\t".join(fieldstoprint))
-
-
