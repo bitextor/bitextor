@@ -2,6 +2,7 @@ digraph Snakemake {
   label="Bitextor Snakemake path chart"
   node [shape=record];
 
+  #Nodes
   Creepy [label="Creepy\n-url"]
   Httrack [label="Httrack\n-url"]
   LETT [label="LETT\n-boiler"]
@@ -25,6 +26,7 @@ digraph Snakemake {
   TMX [style=rounded]
   DedupTMX [style=rounded]
 
+  #Relations
   {Creepy,Httrack} -> LETT [style=dashed]
   LETT -> {DocalignDict,DocalignSMT,DocalignNMT,DocalignCustomMT}
   SymmetriseDic -> {DocalignDict,Hunalign} [label="!dict", style=dotted]
