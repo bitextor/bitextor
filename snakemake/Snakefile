@@ -98,12 +98,6 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 else:
   boilerpipeCleaning="0"
 
-#Option to use the JHU-pipeline pre-processing tool; it can be only used with HTTrack
-if "jhuLett" in config and config["jhuLett"]==True:
-  LETT="jlett"
-else:
-  LETT="lett"
-
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
   CRAWLTARGET="httrack"
@@ -716,17 +710,9 @@ rule tika2lett:
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett-language-detector.py -l {LANG1},{LANG2} | xz -T 0 > {output}'
 
-rule httrack2lett:
-    output:
-        '{target}/jlett.xz'
-    input:
-        '{target}/tar.gz'
-    shell:
-        '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | xz -T 0 > {output}'
-
 rule lett2lettr:
     input:
-        expand("{{target}}/{extension}.xz", extension=LETT)
+        "{{target}}/lett.xz"
     output:
         '{target}/lettr.xz'
     shell:

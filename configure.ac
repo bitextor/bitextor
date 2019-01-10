@@ -115,16 +115,6 @@ then
   AC_MSG_ERROR([You don't have pkg-config installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-if test x$ac_cv_path_GAWK = xno
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-
 AC_PATH_PROG(WC, wc, no)
 if test x$ac_cv_path_WC = x
 then
@@ -483,4 +473,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile utils/Makefile model/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc utils/Makefile model/Makefile])
