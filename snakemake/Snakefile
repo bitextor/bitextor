@@ -12,7 +12,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
-from boilerpipe.extract import Extractor
 
 ###########################################################
 # UTILS 
@@ -668,7 +667,6 @@ rule tt2xtt:
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-html-text.py -x | xz -T 0 > {output}'
 
-#This rule won't work with current non-installation configuration
 rule xtt2boiler:
     input:
         '{target}/xtt.xz'
@@ -676,12 +674,11 @@ rule xtt2boiler:
         '{target}/boiler.xz'
     priority: 5
     shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-boilerpipe.py | xz -T 0 > {output}'
-#        "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
-#        "  xzcat -T 0 -f {input} | java -Dfile.encoding=UTF-8 -jar {BITEXTOR}/piped-boilerpipe/piped-boilerpipe.jar | xz -T 0 > {output}; "
-#        "else "
-#        "  ln -s {input} {output}; "
-#        "fi"
+        "if [ \"{boilerpipeCleaning}\" == \"1\" ]; then "
+        "  xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-boilerpipe.py | xz -T 0 > {output}; "
+        "else "
+        "  ln -s {input} {output}; "
+        "fi"
 
 rule boiler2ett:
     input:
