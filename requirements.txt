@@ -29,3 +29,4 @@ openfile==0.0.7
 pycld2==0.31
 python-dateutil==2.7.5
 boilerpipe3==1.1
+mosestokenizer=1.0.0
