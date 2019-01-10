@@ -712,7 +712,7 @@ rule tika2lett:
 
 rule lett2lettr:
     input:
-        "{{target}}/lett.xz"
+        "{target}/lett.xz"
     output:
         '{target}/lettr.xz'
     shell:
