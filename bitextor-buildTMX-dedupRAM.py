@@ -19,12 +19,14 @@ sys.setdefaultencoding("UTF-8")
 segdictotherdata = {}
 
 def printTU(urlstring1, urlstring2, restofdata):
+  numid=0
   for segid in restofdata.keys():
+    numid+=1
     urls1 = Set(urlstring1[segid])
     urls2 = Set(urlstring2[segid])
     fieldsdict = restofdata[segid]
 
-    print("   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">")
+    print("   <tu tuid=\""+str(numid)+"\" datatype=\"Text\">")
     infoTag=[]
     if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
       print("    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>")
@@ -104,7 +106,6 @@ print(" <body>")
 urls1 = Set()
 urls2 = Set()
 for line in reader:
-
   fields = line.split("\t")
   fields[-1] = fields[-1].strip()
 
