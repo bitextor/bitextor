@@ -77,12 +77,14 @@ def ValidateArgs(config):
            'boilerpipeCleaning': {'type': 'boolean'},
            'jhuLett': {'type': 'boolean'},
            'httrack': {'type': 'boolean'},
-           'crawl-tld': {'type': 'boolean'},
-           'crawler-num-threads': {'type': 'integer'},
+           'crawlTld': {'type': 'boolean'},
+           'crawlerNumThreads': {'type': 'integer'},
 
            'dic': {'type': 'string'},
            'LANG1Tokenizer': {'type': 'string'},
            'LANG2Tokenizer': {'type': 'string'},
+           'LANG2Detokenizer': {'type': 'string'},
+
            'LANG1SentenceSplitter': {'type': 'string'},
            'LANG2SentenceSplitter': {'type': 'string'},
 
@@ -105,13 +107,25 @@ def ValidateArgs(config):
 
            'deduped': {'type': 'boolean'},
            'domains': {'type': 'list'},
+           'langstatExcludeDomains': {'type': 'string'},
 
            'initCorpusTrainPrefix': {'type': 'list'},
+           'initCorpusDevPrefix': {'type': 'list'},
+           'initCorpusTestPrefix': {'type': 'list'},
 
            'nmt': {'type': 'boolean'},
            'smt': {'type': 'boolean'},
            'tmx': {'type': 'boolean'},
 
+           'gpuId': {'type': 'integer'},
+           'marianDir': {'type': 'string'},
+           'marianArgs': {'type': 'list'},
+           'marianModelFile': {'type': 'string'},
+           'nmtVocabSize': {'type': 'integer'},
+
+           'subwordNmtDir': {'type': 'string'},
+
+           'mgiza': {'type': 'string'},
 
             }
 
