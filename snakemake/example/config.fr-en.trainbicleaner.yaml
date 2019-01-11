@@ -1,5 +1,4 @@
 bitextor: /home/mespla/Projects/bitextor-malign
-bitextor-installation: /home/mespla/Projects/bitextor-malign
 domains: ['www.elenacaffe1863.com','vade-retro.fr']
 documentAligner: DIC
 #documentAligner: externalMT
