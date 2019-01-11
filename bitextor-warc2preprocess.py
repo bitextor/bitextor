@@ -18,9 +18,13 @@ from lxml import etree
 from boilerpipe.extract import Extractor
 import alcazar.bodytext
 import logging
-from common import open_xz_or_gzip_or_plain
 import lzma
 
+pathname = os.path.dirname(sys.argv[0])
+if pathname == "":
+  pathname = "."
+sys.path.append(pathname + "/document-aligner")
+from utils.common import open_xz_or_gzip_or_plain
 
 ######################################################################################
 
@@ -44,7 +48,7 @@ def convert_encoding(data):
 
 #############################################################################
 
-oparser = argparse.ArgumentParser(description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML normalization, deduplication, MIME and language identification, and boilerplate removing.")
+oparser = argparse.ArgumentParser(description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML normalization, deduplication, MIME and language identification, and boilerplate removing. The result of each pre-processing step is stored in a XZ compressed file in the output directory.")
 oparser.add_argument("--verbose", action="store_true", default=False, help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument("--boilerpipe", action="store_true", default=False, help="Use boilerpipe bodytext to do the de-boiling")
 oparser.add_argument("--alcazar", action="store_true", default=False, help="Use alcazar bodytext extract relevant text from HTML. By default BeautifulSoup4is used")
