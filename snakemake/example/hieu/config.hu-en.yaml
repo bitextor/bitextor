@@ -30,7 +30,7 @@ bicleaner: /home/hieu/transient/hu-en/bicleaner/en-hu.yaml
 bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/hu-en/train/Books.en-hu"]
 documentAligner: SMT
 alignerCmd: marek-smt
-bleualign: true,
+bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 

@@ -107,11 +107,15 @@ def ValidateArgs(config):
 
            'deduped': {'type': 'boolean'},
            'domains': {'type': 'list'},
+           'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
+           'langstatThreshold': {'type': 'integer'},
 
            'initCorpusTrainPrefix': {'type': 'list'},
            'initCorpusDevPrefix': {'type': 'list'},
            'initCorpusTestPrefix': {'type': 'list'},
+
+           'bicleanerCorpusTrainingPrefix': {'type': 'list'},
 
            'nmt': {'type': 'boolean'},
            'smt': {'type': 'boolean'},
