@@ -182,9 +182,9 @@ else:
 
 #Option to remove Boilerpipe html: if the option is enabled, boilerpipe is not used
 if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
-  boilerpipeCleaning = True
+  boilerpipeCleaning = '--boilerpipe'
 else:
-  boilerpipeCleaning = False
+  boilerpipeCleaning = ''
 
 #Option to use the JHU-pipeline pre-processing tool; it can be only used with HTTrack
 if "jhuLett" in config and config["jhuLett"]==True:
@@ -290,17 +290,6 @@ if "mosesDir" in config:
   MOSESDIR = config["mosesDir"]
 else:
   MOSESDIR = ""
-
-#if "alignerCmd" in config:
-#  MT_COMMAND=config["alignerCmd"]
-#
-#  if MT_COMMAND in {"marek-nmt", "marek-smt"}:
-#      DOCALIGNEXT = MT_COMMAND
-#  else:
-#      DOCALIGNEXT="marek-customMT"
-#else:
-#  MT_COMMAND=""
-#  DOCALIGNEXT="bitextor"
 
 if "bleualign" in config and config["bleualign"]:
   SEGMENTALIGNER="bleualign"
@@ -735,89 +724,34 @@ rule concat_subdomains:
         shell(cmd)
 
 
-checkpoint warc2tt:
+rule warc2preprocess:
     input:
         '{target}/concat.warc.xz'
     output:
-        directory("{target}/raw-html/")
+        deboil='{target}/deboilerplate_html.xz',
+        encoding='{target}/encoding.xz',
+        lang='{target}/lang.xz',
+        mime='{target}/mime.xz',
+        html='{target}/normalized_html.xz',
+        text='{target}/plain_text.xz',
+        url='{target}/url.xz'
     priority: 8
     shell:
-        'mkdir -p {wildcards.target}/raw-html; '
-        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2html.py --output-dir {output}'
-
-rule tt2ttmime:
-    input:
-        file='{target}/raw-html/{name}.html',
-        metadata='{target}/raw-html/{name}.metadata'
-    output:
-        normhtml='{target}/norm-html/{name}',
-        deboiled='{target}/deboiled/{name}.html',
-        text='{target}/text/{name}',
-        lett='{target}/lett/{name}'
-    priority: 7
-    shell:
-        'mkdir -p {wildcards.target}/norm-html; '
-        'mkdir -p {wildcards.target}/deboiled; '
-        'mkdir -p {wildcards.target}/text; '
-        'mkdir -p {wildcards.target}/lett; '
-        '{BITEXTOR}/bitextor-process-html.py --input {input.file} --metadata {input.metadata} --normhtml {output.normhtml} --deboiled {output.deboiled} --text {output.text} --info {output.lett} {ALCAZAR}'
-
-def independenthtml(wildcards):
-    checkpoint_output = checkpoints.warc2tt.get(**wildcards).output[0]
-    filenames=[os.path.basename(f).split(".")[0] for f in glob.glob(wildcards.target+"/raw-html/*.html")]
-    return expand("{target}/lett/{num}", target=wildcards.target, num=filenames)
-
-rule boiler2ett:
-    input:
-        aggregate=independenthtml
-    output:
-        '{target}/lett.xz'
-    priority: 4
-    shell:
-        'if [ "{boilerpipeCleaning}" == "True" ]; then '
-        '  cat {input.aggregate} | {BITEXTOR}/bitextor-filter.py --html-dir {wildcards.target}/deboiled --text-dir {wildcards.target}/text -l {LANG1},{LANG2} | xz -T 0 > {output}; '
-        'else '
-        '  cat {input.aggregate} | {BITEXTOR}/bitextor-filter.py --html-dir {wildcards.target}/raw-html --text-dir {wildcards.target}/text -l {LANG1},{LANG2} | xz -T 0 > {output}; '
-        'fi '
-
-#rule xtt2alcazar:
-#  input:
-#    '{target}/xtt.xz'
-#  output:
-#    '{target}/alcazar.xz'
-#  priority: 3
-#  shell:
-#      'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-get-text-alcazar-dedupe.py  | xz -T 0 > {output}'
-
-rule httrack2lett:
-    output:
-        '{target}/jlett.xz'
-    input:
-        '{target}/tar.gz'
-    shell:
-        '{BITEXTOR}/tar2lett {input} {LANG1} {LANG2} | xz -T 0 > {output}'
-
-rule lett2lettr:
-    input:
-        expand("{{target}}/lett.xz", extension=LETT)
-#        expand("{{target}}/{extension}.xz", extension=LETT)
-    output:
-        '{target}/lettr.xz'
-    shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2lettr.py | xz -T 0 > {output}'
-
-rule lettr2idx:
-    input:
-        '{target}/lettr.xz'
-    output:
-        '{target}/idx.xz'
-    shell:
-        'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 | xz -T 0 > {output}'
-
-
+        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.target} --lang1 {LANG1} --lang2 {LANG2}; '
+        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
 
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
+
+
+rule lettr2idx:
+    input:
+        text='{target}/plain_text.xz',
+        lang='{target}/lang.xz',
+    output:
+        '{target}/idx.xz'
+    shell:
+        '{BITEXTOR}/bitextor-lett2idx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
 rule idx2ridx_l1tol2:
     input:
@@ -838,62 +772,63 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{target}/{num}.ridx.xz',
-        '{target}/lettr.xz'
+        '{target}/deboilerplate_html.xz'
     output:
         '{target}/{num}.imgoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-imagesetoverlap.py --html {input[1]} | xz -T 0 > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
         '{target}/{num}.imgoverlap.xz',
-        '{target}/lettr.xz'
+        '{target}/deboilerplate_html.xz'
     output:
         '{target}/{num}.structuredistance.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-structuredistance.py --html {input[1]} | xz -T 0 > {output}'
 
 rule structuredistance2urldistance:
     input:
         '{target}/{num}.structuredistance.xz',
-        '{target}/lettr.xz'
+        '{target}/deboilerplate_html.xz',
+        '{target}/url.xz'
     output:
         '{target}/{num}.urldistance.xz'
     priority: 8
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsdistance.py --html {input[1]} --url {input[2]} | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
         '{target}/{num}.urldistance.xz',
-        '{target}/lettr.xz'
+        '{target}/deboilerplate_html.xz',
+        '{target}/url.xz'
     output:
         '{target}/{num}.mutuallylinked.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-mutuallylinked.py --html {input[1]} --url {input[2]} | xz -T 0 > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
         '{target}/{num}.mutuallylinked.xz',
-        '{target}/lettr.xz'
+        '{target}/url.xz'
     output:
         '{target}/{num}.urlscomparison.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlscomparison.py --url {input[1]} | xz -T 0 > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
         '{target}/{num}.urlscomparison.xz',
-        '{target}/lettr.xz'
+        '{target}/deboilerplate_html.xz'
     output:
         '{target}/{num}.urlsoverlap.xz'
     shell:
-        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py -l {wildcards.target}/lettr.xz | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {BITEXTOR}/features/bitextor-urlsetoverlap.py --html {input[1]} | xz -T 0 > {output}'
 
 rule urlsoverlap2rank:
     input:
-        '{target}/{num}.urlsoverlap.xz',
-        '{target}/lettr.xz'
+        '{target}/{num}.urlsoverlap.xz'
     output:
         '{target}/{num}.rank.xz'
     shell:
@@ -903,11 +838,12 @@ rule aligndocumentsBitextor:
     input:
         '{target}/1.rank.xz',
         '{target}/2.rank.xz',
-        '{target}/lettr.xz'
+        '{target}/plain_text.xz',
+        '{target}/url.xz'
     output:
         '{target}/docalign.bitextor'
     shell:
-        '{BITEXTOR}/bitextor-align-documents.py -l {input[2]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
+        '{BITEXTOR}/bitextor-align-documents.py --text {input[2]} --url {input[3]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
 
 
 
