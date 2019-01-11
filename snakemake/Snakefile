@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
+from cerberus import Validator
 
 ###########################################################
 # UTILS 
@@ -62,7 +63,58 @@ def open_gzip_or_plain(file_path):
             f.close()
 
 
+def ValidateArgs(config):
+    schema = {'bitextor': {'type': 'string'},
+            'lang1': {'type': 'string', 'maxlength': 2},
+            'lang2': {'type': 'string', 'maxlength': 2},
+            'temp': {'type': 'string'},
+            'minquality': {'type': 'float'},
+            'maxlines': {'type': 'integer'},
+            'alcazar': {'type': 'boolean'},
+
+           'permanentDir': {'type': 'string'},
+           'transientDir': {'type': 'string'},
+           'boilerpipeCleaning': {'type': 'boolean'},
+           'jhuLett': {'type': 'boolean'},
+           'httrack': {'type': 'boolean'},
+           'crawlTld': {'type': 'boolean'},
+
+           'dic': {'type': 'string'},
+           'LANG1Tokenizer': {'type': 'string'},
+           'LANG2Tokenizer': {'type': 'string'},
+           'LANG1SentenceSplitter': {'type': 'string'},
+           'LANG2SentenceSplitter': {'type': 'string'},
+
+           'crawlSizeLimit': {'type': 'string'},
+           'crawlTimeLimit': {'type': 'string'},
+           'crawlerConnectionTimeout': {'type': 'string'},
+           'dumpCurrentCrawl': {'type': 'string'},
+           'resumePreviousCrawl': {'type': 'string'},
+
+           'documentAligner': {'type': 'string'},
+           'mosesDir': {'type': 'string'},
+           'alignerCmd': {'type': 'string'},
+           'bleualign': {'type': 'boolean'},
+           'docAlignThreshold': {'type': 'float'},
+           'bleuAlignThreshold': {'type': 'float'},
+
+           'bicleaner': {'type': 'string'},
+           'bicleanerThreshold': {'type': 'float'},
+           'elrc': {'type': 'boolean'},
+
+            }
+
+    v = Validator(schema)
+    #v.allow_unknown = True
+
+    b = v.validate(config)
+
+    print("b=", b, v.errors)
+    exit()
+
 ###########################################################
+
+ValidateArgs(config)
 
 BITEXTOR=config["bitextor"]
 
@@ -143,7 +195,7 @@ else:
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
-if "crawlTld" in config and config["crawlTld"]==True:
+if "crawlTld" in config and config["crawlTld"]:
   TLD_CRAWL="-D"
 else:
   TLD_CRAWL=""
@@ -255,7 +307,7 @@ if "bicleanerThreshold" in config:
 else:
   BICLEANER_THRESHOLD=0.0
 
-if "elrc" in config and config["elrc"]==True:
+if "elrc" in config and config["elrc"]:
   ELRCSCORES="elrc"
   ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL,idnumber"
 else:

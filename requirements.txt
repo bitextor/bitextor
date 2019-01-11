@@ -30,3 +30,4 @@ pycld2==0.31
 python-dateutil==2.7.5
 cchardet==2.1.4
 boilerpipe3==1.1
+cerberus==1.2
