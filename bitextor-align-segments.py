@@ -28,8 +28,7 @@ import traceback
 from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages
-from external_processor import ExternalTextProcessor
-
+from toolwrapper import ToolWrapper
 
 def runAligner(filename1, filename2, dic, hunaligndir):
   # option -ppthresh=10?
@@ -63,12 +62,14 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
   for origseg in base64.b64decode(encodedtext).decode("utf-8").replace("\t"," ").split("\n"):
     trimorigseg=origseg.strip()
     if trimorigseg != "":
-      proc = ExternalTextProcessor(sent_tokeniser.split(' '))
-      for seg in proc.process(trimorigseg).split('\n'):
+      seg = ""
+      sent_tokeniser.writeline(trimorigseg.rstrip('\n')+"\n")
+      while seg != "<P>":
+        seg = sent_tokeniser.readline().strip()
         if seg.strip() != "":
           tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-          proc_word = ExternalTextProcessor(word_tokeniser.split(' '))
-          tmp_tok_segs.append(proc_word.process(seg).strip())
+          word_tokeniser.writeline(seg)
+          tmp_tok_segs.append(word_tokeniser.readline().strip())
 
   tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
@@ -176,9 +177,13 @@ for line in reader_list:
   filename2=fields[1]
   encodedtext1=fields[2]
   encodedtext2=fields[3]
-   
-  extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
-  extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
+  
+  senttok1 = ToolWrapper(options.senttok1.split())
+  senttok2 = ToolWrapper(options.senttok2.split())
+  wordtok1 = ToolWrapper(options.wordtok1.split())
+  wordtok2 = ToolWrapper(options.wordtok2.split())
+  extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, senttok1, wordtok1)
+  extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, senttok2, wordtok2)
 
 
 tmp_file1.close()
