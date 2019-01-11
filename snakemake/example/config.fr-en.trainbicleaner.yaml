@@ -10,7 +10,6 @@ nmt: false
 smt: false
 lang1: fr
 lang2: en
-nltk: true
 dic: /tmp/persistent/en-fr.dic
 minquality: 0
 maxlines: 5

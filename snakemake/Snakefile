@@ -90,7 +90,7 @@ def ValidateArgs(config):
 
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
-           'crawlerConnectionTimeout': {'type': 'string'},
+           'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
 

@@ -51,7 +51,6 @@ httrack: true
 
 ##### CREEPY CRAWLING OPTIONS #####
 #TODO: add rest of options
-wlerNumThreads: 2
 crawlTld: false
 
 ##### BICLEANER OPTIONS #####
