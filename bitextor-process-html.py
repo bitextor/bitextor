@@ -148,7 +148,7 @@ with open("{metadata}".format(metadata=options.metadata), "rt") as metadata:
     deboiledFile.close()
 
     # get text
-    if alcazar:
+    if options.alcazar:
       text = alcazar.bodytext.parse_article(cleantree)
       if text.body_text:
         text = text.body_text
