@@ -22,7 +22,8 @@ from utils.common import open_xz_or_gzip_or_plain
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from the standard input) and produces a list of aligned documents. If two ridx files are provided, a bidirectional alignment is performed between them.")
 oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang1 to lang2', default=None)
 oparser.add_argument('ridx2', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang2 to lang1', default=None)
-oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+oparser.add_argument('--text', dest='text', help='File produced by bitextor-warc2preprocess containing the text of all the records in the WARC file encoded as base 64 (each line corresponds to a record)', required=True)
+oparser.add_argument('--url', dest='url', help='File produced by bitextor-warc2preprocess containing the url of each of the records in the WARC file encoded as base 64 (each line corresponds to a record)', required=True)
 oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file when performing bidirectional document alignment. This parameter is set by default to 1, which means that only documents being mutualy the best alignment option will be aligned. Note that this option is only used when two ridx files are provided", type=int, dest="candidate_num", default=1)
 oparser.add_argument("-r", "--ridx", help="If this option is defined, the rinal ridx file used for aligning the documents will be saved in the path specified (when two ridx files are provided, the ridx obtained when merging both files will be used)", dest="oridx", type=argparse.FileType('w'), default=None)
 oparser.add_argument("-i", "--iterations", help="Number of iterations to keep looking for paired documents (only works without the non-symmetric option, if both options, then uses 1 iteration). Can also doundetermined iterations until all possible documents are paired. To do that, just write 'converge' as number of iterations", dest="iterations", default="1")
@@ -55,14 +56,14 @@ indicesProb = {}
 documents = {}
 documentsFile2=set()
 
-# File .lett is read extracting the URL and the base64 encoded content
+# Files containing base64 encoded text and url are read and stored in a document map
 counter = 1
-with open_xz_or_gzip_or_plain(options.lettr) as fd:
-  for j in fd:
-    fields = j.split("\t")
-    if len(fields) > 4:
-      documents[counter] = (fields[3], fields[5]) # URL parsed_text_base64
-    counter += 1
+with open_xz_or_gzip_or_plain(options.text) as text_reader:
+  with open_xz_or_gzip_or_plain(options.url) as url_reader:
+    for text in text_reader:
+      url=next(url_reader, None).strip()
+      documents[counter] = (url, text.strip()) # URL parsed_text_base64
+      counter += 1
 
 if combine == False:
   #Reading the .ridx file with the preliminary alignment
