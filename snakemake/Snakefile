@@ -77,7 +77,8 @@ def ValidateArgs(config):
            'boilerpipeCleaning': {'type': 'boolean'},
            'jhuLett': {'type': 'boolean'},
            'httrack': {'type': 'boolean'},
-           'crawlTld': {'type': 'boolean'},
+           'crawl-tld': {'type': 'boolean'},
+           'crawler-num-threads': {'type': 'integer'},
 
            'dic': {'type': 'string'},
            'LANG1Tokenizer': {'type': 'string'},
@@ -102,6 +103,16 @@ def ValidateArgs(config):
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
 
+           'deduped': {'type': 'boolean'},
+           'domains': {'type': 'list'},
+
+           'initCorpusTrainPrefix': {'type': 'list'},
+
+           'nmt': {'type': 'boolean'},
+           'smt': {'type': 'boolean'},
+           'tmx': {'type': 'boolean'},
+
+
             }
 
     v = Validator(schema)
@@ -109,8 +120,9 @@ def ValidateArgs(config):
 
     b = v.validate(config)
 
-    print("b=", b, v.errors)
-    exit()
+    if not b:
+        print("Validation error. Stopping.", v.errors)
+        exit()
 
 ###########################################################
 
@@ -195,7 +207,7 @@ else:
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
-if "crawlTld" in config and config["crawlTld"]:
+if "crawl-tld" in config and config["crawl-tld"]:
   TLD_CRAWL="-D"
 else:
   TLD_CRAWL=""
