@@ -75,6 +75,9 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
     morphanalyser = ["/bin/bash", morphanal]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
   tmp_file.write(tokenized_text.lower().encode("utf8")+b"\n")
+  #Document delimiter
+  tmp_file.write(b"<p>\n")
+  tmp_file_origtext.write(b"<p>\n")
 
 def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
   filereader1=open(file1orig, "r")
@@ -155,11 +158,18 @@ if options.aligned_docs == None:
 else:
   reader_list = open(options.aligned_docs,"r")
 
+
+tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+tmp_file1_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+tmp_file2_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
+
+tmp_file1_name=tmp_file1.name
+tmp_file2_name=tmp_file2.name
+tmp_file1_orig_name=tmp_file1_origtext.name
+tmp_file2_orig_name=tmp_file2_origtext.name
+
 for line in reader_list:
-  tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-  tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-  tmp_file1_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
-  tmp_file2_origtext=NamedTemporaryFile(delete=False, dir=options.tmpdir)
 
   fields=line.split("\t")
   filename1=fields[0]
@@ -170,19 +180,15 @@ for line in reader_list:
   extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
   extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
 
-  tmp_file1_name=tmp_file1.name
-  tmp_file2_name=tmp_file2.name
-  tmp_file1_orig_name=tmp_file1_origtext.name
-  tmp_file2_orig_name=tmp_file2_origtext.name
 
-  tmp_file1.close()
-  tmp_file1_origtext.close()
-  tmp_file2.close()
-  tmp_file2_origtext.close()
+tmp_file1.close()
+tmp_file1_origtext.close()
+tmp_file2.close()
+tmp_file2_origtext.close()
 
-  align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, filename1, filename2, options.dic)
+align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, filename1, filename2, options.dic)
 
-  os.remove(tmp_file1.name)
-  os.remove(tmp_file1_origtext.name)
-  os.remove(tmp_file2.name)
-  os.remove(tmp_file2_origtext.name)
+os.remove(tmp_file1.name)
+os.remove(tmp_file1_origtext.name)
+os.remove(tmp_file2.name)
+os.remove(tmp_file2_origtext.name)
