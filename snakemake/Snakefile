@@ -166,9 +166,16 @@ def ValidateArgs(config):
             schema['alignerCmd']['required']=True
         else:
             schema['dic']['required']=True
+            if "dic" in config and not os.path.isfile(config["dic"]):
+                schema['initCorpusTrainPrefix']['required']=True
     else:
         schema['dic']['required']=True
+        if "dic" in config and not os.path.isfile(config["dic"]):
+            schema['initCorpusTrainPrefix']['required']=True
 
+    if "bicleaner" in config:
+        if not os.path.isfile(config["bicleaner"]):
+            schema['bicleanerCorpusTrainingPrefix']['required']=True
 
     v = Validator(schema)
     #v.allow_unknown = True
