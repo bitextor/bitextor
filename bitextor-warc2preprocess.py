@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import html
 import warc
 import base64
 import sys
@@ -95,7 +96,7 @@ for record in f:
       cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
       document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
       tree = etree.tostring(document)
-      cleantree = tree.decode("utf8")
+      cleantree = tree.decode("utf8").replace("&#160;"," ")
       cleantree = cleantree.replace("\t", " ")
   
       # lang id
@@ -154,7 +155,7 @@ for record in f:
               b64deboil=base64.b64encode(deboiled.encode())
               deboilFile.write(b64deboil+b"\n")
 
-            b64text=base64.b64encode(plaintext.encode())
+            b64text=base64.b64encode(html.unescape(plaintext).encode())
             plainTextFile.write(b64text+b"\n")
             #print("{0}\t{1}\t{2}\t{3}\t{4}".format(lang, orig_encoding, mime, b64norm.decode("utf-8"), b64text.decode("utf-8")))
 

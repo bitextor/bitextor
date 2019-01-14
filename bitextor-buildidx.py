@@ -70,6 +70,7 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader:
         morph_stdout,error = tpmorph.communicate(input=text)
         if len(error.strip()) == 0:
           text =  re.sub(r"\^\*?", r"", re.sub(r"[/<][^$]*\$", r"", morph_stdout.decode("utf-8")))
+
       #Getting the bag of words in the document
       if lang == options.lang1:
         proc = ExternalTextProcessor(options.wordtokeniser1.split(' '))
@@ -80,7 +81,7 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader:
       #Trimming non-aplphanumerics:
       clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
       sorted_uniq_wordlist=clean_sorted_uniq_wordlist
-    
+
       for word in sorted_uniq_wordlist:
         if lang in word_map:
           if word in word_map[lang]:
@@ -92,7 +93,7 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader:
           word_map[lang] = {}
           word_map[lang][word] = []
           word_map[lang][word].append(docnumber)
-    docnumber=docnumber+1
+      docnumber=docnumber+1
     
   for map_lang, map_vocabulary in list(word_map.items()):
     for map_word, map_doc in list(map_vocabulary.items()):

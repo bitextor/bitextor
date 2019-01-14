@@ -11,10 +11,12 @@ import gzip
 import os
 import string
 import sys
-
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/document-aligner/utils")
+from common import open_xz_or_gzip_or_plain
 import langid
+import html
 from external_processor import ExternalTextProcessor
-from textsanitzer import TextSanitizer
+#from textsanitzer import TextSanitizer
 
 
 def filter_digits_and_punctuation(text):
@@ -26,8 +28,8 @@ def filter_digits_and_punctuation(text):
 
 
 def split_sentences(text, sentence_splitter_cmd, lang):
-    proc = ExternalTextProcessor([sentence_splitter_cmd, "-l", lang])
-    output = proc.process(text.replace("\n\n", "\n"))
+    proc = ExternalTextProcessor(sentence_splitter_cmd.split())
+    output = html.unescape(proc.process(text.replace("\n\n", "\n")))
 
     return [n for n in output.split("\n") if filter_digits_and_punctuation(n)]
 
@@ -46,21 +48,13 @@ if __name__ == "__main__":
                         default=80, help="Prune sentences longer than n (words/characters)", required=False)
     parser.add_argument("--prune_type", dest="prune_type", choices=set(("words", "chars")),
                         default="words", help="Prune sentences either by words or charaters", required=False)
-    parser.add_argument("--check_lang", dest="check_lang", action='store_true',
-                        help="Runs language identification on text segments and throws away those that do not match with the lang field", required=False)
     parser.add_argument("-x", "--xz", dest="xz", action="store_true",
                         help="Use xz as the compression tool")
-    parser.add_argument('--root-dir', dest='rootDir', help='Domain directory')
+    parser.add_argument('--langfile', dest='langFile', help='File containing the language code of each HTML file')
+    parser.add_argument('--plaintextfile', dest='textFile', help='File containing the plain text extracted from the HTML documents in a WARC file, encoded in base64')
+    parser.add_argument('--urlfile', dest='urlFile', help='File containing the list of urls of the documents in a WARC file')
 
     args = parser.parse_args()
-
-    with open("{rootDir}/deduped".format(rootDir=args.rootDir), "rt") as dedupedFile:
-        dedupeds = dedupedFile.read().strip().split("\n")
-
-    with open("{rootDir}/page".format(rootDir=args.rootDir), "rt") as pageFile:
-        pages = pageFile.read().strip().split("\n")
-
-    #sys.stderr.write("args.rootDir=" + args.rootDir + "\n")
 
     langs_parse = args.languages.strip().split(',')
     lang_file = {}
@@ -74,51 +68,34 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
-    for line in dedupeds:
-        lineNum = int(line)
-        #sys.stderr.write("lineNum=" + str(lineNum) + "\n")
-
-        pageToks = pages[lineNum].split("\t")
-        assert(len(pageToks) == 5)
-        #sys.stderr.write("pageToks=" + str(pageToks) + "\n")
-
-        with open("{rootDir}/text/{name}".format(rootDir=args.rootDir, name=lineNum), "rt") as textFile:
-            text = textFile.read()
-
-        lang = pageToks[4]
-        uri = pageToks[0]
-
-        if lang not in langs_parse:
-            continue
-
-        if not text.strip():
-            continue
-
-        # clean the UTF8 text
-        text = TextSanitizer.clean_text(text)
-
-        for extracted_line in split_sentences(text, args.splitter, lang):
-            extracted_line = extracted_line.strip()
-            if not extracted_line:
+    with open_xz_or_gzip_or_plain(args.textFile) as text_reader, open_xz_or_gzip_or_plain(args.langFile) as lang_reader, open_xz_or_gzip_or_plain(args.urlFile) as url_reader:
+        for line in text_reader:
+            text = base64.b64decode(line.strip()).decode("utf-8")
+            lang = next(lang_reader, None).strip()
+            uri = next(url_reader, None).strip()
+ 
+            if lang not in langs_parse:
                 continue
-
-            # prune long sentences
-            extracted_line = extracted_line
-            if args.prune_type == "chars":
-                if len(extracted_line) > args.prune_threshold:
+ 
+            if not text:
+                continue
+ 
+            for extracted_line in split_sentences(text, args.splitter, lang):
+                extracted_line = extracted_line.strip()
+                if not extracted_line:
                     continue
-            elif args.prune_type == "words":
-                if len(extracted_line.split()) > args.prune_threshold:
-                    continue
-
-            if args.check_lang:
-                # check that the content is actually in the expected language
-                detected_language = langid.classify(extracted_line)[0]
-                if detected_language != lang:
-                    continue
-
-            lang_file[lang].write("{0}\t{1}\n".format(
-                uri, extracted_line).encode("utf-8"))
-
-    for f in lang_file:
-        lang_file[f].close()
+    
+                # prune long sentences
+                extracted_line = extracted_line
+                if args.prune_type == "chars":
+                    if len(extracted_line) > args.prune_threshold:
+                        continue
+                elif args.prune_type == "words":
+                    if len(extracted_line.split()) > args.prune_threshold:
+                        continue
+    
+                lang_file[lang].write("{0}\t{1}\n".format(
+                    uri, extracted_line).encode("utf-8"))
+    
+        for f in lang_file:
+            lang_file[f].close()
