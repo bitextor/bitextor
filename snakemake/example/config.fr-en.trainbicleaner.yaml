@@ -1,7 +1,7 @@
 bitextor: /home/mespla/Projects/bitextor-malign
 domains: ['www.elenacaffe1863.com','vade-retro.fr']
-documentAligner: DIC
-#documentAligner: externalMT
+#documentAligner: DIC
+documentAligner: externalMT
 temp: /tmp/transient
 httrack: true
 permanentDir: /tmp/persistent/bitextor-output
@@ -21,11 +21,12 @@ mosesDir: /home/mespla/Programari/mosesdecoder-RELEASE-4.0
 tmx: true
 initCorpusTrainPrefix: [/tmp/persistent/EUconst.en-fr]
 bicleanerCorpusTrainingPrefix: [/tmp/persistent/RF.en-fr]
+bicleanerThreshold: 0.5
 LANG1Tokenizer: /home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -a -b -q -l fr
 LANG2Tokenizer: /home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -a -b -q -l en
-LANG1SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l fr
-LANG2SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l en
+LANG1SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -b -l fr
+LANG2SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -b -l en
 deduped: false
 alignerCmd: ~/Projects/bitextor-malign/snakemake/example/translate.miquel.sh
 #boilerpipeCleaning: True
-#bleualign: true
+bleualign: true
