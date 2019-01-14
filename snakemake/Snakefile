@@ -107,6 +107,7 @@ def ValidateArgs(config):
 
            'deduped': {'type': 'boolean'},
            'domains': {'type': 'list'},
+           'excludeDomains': {'type': 'list'},
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
            'langstatThreshold': {'type': 'integer'},
@@ -335,6 +336,12 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
+def excludeDomains(domains, excludeDomains):
+    for exDomain in excludeDomains:
+        if exDomain in domains:
+            domains.remove(exDomain)
+
+
 def createDomainMap(urls):
     domains={}
     for url in urls:
@@ -435,8 +442,11 @@ else:
     print("Need list of urls or langstat file")
     exit()
 
+if "excludeDomains" in config:
+    excludeDomains(domains, config["excludeDomains"])
+
 domain_2_fulldomains = createDomainMap(domains)
-#print("domains", domains)
+print("domains", domains)
 #print("domain_2_fulldomains", domain_2_fulldomains)
 
 #================================== Creater Moses EMS config========================#
