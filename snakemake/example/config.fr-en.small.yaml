@@ -67,6 +67,10 @@ gpuId: 0
 LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l fr
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
+
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -b -l fr
+LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -b -l en
+
 nmtVocabSize: 30000
 
 mgiza: /home/hieu/permanent/software/mgiza
