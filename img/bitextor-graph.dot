@@ -1,6 +1,5 @@
 digraph Snakemake {
   label="Bitextor Snakemake path chart"
-  node [shape=record];
 
   #Nodes
   Creepy [label="Creepy\n-url"]
@@ -34,7 +33,7 @@ digraph Snakemake {
   TrainNMT -> DocalignNMT [label="!model", style=dotted]
   {DocalignDict,DocalignSMT,DocalignNMT,DocalignCustomMT} -> Docalign
   {DocalignSMT,DocalignNMT,DocalignCustomMT} -> DocalignMT
-  Docalign -> Hunalign
+  {Docalign,DocalignMT} -> Hunalign
   DocalignMT -> Bleualign
   BicleanerTrain -> Bicleaner [label="!config", style=dotted]
   {Hunalign,Bleualign} -> Segclean [style=dashed]
