@@ -57,6 +57,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     langs_parse = args.languages.strip().split(',')
+    #print("langs_parse", langs_parse)
+
     lang_file = {}
     for l in langs_parse:
         if not l.strip():
@@ -68,7 +70,9 @@ if __name__ == "__main__":
             lang_file[l] = gzip.open(os.path.join(
                 args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix,l)), "wb")
 
-    with open_xz_or_gzip_or_plain(args.textFile) as text_reader, open_xz_or_gzip_or_plain(args.langFile) as lang_reader, open_xz_or_gzip_or_plain(args.urlFile) as url_reader:
+    with open_xz_or_gzip_or_plain(args.textFile) as text_reader,\
+            open_xz_or_gzip_or_plain(args.langFile) as lang_reader, \
+            open_xz_or_gzip_or_plain(args.urlFile) as url_reader:
         for line in text_reader:
             text = base64.b64decode(line.strip()).decode("utf-8")
             lang = next(lang_reader, None).strip()
@@ -97,6 +101,6 @@ if __name__ == "__main__":
                 lang_file[lang].write("{0}\t{1}\n".format(
                     uri, extracted_line).encode("utf-8"))
 
-        print("lang_file", lang_file)
+        #print("lang_file", lang_file)
         for f in lang_file:
             lang_file[f].close()
