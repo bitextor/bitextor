@@ -6,6 +6,7 @@ import glob
 import gzip
 import lzma
 import tldextract
+import os
 import os.path
 from tld import get_tld
 from tqdm import tqdm
@@ -18,6 +19,14 @@ from cerberus import Validator
 
 ###########################################################
 # UTILS 
+
+def binaryAvailable(cmd):
+    cmd="command -v "+cmd+" > /dev/null"
+    callout=os.system(cmd)
+    if callout == 0:
+        return True
+    else:
+        return False
 
 def tokeniserCheck(cmd):
     proc = ToolWrapper(cmd.split())
@@ -64,18 +73,17 @@ def open_gzip_or_plain(file_path):
 
 
 def ValidateArgs(config):
-    schema = {'bitextor': {'type': 'string'},
-            'lang1': {'type': 'string', 'maxlength': 2},
-            'lang2': {'type': 'string', 'maxlength': 2},
+    schema = {'bitextor': {'required': True, 'type': 'string'},
+            'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
+            'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
             'temp': {'type': 'string'},
             'minquality': {'type': 'float'},
             'maxlines': {'type': 'integer'},
             'alcazar': {'type': 'boolean'},
 
-           'permanentDir': {'type': 'string'},
-           'transientDir': {'type': 'string'},
+           'permanentDir': {'required': True, 'type': 'string'},
+           'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
-           'jhuLett': {'type': 'boolean'},
            'httrack': {'type': 'boolean'},
            'crawlTld': {'type': 'boolean'},
            'crawlerNumThreads': {'type': 'integer'},
@@ -134,6 +142,34 @@ def ValidateArgs(config):
 
             }
 
+    if "httrack" in config and config["httrack"] == True:
+        if not binaryAvailable("httrack"):
+            sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
+            exit(-1)
+
+    #Mandatory options depending on the document aligner method choosen
+    if "documentAligner" in config:
+        if config["documentAligner"]=='NMT':
+            schema['marianDir']['required']=True
+            schema['subwordNmtDir']['required']=True
+            schema['mosesDir']['required']=True
+            schema['LANG2Detokenizer']['required']=True
+            schema['nmtVocabSize']['required']=True
+            schema['gpuId']['required']=True
+            schema['marianArgs']['required']=True
+            schema['initCorpusTrainPrefix']['required']=True
+            schema['initCorpusDevPrefix']['required']=True
+            schema['initCorpusTestPrefix']['required']=True
+        elif config["documentAligner"]=='SMT':
+            schema['mosesDir']['required']=True
+        elif config["documentAligner"]=='customMT':
+            schema['alignerCmd']['required']=True
+        else:
+            schema['dic']['required']=True
+    else:
+        schema['dic']['required']=True
+
+
     v = Validator(schema)
     #v.allow_unknown = True
 
@@ -187,12 +223,6 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 else:
   boilerpipeCleaning = ''
 
-#Option to use the JHU-pipeline pre-processing tool; it can be only used with HTTrack
-if "jhuLett" in config and config["jhuLett"]==True:
-  LETT="jlett"
-else:
-  LETT="lett"
-
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
   CRAWLTARGET="httrack"
@@ -203,22 +233,22 @@ else:
 if "LANG1Tokenizer" in config:
   WORDTOK1=config["LANG1Tokenizer"]
 else:
-  WORDTOK1=None
+  WORDTOK1="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q"
 
 if "LANG2Tokenizer" in config:
   WORDTOK2=config["LANG2Tokenizer"]
 else:
-  WORDTOK2=None
+  WORDTOK2="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q"
 
 if "LANG1SentenceSplitter" in config:
   SENTTOK1=config["LANG1SentenceSplitter"]
 else:
-  SENTTOK1=None
+  SENTTOK1="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}"
 
 if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
 else:
-  SENTTOK2=None
+  SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}"
 
 #tokeniserCheck(WORDTOK1)
 #tokeniserCheck(WORDTOK2)
