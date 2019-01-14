@@ -56,8 +56,8 @@ class Parser(html.parser.HTMLParser):
 
 
 pathname = os.path.dirname(sys.argv[0])
-sys.path.append(pathname + "/../document-aligner")
-from utils.common import open_xz_or_gzip_or_plain
+sys.path.append(pathname + "/../utils")
+from common import open_xz_or_gzip_or_plain
 #print("pathname", pathname)
 
 def extract_structure_representations(f, docs):

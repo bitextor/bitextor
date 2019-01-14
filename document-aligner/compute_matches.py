@@ -10,8 +10,8 @@ import numpy as np
 
 from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
 
-sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
-from utils.common import open_xz_or_gzip_or_plain
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
+from common import open_xz_or_gzip_or_plain
 
 def munge_file_path(filepath):
   if os.path.isfile(filepath):

@@ -13,11 +13,8 @@ import sys
 import argparse
 from operator import itemgetter
 import lzma
-
-pathname = os.path.dirname(sys.argv[0])
-sys.path.append(pathname + "/document-aligner")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
-#print("pathname", pathname)
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from the standard input) and produces a list of aligned documents. If two ridx files are provided, a bidirectional alignment is performed between them.")
 oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned documents from lang1 to lang2', default=None)

@@ -5,7 +5,7 @@ import argparse
 from collections import defaultdict
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
 

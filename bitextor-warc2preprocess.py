@@ -20,11 +20,7 @@ from boilerpipe.extract import Extractor
 import alcazar.bodytext
 import logging
 import lzma
-
-pathname = os.path.dirname(sys.argv[0])
-if pathname == "":
-  pathname = "."
-sys.path.append(pathname + "/document-aligner")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 
 ######################################################################################

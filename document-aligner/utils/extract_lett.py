@@ -11,7 +11,7 @@ import gzip
 import os
 import string
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/document-aligner/utils")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
 from common import open_xz_or_gzip_or_plain
 import langid
 import html

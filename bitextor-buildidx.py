@@ -13,8 +13,8 @@
 # Generates .idx -> index
 #
 
-import sys
 import os
+import sys
 import string
 import base64
 from html.parser import HTMLParser
@@ -22,8 +22,7 @@ import argparse
 import unicodedata
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from unicodepunct import get_unicode_punct
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/document-aligner/utils")
-from common import open_xz_or_gzip_or_plain
+from utils.common import open_xz_or_gzip_or_plain
 from external_processor import ExternalTextProcessor
 import subprocess
 import re

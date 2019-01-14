@@ -23,9 +23,8 @@ import re
 import base64
 
 pathname = os.path.dirname(sys.argv[0])
-sys.path.append(pathname + "/../document-aligner")
-from utils.common import open_xz_or_gzip_or_plain
-#print("pathname", pathname)
+sys.path.append(pathname + "/../utils")
+from common import open_xz_or_gzip_or_plain
 
 def extract_urls(html_file, url_file, docs):
   with open_xz_or_gzip_or_plain(html_file) as hd:
