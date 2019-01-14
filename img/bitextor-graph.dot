@@ -1,6 +1,5 @@
 digraph Snakemake {
   label="Bitextor Snakemake path chart"
-  node [shape=record];
 
   #Nodes
   Creepy [label="Creepy\n-url"]
