@@ -1,0 +1,100 @@
+# BITEXTOR CONFIG FILE
+
+# GENERAL OPTIONS
+##Directory where Bitextor is installed
+bitextor: /home/bitextor/permanent/bitextor
+##Folders used during processing: temp is the temporal folder (/tmp by default); permanentDir will contain the results of crawling: the parallel corpus built and the WARC files obtained through crawling; transientDir will contain the rest of files generated during processing
+temp: /home/bitextor/transient
+permanentDir: /home/bitextor/permanent/bitextor-output
+transientDir: /home/bitextor/transient
+##Segment spliters and word tokenizers
+LANG1Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
+LANG2Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG1SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
+LANG2SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
+lang1: en
+lang2: fr
+
+
+# CRAWLING OPTIONS
+##HTTrack activation: if it is not activated, Creepy crawler is used
+httrack: true
+##Crawling sources: either a list of domains (without http/https) or a langstat file
+domains: ["www.elenacaffe1863.com","vade-retro.fr"]
+#langstat: /home/bitextor/permanent/langstat/langstats.all.gz
+#langstatThreshold: 50000000
+#langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-domains
+# CREEPY CRAWLER SPECIFIC OPTIONS ##
+##Crawling time limit in seconds (s)
+#crawlTimeLimit: 30s
+##If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
+#crawlTld: false
+##Crawling size limit
+#crawlSizeLimit: 1G
+##Number of threads used by the Creepy crawler
+#crawlerNumThreads: 1
+##Connection timeout limit (Default 10 seconds)
+#crawlerConnectionTimeout: 10
+
+
+# DICTIONARIES
+dic: /home/bitextor/permanent/en-fr.dic
+##Corpus for bilingual dictionaries and-or SMT/NMT training, if dictionary or models not given, respectively.
+initCorpusTrainPrefix: ""
+#Corpus for SMT training
+initCorpusDevPrefix: ""
+initCorpusTestPrefix: ""
+##If enabled, boilerpipe is filtered from HTML's
+boilerpipeCleaning: false
+
+
+# DOCUMENT ALIGNMENT
+##Which document aligner to use:
+##Two possible strategies for document alignment: one based on MT and one based on the use of bilingual dictionaries. Valid options for this parameter are:
+## - SMT or NMT: MT is used for document aligner; trains an SMT or NMT system using the training and development dada defined by options initCorpusTrainPrefix and initCorpusDevPrefix
+## - externalMT: the user should provide a script that runs external MT by taking text in lang1 from the standard input and produces the translation in lang2 to the standard output
+## - DIC: uses a strategy based on the use of a bilingual dictionary (specified in option dic)
+documentAligner: SMT
+docAlignThreshold: 0.1 #Only for MT based
+##Train from scratch a nmt or smt system for output corpora evaluation
+nmt: false
+smt: true
+LANG2Detokenizer: /home/bitextor/Projects/bitextor-malign/preprocess/moses/tokenizer/detokenizer.perl -l en #Only for SMT
+##NMT
+#gpuId: 0
+#nmtVocabSize: 30000
+#marianArgs: [ '--optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000','--overwrite --keep-best --valid-metrics perplexity','--valid-log valid.log --log train.log',' --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2','--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings','--valid-metrics bleu']
+#marianModelFile: model.npz.best-bleu.npz.decoder.yml
+#marianDir: /tmp/permanent/software/marian-dev
+#subwordNmtDir: /home/hieu/permanent/software/subword-nmt
+
+
+# SENTENCE ALIGNMENT
+# BLEUALIGN
+bleualign: false
+#bleuAlignThreshold: 0.2
+##Moses installation directory for smt translation
+mosesDir: /home/bitextor/permanent/software/mosesdecoder
+##MGiza installation directory
+mgiza: /home/bitextor/permanent/bitextor/mgiza
+
+
+# POSTPROCESSING
+##Bicleaner
+#bicleaner: /home/bitextor/bicleaner-model/en-fr/training.en-fr.yaml
+bicleanerThreshold: 0.6
+##Bicleaner model training corpus (note that option initCorpusTrainPrefix also needs to be defined with a different corpus to train probabilistic dictionaries)
+bicleanerCorpusTrainingPrefix: '/tmp/persistent/RF.en-fr'
+##Hunalign score
+##Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)
+minquality: 0
+##Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded
+maxlines: 5
+
+
+# OUTPUT
+#elrc will enable ELRC quality metrics generation; tmx will enable TMX generation; deduped will generate a TXM file without repeated translation units
+elrc: true
+tmx: true
+deduped: false
