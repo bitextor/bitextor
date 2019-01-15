@@ -115,16 +115,6 @@ then
   AC_MSG_ERROR([You don't have pkg-config installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-if test x$ac_cv_path_GAWK = xno
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-
 AC_PATH_PROG(WC, wc, no)
 if test x$ac_cv_path_WC = x
 then
@@ -145,14 +135,14 @@ then
   AC_MSG_ERROR([You don't have grep installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
+AC_PATH_PROG(AWK, awk, no)
+if test x$ac_cv_path_AWK = x
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
-if test x$ac_cv_path_GAWK = xno
+if test x$ac_cv_path_AWK = xno
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
 
 AC_PATH_PROG(CMAKE, cmake, no)
