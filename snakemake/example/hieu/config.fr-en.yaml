@@ -27,7 +27,6 @@ domains: ['www.elenacaffe1863.com','vade-retro.fr']
 ###### BOILERPIPE CLEANING #####
 #If enabled, boilerpipe is not used
 boilerpipeCleaning: true
-jhuLett: false
 
 #Output options: elrc will enable ELRC quality metrics generation; tmx will enable TMX generation; deduped will generate a TXM file without repeated translation units
 tmx: true
