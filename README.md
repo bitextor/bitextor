@@ -33,7 +33,7 @@ Apart from downloading all submodules of this repository (you can do it with `gi
 
 For these system libraries and tools we used **apt** because development is carried-out in a Debian-like environment; we have tested it on Ubuntu 14.04, 16.04 and 18.04. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip3 (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
 
-`user@pc:~$ sudo apt install cmake g++ automake pkg-config python3 python3-pip python3-magic libboost-all-dev libbz2-dev liblzma-dev zlib1g-dev libffi-dev`
+`user@pc:~$ sudo apt install cmake g++ automake pkg-config python3 python3-pip python3-magic libboost-all-dev libbz2-dev liblzma-dev zlib1g-dev libffi-dev openjdk-8-jdk openjdk-8-jre`
 
 Most of the scripts in bitextor are written in Python 3 syntax. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
 
