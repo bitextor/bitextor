@@ -33,4 +33,4 @@ boilerpipe3==1.1
 cerberus==1.2
 alcazar==0.4.0
 python-magic==0.4.15
-mosestokenizer=1.0.0
+mosestokenizer==1.0.0
