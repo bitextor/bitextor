@@ -14,8 +14,8 @@ import locale
 import re
 from xml.sax.saxutils import escape
 
-def printTU(columns, fieldsdict, urls1, urls2):
-  print("   <tu tuid=\""+str(fieldsdict["idnumber"])+"\" datatype=\"Text\">")
+def printTU(columns, fieldsdict, urls1, urls2, idnum):
+  print("   <tu tuid=\""+str(idnum)+"\" datatype=\"Text\">")
   infoTag=[]
   if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
     print("    <prop type=\"score-aligner\">"+fieldsdict['hunalign']+"</prop>")
@@ -65,7 +65,7 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 oparser.add_argument("-q", "--min-length", help="Minimum length ratio between two parts of TU", type=float, dest="minl", default=0.6)
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl", default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
-oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber")
+oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL")
 options = oparser.parse_args()
 
 columns = options.columns.split(',')
@@ -102,8 +102,9 @@ urls1 = set()
 urls2 = set()
 urls1.add(fieldsdict['url1'])
 urls2.add(fieldsdict['url2'])
+idnum=0
 for line in reader:
-
+  idnum+=1
   fields = line.split("\t")
   fields[-1] = fields[-1].strip()
 
@@ -115,7 +116,7 @@ for line in reader:
 
   #if a new segment pair is found:
   if curid != previd:
-    printTU(columns, prevfieldsdict, urls1, urls2) 
+    printTU(columns, prevfieldsdict, urls1, urls2, idnum) 
     prevfieldsdict=fieldsdict
     urls1=set()
     urls2=set()
@@ -124,7 +125,7 @@ for line in reader:
 
   previd=curid
 
-printTU(columns, fieldsdict, urls1, urls2) 
+printTU(columns, fieldsdict, urls1, urls2, idnum) 
 print(" </body>")
 print("</tmx>")
 reader.close()
