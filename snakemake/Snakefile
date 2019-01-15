@@ -257,8 +257,10 @@ if "LANG2SentenceSplitter" in config:
 else:
   SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}"
 
-#tokeniserCheck(WORDTOK1)
-#tokeniserCheck(WORDTOK2)
+tokeniserCheck(WORDTOK1)
+tokeniserCheck(WORDTOK2)
+tokeniserCheck(SENTTOK1)
+tokeniserCheck(SENTTOK2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
