@@ -1,4 +1,4 @@
-bs4==0.0.1
+beautifulsoup==4.4.1
 h5py==2.8.0
 html2text==2018.1.9
 iso-639==0.4.5
