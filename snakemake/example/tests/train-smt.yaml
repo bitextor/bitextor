@@ -41,10 +41,10 @@ domains: ["www.elenacaffe1863.com","vade-retro.fr"]
 # DICTIONARIES
 dic: /home/bitextor/permanent/en-fr.dic
 ##Corpus for bilingual dictionaries and-or SMT/NMT training, if dictionary or models not given, respectively.
-initCorpusTrainPrefix: ""
+initCorpusTrainPrefix: "/home/bitextor/permanent/Europarl.en-fr.train"
 #Corpus for SMT training
-initCorpusDevPrefix: ""
-initCorpusTestPrefix: ""
+initCorpusDevPrefix: "/home/bitextor/permanent/Europarl.en-fr.dev"
+initCorpusTestPrefix: "/home/bitextor/permanent/Europarl.en-fr.test"
 ##If enabled, boilerpipe is filtered from HTML's
 boilerpipeCleaning: false
 
@@ -60,7 +60,7 @@ docAlignThreshold: 0.1 #Only for MT based
 ##Train from scratch a nmt or smt system for output corpora evaluation
 nmt: false
 smt: true
-LANG2Detokenizer: /home/bitextor/Projects/bitextor-malign/preprocess/moses/tokenizer/detokenizer.perl -l en #Only for SMT
+LANG2Detokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/detokenizer.perl -l en #Only for SMT
 ##NMT
 #gpuId: 0
 #nmtVocabSize: 30000
@@ -75,7 +75,7 @@ LANG2Detokenizer: /home/bitextor/Projects/bitextor-malign/preprocess/moses/token
 bleualign: false
 #bleuAlignThreshold: 0.2
 ##Moses installation directory for smt translation
-mosesDir: /home/bitextor/permanent/software/mosesdecoder
+mosesDir: /home/bitextor/permanent/mosesdecoder
 ##MGiza installation directory
 mgiza: /home/bitextor/permanent/bitextor/mgiza
 
