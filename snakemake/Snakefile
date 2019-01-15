@@ -259,8 +259,6 @@ else:
 
 tokeniserCheck(WORDTOK1)
 tokeniserCheck(WORDTOK2)
-tokeniserCheck(SENTTOK1)
-tokeniserCheck(SENTTOK2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
