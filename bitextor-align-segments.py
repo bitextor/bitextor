@@ -136,10 +136,7 @@ oparser.add_argument("--sent-tokeniser_tl", help="Path to the sentence tokeniser
 oparser.add_argument("--word-tokeniser_sl", help="Path to the word tokeniser for SL", dest="wordtok1", default=None)
 oparser.add_argument("--word-tokeniser_tl", help="Path to the word tokeniser for TL", dest="wordtok2", default=None)
 
-
-
 options = oparser.parse_args()
-
 
 if options.aligned_docs == None:
   reader = sys.stdin
