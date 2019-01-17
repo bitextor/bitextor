@@ -34,7 +34,7 @@ import random
 import signal
 import pickle
 import warc
-
+import time
 
 class Document(object):
     def __init__(self, res, url):
@@ -73,6 +73,7 @@ class Crawler(object):
         self.timeout = 10
         self.TLdomain = ""
         self.verbose=False
+        self.delay=0
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -81,6 +82,7 @@ class Crawler(object):
 
         self.targets_lock = Lock()
         self.concurrency_lock = Lock()
+        self.delay_lock = Lock()
 
         logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR)
 
@@ -179,6 +181,10 @@ class Crawler(object):
             return '.'.join(parts[1:])
 
     def _follow_link(self, url, link):
+        #Longer than limit set by the standard RFC7230 are discarded
+        if len(link) > 2000:
+            return None
+
         # Remove anchor
         link = re.sub(r'#[^#]*$', '', link)
 
@@ -204,7 +210,7 @@ class Crawler(object):
         link_host = rx.group(3) if rx.group(3) else url_host
         link_port = rx.group(4) if rx.group(4) else url_port
         link_path = rx.group(5) if rx.group(5) else url_path
-        link_query = quote(rx.group(6), '?=&%') if rx.group(6) else ''
+        link_query = quote(rx.group(6), '?=&%/') if rx.group(6) else ''
 
         if not link_full_url and not link.startswith('/'):
             link_path = normpath(join(url_dir_path, link_path))
@@ -300,18 +306,23 @@ class Crawler(object):
                             host = rx.group(2)
                             path = rx.group(3)
 
+                            #Connections are done with a delay to avoid blocking the server
+                            self.delay_lock.acquire()
                             if protocol == 'http':
                                 conn = http.client.HTTPConnection(host, timeout=self.timeout)
                             else:
                                 conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
-                            conn.request('GET', path)
+                            conn.request('GET', quote(path, '?=&%/'))
                             res = conn.getresponse()
 
                             if res.status >= 301 and res.status <= 308:
                                 rlink = self._follow_link(url, res.getheader('location'))
                                 self._add_target(rlink)
                                 logging.info('redirect: %s -> %s' % (url, rlink))
+                                conn.close()
+                                time.sleep(self.delay)
+                                self.delay_lock.release()
                                 continue
 
                             # Check content type
@@ -319,18 +330,37 @@ class Crawler(object):
                                 if not re.search(self.content_type_filter,
                                     res.getheader('Content-Type')):
                                     sys.stderr.write(url+" discarded: wrong file type\n")
+                                    conn.close()
+                                    time.sleep(self.delay)
+                                    self.delay_lock.release()
                                     continue
                             except TypeError: # getheader result is None
+                                conn.close()
+                                time.sleep(self.delay)
+                                self.delay_lock.release()
                                 continue
 
                             doc = Document(res, url)
+                            conn.close()
+                            time.sleep(self.delay)
+                            self.delay_lock.release()
+
+
                             # Make unique list (these are the links in the document)
                             try:
-                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
-                                    doc.text.decode('utf8'))
+                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('utf8'))
+                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('utf8'))
                             except:
-                              links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
-                                    doc.text.decode('latin1'))
+                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('latin1'))
+
+                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('latin1'))
+
+                                #sys.stderr.write(str(content)+"\n")
+
+                                #content = re.sub('<head>.*</head>', '', content)
+                                #links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
+                                #      content)
+
                             linksset = list(set(links))
                             random.shuffle(linksset)
                             self.process_document(doc)
@@ -341,12 +371,16 @@ class Crawler(object):
 
                             if self.concurrency < self.max_outstanding:
                                 if self.verbose:
-                                  sys.stderr.write("Starting thread\n")
+                                    sys.stderr.write("Starting thread\n")
                                 self._spawn_new_worker()
                     except KeyError as e:
                         # Pop from an empty set
                         break
+
                     except (http.client.HTTPException, EnvironmentError) as e:
+                        time.sleep(self.delay)
+                        self.delay_lock.release()
+
                         if self.sizelimit != None and self.crawlsize > self.sizelimit:
                             self.concurrency_lock.acquire()
                             self.interrupt=True
@@ -385,6 +419,7 @@ oparser.add_argument("-s", help="Total size limit; once it is reached the crawli
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
+oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 5s", dest="delay", required=False, default=5)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
@@ -446,6 +481,7 @@ if not options.URL.startswith("http"):
 crawler = MyCrawler()
 crawler.verbose=options.verbose
 crawler.set_concurrency_level(options.jobs)
+crawler.delay=options.delay
 if options.crawltld:
   crawler.set_follow_mode(Crawler.F_TLD)
 else:

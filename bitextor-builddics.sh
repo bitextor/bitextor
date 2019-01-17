@@ -12,9 +12,8 @@ exit_program()
   echo "   SL_FILE               file containing the source language segments (can be gzipped)"
   echo "   TL_FILE               file containing the target language segments (can be gzipped)"
   echo "   DIC                   output dictionary"
-  echo "   WORDTOKENISER         script used to tokenise words"
-  echo "   LANGTOKSL             source language for word tokenisation"
-  echo "   LANGTOKTL             target language for word tokenisation"
+  echo "   WORDTOKENISERSL       script used to tokenise source language words"
+  echo "   WORDTOKENISERTL       script used to tokenise target language words"
   echo "   PREPROCESSED_CORPUS   folder to store the resulting pre-processed files (tokenised, lowercased and leared). If no folder is specified, a temporal folder is created"
   echo "   PRODUCED_MODELS       folder to store the resulting models obtained as a by-product of the dictionaries building. If no folder is specified, a temporal folder is created"
   exit 1
@@ -106,7 +105,7 @@ TL_LOW_TOKENISED="$PREPROCCORPUS/corpus.tok.low.$TL"
 echo "TOKENISING THE CORPUS..."
 zcat -f $SL_CORPUS | $WORDTOKENISERSL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
-zcat -f $TL_CORPUS | $WORDTOKENISERTL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED & 
+zcat -f $TL_CORPUS | $WORDTOKENISERTL | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus
@@ -164,18 +163,18 @@ tvocabulary={}
 svcb=open(sys.argv[1],"r")
 tvcb=open(sys.argv[2],"r")
 for line in svcb:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   svocabulary[item[0]]=item[1]
 
 for line in tvcb:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   tvocabulary[item[0]]=item[1]
 
 t3dic={}
 t3s=open(sys.argv[3],"r")
 t3t=open(sys.argv[4],"r")
 for line in t3t:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   if item[1] in t3dic:
     t3dic[item[1]][item[0]]=item[2]
   else:
@@ -183,7 +182,7 @@ for line in t3t:
     t3dic[item[1]][item[0]]=item[2]
 
 for line in t3s:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   if item[0] in t3dic:
     if item[1] in t3dic[item[0]]:
       value1=float(t3dic[item[0]][item[1]])
