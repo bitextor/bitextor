@@ -103,7 +103,7 @@ $cattool $SL_CORPUS | python3 -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
+  print(" ".join(wordpunct_tokenize(line.strip())))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $SL_TOKENISED &
 
 if [ "$(file $TL_CORPUS|cut -d ' ' -f 2)" == "gzip" ]; then
     cattool="zcat"
@@ -114,7 +114,7 @@ $cattool $TL_CORPUS | python3 -c 'import sys
 #from nltk.tokenize.punkt import PunktWordTokenizer
 from nltk import wordpunct_tokenize
 for line in sys.stdin:
-  print(" ".join(wordpunct_tokenize(line.decode("utf-8").strip())).encode("utf-8"))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
+  print(" ".join(wordpunct_tokenize(line.strip())))' | sed "s/&apos;/'/g" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' > $TL_TOKENISED 
 wait
 
 #Lowercasing the corpus
@@ -172,18 +172,18 @@ tvocabulary={}
 svcb=open(sys.argv[1],"r")
 tvcb=open(sys.argv[2],"r")
 for line in svcb:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   svocabulary[item[0]]=item[1]
 
 for line in tvcb:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   tvocabulary[item[0]]=item[1]
 
 t3dic={}
 t3s=open(sys.argv[3],"r")
 t3t=open(sys.argv[4],"r")
 for line in t3t:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   if item[1] in t3dic:
     t3dic[item[1]][item[0]]=item[2]
   else:
@@ -191,7 +191,7 @@ for line in t3t:
     t3dic[item[1]][item[0]]=item[2]
 
 for line in t3s:
-  item=line.decode("utf-8").strip().split(" ")
+  item=line.strip().split(" ")
   if item[0] in t3dic:
     if item[1] in t3dic[item[0]]:
       value1=float(t3dic[item[0]][item[1]])

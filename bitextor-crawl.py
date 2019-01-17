@@ -210,7 +210,7 @@ class Crawler(object):
         link_host = rx.group(3) if rx.group(3) else url_host
         link_port = rx.group(4) if rx.group(4) else url_port
         link_path = rx.group(5) if rx.group(5) else url_path
-        link_query = quote(rx.group(6), '?=&%') if rx.group(6) else ''
+        link_query = quote(rx.group(6), '?=&%/') if rx.group(6) else ''
 
         if not link_full_url and not link.startswith('/'):
             link_path = normpath(join(url_dir_path, link_path))
@@ -313,7 +313,7 @@ class Crawler(object):
                             else:
                                 conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
-                            conn.request('GET', path)
+                            conn.request('GET', quote(path, '?=&%/'))
                             res = conn.getresponse()
 
                             if res.status >= 301 and res.status <= 308:
