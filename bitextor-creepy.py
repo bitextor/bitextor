@@ -376,7 +376,6 @@ class Crawler(object):
                     except KeyError as e:
                         # Pop from an empty set
                         break
->>>>>>> bitextor-malign-stable
 
                     except (http.client.HTTPException, EnvironmentError) as e:
                         time.sleep(self.delay)
