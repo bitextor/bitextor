@@ -1,0 +1,45 @@
+digraph Snakemake {
+  label="Bitextor Snakemake path chart"
+
+  #Nodes
+  Creepy [label="Creepy\n-url"]
+  Httrack [label="Httrack\n-url"]
+  LETT [label="LETT\n-boiler"]
+  DocalignDict [label="Docalign Dict\n-dic\n-wordtok1\n-wordtok2"]
+  DocalignSMT [label="Docalign SMT\n-doc_threshold\n-wordtok1\n-mosesdir\n-model"]
+  DocalignNMT [label="Docalign NMT\n-doc_threshold\n-wordtok1\n-mariandir\n-mosesdir\n-subword_nmt_dir\n-detok2\n-gpuid\n-marian_args\n-wordtok1\n-wordtok2"]
+  DocalignCustomMT [label="Docalign Custom MT\n-doc_threshold\n-mt_command\n-wordtok1"]
+  TrainSMT [label="Train SMT\n-dev corpus\n-test corpus\n-crawl"]
+  TrainNMT [label="Train NMT\n-train corpus\n-test corpus\n-dev corpus"]
+  SymmetriseDic [label="Symmetrise Dict.\n-corpus_dict"]
+  Docalign [style=dashed]
+  DocalignMT [label="Docalign MT", style=dashed]
+  Hunalign [label="Hunalign\n-dict\n-wordtok1\n-wordtok2\n-senttok1\n-senttok2"]
+  Bleualign [label="Bleualign\n-matches"]
+  Segclean [label="Segment Clean\n-min_quality\n-max_lines"]
+  Bicleaner [label="Bicleaner\n-config\n-threshold"]
+  BicleanerTrain [label="Bicleaner Train\n-corpus_bicleaner"]
+  ELRC
+  Preproc [style=dashed]
+  Sents [style=rounded]
+  TMX [style=rounded]
+  DedupTMX [style=rounded]
+
+  #Relations
+  {Creepy,Httrack} -> LETT [style=dashed]
+  LETT -> {DocalignDict,DocalignSMT,DocalignNMT,DocalignCustomMT}
+  SymmetriseDic -> {DocalignDict,Hunalign} [label="!dict", style=dotted]
+  TrainSMT -> DocalignSMT [label="!model", style=dotted]
+  TrainNMT -> DocalignNMT [label="!model", style=dotted]
+  {DocalignDict,DocalignSMT,DocalignNMT,DocalignCustomMT} -> Docalign
+  {DocalignSMT,DocalignNMT,DocalignCustomMT} -> DocalignMT
+  {Docalign,DocalignMT} -> Hunalign
+  DocalignMT -> Bleualign
+  BicleanerTrain -> Bicleaner [label="!config", style=dotted]
+  {Hunalign,Bleualign} -> Segclean [style=dashed]
+  {Segclean,Bicleaner,ELRC} -> Preproc [style=dashed]
+  {Segclean,Bicleaner} -> ELRC [style=dashed]
+  Segclean -> Bicleaner
+  Preproc -> {Sents,TMX,DedupTMX}
+
+}

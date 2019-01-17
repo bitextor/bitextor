@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 
-#
-# 1. Leer .lettr y cargarlo en memoria
-# 2. Leer .ridx e ir haciendo distancia de edicion
-# 3. Con el porcentaje de parecido anterior y el nuevo se realiza:
-#      nuevo_porcentaje = ant_porcentaje * dist_porcentaje
-#    donde:
-#      dist_porcentaje = longitud(raspa1) / (longitud(raspa1) + dist)
-# 4. Se muestran los 10 documentos con los porcentajes actualizados
-#
-# Formato final del documento:
-# num_doc_lang1    [num_doc_lang2:ratio]+
-#
-# Genera .ridx -> reverse index
-#
-
-
+import os
 import sys
 import base64
 import math

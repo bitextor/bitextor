@@ -257,9 +257,6 @@ if "LANG2SentenceSplitter" in config:
 else:
   SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
 
-tokeniserCheck(WORDTOK1)
-tokeniserCheck(WORDTOK2)
-
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
@@ -353,6 +350,9 @@ if "bicleaner" in config:
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
   BICLEANER_SORT="-r -k6,6 -k3,4"
+  tokeniserCheck(WORDTOK1)
+  tokeniserCheck(WORDTOK2)
+
 else:
   BICLEANEROPTION=""
   BICLEANER_SORT="-k3,4"
@@ -789,8 +789,6 @@ rule warc2preprocess:
 
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
-
-
 rule lettr2idx:
     input:
         text='{target}/plain_text.xz',
@@ -1002,6 +1000,14 @@ rule aligndocumentsMarekCustomMT:
     shell:
         'python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} > {output}'
 
+rule aligndocumentsMarekSMT:
+    input:
+        lett="{target}/lett.xz",
+        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+    output:
+        '{target}/docalign.marek-smt'
+    shell:
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 #================================== SEGMENT ALIGNMENT ==================================#
 

@@ -23,8 +23,8 @@
   "bicleanerCorpusTrainingPrefix": ["/tmp/persistent/RF.en-fr"],
   "LANG1Tokenizer": "/home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -b -l fr",
   "LANG2Tokenizer": "/home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -b -l en",
-  "LANG1SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l fr",
-  "LANG2SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -l en",
+  "LANG1SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr",
+  "LANG2SentenceSplitter": "/home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -q -b -l en",
   "deduped": true
 }
 
