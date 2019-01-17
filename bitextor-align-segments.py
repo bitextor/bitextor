@@ -168,7 +168,7 @@ for line in reader_list:
   extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
   extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
 
-tmp_file.close()
+tmp_file1.close()
 tmp_file1_origtext.close()
 tmp_file2.close()
 tmp_file2_origtext.close()
