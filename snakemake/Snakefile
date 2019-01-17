@@ -499,7 +499,7 @@ def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     lines[13] = "#" + lines[13]
 
     lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
-    lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=mgiza)
+    lines[27] = "external-bin-dir = {mgiza}/mgizapp/bin".format(mgiza=mgiza)
     lines[79] = "jobs = 10"
     lines[146] = "settings = \"--prune '0 0 1' -T $working-dir/lm -S 20% --discount_fallback\" "
     lines[310] = "training-options = \"-mgiza -mgiza-cpus 8\""
@@ -659,7 +659,7 @@ rule train_smt_all:
     output:
         report = "{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
-        cmd = "cd {transient}/smt-dir &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
+        cmd = "cd {transient}/smt-dir && {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
 
 rule train_smt_all_create_config:
@@ -1002,12 +1002,13 @@ rule aligndocumentsMarekCustomMT:
 
 rule aligndocumentsMarekSMT:
     input:
-        lett="{target}/lett.xz",
-        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        text='{target}/plain_text.xz',
+        url='{target}/url.xz'
     output:
         '{target}/docalign.marek-smt'
     shell:
-        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
+        'python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} > {output}'
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
