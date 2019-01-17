@@ -925,6 +925,14 @@ rule aligndocumentsMarekCustomMT:
     shell:
         'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
+rule aligndocumentsMarekSMT:
+    input:
+        lett="{target}/lett.xz",
+        matches="{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+    output:
+        '{target}/docalign.marek-smt'
+    shell:
+        'xzcat -T 0 -f {input.lett} | python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --threshold {DOC_THRESHOLD} > {output}'
 
 #================================== SEGMENT ALIGNMENT ==================================#
 

@@ -56,6 +56,7 @@ boilerpipeCleaning: false
 ## - externalMT: the user should provide a script that runs external MT by taking text in lang1 from the standard input and produces the translation in lang2 to the standard output
 ## - DIC: uses a strategy based on the use of a bilingual dictionary (specified in option dic)
 documentAligner: externalMT
+alignerCmd: "bash example/translate.sh"
 docAlignThreshold: 0.1 #Only for MT based
 ##Train from scratch a nmt or smt system for output corpora evaluation
 nmt: false
