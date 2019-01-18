@@ -116,6 +116,8 @@ def ValidateArgs(config):
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
            'excludeHosts': {'type': 'list'},
+           'linksHosts': {'type': 'list'},
+
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
            'langstatThreshold': {'type': 'integer'},
@@ -452,6 +454,28 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print(len(hostsToCrawl), " hosts found", file=sys.stderr)
     return hostsToCrawl
 
+def LinkHosts(permanent, dir, hosts):
+    #print("dir", dir)
+    cmd = "mkdir -p " + permanent + "/warc"
+    shell(cmd)
+
+    with gzip.open(dir + "/hosts.gz", 'rt') as f:
+        otherHosts = f.read().splitlines()
+
+    otherHosts = set(otherHosts)
+    print("otherHosts", otherHosts)
+
+    for host in hosts:
+        if host in otherHosts:
+            dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
+
+            if not os.path.exists(dest):
+                cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                print(cmd)
+                shell(cmd)
+
+
+###############################################################################################
 if "hosts" in config:
     print("hosts given")
     hosts = config["hosts"]
@@ -477,6 +501,10 @@ elif "langstat" in config:
 else:
     print("Need list of hosts or langstat file")
     exit()
+
+if "linksHosts" in config:
+    for dir in config["linksHosts"]:
+        LinkHosts(permanent, dir, hosts)
 
 if "excludeHosts" in config:
     ExcludeHosts(hosts, config["excludeHosts"])
