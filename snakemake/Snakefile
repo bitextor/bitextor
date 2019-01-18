@@ -1333,21 +1333,21 @@ rule lowercase:
 
 rule tokenize_file_l1:
     input: 
-         expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG1)
+         expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG1)
     output:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}"
+        "zcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}"
 
 rule tokenize_file_l2:
     input:
-         expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=LANG2)
+         expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG2)
     output:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p {preprocCorpusDir}; "
-        "xzcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}"
+        "zcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}"
 
 if "bicleanerCorpusTrainingPrefix" in config:
     bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
