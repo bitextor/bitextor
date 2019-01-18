@@ -463,7 +463,7 @@ def LinkHosts(permanent, dir, hosts):
         otherHosts = f.read().splitlines()
 
     otherHosts = set(otherHosts)
-    print("otherHosts", otherHosts)
+    #print("otherHosts", otherHosts)
 
     for host in hosts:
         if host in otherHosts:
@@ -471,7 +471,7 @@ def LinkHosts(permanent, dir, hosts):
 
             if not os.path.exists(dest):
                 cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
-                print(cmd)
+                #print(cmd)
                 shell(cmd)
 
 
