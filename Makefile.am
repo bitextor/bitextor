@@ -27,7 +27,7 @@ compile-kenlm:
 	cd kenlm && cmake . && make -j4
 
 compile-bleualign:
-	cd bleualign-cpp && cmake . && make
+	cd bleualign-cpp && cmake . && make && make install
 
 compile-clustercat:
 	cd clustercat && make 
