@@ -114,7 +114,7 @@ def ValidateArgs(config):
            'elrc': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
-           'domains': {'type': 'list'},
+           'hosts': {'type': 'list'},
            'excludeDomains': {'type': 'list'},
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
@@ -379,7 +379,7 @@ def excludeDomains(domains, excludeDomains):
             domains.remove(exDomain)
 
 
-def createDomainMap(urls):
+def createDomainKey2HostMap(urls):
     domains={}
     for url in urls:
         domain = tldextract.extract(url).domain
@@ -453,38 +453,38 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
     print(len(domains_to_crawl), " domains found", file=sys.stderr)
     return domains_to_crawl
 
-if "domains" in config:
-    print("domains given")
-    domains = config["domains"]
-elif os.path.isfile(permanent + "/domains.gz"):
-    print("read domains from file")
+if "hosts" in config:
+    print("hosts given")
+    hosts = config["hosts"]
+elif os.path.isfile(permanent + "/hosts.gz"):
+    print("read hosts from file")
 
-    with gzip.open(permanent + "/domains.gz", 'rt') as f:
-        domains = f.read().splitlines()
+    with gzip.open(permanent + "/hosts.gz", 'rt') as f:
+        hosts = f.read().splitlines()
 
 elif "langstat" in config:
-    print("find domains in langstat")
+    print("find hosts in langstat")
     langstat_path = config["langstat"]
     lang1 = config["lang1"]
     lang2 = config["lang2"]
     threshold = int(config["langstatThreshold"])
     exclude_path = config["langstatExcludeDomains"]
 
-    domains = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+    hosts = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 
-    with gzip.open(permanent + "/domains.gz", 'wt') as f:
-        for item in domains:
+    with gzip.open(permanent + "/hosts.gz", 'wt') as f:
+        for item in hosts:
             f.write("%s\n" % item)
 else:
     print("Need list of urls or langstat file")
     exit()
 
 if "excludeDomains" in config:
-    excludeDomains(domains, config["excludeDomains"])
+    excludeDomains(hosts, config["excludeDomains"])
 
-domain_2_fulldomains = createDomainMap(domains)
-print("domains", domains)
-#print("domain_2_fulldomains", domain_2_fulldomains)
+domainKey2Hosts = createDomainKey2HostMap(hosts)
+#print("hosts", hosts)
+#print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
 def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
@@ -758,7 +758,7 @@ rule httrack_download:
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent, subdomain=domain_2_fulldomains[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent, subdomain=domainKey2Hosts[w.target], crawler=CRAWLTARGET)
     output:
         "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
     priority: 9
@@ -1102,7 +1102,7 @@ rule elrc:
 
 rule sents:
     input:
-        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
@@ -1110,7 +1110,7 @@ rule sents:
 
 rule tmx:
     input:
-        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
@@ -1118,7 +1118,7 @@ rule tmx:
 
 rule deduped_tmx:
     input:
-        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domain_2_fulldomains.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{dir}".format(dir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
