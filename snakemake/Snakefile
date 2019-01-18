@@ -115,7 +115,7 @@ def ValidateArgs(config):
 
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
-           'excludeDomains': {'type': 'list'},
+           'excludeHosts': {'type': 'list'},
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
            'langstatThreshold': {'type': 'integer'},
@@ -373,23 +373,17 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def excludeDomains(domains, excludeDomains):
-    for exDomain in excludeDomains:
-        if exDomain in domains:
-            domains.remove(exDomain)
-
-
-def createDomainKey2HostMap(urls):
+def CreateDomainKey2HostMap(hosts):
     domains={}
-    for url in urls:
-        domain = tldextract.extract(url).domain
+    for host in hosts:
+        domain = tldextract.extract(host).domain
         if domain not in domains:
             domains[domain]=[]
-        domains[domain].append(url)
-        #print("subdomain", domain, url)
+        domains[domain].append(host)
+        #print("subdomain", domain, host)
     return domains
 
-def loadDomains(file_path):
+def LoadDomains(file_path):
     domains = set()
     with file_path.open("r") as f:
         for line in f:
@@ -399,22 +393,27 @@ def loadDomains(file_path):
 
     return domains
 
-def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+def ExcludeHosts(hosts, excludeHosts):
+    for exHost in excludeHosts:
+        if exHost in hosts:
+            hosts.remove(exHost)
+
+def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
 
     excluded_set = set()
     if exclude_path:
-        excluded_set = loadDomains(Path(exclude_path))
+        excluded_set = LoadDomains(Path(exclude_path))
 
-    domains_to_crawl = set()
+    hostsToCrawl = set()
 
     sys.stderr.write(
         "Gathering domain information for {0} and {1}...\n".format(*l12))
     with tqdm(total=None) as pbar:
         with open_gzip_or_plain(langstat_path) as f:
 
-            prevDomain = ""
+            prevHost = ""
             langContent = {}
 
             for line in f:
@@ -422,19 +421,19 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
                 if len(split_line) != 3:
                     continue
 
-                domain, lang, byte_len = split_line
-                name = tldextract.extract(domain).domain
-                #print("processing ", domain, lang.lower(), byte_len, name)
+                host, lang, byte_len = split_line
+                name = tldextract.extract(host).domain
+                #print("processing ", host, lang.lower(), byte_len, name)
 
-                if domain != prevDomain:
-                    # start of new domain. Process previous entries
+                if host != prevHost:
+                    # start of new host. Process previous entries
                     if len(langContent) == 2:
                         lang1_bytes = langContent[l12[0]]
                         lang2_bytes = langContent[l12[1]]
                         if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                            domains_to_crawl.add(prevDomain)
+                            hostsToCrawl.add(prevHost)
 
-                    prevDomain = domain
+                    prevHost = host
                     langContent = {}
 
                 if lang.lower() in l12 and name not in excluded_set:
@@ -442,16 +441,16 @@ def getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_p
 
                 pbar.update(1)
 
-            # last domain
+            # last host
             if len(langContent) == 2:
                 lang1_bytes = langContent[l12[0]]
                 lang2_bytes = langContent[l12[1]]
                 if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                    domains_to_crawl.add(prevDomain)
+                    hostsToCrawl.add(prevHost)
 
 
-    print(len(domains_to_crawl), " domains found", file=sys.stderr)
-    return domains_to_crawl
+    print(len(hostsToCrawl), " hosts found", file=sys.stderr)
+    return hostsToCrawl
 
 if "hosts" in config:
     print("hosts given")
@@ -470,24 +469,24 @@ elif "langstat" in config:
     threshold = int(config["langstatThreshold"])
     exclude_path = config["langstatExcludeDomains"]
 
-    hosts = getFullDomainsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+    hosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
 
     with gzip.open(permanent + "/hosts.gz", 'wt') as f:
-        for item in hosts:
-            f.write("%s\n" % item)
+        for host in hosts:
+            f.write("%s\n" % host)
 else:
-    print("Need list of urls or langstat file")
+    print("Need list of hosts or langstat file")
     exit()
 
-if "excludeDomains" in config:
-    excludeDomains(hosts, config["excludeDomains"])
+if "excludeHosts" in config:
+    ExcludeHosts(hosts, config["excludeHosts"])
 
-domainKey2Hosts = createDomainKey2HostMap(hosts)
+domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #print("hosts", hosts)
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
-def createMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
+def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
     with open("{mosesDir}/scripts/ems/example/config.basic.moses2".format(mosesDir=mosesDir), "r") as file:
         lines = file.read().split("\n")
         print("lines", len(lines))
@@ -646,7 +645,7 @@ rule train_smt_with_crawl_data_create_config:
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        createMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
+        CreateMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
                             MOSESDIR, config["mgiza"],
                             trainData,
                             config["initCorpusDevPrefix"],
@@ -674,7 +673,7 @@ rule train_smt_all_create_config:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
-        createMosesEMSConfig("{0}/smt-dir".format(transient),
+        CreateMosesEMSConfig("{0}/smt-dir".format(transient),
                             MOSESDIR, config["mgiza"],
                             config["initCorpusTrainPrefix"],
                             config["initCorpusDevPrefix"],
