@@ -1,5 +1,5 @@
 bitextor: /home/bitextor/permanent/bitextor
-domains: ["www.elenacaffe1863.com"]
+hosts: ["www.elenacaffe1863.com"]
 temp: /home/bitextor/transient
 httrack: false
 permanentDir: /home/bitextor/permanent/bitextor-output

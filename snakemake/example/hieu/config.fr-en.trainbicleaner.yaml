@@ -1,5 +1,5 @@
 bitextor: /home/hieu/permanent/software/bitextor
-domains: ['www.elenacaffe1863.com','vade-retro.fr']
+hosts: ['www.elenacaffe1863.com','vade-retro.fr']
 documentAligner: DIC
 #documentAligner: externalMT
 temp: /tmp
