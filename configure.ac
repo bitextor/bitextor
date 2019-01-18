@@ -165,41 +165,6 @@ then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
 
-AC_ARG_WITH([apertium],
-            [AS_HELP_STRING([--with-apertium],
-              [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
-            [],
-            [with_apertium=no])
-
-AS_IF([test "x$with_apertium" != yes],
-  AC_MSG_WARN([You are not using apertium as morphological analyser. In case you want to use it, install it and use with option --with-apertium])
-)
-
-          
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-])
-
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-retxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-])
-
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
   AC_MSG_CHECKING([for Levenshtein for Python])
