@@ -4,134 +4,39 @@
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. To run it, it is necessary to provide:
-1. The source where the parallel data will be searched: a web site (the URL of the web site), a list of web sites, an [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file, or the path to a directory containing a crawled website.
-2. The two languages on which the user is interested: language IDs must be provided following the ISO [639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)) or a machine translation system, depending on the document-alignment strategy choosen
-
-The tool works following a sequence of steps (scripts sorted by default use):
-
-1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file as input);
-4. Document align:
-* Bitextor document aligner
-  * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
-  * The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
-  * The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
-  * The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
-* or Paracrawl document aligner `document-aligner/doc_align`
-5. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `bicleaner/bicleaner-classifier-full`
-6. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
-
-It is worth noting that each of these steps can be run separately.
-
+`bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
+1. The source where the parallel data will be searched: one or more [website hostnames](https://en.wikipedia.org/wiki/URL)
+2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the document-alignment strategy choosen)
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this reposotory from scratch; in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary to build and install the project. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences. In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
 
-For these system libraries and tools we used **apt** because development is carried-out in a Debian-like environment; we have tested it on Ubuntu 14.04, 16.04 and 18.04. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip3 (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`user@pc:~$ sudo apt install cmake g++ automake pkg-config python3 python3-pip python3-magic libboost-all-dev libbz2-dev liblzma-dev zlib1g-dev libffi-dev openjdk-8-jdk openjdk-8-jre`
+`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev libffi-dev`
 
-Most of the scripts in bitextor are written in Python 3 syntax. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
+Most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
 
-Some external Python libraries should also be installed before starting the installation of bitextor:
-
-- **python-Levenshtein**: Python library for computing the Levenshtein edit-distance.
-- **LangID.py**: Python library for plain text language detection.
-- **regex**: Python package for regular expressions in Python.
-- **NLTK**: Python package with natural language processing utilities.
-- **numpy**: Python package for scientific computing with Python.
-- **keras**: Python package for implementing neural networks for deep learning.
-- **h5py**: Pythonic interface to the HDF5 binary data format.
-- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
-using `pip3 install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
-- **iso-639**: Python package to convert between language names and ISO-639 codes
-- **ftfy**: Python package to fix encoding conversion issues
-- **lxml**: Python package to parse XML
-- **html5lib**: Python package used to parse HTML 
-
-Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
-- **bs4**: BeautifulSoup4 is a Python package for HTML/XML processing and cleaning
-- **html2txt**: text extractor from HTML, created by Aaron Swartz
-- **cld2**: Chromium language detector, by Google. Install through pip3 package `cld2-cffi`
-
-We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip3 (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run:
-
-`user@pc:~$ sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py ftfy warc3-wet snakemake`
-
-To ensure you are using the minimum required versions of the needed libraries, if you didn't run the previous command, you should run:
+Some additional Python libraries are required. They can be installed automatically with the tool pip by runing:
 
 `user@pc:~$ sudo pip3 install -r requirements.txt`
 
-If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0), also do that if you are using an [AMD CPU and you are having errors when importing](https://github.com/tensorflow/tensorflow/issues/17411):
+The web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
-`sudo pip3 install tensorflow==1.4.1`
-
-Most of these pip3 packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
-
-
-### Optional dependences
-
-In case you want to use HTTrack instead of integrated Creepy crawler just:
 `sudo apt install httrack`
 
-In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
-
-For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
-
-For optional document aligner from Paracrawl team read the document-aligner/README.md file to install all dependencies in Python 3.
+This dependency is not mandatory as a second parallel data crawler is provided in Bitextor.
 
 ## Install
 
-To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
+To install bitextor you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
 
 ```
 user@pc:~$ ./autogen.sh
 user@pc:~$ make
-user@pc:~$ sudo make install
 ```
-
-In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
-
-```
-user@pc:~$ ./autogen.sh --prefix=LOCALDIR
-user@pc:~$ make
-user@pc:~$ make install
-```
-
-where LOCALDIR can be any directory where you have writing permission, such as `~/local`.
-
-In both examples, Apertium is an optional requirement and a warning will be prompted to the user if this tool is not installed when running configure. If you want to use this tool you can run configure with the option --with-apertium, but again, it is purely optional:
-
-```
-user@pc:~$ ./autogen.sh --prefix=LOCALDIR --with-apertium
-user@pc:~$ make
-user@pc:~$ make install
-```
-
-Compiling the bleualign implementation provided in Bitextor requieres having libboost installed. However, some installations of libboost do not contain all the libraries required to manage xz compressed files. In case of having difficulties during installation, remove your current installation and perform a manual installation in the following way:
-```
-wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
-tar xvf boost_1_66_0.tar.gz
-cd boost_1_66_0/
-./bootstrap.sh
-sudo ./b2 -j16 --layout=system install || echo FAILURE
-cd ..
-rm -rf boost_1_66_0*
-```
-
-
-
-
-Some more tools are included in the bitextor package and will be installed together with bitextor:
-- hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
-- mgiza: machine translation package, here used for building probabilistic bilingual dictionaries (<https://github.com/moses-smt/mgiza>)
-- clustercat: Fast Word Clustering program, parallelised alternative to mkcls (<https://github.com/jonsafari/clustercat>)
-- boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>)
-
 
 ## Run
 
@@ -158,3 +63,20 @@ A sample configuration file (`baseline.conf`) can be found in this repository. T
 Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
 
 Test your installation and parameters with this [sample of running bitext](https://github.com/bitextor/bitextor/wiki/Sample-of-a-bitext).
+
+## Pipeline description
+
+Bitextor is a pipeline that runs a collection of scripts to produce a parallel corpus from a collection of multilingual websites. The pipeline is divided in five stages:
+1. **Crawling**: documents are downloaded from the specified websites
+2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
+3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
+  1. one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
+  2. another using machine translation and a [TF/IDF ](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
+  1. one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
+  2. another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
+5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quialtity metrics
+
+The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
+
+![Banner](img/bitextor7.png?raw=true)
