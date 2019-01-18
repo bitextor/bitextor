@@ -1,110 +1,70 @@
-#Directory where Bitextor is installed
-bitextor: /home/mespla/Projects/bitextor-malign
+bitextor: /home/hieu/permanent/software/bitextor
+  #"domains:  ["www.elenacaffe1863.com","vade-retro.fr"],
 
-#Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
+  #"langstat: /home/hieu/permanent/software/langstat/1k.gz
+  #"langstatThreshold: 10,
+    
+langstat: /home/hieu/transient/langstat/langstats.all.gz
+langstatThreshold: 50000
+
+langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
+temp: /mnt/tmp
+permanentDir: /home/hieu/permanent/fr-en
+transientDir: /home/hieu/transient/fr-en
 lang1: fr
 lang2: en
-
-#Folders used during processing: temp is the temporal folder (/tmp by default); permanentDir will contain the results of crawling: the parallel corpus built and the WARC files obtained through crawling; transientDir will contain the rest of files generated during processing
-temp: /tmp
-permanentDir: /tmp/persistent/bitextor-output
-transientDir: /tmp/transient
-
-#Segment spliters and word tokenizers
-LANG1Tokenizer: /home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -l fr
-LANG2Tokenizer: /home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/tokenizer.perl -l en
-LANG2Detokenizer: /home/mespla/Projects/bitextor-malign/preprocess/moses/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
-LANG2SentenceSplitter: /home/mespla/Projects/bitextor-malign/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-
-#Crawling sources: either a list of domains (without http/https) or a langstat file
-#TODO: control 
-hosts: ['www.elenacaffe1863.com','vade-retro.fr']
-#langstat: /home/hieu/permanent/software/langstat/langstats.all.gz
-#langstatThreshold: 50000000
-#langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
-
-###### BOILERPIPE CLEANING #####
-#If enabled, boilerpipe is not used
-boilerpipeCleaning: true
-
-#Output options: elrc will enable ELRC quality metrics generation; tmx will enable TMX generation; deduped will generate a TXM file without repeated translation units
+  #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
+minquality: 0
+maxlines: 5
+crawlTimeLimit: 43200s
 tmx: true
-elrc: true
-deduped: true
-
-##### CRAWLING OPTIONS #####
-##Crawling time limit in seconds (s)
-crawlTimeLimit: 3600s
-
-## CREEPY CRAWLER SPECIFIC OPTIONS ##
-#Crawling size limit
-crawlSizeLimit: 1G
-#Number of threads used by the Creepy crawler
-crawlerNumThreads: 1
-#Connection timeout limit (Default 10 seconds)
-crawlerConnectionTimeout: 10
-
-#HTTrack activation: if it is not activated, Creepy crawler is used
+nmt: true
+smt: true
 httrack: true
 
-##### CREEPY CRAWLING OPTIONS #####
-#TODO: add rest of options
+elrc: true
+crawlerNumThreads: 2
 crawlTld: false
-
-##### BICLEANER OPTIONS #####
-#path to the yaml file of the model used;
-bicleaner: /home/mespla/fr-en/training.en-fr.yaml
-#bicleaner score threshold (between 0.0 and 1.0)
-bicleanerThreshold: 0.6
-#if no model is available at the path specified in option bicleaner, a new model will be trained by using the corpus defined at bicleanerCorpusTrainingPrefix (note that option initCorpusTrainPrefix also needs to be dfined to train probabilistic dictionaries)
-bicleanerCorpusTrainingPrefix: ['/tmp/persistent/RF.en-fr']
-
-
-##### BLEUALIGN OPTIONS #####
-#Activates bleualign as the segment aligner; Hunalign is used if bleualign is not enabled
-bleualign: false
-#Bleualign score threshold for segment filtering (from 0.0 to 1.0)
+  #"bicleanerThreshold: 0.7
+bicleaner: /home/hieu/transient/fr-en/bicleaner/en-fr.yaml
+bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"]
+documentAligner: SMT
+alignerCmd: marek-smt
+bleualign: true
+docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 
-##### DOCUMENT ALIGNER ######
-#Two possible strategies for document alignment: one based on MT and one based on the use of bilingual dictionaries. Valid options for this parameter are:
-# - SMT or NMT: MT is used for document aligner; trains an SMT or NMT system using the training and development dada defined by options initCorpusTrainPrefix and initCorpusDevPrefix
-# - externalMT: the user should provide a script that runs external MT by taking text in lang1 from the standard input and produces the translation in lang2 to the standard output
-# - DIC: uses a strategy based on the use of a bilingual dictionary (specified in option dic)
-documentAligner: DIC
-docAlignThreshold: 0.1
-
-##### MT-BASED MACHINE TRANSLATION ######
-#alignerCmd: marek-smt
-initCorpusTrainPrefix: ['/tmp/persistent/EUconst.en-fr']
-#initCorpusTrainPrefix: ['/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en']
-#initCorpusDevPrefix: ['/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006']
-#initCorpusTestPrefix: ['/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006','/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007']
-
-##### NMT #####
-gpuId: 0
-nmtVocabSize: 30000
-marianArgs: [ '--optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000','--overwrite --keep-best --valid-metrics perplexity','--valid-log valid.log --log train.log',' --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2','--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings','--valid-metrics bleu']
-marianModelFile: model.npz.best-bleu.npz.decoder.yml
-marianDir: /tmp/permanent/software/marian-dev
+marianDir: /home/hieu/permanent/software/marian-dev
 subwordNmtDir: /home/hieu/permanent/software/subword-nmt
-
-##### SMT #####
-#Moses installation directory
 mosesDir: /home/hieu/permanent/software/mosesdecoder
-#MGiza installation directory
+
+marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
+                 " --overwrite --keep-best --valid-metrics perplexity",
+                 " --valid-log valid.log --log train.log",
+                 " --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2 ",
+                 "--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings",
+                 "--valid-metrics bleu"
+                ]
+#marianModelFile: model.npz.decoder.yml
+#marianModelFile: model.npz.best-perplexity.npz.decoder.yml
+marianModelFile: model.npz.best-bleu.npz.decoder.yml
+
+initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en",
+                       ]
+initCorpusDevPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"]
+initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
+                       "/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/devtest2006",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/nc-devtest2007",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
+
+gpuId: 0
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l fr
+LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
+LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l fr
+LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
+
+nmtVocabSize: 30000
+
 mgiza: /home/hieu/permanent/software/mgiza
-
-##### DICTIONARY-BASED DOCUMENT ALIGNMENT #####
-#Path to the bilingual dictionary used for document alignment
-dic: /tmp/persistent/en-fr.dic
-#minquality: 0
-#maxlines: 5
-
-##### MT-BASED EVALUATION #####
-#If enabled, SMT evaluation is run by training an SMT system with the data crawled
-smt: false
-#If enabled, NMT evaluation is run by training an SMT system with the data crawled
-nmt: false
-
