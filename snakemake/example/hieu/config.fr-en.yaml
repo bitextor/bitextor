@@ -5,7 +5,8 @@ bitextor: /home/hieu/permanent/software/bitextor
   #"langstatThreshold: 10,
     
 langstat: /home/hieu/transient/langstat/langstats.all.gz
-langstatThreshold: 50000
+langstatThreshold: 1000000
+linksHosts: ["/home/hieu/permanent/hu-en"]
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /mnt/tmp
