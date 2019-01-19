@@ -517,12 +517,12 @@ if "hostPath" in config:
 
     print("hosts", len(hosts), len(otherHosts))
 
+if "excludeHosts" in config:
+    ExcludeHosts(hosts, config["excludeHosts"])
+
 if "linksHosts" in config:
     for dir in config["linksHosts"]:
         LinkHosts(permanent, dir, hosts)
-
-if "excludeHosts" in config:
-    ExcludeHosts(hosts, config["excludeHosts"])
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #print("hosts", hosts)
