@@ -27,8 +27,8 @@ elrc: true
 crawlerNumThreads: 2
 crawlTld: false
   #"bicleanerThreshold: 0.7
-bicleaner: /home/hieu/transient/fr-en/bicleaner/en-fr.yaml
-bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"]
+#bicleaner: /home/hieu/transient/fr-en/bicleaner/en-fr.yaml
+#bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"]
 documentAligner: SMT
 alignerCmd: marek-smt
 bleualign: true
