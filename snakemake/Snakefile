@@ -512,9 +512,7 @@ if "hostPath" in config:
     with gzip.open(path, 'rt') as f:
         otherHosts = f.read().splitlines()
 
-    for otherHost in otherHosts:
-        hosts.add(otherHost)
-
+    hosts = hosts.union(otherHosts)
     print("hosts", len(hosts), len(otherHosts))
 
 if "excludeHosts" in config:
