@@ -193,12 +193,22 @@ def ValidateArgs(config):
 
 ValidateArgs(config)
 
+#Local bitextor installation
 BITEXTOR=config["bitextor"]
 
+#Crawled languages
 LANG1=config["lang1"]
 LANG2=config["lang2"]
 
-TMPDIR=config["temp"]
+#Working paths
+permanent=config["permanentDir"]
+transient=config["transientDir"]
+
+if "temp" in config:
+  TMPDIR=config["temp"]
+else:
+  TMPDIR=transient
+
 if "minquality" in config:
   MINQUALITY=config["minquality"]
 else:
@@ -213,10 +223,6 @@ if "alcazar" in config and config["alcazar"]:
   ALCAZAR = "--alcazar"
 else:
   ALCAZAR = ""
-
-#Working paths
-permanent=config["permanentDir"]
-transient=config["transientDir"]
 
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)
