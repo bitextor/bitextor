@@ -525,7 +525,7 @@ if "linksHosts" in config:
         LinkHosts(permanent, dir, hosts)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
-sys.stderr.write("#hosts=", str(len(hosts)) + "\n")
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
