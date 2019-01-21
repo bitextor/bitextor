@@ -35,34 +35,120 @@ To install bitextor you will first need to run the script `configure` (if you ar
 
 ```
 user@pc:~$ ./autogen.sh
+user@pc:~$ ./configure
 user@pc:~$ make
 ```
 
 ## Run
 
-There are many ways to call bitextor, but here we will explain the three most used. Two of them include the first step (downloading the websites) and are:
+To run Bitextor use the main script bitextor.sh. In general, this script will take two parameters:
 ```
-bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
-bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
+bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
 ```
-where, *LANG1* and *LANG2* are the two-character lang codes following the ISO 639-1, and *LEXICON* is a bilingual lexicon bewteen languages LANG1 and LANG2.
-With option *-u* bitextor downloads the URL specified; option *-U* allows to use a tab-separated file containing, in each line, a URL to be crawled and the [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) file where the crawled data will be stored.
+where
+* `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run bitextor (learn more about bitextor configuration in the next section), and
+* `<NUMJOBS>` is the number of jobs that can be launch in launched in parallel (a job may be a single step of the pipeline or the same step for different websites if more than one is specified in the `<CONFIGFILE>`
+For example, on a machine with 4 cores, one could run Bitextor as follows:
+```
+bitextor.sh -s myconfig.yaml -j 4
+```
 
-It is also possible to re-process a previously crawled web site by using option *-e* to specify an [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) (this process starts in the second step described in the previous section): 
+If bitextor is run on a cluster with a software that allows to manage job queues, two more otpions can be used 
 ```
-bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
+bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>]
 ```
-Options *-u* and *-e* can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
+where
+* `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
+* `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
+* `<CLUSTERCONFIG>` is a json configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for exampe). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be botained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
-See more useful options, entry points and stop points of the whole pipeline using -h or --help command. Options can be provided either when calling bitextor or by definning them in a configuration file as in the following example:
+### Running Bitextor on a cluster
+In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
 ```
-bitextor --config-file CONFIGFILE -u URL LANG1 LANG2
+bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
-A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is in `bitextor-dictionaries` relative path folder from your running path. Change it if it is necessary.
+this command would run bitextor allowing to queue 20 jobs in the cluster queue, assuming that all jobs can be run in any node of the cluster.
 
-Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
+Now assume that we plan to train a neural machine translatino (NMT) system with bitextor for document alignment. In this case we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
 
-Test your installation and parameters with this [sample of running bitext](https://github.com/bitextor/bitextor/wiki/Sample-of-a-bitext).
+```
+{
+    "__default__" :
+    {
+        "gres": "",
+    },
+
+    "docaling_translate_nmt" :
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt_all":
+    {
+        "gres": "--gres gpu:tesla:1"
+    }
+
+}
+```
+this configuration file is telling the cluster to set option `gres` emtpy for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla gpu is requiered by these two rules. Once we had our configuration file, we could call bitextor in the following way:
+```
+bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
+```
+Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`.
+
+## Bitextor configuration file
+Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file
+
+```
+# GENERAL OPTIONS
+##Directory where Bitextor is installed
+bitextor: /home/bitextor/permanent/bitextor
+##Folders used during processing: temp is the temporal folder (/tmp by default); permanentDir will contain the results of crawling: the parallel corpus built and the WARC files obtained through crawling; transientDir will contain the rest of files generated during processing
+temp: /home/bitextor/transient
+permanentDir: /home/bitextor/permanent/bitextor-output
+transientDir: /home/bitextor/transient
+##Segment spliters and word tokenizers
+LANG1Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
+LANG2Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG1SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
+LANG2SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
+lang1: en
+lang2: fr
+
+
+# CRAWLING OPTIONS
+##HTTrack activation: if it is not activated, Creepy crawler is used
+httrack: true
+##Crawling sources: either a list of domains (without http/https) or a langstat file
+hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
+langstat: /home/bitextor/permanent/langstat/langstats.all.gz
+langstatThreshold: 50000000
+langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-domains
+# CREEPY CRAWLER SPECIFIC OPTIONS ##
+##Crawling time limit in seconds (s)
+crawlTimeLimit: 30s
+##If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
+crawlTld: false
+##Crawling size limit
+crawlSizeLimit: 1G
+##Number of threads used by the Creepy crawler
+crawlerNumThreads: 1
+##Connection timeout limit (Default 10 seconds)
+crawlerConnectionTimeout: 10
+
+
+# DICTIONARIES
+dic: /home/bitextor/permanent/en-fr.dic
+##Corpus for bilingual dictionaries and-or SMT/NMT training, if dictionary or models not given, respectively.
+initCorpusTrainPrefix: ""
+#Corpus for SMT training
+initCorpusDevPrefix: ""
+initCorpusTestPrefix: ""
+##If enabled, boilerpipe is filtered from HTML's
+boilerpipeCleaning: true
+
+```
 
 ## Pipeline description
 
