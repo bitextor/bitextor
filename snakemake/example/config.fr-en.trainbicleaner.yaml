@@ -11,7 +11,7 @@ smt: false
 lang1: fr
 lang2: en
 dic: /tmp/persistent/en-fr.dic
-minquality: 0
+hunalignThreshold: 0
 maxlines: 5
 elrc: true
 crawlerNumThreads: 2
