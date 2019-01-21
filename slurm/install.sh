@@ -269,6 +269,7 @@ slurmworkersetup(){
     name=`hostname`
     sudo scontrol update NodeName=$name State=resume
 }
+
 for vmssinfo in $vmssnames; do
     VMSS_NAME=`echo $vmssinfo | cut -f 1 -d ':'`
     for worker in `az vmss nic list --resource-group $RESOURCE_GROUP --vmss-name $VMSS_NAME --query [].{ip:ipConfigurations[0].privateIpAddress} -o tsv `; do
@@ -278,6 +279,8 @@ for vmssinfo in $vmssnames; do
     done
 done
 wait
+
+sudo slurmd
 
 #Uncomment to install Bitextor
 #sudo -u $SUDO_USER sh -c "mkdir ~/permanent/software; cd ~/permanent/software ; git clone --recurse-submodules https://github.com/bitextor/bitextor.git ~/permanent/software/bitextor; cd ~/permanent/software/bitextor; ./autogen.sh --prefix=/home/$SUDO_USER/permanent/software/bitextor && make && make install && export PATH=/home/$SUDO_USER/permanent/software/bitextor/bin:\$PATH"
