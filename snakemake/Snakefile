@@ -468,7 +468,7 @@ def LinkHosts(permanent, dir, hosts):
         if host in otherHosts:
             dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
-            if not os.path.exists(dest):
+            if not (os.path.exists(dest) or os.path.islink(dest)):
                 cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
                 #print(cmd)
                 shell(cmd)
