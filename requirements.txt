@@ -31,4 +31,3 @@ cerberus==1.2
 alcazar==0.4.0
 python-magic==0.4.15
 mosestokenizer==1.0.0
--r bicleaner/requirements.txt
