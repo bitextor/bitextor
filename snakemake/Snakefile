@@ -451,8 +451,6 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
                 if lang1_bytes >= threshold and lang2_bytes >= threshold:
                     hostsToCrawl.add(prevHost)
 
-
-    print(len(hostsToCrawl), " hosts found", file=sys.stderr)
     return hostsToCrawl
 
 def LinkHosts(permanent, dir, hosts):
@@ -527,7 +525,7 @@ if "linksHosts" in config:
         LinkHosts(permanent, dir, hosts)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
-print("hosts", len(hosts))
+sys.stderr.write("#hosts=", str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
