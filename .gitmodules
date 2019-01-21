@@ -13,9 +13,6 @@
 [submodule "preprocess"]
 	path = preprocess
 	url = https://github.com/kpu/preprocess
-[submodule "kenlm"]
-	path = kenlm
-	url = https://github.com/kpu/kenlm
 [submodule "standoff"]
 	path = standoff
 	url = https://github.com/lpla/standoff

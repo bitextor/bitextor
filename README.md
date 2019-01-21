@@ -11,33 +11,31 @@
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences. In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences (Boilerpipe). In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev libffi-dev`
+`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-11-jdk`
 
-Most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
+The two last dependencies (`libboost-all-dev` and `openjdk-11-jdk`) are not mandatory if you are not going to build your own dictionaries and use `boilerpipe`, respectively.
 
-Some additional Python libraries are required. They can be installed automatically with the tool pip by runing:
+Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
-`user@pc:~$ sudo pip3 install -r requirements.txt`
+Some additional Python libraries are required. They can be installed automatically with the tool pip by runing (use without `sudo` if you are running in a virtualenv):
 
-The web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
+`sudo pip3 install -r requirements.txt`
+
+As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
 `sudo apt install httrack`
 
-This dependency is not mandatory as a second parallel data crawler is provided in Bitextor.
+This dependency is not mandatory as a second parallel data crawler is provided in Bitextor (Creepy).
 
-## Install
+## Submodules compilation
 
-To install bitextor you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
+To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used. Then the code will be compiled and optionally installed (using `make install`) by means of the command `make`:
 
-```
-user@pc:~$ ./autogen.sh
-user@pc:~$ ./configure
-user@pc:~$ make
-```
+`./autogen.sh && make`
 
 ## Run
 
@@ -149,6 +147,12 @@ initCorpusTestPrefix: ""
 boilerpipeCleaning: true
 
 ```
+
+A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). Change all the paths to match your environment.
+
+Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can be easily built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
+
+
 
 ## Pipeline description
 

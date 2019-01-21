@@ -71,7 +71,7 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
   tmp_file.write(tokenized_text.strip().lower().encode()+b"\n<p>\n")
 
-def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
+def align(file1, file2, file1orig, file2orig, dic):
   filereader1=open(file1orig, "r")
   filereader2=open(file2orig, "r")
 
@@ -173,7 +173,7 @@ tmp_file1_origtext.close()
 tmp_file2.close()
 tmp_file2_origtext.close()
 
-align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, filename1, filename2, options.dic)
+align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, options.dic)
 
 os.remove(tmp_file1.name)
 os.remove(tmp_file1_origtext.name)
