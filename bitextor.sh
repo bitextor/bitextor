@@ -34,7 +34,7 @@ if [[ $(command -v snakemake | wc -l) -eq 0 ]]; then
   exit -1
 fi
 
-ARGS=$(getopt -o s:j:c:g: -- "$@")
+ARGS=$(getopt -o hs:j:c:g: -- "$@")
 eval set -- $ARGS
 for i
 do
