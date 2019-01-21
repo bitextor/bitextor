@@ -7,7 +7,7 @@ transientDir: /home/bitextor/transient
 lang1: en
 lang2: fr
 dic: /home/bitextor/permanent/en-fr.dic
-minquality: 0
+hunalignThreshold: 0
 maxlines: 5
 elrc: true
 documentAligner: DIC
