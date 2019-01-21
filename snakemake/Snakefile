@@ -77,7 +77,7 @@ def ValidateArgs(config):
             'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
             'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
             'temp': {'type': 'string'},
-            'minquality': {'type': 'float'},
+            'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
             'alcazar': {'type': 'boolean'},
 
@@ -193,14 +193,24 @@ def ValidateArgs(config):
 
 ValidateArgs(config)
 
+#Local bitextor installation
 BITEXTOR=config["bitextor"]
 
+#Crawled languages
 LANG1=config["lang1"]
 LANG2=config["lang2"]
 
-TMPDIR=config["temp"]
-if "minquality" in config:
-  MINQUALITY=config["minquality"]
+#Working paths
+permanent=config["permanentDir"]
+transient=config["transientDir"]
+
+if "temp" in config:
+  TMPDIR=config["temp"]
+else:
+  TMPDIR=transient
+
+if "hunalignThreshold" in config:
+  MINQUALITY=config["hunalignThreshold"]
 else:
   MINQUALITY=0.0
 
@@ -213,10 +223,6 @@ if "alcazar" in config and config["alcazar"]:
   ALCAZAR = "--alcazar"
 else:
   ALCAZAR = ""
-
-#Working paths
-permanent=config["permanentDir"]
-transient=config["transientDir"]
 
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)

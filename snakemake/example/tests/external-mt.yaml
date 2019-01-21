@@ -89,7 +89,7 @@ bicleanerThreshold: 0.6
 #bicleanerCorpusTrainingPrefix: '/tmp/persistent/RF.en-fr'
 ##Hunalign score
 ##Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)
-minquality: 0
+hunalignThreshold: 0
 ##Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded
 maxlines: 5
 

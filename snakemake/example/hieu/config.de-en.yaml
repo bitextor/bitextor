@@ -12,7 +12,7 @@ transientDir: /home/hieu/transient/de-en
 lang1: de
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
-minquality: 0
+hunalignThreshold: 0
 maxlines: 5
 crawlTimeLimit: 43200s
 tmx: true
