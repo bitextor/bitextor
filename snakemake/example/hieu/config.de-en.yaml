@@ -1,22 +1,18 @@
 bitextor: /home/hieu/permanent/software/bitextor
-  #"domains:  ["www.elenacaffe1863.com","vade-retro.fr"],
 
-  #"langstat: /home/hieu/permanent/software/langstat/1k.gz
-  #"langstatThreshold: 10,
-    
 langstat: /home/hieu/permanent/data/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/hieu/permanent/data/hosts/hosts.fr.gz
-linksHosts: ["/home/hieu/permanent/hu-en"]
+hostPath: /home/hieu/permanent/data/hosts/hosts.de.gz
+linksHosts: ["/home/hieu/permanent/hu-en", "/home/hieu/permanent/fr-en"]
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /mnt/tmp
-permanentDir: /home/hieu/permanent/fr-en
-transientDir: /home/hieu/transient/fr-en
-lang1: fr
+permanentDir: /home/hieu/permanent/de-en
+transientDir: /home/hieu/transient/de-en
+lang1: de
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
-hunalignThreshold: 0
+minquality: 0
 maxlines: 5
 crawlTimeLimit: 43200s
 tmx: true
@@ -51,7 +47,7 @@ marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-bat
 #marianModelFile: model.npz.best-perplexity.npz.decoder.yml
 marianModelFile: model.npz.best-bleu.npz.decoder.yml
 
-initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en",
+initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.de-en",
                        ]
 initCorpusDevPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"]
 initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
@@ -61,10 +57,10 @@ initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
                        "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
 
 gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l fr
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l de
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l fr
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l de
 LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
 
 nmtVocabSize: 30000
