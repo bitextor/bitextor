@@ -7,7 +7,7 @@
 `bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
 1. The source where the parallel data will be searched: one or more [website hostnames](https://en.wikipedia.org/wiki/URL)
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the document-alignment strategy choosen)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the document-alignment strategy chosen)
 
 ## Dependencies
 
@@ -37,6 +37,14 @@ To compile all bitextor submodules you will first need to run the script `config
 
 `./autogen.sh && make`
 
+## Some frequent installation issues
+
+In some machines equipped with an AMD CPU you may experience some troubles tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
+```
+sudo pip3 uninstall tensorflow
+sudo pip3 install tensorflow==1.5.0
+```
+
 ## Run
 
 To run Bitextor use the main script bitextor.sh. In general, this script will take two parameters:
@@ -58,7 +66,7 @@ bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCON
 where
 * `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a json configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for exampe). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be botained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
+* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be botained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
 ### Running Bitextor on a cluster
 In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
@@ -67,7 +75,7 @@ bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
 this command would run bitextor allowing to queue 20 jobs in the cluster queue, assuming that all jobs can be run in any node of the cluster.
 
-Now assume that we plan to train a neural machine translatino (NMT) system with bitextor for document alignment. In this case we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
+Now assume that we plan to train a neural machine translation (NMT) system with bitextor for document alignment. In this case we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
 
 ```
 {
@@ -88,7 +96,7 @@ Now assume that we plan to train a neural machine translatino (NMT) system with 
 
 }
 ```
-this configuration file is telling the cluster to set option `gres` emtpy for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla gpu is requiered by these two rules. Once we had our configuration file, we could call bitextor in the following way:
+this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two rules. Once we had our configuration file, we could call bitextor in the following way:
 ```
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
 ```
@@ -165,7 +173,7 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
   1. one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
   2. another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
-5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quialtity metrics
+5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quality metrics
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
