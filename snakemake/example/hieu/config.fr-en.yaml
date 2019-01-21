@@ -4,7 +4,7 @@ bitextor: /home/hieu/permanent/software/bitextor
   #"langstat: /home/hieu/permanent/software/langstat/1k.gz
   #"langstatThreshold: 10,
     
-langstat: /home/hieu/transient/langstat/langstats.all.gz
+langstat: /home/hieu/permanent/data/langstat/langstats.all.gz
 langstatThreshold: 1000000
 linksHosts: ["/home/hieu/permanent/hu-en"]
 
