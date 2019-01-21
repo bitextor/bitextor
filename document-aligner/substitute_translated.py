@@ -4,8 +4,8 @@ import argparse
 import sys
 import os
 
-sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
-from utils.common import build_mappings, check_lengths
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
+from common import build_mappings, check_lengths
 
 
 if __name__ == "__main__":

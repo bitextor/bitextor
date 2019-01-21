@@ -8,24 +8,22 @@ import re
 import base64
 
 pathname = os.path.dirname(sys.argv[0])
-sys.path.append(pathname + "/../document-aligner")
-from utils.common import open_xz_or_gzip_or_plain
+sys.path.append(pathname + "/../utils")
+from common import open_xz_or_gzip_or_plain
 #print("pathname", pathname)
 
-def readLETT(f, docs):
+def extract_urls(f, docs):
   with open_xz_or_gzip_or_plain(f) as fd:
     fileid = 1
     for i in fd:
-      fields = i.strip().split("\t")
-      if len(fields) >= 5:
-        #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
-        links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', base64.b64decode(fields[4]).decode("utf-8"), re.S)
-        docs[fileid] = set(list(links))
+      #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
+      links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', base64.b64decode(i.strip()).decode("utf-8"), re.S)
+      docs[fileid] = set(list(links))
       fileid += 1
 
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
 oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
-oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+oparser.add_argument("--html", help="File produced during pre-processing containing all HTML files in a WARC file", dest="html", required=True)
 options = oparser.parse_args()
 
 if options.ridx == None:
@@ -35,7 +33,7 @@ else:
 
 index = {}
 documents = {}
-readLETT(options.lettr, documents)
+extract_urls(options.html, documents)
 
 for i in reader:
   fields = i.strip().split("\t")

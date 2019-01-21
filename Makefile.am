@@ -23,9 +23,6 @@ compile-hunalign:
 compile-truecaser:
 	cd preprocess && cmake . && make -j4
 
-compile-kenlm:
-	cd kenlm && cmake . && make -j4
-
 compile-bleualign:
 	cd bleualign-cpp && cmake . && make
 
@@ -38,7 +35,6 @@ install-smttools:
 	touch $(prefix)/bin/__init__.py
 	cp -R preprocess/moses $(prefix)/share/moses
 	cp preprocess/bin/truecase $(prefix)/bin/.
-	cp kenlm/bin/query kenlm/bin/build_binary $(prefix)/bin/.
 
 install-standoff:
 	cp standoff/deferred-document.py $(prefix)/bin/deferred-document
@@ -54,7 +50,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign install-standoff
 
-bitextor: compile-clustercat compile-bleualign compile-smttools compile-hunalign compile-truecaser compile-kenlm
+bitextor: compile-clustercat compile-bleualign compile-smttools compile-hunalign compile-truecaser
 
 nltk_data:
 	python3 install_nltk_data.py

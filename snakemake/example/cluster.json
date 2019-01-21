@@ -1,9 +1,15 @@
 {
     "__default__" :
     {
-        "gres": ""
+        "gres": "",
+	"oversubscribe": ""
     },
 
+    "httrack_download" :
+    {
+        "oversubscribe": "--oversubscribe"
+    },
+    
     "docaling_translate_nmt" :
     {
         "gres": "--gres gpu:tesla:1"

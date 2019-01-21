@@ -6,16 +6,13 @@ Keras==2.2.0
 langid==1.1.6
 matplotlib==2.2.2
 nltk==3.3
-numpy==1.14.5
 python-Levenshtein==0.12.0
-regex==2018.6.9
 scikit-learn==0.19.1
-scipy==1.1.0
 sklearn==0.0
 tensorflow==1.8.0
 warc3-wet==0.2.3
 tld==0.9.1
-snakemake==5.2.2
+snakemake==5.4.0
 tqdm==4.28.1
 tldextract==2.2.0
 ftfy==5.5.0
@@ -28,5 +25,10 @@ docopt==0.6.2
 openfile==0.0.7
 pycld2==0.31
 python-dateutil==2.7.5
+cchardet==2.1.4
 boilerpipe3==1.1
+cerberus==1.2
+alcazar==0.4.0
+python-magic==0.4.15
 mosestokenizer==1.0.0
+-r bicleaner/requirements.txt

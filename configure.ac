@@ -135,14 +135,14 @@ then
   AC_MSG_ERROR([You don't have grep installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
+AC_PATH_PROG(AWK, awk, no)
+if test x$ac_cv_path_AWK = x
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
-if test x$ac_cv_path_GAWK = xno
+if test x$ac_cv_path_AWK = xno
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
 
 AC_PATH_PROG(CMAKE, cmake, no)
@@ -164,41 +164,6 @@ if test x$ac_cv_path_HTTRACK = xno
 then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
-
-AC_ARG_WITH([apertium],
-            [AS_HELP_STRING([--with-apertium],
-              [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
-            [],
-            [with_apertium=no])
-
-AS_IF([test "x$with_apertium" != yes],
-  AC_MSG_WARN([You are not using apertium as morphological analyser. In case you want to use it, install it and use with option --with-apertium])
-)
-
-          
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-])
-
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-retxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-])
 
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
@@ -337,7 +302,7 @@ print (var)" 2> /dev/null`
   AC_MSG_CHECKING([for libmagic for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import magic; \
-m=magic.open(magic.MAGIC_NONE); \
+magic.Magic(mime=True); \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
@@ -345,7 +310,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python3-magic' and try again.
+    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo pip install python-magic' and try again.
 ])
   fi
 

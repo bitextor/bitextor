@@ -65,7 +65,7 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 oparser.add_argument("-q", "--min-length", help="Minimum length ratio between two parts of TU", type=float, dest="minl", default=0.6)
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl", default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
-oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL,idnumber", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL")
+oparser.add_argument("-c", "--columns", help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL", default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL")
 options = oparser.parse_args()
 
 columns = options.columns.split(',')
@@ -125,7 +125,7 @@ for line in reader:
 
   previd=curid
 
-printTU(columns, fieldsdict, urls1, urls2, idnum) 
+printTU(columns, fieldsdict, urls1, urls2, idnum+1)
 print(" </body>")
 print("</tmx>")
 reader.close()

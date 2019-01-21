@@ -4,6 +4,9 @@
 import argparse
 from collections import defaultdict
 import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
+from common import open_xz_or_gzip_or_plain
 
 
 def print_docs(docs):
@@ -29,7 +32,7 @@ def print_docs(docs):
             sys.stderr.write("{0}\n".format(n))
 
 
-def load_docs(matches_filepath, threshold):
+def load_docs(matches_filepath, url_filepath, text_filepath, threshold):
     map_e2f = {}
     map_f2e = {}
 
@@ -44,16 +47,18 @@ def load_docs(matches_filepath, threshold):
             map_e2f[e] = f
             map_f2e[f] = e
 
-    for line in sys.stdin:
-        lang, format, encoding, url, html, text = line.strip().split('\t')
+    with open_xz_or_gzip_or_plain(text_filepath) as f_text, open_xz_or_gzip_or_plain(url_filepath) as f_url:
+        for line in f_text:
+            text=line.strip()
+            url=next(f_url, None).strip()
 
-        if url in map_e2f:
-            key = (url, map_e2f[url])
-            docs[key]['en_text'] = text
+            if url in map_e2f:
+                key = (url, map_e2f[url])
+                docs[key]['en_text'] = text
 
-        elif url in map_f2e:
-            key = (map_f2e[url], url)
-            docs[key]['fr_text'] = text
+            elif url in map_f2e:
+                key = (map_f2e[url], url)
+                docs[key]['fr_text'] = text
 
     return docs
 
@@ -61,9 +66,11 @@ def load_docs(matches_filepath, threshold):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--matches', help='path to the file with matched documents', required=True)
+    parser.add_argument('--url', help='path to the file with the list of URLs crawled', required=True)
+    parser.add_argument('--plaintext', help='path to the file with the plain text of the documents crawled', required=True)
     parser.add_argument('--threshold', help='documents with lower TF-IDF score will be skipped', default=0.1, type=float, required=False)
 
     args = parser.parse_args()
 
-    docs = load_docs(args.matches, args.threshold)
+    docs = load_docs(args.matches, args.url, args.plaintext, args.threshold)
     print_docs(docs)

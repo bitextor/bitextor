@@ -21,7 +21,7 @@ lang2: fr
 ##HTTrack activation: if it is not activated, Creepy crawler is used
 httrack: false
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
-domains: ["www.elenacaffe1863.com","vade-retro.fr"]
+hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 #langstat: /home/bitextor/permanent/langstat/langstats.all.gz
 #langstatThreshold: 50000000
 #langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-domains
@@ -56,7 +56,7 @@ boilerpipeCleaning: false
 ## - externalMT: the user should provide a script that runs external MT by taking text in lang1 from the standard input and produces the translation in lang2 to the standard output
 ## - DIC: uses a strategy based on the use of a bilingual dictionary (specified in option dic)
 documentAligner: externalMT
-alignerCmd: "bash example/translate.sh"
+alignerCmd: "bash example/dummy-translate.sh"
 docAlignThreshold: 0.1 #Only for MT based
 ##Train from scratch a nmt or smt system for output corpora evaluation
 nmt: false

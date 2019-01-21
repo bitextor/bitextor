@@ -2,49 +2,88 @@
 
 import os
 import sys
+import base64
+import math
+import fileinput
+import html.parser
 import argparse
+import datetime
+import os
 from operator import itemgetter
 import Levenshtein
-import base64
+
+class Parser(html.parser.HTMLParser):
+
+  def __init__( self ):
+    html.parser.HTMLParser.__init__( self )
+    self.script = 0
+    self.output = []
+
+  def handle_starttag( self, tag, attrs ):
+    if tag == "script" or tag == "noscript":
+      self.script = 1
+    else:
+      self.output.append("_" + tag + "_")
+
+  def handle_data( self, data ):
+    if self.script == 0:
+      if data != "":
+        nwords=len(data.split())
+        if nwords > 0:
+          #Replacing every word in text by a "_" symbol
+          self.output.append("_"*int(math.log(nwords, 2)))
+
+  def handle_endtag( self, tag ):
+    if tag == "script" or tag == "noscript":
+      self.script = 0
+    else:
+      self.output.append("_" + tag + "_")
+
 
 pathname = os.path.dirname(sys.argv[0])
-sys.path.append(pathname + "/../document-aligner")
-from utils.common import open_xz_or_gzip_or_plain
+sys.path.append(pathname + "/../utils")
+from common import open_xz_or_gzip_or_plain
 #print("pathname", pathname)
 
-def readLETT(f, docs):
+def extract_structure_representations(f, docs):
   with open_xz_or_gzip_or_plain(f) as fd:
     fileid = 1
+    dic={}
+    charidx=32
+    dic['']='_'
+
     for i in fd:
-      fields = i.strip().split("\t")
-      #Checking if format is crrect
-      if len(fields) >= 7:
-        #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
-        tags = set(fields[6].split('_'))
-        if '' in tags:
-          tags.remove('')
-        #List of names of tags in the current raspa
-        tags_with_bounds = ["_{0}_".format(x) for x in tags]
-        dic={}
-        #Creating a map with all the tags found in the raspa and the character with which they will be replaced
-        charidx=32
-        for tag in tags_with_bounds:
-          dic[chr(charidx)]=tag
-          charidx=charidx+1
-        #If character '_' is used, it must be replaced, since it is already representing text
-        if '_' in dic:
-          extratag=dic['_']
-          del dic['_']
-          dic[chr(charidx)]=extratag
-        inv_dic = {v:k for k, v in list(dic.items())}
-        for tag,code in list(inv_dic.items()):
-          fields[6]=fields[6].replace(tag,code)
-        docs[fileid] = fields[6]
-      fileid += 1
+      p=Parser()
+      try:
+        e = base64.b64decode(i.strip()).decode("utf8")
+        if e != "":
+          p.feed(e)
+          raspa = "".join(p.output)
+          if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in raspa): #Delete entries without *ml in the first tag to avoid things different than HTML or XML as JPGS or PDF, for example.
+            #To compute the edit distance at the level of characters, HTML tags must be encoded as characters and not strings:
+            taglist = raspa.split('_')
+            tagset = set(taglist)
+            if '' in tagset:
+              tagset.remove('')
+            #Adding new tags in the raspa and the character with which they will be replaced to the dictionary
+            for tag in tagset:
+              if tag not in dic:
+                dic[tag]=chr(charidx)
+                charidx+=1
+                if charidx == 95:
+                  charidx+=1
+            translated_taglist=[]
+            for tag in taglist:
+              translated_taglist.append(dic[tag])
+            docs[fileid] = "".join(translated_taglist)
+      except html.parser.HTMLParseError:
+        pass
+      finally:
+        fileid += 1
 
 oparser = argparse.ArgumentParser(description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using the Levenshtein edit distance of the structure of the files.")
 oparser.add_argument('ridx', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, the script will read from the standard input)', default=None)
-oparser.add_argument("-l", "--lettr", help=".lettr (language encoded and typed text with \"raspa\") file with all the information about the processed files (.lett file is also valid)", dest="lettr", required=True)
+oparser.add_argument("--html", help="File produced during pre-processing containing all HTML files in a WARC file", dest="html", required=True)
 options = oparser.parse_args()
 
 if options.ridx == None:
@@ -52,9 +91,8 @@ if options.ridx == None:
 else:
   reader = open(options.ridx,"r")
 
-index = {}
 documents = {}
-readLETT(options.lettr, documents)
+extract_structure_representations(options.html, documents)
 
 for i in reader:
   fields = i.strip().split("\t")

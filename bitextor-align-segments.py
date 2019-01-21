@@ -28,7 +28,7 @@ import traceback
 from tempfile import NamedTemporaryFile
 import gzip
 from iso639 import languages
-from toolwrapper import ToolWrapper
+from external_processor import ExternalTextProcessor
 
 def runAligner(filename1, filename2, dic, hunaligndir):
   # option -ppthresh=10?
@@ -59,28 +59,19 @@ def runAnalyse(morph, text):
 
 def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, sent_tokeniser, word_tokeniser):
   tmp_tok_segs=[]
-  for origseg in base64.b64decode(encodedtext).decode("utf-8").replace("\t"," ").split("\n"):
-    trimorigseg=origseg.strip()
-    if trimorigseg != "":
-      seg = ""
-      sent_tokeniser.writeline(trimorigseg.rstrip('\n')+"\n")
-      while seg != "<P>":
-        seg = sent_tokeniser.readline().strip()
-        if seg.strip() != "":
-          tmp_file_origtext.write(seg.encode("utf8")+b"\n")
-          word_tokeniser.writeline(seg)
-          tmp_tok_segs.append(word_tokeniser.readline().strip())
+  proc_sent = ExternalTextProcessor(sent_tokeniser.split(' '))
+  proc_word = ExternalTextProcessor(word_tokeniser.split(' '))
+  content=base64.b64decode(encodedtext).decode("utf-8").replace("\t"," ")
+  tokenized_segs=proc_sent.process(content).strip()
+  tmp_file_origtext.write(tokenized_segs.encode()+b"\n<p>\n")
+  tokenized_text=proc_word.process(tokenized_segs)
 
-  tokenized_text=u"\n".join(tmp_tok_segs)
   if morphanal is not None:
     morphanalyser = ["/bin/bash", morphanal]
     tokenized_text=runAnalyse(morphanalyser, tokenized_text)
-  tmp_file.write(tokenized_text.lower().encode("utf8")+b"\n")
-  #Document delimiter
-  tmp_file.write(b"<p>\n")
-  tmp_file_origtext.write(b"<p>\n")
+  tmp_file.write(tokenized_text.strip().lower().encode()+b"\n<p>\n")
 
-def align(file1, file2, file1orig, file2orig, file1name, file2name, dic):
+def align(file1, file2, file1orig, file2orig, dic):
   filereader1=open(file1orig, "r")
   filereader2=open(file2orig, "r")
 
@@ -144,10 +135,7 @@ oparser.add_argument("--sent-tokeniser_tl", help="Path to the sentence tokeniser
 oparser.add_argument("--word-tokeniser_sl", help="Path to the word tokeniser for SL", dest="wordtok1", default=None)
 oparser.add_argument("--word-tokeniser_tl", help="Path to the word tokeniser for TL", dest="wordtok2", default=None)
 
-
-
 options = oparser.parse_args()
-
 
 if options.aligned_docs == None:
   reader = sys.stdin
@@ -158,7 +146,6 @@ if options.aligned_docs == None:
   reader_list = sys.stdin
 else:
   reader_list = open(options.aligned_docs,"r")
-
 
 tmp_file1=NamedTemporaryFile(delete=False, dir=options.tmpdir)
 tmp_file2=NamedTemporaryFile(delete=False, dir=options.tmpdir)
@@ -178,20 +165,15 @@ for line in reader_list:
   encodedtext1=fields[2]
   encodedtext2=fields[3]
   
-  senttok1 = ToolWrapper(options.senttok1.split())
-  senttok2 = ToolWrapper(options.senttok2.split())
-  wordtok1 = ToolWrapper(options.wordtok1.split())
-  wordtok2 = ToolWrapper(options.wordtok2.split())
-  extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, senttok1, wordtok1)
-  extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, senttok2, wordtok2)
-
+  extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1, options.wordtok1)
+  extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2, options.wordtok2)
 
 tmp_file1.close()
 tmp_file1_origtext.close()
 tmp_file2.close()
 tmp_file2_origtext.close()
 
-align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, filename1, filename2, options.dic)
+align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, options.dic)
 
 os.remove(tmp_file1.name)
 os.remove(tmp_file1_origtext.name)

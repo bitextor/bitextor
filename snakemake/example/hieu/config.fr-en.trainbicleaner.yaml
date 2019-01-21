@@ -1,0 +1,31 @@
+bitextor: /home/hieu/permanent/software/bitextor
+hosts: ['www.elenacaffe1863.com','vade-retro.fr']
+documentAligner: DIC
+#documentAligner: externalMT
+temp: /tmp
+httrack: true
+permanentDir: /home/hieu/permanent/fr-en
+transientDir: /home/hieu/transient/fr-en
+nmt: false
+smt: false
+lang1: fr
+lang2: en
+dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
+minquality: 0
+maxlines: 5
+elrc: true
+crawlerNumThreads: 2
+crawlTld: false
+#bicleaner: /home/hieu/permanent/software/bitextor-data/bicleaner/en-fr/training.en-fr.yaml
+mosesDir: /home/hieu/permanent/software/mosesdecoder
+tmx: true
+initCorpusTrainPrefix: [/home/hieu/permanent/data/fr-en/train/1k/europarl-v7.fr-en]
+#bicleanerCorpusTrainingPrefix: [/home/hieu/permanent/data/fr-en/train/1k/europarl-v7.fr-en]
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -a -b -q -l fr
+LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -a -b -q -l en
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l fr
+LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
+deduped: false
+#alignerCmd: ~/Projects/bitextor-malign/snakemake/example/translate.miquel.sh
+#boilerpipeCleaning: True
+#bleualign: true

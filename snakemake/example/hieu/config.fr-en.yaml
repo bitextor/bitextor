@@ -4,14 +4,15 @@ bitextor: /home/hieu/permanent/software/bitextor
   #"langstat: /home/hieu/permanent/software/langstat/1k.gz
   #"langstatThreshold: 10,
     
-langstat: /home/hieu/permanent/langstat/langstats.all.gz
-langstatThreshold: 5000
+langstat: /home/hieu/transient/langstat/langstats.all.gz
+langstatThreshold: 1000000
+linksHosts: ["/home/hieu/permanent/hu-en"]
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /mnt/tmp
-permanentDir: /home/hieu/permanent/so-en.large
-transientDir: /home/hieu/transient/so-en.large
-lang1: so
+permanentDir: /home/hieu/permanent/fr-en
+transientDir: /home/hieu/transient/fr-en
+lang1: fr
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
 minquality: 0
@@ -26,11 +27,11 @@ elrc: true
 crawlerNumThreads: 2
 crawlTld: false
   #"bicleanerThreshold: 0.7
-bicleaner: /home/hieu/transient/so-en.large/bicleaner/en-so.yaml
-bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/so-en/material-only/train.txt"]
+#bicleaner: /home/hieu/transient/fr-en/bicleaner/en-fr.yaml
+#bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"]
 documentAligner: SMT
 alignerCmd: marek-smt
-bleualign: true,
+bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 
@@ -49,17 +50,21 @@ marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-bat
 #marianModelFile: model.npz.best-perplexity.npz.decoder.yml
 marianModelFile: model.npz.best-bleu.npz.decoder.yml
 
-initCorpusTrainPrefix: ["/home/hieu/permanent/data/so-en/material-only/train.txt"]
-initCorpusDevPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt"]
-initCorpusTestPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt",
-                       "/home/hieu/permanent/data/so-en/material-only/test.txt"]
+initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en",
+                       ]
+initCorpusDevPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"]
+initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
+                       "/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/devtest2006",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/nc-devtest2007",
+                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
 
 gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l so
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l fr
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -q -b -l so
-LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -q -b -l en
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l fr
+LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
 
 nmtVocabSize: 30000
 
