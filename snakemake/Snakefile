@@ -471,7 +471,8 @@ def LinkHosts(permanent, dir, hosts, deleteLinkedHosts):
     otherHosts = set(otherHosts)
     #print("otherHosts", otherHosts)
 
-    copyHosts = hosts
+    # make a copy in case we have to delete thing
+    copyHosts = set(hosts)
     for host in copyHosts:
         if host in otherHosts:
             dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
