@@ -23,7 +23,7 @@ Furthermore, most of the scripts in bitextor are written in Python 3. Because of
 
 Some additional Python libraries are required. They can be installed automatically with the tool pip by runing (use without `sudo` if you are running in a virtualenv):
 
-`sudo pip3 install -r requirements.txt`
+`sudo pip3 install -r requirements.txt -r bicleaner/requirements.txt`
 
 As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
