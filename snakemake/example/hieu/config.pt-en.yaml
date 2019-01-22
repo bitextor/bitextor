@@ -6,7 +6,7 @@ hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.pt.gz
 linksHosts: ["/home/s0565741/workspace/experiment/paracrawl2/hu-en", "/home/s0565741/workspace/experiment/paracrawl2/fr-en", "/home/s0565741/workspace/experiment/paracrawl2/de-en"]
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
-temp: /mnt/tmp
+temp: /tmp
 permanentDir: /home/s0565741/workspace/experiment/paracrawl2/pt-en/permanent
 transientDir: /home/s0565741/workspace/experiment/paracrawl2/pt-en/transient
 lang1: pt
