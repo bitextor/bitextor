@@ -40,7 +40,7 @@ To compile all bitextor submodules you will first need to run the script `config
 ## Some frequent installation issues
 
 In some machines equipped with an AMD CPU you may experience some troubles tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
-```
+```bash
 sudo pip3 uninstall tensorflow
 sudo pip3 install tensorflow==1.5.0
 ```
@@ -48,36 +48,36 @@ sudo pip3 install tensorflow==1.5.0
 ## Run
 
 To run Bitextor use the main script bitextor.sh. In general, this script will take two parameters:
-```
+```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
 ```
 where
 * `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run bitextor (learn more about bitextor configuration in the next section), and
 * `<NUMJOBS>` is the number of jobs that can be launch in launched in parallel (a job may be a single step of the pipeline or the same step for different websites if more than one is specified in the `<CONFIGFILE>`
 For example, on a machine with 4 cores, one could run Bitextor as follows:
-```
+```bash
 bitextor.sh -s myconfig.yaml -j 4
 ```
 
-If bitextor is run on a cluster with a software that allows to manage job queues, two more otpions can be used 
-```
+If bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used 
+```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>]
 ```
 where
 * `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be botained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
+* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
 ### Running Bitextor on a cluster
 In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
-```
+```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
 this command would run bitextor allowing to queue 20 jobs in the cluster queue, assuming that all jobs can be run in any node of the cluster.
 
 Now assume that we plan to train a neural machine translation (NMT) system with bitextor for document alignment. In this case we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
 
-```
+```json
 {
     "__default__" :
     {
@@ -97,20 +97,19 @@ Now assume that we plan to train a neural machine translation (NMT) system with 
 }
 ```
 this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two rules. Once we had our configuration file, we could call bitextor in the following way:
-```
+```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
 ```
 Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`.
 
 ## Bitextor configuration file
-Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can beheave differently, running alternative tools and functionalieites. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
+Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
 **Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). Change all the paths to match your environment.
 
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
-```
-# MANDATORY OPTIONS
+```yaml
 bitextor: /home/user/bitextor
 
 permanentDir: /home/bitextor/permanent/bitextor-output
@@ -120,15 +119,15 @@ lang1: en
 lang2: fr
 ```
 * `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
-* `permanentDir` and `transientDir`: Folders used during processing: permanentDir will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; transientDir will contain the rest of files generated during processing
+* `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 
 There are some more options that are rather basic but not mandatory as they take default values if they are not defined
-```
-LANG1Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
-LANG2Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
-LANG1SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-LANG2SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+```yaml
+LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
+LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
+LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
 
 temp: /home/bitextor/transient
 
@@ -143,7 +142,7 @@ alcazar: false
 
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
-```
+```yaml
 hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 
 langstat: /home/bitextor/permanent/langstat/langstats.all.gz
@@ -162,8 +161,8 @@ langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-doma
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
 ### Variables for crawling configuration
-Two crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy) and the other on the external tool [HTTrack](https://www.httrack.com/). The follwing are the variables that allow to choose one of them and to configure soome aspects of the crawling.
-```
+Two crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy) and the other on the external tool [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+```yaml
 httrack: true
 
 crawlTimeLimit: 30s
@@ -173,17 +172,17 @@ crawlTld: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
 ```
-*`httack`: if this option is enabled, httrack is used instead of the crawler based on Creepy
+*`httack`: if this option is enabled, HTTrack is used instead of the crawler based on Creepy
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
-* `crawlSizeLimit`: **creepy-specific option** that limits the lize of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
+* `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
 * `crawlTld`: **creepy-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org*
 * `crawlerNumThreads`: **creepy-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
 * `crawlerConnectionTimeout`: **creepy-specific option** that allows to specify the connection timeout to a web server
 
 ### Variables for document alignment
-Two strategies are implemented in bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a TF/IDF similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
+Two strategies are implemented in bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
 
-```
+```yaml
 documentAligner: DIC
 ```
 The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
@@ -192,11 +191,11 @@ The variable `documentAligner` can take three different values, each of them tak
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
 #### Variables for document alignment using bilingual lexica
-```
+```yaml
 dic: /home/bitextor/permanent/en-fr.dic
 ```
 Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`.
-```
+```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, they will be concatenated before building the bilingual lexicon.
@@ -205,7 +204,7 @@ This variable must contain one or more **corpora prefixes**. For a given prefix 
 
 
 #### Variables for document alignment using external MT
-```
+```yaml
 alignerCmd: "example/dummy-translate.sh"
 docAlignThreshold: 0.1
 ```
@@ -214,7 +213,7 @@ docAlignThreshold: 0.1
 
 #### Variables for document alignment using home-brew neural MT
 If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having an available GPU. The following are mandatory variables in order to build the NMT system:
-```
+```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 initCorpusDevPrefix: ['/home/bitextor/permanent/Europarl.en-fr.dev']
 initCorpusTestPrefix: ['/home/bitextor/permanent/Europarl.en-fr.test']
@@ -242,8 +241,8 @@ marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "-
 * `marianArgs`: additional arguments for Marian training
 
 ### Options for segment alignment
-After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign] or the tool [bleualign]. The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is better suited for the options bases on MT of `documentAligner`.
-```
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is better suited for the options bases on MT of `documentAligner`.
+```yaml
 bleualign: true
 bleuAlignThreshold: 
 hunalignThreshold: 0
@@ -253,25 +252,25 @@ hunalignThreshold: 0
 
 ### Variables for parallel data filtering
 Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained model an statistical bilingual dictionaries to filter out pairs of segments with a low confidence score. The options required to make it work are:
-```
-bicleaner: /home/bitextor/bicleaner-model/en-fr/training.en-fr.yaml
+```yaml
+bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
 * `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data]
-* `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recomended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
+* `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
 If the bicleaner model is not availalbe, it can be trained automatically by providing two parallel corpora:
-```
+```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
 ```
-* `initCorpusTrainPrefix`: preffix to the parallel corpus used to train the statistical dictionaries (see section *Variables for document alignment using bilingual lexica*)
-* `bicleanerCorpusTrainingPrefix`: preffix to the parallel corpus used to train the regressor that obtains the confidence score in Bicleaner
+* `initCorpusTrainPrefix`: prefix to the parallel corpus used to train the statistical dictionaries (see section *Variables for document alignment using bilingual lexica*)
+* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus used to train the regressor that obtains the confidence score in Bicleaner
 
 
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
-```
+```yaml
 elrc: true
 
 tmx: true
@@ -280,7 +279,7 @@ deduped: false
 ```
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, sich as length ratio; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
-* `deduped`: if this option is set in conjuction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
+* `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
 
 
 ## Pipeline description
