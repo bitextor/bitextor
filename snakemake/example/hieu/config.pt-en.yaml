@@ -3,9 +3,11 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000
 hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.pt.gz
-linksHosts: ["/home/s0565741/workspace/experiment/paracrawl2/hu-en", "/home/s0565741/workspace/experiment/paracrawl2/fr-en", "/home/s0565741/workspace/experiment/paracrawl2/de-en",
+linksHosts: ["/home/s0565741/workspace/experiment/paracrawl2/hu-en",
+  "/home/s0565741/workspace/experiment/paracrawl2/fr-en",
+  "/home/s0565741/workspace/experiment/paracrawl2/de-en",
   "/home/s0565741/workspace/experiment/paracrawl2/it-en",
-  "/home/s0565741/workspace/experiment/paracrawl2/es-en"]
+  "/home/s0565741/workspace/experiment/paracrawl2/es-en/permanent"]
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /tmp
@@ -18,7 +20,7 @@ hunalignThreshold: 0
 maxlines: 5
 crawlTimeLimit: 43200s
 tmx: true
-nmt: true
+nmt: false
 smt: true
 httrack: true
 
