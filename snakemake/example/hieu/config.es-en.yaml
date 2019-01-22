@@ -6,7 +6,7 @@ hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.es.gz
 linksHosts: ["/home/hieu/permanent/hu-en",
              "/home/hieu/permanent/fr-en",
              "/home/hieu/permanent/de-en",
-             "/home/hieu/permanent/pt-en"]
+             "/home/hieu/permanent/it-en"]
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /tmp
