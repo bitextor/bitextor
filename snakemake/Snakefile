@@ -118,6 +118,7 @@ def ValidateArgs(config):
            'hostPath': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
            'linksHosts': {'type': 'list'},
+           'deleteLinkedHosts': {'type': 'boolean'}
 
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
@@ -459,7 +460,7 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
 
     return hostsToCrawl
 
-def LinkHosts(permanent, dir, hosts):
+def LinkHosts(permanent, dir, hosts, deleteLinkedHosts):
     #print("dir", dir)
     cmd = "mkdir -p " + permanent + "/warc"
     shell(cmd)
@@ -470,7 +471,8 @@ def LinkHosts(permanent, dir, hosts):
     otherHosts = set(otherHosts)
     #print("otherHosts", otherHosts)
 
-    for host in hosts:
+    copyHosts = hosts
+    for host in copyHosts:
         if host in otherHosts:
             dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
@@ -478,6 +480,9 @@ def LinkHosts(permanent, dir, hosts):
                 cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
                 #print(cmd)
                 shell(cmd)
+
+            if deleteLinkedHosts:
+                hosts.remove(host)
 
 
 ###############################################################################################
@@ -527,8 +532,9 @@ else:
 
 
 if "linksHosts" in config:
+    deleteLinkedHosts = config["deleteLinkedHosts"]
     for dir in config["linksHosts"]:
-        LinkHosts(permanent, dir, hosts)
+        LinkHosts(permanent, dir, hosts, deleteLinkedHosts)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
