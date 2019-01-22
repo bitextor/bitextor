@@ -2,13 +2,13 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/hieu/permanent/data/hosts/hosts.es.gz
+hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.es.gz
 linksHosts: ["/home/s0565741/workspace/experiment/paracrawl2/hu-en",
              "/home/s0565741/workspace/experiment/paracrawl2/fr-en",
              "/home/s0565741/workspace/experiment/paracrawl2/de-en",
              "/home/s0565741/workspace/experiment/paracrawl2/it-en"]
 
-langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
+langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /mnt/tmp
 permanentDir: /home/s0565741/workspace/experiment/paracrawl2/es-en/permanent
 transientDir: /home/s0565741/workspace/experiment/paracrawl2/es-en/transient
