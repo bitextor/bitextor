@@ -3,16 +3,16 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000
 hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.pt.gz
-linksHosts: ["/home/s0565741/workspace/experiment/paracrawl2/hu-en",
-  "/home/s0565741/workspace/experiment/paracrawl2/fr-en",
-  "/home/s0565741/workspace/experiment/paracrawl2/de-en",
-  "/home/s0565741/workspace/experiment/paracrawl2/it-en",
-  "/home/s0565741/workspace/experiment/paracrawl2/es-en/permanent"]
+linksHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent"]
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl2/pt-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl2/pt-en/transient
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/pt-en/transient
 lang1: pt
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic

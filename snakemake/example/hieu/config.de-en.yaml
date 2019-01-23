@@ -3,12 +3,13 @@ bitextor: /home/hieu/permanent/software/bitextor
 langstat: /home/hieu/permanent/data/langstat/langstats.all.gz
 langstatThreshold: 1000000
 hostPath: /home/hieu/permanent/data/hosts/hosts.de.gz
-linksHosts: ["/home/hieu/permanent/hu-en", "/home/hieu/permanent/fr-en"]
+linksHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent"]
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /mnt/tmp
-permanentDir: /home/hieu/permanent/de-en
-transientDir: /home/hieu/transient/de-en
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/de-en/transient
 lang1: de
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
