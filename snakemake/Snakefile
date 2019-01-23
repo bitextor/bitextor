@@ -117,8 +117,8 @@ def ValidateArgs(config):
            'hosts': {'type': 'list'},
            'hostPath': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
-           'linksHosts': {'type': 'list'},
-           'deleteLinkedHosts': {'type': 'boolean'}
+           'linkedHosts': {'type': 'list'},
+           'linkedHostsAction': {'type': 'string'}
 
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
@@ -180,6 +180,9 @@ def ValidateArgs(config):
     if "bicleaner" in config:
         if not os.path.isfile(config["bicleaner"]):
             schema['bicleanerCorpusTrainingPrefix']['required']=True
+
+    if "linkedHosts" in config:
+        schema['linkedHostsAction']['required']=True
 
     v = Validator(schema)
     #v.allow_unknown = True
@@ -460,7 +463,7 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
 
     return hostsToCrawl
 
-def LinkHosts(permanent, dir, hosts, deleteLinkedHosts):
+def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
     #print("dir", dir)
     cmd = "mkdir -p " + permanent + "/warc"
     shell(cmd)
@@ -475,20 +478,22 @@ def LinkHosts(permanent, dir, hosts, deleteLinkedHosts):
     copyHosts = set(hosts)
     for host in copyHosts:
         if host in otherHosts:
-            dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
-
-            if not (os.path.exists(dest) or os.path.islink(dest)):
-                cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
-                #print(cmd)
-                shell(cmd)
-
-            if deleteLinkedHosts:
+            if linkedHostsAction == "remove":
                 hosts.remove(host)
+            elseif linkedHostsAction == "link":
+                dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
+                if not (os.path.exists(dest) or os.path.islink(dest)):
+                    cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    #print(cmd)
+                    shell(cmd)
+            else:
+                sys.stderr.write("Unknown linkedHostsAction:" + linkedHostsAction + "\n")
+                exit()
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
-    print("read hosts from file")
+    sys.stderr.write("read hosts from file")
 
     with gzip.open(permanent + "/hosts.gz", 'rt') as f:
         hosts = f.read().splitlines()
@@ -532,10 +537,10 @@ else:
             f.write("%s\n" % host)
 
 
-if "linksHosts" in config:
-    deleteLinkedHosts = config["deleteLinkedHosts"]
-    for dir in config["linksHosts"]:
-        LinkHosts(permanent, dir, hosts, deleteLinkedHosts)
+if "linkedHosts" in config:
+    linkedHostsAction = config["linkedHostsAction"]
+    for dir in config["linkedHosts"]:
+        LinkedHosts(permanent, dir, hosts, linkedHostsAction)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
