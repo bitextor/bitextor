@@ -15,7 +15,7 @@ Apart from downloading all submodules of this repository (you can do it with `gi
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk`
+`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk gawk`
 
 The two last dependencies (`libboost-all-dev` and `openjdk-8-jdk`) are not mandatory if you are not going to build your own dictionaries and use `boilerpipe`, respectively.
 
