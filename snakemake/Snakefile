@@ -811,6 +811,7 @@ rule httrack_download:
         url="http://{target}"
     priority: 10
     shell:
+        'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
