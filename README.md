@@ -15,7 +15,7 @@ Apart from downloading all submodules of this repository (you can do it with `gi
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk gawk`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
@@ -34,7 +34,7 @@ This dependency is not mandatory as a second parallel data crawler is provided i
 
 ## Submodules compilation
 
-To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used). Then the code will be compiled using `make`:
+To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
 
 `./autogen.sh && make`
 
