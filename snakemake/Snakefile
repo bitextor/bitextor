@@ -480,7 +480,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
         if host in otherHosts:
             if linkedHostsAction == "remove":
                 hosts.remove(host)
-            elseif linkedHostsAction == "link":
+            elif linkedHostsAction == "link":
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
