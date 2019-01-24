@@ -1,5 +1,5 @@
 
-# nohup snakemake --snakefile ../../Snakefile --cores 4222 -j 4222 -k --configfile config.fr-en.yaml --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json  &
+# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
 
 import sys
 import glob
