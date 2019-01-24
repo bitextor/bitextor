@@ -7,7 +7,7 @@
 `bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
 1. The source where the parallel data will be searched: one or more websites (namely, bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
 ## Dependencies
 
@@ -215,7 +215,7 @@ initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
-**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
+**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
 
 
 #### Variables for document alignment using external MT
@@ -270,7 +270,7 @@ Parallel data filtering is carried out with the tool [Bicleaner](https://github.
 bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
-* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data]
+* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data/releases/tag/bicleaner-v1.0]. They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
 If the bicleaner model is not availalbe, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
