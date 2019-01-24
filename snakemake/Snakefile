@@ -118,7 +118,7 @@ def ValidateArgs(config):
            'hostPath': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
            'linkedHosts': {'type': 'list'},
-           'linkedHostsAction': {'type': 'string'}
+           'linkedHostsAction': {'type': 'string'},
 
            'langstat': {'type': 'string'},
            'langstatExcludeDomains': {'type': 'string'},
