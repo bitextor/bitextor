@@ -15,7 +15,7 @@ Apart from downloading all submodules of this repository (you can do it with `gi
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
