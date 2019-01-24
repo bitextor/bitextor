@@ -11,13 +11,13 @@
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences (Boilerpipe). In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences (Boilerpipe); version 8 or later are required. In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-11-jdk`
+`sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk`
 
-The two last dependencies (`libboost-all-dev` and `openjdk-11-jdk`) are not mandatory if you are not going to build your own dictionaries and use `boilerpipe`, respectively.
+The two last dependencies (`libboost-all-dev` and `openjdk-8-jdk`) are not mandatory if you are not going to build your own dictionaries and use `boilerpipe`, respectively.
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
