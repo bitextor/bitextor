@@ -174,7 +174,7 @@ crawlTld: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
 ```
-*`httack`: if this option is enabled, HTTrack is used instead of the crawler based on Creepy
+* `httack`: if this option is enabled, HTTrack is used instead of the crawler based on Creepy
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
 * `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
 * `crawlTld`: **creepy-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org*
@@ -189,20 +189,20 @@ documentAligner: DIC
 ```
 The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
 * `DIC`: takes the strategy using bilingual lexica and a linear regressor
-* `externalMT`: takes the strategy using MT, in this case using an external MT script that reads source-language text from the standard input and writes the translations to the standard output
+* `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
 #### Variables for document alignment using bilingual lexica
 ```yaml
 dic: /home/user/en-fr.dic
 ```
-Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`.
+Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 ```
-This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, they will be concatenated before building the bilingual lexicon.
+This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
-**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
+**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
 
 
 #### Variables for document alignment using external MT
@@ -231,7 +231,6 @@ LANG2Detokenizer: "/home/user/mosesdecoder/scripts/tokenizer/detokenizer.perl -l
 gpuId: 0
 
 marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "--maxi-batch 1000", "--overwrite", "--keep-best", "--valid-metrics perplexity", "--valid-log valid.log", "--log train.log", "--dropout-rnn 0.2", "--dropout-src 0.2", "--dropout-trg 0.2 ", "--cost-type ce-mean-words", "--layer-normalization", "--exponential-smoothing", "--tied-embeddings", "--valid-metrics bleu"]
-
 ```
 * `initCorpusTrainPrefix`, `initCorpusDevPrefix`,  and `initCorpusTestPrefix`: training data prefixes, development data prefixes and test data prefixes. See section *Variables for document alignment using bilingual lexica* for a description of such prefixes
 * `marianDir`: path to the directory containing the installation of the NMT tool [Marian](https://github.com/marian-nmt/marian-dev)
@@ -243,17 +242,17 @@ marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "-
 * `marianArgs`: additional arguments for Marian training
 
 ### Options for segment alignment
-After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is better suited for the options bases on MT of `documentAligner`.
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
 ```yaml
 bleualign: true
-bleuAlignThreshold: 
-hunalignThreshold: 0
+bleuAlignThreshold: 0.1
+hunalignThreshold: 0.0
 ```
-*`bleualign`: if this option is set, bleualign is used instead of hunalign as the tool for segment alignment. This option will only work is `documentAligner` is set either to `externalMT` or `NMT`. This option is set to false by default
-*`bleuAlignThreshold` and `hunalignThreshold`: score threshold for filtering pairs of sentences with a score too low. `bleuAlignThreshold` should be set to a value in [0,1], while `hunalignThreshold` can take any float value. Both are set to 0.0 by default
+* `bleualign`: if this option is set, bleualign is used instead of hunalign as the tool for segment alignment. This option will only work is `documentAligner` is set either to `externalMT` or `NMT`. This option false by default
+* `bleuAlignThreshold` and `hunalignThreshold`: score threshold for filtering pairs of sentences with a score too low. `bleuAlignThreshold` should be set to a value in [0,1], while `hunalignThreshold` can take any float value. Both are set to 0.0 by default
 
 ### Variables for parallel data filtering
-Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained model an statistical bilingual dictionaries to filter out pairs of segments with a low confidence score. The options required to make it work are:
+Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score (learn more about Bicleaner at [https://github.com/bitextor/bicleaner]). The options required to make it work are:
 ```yaml
 bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
@@ -261,14 +260,14 @@ bicleanerThreshold: 0.6
 * `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data]
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
-If the bicleaner model is not availalbe, it can be trained automatically by providing two parallel corpora:
+If the bicleaner model is not availalbe, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
 ```
-* `initCorpusTrainPrefix`: prefix to the parallel corpus used to train the statistical dictionaries (see section *Variables for document alignment using bilingual lexica*)
-* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus used to train the regressor that obtains the confidence score in Bicleaner
-
+* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
+* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
+It is important to provide different parallel corpora for these two options as this helps bicleaner to deal with unkown words (that do not apear in the statistical dictionaries) during scoring.
 
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
