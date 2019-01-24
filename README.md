@@ -51,7 +51,7 @@ In addition, some users haver reported problems when trying to install tensorflo
 Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
 ```bash
 sudo apt-get remove libboost-all-dev
-sudo apt-get remove
+sudo apt-get autoremove
 wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
 tar xvf boost_1_66_0.tar.gz
 cd boost_1_66_0/
