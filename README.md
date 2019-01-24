@@ -48,6 +48,18 @@ sudo pip3 install tensorflow==1.5.0
 
 In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
+Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
+```bash
+sudo apt-get remove libboost-all-dev
+sudo apt-get remove
+wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
+tar xvf boost_1_66_0.tar.gz
+cd boost_1_66_0/
+./bootstrap.sh
+./b2 -j16 --layout=system install || echo FAILURE
+cd ..
+rm -rf boost_1_66_0*
+```
 ## Run
 
 To run Bitextor use the main script `bitextor.sh`. In general, this script will take two parameters:
