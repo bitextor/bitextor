@@ -17,8 +17,6 @@ If you are using an apt-like package manager you can run the following command l
 
 `sudo apt install automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk gawk`
 
-The two last dependencies (`libboost-all-dev` and `openjdk-8-jdk`) are not mandatory if you are not going to build your own dictionaries and use `boilerpipe`, respectively.
-
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
 Some additional Python libraries are required. They can be installed automatically with the tool pip by runing (use without `sudo` if you are running in a virtualenv):
