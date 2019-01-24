@@ -5,9 +5,9 @@
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 `bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
-1. The source where the parallel data will be searched: one or more [website hostnames](https://en.wikipedia.org/wiki/URL)
+1. The source where the parallel data will be searched: one or more websites (namely, bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the document-alignment strategy chosen)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
 ## Dependencies
 
@@ -33,49 +33,51 @@ This dependency is not mandatory as a second parallel data crawler is provided i
 
 ## Submodules compilation
 
-To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used. Then the code will be compiled and optionally installed (using `make install`) by means of the command `make`:
+To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh`, which will identify the location of the external tools used). Then the code will be compiled using `make`:
 
 `./autogen.sh && make`
 
-## Some frequent installation issues
+### Some known installation issues
 
-In some machines equipped with an AMD CPU you may experience some troubles tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
+In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
 ```bash
 sudo pip3 uninstall tensorflow
 sudo pip3 install tensorflow==1.5.0
 ```
 
+In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
+
 ## Run
 
-To run Bitextor use the main script bitextor.sh. In general, this script will take two parameters:
+To run Bitextor use the main script `bitextor.sh`. In general, this script will take two parameters:
 ```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
 ```
 where
 * `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run bitextor (learn more about bitextor configuration in the next section), and
-* `<NUMJOBS>` is the number of jobs that can be launch in launched in parallel (a job may be a single step of the pipeline or the same step for different websites if more than one is specified in the `<CONFIGFILE>`
+* `<NUMJOBS>` is the number of jobs that can be launched in parallel; a job is a single step of the pipeline (see section Pipeline description) and can be run in parallel for different websites
 For example, on a machine with 4 cores, one could run Bitextor as follows:
 ```bash
 bitextor.sh -s myconfig.yaml -j 4
 ```
 
-If bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used 
+If bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used: 
 ```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>]
 ```
 where
 * `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example). Since bitextor 7.0 is implemented using the [Snakemake](https://snakemake.readthedocs.io/) pipeline manager. Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
+* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
 ### Running Bitextor on a cluster
 In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
 ```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
-this command would run bitextor allowing to queue 20 jobs in the cluster queue, assuming that all jobs can be run in any node of the cluster.
+this command would run bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
 
-Now assume that we plan to train a neural machine translation (NMT) system with bitextor for document alignment. In this case we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
+Now assume that we plan to train a neural MT (NMT) system with bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
 
 ```json
 {
@@ -96,7 +98,7 @@ Now assume that we plan to train a neural machine translation (NMT) system with 
 
 }
 ```
-this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two rules. Once we had our configuration file, we could call bitextor in the following way:
+this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two jobs. Once we had our configuration file, we could call bitextor in the following way:
 ```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
 ```
@@ -105,15 +107,15 @@ Note that, in this case, an additional option needs to be added to the `sbatch` 
 ## Bitextor configuration file
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). Change all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
 ```yaml
 bitextor: /home/user/bitextor
 
-permanentDir: /home/bitextor/permanent/bitextor-output
-transientDir: /home/bitextor/transient
+permanentDir: /home/user/permanent/bitextor-output
+transientDir: /home/user/transient
 
 lang1: en
 lang2: fr
@@ -129,35 +131,35 @@ LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q
 LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
 LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
 
-temp: /home/bitextor/transient
+temp: /home/user/transient
 
 boilerpipeCleaning: true
 alcazar: false
 ```
 * `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
-* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If not sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
-* `temp`: temporal directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents
-* `alcazar`: option that enables the library [alcazar](https://github.com/saintamh/alcazar/) for text extraction from HTML documents
+* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If no sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
+* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled
+* `alcazar`: option that enables the library [alcazar](https://github.com/saintamh/alcazar/) for text extraction from HTML documents; by default `lxml` library is used
 
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
 hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 
-langstat: /home/bitextor/permanent/langstat/langstats.all.gz
+langstat: /home/user/langstat/langstats.all.gz
 langstatThreshold: 50
-langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-domains
+langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 ```
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
-* `langstat`: file containing language statistics of a collection of web domains (hosts). The langstat file is a tab-separated list of tuples host - language - amount of documents. For example:
-``
+* `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
+```
 0-0hamster.livejournal.com      el      17
 0-0hamster.livejournal.com      en      1102
 0-0hamster.livejournal.com      hi      19
 0-0hamster.livejournal.com      ms      33
 0-0hamster.livejournal.com      nn      29
-``
+```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
 ### Variables for crawling configuration
@@ -192,7 +194,7 @@ The variable `documentAligner` can take three different values, each of them tak
 
 #### Variables for document alignment using bilingual lexica
 ```yaml
-dic: /home/bitextor/permanent/en-fr.dic
+dic: /home/user/en-fr.dic
 ```
 Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`.
 ```yaml
@@ -215,8 +217,8 @@ docAlignThreshold: 0.1
 If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having an available GPU. The following are mandatory variables in order to build the NMT system:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
-initCorpusDevPrefix: ['/home/bitextor/permanent/Europarl.en-fr.dev']
-initCorpusTestPrefix: ['/home/bitextor/permanent/Europarl.en-fr.test']
+initCorpusDevPrefix: ['/home/user/Europarl.en-fr.dev']
+initCorpusTestPrefix: ['/home/user/Europarl.en-fr.test']
 
 marianDir: /home/user/marian-dev
 mosesDir: /home/user/mosesdecoder
