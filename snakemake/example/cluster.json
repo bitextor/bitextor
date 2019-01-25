@@ -7,7 +7,7 @@
 
     "httrack_download" :
     {
-        "oversubscribe": "--oversubscribe"
+        "oversubscribe": "-s"
     },
     
     "docaling_translate_nmt" :
