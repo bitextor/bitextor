@@ -1,6 +1,6 @@
 bitextor: /home/hieu/permanent/software/bitextor
 hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
-hostPath: /home/hieu/permanent/data/hosts/hosts.fr.gz
+hostPath: /home/hieu/permanent/data/hosts/hosts.fr.3.gz
 #excludeHosts: ["vade-retro.fr"]
 
   #"langstat: /home/hieu/permanent/software/langstat/1k.gz
@@ -8,7 +8,8 @@ hostPath: /home/hieu/permanent/data/hosts/hosts.fr.gz
     
   #"langstat: /home/hieu/permanent/software/langstat/langstats.all.gz
   #"langstatThreshold":50000000,
-linksHosts: ["/home/hieu/permanent/other-en"]
+linkedHosts: ["/home/hieu/permanent/other-en"]
+linkedHostsAction: link
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /tmp
