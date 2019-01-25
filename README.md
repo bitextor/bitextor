@@ -125,20 +125,19 @@ Bitextor uses a configuration file to define the variables required by the pipel
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
 ```yaml
-bitextor: /home/user/bitextor
-
 permanentDir: /home/user/permanent/bitextor-output
 transientDir: /home/user/transient
 
 lang1: en
 lang2: fr
 ```
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 
 There are some more options that are rather basic but not mandatory as they take default values if they are not defined
 ```yaml
+bitextor: /home/user/bitextor
+
 LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
 LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
 LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
@@ -149,6 +148,7 @@ temp: /home/user/transient
 boilerpipeCleaning: true
 alcazar: false
 ```
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
 * `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
 * `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If no sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
