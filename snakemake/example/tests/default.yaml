@@ -12,4 +12,3 @@ elrc: true
 documentAligner: DIC
 bicleaner: /home/bitextor/bicleaner-model/en-fr/training.en-fr.yaml
 tmx: true
-

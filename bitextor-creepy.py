@@ -16,6 +16,7 @@ import re
 import sys
 import time
 import urllib.robotparser
+import hashlib
 
 from ssl import CertificateError
 from posixpath import join, dirname, normpath
@@ -49,6 +50,7 @@ class Document(object):
 class Crawler(object):
     F_ANY, F_SAME_DOMAIN, F_SAME_HOST, F_SAME_PATH, F_TLD = list(range(5))
     def __init__(self, debug=False):
+        self.seencontent = set()
         self.currdomain = ""
         self.visited = {}
         self.outerdomaintargets = {}
@@ -345,29 +347,31 @@ class Crawler(object):
                             time.sleep(self.delay)
                             self.delay_lock.release()
 
+                            c = hashlib.md5()
+                            c.update(re.sub(rb"href\s*=\s*['\"]\s*([^'\"]+)['\"]", b"", doc.text))
+                            if c.hexdigest() not in self.seencontent:
+                                # Make unique list (these are the links in the document)
+                                try:
+                                    links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('utf8'))
+                                    #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('utf8'))
+                                except:
+                                    links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('latin1'))
 
-                            # Make unique list (these are the links in the document)
-                            try:
-                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('utf8'))
-                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('utf8'))
-                            except:
-                                links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('latin1'))
+                                    #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('latin1'))
 
-                                #content = re.sub('<atom:link[^>]*>', '', doc.text.decode('latin1'))
+                                    #sys.stderr.write(str(content)+"\n")
 
-                                #sys.stderr.write(str(content)+"\n")
+                                    #content = re.sub('<head>.*</head>', '', content)
+                                    #links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
+                                    #      content)
 
-                                #content = re.sub('<head>.*</head>', '', content)
-                                #links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]",
-                                #      content)
+                                linksset = list(set(links))
+                                random.shuffle(linksset)
+                                self.process_document(doc)
 
-                            linksset = list(set(links))
-                            random.shuffle(linksset)
-                            self.process_document(doc)
-
-                            for link in linksset:
-                                rlink = self._follow_link(url, link.strip())
-                                self._add_target(rlink)
+                                for link in linksset:
+                                    rlink = self._follow_link(url, link.strip())
+                                    self._add_target(rlink)
 
                             if self.concurrency < self.max_outstanding:
                                 if self.verbose:
@@ -399,8 +403,6 @@ class Crawler(object):
                             else:
                               logging.error('%s: %s, given up after 5 attempts' % (url, str(e)))
                             self.targets_lock.release()
-                else:
-                    self.targets_lock.release()
             if crawler.timelimit != None and time.time()-crawler.crawlstarts > crawler.timelimit:
                 self.interrupt=True
 
@@ -419,7 +421,7 @@ oparser.add_argument("-s", help="Total size limit; once it is reached the crawli
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
-oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 5s", dest="delay", required=False, default=5)
+oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 5s", dest="delay", required=False, default=5, type=int)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
