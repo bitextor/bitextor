@@ -150,7 +150,7 @@ def ValidateArgs(config):
         if not binaryAvailable("httrack"):
             sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
             exit(-1)
-
+    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
     #Mandatory options depending on the document aligner method choosen
     if "documentAligner" in config:
         if config["documentAligner"]=='NMT':
