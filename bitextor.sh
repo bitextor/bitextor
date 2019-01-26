@@ -75,5 +75,3 @@ if [ "$SNAKEFILE" == "" ]; then
 fi
 
 snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile $SNAKEFILE -j $NUMJOBS $CLUSTERCOMMAND $CLUSTERCONFIG --config bitextor="$(dirname $0)"
-
-rm -rf $BUILDDICTTMP
