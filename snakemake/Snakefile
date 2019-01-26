@@ -8,6 +8,7 @@ import lzma
 import tldextract
 import os
 import os.path
+import socket
 from tld import get_tld
 from tqdm import tqdm
 from collections import defaultdict
@@ -38,7 +39,7 @@ def tokeniserCheck(cmd):
         exit(1)
 
 def systemCheck(cmd):
-    sys.stderr.write("Executing:" + cmd + "\n")
+    sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
     sys.stderr.flush()
 
     subprocess.check_call(cmd, shell=True)
