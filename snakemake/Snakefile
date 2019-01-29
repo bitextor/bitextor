@@ -817,7 +817,7 @@ rule httrack_download:
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
-        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
+        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 	'sync ; '
 
