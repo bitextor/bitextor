@@ -4,7 +4,7 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.sl.gz
+hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.mt.gz
 linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
   "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
   "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
@@ -25,14 +25,15 @@ linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent"
   "/home/s0565741/workspace/experiment/paracrawl/v3/et-en/permanent",
   "/home/s0565741/workspace/experiment/paracrawl/v3/lt-en/permanent",
   "/home/s0565741/workspace/experiment/paracrawl/v3/lv-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/ga-en/permanent"]
+  "/home/s0565741/workspace/experiment/paracrawl/v3/ga-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/sl-en/permanent"]
 linkedHostsAction: remove
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/sl-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/sl-en/transient
-lang1: sl
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/mt-en/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/mt-en/transient
+lang1: mt
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
 hunalignThreshold: 0
@@ -80,10 +81,10 @@ initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
                        "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
 
 gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l sl
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l mt
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l sl
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l mt
 LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
 
 nmtVocabSize: 30000

@@ -494,21 +494,20 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
-    sys.stderr.write("read hosts from file")
-
     with gzip.open(permanent + "/hosts.gz", 'rt') as f:
         hosts = f.read().splitlines()
     hosts = set(hosts)
+    sys.stderr.write("read hosts from file=" + str(len(hosts)) + "\n")
+	
 else:
     hosts = set()
 
     if "hosts" in config:
-        print("hosts given")
         newHosts = config["hosts"]
         hosts = hosts.union(newHosts)
+        sys.stderr.write("#hosts given=" + str(len(newHosts)) + "\n")
 
     if "langstat" in config:
-        print("find hosts in langstat")
         langstat_path = config["langstat"]
         lang1 = config["lang1"]
         lang2 = config["lang2"]
@@ -517,13 +516,14 @@ else:
 
         newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
-
+        sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
+	
     if "hostPath" in config:
-        print("find hosts in hostPath")
         path = config["hostPath"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
-
+            sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
+	
         hosts = hosts.union(newHosts)
 
     if "excludeHosts" in config:
@@ -537,6 +537,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
@@ -544,7 +545,7 @@ if "linkedHosts" in config:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
-sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
