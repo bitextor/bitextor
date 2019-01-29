@@ -826,7 +826,7 @@ rule httrack_download:
         'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
-	'sync ; '
+    	'sync ; '
 
 rule concat_subdomains:
     input:
