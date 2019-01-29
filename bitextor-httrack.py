@@ -42,7 +42,7 @@ def Run(url, outPath, timeLimit, pageLimit):
         cmd += " -#L{}".format(pageLimit)
 
     cmd += " {URL} -O {DOWNLOAD_PATH}".format(URL=url, DOWNLOAD_PATH=outPath)
-    print("cmd", cmd)
+    #print("cmd", cmd)
 
     systemCheck(cmd)
 
