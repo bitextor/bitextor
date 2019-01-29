@@ -98,6 +98,7 @@ def ValidateArgs(config):
 
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
+           'crawlPageLimit': {'type': 'integer'},
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
@@ -289,6 +290,11 @@ if "crawlTimeLimit" in config:
   CRAWLTIMELIMIT="-t "+str(config["crawlTimeLimit"])
 else:
   CRAWLTIMELIMIT=""
+
+if "crawlPageLimit" in config:
+  CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
+else:
+  CRAWLPAGELIMIT=""
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
@@ -815,7 +821,7 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
+        'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
