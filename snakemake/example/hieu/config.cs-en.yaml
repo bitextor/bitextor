@@ -24,6 +24,7 @@ lang2: en
 hunalignThreshold: 0
 maxlines: 5
 crawlTimeLimit: 43200s
+crawlPageLimit: 100000
 tmx: true
 nmt: false
 smt: true
