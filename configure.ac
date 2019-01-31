@@ -215,6 +215,7 @@ print (var)" 2> /dev/null`
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is $kerasversion; try running:
 pip install --upgrade keras
+if you already have an updated version of keras, check if the engine is properly configured and installed (Tensorflow, Theano...) with 'python3 -c "import keras"'
 ])
     fi
   else

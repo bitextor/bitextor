@@ -421,7 +421,7 @@ oparser.add_argument("-s", help="Total size limit; once it is reached the crawli
 oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs", required=False, default=8, type=int)
 oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8, type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False, default=None)
-oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 5s", dest="delay", required=False, default=5, type=int)
+oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 2s", dest="delay", required=False, default=2, type=int)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load", required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett", required=False, default=None)
 oparser.add_argument("-D", help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL provided.", dest="crawltld", action='store_true')
