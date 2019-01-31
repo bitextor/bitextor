@@ -379,7 +379,7 @@ else:
 
 if "elrc" in config and config["elrc"]:
   ELRCSCORES="elrc"
-  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL,idnumber"
+  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL"
 else:
   ELRCSCORES=BICLEANER
   ELRCFIELDS=""
