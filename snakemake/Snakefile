@@ -652,10 +652,6 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
 
 OUTPUT=[]
 
-#Two WARC files with documents in lang1 and lang2
-OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
-OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
-
 if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
     OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
