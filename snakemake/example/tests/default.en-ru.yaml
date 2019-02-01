@@ -1,0 +1,14 @@
+bitextor: ~/permanent/bitextor
+hosts: ["kremlin.ru"]
+httrack: false
+permanentDir: ~/permanent/bitextor-output-default-en-ru
+transientDir: ~/transient-default-en-ru
+temp: ~/transient-default-en-ru
+lang1: en
+lang2: ru
+dic: ~/permanent/en-ru.dic
+hunalignThreshold: 0
+elrc: true
+documentAligner: DIC
+#bicleaner: ~/bicleaner-model/en-ru/training.en-ru.yaml
+tmx: true

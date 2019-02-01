@@ -1,5 +1,5 @@
 
-# nohup snakemake --snakefile ../../Snakefile --cores 4222 -j 4222 -k --configfile config.fr-en.yaml --cluster "sbatch {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json  &
+# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
 
 import sys
 import glob
@@ -8,6 +8,7 @@ import lzma
 import tldextract
 import os
 import os.path
+import socket
 from tld import get_tld
 from tqdm import tqdm
 from collections import defaultdict
@@ -38,7 +39,7 @@ def tokeniserCheck(cmd):
         exit(1)
 
 def systemCheck(cmd):
-    sys.stderr.write("Executing:" + cmd + "\n")
+    sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
     sys.stderr.flush()
 
     subprocess.check_call(cmd, shell=True)
@@ -98,6 +99,7 @@ def ValidateArgs(config):
 
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
+           'crawlPageLimit': {'type': 'integer'},
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
@@ -150,6 +152,9 @@ def ValidateArgs(config):
         if not binaryAvailable("httrack"):
             sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
             exit(-1)
+    
+    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
+    config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()}) 
 
     #Mandatory options depending on the document aligner method choosen
     if "documentAligner" in config:
@@ -290,6 +295,11 @@ if "crawlTimeLimit" in config:
 else:
   CRAWLTIMELIMIT=""
 
+if "crawlPageLimit" in config:
+  CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
+else:
+  CRAWLPAGELIMIT=""
+
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
   CRAWLJOBS="-j "+str(config["crawlerNumThreads"])
@@ -379,7 +389,7 @@ else:
 
 if "elrc" in config and config["elrc"]:
   ELRCSCORES="elrc"
-  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL,idnumber"
+  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL"
 else:
   ELRCSCORES=BICLEANER
   ELRCFIELDS=""
@@ -480,7 +490,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
         if host in otherHosts:
             if linkedHostsAction == "remove":
                 hosts.remove(host)
-            elseif linkedHostsAction == "link":
+            elif linkedHostsAction == "link":
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
@@ -493,21 +503,20 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
-    sys.stderr.write("read hosts from file")
-
     with gzip.open(permanent + "/hosts.gz", 'rt') as f:
         hosts = f.read().splitlines()
     hosts = set(hosts)
+    sys.stderr.write("read hosts from file=" + str(len(hosts)) + "\n")
+	
 else:
     hosts = set()
 
     if "hosts" in config:
-        print("hosts given")
         newHosts = config["hosts"]
         hosts = hosts.union(newHosts)
+        sys.stderr.write("#hosts given=" + str(len(newHosts)) + "\n")
 
     if "langstat" in config:
-        print("find hosts in langstat")
         langstat_path = config["langstat"]
         lang1 = config["lang1"]
         lang2 = config["lang2"]
@@ -516,13 +525,14 @@ else:
 
         newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
-
+        sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
+	
     if "hostPath" in config:
-        print("find hosts in hostPath")
         path = config["hostPath"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
-
+            sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
+	
         hosts = hosts.union(newHosts)
 
     if "excludeHosts" in config:
@@ -536,6 +546,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
@@ -543,7 +554,7 @@ if "linkedHosts" in config:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
-sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
@@ -643,10 +654,6 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
 #================================== TARGET FILES ==================================#
 
 OUTPUT=[]
-
-#Two WARC files with documents in lang1 and lang2
-OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1))
-OUTPUT.append("{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2))
 
 if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
@@ -811,10 +818,14 @@ rule httrack_download:
         url="http://{target}"
     priority: 10
     shell:
+        'echo hostname=$HOSTNAME; '
+        #'mkdir -p {permanent}/warc/{wildcards.target} ; '
+        'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        '{BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT}; '
-        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | xz -c -T 0 > {output}; '
+        'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
+        '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
+    	'sync ; '
 
 rule concat_subdomains:
     input:

@@ -32,11 +32,14 @@ def systemCheck(cmd):
 
     subprocess.check_call(cmd, shell=True)
 
-def Run(url, outPath, timeLimit):
+def Run(url, outPath, timeLimit, pageLimit):
     cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 "
 
     if timeLimit:
         cmd += " -E{}".format(timeLimit)
+
+    if pageLimit:
+        cmd += " -#L{}".format(pageLimit)
 
     cmd += " {URL} -O {DOWNLOAD_PATH}".format(URL=url, DOWNLOAD_PATH=outPath)
     #print("cmd", cmd)
@@ -55,12 +58,14 @@ if __name__ == "__main__":
                         help='Directory to write to', required=True)
     parser.add_argument('-t', dest='timeLimit',
                         help='Maximum time to crawl.', required=False)
+    parser.add_argument('-p', dest='pageLimit',
+                        help='Maximum number of pages to crawl.', required=False)
 
     args = parser.parse_args()
 
     print("Starting...")
 
-    Run(args.url, args.outPath, args.timeLimit)
+    Run(args.url, args.outPath, args.timeLimit, args.pageLimit)
 
 
     print("Finished!")

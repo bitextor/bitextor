@@ -7,7 +7,7 @@
 `bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
 1. The source where the parallel data will be searched: one or more websites (namely, bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
 ## Dependencies
 
@@ -15,7 +15,7 @@ Apart from downloading all submodules of this repository (you can do it with `gi
 
 If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
@@ -48,6 +48,18 @@ sudo pip3 install tensorflow==1.5.0
 
 In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
+Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
+```bash
+sudo apt-get remove libboost-all-dev
+sudo apt-get autoremove
+wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
+tar xvf boost_1_66_0.tar.gz
+cd boost_1_66_0/
+./bootstrap.sh
+./b2 -j16 --layout=system install || echo FAILURE
+cd ..
+rm -rf boost_1_66_0*
+```
 ## Run
 
 To run Bitextor use the main script `bitextor.sh`. In general, this script will take two parameters:
@@ -113,20 +125,19 @@ Bitextor uses a configuration file to define the variables required by the pipel
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
 ```yaml
-bitextor: /home/user/bitextor
-
 permanentDir: /home/user/permanent/bitextor-output
 transientDir: /home/user/transient
 
 lang1: en
 lang2: fr
 ```
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 
 There are some more options that are rather basic but not mandatory as they take default values if they are not defined
 ```yaml
+bitextor: /home/user/bitextor
+
 LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
 LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
 LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
@@ -137,6 +148,7 @@ temp: /home/user/transient
 boilerpipeCleaning: true
 alcazar: false
 ```
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
 * `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
 * `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If no sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
@@ -203,7 +215,7 @@ initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
-**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
+**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
 
 
 #### Variables for document alignment using external MT
@@ -258,7 +270,7 @@ Parallel data filtering is carried out with the tool [Bicleaner](https://github.
 bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
-* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data]
+* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data/releases/tag/bicleaner-v1.0]. They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
 If the bicleaner model is not availalbe, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:

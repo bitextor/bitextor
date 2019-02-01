@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-
+#!/usr/bin/env python3
 #
 # 1. All the alignments produced by bitextor-alignsegments are checked and those with an alignemnt confidence score lower than a given threshold are discarded (also those unaligned segments are discarded)
 # 2. If, for a same document pair, a worng-alignment threshold is reached, the whole document pair is discarded
