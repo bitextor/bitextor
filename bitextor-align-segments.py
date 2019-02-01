@@ -83,7 +83,7 @@ def align(file1, file2, file1orig, file2orig, dic):
       for i in range(int(prev_fields[0])):
         line1=filereader1.readline().strip()
 
-    elif int(prev_fields[1]) > 1:
+    if int(prev_fields[1]) > 0:
       for i in range(int(prev_fields[1])):
         line2=filereader2.readline().strip()
 

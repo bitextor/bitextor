@@ -1,19 +1,36 @@
+# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
+
 bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.es.gz
+hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.lv.gz
 linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
-             "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
-             "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
-             "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent"]
+  "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/ro-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/sv-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/fi-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/hr-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/bg-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/sk-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/et-en/permanent",
+  "/home/s0565741/workspace/experiment/paracrawl/v3/lt-en/permanent"]
 linkedHostsAction: remove
 
 langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
 temp: /raid0/tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/es-en/transient
-lang1: es
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/lv-en/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/lv-en/transient
+lang1: lv
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
 hunalignThreshold: 0
@@ -21,7 +38,7 @@ maxlines: 5
 crawlTimeLimit: 43200s
 crawlPageLimit: 100000
 tmx: true
-nmt: true
+nmt: false
 smt: true
 httrack: true
 
@@ -62,10 +79,10 @@ initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
                        "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
 
 gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l es
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l lv
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l es
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l lv
 LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
 
 nmtVocabSize: 30000
