@@ -110,6 +110,7 @@ for record in f:
       #We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate files we discard them
       c = hashlib.md5()
       c.update(deboiled.encode())
+      print("hash", c.hexdigest(), url)
 
       #checking for duplicate content (duplicates are discarded)
       if c.hexdigest() in seen_md5:
