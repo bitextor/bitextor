@@ -851,13 +851,13 @@ rule concat_subdomains:
 
 checkpoint split_warc:
     input:
-        "{target}/concat.warc.xz"
+        "{dir}/concat.warc.xz"
     output:
-        "{target}/concat.warc.split/checkpoint.flag"
+        "{dir}/concat.warc.split/checkpoint.flag"
     shell:
-        'mkdir -p {wildcards.target}/concat.warc.split; '
-        'xzcat {input} | {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.target}/concat.warc.split; '
-        'touch {wildcards.target}/concat.warc.split/checkpoint.flag'
+        'mkdir -p {wildcards.dir}/concat.warc.split; '
+        'xzcat {input} | {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.dir}/concat.warc.split; '
+        'touch {wildcards.dir}/concat.warc.split/checkpoint.flag'
 
 rule warc2preprocess:
     input:
@@ -882,32 +882,32 @@ def input_files(wildcards):
     output = []
     file_types = ['deboilerplate_html','encoding','lang','mime','normalized_html','plain_text','url']
     for contenttype in file_types:
-        output.extend(expand("{splitdir}/concat.warc.split/{i}.{contenttype}.xz",
-               splitdir=wildcards.splitdir,
+        output.extend(expand("{dir}/concat.warc.split/{i}.{contenttype}.xz",
+               dir=wildcards.dir,
                contenttype=contenttype,
-               i=glob_wildcards(os.path.join(wildcards.splitdir+"/concat.warc.split", "{i}.warc.gz")).i))
+               i=glob_wildcards(os.path.join(wildcards.dir+"/concat.warc.split", "{i}.warc.gz")).i))
     return output
 
 rule recompound_preprocess:
     input:
         input_files
     output:
-        deboil='{splitdir}/deboilerplate_html.xz',
-        encoding='{splitdir}/encoding.xz',
-        lang='{splitdir}/lang.xz',
-        mime='{splitdir}/mime.xz',
-        html='{splitdir}/normalized_html.xz',
-        text='{splitdir}/plain_text.xz',
-        url='{splitdir}/url.xz'
+        deboil='{dir}/deboilerplate_html.xz',
+        encoding='{dir}/encoding.xz',
+        lang='{dir}/lang.xz',
+        mime='{dir}/mime.xz',
+        html='{dir}/normalized_html.xz',
+        text='{dir}/plain_text.xz',
+        url='{dir}/url.xz'
     shell:
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.deboilerplate_html.xz | xz > {output.deboil}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.encoding.xz | xz > {output.encoding}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.lang.xz | xz > {output.lang}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.mime.xz | xz > {output.mime}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.normalized_html.xz | xz > {output.html}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.plain_text.xz | xz > {output.text}; '
-        'xzcat {wildcards.splitdir}/concat.warc.split/*.url.xz | xz > {output.url}; '
-        'rm -rf {wildcards.splitdir}/concat.warc.split; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.deboilerplate_html.xz | xz > {output.deboil}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.encoding.xz | xz > {output.encoding}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.lang.xz | xz > {output.lang}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.mime.xz | xz > {output.mime}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.normalized_html.xz | xz > {output.html}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.plain_text.xz | xz > {output.text}; '
+        'xzcat {wildcards.dir}/concat.warc.split/*.url.xz | xz > {output.url}; '
+        'rm -rf {wildcards.dir}/concat.warc.split; '
 
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
