@@ -50,6 +50,7 @@ oparser.add_argument("--verbose", action="store_true", default=False, help="Prod
 oparser.add_argument("--boilerpipe", action="store_true", default=False, help="Use boilerpipe bodytext to do the de-boiling")
 oparser.add_argument("--alcazar", action="store_true", default=False, help="Use alcazar bodytext extract relevant text from HTML. By default BeautifulSoup4is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
+oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; if not specified it is empty string', required=False, default="")
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 options = oparser.parse_args()
@@ -67,15 +68,15 @@ if options.l1 != None:
 if options.l2 != None:
   languages.append(options.l2)
 
-urlFile = lzma.open(options.outDir+"/url.xz", "w")
-langFile = lzma.open(options.outDir+"/lang.xz", "w")
-encodingFile = lzma.open(options.outDir+"/encoding.xz", "w")
-mimeFile = lzma.open(options.outDir+"/mime.xz", "w")
-normHtmlFile = lzma.open(options.outDir+"/normalized_html.xz", "w")
-plainTextFile = lzma.open(options.outDir+"/plain_text.xz", "w")
+urlFile = lzma.open(options.outDir+"/"+options.prefix+"url.xz", "w")
+langFile = lzma.open(options.outDir+"/"+options.prefix+"lang.xz", "w")
+encodingFile = lzma.open(options.outDir+"/"+options.prefix+"encoding.xz", "w")
+mimeFile = lzma.open(options.outDir+"/"+options.prefix+"mime.xz", "w")
+normHtmlFile = lzma.open(options.outDir+"/"+options.prefix+"normalized_html.xz", "w")
+plainTextFile = lzma.open(options.outDir+"/"+options.prefix+"plain_text.xz", "w")
 #Boilerpipe cleaning is optional
 if options.boilerpipe:
-  deboilFile = lzma.open(options.outDir+"/deboilerplate_html.xz", "w")
+  deboilFile = lzma.open(options.outDir+"/"+options.prefix+"deboilerplate_html.xz", "w")
 
 for record in f:
   #We convert into UTF8 first of all
