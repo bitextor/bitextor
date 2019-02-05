@@ -88,6 +88,7 @@ def ValidateArgs(config):
            'httrack': {'type': 'boolean'},
            'crawlTld': {'type': 'boolean'},
            'crawlerNumThreads': {'type': 'integer'},
+           'maxSizeWARC': {'type': 'integer'},
 
            'dic': {'type': 'string'},
            'LANG1Tokenizer': {'type': 'string'},
@@ -250,6 +251,12 @@ if "httrack" in config and config["httrack"]==True:
   CRAWLTARGET="httrack"
 else:
   CRAWLTARGET="creepy"
+
+#Maximum size of the WARC file to be pre-processed: if it is exceeded the file is split
+if "maxSizeWARC" in config:
+  MAXWARCSIZE="-m "+str(config["maxSizeWARC"])
+else:
+  MAXWARCSIZE=""
 
 #Tokenisers
 if "LANG1Tokenizer" in config:
@@ -838,10 +845,47 @@ rule concat_subdomains:
             cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
         shell(cmd)
 
+checkpoint split_warc:
+    input:
+        "{target}/concat.warc.xz"
+    output:
+        "{target}/concat.warc.split/checkpoint.flag"
+    shell:
+        'mkdir -p {wildcards.target}/concat.warc.split; '
+        'xzcat {input} | {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.target}/concat.warc.split; '
+        'touch {wildcards.target}/concat.warc.split/checkpoint.flag'
 
 rule warc2preprocess:
     input:
-        '{target}/concat.warc.xz'
+        '{target}/{name}.warc.gz'
+    output:
+        deboil='{target}/{name}.deboilerplate_html.xz',
+        encoding='{target}/{name}.encoding.xz',
+        lang='{target}/{name}.lang.xz',
+        mime='{target}/{name}.mime.xz',
+        html='{target}/{name}.normalized_html.xz',
+        text='{target}/{name}.plain_text.xz',
+        url='{target}/{name}.url.xz'
+    priority: 8
+    shell:
+        'rm -rf {wildcards.target}/checkpoint.flag;'
+        'zcat {input} -f | {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.target} --prefix {wildcards.name}. --lang1 {LANG1} --lang2 {LANG2}; '
+        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
+
+def input_files(wildcards):
+    checkpoint_output = checkpoints.split_warc.get(**wildcards).output[0]
+    output = []
+    file_types = ['deboilerplate_html','encoding','lang','mime','normalized_html','plain_text','url']
+    for contenttype in file_types:
+        output.extend(expand("{target}/concat.warc.split/{i}.{contenttype}.xz",
+               target=wildcards.target,
+               contenttype=contenttype,
+               i=glob_wildcards(os.path.join(wildcards.target+"/concat.warc.split", "{i}.warc.gz")).i))
+    return output
+
+rule recompound_preprocess:
+    input:
+        input_files
     output:
         deboil='{target}/deboilerplate_html.xz',
         encoding='{target}/encoding.xz',
@@ -850,10 +894,15 @@ rule warc2preprocess:
         html='{target}/normalized_html.xz',
         text='{target}/plain_text.xz',
         url='{target}/url.xz'
-    priority: 8
     shell:
-        'xzcat -T 0 {input} -f | {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.target} --lang1 {LANG1} --lang2 {LANG2}; '
-        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
+        'xzcat {wildcards.target}/concat.warc.split/*.deboilerplate_html.xz | xz > {output.deboil}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.encoding.xz | xz > {output.encoding}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.lang.xz | xz > {output.lang}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.mime.xz | xz > {output.mime}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.normalized_html.xz | xz > {output.html}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.plain_text.xz | xz > {output.text}; '
+        'xzcat {wildcards.target}/concat.warc.split/*.url.xz | xz > {output.url}; '
+        'rm -rf {wildcards.target}/concat.warc.split; '
 
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
