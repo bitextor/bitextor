@@ -868,6 +868,7 @@ rule warc2preprocess:
         url='{target}/{name}.url.xz'
     priority: 8
     shell:
+        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         'rm -rf {wildcards.target}/checkpoint.flag;'
         'zcat {input} -f | {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.target} --prefix {wildcards.name}. --lang1 {LANG1} --lang2 {LANG2}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
