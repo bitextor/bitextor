@@ -79,82 +79,83 @@ if options.boilerpipe:
   deboilFile = lzma.open(options.outDir+"/"+options.prefix+"deboilerplate_html.xz", "w")
 
 for record in f:
-    #We convert into UTF8 first of all
-    orig_encoding,text = convert_encoding(record.payload.read())
-    url=record.url
+  #We convert into UTF8 first of all
+  orig_encoding,text = convert_encoding(record.payload.read())
+  url=record.url
 
-    if orig_encoding == None:
-      logging.info("Encoding of document "+url+" could not be identified")
+  if orig_encoding == None:
+    logging.info("Encoding of document "+url+" could not be identified")
 
-    if len(text) > 0:
-      #HTML is then normalized
-      cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
-  
-      cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-      document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
-      tree = etree.tostring(document)
-      cleantree = tree.decode("utf8").replace("&#160;"," ")
-      cleantree = cleantree.replace("\t", " ")
-  
-      # lang id
-      lang = guess_lang_from_data2(cleantree)
-      if len(languages)>0 and lang not in languages:
-        logging.info("Language of document "+url+": "+lang+". Not among searched languages.")
+  if len(text) > 0:
+    #HTML is then normalized
+    cleaner=Cleaner(style=True, links=True, add_nofollow=True,page_structure=False, safe_attrs_only=False)
+
+    cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
+    document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
+    tree = etree.tostring(document)
+    cleantree = tree.decode("utf8").replace("&#160;"," ")
+    cleantree = cleantree.replace("\t", " ")
+
+    # lang id
+    lang = guess_lang_from_data2(cleantree)
+    if len(languages)>0 and lang not in languages:
+      logging.info("Language of document "+url+": "+lang+". Not among searched languages.")
+    else:
+      #If enabled, remove boilerplate HTML
+      if options.boilerpipe:
+        extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
+        deboiled = extractor.getHTML()
       else:
-        #If enabled, remove boilerplate HTML
-        if options.boilerpipe:
-          extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
-          deboiled = extractor.getHTML()
-        else:
-          deboiled = cleantree
+        deboiled = cleantree
 
-        #We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate files we discard them
-        c = hashlib.md5()
-        c.update(deboiled.encode())
+      #We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate files we discard them
+      c = hashlib.md5()
+      c.update(deboiled.encode())
+      #print("hash", c.hexdigest(), url)
 
-        #checking for duplicate content (duplicates are discarded)
-        if c.hexdigest() in seen_md5:
-          logging.info("Repeated file:\t"+url+"\tfirst occurrence\t"+seen_md5[c.hexdigest()])
-          pass
-        else:
-          #If enabled get text with Alcazar library
-          if options.alcazar:
-            btext = alcazar.bodytext.parse_article(cleantree)
-            if btext.body_text:
-              plaintext = btext.body_text
-            else:
-              plaintext = ""
-          #Otherwise use beautifulsoup
+      #checking for duplicate content (duplicates are discarded)
+      if c.hexdigest() in seen_md5:
+        logging.info("Repeated file:\t"+url+"\tfirst occurrence\t"+seen_md5[c.hexdigest()])
+        pass
+      else:
+        #If enabled get text with Alcazar library
+        if options.alcazar:
+          btext = alcazar.bodytext.parse_article(cleantree)
+          if btext.body_text:
+            plaintext = btext.body_text
           else:
-            if options.boilerpipe:
-              soup = BeautifulSoup(deboiled, "lxml")
-            else:
-              soup = BeautifulSoup(cleantree, "lxml")
-            for script in soup(["script", "style", "img"]):
-                script.extract()    # rip it out
+            plaintext = ""
+        #Otherwise use beautifulsoup
+        else:
+          if options.boilerpipe:
+            soup = BeautifulSoup(deboiled, "lxml")
+          else:
+            soup = BeautifulSoup(cleantree, "lxml")
+          for script in soup(["script", "style", "img"]):
+            script.extract()    # rip it out
 
-            plaintext = soup.get_text()
-            plaintext = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", plaintext))))
+          plaintext = soup.get_text()
+          plaintext = re.sub(r"\n+","\n",re.sub(r" *\n *","\n",re.sub(r" +"," ",re.sub(r"\r","", plaintext))))
 
-          if len(plaintext) > 0:
-            #Guessing MIME of the file (checked on original content)
-            mime=magic.from_buffer(text, mime=True)
-            mimeFile.write(mime.encode()+b"\n")
+        if len(plaintext) > 0:
+          #Guessing MIME of the file (checked on original content)
+          mime=magic.from_buffer(text, mime=True)
+          mimeFile.write(mime.encode()+b"\n")
 
-            urlFile.write(url.encode()+b"\n")
-            langFile.write(lang.encode()+b"\n")
-            encodingFile.write(orig_encoding.encode()+b"\n")
+          urlFile.write(url.encode()+b"\n")
+          langFile.write(lang.encode()+b"\n")
+          encodingFile.write(orig_encoding.encode()+b"\n")
 
-            b64norm=base64.b64encode(cleantree.encode())
-            normHtmlFile.write(b64norm+b"\n")
+          b64norm=base64.b64encode(cleantree.encode())
+          normHtmlFile.write(b64norm+b"\n")
 
-            if options.boilerpipe:
-              b64deboil=base64.b64encode(deboiled.encode())
-              deboilFile.write(b64deboil+b"\n")
+          if options.boilerpipe:
+            b64deboil=base64.b64encode(deboiled.encode())
+            deboilFile.write(b64deboil+b"\n")
 
-            b64text=base64.b64encode(html.unescape(plaintext).encode())
-            plainTextFile.write(b64text+b"\n")
-            #print("{0}\t{1}\t{2}\t{3}\t{4}".format(lang, orig_encoding, mime, b64norm.decode("utf-8"), b64text.decode("utf-8")))
+          b64text=base64.b64encode(html.unescape(plaintext).encode())
+          plainTextFile.write(b64text+b"\n")
+          #print("{0}\t{1}\t{2}\t{3}\t{4}".format(lang, orig_encoding, mime, b64norm.decode("utf-8"), b64text.decode("utf-8")))
 
 urlFile.close()
 langFile.close()
