@@ -29,7 +29,7 @@ def printTU(urlstring1, urlstring2, restofdata):
     print("   <tu tuid=\""+str(numid)+"\" datatype=\"Text\">")
     infoTag=[]
     if 'hunalign' in fieldsdict and  fieldsdict['hunalign'] != "":
-      print("    <prop type=\"score\">"+fieldsdict['hunalign']+"</prop>")
+      print("    <prop type=\"score-aligner\">"+fieldsdict['hunalign']+"</prop>")
     if 'zipporah' in fieldsdict and fieldsdict['zipporah'] != "":
       print("    <prop type=\"score-zipporah\">"+fieldsdict['zipporah']+"</prop>")
     if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":

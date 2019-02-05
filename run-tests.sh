@@ -76,12 +76,13 @@ fi
 
 
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)"
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)"
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" &
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="$(dirname $0)"
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="$(dirname $0)"
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" &
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)"
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)"
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" &
 
+wait
