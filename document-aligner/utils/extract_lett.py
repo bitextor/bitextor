@@ -11,11 +11,11 @@ import gzip
 import os
 import string
 import sys
-from common import open_xz_or_gzip_or_plain
 import html
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
 from external_processor import ExternalTextProcessor
+from common import open_xz_or_gzip_or_plain
 
 def filter_digits_and_punctuation(original_text):
     text_split = original_text.split()
