@@ -5,11 +5,10 @@ import sys
 import argparse
 import Levenshtein
 import re
-from common import open_xz_or_gzip_or_plain
 
 pathname = os.path.dirname(sys.argv[0])
 sys.path.append(pathname + "/../utils")
-
+from common import open_xz_or_gzip_or_plain
 
 def read_urls(f, docs):
     with open_xz_or_gzip_or_plain(f) as fd:
