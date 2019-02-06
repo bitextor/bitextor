@@ -1,52 +1,50 @@
-
-# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
-
 import sys
-import glob
 import gzip
 import lzma
 import tldextract
 import os
 import os.path
 import socket
-from tld import get_tld
 from tqdm import tqdm
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
 from cerberus import Validator
 
+
 ###########################################################
 # UTILS 
 
-def binaryAvailable(cmd):
-    cmd="command -v "+cmd+" > /dev/null"
-    callout=os.system(cmd)
+def binary_available(command):
+    command = "command -v " + command + " > /dev/null"
+    callout = os.system(command)
     if callout == 0:
         return True
     else:
         return False
 
-def tokeniserCheck(cmd):
-    proc = ToolWrapper(cmd.split())
+
+def tokeniser_check(command):
+    proc = ToolWrapper(command.split())
     line = proc.writeline('test.test')
     try:
         tokline = func_timeout(5, proc.readline)
     except FunctionTimedOut:
-        sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
+        sys.stderr.write(
+            "ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
         exit(1)
 
-def systemCheck(cmd):
-    sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
+
+def system_check(command):
+    sys.stderr.write("Executing:" + command + " on " + socket.gethostname() + "\n")
     sys.stderr.flush()
 
-    subprocess.check_call(cmd, shell=True)
+    subprocess.check_call(command, shell=True)
+
 
 @contextmanager
 def open_gzip_or_plain(file_path):
-
     def decode_text(file_handler):
         for line in file_handler:
             yield line.decode('utf-8')
@@ -65,7 +63,7 @@ def open_gzip_or_plain(file_path):
             yield f
 
     except Exception as ex:
-        sys.stderr.write(str(ex)+"\n")
+        sys.stderr.write(str(ex) + "\n")
         raise Exception("Error occured while loading a file {}".format(file_path))
 
     finally:
@@ -73,122 +71,124 @@ def open_gzip_or_plain(file_path):
             f.close()
 
 
-def ValidateArgs(config):
+def validate_args(config):
     schema = {'bitextor': {'required': True, 'type': 'string'},
-            'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
-            'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
-            'temp': {'type': 'string'},
-            'hunalignThreshold': {'type': 'float'},
-            'maxlines': {'type': 'integer'},
-            'alcazar': {'type': 'boolean'},
+              'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
+              'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
+              'temp': {'type': 'string'},
+              'hunalignThreshold': {'type': 'float'},
+              'maxlines': {'type': 'integer'},
+              'alcazar': {'type': 'boolean'},
 
-           'permanentDir': {'required': True, 'type': 'string'},
-           'transientDir': {'required': True, 'type': 'string'},
-           'boilerpipeCleaning': {'type': 'boolean'},
-           'httrack': {'type': 'boolean'},
-           'crawlTld': {'type': 'boolean'},
-           'crawlerNumThreads': {'type': 'integer'},
-           'maxSizeWARC': {'type': 'integer'},
+              'permanentDir': {'required': True, 'type': 'string'},
+              'transientDir': {'required': True, 'type': 'string'},
+              'boilerpipeCleaning': {'type': 'boolean'},
+              'httrack': {'type': 'boolean'},
+              'crawlTld': {'type': 'boolean'},
+              'crawlerNumThreads': {'type': 'integer'},
+              'maxSizeWARC': {'type': 'integer'},
 
-           'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'type': 'string'},
-           'LANG2Tokenizer': {'type': 'string'},
-           'LANG2Detokenizer': {'type': 'string'},
+              'dic': {'type': 'string'},
+              'LANG1Tokenizer': {'type': 'string'},
+              'LANG2Tokenizer': {'type': 'string'},
+              'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'type': 'string'},
-           'LANG2SentenceSplitter': {'type': 'string'},
+              'LANG1SentenceSplitter': {'type': 'string'},
+              'LANG2SentenceSplitter': {'type': 'string'},
 
-           'crawlSizeLimit': {'type': 'string'},
-           'crawlTimeLimit': {'type': 'string'},
-           'crawlPageLimit': {'type': 'integer'},
-           'crawlerConnectionTimeout': {'type': 'integer'},
-           'dumpCurrentCrawl': {'type': 'string'},
-           'resumePreviousCrawl': {'type': 'string'},
+              'crawlSizeLimit': {'type': 'string'},
+              'crawlTimeLimit': {'type': 'string'},
+              'crawlPageLimit': {'type': 'integer'},
+              'crawlerConnectionTimeout': {'type': 'integer'},
+              'dumpCurrentCrawl': {'type': 'string'},
+              'resumePreviousCrawl': {'type': 'string'},
 
-           'documentAligner': {'type': 'string'},
-           'mosesDir': {'type': 'string'},
-           'alignerCmd': {'type': 'string'},
-           'bleualign': {'type': 'boolean'},
-           'docAlignThreshold': {'type': 'float'},
-           'bleuAlignThreshold': {'type': 'float'},
+              'documentAligner': {'type': 'string'},
+              'mosesDir': {'type': 'string'},
+              'alignerCmd': {'type': 'string'},
+              'bleualign': {'type': 'boolean'},
+              'docAlignThreshold': {'type': 'float'},
+              'bleuAlignThreshold': {'type': 'float'},
 
-           'bicleaner': {'type': 'string'},
-           'bicleanerThreshold': {'type': 'float'},
-           'elrc': {'type': 'boolean'},
+              'bicleaner': {'type': 'string'},
+              'bicleanerThreshold': {'type': 'float'},
+              'elrc': {'type': 'boolean'},
 
-           'deduped': {'type': 'boolean'},
-           'hosts': {'type': 'list'},
-           'hostPath': {'type': 'string'},
-           'excludeHosts': {'type': 'list'},
-           'linkedHosts': {'type': 'list'},
-           'linkedHostsAction': {'type': 'string'},
+              'deduped': {'type': 'boolean'},
+              'hosts': {'type': 'list'},
+              'hostPath': {'type': 'string'},
+              'excludeHosts': {'type': 'list'},
+              'linkedHosts': {'type': 'list'},
+              'linkedHostsAction': {'type': 'string'},
 
-           'langstat': {'type': 'string'},
-           'langstatExcludeDomains': {'type': 'string'},
-           'langstatThreshold': {'type': 'integer'},
+              'langstat': {'type': 'string'},
+              'langstatExcludeDomains': {'type': 'string'},
+              'langstatThreshold': {'type': 'integer'},
 
-           'initCorpusTrainPrefix': {'type': 'list'},
-           'initCorpusDevPrefix': {'type': 'list'},
-           'initCorpusTestPrefix': {'type': 'list'},
+              'initCorpusTrainPrefix': {'type': 'list'},
+              'initCorpusDevPrefix': {'type': 'list'},
+              'initCorpusTestPrefix': {'type': 'list'},
 
-           'bicleanerCorpusTrainingPrefix': {'type': 'list'},
+              'bicleanerCorpusTrainingPrefix': {'type': 'list'},
 
-           'nmt': {'type': 'boolean'},
-           'smt': {'type': 'boolean'},
-           'tmx': {'type': 'boolean'},
+              'nmt': {'type': 'boolean'},
+              'smt': {'type': 'boolean'},
+              'tmx': {'type': 'boolean'},
 
-           'gpuId': {'type': 'integer'},
-           'marianDir': {'type': 'string'},
-           'marianArgs': {'type': 'list'},
-           'marianModelFile': {'type': 'string'},
-           'nmtVocabSize': {'type': 'integer'},
+              'gpuId': {'type': 'integer'},
+              'marianDir': {'type': 'string'},
+              'marianArgs': {'type': 'list'},
+              'marianModelFile': {'type': 'string'},
+              'nmtVocabSize': {'type': 'integer'},
 
-           'subwordNmtDir': {'type': 'string'},
+              'subwordNmtDir': {'type': 'string'},
 
-           'mgiza': {'type': 'string'},
+              'mgiza': {'type': 'string'},
 
-            }
+              }
 
     if "httrack" in config and config["httrack"] == True:
-        if not binaryAvailable("httrack"):
-            sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
+        if not binary_available("httrack"):
+            sys.stderr.write(
+                "HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
             exit(-1)
-    
+
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
-    config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()}) 
+    config.update(
+        {k: [os.path.expanduser(el) for el in v] if 'Config' in k and v is list else v for k, v in config.items()})
 
     #Mandatory options depending on the document aligner method choosen
     if "documentAligner" in config:
-        if config["documentAligner"]=='NMT':
-            schema['marianDir']['required']=True
-            schema['subwordNmtDir']['required']=True
-            schema['mosesDir']['required']=True
-            schema['LANG2Detokenizer']['required']=True
-            schema['nmtVocabSize']['required']=True
-            schema['gpuId']['required']=True
-            schema['marianArgs']['required']=True
-            schema['initCorpusTrainPrefix']['required']=True
-            schema['initCorpusDevPrefix']['required']=True
-            schema['initCorpusTestPrefix']['required']=True
-        elif config["documentAligner"]=='SMT':
-            schema['mosesDir']['required']=True
-        elif config["documentAligner"]=='customMT':
-            schema['alignerCmd']['required']=True
+        if config["documentAligner"] == 'NMT':
+            schema['marianDir']['required'] = True
+            schema['subwordNmtDir']['required'] = True
+            schema['mosesDir']['required'] = True
+            schema['LANG2Detokenizer']['required'] = True
+            schema['nmtVocabSize']['required'] = True
+            schema['gpuId']['required'] = True
+            schema['marianArgs']['required'] = True
+            schema['initCorpusTrainPrefix']['required'] = True
+            schema['initCorpusDevPrefix']['required'] = True
+            schema['initCorpusTestPrefix']['required'] = True
+        elif config["documentAligner"] == 'SMT':
+            schema['mosesDir']['required'] = True
+        elif config["documentAligner"] == 'customMT':
+            schema['alignerCmd']['required'] = True
         else:
-            schema['dic']['required']=True
+            schema['dic']['required'] = True
             if "dic" in config and not os.path.isfile(config["dic"]):
-                schema['initCorpusTrainPrefix']['required']=True
+                schema['initCorpusTrainPrefix']['required'] = True
     else:
-        schema['dic']['required']=True
+        schema['dic']['required'] = True
         if "dic" in config and not os.path.isfile(config["dic"]):
-            schema['initCorpusTrainPrefix']['required']=True
+            schema['initCorpusTrainPrefix']['required'] = True
 
     if "bicleaner" in config:
         if not os.path.isfile(config["bicleaner"]):
-            schema['bicleanerCorpusTrainingPrefix']['required']=True
+            schema['bicleanerCorpusTrainingPrefix']['required'] = True
 
     if "linkedHosts" in config:
-        schema['linkedHostsAction']['required']=True
+        schema['linkedHostsAction']['required'] = True
 
     v = Validator(schema)
     #v.allow_unknown = True
@@ -199,172 +199,177 @@ def ValidateArgs(config):
         print("Validation error. Stopping.", v.errors)
         exit()
 
+
 ###########################################################
 
-ValidateArgs(config)
+validate_args(config)
 
 #Local bitextor installation
-BITEXTOR=config["bitextor"]
+BITEXTOR = config["bitextor"]
 
 #Crawled languages
-LANG1=config["lang1"]
-LANG2=config["lang2"]
+LANG1 = config["lang1"]
+LANG2 = config["lang2"]
 
 #Working paths
-permanent=config["permanentDir"]
-transient=config["transientDir"]
+permanent = config["permanentDir"]
+transient = config["transientDir"]
 
 if "temp" in config:
-  TMPDIR=config["temp"]
+    TMPDIR = config["temp"]
 else:
-  TMPDIR=transient
+    TMPDIR = transient
 
 if "hunalignThreshold" in config:
-  MINQUALITY=config["hunalignThreshold"]
+    MINQUALITY = config["hunalignThreshold"]
 else:
-  MINQUALITY=0.0
+    MINQUALITY = 0.0
 
 if "maxlines" in config:
-  MAXLINES=config["maxlines"]
+    MAXLINES = config["maxlines"]
 else:
-  MAXLINES=-1
+    MAXLINES = -1
 
 if "alcazar" in config and config["alcazar"]:
-  ALCAZAR = "--alcazar"
+    ALCAZAR = "--alcazar"
 else:
-  ALCAZAR = ""
+    ALCAZAR = ""
 
-systemCheck("mkdir -p " + permanent)
-systemCheck("mkdir -p " + transient)
+system_check("mkdir -p " + permanent)
+system_check("mkdir -p " + transient)
 
 #Dictionary
 if "dic" in config:
-  DIC=config["dic"]
+    DIC = config["dic"]
 else:
-  DIC=None
+    DIC = None
 
 #Option to remove Boilerpipe html: if the option is enabled, boilerpipe is not used
-if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
-  boilerpipeCleaning = '--boilerpipe'
+if "boilerpipeCleaning" in config and config["boilerpipeCleaning"] == True:
+    boilerpipeCleaning = '--boilerpipe'
 else:
-  boilerpipeCleaning = ''
+    boilerpipeCleaning = ''
 
 #Option to use HTTrack for crawling instead of the native bitextor crawler
-if "httrack" in config and config["httrack"]==True:
-  CRAWLTARGET="httrack"
+if "httrack" in config and config["httrack"] == True:
+    CRAWLTARGET = "httrack"
 else:
-  CRAWLTARGET="creepy"
+    CRAWLTARGET = "creepy"
 
 #Maximum size of the WARC file to be pre-processed: if it is exceeded the file is split
 if "maxSizeWARC" in config:
-  MAXWARCSIZE="-m "+str(config["maxSizeWARC"])
+    MAXWARCSIZE = "-m " + str(config["maxSizeWARC"])
 else:
-  MAXWARCSIZE=""
+    MAXWARCSIZE = ""
 
 #Tokenisers
 if "LANG1Tokenizer" in config:
-  WORDTOK1=config["LANG1Tokenizer"]
+    WORDTOK1 = config["LANG1Tokenizer"]
 else:
-  WORDTOK1="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
+    WORDTOK1 = "{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q".format(BITEXTOR=BITEXTOR,
+                                                                                                 LANG1=LANG1)
 
 if "LANG2Tokenizer" in config:
-  WORDTOK2=config["LANG2Tokenizer"]
+    WORDTOK2 = config["LANG2Tokenizer"]
 else:
-  WORDTOK2="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
+    WORDTOK2 = "{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q".format(BITEXTOR=BITEXTOR,
+                                                                                                 LANG2=LANG2)
 
 if "LANG1SentenceSplitter" in config:
-  SENTTOK1=config["LANG1SentenceSplitter"]
+    SENTTOK1 = config["LANG1SentenceSplitter"]
 else:
-  SENTTOK1="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
+    SENTTOK1 = "{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}".format(BITEXTOR=BITEXTOR,
+                                                                                                   LANG1=LANG1)
 
 if "LANG2SentenceSplitter" in config:
-  SENTTOK2=config["LANG2SentenceSplitter"]
+    SENTTOK2 = config["LANG2SentenceSplitter"]
 else:
-  SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
+    SENTTOK2 = "{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR,
+                                                                                                   LANG2=LANG2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
 #If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
 if "crawl-tld" in config and config["crawl-tld"]:
-  TLD_CRAWL="-D"
+    TLD_CRAWL = "-D"
 else:
-  TLD_CRAWL=""
+    TLD_CRAWL = ""
 
 #If this option is enabled, a size-limit is set for crawled data (for example "size-limit": "1G")
 if "crawlSizeLimit" in config:
-  CRAWLSIZELIMIT="-s "+config["crawlSizeLimit"]
+    CRAWLSIZELIMIT = "-s " + config["crawlSizeLimit"]
 else:
-  CRAWLSIZELIMIT=""
+    CRAWLSIZELIMIT = ""
 
 #If this option is enabled, a time-limit is set for crawling data (for example "time-limit": "1h")
 if "crawlTimeLimit" in config:
-  CRAWLTIMELIMIT="-t "+str(config["crawlTimeLimit"])
+    CRAWLTIMELIMIT = "-t " + str(config["crawlTimeLimit"])
 else:
-  CRAWLTIMELIMIT=""
+    CRAWLTIMELIMIT = ""
 
 if "crawlPageLimit" in config:
-  CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
+    CRAWLPAGELIMIT = "-p " + str(config["crawlPageLimit"])
 else:
-  CRAWLPAGELIMIT=""
+    CRAWLPAGELIMIT = ""
 
-#Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
+# Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause
+# the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
-  CRAWLJOBS="-j "+str(config["crawlerNumThreads"])
+    CRAWLJOBS = "-j " + str(config["crawlerNumThreads"])
 else:
-  CRAWLJOBS="-j 2"
+    CRAWLJOBS = "-j 2"
 
 #Connection timeout in the crawler
 if "crawlerConnectionTimeout" in config:
-  CRAWLTIMEOUT="-o "+str(config["crawlerConnectionTimeout"])
+    CRAWLTIMEOUT = "-o " + str(config["crawlerConnectionTimeout"])
 else:
-  CRAWLTIMEOUT=""
+    CRAWLTIMEOUT = ""
 
 #If this option is set, the "crawler" object will be dump as a pickle, so crawling can be continued afterwards
 if "dumpCurrentCrawl" in config:
-  CRAWLDUMPARGS="-d "+config["dumpCurrentCrawl"]
+    CRAWLDUMPARGS = "-d " + config["dumpCurrentCrawl"]
 else:
-  CRAWLDUMPARGS=""
+    CRAWLDUMPARGS = ""
 
 #If this option is set, crawling will be continued from the pickle object dumped in a previous crawl
 if "resumePreviousCrawl" in config:
-  CONTINUECRAWL="-l "+config["resumePreviousCrawl"]
+    CONTINUECRAWL = "-l " + config["resumePreviousCrawl"]
 else:
-  CONTINUECRAWL=""
-
+    CONTINUECRAWL = ""
 
 ############ OPTIONS FOR THE MALIGN ALIGNER ############
 
 #If documentAligner is enabled, Marek Střelec's MT-based document aligner is used [https://github.com/paracrawl/Malign]
 if "documentAligner" in config:
-  if config["documentAligner"] == "externalMT":
-    MT_COMMAND=config["alignerCmd"]
-    DOCALIGNEXT="customMT"
-  elif config["documentAligner"] == "SMT":
-    MT_COMMAND="smt"
-    DOCALIGNEXT="smt"
-  elif config["documentAligner"] == "NMT":
-    MT_COMMAND="nmt"
-    DOCALIGNEXT="nmt"
-  else:
-    MT_COMMAND=""
-    DOCALIGNEXT="bitextor"
+    if config["documentAligner"] == "externalMT":
+        MT_COMMAND = config["alignerCmd"]
+        DOCALIGNEXT = "customMT"
+    elif config["documentAligner"] == "SMT":
+        MT_COMMAND = "smt"
+        DOCALIGNEXT = "smt"
+    elif config["documentAligner"] == "NMT":
+        MT_COMMAND = "nmt"
+        DOCALIGNEXT = "nmt"
+    else:
+        MT_COMMAND = ""
+        DOCALIGNEXT = "bitextor"
 else:
-  MT_COMMAND=""
-  DOCALIGNEXT="bitextor"
+    MT_COMMAND = ""
+    DOCALIGNEXT = "bitextor"
 
 if "mosesDir" in config:
-  MOSESDIR = config["mosesDir"]
+    MOSESDIR = config["mosesDir"]
 else:
-  MOSESDIR = ""
+    MOSESDIR = ""
 
 if "bleualign" in config and config["bleualign"]:
-  SEGMENTALIGNER="bleualign"
+    SEGMENTALIGNER = "bleualign"
 else:
-  SEGMENTALIGNER="hunalign"
+    SEGMENTALIGNER = "hunalign"
 
 # Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
 if "docAlignThreshold" in config:
-    DOC_THRESHOLD  = config["docAlignThreshold"]
+    DOC_THRESHOLD = config["docAlignThreshold"]
 else:
     DOC_THRESHOLD = 0.0
 
@@ -377,44 +382,46 @@ else:
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
 if "bicleaner" in config:
-  BICLEANEROPTION=",bicleaner"
-  BICLEANER="bicleaner"
-  BICLEANER_CONFIG=config["bicleaner"]
-  BICLEANER_SORT="-r -k6,6 -k3,4"
-  tokeniserCheck(WORDTOK1)
-  tokeniserCheck(WORDTOK2)
+    BICLEANEROPTION = ",bicleaner"
+    BICLEANER = "bicleaner"
+    BICLEANER_CONFIG = config["bicleaner"]
+    BICLEANER_SORT = "-r -k6,6 -k3,4"
+    tokeniser_check(WORDTOK1)
+    tokeniser_check(WORDTOK2)
 
 else:
-  BICLEANEROPTION=""
-  BICLEANER_SORT="-k3,4"
-  BICLEANER="segclean"
-  BICLEANER_CONFIG=""
+    BICLEANEROPTION = ""
+    BICLEANER_SORT = "-k3,4"
+    BICLEANER = "segclean"
+    BICLEANER_CONFIG = ""
 
 if "bicleanerThreshold" in config:
-  BICLEANER_THRESHOLD=config["bicleanerThreshold"]
+    BICLEANER_THRESHOLD = config["bicleanerThreshold"]
 else:
-  BICLEANER_THRESHOLD=0.0
+    BICLEANER_THRESHOLD = 0.0
 
 if "elrc" in config and config["elrc"]:
-  ELRCSCORES="elrc"
-  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL"
+    ELRCSCORES = "elrc"
+    ELRCFIELDS = ",lengthratio,numTokensSL,numTokensTL"
 else:
-  ELRCSCORES=BICLEANER
-  ELRCFIELDS=""
+    ELRCSCORES = BICLEANER
+    ELRCFIELDS = ""
+
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def CreateDomainKey2HostMap(hosts):
-    domains={}
+def create_domain_key2_host_map(hosts):
+    domains = {}
     for host in hosts:
         domain = tldextract.extract(host).domain
         if domain not in domains:
-            domains[domain]=[]
+            domains[domain] = []
         domains[domain].append(host)
         #print("subdomain", domain, host)
     return domains
 
-def LoadDomains(file_path):
+
+def load_domains(file_path):
     domains = set()
     with file_path.open("r") as f:
         for line in f:
@@ -424,28 +431,30 @@ def LoadDomains(file_path):
 
     return domains
 
-def ExcludeHosts(hosts, excludeHosts):
-    for exHost in excludeHosts:
+
+def exclude_hosts(hosts, exclude_hosts):
+    for exHost in exclude_hosts:
         if exHost in hosts:
             hosts.remove(exHost)
 
-def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+
+def get_hosts_from_langstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
 
     excluded_set = set()
     if exclude_path:
-        excluded_set = LoadDomains(Path(exclude_path))
+        excluded_set = load_domains(Path(exclude_path))
 
-    hostsToCrawl = set()
+    hosts_to_crawl = set()
 
     sys.stderr.write(
         "Gathering domain information for {0} and {1}...\n".format(*l12))
     with tqdm(total=None) as pbar:
         with open_gzip_or_plain(langstat_path) as f:
 
-            prevHost = ""
-            langContent = {}
+            prev_host = ""
+            lang_content = {}
 
             for line in f:
                 split_line = line.strip().split()
@@ -456,58 +465,60 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
                 name = tldextract.extract(host).domain
                 #print("processing ", host, lang.lower(), byte_len, name)
 
-                if host != prevHost:
+                if host != prev_host:
                     # start of new host. Process previous entries
-                    if len(langContent) == 2:
-                        lang1_bytes = langContent[l12[0]]
-                        lang2_bytes = langContent[l12[1]]
+                    if len(lang_content) == 2:
+                        lang1_bytes = lang_content[l12[0]]
+                        lang2_bytes = lang_content[l12[1]]
                         if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                            hostsToCrawl.add(prevHost)
+                            hosts_to_crawl.add(prev_host)
 
-                    prevHost = host
-                    langContent = {}
+                    prev_host = host
+                    lang_content = {}
 
                 if lang.lower() in l12 and name not in excluded_set:
-                    langContent[lang.lower()] = int(byte_len)
+                    lang_content[lang.lower()] = int(byte_len)
 
                 pbar.update(1)
 
             # last host
-            if len(langContent) == 2:
-                lang1_bytes = langContent[l12[0]]
-                lang2_bytes = langContent[l12[1]]
+            if len(lang_content) == 2:
+                lang1_bytes = lang_content[l12[0]]
+                lang2_bytes = lang_content[l12[1]]
                 if lang1_bytes >= threshold and lang2_bytes >= threshold:
-                    hostsToCrawl.add(prevHost)
+                    hosts_to_crawl.add(prev_host)
 
-    return hostsToCrawl
+    return hosts_to_crawl
 
-def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
+
+def linked_hosts(permanent, dir, hosts, linked_hosts_action):
     #print("dir", dir)
-    cmd = "mkdir -p " + permanent + "/warc"
-    shell(cmd)
+    command = "mkdir -p " + permanent + "/warc"
+    shell(command)
 
     with gzip.open(dir + "/hosts.gz", 'rt') as f:
-        otherHosts = f.read().splitlines()
+        other_hosts = f.read().splitlines()
 
-    otherHosts = set(otherHosts)
-    #print("otherHosts", otherHosts)
+    other_hosts = set(other_hosts)
+    #print("other_hosts", other_hosts)
 
     # make a copy in case we have to delete thing
-    copyHosts = set(hosts)
-    for host in copyHosts:
-        if host in otherHosts:
-            if linkedHostsAction == "remove":
+    copy_hosts = set(hosts)
+    for host in copy_hosts:
+        if host in other_hosts:
+            if linked_hosts_action == "remove":
                 hosts.remove(host)
-            elif linkedHostsAction == "link":
+            elif linked_hosts_action == "link":
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
-                    cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    command = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
                     #print(cmd)
-                    shell(cmd)
+                    shell(command)
             else:
-                sys.stderr.write("Unknown linkedHostsAction:" + linkedHostsAction + "\n")
+                sys.stderr.write("Unknown linkedHostsAction:" + linked_hosts_action + "\n")
                 exit()
+
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
@@ -515,7 +526,7 @@ if os.path.isfile(permanent + "/hosts.gz"):
         hosts = f.read().splitlines()
     hosts = set(hosts)
     sys.stderr.write("read hosts from file=" + str(len(hosts)) + "\n")
-	
+
 else:
     hosts = set()
 
@@ -531,22 +542,22 @@ else:
         threshold = int(config["langstatThreshold"])
         exclude_path = config["langstatExcludeDomains"]
 
-        newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+        newHosts = get_hosts_from_langstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
         sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
-	
+
     if "hostPath" in config:
         path = config["hostPath"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
             sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
-	
+
         hosts = hosts.union(newHosts)
 
     if "excludeHosts" in config:
-        ExcludeHosts(hosts, config["excludeHosts"])
+        exclude_hosts(hosts, config["excludeHosts"])
 
-    if (len(hosts) == 0):
+    if len(hosts) == 0:
         print("No hosts found. Need at least one of hosts, langstat, hostPath")
         exit()
 
@@ -559,25 +570,27 @@ sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
     for dir in config["linkedHosts"]:
-        LinkedHosts(permanent, dir, hosts, linkedHostsAction)
+        linked_hosts(permanent, dir, hosts, linkedHostsAction)
 
-domainKey2Hosts = CreateDomainKey2HostMap(hosts)
+domainKey2Hosts = create_domain_key2_host_map(hosts)
 sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+
+
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
-def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
-    with open("{mosesDir}/scripts/ems/example/config.basic.moses2".format(mosesDir=mosesDir), "r") as file:
+def create_moses_ems_config(work_dir, moses_dir, mgiza, train_prefixes, dev_prefix, test_prefixes):
+    with open("{moses_dir}/scripts/ems/example/config.basic.moses2".format(mosesDir=moses_dir), "r") as file:
         lines = file.read().split("\n")
         print("lines", len(lines))
         #print("lines", lines)
 
-    lines[8] = "working-dir = {0}".format(workDir)
+    lines[8] = "working-dir = {0}".format(work_dir)
     lines[11] = "input-extension = " + LANG1
     lines[12] = "output-extension = " + LANG2
     lines[13] = "#" + lines[13]
 
-    lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
+    lines[18] = "moses-src-dir = {moses_dir}".format(mosesDir=moses_dir)
     lines[27] = "external-bin-dir = {mgiza}/mgizapp/bin".format(mgiza=mgiza)
     lines[79] = "jobs = 10"
     lines[146] = "settings = \"--prune '0 0 1' -T $working-dir/lm -S 20% --discount_fallback\" "
@@ -618,7 +631,7 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     lines.insert(710, "")
 
     line = 711
-    for path in testPrefixes:
+    for path in test_prefixes:
         name = os.path.basename(path)
         lines.insert(line, "[EVALUATION:{name}]".format(name=name))
         lines.insert(line + 1, "raw-input = {path}.{lang}".format(path=path, lang=LANG1))
@@ -627,13 +640,13 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
         line += 3
 
     # tuning
-    assert(len(devPrefix) == 1)
-    lines[523] = "raw-input = {path}.{lang}".format(path=devPrefix[0], lang=LANG1)
-    lines[529] = "raw-reference = {path}.{lang}".format(path=devPrefix[0], lang=LANG2)
+    assert (len(dev_prefix) == 1)
+    lines[523] = "raw-input = {path}.{lang}".format(path=dev_prefix[0], lang=LANG1)
+    lines[529] = "raw-reference = {path}.{lang}".format(path=dev_prefix[0], lang=LANG2)
 
     # lm
     line = 215
-    for path in trainPrefixes:
+    for path in train_prefixes:
         name = os.path.basename(path)
         lines.insert(line, "[LM:{name}]".format(name=name))
         lines.insert(line + 1, "raw-corpus = {path}.{lang}".format(path=path, lang=LANG2))
@@ -644,24 +657,22 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     lines.insert(137, "")
 
     line = 138
-    for path in trainPrefixes:
+    for path in train_prefixes:
         name = os.path.basename(path)
         lines.insert(line, "[CORPUS:{name}]".format(name=name))
         lines.insert(line + 1, "raw-stem = {path}".format(path=path))
 
         line += 2
 
-
-    with open("{0}/steps/1/config.1".format(workDir), "w") as file:
+    with open("{0}/steps/1/config.1".format(work_dir), "w") as file:
         file.write("\n".join(lines))
-
 
 
 #================================== START SNAKEMAKE================================#
 
 #================================== TARGET FILES ==================================#
 
-OUTPUT=[]
+OUTPUT = []
 
 if "nmt" in config and config["nmt"]:
     OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
@@ -682,30 +693,26 @@ else:
 
 rule all:
     input:
-        expand("{target}", target=OUTPUT)
+         expand("{target}", target=OUTPUT)
 
 #================================== SMT ======================================#
 
 rule train_smt_with_crawl_data:
     input:
-        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
-        ,
-        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
-        ,
+        l1 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1),
+        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2),
         emsConfig = "{dir}/smt-dir-crawl/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient)
+        report="{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
 
 rule train_smt_with_crawl_data_create_config:
     input:
-        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
-        ,
-        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
-        ,
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1),
+        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2),
         config = "{dir}/config.json".format(dir=transient)
 
     output:
@@ -721,53 +728,51 @@ rule train_smt_with_crawl_data_create_config:
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        CreateMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
-                            MOSESDIR, config["mgiza"],
-                            trainData,
-                            config["initCorpusDevPrefix"],
-                            config["initCorpusTestPrefix"])
+        create_moses_ems_config("{0}/smt-dir-crawl".format(transient),
+                                MOSESDIR, config["mgiza"],
+                                trainData,
+                                config["initCorpusDevPrefix"],
+                                config["initCorpusTestPrefix"])
 
 rule train_smt_all:
     input:
-        emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
+        emsConfig="{dir}/smt-dir/steps/1/config.1".format(dir=transient)
 
     output:
-        report = "{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
+        report="{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
         cmd = "cd {transient}/smt-dir && {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
         shell(cmd)
 
 rule train_smt_all_create_config:
     input:
-        config = "{dir}/config.json".format(dir=transient)
+        config="{dir}/config.json".format(dir=transient)
 
     output:
-        emsConfig = "{dir}/smt-dir/steps/1/config.1".format(dir=transient)
+        emsConfig="{dir}/smt-dir/steps/1/config.1".format(dir=transient)
     priority: 40
 
     run:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
-        CreateMosesEMSConfig("{0}/smt-dir".format(transient),
-                            MOSESDIR, config["mgiza"],
-                            config["initCorpusTrainPrefix"],
-                            config["initCorpusDevPrefix"],
-                            config["initCorpusTestPrefix"])
+        create_moses_ems_config("{0}/smt-dir".format(transient),
+                                MOSESDIR, config["mgiza"],
+                                config["initCorpusTrainPrefix"],
+                                config["initCorpusDevPrefix"],
+                                config["initCorpusTestPrefix"])
 
 #================================== NMT ======================================#
 
 
 rule train_nmt_with_crawl_data:
     input:
-        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1)
-        ,
-        l2="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2)
-        ,
+        l1="{dir}/crawl.{lang}".format(dir=permanent, lang=LANG1),
+        l2 = "{dir}/crawl.{lang}".format(dir=permanent, lang=LANG2),
         config = "{dir}/config.json".format(dir=transient)
 
     output:
-        report = "{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient)
+        report="{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient)
 
     priority: 50
     run:
@@ -777,35 +782,34 @@ rule train_nmt_with_crawl_data:
         trainData.append(crawlPref)
 
         cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {input.config} -k -j3" \
-            + " --directory {transient}/nmt-dir-crawl" \
-            + " --config initCorpusTrainPrefix=\"" + str(trainData) + "\"" \
-            + " permanentDir={permanent}/nmt-dir-crawl"
+              + " --directory {transient}/nmt-dir-crawl" \
+              + " --config initCorpusTrainPrefix=\"" + str(trainData) + "\"" \
+              + " permanentDir={permanent}/nmt-dir-crawl"
         print("cmd", cmd)
         shell(cmd)
 
 rule train_nmt_all:
     input:
-        config = "{transient}/config.json"
+         config="{transient}/config.json"
 
     output:
-        report = "{transient}/nmt-dir/evaluation/report"
+          report="{transient}/nmt-dir/evaluation/report"
 
     priority: 50
     run:
         cmd = "snakemake --snakefile {BITEXTOR}/snakemake/nmt/Snakefile --configfile {input.config} -k -j3" \
-            + " --directory {transient}/nmt-dir" \
-            + " --config permanentDir={permanent}/nmt-dir"
+              + " --directory {transient}/nmt-dir" \
+              + " --config permanentDir={permanent}/nmt-dir"
         shell(cmd)
 
 rule create_config:
     output:
-        config = temp("{dir}/config.json".format(dir=transient))
+          config=temp("{dir}/config.json".format(dir=transient))
 
     priority: 50
     run:
         with open(output.config, "wt") as configFile:
             configFile.write(str(config))
-
 
 #================================== CRAWLING ======================================#
 #"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
@@ -813,36 +817,35 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.xz'
+        '{dir}/warc'.format(dir=permanent) + '/{target}/creepy.warc.xz'
     priority: 10
     shell:
-        #'echo {params.url}; '
         'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.xz'
+        '{dir}/warc'.format(dir=permanent) + '/{target}/httrack.warc.xz'
     params:
         url="http://{target}"
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
-        #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         'nice {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
         '{BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
-    	'sync ; '
+        'sync ; '
 
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent, subdomain=domainKey2Hosts[w.target], crawler=CRAWLTARGET)
+        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent,
+                          subdomain=domainKey2Hosts[w.target], crawler=CRAWLTARGET)
     output:
-        "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
+        "{dir}".format(dir=transient) + "/{target}/concat.warc.xz"
     priority: 9
     run:
-        assert(len(input))
+        assert (len(input))
         if len(input) == 1:
             cmd = "ln -s {input} {output}"
         else:
@@ -872,21 +875,24 @@ rule warc2preprocess:
         url='{dir}/{name}.url.xz'
     priority: 8
     shell:
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
+        # By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows
+        # to resume the pipeline if this step breaks
         'rm -rf {wildcards.dir}/checkpoint.flag;'
         'zcat {input} -f | {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --prefix {wildcards.name}. --lang1 {LANG1} --lang2 {LANG2}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
 
+
 def input_files(wildcards):
     checkpoint_output = checkpoints.split_warc.get(**wildcards).output[0]
     output = []
-    file_types = ['deboilerplate_html','encoding','lang','mime','normalized_html','plain_text','url']
+    file_types = ['deboilerplate_html', 'encoding', 'lang', 'mime', 'normalized_html', 'plain_text', 'url']
     for contenttype in file_types:
         output.extend(expand("{dir}/concat.warc.split/{i}.{contenttype}.xz",
-               dir=wildcards.dir,
-               contenttype=contenttype,
-               i=glob_wildcards(os.path.join(wildcards.dir+"/concat.warc.split", "{i}.warc.gz")).i))
+                             dir=wildcards.dir,
+                             contenttype=contenttype,
+                             i=glob_wildcards(os.path.join(wildcards.dir + "/concat.warc.split", "{i}.warc.gz")).i))
     return output
+
 
 rule recompound_preprocess:
     input:
@@ -908,7 +914,6 @@ rule recompound_preprocess:
         'xzcat {wildcards.dir}/concat.warc.split/*.plain_text.xz | xz > {output.text}; '
         'xzcat {wildcards.dir}/concat.warc.split/*.url.xz | xz > {output.url}; '
         'rm -rf {wildcards.dir}/concat.warc.split; '
-
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1012,8 +1017,6 @@ rule aligndocumentsBitextor:
     shell:
         '{BITEXTOR}/bitextor-align-documents.py --text {input[2]} --url {input[3]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
 
-
-
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
 rule docaling_extracted:
@@ -1022,8 +1025,8 @@ rule docaling_extracted:
         lang='{dir}/lang.xz',
         url='{dir}/url.xz'
     output:
-        "{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        "{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+        "{dir}/docalign/" + "{l1}.extracted.xz".format(l1=LANG1),
+        "{dir}/docalign/" + "{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.dir}/docalign; '
         '{BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "{SENTTOK1}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
@@ -1038,10 +1041,8 @@ rule docaling_deduped:
 
 rule docaling_translate_nmt:
     input:
-        source = "{dir}/{prefix}/extracted.deduped.xz"
-        ,
-        configFile = "{dir}/config.json".format(dir=transient)
-        ,
+        source="{dir}/{prefix}/extracted.deduped.xz",
+        configFile = "{dir}/config.json".format(dir=transient),
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
 
     output:
@@ -1055,9 +1056,8 @@ rule docaling_translate_nmt:
 
 rule docaling_translate_smt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
-        ,
-        report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
+        source="{dir}/{prefix}.extracted.deduped.xz",
+        report="{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
         temp("{dir}/{prefix}.smt.extracted.deduped.translated.xz")
@@ -1069,7 +1069,6 @@ rule docaling_translate_smt:
         'xzcat -T 0 {input.source} | {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 
-
 rule docaling_custom_translate:
     input:
         "{prefix}.extracted.deduped.xz",
@@ -1078,7 +1077,6 @@ rule docaling_custom_translate:
     shell:
         'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
-
 
 rule docaling_substitute_translated:
     input:
@@ -1092,16 +1090,16 @@ rule docaling_substitute_translated:
 
 rule docaling_matches:
     input:
-        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz",
-        l2="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2)
+        l1="{dir}/" + "{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.xz",
+        l2="{dir}/" + "{l2}.extracted.xz".format(l2=LANG2)
     output:
-        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
+        "{dir}/" + "{l1}-{l2}".format(l1=LANG1, l2=LANG2) + ".{mttype}.matches"
     shell:
         "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
 
 rule aligndocumentsTrainedNMT:
     input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        matches="{dir}/docalign/" + "{l1}-{l2}.{mttype}.matches".format(l1=LANG1, l2=LANG2, mttype=DOCALIGNEXT),
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz',
         report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
@@ -1114,7 +1112,7 @@ rule aligndocumentsTrainedNMT:
 
 rule aligndocumentsCustomMT:
     input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        matches="{dir}/docalign/" + "{l1}-{l2}.{mttype}.matches".format(l1=LANG1, l2=LANG2, mttype=DOCALIGNEXT),
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
     output:
@@ -1124,7 +1122,7 @@ rule aligndocumentsCustomMT:
 
 rule aligndocumentsTrainedSMT:
     input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        matches="{dir}/docalign/" + "{l1}-{l2}.{mttype}.matches".format(l1=LANG1, l2=LANG2, mttype=DOCALIGNEXT),
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
     output:
@@ -1142,23 +1140,23 @@ rule hunaligndic:
     run:
         with open(output[0], "wt") as outw:
             with open(input[0], "rt") as inr:
-                header=inr.readline().strip()
-                langs=header.split("\t")
+                header = inr.readline().strip()
+                langs = header.split("\t")
                 if langs[0] == LANG1 and langs[1] == LANG2:
-                    inverse=True
+                    inverse = True
                 else:
-                    inverse=False
+                    inverse = False
                 for inline in inr:
-                    columns=inline.strip().split("\t")
+                    columns = inline.strip().split("\t")
                     if inverse:
-                        outw.write(columns[1]+" @ "+columns[0]+"\n")
+                        outw.write(columns[1] + " @ " + columns[0] + "\n")
                     else:
-                        outw.write(columns[0]+" @ "+columns[1]+"\n")
+                        outw.write(columns[0] + " @ " + columns[1] + "\n")
 
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
-        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)
+        "{dir}/docalign." + "{extension}".format(extension=DOCALIGNEXT)
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
@@ -1173,19 +1171,18 @@ rule alignsegments_bleualign:
         with lzma.open(output.alignments, "wt") as algFile:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
                 for urlAlg in urlsFile:
-                    id=urlAlg.split("\t")[0]
-                    urls="\t".join(urlAlg.strip().split("\t")[1:])
-                    filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"
+                    id = urlAlg.split("\t")[0]
+                    urls = "\t".join(urlAlg.strip().split("\t")[1:])
+                    filename = wildcards.dir + "/bleualign/aligned." + str(id) + ".gz"
                     with open_gzip_or_plain(filename) as sentFile:
                         for line in sentFile:
-                            algFile.write(urls+"\t"+line)
-
+                            algFile.write(urls + "\t" + line)
 
 rule cleansegments:
     input:
         "{dir}/" + SEGMENTALIGNER + ".segalign.xz"
     output:
-        "{dir}/"  + SEGMENTALIGNER + ".segclean.xz"
+        "{dir}/" + SEGMENTALIGNER + ".segclean.xz"
     shell:
         'xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
@@ -1216,7 +1213,7 @@ rule bicleanerfilter:
 
 rule elrc:
     input:
-        "{prefix}."+"{extension}".format(extension=BICLEANER)+".xz"
+        "{prefix}." + "{extension}".format(extension=BICLEANER) + ".xz"
     output:
         "{prefix}.elrc.xz"
     shell:
@@ -1224,48 +1221,50 @@ rule elrc:
 
 rule sents:
     input:
-        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(),
+                aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
-        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
+        "{permanentdir}".format(permanentdir=config["permanentDir"]) + "/{l1}-{l2}.sent.xz"
     shell:
         "xzcat -T 0 {input} | xz -T 0 > {output}"
 
 rule tmx:
     input:
-        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"],
+                webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
-        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
+        "{permanentdir}".format(permanentdir=config["permanentDir"]) + "/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
         "xzcat -T 0 -f {input} | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
     input:
-        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"],
+                webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
-        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
+        "{permanentdir}".format(permanentdir=config["permanentDir"]) + "/{l1}-{l2}.deduped.tmx.xz"
     shell:
         "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} --compress-program=gzip | {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule mt_parallel_data:
     input:
-         "{permanentdir}/{l1}-{l2}.sent".format(permanentdir=permanent, l1=LANG1, l2=LANG2)+".xz"
+        "{permanentdir}/{l1}-{l2}.sent".format(permanentdir=permanent, l1=LANG1, l2=LANG2) + ".xz"
     output:
-         l1="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG1)
-         ,
-         l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
+        l1="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG1),
+        l2 = "{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
     shell:
-         "xzcat -T 0 -f {input} | cut -f 3,4 | sort | uniq > corpus; "
-         "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
-         "rm corpus"
+        "xzcat -T 0 -f {input} | cut -f 3,4 | sort | uniq > corpus; "
+        "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
+        "rm corpus"
 
 ################# BLEUALIGN RULES #################
 
 rule bleualign:
     input:
-        extracted_l1="{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        extracted_l2="{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{dir}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        extracted_l1="{dir}/docalign/" + "{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{dir}/docalign/" + "{l2}.extracted.xz".format(l2=LANG2),
+        translated="{dir}/docalign/" + "{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1, mttype=DOCALIGNEXT),
+        matches="{dir}/docalign/" + "{l1}-{l2}.{mttype}.matches".format(l1=LANG1, l2=LANG2, mttype=DOCALIGNEXT)
     output:
         "{dir}/bleualign/align.info.gz"
     shell:
@@ -1275,62 +1274,62 @@ rule bleualign:
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
 #Temporal directories for generated data
-preprocCorpusDir=transient+"/tempcorpuspreproc."+LANG1+"-"+LANG2
-mgizaModelDir=transient+"/tempgizamodel."+LANG1+"-"+LANG2
+preprocCorpusDir = transient + "/tempcorpuspreproc." + LANG1 + "-" + LANG2
+mgizaModelDir = transient + "/tempgizamodel." + LANG1 + "-" + LANG2
 
 #Input data prefixes
 if "initCorpusTrainPrefix" in config:
-    trainPrefixes=config["initCorpusTrainPrefix"]
+    trainPrefixes = config["initCorpusTrainPrefix"]
 else:
-    trainPrefixes=None
+    trainPrefixes = None
 
 #Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 rule symmetrise_dic:
     input:
-        vcb1="{dir}/corpus.{l1}.filtered.vcb".format(dir=mgizaModelDir, l1=LANG1),
-        vcb2="{dir}/corpus.{l2}.filtered.vcb".format(dir=mgizaModelDir, l2=LANG2),
-        t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
-        t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
+         vcb1="{dir}/corpus.{l1}.filtered.vcb".format(dir=mgizaModelDir, l1=LANG1),
+         vcb2="{dir}/corpus.{l2}.filtered.vcb".format(dir=mgizaModelDir, l2=LANG2),
+         t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
+         t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
     output:
-        "{file}".format(file=DIC)
+          "{file}".format(file=DIC)
     run:
-        svocabulary={}
-        tvocabulary={}
-        svcb=open(input.vcb1,"r")
-        tvcb=open(input.vcb2,"r")
+        svocabulary = {}
+        tvocabulary = {}
+        svcb = open(input.vcb1, "r")
+        tvcb = open(input.vcb2, "r")
         for line in svcb:
-            item=line.strip().split(" ")
-            svocabulary[item[0]]=item[1]
+            item = line.strip().split(" ")
+            svocabulary[item[0]] = item[1]
 
         for line in tvcb:
-            item=line.strip().split(" ")
-            tvocabulary[item[0]]=item[1]
+            item = line.strip().split(" ")
+            tvocabulary[item[0]] = item[1]
 
-        t3dic={}
-        t3s=open(input.t3_1,"r")
-        t3t=open(input.t3_2,"r")
+        t3dic = {}
+        t3s = open(input.t3_1, "r")
+        t3t = open(input.t3_2, "r")
         for line in t3t:
-            item=line.strip().split(" ")
+            item = line.strip().split(" ")
             if item[1] in t3dic:
-                t3dic[item[1]][item[0]]=item[2]
+                t3dic[item[1]][item[0]] = item[2]
             else:
-                t3dic[item[1]]={}
-                t3dic[item[1]][item[0]]=item[2]
+                t3dic[item[1]] = {}
+                t3dic[item[1]][item[0]] = item[2]
 
-        dic=open(output[0], "wt")
-        dic.write(LANG1+"\t"+LANG2+"\n")
+        dic = open(output[0], "wt")
+        dic.write(LANG1 + "\t" + LANG2 + "\n")
         for line in t3s:
-            item=line.strip().split(" ")
+            item = line.strip().split(" ")
             if item[0] in t3dic:
                 if item[1] in t3dic[item[0]]:
-                    value1=float(t3dic[item[0]][item[1]])
-                    value2=float(item[2])
-                    hmean=2/((1/value1)+(1/value2))
+                    value1 = float(t3dic[item[0]][item[1]])
+                    value2 = float(item[2])
+                    hmean = 2 / ((1 / value1) + (1 / value2))
 
                     if hmean > 0.1:
                         if item[1] in svocabulary and item[0] in tvocabulary:
-                            word1=svocabulary[item[1]]
-                            word2=tvocabulary[item[0]]
+                            word1 = svocabulary[item[1]]
+                            word2 = tvocabulary[item[0]]
                             if word1.isalpha() or word2.isalpha():
                                 dic.write("{0}\t{1}\n".format(word1, word2))
         svcb.close()
@@ -1357,7 +1356,6 @@ rule mgiza:
         "{prefix}.{l2}-{l1}.t3.final"
     shell:
         "{BITEXTOR}/mgiza/mgizapp/bin/mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null"
-
 
 rule snt2cooc:
     input:
@@ -1404,13 +1402,11 @@ rule plain2snt:
 
 rule clean:
     input:
-        "{prefix}.tok.low."+"{lang1}".format(lang1=LANG1)
-        ,
-        "{prefix}.tok.low."+"{lang2}".format(lang2=LANG2)
+        "{prefix}.tok.low." + "{lang1}".format(lang1=LANG1),
+        "{prefix}.tok.low." + "{lang2}".format(lang2=LANG2)
     output:
-        "{prefix}.clean."+"{lang1}".format(lang1=LANG1)
-        ,
-        "{prefix}.clean."+"{lang2}".format(lang2=LANG2)
+        "{prefix}.clean." + "{lang1}".format(lang1=LANG1),
+        "{prefix}.clean." + "{lang2}".format(lang2=LANG2)
     shell:
         "perl {BITEXTOR}/utils/clean-corpus-n.perl {wildcards.prefix}.tok.low {LANG1} {LANG2} {wildcards.prefix}.clean 1 80 {wildcards.prefix}.lines-retained"
 
@@ -1427,27 +1423,27 @@ rule lowercase:
 #Tokenize corpus
 
 rule tokenize_file_l1:
-    input: 
-         expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG1)
+    input:
+        expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG1)
     output:
-        "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)
+        "{preprocCorpusDir}/corpus.tok." + "{lang}.xz".format(lang=LANG1)
     shell:
         "mkdir -p {preprocCorpusDir}; "
         "zcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}"
 
 rule tokenize_file_l2:
     input:
-         expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG2)
+        expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG2)
     output:
-        "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG2)
+        "{preprocCorpusDir}/corpus.tok." + "{lang}.xz".format(lang=LANG2)
     shell:
         "mkdir -p {preprocCorpusDir}; "
         "zcat -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}"
 
 if "bicleanerCorpusTrainingPrefix" in config:
-    bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
+    bicleanerTrainPrefixes = config["bicleanerCorpusTrainingPrefix"]
 else:
-    bicleanerTrainPrefixes=None
+    bicleanerTrainPrefixes = None
 
 rule bicleaner_train_model:
     input:
@@ -1463,7 +1459,7 @@ rule bicleaner_train_model:
         "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "
         "paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training; "
         "DIR=$(dirname {BICLEANER_CONFIG}); "
-        "echo $DIR; "
+       "echo $DIR; "
         "cp {input.t3_1} $DIR/{LANG1}.dic; "
         "cp {input.t3_2} $DIR/{LANG2}.dic; "
         "gzip $DIR/{LANG1}.dic $DIR/{LANG2}.dic; "

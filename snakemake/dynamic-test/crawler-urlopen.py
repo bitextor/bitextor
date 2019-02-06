@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 from urllib.request import urlopen
 from urllib import parse
 
+
 ###############################################################################
 # We are going to create a class called LinkParser that inherits some
 # methods from HTMLParser which is why it is passed into the definition
@@ -45,7 +46,7 @@ class LinkParser(HTMLParser):
         # are floating around on the internet (such as
         # JavaScript files, CSS, or .PDFs for example)
         print("getLinks2")
-        if response.getheader('Content-Type')=='text/html':
+        if response.getheader('Content-Type') == 'text/html':
             print("getLinks3")
             htmlBytes = response.read()
             # Note that feed() handles Strings well, but not bytes
@@ -58,7 +59,8 @@ class LinkParser(HTMLParser):
             return htmlString, self.links
         else:
             print("getLinks7")
-            return "",[]
+            return "", []
+
 
 ###############################################################################
 
@@ -100,6 +102,7 @@ def spider(url, word, maxPages):
         print("The word", word, "was found at", url)
     else:
         print("Word never found")
+
 
 ###############################################################################
 if __name__ == "__main__":
