@@ -15,7 +15,7 @@ linkedHosts: ["/home/hieu/permanent/hu-en",
              "/home/hieu/permanent/cs-en",
              "/home/hieu/permanent/pl-en",
              "/home/hieu/permanent/da-en",
-             "/home/hieu/permanent/el-en",]
+             "/home/hieu/permanent/el-en"]
 linkedHostsAction: remove
 
 langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
