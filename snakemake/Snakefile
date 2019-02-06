@@ -551,7 +551,7 @@ else:
     if "excludeHostsFile" in config:
         with open(config["excludeHostsFile"], "rt") as f:
             excludeHosts = f.read().splitlines()
-            print("excludeHosts", excludeHosts)
+            print("excludeHosts", len(excludeHosts))
         ExcludeHosts(hosts, excludeHosts)
 
     if (len(hosts) == 0):
