@@ -6,9 +6,10 @@ bitextor: /home/hieu/permanent/software/bitextor
     
 langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 5000
+langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
+excludeHostsFile: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 
-langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
-temp: /mnt/tmp
+temp: /tmp
 permanentDir: /home/hieu/permanent/hu-en
 transientDir: /home/hieu/transient/hu-en
 lang1: hu
