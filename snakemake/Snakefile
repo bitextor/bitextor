@@ -120,6 +120,7 @@ def ValidateArgs(config):
            'hosts': {'type': 'list'},
            'hostPath': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
+           'excludeHostsFile': {'type': 'string'},
            'linkedHosts': {'type': 'list'},
            'linkedHostsAction': {'type': 'string'},
 
@@ -548,8 +549,9 @@ else:
         ExcludeHosts(hosts, excludeHosts)
 
     if "excludeHostsFile" in config:
-        with open(config["excludeHosts"], "rt") as f:
+        with open(config["excludeHostsFile"], "rt") as f:
             excludeHosts = f.read().splitlines()
+            print("excludeHosts", excludeHosts)
         ExcludeHosts(hosts, excludeHosts)
 
     if (len(hosts) == 0):
