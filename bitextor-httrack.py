@@ -25,14 +25,15 @@ import tldextract
 sys.path.append("{0}/..".format(os.path.dirname(os.path.realpath(__file__))))
 scriptDir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-###########################################################################################################################
-def systemCheck(cmd):
+
+def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
     sys.stderr.flush()
 
     subprocess.check_call(cmd, shell=True)
 
-def Run(url, outPath, timeLimit, pageLimit):
+
+def run(url, outPath, timeLimit, pageLimit):
     cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 "
 
     if timeLimit:
@@ -42,11 +43,10 @@ def Run(url, outPath, timeLimit, pageLimit):
         cmd += " -#L{}".format(pageLimit)
 
     cmd += " {URL} -O {DOWNLOAD_PATH}".format(URL=url, DOWNLOAD_PATH=outPath)
-    #print("cmd", cmd)
+    # print("cmd", cmd)
 
-    systemCheck(cmd)
+    system_check(cmd)
 
-###########################################################################################################################
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -65,7 +65,6 @@ if __name__ == "__main__":
 
     print("Starting...")
 
-    Run(args.url, args.outPath, args.timeLimit, args.pageLimit)
-
+    run(args.url, args.outPath, args.timeLimit, args.pageLimit)
 
     print("Finished!")
