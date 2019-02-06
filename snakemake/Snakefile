@@ -124,7 +124,7 @@ def ValidateArgs(config):
            'linkedHostsAction': {'type': 'string'},
 
            'langstat': {'type': 'string'},
-           'langstatExcludeDomains': {'type': 'string'},
+           'langstatExcludeStrings': {'type': 'string'},
            'langstatThreshold': {'type': 'integer'},
 
            'initCorpusTrainPrefix': {'type': 'list'},
@@ -529,7 +529,7 @@ else:
         lang1 = config["lang1"]
         lang2 = config["lang2"]
         threshold = int(config["langstatThreshold"])
-        exclude_path = config["langstatExcludeDomains"]
+        exclude_path = config["langstatExcludeStrings"]
 
         newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
@@ -544,7 +544,13 @@ else:
         hosts = hosts.union(newHosts)
 
     if "excludeHosts" in config:
-        ExcludeHosts(hosts, config["excludeHosts"])
+        excludeHosts = config["excludeHosts"]
+        ExcludeHosts(hosts, excludeHosts)
+
+    if "excludeHostsFile" in config:
+        with open(config["excludeHosts"], "rt") as f:
+            excludeHosts = f.read().splitlines()
+        ExcludeHosts(hosts, excludeHosts)
 
     if (len(hosts) == 0):
         print("No hosts found. Need at least one of hosts, langstat, hostPath")
