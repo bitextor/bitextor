@@ -4,7 +4,7 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
 langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.nl.gz
+hostPath: /home/hieu/workspace/experiment/issues/paracrawl/prevHosts/hosts.nl.gz
 linkedHosts: ["/home/hieu/permanent/hu-en",
              "/home/hieu/permanent/fr-en",
              "/home/hieu/permanent/de-en",
