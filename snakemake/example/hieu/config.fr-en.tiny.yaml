@@ -13,8 +13,8 @@ hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 
 langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
 temp: /tmp
-permanentDir: /home/hieu/permanent/fr-en
-transientDir: /home/hieu/transient/fr-en
+permanentDir: /home/hieu/permanent/fr-en.tiny
+transientDir: /home/hieu/transient/fr-en.tiny
 lang1: fr
 lang2: en
 dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic

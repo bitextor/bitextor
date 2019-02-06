@@ -9,7 +9,7 @@ langstatThreshold: 5000
 langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 
-temp: /tmp
+temp: /raid0/tmp
 permanentDir: /home/hieu/permanent/hu-en
 transientDir: /home/hieu/transient/hu-en
 lang1: hu
