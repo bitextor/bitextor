@@ -2,26 +2,27 @@
 
 bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
-langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
+langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.ro.gz
-linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent"]
+hostPath: /home/hieu/workspace/experiment/issues/paracrawl/prevHosts/hosts.ro.gz
+linkedHosts: ["/home/hieu/permanent/hu-en",
+             "/home/hieu/permanent/fr-en",
+             "/home/hieu/permanent/de-en",
+             "/home/hieu/permanent/it-en",
+             "/home/hieu/permanent/es-en",
+             "/home/hieu/permanent/pt-en",
+             "/home/hieu/permanent/nl-en",
+             "/home/hieu/permanent/cs-en",
+             "/home/hieu/permanent/pl-en",
+             "/home/hieu/permanent/da-en",
+             "/home/hieu/permanent/el-en",]
 linkedHostsAction: remove
 
-langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
+langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
+excludeHostsFile: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 temp: /raid0/tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/ro-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/ro-en/transient
+permanentDir: /home/hieu/permanent/ro-en
+transientDir: /home/hieu/transient/ro-en
 lang1: ro
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
