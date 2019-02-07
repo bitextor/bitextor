@@ -8,7 +8,6 @@ from contextlib import contextmanager
 
 @contextmanager
 def open_xz_or_gzip_or_plain(file_path):
-
     def decode_text(file_handler):
         for line in file_handler:
             yield line.decode('utf-8')
@@ -73,6 +72,6 @@ def check_lengths(file_path_from, file_path_to, throw=True):
 
     if throw and f1_lines != f2_lines:
         raise Exception("Files must have the same number of lines!\
-                            {0}: {1}, {2}: {3}".format(file_path_from,f1_lines,file_path_to, f2_lines))
+                            {0}: {1}, {2}: {3}".format(file_path_from, f1_lines, file_path_to, f2_lines))
 
     return f1_lines == f2_lines

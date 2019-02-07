@@ -2,23 +2,24 @@
 
 bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
-langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
+langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/hosts/hosts.pl.gz
-linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3.vili/hu-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/fr-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/de-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/it-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/es-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/pt-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/nl-en/permanent",
-  "/home/s0565741/workspace/experiment/paracrawl/v3.vili/cs-en/permanent"]
+hostPath: /home/hieu/workspace/experiment/issues/paracrawl/prevHosts/hosts.pl.gz
+linkedHosts: ["/home/hieu/permanent/hu-en",
+             "/home/hieu/permanent/fr-en",
+             "/home/hieu/permanent/de-en",
+             "/home/hieu/permanent/it-en",
+             "/home/hieu/permanent/es-en",
+             "/home/hieu/permanent/pt-en",
+             "/home/hieu/permanent/nl-en",
+             "/home/hieu/permanent/cs-en"]
 linkedHostsAction: remove
 
-langstatExcludeDomains: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-domains
+langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
+excludeHostsFile: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 temp: /raid0/tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3.vili/pl-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl/v3.vili/pl-en/transient
+permanentDir: /home/hieu/permanent/pl-en
+transientDir: /home/hieu/transient/pl-en
 lang1: pl
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic

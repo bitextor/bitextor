@@ -1,9 +1,9 @@
 bitextor: ~/permanent/bitextor
-hosts: ["www.elenacaffe1863.com"]
+hosts: ["greenpeace.org"]
 httrack: false
-permanentDir: ~/permanent/bitextor-output-default
-transientDir: ~/transient
-temp: ~/transient
+permanentDir: ~/permanent/bitextor-output-default-en-fr
+transientDir: ~/transient-default-en-fr
+temp: ~/transient-default-en-fr
 lang1: en
 lang2: fr
 dic: ~/permanent/en-fr.dic

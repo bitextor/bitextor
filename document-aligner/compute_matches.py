@@ -14,27 +14,26 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
 def munge_file_path(filepath):
-  if os.path.isfile(filepath):
-    return filepath
-  if os.path.isfile(filepath + ".gz"):
-    return filepath + ".gz"
-  if os.path.isfile(filepath + ".xz"):
-    return filepath + ".xz"
-  if os.path.isfile(filepath + ".bz2"):
+    if os.path.isfile(filepath):
+        return filepath
+    if os.path.isfile(filepath + ".gz"):
+        return filepath + ".gz"
+    if os.path.isfile(filepath + ".xz"):
+        return filepath + ".xz"
+    if os.path.isfile(filepath + ".bz2"):
         return filepath + ".bz2"
-      
-  # return nothing. file does not exist
-  return None
-  
+
+    # return nothing. file does not exist
+    return None
+
+
 def load_extracted(filepath):
-    #print("BEFORE filepath", filepath)
     filepath = munge_file_path(filepath)
-    #print("AFTER filepath", filepath)
-    
-    with open_xz_or_gzip_or_plain(filepath) as f:
+
+    with open_xz_or_gzip_or_plain(filepath) as fextract:
         documents = defaultdict(list)
 
-        for line in f:
+        for line in fextract:
             line_split = line.strip().split('\t', 1)
             if len(line_split) != 2:
                 continue
@@ -49,7 +48,7 @@ def map_dic2list(documents):
     mapping = []
     text = []
 
-    for idx, d in enumerate(documents):
+    for idx_documents, d in enumerate(documents):
         mapping.append(d)
         text.append(documents[d])
 
@@ -61,7 +60,7 @@ def map_dic2list(documents):
 
 def match(score_matrix_csr, threshold):
     score_matrix_coo = score_matrix_csr.tocoo()
-    matches = []
+    matches_list = []
     visited_cols = set()
     visited_rows = set()
 
@@ -69,28 +68,28 @@ def match(score_matrix_csr, threshold):
     sorted_indices = np.argsort(
         score_matrix_coo.data, axis=None, kind='quicksort')
 
-    for idx in sorted_indices[::-1]:
-        curr_row = score_matrix_coo.row[idx]
+    for sorted_idx in sorted_indices[::-1]:
+        curr_row = score_matrix_coo.row[sorted_idx]
         if curr_row in visited_rows:
             continue
 
-        curr_col = score_matrix_coo.col[idx]
+        curr_col = score_matrix_coo.col[sorted_idx]
         if curr_col in visited_cols:
             continue
 
         if score_matrix_csr[int(curr_row), int(curr_col)] < threshold:
             break
 
-        matches.append((curr_row, curr_col))
+        matches_list.append((curr_row, curr_col))
         visited_cols.add(curr_col)
         visited_rows.add(curr_row)
 
-        if len(matches) >= smaller_dim:
+        if len(matches_list) >= smaller_dim:
             break
 
-    match_costs = [score_matrix_csr[int(r), int(c)] for r, c in matches]
+    match_costs_list = [score_matrix_csr[int(r), int(c)] for r, c in matches_list]
 
-    return match_costs, matches
+    return match_costs_list, matches_list
 
 
 if __name__ == "__main__":
@@ -116,7 +115,9 @@ if __name__ == "__main__":
     docs_lang1 = load_extracted(args.lang1)
 
     if len(docs_lang1) == 0 or len(docs_lang2) == 0:
-        sys.stderr.write("No document alignments feasible: "+str(len(docs_lang1))+" documents in foreign language and "+str(len(docs_lang2))+" documents in source language.\n")
+        sys.stderr.write(
+            "No document alignments feasible: " + str(len(docs_lang1)) + " documents in foreign language and " + str(
+                len(docs_lang2)) + " documents in source language.\n")
         open(args.output_matches, 'a').close()
 
     else:
@@ -132,14 +133,14 @@ if __name__ == "__main__":
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
                                       batch_size=args.batch_size)
- 
+
         m_csr = scorer.score(obj_lang2['text'], obj_lang1['text'])
-        if m_csr == None:
+        if m_csr is None:
             sys.stderr.write("Documents do not contain any useful information to be used in alignment.\n")
             open(args.output_matches, 'a').close()
         else:
             match_costs, matches = match(m_csr, threshold=args.threshold)
-    
+
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):
                     turl = obj_lang2['mapping'][matches[idx][0]]

@@ -4,24 +4,24 @@
 ##Directory where Bitextor is installed
 bitextor: ~/permanent/bitextor
 ##Folders used during processing: temp is the temporal folder (/tmp by default); permanentDir will contain the results of crawling: the parallel corpus built and the WARC files obtained through crawling; transientDir will contain the rest of files generated during processing
-temp: ~/transient
-permanentDir: ~/permanent/bitextor-output-mt
-transientDir: ~/transient
+temp: ~/transient-mt-en-ru
+permanentDir: ~/permanent/bitextor-output-mt-en-ru
+transientDir: ~/transient-mt-en-ru
 ##Segment spliters and word tokenizers
 LANG1Tokenizer: ~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
-LANG2Tokenizer: ~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG2Tokenizer: ~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ru
 LANG1SentenceSplitter: ~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-LANG2SentenceSplitter: ~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+LANG2SentenceSplitter: ~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l ru
 ##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 lang1: en
-lang2: fr
+lang2: ru
 
 
 # CRAWLING OPTIONS
 ##HTTrack activation: if it is not activated, Creepy crawler is used
 httrack: false
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
-hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
+hosts: ["kremlin.ru"]
 #langstat: ~/permanent/langstat/langstats.all.gz
 #langstatThreshold: 50000000
 #langstatExcludeDomains: ~/permanent/bitextor/snakemake/exclude-domains
@@ -39,7 +39,7 @@ crawlerConnectionTimeout: 10
 
 
 # DICTIONARIES
-dic: ~/permanent/en-fr.dic
+dic: ~/permanent/en-ru.dic
 ##Corpus for bilingual dictionaries and-or SMT/NMT training, if dictionary or models not given, respectively.
 #initCorpusTrainPrefix: ""
 #Corpus for SMT training
@@ -83,8 +83,8 @@ mgiza: ~/permanent/bitextor/mgiza
 
 # POSTPROCESSING
 ##Bicleaner
-bicleaner: ~/bicleaner-model/en-fr/training.en-fr.yaml
-bicleanerThreshold: 0.6
+#bicleaner: ~/bicleaner-model/en-ru/training.en-ru.yaml
+#bicleanerThreshold: 0.6
 ##Bicleaner model training corpus (note that option initCorpusTrainPrefix also needs to be defined with a different corpus to train probabilistic dictionaries)
 #bicleanerCorpusTrainingPrefix: '/tmp/persistent/RF.en-fr'
 ##Hunalign score

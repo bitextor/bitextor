@@ -1,4 +1,3 @@
-
 import math
 import sys
 import time
@@ -10,7 +9,6 @@ from scipy.sparse import vstack as sp_vstack
 from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from external_processor import ExternalTextProcessor
-
 
 
 def _ngram_helper(words, n, hash_values):
@@ -26,9 +24,9 @@ def _ngram_helper(words, n, hash_values):
 def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, page):
     proc = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
     segments = proc.process(page).split("\n")
-    words=[]
+    words = []
     for s in segments:
-      words.extend(s.split(' '))
+        words.extend(s.split(' '))
     ngrams = _ngram_helper(words, n, hash_values)
 
     if ignore_set:
@@ -73,6 +71,11 @@ class DocumentVectorExtractor(object):
         self.min_term_count = min_count
         self.max_term_count = max_count
         self.ef = extraction_mapper
+        self.ndocs = 0
+        self.term2idf = {}
+        self.term2idx = {}
+        self.ignored_terms = set()
+        self.max_count = 0
         self.tf_smooth = smooth // 6
         self.idf_smooth = smooth % 6
         sys.stderr.write("TF: {0}\nIDF: {1}\n".format(
@@ -140,7 +143,7 @@ class DocumentVectorExtractor(object):
             for ngram, count in counts.items():
                 if ngram not in self.term2idx:
                     if ngram not in self.ignored_terms:
-                        sys.stderr.write("unknown ngram: %s\n" % (ngram))
+                        sys.stderr.write("unknown ngram: %s\n" % ngram)
                     continue
 
                 idf = self.term2idf[ngram]
@@ -171,7 +174,7 @@ class DocumentVectorExtractor(object):
 class CosineDistanceScorer(object):
 
     def __init__(self, extraction_mapper, min_count, metric='cosine',
-                 smooth=0, ignore=None, threshold=0.1, batch_size=10000):
+                 smooth=0, threshold=0.1, batch_size=10000):
         self.name = "Cosine Distance Scorer"
         self.metric = metric
         self.vector_extractor = DocumentVectorExtractor(
@@ -180,15 +183,15 @@ class CosineDistanceScorer(object):
         self.threshold = threshold
         self.batch_size = batch_size
 
-    def batched_pairwise_distances(self, X_csr, Y_csr):
+    def batched_pairwise_distances(self, x_csr, y_csr):
 
-        def get_row_batch(M, batch):
-            for cols_step in range(math.ceil(M.shape[0] / batch)):
-                yield M[cols_step * batch:(cols_step + 1) * batch]
+        def get_row_batch(m, batch):
+            for cols_step in range(math.ceil(m.shape[0] / batch)):
+                yield m[cols_step * batch:(cols_step + 1) * batch]
 
         all_csr = None
-        for idx, X_batch in enumerate(get_row_batch(X_csr, self.batch_size)):
-            pd = 1 - pairwise_distances(X_batch, Y_csr,  metric=self.metric)
+        for idx, X_batch in enumerate(get_row_batch(x_csr, self.batch_size)):
+            pd = 1 - pairwise_distances(X_batch, y_csr, metric=self.metric)
             pd[(isnan(pd)) | (pd < self.threshold)] = 0
 
             if all_csr is None:
@@ -198,7 +201,7 @@ class CosineDistanceScorer(object):
 
         return all_csr
 
-    def score(self, source_corpus, target_corpus, weighting=None, pool=None):
+    def score(self, source_corpus, target_corpus):
         start = time.time()
         self.vector_extractor.estimate_idf(source_corpus, target_corpus)
         sys.stderr.write(
@@ -214,7 +217,7 @@ class CosineDistanceScorer(object):
         del self.vector_extractor
 
         if source_matrix.getnnz() == 0 or target_matrix.getnnz() == 0:
-            d=None
+            d = None
         else:
             d = self.batched_pairwise_distances(source_matrix, target_matrix)
 
