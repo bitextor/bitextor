@@ -5,16 +5,16 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 1000000
 hostPath: /home/hieu/workspace/experiment/issues/paracrawl/prevHosts/hosts.el.gz
-linkedHosts: ["/home/hieu/permanent/hu-en",
-             "/home/hieu/permanent/fr-en",
-             "/home/hieu/permanent/de-en",
-             "/home/hieu/permanent/it-en",
-             "/home/hieu/permanent/es-en",
-             "/home/hieu/permanent/pt-en",
-             "/home/hieu/permanent/nl-en",
-             "/home/hieu/permanent/cs-en",
-             "/home/hieu/permanent/pl-en",
-             "/home/hieu/permanent/da-en"]
+linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent"]
 linkedHostsAction: remove
 
 langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
