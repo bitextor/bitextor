@@ -11,8 +11,8 @@ langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langsta
 excludeHostsFile: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 
 temp: /raid0/tmp
-permanentDir: /home/hieu/permanent/de-en
-transientDir: /home/hieu/transient/de-en
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/de-en/transient
 lang1: de
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
