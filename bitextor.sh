@@ -35,7 +35,7 @@ if [[ $(command -v snakemake | wc -l) -eq 0 ]]; then
 fi
 
 ARGS=$(getopt -o hs:j:c:g: -- "$@")
-eval set -- $ARGS
+eval set -- ${ARGS}
 for i
 do
   case "$i" in
@@ -69,9 +69,9 @@ do
   esac
 done
 
-if [ "$SNAKEFILE" == "" ]; then
+if [[ "$SNAKEFILE" == "" ]]; then
   >&2 echo "Argument -s <SNAKEFILE> is mandatory. Please, specify a snakemake configuration file.";
   exit -1
 fi
 
-snakemake  --verbose --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile $SNAKEFILE -j $NUMJOBS $CLUSTERCOMMAND $CLUSTERCONFIG --config bitextor="$(dirname $0)"
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile ${SNAKEFILE} -j ${NUMJOBS} ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname $0)"

@@ -7,6 +7,7 @@ import logging
 
 logging.getLogger('scrapy').setLevel(logging.WARNING)
 
+
 ###############################################################################
 class spider1(scrapy.Spider):
     name = 'Wikipedia'
@@ -14,6 +15,5 @@ class spider1(scrapy.Spider):
 
     def parse(self, response):
         print("response", response.url)
-        #print("response", response.body)
-        #print(response.css('h1#firstHeading::text').extract())
-
+        # print("response", response.body)
+        # print(response.css('h1#firstHeading::text').extract())

@@ -19,7 +19,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 from cerberus import Validator
 
 ###########################################################
-# UTILS 
+# UTILS
 
 def binaryAvailable(cmd):
     cmd="command -v "+cmd+" > /dev/null"
@@ -120,11 +120,12 @@ def ValidateArgs(config):
            'hosts': {'type': 'list'},
            'hostPath': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
+           'excludeHostsFile': {'type': 'string'},
            'linkedHosts': {'type': 'list'},
            'linkedHostsAction': {'type': 'string'},
 
            'langstat': {'type': 'string'},
-           'langstatExcludeDomains': {'type': 'string'},
+           'langstatExcludeStrings': {'type': 'string'},
            'langstatThreshold': {'type': 'integer'},
 
            'initCorpusTrainPrefix': {'type': 'list'},
@@ -153,9 +154,9 @@ def ValidateArgs(config):
         if not binaryAvailable("httrack"):
             sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
             exit(-1)
-    
+
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
-    config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()}) 
+    config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()})
 
     #Mandatory options depending on the document aligner method choosen
     if "documentAligner" in config:
@@ -515,7 +516,7 @@ if os.path.isfile(permanent + "/hosts.gz"):
         hosts = f.read().splitlines()
     hosts = set(hosts)
     sys.stderr.write("read hosts from file=" + str(len(hosts)) + "\n")
-	
+
 else:
     hosts = set()
 
@@ -529,22 +530,29 @@ else:
         lang1 = config["lang1"]
         lang2 = config["lang2"]
         threshold = int(config["langstatThreshold"])
-        exclude_path = config["langstatExcludeDomains"]
+        exclude_path = config["langstatExcludeStrings"]
 
         newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
         sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
-	
+
     if "hostPath" in config:
         path = config["hostPath"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
             sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
-	
+
         hosts = hosts.union(newHosts)
 
     if "excludeHosts" in config:
-        ExcludeHosts(hosts, config["excludeHosts"])
+        excludeHosts = config["excludeHosts"]
+        ExcludeHosts(hosts, excludeHosts)
+
+    if "excludeHostsFile" in config:
+        with open(config["excludeHostsFile"], "rt") as f:
+            excludeHosts = f.read().splitlines()
+            print("excludeHosts", len(excludeHosts))
+        ExcludeHosts(hosts, excludeHosts)
 
     if (len(hosts) == 0):
         print("No hosts found. Need at least one of hosts, langstat, hostPath")
@@ -1427,7 +1435,7 @@ rule lowercase:
 #Tokenize corpus
 
 rule tokenize_file_l1:
-    input: 
+    input:
          expand("{dataset}.{lang}.gz", dataset=trainPrefixes, lang=LANG1)
     output:
         "{preprocCorpusDir}/corpus.tok."+"{lang}.xz".format(lang=LANG1)

@@ -7,7 +7,6 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import build_mappings, check_lengths
 
-
 if __name__ == "__main__":
 
     oparser = argparse.ArgumentParser(description="")
