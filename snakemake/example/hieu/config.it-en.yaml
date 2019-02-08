@@ -3,9 +3,9 @@ bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 langstat: /home/hieu/transient/langstat/langstats.all.gz
 langstatThreshold: 1000000
 hostPath: /home/hieu/workspace/experiment/issues/paracrawl/prevHosts/hosts.it.gz
-linkedHosts: ["/home/hieu/permanent/hu-en",
-             "/home/hieu/permanent/fr-en",
-             "/home/hieu/permanent/de-en"]
+linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent"]
 linkedHostsAction: remove
 
 langstatExcludeStrings: /home/hieu/permanent/software/bitextor/snakemake/langstat-exclude-strings
