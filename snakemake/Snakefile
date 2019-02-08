@@ -172,7 +172,7 @@ def ValidateArgs(config):
             schema['initCorpusTestPrefix']['required']=True
         elif config["documentAligner"]=='SMT':
             schema['mosesDir']['required']=True
-        elif config["documentAligner"]=='customMT':
+        elif config["documentAligner"]=='externalMT':
             schema['alignerCmd']['required']=True
         else:
             schema['dic']['required']=True
