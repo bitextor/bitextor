@@ -3,6 +3,16 @@
 import os
 import sys
 import argparse
+import tldextract
+
+################################################################
+def GetDomainKeys(hosts):
+    keys = set()
+    for host in hosts:
+        domain = tldextract.extract(host).domain
+        keys.add(domain)
+    return keys
+################################################################
 
 print("Starting")
 
@@ -13,11 +23,16 @@ oparser.add_argument('--output-dir', dest='outDir', help='Where to move them to'
 options = oparser.parse_args()
 
 with open(options.hostsPath, 'rt') as f:
-  excludedHosts = f.read().splitlines()
-  #print("excludedHosts", excludedHosts)
-                
+  excludeHosts = f.read().splitlines()
+  print("excludeHosts", len(excludeHosts))
+
+  excludeKeys = GetDomainKeys(excludeHosts)
+  print("excludeKeys", len(excludeKeys))
+  #print("excludeKeys", excludeKeys)
+
 for dir in os.listdir(options.inDir):
-  if dir in excludedHosts:
+  key = tldextract.extract(dir).domain
+  if key in excludeKeys:
     cmd = "    mv {0}/{1} {2}/{1}".format(options.inDir, dir, options.outDir)
     print(cmd)
     
