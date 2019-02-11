@@ -1,24 +1,24 @@
 [submodule "clustercat"]
 	path = clustercat
 	url = https://github.com/jonsafari/clustercat
+	ignore = dirty
 [submodule "mgiza"]
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
+	ignore = dirty
 [submodule "hunalign"]
 	path = hunalign
 	url = https://github.com/bitextor/hunalign
+	ignore = dirty
 [submodule "bicleaner"]
 	path = bicleaner
 	url = https://github.com/bitextor/bicleaner
-[submodule "zipporah/zipporah"]
-	path = zipporah/zipporah
-	url = https://github.com/hainan-xv/zipporah
+	ignore = dirty
 [submodule "preprocess"]
 	path = preprocess
 	url = https://github.com/kpu/preprocess
-[submodule "kenlm"]
-	path = kenlm
-	url = https://github.com/kpu/kenlm
+	ignore = dirty
 [submodule "standoff"]
 	path = standoff
 	url = https://github.com/lpla/standoff
+	ignore = dirty

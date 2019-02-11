@@ -1,0 +1,33 @@
+
+permanentDir: .
+
+lang1: so
+lang2: en
+    
+marianDir: /home/hieu/permanent/software/marian-dev
+subwordNmtDir: /home/hieu/permanent/software/subword-nmt
+mosesDir: /home/hieu/permanent/software/mosesdecoder
+
+marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
+                 " --overwrite --keep-best --valid-metrics perplexity",
+                 " --valid-log valid.log --log train.log",
+                 " --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2 ",
+                 "--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings",
+                 "--valid-metrics bleu"
+                ]
+#marianModelFile: model.npz.decoder.yml
+#marianModelFile: model.npz.best-perplexity.npz.decoder.yml
+marianModelFile: model.npz.best-bleu.npz.decoder.yml
+
+initCorpusTrainPrefix: ["/home/hieu/permanent/data/so-en/material-only/train.txt"]
+initCorpusDevPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt"]
+initCorpusTestPrefix: ["/home/hieu/permanent/data/so-en/material-only/dev.txt",
+                        "/home/hieu/permanent/data/so-en/material-only/test.txt"]
+
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l so
+LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
+LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
+nmtVocabSize: 30000
+
+gpuId: 0
+    

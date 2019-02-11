@@ -4,144 +4,314 @@
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-`bitextor` is a tool for automatically harvesting bitexts from multilingual websites. To run it, it is necessary to provide:
-1. The source where the parallel data will be searched: a web site (the URL of the web site), a list of web sites, an [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file, or the path to a directory containing a crawled website.
-2. The two languages on which the user is interested: language IDs must be provided following the ISO [639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/tree/master/dics)) or a machine translation system, depending on the document-alignment strategy choosen
-
-The tool works following a sequence of steps (scripts sorted by default use):
-
-1. Downloads a website by using the tool creepy or httrack: see module `bitextor-crawl` and `bitextor-downloadweb` (optional step);
-2. The files in the website are analysed, cleaned and standardised: see module `bitextor-crawl2ett` or `bitextor-webdir2ett` (optional as related with previous step);
-3. The language of every web page is detected: see module `bitextor-ett2lett` (optional, in case you give `bitextor` a [LETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#LETT) file as input);
-4. Document align:
-* Bitextor document aligner
-  * The HTML structure is analysed to create a representation which is used to compare the different web pages: see module `bitextor-lett2lettr`;
-  * The a preliminary list of document-alignment candidates is obtained by computing bag-of-word-overlapping measures: see modules in folder `features` ;
-  * The candidates are checked by using the HTML structure: see module `bitextor-distancefilter`;
-  * The documents are aligned using translation dictionaries: see module `bitextor-align-documents`;
-* or Paracrawl document aligner `document-aligner/doc_align`
-5. A set of aligned segments is obtained from the aligned documents, using Hunalign, and then filtered: see modules `bitextor-align-segments` and `bitextor-cleantextalign`, also optionally `zipporah-classifier` and `bicleaner/bicleaner-classifier-full`
-6. The aligned segments are formatted into TMX standard format: see module `bitextor-buildTMX` (optional step, otherwise output will be a tab separated file).
-
-It is worth noting that each of these steps can be run separately.
-
+`bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
+1. The source where the parallel data will be searched: one or more websites (namely, bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
+2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** as javac and jar are needed for building Java dependences, and the virtual machine of Java is needed for running them. Also **maven** for some dependencies. In addition, a c++ compiler is required for compiling as **g++**, and **cmake** and **libboost-all-dev** for `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if specified through arguments and found in binary path.
+Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences (Boilerpipe); version 8 or later are required. In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
 
-For these system libraries and tools we used apt because we are in a Debian-like environment and tested them in Ubuntu 14.04, 16.04 and 18.04. In case you have another package manager, just run the equivalent installation with it, but we cannot ensure that the versions and interfaces match the Debian ones, or even exist. In case of any problem, just search how to install those packages, including Java JDK (Oracle or OpenJDK), pip3 (with get_pip.py) and libmagic with Python interface (https://github.com/threatstack/libmagic/tree/master/) in your distribution or from source code.
+If you are using an apt-like package manager you can run the following command line to install all these dependences:
 
-`user@pc:~$ sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python3 python3-pip python3-magic libboost-all-dev maven libbz2-dev liblzma-dev zlib1g-dev libffi-dev`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev`
 
-Most of the scripts in bitextor are written in Python 3 syntax. Because of this, it is necessary to also install Python >= 3. All these tools are available in most Unix-based operating systems repositories.
+Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
 
-Some external Python libraries should also be installed before starting the installation of bitextor:
+Some additional Python libraries are required. They can be installed automatically with the tool pip by runing (use without `sudo` if you are running in a virtualenv):
 
-- **python-Levenshtein**: Python library for computing the Levenshtein edit-distance.
-- **LangID.py**: Python library for plain text language detection.
-- **regex**: Python package for regular expressions in Python.
-- **NLTK**: Python package with natural language processing utilities.
-- **numpy**: Python package for scientific computing with Python.
-- **keras**: Python package for implementing neural networks for deep learning.
-- **h5py**: Pythonic interface to the HDF5 binary data format.
-- **python-magic**: Python interface for the magic library, used to detect files' format (install from apt or source code in https://github.com/threatstack/libmagic/tree/master/python, not from pip: it has a different interface). It can be installed with `pip`
-using `pip3 install -e git://github.com/mammadori/magic-python.git#egg=Magic_file_extensions` (useful for installing in a virtualenv).
-- **iso-639**: Python package to convert between language names and ISO-639 codes
+```
+pip3 install -r requirements.txt
+pip3 install -r bicleaner/requirements.txt
+```
 
-Also, Bitextor modules have alternative implementations from other pipelines, which have these dependencies:
-- **bs4**: BeautifulSoup4 is a Python package for HTML/XML processing and cleaning
-- **html2txt**: text extractor from HTML, created by Aaron Swartz
-- **cld2**: Chromium language detector, by Google. Install through pip3 package `cld2-cffi`
+As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
-We expect this project to be compatible with latest version of all previous dependencies. So that, the easiest way to install these Python libraries is using the tool pip3 (https://pypi.python.org/pypi/pip). To install or upgrade all the basic libraries at the same time, you can simply run:
-
-`user@pc:~$ sudo pip3 install --upgrade python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py ftfy warc3-wet`
-
-To ensure you are using the minimum required versions of the needed libraries, if you didn't run the previous command, you should run:
-
-`user@pc:~$ sudo pip3 install -r requirements.txt`
-
-If you are using Ubuntu 14.04 install tensorflow 1.4.1 because of [breaking change with glibc version in version tensorflow 1.5.0](https://github.com/tensorflow/tensorflow/releases/tag/v1.5.0-rc0), also do that if you are using an [AMD CPU and you are having errors when importing](https://github.com/tensorflow/tensorflow/issues/17411):
-
-`sudo pip3 install tensorflow==1.4.1`
-
-Most of these pip3 packages are also available in the repositories of many Unix-based systems, but usually `pip` ones are up to date.
-
-
-### Optional dependences
-
-In case you want to use HTTrack instead of integrated Creepy crawler just:
 `sudo apt install httrack`
 
-In addition to the Python libraries, the tool Apertium (http://www.apertium.org/) may be necessary if you plan to use lemmatisation with bitextor crawl websites containing texts in highly inflective languages. If you need this functionally, just use the option `--with-apertium` when running the `autogen.sh` configuration script at the install step.
+This dependency is not mandatory as a second parallel data crawler is provided in Bitextor (Creepy).
 
-For optional Bicleaner submodule just run `sudo pip3 install -r bicleaner/requirements.txt`
+## Submodules compilation
 
-For optional Zipporah submodule, SRILM `ngram` (http://www.speech.sri.com/projects/srilm/download.html) binary is needed in PATH, and:
+To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
 
-`sudo pip3 install --upgrade matplotlib sklearn numpy && sudo apt install python3-tk`
+`./autogen.sh && make`
 
-For optional document aligner from Paracrawl team read the [document-aligner/README.md](https://github.com/paracrawl/document-aligner/blob/master/README.md) file to install all dependencies in Python 3.
+### Some known installation issues
 
-## Install
-
-To install bitextor you will first need to run the script 'configure', which will identify the location of the external tools used. Then the code will be compiled and installed by means of the command 'make':
-
-```
-user@pc:~$ ./autogen.sh
-user@pc:~$ make
-user@pc:~$ sudo make install
+In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
+```bash
+sudo pip3 uninstall tensorflow
+sudo pip3 install tensorflow==1.5.0
 ```
 
-In case you do not have sudoer privileges, it is possible to install the tool locally by specifying a different installation directory when running the script 'configure':
+In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
+Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
+```bash
+sudo apt-get remove libboost-all-dev
+sudo apt-get autoremove
+wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
+tar xvf boost_1_66_0.tar.gz
+cd boost_1_66_0/
+./bootstrap.sh
+./b2 -j16 --layout=system install || echo FAILURE
+cd ..
+rm -rf boost_1_66_0*
 ```
-user@pc:~$ ./autogen.sh --prefix=LOCALDIR
-user@pc:~$ make
-user@pc:~$ make install
-```
-
-where LOCALDIR can be any directory where you have writing permission, such as `~/local`.
-
-In both examples, Apertium is an optional requirement and a warning will be prompted to the user if this tool is not installed when running configure. If you want to use this tool you can run configure with the option --with-apertium, but again, it is purely optional:
-
-```
-user@pc:~$ ./autogen.sh --prefix=LOCALDIR --with-apertium
-user@pc:~$ make
-user@pc:~$ make install
-```
-
-Some more tools are included in the bitextor package and will be installed together with bitextor:
-- hunalign: a software for sentence alignment (<http://mokk.bme.hu/resources/hunalign/>)
-- mgiza: machine translation package, here used for building probabilistic bilingual dictionaries (<https://github.com/moses-smt/mgiza>)
-- clustercat: Fast Word Clustering program, parallelised alternative to mkcls (<https://github.com/jonsafari/clustercat>)
-- boilerpipe: a tool for cleaning HTML files to remove useless information such as menus, banners, etc. (<https://code.google.com/p/boilerpipe/>) (using Maven)
-
-
 ## Run
 
-There are many ways to call bitextor, but here we will explain the three most used. Two of them include the first step (downloading the websites) and are:
+To run Bitextor use the main script `bitextor.sh`. In general, this script will take two parameters:
+```bash
+bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
 ```
-bitextor [OPTIONS] -v LEXICON -u  URL LANG1 LANG2
-bitextor [OPTIONS] -v LEXICON -U FILE LANG1 LANG2
+where
+* `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run bitextor (learn more about bitextor configuration in the next section), and
+* `<NUMJOBS>` is the number of jobs that can be launched in parallel; a job is a single step of the pipeline (see section Pipeline description) and can be run in parallel for different websites
+For example, on a machine with 4 cores, one could run Bitextor as follows:
+```bash
+bitextor.sh -s myconfig.yaml -j 4
 ```
-where, *LANG1* and *LANG2* are the two-character lang codes following the ISO 639-1, and *LEXICON* is a bilingual lexicon bewteen languages LANG1 and LANG2.
-With option *-u* bitextor downloads the URL specified; option *-U* allows to use a tab-separated file containing, in each line, a URL to be crawled and the [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) file where the crawled data will be stored.
 
-It is also possible to re-process a previously crawled web site by using option *-e* to specify an [ETT](https://github.com/bitextor/bitextor/wiki/Intermediate-formats-used-in-Bitextor#ETT) (this process starts in the second step described in the previous section): 
+If bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used: 
+```bash
+bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>]
 ```
-bitextor [OPTIONS] -v LEXICON -e ETT LANG1 LANG2
-```
-Options *-u* and *-e* can be combined to specify the file where the documents downloaded from the URL will be stored for future processing.
+where
+* `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
+* `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
+* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
-See more useful options, entry points and stop points of the whole pipeline using -h or --help command. Options can be provided either when calling bitextor or by definning them in a configuration file as in the following example:
+### Running Bitextor on a cluster
+In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
+```bash
+bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
-bitextor --config-file CONFIGFILE -u URL LANG1 LANG2
+this command would run bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
+
+Now assume that we plan to train a neural MT (NMT) system with bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
+
+```json
+{
+    "__default__" :
+    {
+        "gres": "",
+    },
+
+    "docaling_translate_nmt" :
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt_all":
+    {
+        "gres": "--gres gpu:tesla:1"
+    }
+
+}
 ```
-A sample configuration file (`baseline.conf`) can be found in this repository. This sample configuration file assumes that the path to the bilingual lexicons is in `bitextor-dictionaries` relative path folder from your running path. Change it if it is necessary.
+this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two jobs. Once we had our configuration file, we could call bitextor in the following way:
+```bash
+bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
+```
+Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`.
 
-Some dictionaries are provided in [bitextor-data](https://github.com/bitextor/bitextor-data) repository, but customised dictionaries can easily be built from parallel corpora as explained in the next section. It is also possible to use other lexicons already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is compatible with the one defined here [in this page of the wiki](https://github.com/bitextor/bitextor/wiki/Build-bilingual-lexicons-from-parallel-corpora).
+## Bitextor configuration file
+Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-Test your installation and parameters with this [sample of running bitext](https://github.com/bitextor/bitextor/wiki/Sample-of-a-bitext).
+**Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+
+### Basic variables
+There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
+```yaml
+permanentDir: /home/user/permanent/bitextor-output
+transientDir: /home/user/transient
+
+lang1: en
+lang2: fr
+```
+* `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
+* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
+
+There are some more options that are rather basic but not mandatory as they take default values if they are not defined
+```yaml
+bitextor: /home/user/bitextor
+
+LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
+LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
+LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+
+temp: /home/user/transient
+
+maxSizeWARC: 1000
+
+boilerpipeCleaning: true
+alcazar: false
+```
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
+* `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
+* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If no sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
+* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
+* `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled
+* `alcazar`: option that enables the library [alcazar](https://github.com/saintamh/alcazar/) for text extraction from HTML documents; by default `lxml` library is used
+
+### Variables defining data sources
+The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
+```yaml
+hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
+
+langstat: /home/user/langstat/langstats.all.gz
+langstatThreshold: 50
+langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
+```
+* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
+* `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
+```
+0-0hamster.livejournal.com      el      17
+0-0hamster.livejournal.com      en      1102
+0-0hamster.livejournal.com      hi      19
+0-0hamster.livejournal.com      ms      33
+0-0hamster.livejournal.com      nn      29
+```
+* `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
+
+### Variables for crawling configuration
+Two crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy) and the other on the external tool [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+```yaml
+httrack: true
+
+crawlTimeLimit: 30s
+
+crawlSizeLimit: 1G
+crawlTld: false
+crawlerNumThreads: 1
+crawlerConnectionTimeout: 10
+```
+* `httack`: if this option is enabled, HTTrack is used instead of the crawler based on Creepy
+* `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
+* `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
+* `crawlTld`: **creepy-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org*
+* `crawlerNumThreads`: **creepy-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
+* `crawlerConnectionTimeout`: **creepy-specific option** that allows to specify the connection timeout to a web server
+
+### Variables for document alignment
+Two strategies are implemented in bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
+
+```yaml
+documentAligner: DIC
+```
+The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor
+* `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
+* `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
+
+#### Variables for document alignment using bilingual lexica
+```yaml
+dic: /home/user/en-fr.dic
+```
+Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`:
+```yaml
+initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+```
+This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
+
+**Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
+
+
+#### Variables for document alignment using external MT
+```yaml
+alignerCmd: "example/dummy-translate.sh"
+docAlignThreshold: 0.1
+```
+* `alignerCmd`: command to call the external MT script
+* `docAlignThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.0 by default
+
+#### Variables for document alignment using home-brew neural MT
+If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having an available GPU. The following are mandatory variables in order to build the NMT system:
+```yaml
+initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+initCorpusDevPrefix: ['/home/user/Europarl.en-fr.dev']
+initCorpusTestPrefix: ['/home/user/Europarl.en-fr.test']
+
+marianDir: /home/user/marian-dev
+mosesDir: /home/user/mosesdecoder
+subwordNmtDir: /home/user/subword-nmt
+
+nmtVocabSize: 50000
+
+LANG2Detokenizer: "/home/user/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr"
+
+gpuId: 0
+
+marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "--maxi-batch 1000", "--overwrite", "--keep-best", "--valid-metrics perplexity", "--valid-log valid.log", "--log train.log", "--dropout-rnn 0.2", "--dropout-src 0.2", "--dropout-trg 0.2 ", "--cost-type ce-mean-words", "--layer-normalization", "--exponential-smoothing", "--tied-embeddings", "--valid-metrics bleu"]
+```
+* `initCorpusTrainPrefix`, `initCorpusDevPrefix`,  and `initCorpusTestPrefix`: training data prefixes, development data prefixes and test data prefixes. See section *Variables for document alignment using bilingual lexica* for a description of such prefixes
+* `marianDir`: path to the directory containing the installation of the NMT tool [Marian](https://github.com/marian-nmt/marian-dev)
+* `mosesDir`: path to the directory containing the MT tool [Moses](https://github.com/moses-smt/mosesdecoder); note that only data pre-processing scripts are used from Moses and, therefore, it is not necessary to compile the project to use it to train and NMT system
+* `subwordNmtDir`: path to the directory containing the installation of the tool [subword-nmt](https://github.com/rsennrich/subword-nmt)
+* `nmtVocabSize`: size of the NMT vocabulary
+* `LANG2Detokenizer`: path to a detokenization script that reads from the standard input and writes to the standard output
+* `gpuId`: id of the GPU to be used for training and testing
+* `marianArgs`: additional arguments for Marian training
+
+### Options for segment alignment
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
+```yaml
+bleualign: true
+bleuAlignThreshold: 0.1
+hunalignThreshold: 0.0
+```
+* `bleualign`: if this option is set, bleualign is used instead of hunalign as the tool for segment alignment. This option will only work is `documentAligner` is set either to `externalMT` or `NMT`. This option false by default
+* `bleuAlignThreshold` and `hunalignThreshold`: score threshold for filtering pairs of sentences with a score too low. `bleuAlignThreshold` should be set to a value in [0,1], while `hunalignThreshold` can take any float value. Both are set to 0.0 by default
+
+### Variables for parallel data filtering
+Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score (learn more about Bicleaner at [https://github.com/bitextor/bicleaner]). The options required to make it work are:
+```yaml
+bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
+bicleanerThreshold: 0.6
+```
+* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data/releases/tag/bicleaner-v1.0]. They are ready to be downloaded and decompressed
+* `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
+
+If the bicleaner model is not availalbe, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
+```yaml
+initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
+```
+* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
+* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
+It is important to provide different parallel corpora for these two options as this helps bicleaner to deal with unkown words (that do not apear in the statistical dictionaries) during scoring.
+
+### Other post-processing variables
+Some other options can be configured to specify the output format of our corpus:
+```yaml
+elrc: true
+
+tmx: true
+
+deduped: false
+```
+* `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, sich as length ratio; these indicators can be used later to filter-out some segment pairs manually
+* `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
+* `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
+
+
+## Pipeline description
+
+Bitextor is a pipeline that runs a collection of scripts to produce a parallel corpus from a collection of multilingual websites. The pipeline is divided in five stages:
+1. **Crawling**: documents are downloaded from the specified websites
+2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
+3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
+  1. one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
+  2. another using machine translation and a [TF/IDF ](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
+  1. one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
+  2. another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
+5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quality metrics
+
+The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
+
+![Banner](img/bitextor7.png?raw=true)

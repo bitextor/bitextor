@@ -115,16 +115,6 @@ then
   AC_MSG_ERROR([You don't have pkg-config installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-if test x$ac_cv_path_GAWK = xno
-then
-  AC_MSG_ERROR([You don't have gawk installed.])
-fi
-
 AC_PATH_PROG(WC, wc, no)
 if test x$ac_cv_path_WC = x
 then
@@ -145,14 +135,14 @@ then
   AC_MSG_ERROR([You don't have grep installed.])
 fi
 
-AC_PATH_PROG(GAWK, gawk, no)
-if test x$ac_cv_path_GAWK = x
+AC_PATH_PROG(AWK, awk, no)
+if test x$ac_cv_path_AWK = x
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
-if test x$ac_cv_path_GAWK = xno
+if test x$ac_cv_path_AWK = xno
 then
-  AC_MSG_ERROR([You don't have gawk installed.])
+  AC_MSG_ERROR([You don't have awk installed.])
 fi
 
 AC_PATH_PROG(CMAKE, cmake, no)
@@ -165,36 +155,6 @@ then
   AC_MSG_ERROR([You don't have cmake installed.])
 fi
 
-AC_PATH_PROG(JAVA, java, no)
-if test x$ac_cv_path_JAVA = x
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-if test x$ac_cv_path_JAVA = xno
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-
-AC_PATH_PROG(JAVAC, javac, no)
-if test x$ac_cv_path_JAVAC = x
-then
-  AC_MSG_ERROR([You don't have javac installed.])
-fi
-if test x$ac_cv_path_JAVAC = xno
-then
-  AC_MSG_ERROR([You don't have javac installed.])
-fi
-
-AC_PATH_PROG(JAR, jar, no)
-if test x$ac_cv_path_JAR = x
-then
-  AC_MSG_ERROR([You don't have java installed.])
-fi
-if test x$ac_cv_path_JAR = xno
-then
-  AC_MSG_ERROR([You don't have jar installed.])
-fi
-
 AC_PATH_PROG(HTTRACK, httrack, no)
 if test x$ac_cv_path_HTTRACK = x
 then
@@ -204,51 +164,6 @@ if test x$ac_cv_path_HTTRACK = xno
 then
   AC_MSG_WARN([You don't have httrack installed. You can only use Creepy crawler (default crawler and integrated in Bitextor)])
 fi
-
-AC_PATH_PROG(MVN, mvn, no)
-if test x$ac_cv_path_MVN = x
-then
-  AC_MSG_ERROR([You don't have mvn (maven) installed.])
-fi
-if test x$ac_cv_path_MVN = xno
-then
-  AC_MSG_ERROR([You don't have mvn (maven) installed.])
-fi
-
-AC_ARG_WITH([apertium],
-            [AS_HELP_STRING([--with-apertium],
-              [enable support for apertium; if this option is disabled, you will not be able to use apertium morphological analysers)])],
-            [],
-            [with_apertium=no])
-
-AS_IF([test "x$with_apertium" != yes],
-  AC_MSG_WARN([You are not using apertium as morphological analyser. In case you want to use it, install it and use with option --with-apertium])
-)
-
-          
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-destxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-destxt installed])
-     fi
-])
-
-AS_IF([test "x$with_apertium" != xno],
-  [AC_PATH_PROG(APERTIUM, apertium-retxt, no)
-     if test x$ac_cv_path_APERTIUM = x
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-     if test x$ac_cv_path_APERTIUM = xno
-     then
-       AC_MSG_ERROR([You don't have apertium-retxt installed])
-     fi
-])
 
 #AM_PATH_PYTHON ([VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
@@ -300,6 +215,7 @@ print (var)" 2> /dev/null`
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is $kerasversion; try running:
 pip install --upgrade keras
+if you already have an updated version of keras, check if the engine is properly configured and installed (Tensorflow, Theano...) with 'python3 -c "import keras"'
 ])
     fi
   else
@@ -387,7 +303,7 @@ print (var)" 2> /dev/null`
   AC_MSG_CHECKING([for libmagic for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import magic; \
-m=magic.open(magic.MAGIC_NONE); \
+magic.Magic(mime=True); \
 var = True; \
 print (var)" 2> /dev/null`
   if test "$ac_supports_python_ver" = "True";
@@ -395,7 +311,7 @@ print (var)" 2> /dev/null`
     AC_MSG_RESULT([yes])
   else
     AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo apt install python3-magic' and try again.
+    AC_MSG_ERROR([this package requires magic for Python. Please, install with 'sudo pip install python-magic' and try again.
 ])
   fi
 
@@ -523,4 +439,4 @@ AC_CHECK_DECLS([fread_unlocked, fwrite_unlocked, fgetc_unlocked, fputc_unlocked,
 
 AC_CHECK_FUNCS([setlocale strdup getopt_long snprintf])
 
-AC_OUTPUT([Makefile bitextor-git.pc piped-boilerpipe/Makefile utils/Makefile model/Makefile zipporah/Makefile])
+AC_OUTPUT([Makefile bitextor-git.pc utils/Makefile model/Makefile])

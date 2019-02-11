@@ -1,0 +1,38 @@
+{
+    "__default__" :
+    {
+        "gres": "",
+	"oversubscribe": ""
+    },
+
+    "httrack_download" :
+    {
+        "oversubscribe": "-s"
+    },
+    
+    "docaling_translate_nmt" :
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt_with_crawl_data":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+
+    "train_nmt_all":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+    
+    "train_nmt":
+    {
+        "gres": "--gres gpu:tesla:1"
+    },
+    
+    "translate_test":
+    {
+        "gres": "--gres gpu:tesla:1"
+    }
+
+}
