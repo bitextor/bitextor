@@ -425,11 +425,25 @@ def LoadDomains(file_path):
 
     return domains
 
+def GetDomainKeys(hosts):
+    keys = set()
+    for host in hosts:
+        domain = tldextract.extract(host).domain
+        keys.add(domain)
+    return keys
+			    
 def ExcludeHosts(hosts, excludeHosts):
-    for exHost in excludeHosts:
-        if exHost in hosts:
-            hosts.remove(exHost)
+    excludeKeys = GetDomainKeys(excludeHosts)
 
+    hostsCopy = set(hosts)	
+    print("BEFORE hosts", len(hosts), len(hostsCopy))
+	
+    for host in hostsCopy:
+        key = tldextract.extract(host).domain
+        if key in excludeKeys:
+            hosts.remove(host)
+    print("AFTER hosts", len(hosts), len(hostsCopy))
+	
 def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
