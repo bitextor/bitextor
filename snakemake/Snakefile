@@ -416,6 +416,24 @@ def CreateDomainKey2HostMap(hosts):
         #print("subdomain", domain, host)
     return domains
 
+def FilterTLD(tlds):
+    filtered_tlds={}
+    if os.path.isfile("{permanent}/domains.gz".format(permanent=permanent)):
+        with open_gzip_or_plain("{permanent}/domains.gz".format(permanent=permanent)) as f:
+            for tld in f:
+                tld=tld.strip()
+                filtered_tlds[tld]=tlds[tld]
+        return filtered_tlds
+    else:
+        return tlds
+
+def InitConcatLogicLink(domains):
+    for tld,hosts in domains.items():
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -s {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+ tld=tld)
+            shell(cmd)
+
 def LoadDomains(file_path):
     domains = set()
     with file_path.open("r") as f:
@@ -585,6 +603,10 @@ if "linkedHosts" in config:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
+#If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
+domainKey2Hosts = FilterTLD(domainKey2Hosts)
+#Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
+InitConcatLogicLink(domainKey2Hosts)
 sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
