@@ -46,9 +46,9 @@ bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.1
 
-marianDir: /home/hieu/permanent/software/marian-dev
-subwordNmtDir: /home/hieu/permanent/software/subword-nmt
-mosesDir: /home/hieu/permanent/software/mosesdecoder
+marianDir: /home/hieu/workspace/github/marian-dev
+subwordNmtDir: /home/hieu/workspace/github/subword-nmt
+mosesDir: /home/hieu/workspace/github/mosesdecoder
 
 marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
                  " --overwrite --keep-best --valid-metrics perplexity",
@@ -61,10 +61,10 @@ marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-bat
 #marianModelFile: model.npz.best-perplexity.npz.decoder.yml
 marianModelFile: model.npz.best-bleu.npz.decoder.yml
 
-initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/1k/europarl-v7.fr-en"]
-initCorpusDevPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"]
-initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
-                    "/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007",
+initCorpusTrainPrefix: ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/train/1k/europarl-v7.fr-en"]
+initCorpusDevPrefix: ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/dev2006"]
+initCorpusTestPrefix: ["/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/dev2006",
+                    "/home/hieu/workspace/experiment/issues/paracrawl/fr-en/wmt07/dev/nc-dev2007",
                     ]
 
 gpuId: 0
@@ -77,6 +77,6 @@ LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/su
 
 nmtVocabSize: 30000
 
-mgiza: /home/hieu/permanent/software/mgiza
+mgiza: /home/hieu/workspace/github/mgiza
 
 
