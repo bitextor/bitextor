@@ -623,7 +623,7 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
     lines[13] = "#" + lines[13]
 
     lines[18] = "moses-src-dir = {mosesDir}".format(mosesDir=mosesDir)
-    lines[27] = "external-bin-dir = {mgiza}/mgizapp/bin".format(mgiza=mgiza)
+    lines[27] = "external-bin-dir = {mgiza}/mgizapp/inst".format(mgiza=mgiza)
     lines[79] = "jobs = 10"
     lines[146] = "settings = \"--prune '0 0 1' -T $working-dir/lm -S 20% --discount_fallback\" "
     lines[310] = "training-options = \"-mgiza -mgiza-cpus 8\""
