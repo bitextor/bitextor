@@ -81,6 +81,7 @@ def ValidateArgs(config):
             'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
             'alcazar': {'type': 'boolean'},
+            'onlyConcat': {'type': 'boolean'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -685,22 +686,29 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
 
 OUTPUT=[]
 
-if "nmt" in config and config["nmt"]:
-    OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
-    OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
-
-if "smt" in config and config["smt"]:
-    OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-    OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-
-#Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
-if "tmx" in config and config["tmx"]:
-    if "deduped" in config and config["deduped"]:
-        OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    else:
-        OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+if "onlyConcat" in config and config["onlyConcat"]:
+    for tld in domainKey2Hosts.keys():
+        OUTPUT.append("{dir}/{tld}/concat.warc.xz".format(dir=transient, tld=tld))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    if "nmt" in config and config["nmt"]:
+        OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
+        OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
+    
+    if "smt" in config and config["smt"]:
+        OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+        OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+    
+    #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
+    if "tmx" in config and config["tmx"]:
+        if "storeRawCorpus" in config and config["storeRawCorpus"]:
+            OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+        if "deduped" in config and config["deduped"]:
+            OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+        else:
+            OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    else:
+        OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 
 rule all:
     input:
