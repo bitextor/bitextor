@@ -98,8 +98,14 @@ for record in f:
         # HTML is then normalized
         cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
-        cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-        document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
+        tree=""
+        try:
+            cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
+            document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
+            tree = etree.tostring(document)
+        except:
+            continue
+
         tree = etree.tostring(document)
         cleantree = tree.decode("utf8").replace("&#160;", " ")
         cleantree = cleantree.replace("\t", " ")
