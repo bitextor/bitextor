@@ -1,4 +1,4 @@
-bitextor: /home/hieu/permanent/software/bitextor
+bitextor: /home/hieu/workspace/github/paracrawl/bitextor.malign
 hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 #hostPath: /home/hieu/permanent/data/hosts/hosts.fr.3.gz
 #excludeHosts: ["vade-retro.fr"]
@@ -11,10 +11,10 @@ hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 #linkedHosts: ["/home/hieu/permanent/other-en"]
 #linkedHostsAction: link
 
-langstatExcludeDomains: /home/hieu/permanent/software/bitextor/snakemake/exclude-domains
+langstatExcludeStrings: /home/hieu/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 temp: /tmp
-permanentDir: /home/hieu/permanent/fr-en.tiny
-transientDir: /home/hieu/transient/fr-en.tiny
+permanentDir: /home/hieu/workspace/experiment/issues/paracrawl/workspace/fr-en.tiny/permanent
+transientDir: /home/hieu/workspace/experiment/issues/paracrawl/workspace/fr-en.tiny/transient
 lang1: fr
 lang2: en
 dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
