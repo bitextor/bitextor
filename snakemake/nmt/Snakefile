@@ -1,37 +1,37 @@
 from os.path import join
 
 #Output dirs
-permanent_dir = config["permanentDir"]
-model_dir = permanent_dir + "/model"
+permanentDir = config["permanentDir"]
+modelDir = permanentDir + "/model"
 #print("permanentDir", permanentDir)
 
 marian=config["marianDir"]
 moses=config["mosesDir"]
 subword_nmt=config["subwordNmtDir"]
-vocab_size=config["nmtVocabSize"]
+vocabSize=config["nmtVocabSize"]
 detokenizer=config["LANG2Detokenizer"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
 
 #NMT commands
-train_cmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join(config["marianArgs"])
+trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join(config["marianArgs"])
 
-translate_cmd = "{0}/build/marian-decoder --max-length-crop -d {1} --quiet-translation ".format(marian, config["gpuId"])
+translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1} --quiet-translation ".format(marian, config["gpuId"])
 
 #Tokenization
 tokenizer_l1= config["LANG1Tokenizer"]
 tokenizer_l2= config["LANG2Tokenizer"]
 
 #Input data prefixes
-train_prefixes=config["initCorpusTrainPrefix"]
-dev_prefix=config["initCorpusDevPrefix"]
-test_prefixes=config["initCorpusTestPrefix"]
-assert(len(dev_prefix) == 1)
+trainPrefixes=config["initCorpusTrainPrefix"]
+devPrefix=config["initCorpusDevPrefix"]
+testPrefixes=config["initCorpusTestPrefix"]
+assert(len(devPrefix) == 1)
 
 ############################################# EVALUATION #############################################################
 
-def all_test_names(dataset):
+def allTestNames(dataset):
     names = []
     for f in dataset:
         names.append(os.path.basename(f))
@@ -39,7 +39,7 @@ def all_test_names(dataset):
 
 rule report:
     input:
-        expand("evaluation/{name}.bleu", name=all_test_names(test_prefixes))
+        expand("evaluation/{name}.bleu", name=allTestNames(testPrefixes))
     output:
         "evaluation/report"
     run:
@@ -76,20 +76,20 @@ rule translate_only:
 
 rule translate_test:
     input:
-        model_previous="{dir}/marian/model.npz.decoder.yml".format(dir=model_dir)
+        modelPrevious="{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
         ,
         test="processed_corpus/test/{name}.bpe." + "{lang}".format(lang=LANG1)
     output:
         "evaluation/{name}.output"
     params:
-        model="{dir}/marian/{model_file}".format(dir=model_dir, model_file=config["marianModelFile"])
+        model="{dir}/marian/{modelFile}".format(dir=modelDir, modelFile=config["marianModelFile"])
 
     shell:
         "cat {input.test} | {translateCmd} -c {params.model} > {output}"
 
 rule train_nmt:
     input:
-        vocab="{dir}/vocab.yml".format(dir=model_dir)
+        vocab="{dir}/vocab.yml".format(dir=modelDir)
         ,
         train=["processed_corpus/train.clean-bpe.{lang}".format(lang=LANG1),
                "processed_corpus/train.clean-bpe.{lang}".format(lang=LANG2)]
@@ -98,7 +98,7 @@ rule train_nmt:
                "processed_corpus/dev.bpe.{lang}".format(lang=LANG2)]
 
     output:
-        "{dir}/marian/model.npz.decoder.yml".format(dir=model_dir)
+        "{dir}/marian/model.npz.decoder.yml".format(dir=modelDir)
     shell:
         "{trainCmd} -t {input.train} --valid-sets {input.valid} --vocabs {input.vocab} {input.vocab} -m {modelDir}/marian/model.npz"
 
@@ -110,7 +110,7 @@ rule make_vocab_yml:
         ,
         "processed_corpus/train.clean-bpe."+"{lang}".format(lang=LANG2)
     output:
-        '{pref}'.format(pref=model_dir) + '/vocab.yml'
+        '{pref}'.format(pref=modelDir)+'/vocab.yml'
     shell:
         "cat {input} | {marian}/build/marian-vocab --max-size {vocabSize} > {output}"
 
@@ -120,7 +120,7 @@ rule apply_truecaser:
     input:
         file='{name}.tok.{lang}'
         ,
-        model="{dir}/truecaser/".format(dir=model_dir) + "truecase-model.{lang}"
+        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     output:
         '{name}.tc.{lang}'
     shell:
@@ -130,7 +130,7 @@ rule apply_truecaser_train:
     input:
         file='{name}.clean.{lang}'
         ,
-        model="{dir}/truecaser/".format(dir=model_dir) + "truecase-model.{lang}"
+        model="{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     output:
         '{name}.clean-tc.{lang}'
     shell:
@@ -140,7 +140,7 @@ rule learn_truecaser:
     input:
         "processed_corpus/train.clean.{lang}"
     output:
-        "{dir}/truecaser/".format(dir=model_dir) + "truecase-model.{lang}"
+        "{dir}/truecaser/".format(dir=modelDir)+"truecase-model.{lang}"
     shell:
         "mkdir -p {modelDir}/truecaser;"
         "{moses}/scripts/recaser/train-truecaser.perl -corpus {input} -model {output}"
@@ -210,7 +210,7 @@ rule apply_bpe:
     input:
         file="{pref}.tc.{lang}"
         ,
-        vocab="{dir}/".format(dir=model_dir) + "vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
+        vocab="{dir}/".format(dir=modelDir)+"vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
     output:
         "{pref}.bpe.{lang}"
     shell:
@@ -220,7 +220,7 @@ rule apply_bpe_train:
     input:
         file="{pref}.clean-tc.{lang}"
         ,
-        vocab="{dir}/".format(dir=model_dir) + "vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
+        vocab="{dir}/".format(dir=modelDir)+"vocab.{lang1}{lang2}".format(lang1=LANG1, lang2=LANG2)
     output:
         "{pref}.clean-bpe.{lang}"
     shell:
@@ -232,7 +232,7 @@ rule learn_bpe:
         ,
         "processed_corpus/train.clean."+"{lang}".format(lang=LANG2)
     output:
-        '{dir}'.format(dir=model_dir) + '/vocab.' + '{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
+        '{dir}'.format(dir=modelDir)+'/vocab.'+'{lang1}{lang2}'.format(lang1=LANG1, lang2=LANG2)
     shell:
         "cat {input} | {subword_nmt}/subword_nmt/learn_bpe.py -s {vocabSize}  > {output}"
 
@@ -240,9 +240,9 @@ rule learn_bpe:
 
 rule prepare_traindata:
     input:
-         l1=expand("{dataset}.{lang}", dataset=train_prefixes, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=trainPrefixes, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=train_prefixes, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=trainPrefixes, lang=LANG2)
     output:
          l1="processed_corpus/train.{lang}".format(lang=LANG1)
          ,
@@ -252,9 +252,9 @@ rule prepare_traindata:
 
 rule prepare_devdata:
     input: 
-         l1=expand("{dataset}.{lang}", dataset=dev_prefix, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=devPrefix, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=dev_prefix, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=devPrefix, lang=LANG2)
     output: 
          l1="processed_corpus/dev.{lang}".format(lang=LANG1)
          ,
@@ -264,13 +264,13 @@ rule prepare_devdata:
 
 rule prepare_test:
     input:
-         l1=expand("{dataset}.{lang}", dataset=test_prefixes, lang=LANG1)
+         l1=expand("{dataset}.{lang}", dataset=testPrefixes, lang=LANG1)
          ,
-         l2=expand("{dataset}.{lang}", dataset=test_prefixes, lang=LANG2)
+         l2=expand("{dataset}.{lang}", dataset=testPrefixes, lang=LANG2)
     output:
-         expand("processed_corpus/test/{name}.{lang}", name=all_test_names(test_prefixes), lang=LANG1)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPrefixes), lang=LANG1)
          ,
-         expand("processed_corpus/test/{name}.{lang}", name=all_test_names(test_prefixes), lang=LANG2)
+         expand("processed_corpus/test/{name}.{lang}", name=allTestNames(testPrefixes), lang=LANG2)
     shell:
          "mkdir -p processed_corpus/test; cp -r {input.l1} {input.l2} processed_corpus/test"
 
@@ -284,7 +284,7 @@ rule prepare_translate_only:
 
 ruleorder: decompressGZ > decompressXZ
 
-rule decompress_gz:
+rule decompressGZ:
     input:
          "{pref}.{lang}.gz"
     output:
@@ -294,7 +294,7 @@ rule decompress_gz:
     shell:
          "zcat {input} > {output}"
 
-rule decompress_xz:
+rule decompressXZ:
     input:
          "{pref}.{lang}.xz"
     output:
