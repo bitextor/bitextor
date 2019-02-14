@@ -99,6 +99,7 @@ def ValidateArgs(config):
            'LANG1SentenceSplitter': {'type': 'string'},
            'LANG2SentenceSplitter': {'type': 'string'},
 
+           'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
@@ -291,6 +292,12 @@ if "crawl-tld" in config and config["crawl-tld"]:
   TLD_CRAWL="-D"
 else:
   TLD_CRAWL=""
+
+#If this option is set, a specific user agent is used when crawling
+if "crawlerUserAgent" in config:
+  USERAGENT="-a \""+config["crawlerUserAgent"]+"\""
+else:
+  USERAGENT=""
 
 #If this option is enabled, a size-limit is set for crawled data (for example "size-limit": "1G")
 if "crawlSizeLimit" in config:
@@ -870,7 +877,7 @@ rule creepy_download:
     priority: 10
     shell:
         #'echo {params.url}; '
-        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
+        'python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
@@ -883,7 +890,7 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        'nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
+        'nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
         'nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
     	'sync ; '

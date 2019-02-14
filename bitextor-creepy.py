@@ -78,6 +78,7 @@ class Crawler(object):
         self.TLdomain = ""
         self.verbose = False
         self.delay = 0
+        self.useragent = None
 
         self.follow_mode = self.F_SAME_HOST
         self.content_type_filter = '(text/html)'
@@ -318,7 +319,11 @@ class Crawler(object):
                             else:
                                 conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
-                            conn.request('GET', quote(path, '?=&%/'))
+                            if self.useragent == None:
+                                conn.request('GET', quote(path, '?=&%/'))
+                            else:
+                                conn.request('GET', quote(path, '?=&%/'), headers={'User-Agent': self.useragent})
+
                             res = conn.getresponse()
 
                             if 301 <= res.status <= 308:
@@ -434,6 +439,8 @@ oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling
                      required=False, default=None)
 oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett",
                      required=False, default=None)
+oparser.add_argument("-a", help="User agent to be added to the headers of the requests", dest="agent",
+                     required=False, default=None)
 oparser.add_argument("-D",
                      help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL "
                           "provided.",
@@ -500,6 +507,7 @@ crawler = MyCrawler()
 crawler.verbose = options.verbose
 crawler.set_concurrency_level(options.jobs)
 crawler.delay = options.delay
+crawler.useragent = options.agent
 if options.crawltld:
     crawler.set_follow_mode(Crawler.F_TLD)
 else:
