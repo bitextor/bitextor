@@ -100,6 +100,7 @@ def ValidateArgs(config):
            'LANG1SentenceSplitter': {'type': 'string'},
            'LANG2SentenceSplitter': {'type': 'string'},
 
+           'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
@@ -217,7 +218,7 @@ LANG2=config["lang2"]
 permanent=config["permanentDir"]
 transient=config["transientDir"]
 
-PROFILING="/usr/bin/time -v"
+PROFILING=""
 
 if "temp" in config:
   TMPDIR=config["temp"]
@@ -297,6 +298,12 @@ if "crawl-tld" in config and config["crawl-tld"]:
   TLD_CRAWL="-D"
 else:
   TLD_CRAWL=""
+
+#If this option is set, a specific user agent is used when crawling
+if "crawlerUserAgent" in config:
+  USERAGENT="-a \""+config["crawlerUserAgent"]+"\""
+else:
+  USERAGENT=""
 
 #If this option is enabled, a size-limit is set for crawled data (for example "size-limit": "1G")
 if "crawlSizeLimit" in config:
@@ -612,7 +619,7 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
-InitConcatLogicLink(domainKey2Hosts)
+#InitConcatLogicLink(domainKey2Hosts)
 sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
@@ -876,7 +883,7 @@ rule creepy_download:
     priority: 10
     shell:
         #'echo {params.url}; '
-        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {params.url} | xz -c -T 0 > {output}'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
@@ -889,14 +896,31 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
     	'sync ; '
 
+rule ln_subdomains:
+    input:
+        lambda w: expand('{dir}/warc/{host}/{crawler}.warc.xz', dir=permanent, host=hosts, crawler=CRAWLTARGET)
+    output:
+        '{dir}/ln.flag'.format(dir=transient)
+    run:
+        InitConcatLogicLink(domainKey2Hosts)
+        cmd = "touch {output}"
+        shell(cmd)
+
+def GetDomainHosts(wildcards):
+    output=[]
+    output.append('{dir}/ln.flag'.format(dir=transient))
+    for h in domainKey2Hosts[wildcards.target]:
+        output.append('{dir}/warc/{host}/{crawler}.warc.xz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
+    return output
+
 rule concat_subdomains:
     input:
-        lambda w: expand('{dir}/warc/{subdomain}/{crawler}.warc.xz', dir=permanent, subdomain=domainKey2Hosts[w.target], crawler=CRAWLTARGET)
+        GetDomainHosts
     output:
         "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
     priority: 9

@@ -17,6 +17,7 @@ linkedHostsAction: remove
 
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
+crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
 
 temp: /raid0/tmp
 permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent
