@@ -23,7 +23,7 @@ Some additional Python libraries are required. They can be installed automatical
 
 ```
 pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt
+pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
 ```
 
 As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
