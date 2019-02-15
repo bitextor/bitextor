@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tldextract
 import traceback
 import urllib.parse
 from collections import defaultdict
@@ -33,8 +34,8 @@ def system_check(cmd):
     subprocess.check_call(cmd, shell=True)
 
 
-def run(url, outPath, timeLimit, pageLimit):
-    cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 "
+def run(url, outPath, timeLimit, pageLimit, agent):
+    cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 -a "
 
     if timeLimit:
         cmd += " -E{}".format(timeLimit)
@@ -42,7 +43,13 @@ def run(url, outPath, timeLimit, pageLimit):
     if pageLimit:
         cmd += " -#L{}".format(pageLimit)
 
-    cmd += " {URL} -O {DOWNLOAD_PATH}".format(URL=url, DOWNLOAD_PATH=outPath)
+    agentoption=""
+    if agent != None:
+        agentoption="-F \""+agent+"\""
+
+    domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
+
+    cmd += " {URL} -O {DOWNLOAD_PATH} {AGENT} -* +*{DOMAIN}*".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
     # print("cmd", cmd)
 
     system_check(cmd)
@@ -60,11 +67,13 @@ if __name__ == "__main__":
                         help='Maximum time to crawl.', required=False)
     parser.add_argument('-p', dest='pageLimit',
                         help='Maximum number of pages to crawl.', required=False)
+    parser.add_argument('-a', dest='agent',
+                        help='User agent to be included in the crawler requests.', required=False, default=None)
 
     args = parser.parse_args()
 
     print("Starting...")
 
-    run(args.url, args.outPath, args.timeLimit, args.pageLimit)
+    run(args.url, args.outPath, args.timeLimit, args.pageLimit, args.agent)
 
     print("Finished!")
