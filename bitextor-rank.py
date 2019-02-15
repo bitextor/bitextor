@@ -12,14 +12,16 @@
 #
 #
 
+import os
 import sys
 import argparse
 from operator import itemgetter
+stderr = sys.stderr
+sys.stderr = open(os.devnull, 'w')
 from keras.models import model_from_json
 import numpy as np
 from keras.utils import np_utils
-import os
-
+sys.stderr = stderr
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 oparser = argparse.ArgumentParser(

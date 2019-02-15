@@ -26,10 +26,10 @@ def print_docs(docs_dict):
         en_text, fr_text = docs_dict[k]['en_text'], docs_dict[k]['fr_text']
         print("{0}\t{1}\t{2}\t{3}\t".format(en_url, fr_url, en_text, fr_text))
 
-    if len(not_found):
-        sys.stderr.write("Number of documents without matches: {0}\n".format(len(not_found)))
-        for n in not_found:
-            sys.stderr.write("{0}\n".format(n))
+    #if len(not_found):
+    #    sys.stderr.write("Number of documents without matches: {0}\n".format(len(not_found)))
+    #    for n in not_found:
+    #        sys.stderr.write("{0}\n".format(n))
 
 
 def load_docs(matches_filepath, url_filepath, text_filepath, threshold):

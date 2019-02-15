@@ -12,7 +12,7 @@ sklearn==0.0
 tensorflow==1.8.0
 warc3-wet==0.2.3
 tld==0.9.1
-snakemake==5.4.1
+snakemake==5.4.2
 tqdm==4.28.1
 tldextract==2.2.0
 ftfy==5.5.0

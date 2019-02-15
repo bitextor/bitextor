@@ -78,8 +78,8 @@ class DocumentVectorExtractor(object):
         self.max_count = 0
         self.tf_smooth = smooth // 6
         self.idf_smooth = smooth % 6
-        sys.stderr.write("TF: {0}\nIDF: {1}\n".format(
-            self.tf_smooth, self.idf_smooth))
+        #sys.stderr.write("TF: {0}\nIDF: {1}\n".format(
+        #    self.tf_smooth, self.idf_smooth))
         assert int(self.tf_smooth) in range(7)
         assert int(self.idf_smooth) in range(6)
         self.lda_dim = lda_dim
@@ -129,8 +129,8 @@ class DocumentVectorExtractor(object):
             self.term2idf[term] = idf
             self.term2idx[term] = len(self.term2idx)
 
-        sys.stderr.write("{0} terms, {1} ignored\n".format(
-            len(self.term2idx), len(self.ignored_terms)))
+        #sys.stderr.write("{0} terms, {1} ignored\n".format(
+        #    len(self.term2idx), len(self.ignored_terms)))
 
     def extract(self, corpus):
         m = lil_matrix((len(corpus), len(self.term2idx)), dtype=float32)
@@ -142,8 +142,8 @@ class DocumentVectorExtractor(object):
             local_sum = float(sum(counts.values()))
             for ngram, count in counts.items():
                 if ngram not in self.term2idx:
-                    if ngram not in self.ignored_terms:
-                        sys.stderr.write("unknown ngram: %s\n" % ngram)
+                    #if ngram not in self.ignored_terms:
+                        #sys.stderr.write("unknown ngram: %s\n" % ngram)
                     continue
 
                 idf = self.term2idf[ngram]
@@ -204,14 +204,14 @@ class CosineDistanceScorer(object):
     def score(self, source_corpus, target_corpus):
         start = time.time()
         self.vector_extractor.estimate_idf(source_corpus, target_corpus)
-        sys.stderr.write(
-            "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
+        #sys.stderr.write(
+        #    "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
 
         start = time.time()
         source_matrix = self.vector_extractor.extract(source_corpus)
         target_matrix = self.vector_extractor.extract(target_corpus)
-        sys.stderr.write(
-            "Matrix extraction took {0:.5f} seconds\n".format(time.time() - start))
+        #sys.stderr.write(
+        #    "Matrix extraction took {0:.5f} seconds\n".format(time.time() - start))
 
         start = time.time()
         del self.vector_extractor
@@ -221,6 +221,6 @@ class CosineDistanceScorer(object):
         else:
             d = self.batched_pairwise_distances(source_matrix, target_matrix)
 
-        sys.stderr.write(
-            "Scoring took {0:.5f} seconds\n".format(time.time() - start))
+        #sys.stderr.write(
+        #    "Scoring took {0:.5f} seconds\n".format(time.time() - start))
         return d
