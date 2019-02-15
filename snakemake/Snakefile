@@ -610,7 +610,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
-#sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
@@ -622,7 +622,7 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 #InitConcatLogicLink(domainKey2Hosts)
-#sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
@@ -894,7 +894,7 @@ rule httrack_download:
         url="http://{target}"
     priority: 10
     shell:
-        #'echo hostname=$HOSTNAME; '
+        'echo hostname=$HOSTNAME; '
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '

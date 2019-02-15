@@ -49,7 +49,7 @@ def run(url, outPath, timeLimit, pageLimit, agent):
 
     domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
 
-    cmd += " {URL} -O {DOWNLOAD_PATH} {AGENT} -* +*{DOMAIN}*".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
+    cmd += " {URL} -O {DOWNLOAD_PATH} {AGENT} -* +*{DOMAIN}* -*.m4v".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
     # print("cmd", cmd)
 
     system_check(cmd)
