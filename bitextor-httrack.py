@@ -35,7 +35,7 @@ def system_check(cmd):
 
 
 def run(url, outPath, timeLimit, pageLimit, agent):
-    cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 -a "
+    cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 -a --urlhack "
 
     if timeLimit:
         cmd += " -E{}".format(timeLimit)

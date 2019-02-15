@@ -1,6 +1,6 @@
 bitextor: /home/hieu/workspace/github/paracrawl/bitextor.malign
 #hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
-hosts: ["www.icgeb.org"]
+hosts: ["www.icgeb.org", "aletheia.ro", "ams.impa.br"]
 #hostPath: /home/hieu/permanent/data/hosts/hosts.fr.3.gz
 #excludeHosts: ["vade-retro.fr"]
 
@@ -26,7 +26,7 @@ maxlines: 5
 #If enabled, boilerpipe is not used
 boilerpipeCleaning: true
 
-crawlTimeLimit: 43200s
+crawlTimeLimit: 60s
 crawlPageLimit: 100000
   #"crawlTimeLimit: 900s
   #"crawlTimeLimit: 60m
