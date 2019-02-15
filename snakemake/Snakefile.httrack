@@ -636,7 +636,7 @@ for key, hosts in domainKey2Hosts.items():
         file = "{dir}/warc/{host}/httrack.warc.xz".format(dir=permanent,host=host)
         OUTPUT.append(file)
 
-print("OUTPUT", OUTPUT)
+#print("OUTPUT", OUTPUT)
 
 rule all:
     input:
