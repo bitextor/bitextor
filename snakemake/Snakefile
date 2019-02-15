@@ -21,6 +21,8 @@ from cerberus import Validator
 ###########################################################
 # UTILS
 
+shell.prefix("sync; set -euo pipefail; ")
+
 def binaryAvailable(cmd):
     cmd="command -v "+cmd+" > /dev/null"
     callout=os.system(cmd)
@@ -763,7 +765,7 @@ rule train_smt_with_crawl_data:
     output:
         report = "{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
-        cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
+        cmd = "cd {transient}/smt-dir-crawl &&  {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec; sync;"
         shell(cmd)
 
 rule train_smt_with_crawl_data_create_config:
@@ -800,7 +802,7 @@ rule train_smt_all:
     output:
         report = "{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient)
     run:
-        cmd = "cd {transient}/smt-dir && {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec"
+        cmd = "cd {transient}/smt-dir && {MOSESDIR}/scripts/ems/experiment.perl --continue 1 --exec; sync;"
         shell(cmd)
 
 rule train_smt_all_create_config:
@@ -899,7 +901,6 @@ rule httrack_download:
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
-    	'sync ; '
 
 rule ln_subdomains:
     input:
@@ -927,9 +928,9 @@ rule concat_subdomains:
     run:
         assert(len(input))
         if len(input) == 1:
-            cmd = "ln -s {input} {output}"
+            cmd = "ln -s {input} {output}; "
         else:
-            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}'
+            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; sync;'
         shell(cmd)
 
 checkpoint split_warc:
@@ -956,7 +957,6 @@ rule warc2preprocess:
     priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        'rm -rf {wildcards.dir}/checkpoint.flag;'
         'zcat {input} -f | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --prefix {wildcards.name}. --lang1 {LANG1} --lang2 {LANG2}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
 
@@ -1262,6 +1262,7 @@ rule alignsegments_bleualign:
                     with open_gzip_or_plain(filename) as sentFile:
                         for line in sentFile:
                             algFile.write(urls+"\t"+line)
+        os.sync()
 
 
 rule cleansegments:
@@ -1421,7 +1422,7 @@ rule symmetrise_dic:
         t3s.close()
         t3t.close()
         dic.close()
-
+        os.sync()
 rule filter_dics:
     input:
         "{prefix}.vcb"
