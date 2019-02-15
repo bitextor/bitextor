@@ -1,0 +1,662 @@
+
+# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
+
+import sys
+import glob
+import gzip
+import lzma
+import tldextract
+import os
+import os.path
+import socket
+from tld import get_tld
+from tqdm import tqdm
+from collections import defaultdict
+from contextlib import contextmanager
+from pathlib import Path
+from toolwrapper import ToolWrapper
+from func_timeout import func_timeout, FunctionTimedOut
+from cerberus import Validator
+
+###########################################################
+# UTILS
+
+shell.prefix("sync; set -euo pipefail; ")
+
+def binaryAvailable(cmd):
+    cmd="command -v "+cmd+" > /dev/null"
+    callout=os.system(cmd)
+    if callout == 0:
+        return True
+    else:
+        return False
+
+def tokeniserCheck(cmd):
+    proc = ToolWrapper(cmd.split())
+    line = proc.writeline('test.test')
+    try:
+        tokline = func_timeout(5, proc.readline)
+    except FunctionTimedOut:
+        sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
+        exit(1)
+
+def systemCheck(cmd):
+    sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
+    sys.stderr.flush()
+
+    subprocess.check_call(cmd, shell=True)
+
+@contextmanager
+def open_gzip_or_plain(file_path):
+
+    def decode_text(file_handler):
+        for line in file_handler:
+            yield line.decode('utf-8')
+
+    f = None
+    try:
+        #print("file_path", file_path)
+        if file_path[-3:] == ".gz":
+            f = gzip.open(file_path, 'rb')
+            yield decode_text(f)
+        elif file_path[-3:] == ".xz":
+            f = lzma.open(file_path, 'rb')
+            yield decode_text(f)
+        else:
+            f = open(file_path, 'r')
+            yield f
+
+    except Exception as ex:
+        sys.stderr.write(str(ex)+"\n")
+        raise Exception("Error occured while loading a file {}".format(file_path))
+
+    finally:
+        if f:
+            f.close()
+
+
+def ValidateArgs(config):
+    schema = {'bitextor': {'required': True, 'type': 'string'},
+            'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
+            'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
+            'temp': {'type': 'string'},
+            'hunalignThreshold': {'type': 'float'},
+            'maxlines': {'type': 'integer'},
+            'alcazar': {'type': 'boolean'},
+            'onlyConcat': {'type': 'boolean'},
+            'profiling': {'type': 'boolean'},
+
+           'permanentDir': {'required': True, 'type': 'string'},
+           'transientDir': {'required': True, 'type': 'string'},
+           'boilerpipeCleaning': {'type': 'boolean'},
+           'httrack': {'type': 'boolean'},
+           'crawlTld': {'type': 'boolean'},
+           'crawlerNumThreads': {'type': 'integer'},
+           'maxSizeWARC': {'type': 'integer'},
+
+           'dic': {'type': 'string'},
+           'LANG1Tokenizer': {'type': 'string'},
+           'LANG2Tokenizer': {'type': 'string'},
+           'LANG2Detokenizer': {'type': 'string'},
+
+           'LANG1SentenceSplitter': {'type': 'string'},
+           'LANG2SentenceSplitter': {'type': 'string'},
+
+           'crawlerUserAgent': {'type': 'string'},
+           'crawlSizeLimit': {'type': 'string'},
+           'crawlTimeLimit': {'type': 'string'},
+           'crawlPageLimit': {'type': 'integer'},
+           'crawlerConnectionTimeout': {'type': 'integer'},
+           'dumpCurrentCrawl': {'type': 'string'},
+           'resumePreviousCrawl': {'type': 'string'},
+
+           'documentAligner': {'type': 'string'},
+           'mosesDir': {'type': 'string'},
+           'alignerCmd': {'type': 'string'},
+           'bleualign': {'type': 'boolean'},
+           'docAlignThreshold': {'type': 'float'},
+           'bleuAlignThreshold': {'type': 'float'},
+
+           'bicleaner': {'type': 'string'},
+           'bicleanerThreshold': {'type': 'float'},
+           'elrc': {'type': 'boolean'},
+
+           'deduped': {'type': 'boolean'},
+           'hosts': {'type': 'list'},
+           'hostPath': {'type': 'string'},
+           'excludeHosts': {'type': 'list'},
+           'excludeHostsFile': {'type': 'string'},
+           'linkedHosts': {'type': 'list'},
+           'linkedHostsAction': {'type': 'string'},
+
+           'langstat': {'type': 'string'},
+           'langstatExcludeStrings': {'type': 'string'},
+           'langstatThreshold': {'type': 'integer'},
+
+           'initCorpusTrainPrefix': {'type': 'list'},
+           'initCorpusDevPrefix': {'type': 'list'},
+           'initCorpusTestPrefix': {'type': 'list'},
+
+           'bicleanerCorpusTrainingPrefix': {'type': 'list'},
+
+           'nmt': {'type': 'boolean'},
+           'smt': {'type': 'boolean'},
+           'tmx': {'type': 'boolean'},
+
+           'gpuId': {'type': 'integer'},
+           'marianDir': {'type': 'string'},
+           'marianArgs': {'type': 'list'},
+           'marianModelFile': {'type': 'string'},
+           'nmtVocabSize': {'type': 'integer'},
+
+           'subwordNmtDir': {'type': 'string'},
+
+           'mgiza': {'type': 'string'},
+
+            }
+
+    if "httrack" in config and config["httrack"] == True:
+        if not binaryAvailable("httrack"):
+            sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
+            exit(-1)
+
+    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
+    config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()})
+
+    #Mandatory options depending on the document aligner method choosen
+    if "documentAligner" in config:
+        if config["documentAligner"]=='NMT':
+            schema['marianDir']['required']=True
+            schema['subwordNmtDir']['required']=True
+            schema['mosesDir']['required']=True
+            schema['LANG2Detokenizer']['required']=True
+            schema['nmtVocabSize']['required']=True
+            schema['gpuId']['required']=True
+            schema['marianArgs']['required']=True
+            schema['initCorpusTrainPrefix']['required']=True
+            schema['initCorpusDevPrefix']['required']=True
+            schema['initCorpusTestPrefix']['required']=True
+        elif config["documentAligner"]=='SMT':
+            schema['mosesDir']['required']=True
+        elif config["documentAligner"]=='externalMT':
+            schema['alignerCmd']['required']=True
+        else:
+            schema['dic']['required']=True
+            if "dic" in config and not os.path.isfile(config["dic"]):
+                schema['initCorpusTrainPrefix']['required']=True
+    else:
+        schema['dic']['required']=True
+        if "dic" in config and not os.path.isfile(config["dic"]):
+            schema['initCorpusTrainPrefix']['required']=True
+
+    if "bicleaner" in config:
+        if not os.path.isfile(config["bicleaner"]):
+            schema['bicleanerCorpusTrainingPrefix']['required']=True
+
+    if "linkedHosts" in config:
+        schema['linkedHostsAction']['required']=True
+
+    v = Validator(schema)
+    #v.allow_unknown = True
+
+    b = v.validate(config)
+
+    if not b:
+        print("Validation error. Stopping.", v.errors)
+        exit()
+
+###########################################################
+
+ValidateArgs(config)
+
+#Local bitextor installation
+BITEXTOR=config["bitextor"]
+
+#Crawled languages
+LANG1=config["lang1"]
+LANG2=config["lang2"]
+
+#Working paths
+permanent=config["permanentDir"]
+transient=config["transientDir"]
+
+PROFILING=""
+
+if "temp" in config:
+  TMPDIR=config["temp"]
+else:
+  TMPDIR=transient
+
+if "hunalignThreshold" in config:
+  MINQUALITY=config["hunalignThreshold"]
+else:
+  MINQUALITY=0.0
+
+if "maxlines" in config:
+  MAXLINES=config["maxlines"]
+else:
+  MAXLINES=-1
+
+if "alcazar" in config and config["alcazar"]:
+  ALCAZAR = "--alcazar"
+else:
+  ALCAZAR = ""
+
+if "profiling" in config and config["profiling"]:
+  PROFILING="/usr/bin/time -v"
+
+systemCheck("mkdir -p " + permanent)
+systemCheck("mkdir -p " + transient)
+
+#Dictionary
+if "dic" in config:
+  DIC=config["dic"]
+else:
+  DIC=None
+
+#Option to remove Boilerpipe html: if the option is enabled, boilerpipe is not used
+if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
+  boilerpipeCleaning = '--boilerpipe'
+else:
+  boilerpipeCleaning = ''
+
+#Option to use HTTrack for crawling instead of the native bitextor crawler
+if "httrack" in config and config["httrack"]==True:
+  CRAWLTARGET="httrack"
+else:
+  CRAWLTARGET="creepy"
+
+#Maximum size of the WARC file to be pre-processed: if it is exceeded the file is split
+if "maxSizeWARC" in config:
+  MAXWARCSIZE="-m "+str(config["maxSizeWARC"])
+else:
+  MAXWARCSIZE=""
+
+#Tokenisers
+if "LANG1Tokenizer" in config:
+  WORDTOK1=config["LANG1Tokenizer"]
+else:
+  WORDTOK1="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
+
+if "LANG2Tokenizer" in config:
+  WORDTOK2=config["LANG2Tokenizer"]
+else:
+  WORDTOK2="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
+
+if "LANG1SentenceSplitter" in config:
+  SENTTOK1=config["LANG1SentenceSplitter"]
+else:
+  SENTTOK1="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
+
+if "LANG2SentenceSplitter" in config:
+  SENTTOK2=config["LANG2SentenceSplitter"]
+else:
+  SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
+
+############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
+
+#If this option is enabled the crawler will keep crawling across a whole top-level domain (.es, .com, .fr, etc.)
+if "crawl-tld" in config and config["crawl-tld"]:
+  TLD_CRAWL="-D"
+else:
+  TLD_CRAWL=""
+
+#If this option is set, a specific user agent is used when crawling
+if "crawlerUserAgent" in config:
+  USERAGENT="-a \""+config["crawlerUserAgent"]+"\""
+else:
+  USERAGENT=""
+
+#If this option is enabled, a size-limit is set for crawled data (for example "size-limit": "1G")
+if "crawlSizeLimit" in config:
+  CRAWLSIZELIMIT="-s "+config["crawlSizeLimit"]
+else:
+  CRAWLSIZELIMIT=""
+
+#If this option is enabled, a time-limit is set for crawling data (for example "time-limit": "1h")
+if "crawlTimeLimit" in config:
+  CRAWLTIMELIMIT="-t "+str(config["crawlTimeLimit"])
+else:
+  CRAWLTIMELIMIT=""
+
+if "crawlPageLimit" in config:
+  CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
+else:
+  CRAWLPAGELIMIT=""
+
+#Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
+if "crawlerNumThreads" in config:
+  CRAWLJOBS="-j "+str(config["crawlerNumThreads"])
+else:
+  CRAWLJOBS="-j 2"
+
+#Connection timeout in the crawler
+if "crawlerConnectionTimeout" in config:
+  CRAWLTIMEOUT="-o "+str(config["crawlerConnectionTimeout"])
+else:
+  CRAWLTIMEOUT=""
+
+#If this option is set, the "crawler" object will be dump as a pickle, so crawling can be continued afterwards
+if "dumpCurrentCrawl" in config:
+  CRAWLDUMPARGS="-d "+config["dumpCurrentCrawl"]
+else:
+  CRAWLDUMPARGS=""
+
+#If this option is set, crawling will be continued from the pickle object dumped in a previous crawl
+if "resumePreviousCrawl" in config:
+  CONTINUECRAWL="-l "+config["resumePreviousCrawl"]
+else:
+  CONTINUECRAWL=""
+
+
+############ OPTIONS FOR THE MALIGN ALIGNER ############
+
+#If documentAligner is enabled, Marek Střelec's MT-based document aligner is used [https://github.com/paracrawl/Malign]
+if "documentAligner" in config:
+  if config["documentAligner"] == "externalMT":
+    MT_COMMAND=config["alignerCmd"]
+    DOCALIGNEXT="customMT"
+  elif config["documentAligner"] == "SMT":
+    MT_COMMAND="smt"
+    DOCALIGNEXT="smt"
+  elif config["documentAligner"] == "NMT":
+    MT_COMMAND="nmt"
+    DOCALIGNEXT="nmt"
+  else:
+    MT_COMMAND=""
+    DOCALIGNEXT="bitextor"
+else:
+  MT_COMMAND=""
+  DOCALIGNEXT="bitextor"
+
+if "mosesDir" in config:
+  MOSESDIR = config["mosesDir"]
+else:
+  MOSESDIR = ""
+
+if "bleualign" in config and config["bleualign"]:
+  SEGMENTALIGNER="bleualign"
+else:
+  SEGMENTALIGNER="hunalign"
+
+# Marek says DOC_THRESHOLD~0.1, BLEU_THRESHOLD~ 0.1 - 0.3
+if "docAlignThreshold" in config:
+    DOC_THRESHOLD  = config["docAlignThreshold"]
+else:
+    DOC_THRESHOLD = 0.0
+
+if "bleuAlignThreshold" in config:
+    BLEU_THRESHOLD = config["bleuAlignThreshold"]
+else:
+    BLEU_THRESHOLD = 0.0
+#print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
+
+############ FILTERING AND POST-PROCESSING OPTIONS ############
+
+if "bicleaner" in config:
+  BICLEANEROPTION=",bicleaner"
+  BICLEANER="bicleaner"
+  BICLEANER_CONFIG=config["bicleaner"]
+  BICLEANER_SORT="-r -k6,6 -k3,4"
+  tokeniserCheck(WORDTOK1)
+  tokeniserCheck(WORDTOK2)
+
+else:
+  BICLEANEROPTION=""
+  BICLEANER_SORT="-k3,4"
+  BICLEANER="segclean"
+  BICLEANER_CONFIG=""
+
+if "bicleanerThreshold" in config:
+  BICLEANER_THRESHOLD=config["bicleanerThreshold"]
+else:
+  BICLEANER_THRESHOLD=0.0
+
+if "elrc" in config and config["elrc"]:
+  ELRCSCORES="elrc"
+  ELRCFIELDS=",lengthratio,numTokensSL,numTokensTL"
+else:
+  ELRCSCORES=BICLEANER
+  ELRCFIELDS=""
+
+#========================= MAPPING URLS AND OUTPUT FILES =========================#
+
+def CreateDomainKey2HostMap(hosts):
+    domains={}
+    for host in hosts:
+        domain = tldextract.extract(host).domain
+        if domain not in domains:
+            domains[domain]=[]
+        domains[domain].append(host)
+        #print("subdomain", domain, host)
+    return domains
+
+def FilterTLD(tlds):
+    filtered_tlds={}
+    if os.path.isfile("{permanent}/domains.gz".format(permanent=permanent)):
+        with open_gzip_or_plain("{permanent}/domains.gz".format(permanent=permanent)) as f:
+            for tld in f:
+                tld=tld.strip()
+                filtered_tlds[tld]=tlds[tld]
+        return filtered_tlds
+    else:
+        return tlds
+
+def InitConcatLogicLink(domains):
+    for tld,hosts in domains.items():
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -s {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+ tld=tld)
+            shell(cmd)
+
+def LoadDomains(file_path):
+    domains = set()
+    with file_path.open("r") as f:
+        for line in f:
+            line = line.strip()
+            if len(line):
+                domains.add(line)
+
+    return domains
+
+def GetDomainKeys(hosts):
+    keys = set()
+    for host in hosts:
+        domain = tldextract.extract(host).domain
+        keys.add(domain)
+    return keys
+			    
+def ExcludeHosts(hosts, excludeHosts):
+    excludeKeys = GetDomainKeys(excludeHosts)
+
+    hostsCopy = set(hosts)	
+    print("BEFORE hosts", len(hosts), len(hostsCopy))
+	
+    for host in hostsCopy:
+        key = tldextract.extract(host).domain
+        if key in excludeKeys:
+            hosts.remove(host)
+    print("AFTER hosts", len(hosts), len(hostsCopy))
+	
+def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+    print("langstat_path", langstat_path, file=sys.stderr)
+    l12 = [lang1.lower(), lang2.lower()]
+
+    excluded_set = set()
+    if exclude_path:
+        excluded_set = LoadDomains(Path(exclude_path))
+
+    hostsToCrawl = set()
+
+    sys.stderr.write(
+        "Gathering domain information for {0} and {1}...\n".format(*l12))
+    with tqdm(total=None) as pbar:
+        with open_gzip_or_plain(langstat_path) as f:
+
+            prevHost = ""
+            langContent = {}
+
+            for line in f:
+                split_line = line.strip().split()
+                if len(split_line) != 3:
+                    continue
+
+                host, lang, byte_len = split_line
+                name = tldextract.extract(host).domain
+                #print("processing ", host, lang.lower(), byte_len, name)
+
+                if host != prevHost:
+                    # start of new host. Process previous entries
+                    if len(langContent) == 2:
+                        lang1_bytes = langContent[l12[0]]
+                        lang2_bytes = langContent[l12[1]]
+                        if lang1_bytes >= threshold and lang2_bytes >= threshold:
+                            hostsToCrawl.add(prevHost)
+
+                    prevHost = host
+                    langContent = {}
+
+                if lang.lower() in l12 and name not in excluded_set:
+                    langContent[lang.lower()] = int(byte_len)
+
+                pbar.update(1)
+
+            # last host
+            if len(langContent) == 2:
+                lang1_bytes = langContent[l12[0]]
+                lang2_bytes = langContent[l12[1]]
+                if lang1_bytes >= threshold and lang2_bytes >= threshold:
+                    hostsToCrawl.add(prevHost)
+
+    return hostsToCrawl
+
+def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
+    #print("dir", dir)
+    cmd = "mkdir -p " + permanent + "/warc"
+    shell(cmd)
+
+    with gzip.open(dir + "/hosts.gz", 'rt') as f:
+        otherHosts = f.read().splitlines()
+
+    otherHosts = set(otherHosts)
+    #print("otherHosts", otherHosts)
+
+    # make a copy in case we have to delete thing
+    copyHosts = set(hosts)
+    for host in copyHosts:
+        if host in otherHosts:
+            if linkedHostsAction == "remove":
+                hosts.remove(host)
+            elif linkedHostsAction == "link":
+                dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
+
+                if not (os.path.exists(dest) or os.path.islink(dest)):
+                    cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    #print(cmd)
+                    shell(cmd)
+            else:
+                sys.stderr.write("Unknown linkedHostsAction:" + linkedHostsAction + "\n")
+                exit()
+
+###############################################################################################
+if os.path.isfile(permanent + "/hosts.gz"):
+    with gzip.open(permanent + "/hosts.gz", 'rt') as f:
+        hosts = f.read().splitlines()
+    hosts = set(hosts)
+    sys.stderr.write("read hosts from file=" + str(len(hosts)) + "\n")
+
+else:
+    hosts = set()
+
+    if "hosts" in config:
+        newHosts = config["hosts"]
+        hosts = hosts.union(newHosts)
+        sys.stderr.write("#hosts given=" + str(len(newHosts)) + "\n")
+
+    if "langstat" in config:
+        langstat_path = config["langstat"]
+        lang1 = config["lang1"]
+        lang2 = config["lang2"]
+        threshold = int(config["langstatThreshold"])
+        exclude_path = config["langstatExcludeStrings"]
+
+        newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+        hosts = hosts.union(newHosts)
+        sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
+
+    if "hostPath" in config:
+        path = config["hostPath"]
+        with gzip.open(path, 'rt') as f:
+            newHosts = f.read().splitlines()
+            sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
+
+        hosts = hosts.union(newHosts)
+
+    if "excludeHosts" in config:
+        excludeHosts = config["excludeHosts"]
+        ExcludeHosts(hosts, excludeHosts)
+
+    if "excludeHostsFile" in config:
+        with open(config["excludeHostsFile"], "rt") as f:
+            excludeHosts = f.read().splitlines()
+            print("excludeHosts", len(excludeHosts))
+        ExcludeHosts(hosts, excludeHosts)
+
+    if (len(hosts) == 0):
+        print("No hosts found. Need at least one of hosts, langstat, hostPath")
+        exit()
+
+    with gzip.open(permanent + "/hosts.gz", 'wt') as f:
+        for host in hosts:
+            f.write("%s\n" % host)
+
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+
+if "linkedHosts" in config:
+    linkedHostsAction = config["linkedHostsAction"]
+    for dir in config["linkedHosts"]:
+        LinkedHosts(permanent, dir, hosts, linkedHostsAction)
+
+domainKey2Hosts = CreateDomainKey2HostMap(hosts)
+#If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
+domainKey2Hosts = FilterTLD(domainKey2Hosts)
+#Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
+#InitConcatLogicLink(domainKey2Hosts)
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+#print("domainKey2Hosts", domainKey2Hosts)
+
+#================================== START SNAKEMAKE================================#
+
+#================================== TARGET FILES ==================================#
+
+OUTPUT=[]
+for key, hosts in domainKey2Hosts.items():
+    for host in hosts:
+        #print("key", key, host)
+        file = "{dir}/warc/{host}/httrack.warc.xz".format(dir=permanent,host=host)
+        OUTPUT.append(file)
+
+#print("OUTPUT", OUTPUT)
+
+rule all:
+    input:
+        expand("{target}", target=OUTPUT)
+
+#================================== CRAWLING ======================================#
+#"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
+
+rule httrack_download:
+    output:
+        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.xz'
+    params:
+        url="http://{target}"
+    priority: 10
+    shell:
+        'echo hostname=$HOSTNAME; '
+        #'mkdir -p {permanent}/warc/{wildcards.target} ; '
+        'sync ; '
+        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        'rm -rf $DIRNAME;'
+
