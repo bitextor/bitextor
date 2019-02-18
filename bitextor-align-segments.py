@@ -40,7 +40,7 @@ def run_aligner(filename1, filename2, dic, hunaligndir):
         else:
             hunalign = [hunaligndir + "/hunalign", dic, filename1, filename2]
 
-    p = subprocess.Popen(hunalign, stdout=subprocess.PIPE)
+    p = subprocess.Popen(hunalign, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     for line in p.stdout:
         yield line
     return

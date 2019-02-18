@@ -108,15 +108,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    sys.stderr.write("threshold: {0}\n".format(args.threshold))
-    sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
+    #sys.stderr.write("threshold: {0}\n".format(args.threshold))
+    #sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 
     docs_lang2 = load_extracted(args.lang2)
     docs_lang1 = load_extracted(args.lang1)
 
     if len(docs_lang1) == 0 or len(docs_lang2) == 0:
         sys.stderr.write(
-            "No document alignments feasible: " + str(len(docs_lang1)) + " documents in foreign language and " + str(
+            "WARNING: No document alignments feasible: " + str(len(docs_lang1)) + " documents in foreign language and " + str(
                 len(docs_lang2)) + " documents in source language.\n")
         open(args.output_matches, 'a').close()
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
         m_csr = scorer.score(obj_lang2['text'], obj_lang1['text'])
         if m_csr is None:
-            sys.stderr.write("Documents do not contain any useful information to be used in alignment.\n")
+            sys.stderr.write("WARNING: Documents do not contain any useful information to be used in alignment.\n")
             open(args.output_matches, 'a').close()
         else:
             match_costs, matches = match(m_csr, threshold=args.threshold)

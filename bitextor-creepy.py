@@ -339,7 +339,7 @@ class Crawler(object):
                             try:
                                 if not re.search(self.content_type_filter,
                                                  res.getheader('Content-Type')):
-                                    sys.stderr.write(url + " discarded: wrong file type\n")
+                                    #sys.stderr.write(url + " discarded: wrong file type\n")
                                     conn.close()
                                     time.sleep(self.delay)
                                     self.delay_lock.release()

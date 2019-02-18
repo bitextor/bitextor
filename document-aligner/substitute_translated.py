@@ -17,10 +17,10 @@ if __name__ == "__main__":
 
     options = oparser.parse_args()
 
-    sys.stderr.write("Building substitution mappings...\n")
+    #sys.stderr.write("Building substitution mappings...\n")
     check_lengths(options.deduplicated, options.translated)
     mapping = build_mappings(options.deduplicated, options.translated)
-    sys.stderr.write("Done.\n")
+    #sys.stderr.write("Done.\n")
 
     line_num = 0
     err_num = 0
@@ -44,8 +44,8 @@ if __name__ == "__main__":
         else:
             print("{0}\t{1}".format(url, mapping[text]))
 
-    sys.stderr.write("Detected sentences: {0}\n".format(line_num - err_num))
-    sys.stderr.write("Undetected sentences: {0}\n".format(err_num))
+    #sys.stderr.write("Detected sentences: {0}\n".format(line_num - err_num))
+    #sys.stderr.write("Undetected sentences: {0}\n".format(err_num))
 
     if err_num != 0:
         sys.stderr.write("Error while substituting: {0} sentences were not found!\n".format(err_num))
