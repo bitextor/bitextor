@@ -226,6 +226,7 @@ if "temp" in config:
   TMPDIR=config["temp"]
 else:
   TMPDIR=transient
+shell("mkdir -p "+TMPDIR)
 
 if "hunalignThreshold" in config:
   MINQUALITY=config["hunalignThreshold"]
@@ -610,7 +611,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
-#sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
@@ -622,7 +623,7 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 #InitConcatLogicLink(domainKey2Hosts)
-#sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
@@ -894,7 +895,7 @@ rule httrack_download:
         url="http://{target}"
     priority: 10
     shell:
-        #'echo hostname=$HOSTNAME; '
+        'echo hostname=$HOSTNAME; '
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'sync ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
@@ -1117,7 +1118,7 @@ rule docaling_deduped:
     output:
         temp("{dir}/{lang}.extracted.deduped.xz")
     shell:
-        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort | uniq | xz -c -T 0 > {output}"
+        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
 rule docaling_translate_nmt:
     input:
@@ -1328,7 +1329,7 @@ rule deduped_tmx:
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
-        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} --compress-program=gzip | {PROFILING} {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} -T {TMPDIR} --compress-program=gzip | {PROFILING} {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule mt_parallel_data:
     input:
@@ -1338,7 +1339,7 @@ rule mt_parallel_data:
          ,
          l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
     shell:
-         "xzcat -T 0 -f {input} | cut -f 3,4 | sort | uniq > corpus; "
+         "xzcat -T 0 -f {input} | cut -f 3,4 | sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
