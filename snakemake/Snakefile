@@ -1091,9 +1091,9 @@ rule aligndocumentsBitextor:
         '{dir}/plain_text.xz',
         '{dir}/url.xz'
     output:
-        '{dir}/docalign.bitextor'
+        '{dir}/docalign.bitextor.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --text {input[2]} --url {input[3]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --text {input[2]} --url {input[3]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
 
 
 
@@ -1189,11 +1189,11 @@ rule aligndocumentsTrainedNMT:
         url='{dir}/url.xz',
         report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
     output:
-        '{dir}/docalign.nmt'
+        '{dir}/docalign.nmt.xz'
 
     shell:
         'mkdir -p {wildcards.dir}/docalign; '
-        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} > {output}'
+        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
 rule aligndocumentsCustomMT:
     input:
@@ -1201,9 +1201,9 @@ rule aligndocumentsCustomMT:
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
     output:
-        '{dir}/docalign.customMT'
+        '{dir}/docalign.customMT.xz'
     shell:
-        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} > {output}'
+        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
 rule aligndocumentsTrainedSMT:
     input:
@@ -1211,9 +1211,9 @@ rule aligndocumentsTrainedSMT:
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
     output:
-        '{dir}/docalign.smt'
+        '{dir}/docalign.smt.xz'
     shell:
-        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} > {output}'
+        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
@@ -1241,7 +1241,7 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
-        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)
+        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz"
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
