@@ -924,47 +924,9 @@ rule concat_subdomains:
             cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
         shell(cmd)
 
-checkpoint split_warc:
-    input:
-        "{dir}/concat.warc.xz"
-    output:
-        "{dir}/concat.warc.split/checkpoint.flag"
-    shell:
-        'mkdir -p {wildcards.dir}/concat.warc.split; '
-        'xzcat {input} | {PROFILING} {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.dir}/concat.warc.split; '
-        'touch {wildcards.dir}/concat.warc.split/checkpoint.flag'
-
 rule warc2preprocess:
     input:
-        '{dir}/{name}.warc.gz'
-    output:
-        deboil='{dir}/{name}.deboilerplate_html.xz',
-        encoding='{dir}/{name}.encoding.xz',
-        lang='{dir}/{name}.lang.xz',
-        mime='{dir}/{name}.mime.xz',
-        html='{dir}/{name}.normalized_html.xz',
-        text='{dir}/{name}.plain_text.xz',
-        url='{dir}/{name}.url.xz'
-    priority: 8
-    shell:
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        'zcat {input} -f | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --prefix {wildcards.name}. --lang1 {LANG1} --lang2 {LANG2}; '
-        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
-
-def input_files(wildcards):
-    checkpoint_output = checkpoints.split_warc.get(**wildcards).output[0]
-    output = []
-    file_types = ['deboilerplate_html','encoding','lang','mime','normalized_html','plain_text','url']
-    for contenttype in file_types:
-        output.extend(expand("{dir}/concat.warc.split/{i}.{contenttype}.xz",
-               dir=wildcards.dir,
-               contenttype=contenttype,
-               i=glob_wildcards(os.path.join(wildcards.dir+"/concat.warc.split", "{i}.warc.gz")).i))
-    return output
-
-rule recompound_preprocess:
-    input:
-        input_files
+        '{dir}/concat.warc.xz'
     output:
         deboil='{dir}/deboilerplate_html.xz',
         encoding='{dir}/encoding.xz',
@@ -973,16 +935,11 @@ rule recompound_preprocess:
         html='{dir}/normalized_html.xz',
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
+    priority: 8
     shell:
-        'xzcat {wildcards.dir}/concat.warc.split/*.deboilerplate_html.xz | xz > {output.deboil}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.encoding.xz | xz > {output.encoding}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.lang.xz | xz > {output.lang}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.mime.xz | xz > {output.mime}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.normalized_html.xz | xz > {output.html}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.plain_text.xz | xz > {output.text}; '
-        'xzcat {wildcards.dir}/concat.warc.split/*.url.xz | xz > {output.url}; '
-        'rm -rf {wildcards.dir}/concat.warc.split; '
-
+        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
+        'xzcat {input} -f | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
+        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
