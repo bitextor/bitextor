@@ -622,7 +622,7 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
-#InitConcatLogicLink(domainKey2Hosts)
+InitConcatLogicLink(domainKey2Hosts)
 sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
@@ -903,19 +903,9 @@ rule httrack_download:
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
-rule ln_subdomains:
-    input:
-        lambda w: expand('{dir}/warc/{host}/{crawler}.warc.xz', dir=permanent, host=hosts, crawler=CRAWLTARGET)
-    output:
-        '{dir}/ln.flag'.format(dir=transient)
-    run:
-        InitConcatLogicLink(domainKey2Hosts)
-        cmd = "touch {output}"
-        shell(cmd)
 
 def GetDomainHosts(wildcards):
     output=[]
-    output.append('{dir}/ln.flag'.format(dir=transient))
     for h in domainKey2Hosts[wildcards.target]:
         output.append('{dir}/warc/{host}/{crawler}.warc.xz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
     return output
@@ -931,18 +921,17 @@ rule concat_subdomains:
         if len(input) == 1:
             cmd = "ln -s {input} {output}; "
         else:
-            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; sync;'
+            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
         shell(cmd)
 
 checkpoint split_warc:
     input:
         "{dir}/concat.warc.xz"
     output:
-        "{dir}/concat.warc.split/checkpoint.flag"
+        directory("{dir}/concat.warc.split")
     shell:
         'mkdir -p {wildcards.dir}/concat.warc.split; '
         'xzcat {input} | {PROFILING} {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.dir}/concat.warc.split; '
-        'touch {wildcards.dir}/concat.warc.split/checkpoint.flag'
 
 rule warc2preprocess:
     input:
