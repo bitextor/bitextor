@@ -928,10 +928,11 @@ checkpoint split_warc:
     input:
         "{dir}/concat.warc.xz"
     output:
-        directory("{dir}/concat.warc.split")
+        "{dir}/concat.warc.split/checkpoint.flag"
     shell:
         'mkdir -p {wildcards.dir}/concat.warc.split; '
         'xzcat {input} | {PROFILING} {BITEXTOR}/bitextor-splitWARC.py {MAXWARCSIZE} -o {wildcards.dir}/concat.warc.split; '
+        'touch {wildcards.dir}/concat.warc.split/checkpoint.flag'
 
 rule warc2preprocess:
     input:
