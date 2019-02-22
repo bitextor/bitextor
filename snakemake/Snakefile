@@ -1260,7 +1260,8 @@ rule sents:
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     shell:
-        "xzcat -T 0 {input} | xz -T 0 > {output}"
+        #Original command ("xzcat -T 0 {input} | xz -T 0 > {output}") replaced to be able to deal with any number of inputs
+        "for f in {input}; do xzcat -T 0 $f; done | xz -T 0 > {output}"
 
 rule tmx:
     input:
