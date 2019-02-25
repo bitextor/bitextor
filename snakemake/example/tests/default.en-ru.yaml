@@ -12,3 +12,4 @@ elrc: true
 documentAligner: DIC
 #bicleaner: ~/bicleaner-model/en-ru/training.en-ru.yaml
 tmx: true
+profiling: true
