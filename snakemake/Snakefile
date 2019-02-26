@@ -9,6 +9,7 @@ import tldextract
 import os
 import os.path
 import socket
+import shutil
 from tld import get_tld
 from tqdm import tqdm
 from collections import defaultdict
@@ -141,6 +142,7 @@ def ValidateArgs(config):
 
            'nmt': {'type': 'boolean'},
            'smt': {'type': 'boolean'},
+           'storeRawCorpus': {'type': 'boolean'},
            'tmx': {'type': 'boolean'},
 
            'gpuId': {'type': 'integer'},
@@ -741,7 +743,7 @@ else:
     #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
     if "tmx" in config and config["tmx"]:
         if "storeRawCorpus" in config and config["storeRawCorpus"]:
-            OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+            OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
         if "deduped" in config and config["deduped"]:
             OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
         else:
@@ -1254,18 +1256,33 @@ rule elrc:
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
+rule raw:
+    input:
+        expand("{dir}/{webdomain}/{aligner}.bicleaner.scores.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER)
+    output:
+        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.raw.xz"
+    run:
+        #Original command ("xzcat -T 0 {input} | xz -T 0 > {output}") replaced to be able to deal with any number of inputs
+        with open(output[0],'wb') as wfd:
+            for f in input:
+                with open(f,'rb') as fd:
+                    shutil.copyfileobj(fd, wfd, 1024*1024*10)
+
 rule sents:
     input:
         expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
-    shell:
+    run:
         #Original command ("xzcat -T 0 {input} | xz -T 0 > {output}") replaced to be able to deal with any number of inputs
-        "for f in {input}; do xzcat -T 0 $f; done | xz -T 0 > {output}"
+        with open(output[0],'wb') as wfd:
+            for f in input:
+                with open(f,'rb') as fd:
+                    shutil.copyfileobj(fd, wfd, 1024*1024*10)
 
 rule tmx:
     input:
-        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:

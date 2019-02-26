@@ -32,6 +32,16 @@ if [ ! -f ~/permanent/en-fr.dic ]; then
 	wget https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0/en-fr.dic -P ~/permanent
 fi
 
+if [ ! -f ~/permanent/en-ru.dic ]; then
+        mkdir ~/permanent
+        wget https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0/en-ru.dic -P ~/permanent
+fi
+
+if [ ! -f ~/permanent/en-el.dic ]; then
+        mkdir ~/permanent
+        wget https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0/en-el.dic -P ~/permanent
+fi
+
 if [ ! -f ~/bicleaner-model/en-fr/training.en-fr.yaml ]; then
 	mkdir ~/bicleaner-model
 	wget https://github.com/bitextor/bitextor-data/releases/download/bicleaner-v1.0/en-fr.tar.gz -P ~/bicleaner-model
@@ -75,14 +85,15 @@ if [ ! -f ~/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.xz ];
 fi
 
 
+mkdir -p ~/reports
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" &
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/default.en-fr.report &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-fr.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/external-mt.en-fr.report &
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" &
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/default.en-el.report &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/external-mt.en-el.report &
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" &
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/default.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/default.en-ru.report &
+snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile "$(dirname $0)/snakemake/example/tests/external-mt.en-ru.yaml" -j 4 --config bitextor="$(dirname $0)" 2> ~/reports/external-mt.en-ru.report &
 
 wait

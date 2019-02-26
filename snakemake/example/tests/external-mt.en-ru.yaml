@@ -99,3 +99,4 @@ maxlines: 5
 elrc: true
 tmx: true
 deduped: false
+profiling: true
