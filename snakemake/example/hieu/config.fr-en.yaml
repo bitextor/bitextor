@@ -10,7 +10,7 @@ langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstat
 langstatThreshold: 1000000
 hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/prevHosts/hosts.fr.gz
 linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent"]
-linkedHostsAction: remove
+linkedHostsAction: remove #postCrawlExclude #remove
 
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
