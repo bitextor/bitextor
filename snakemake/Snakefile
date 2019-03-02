@@ -671,7 +671,7 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
-#InitConcatLogicLink(domainKey2Hosts)
+InitConcatLogicLink(domainKey2Hosts)
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
