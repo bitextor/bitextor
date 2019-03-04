@@ -159,8 +159,7 @@ def ValidateArgs(config):
 
     if "httrack" in config and config["httrack"] == True:
         if not binaryAvailable("httrack"):
-            sys.stderr.write("HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
-            exit(-1)
+            sys.stderr.write("WARNING: HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
     config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()})
