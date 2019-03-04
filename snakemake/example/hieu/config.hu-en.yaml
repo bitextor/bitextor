@@ -6,6 +6,10 @@ bitextor: /home/hieu/permanent/software/bitextor
     
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 5000
+
+#linkedHosts: []
+#linkedHostsAction: remove
+
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 

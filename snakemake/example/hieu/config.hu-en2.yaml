@@ -3,8 +3,8 @@
 bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
 
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
-langstatThreshold: 1000000
-hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/prevHosts/hosts.el.gz
+langstatThreshold: 5000
+hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/prevHosts/hosts.hu.gz
 linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
@@ -14,7 +14,20 @@ linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent"
              "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent",
-             "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent"]
+             "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/ro-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/sv-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/fi-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/hr-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/bg-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/sk-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/et-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/lt-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/lv-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/ga-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/sl-en/permanent",
+             "/home/s0565741/workspace/experiment/paracrawl/v3/mt-en/permanent"]
 linkedHostsAction: postCrawlExclude #remove
 
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
@@ -22,9 +35,9 @@ excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snak
 crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
 
 temp: /raid0/tmp
-permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent
-transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/el-en/transient
-lang1: el
+permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/hu-en2/permanent
+transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/hu-en2/transient
+lang1: hu
 lang2: en
   #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
 hunalignThreshold: 0
@@ -73,10 +86,10 @@ initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
                        "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
 
 gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l el
+LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l hu
 LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
 LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l el
+LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l hu
 LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
 
 nmtVocabSize: 30000

@@ -547,7 +547,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
     copyHosts = set(hosts)
     for host in copyHosts:
         if host in otherHosts:
-            if linkedHostsAction == "remove":
+            if linkedHostsAction == "remove" or linkedHostsAction == "postCrawlExclude":
                 hosts.remove(host)
             elif linkedHostsAction == "link":
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
@@ -560,6 +560,12 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
                 sys.stderr.write("Unknown linkedHostsAction:" + linkedHostsAction + "\n")
                 exit()
 
+def PostCrawlExclude(hosts, postCrawlPath):
+    with open(postCrawlPath, "rt") as f:
+        excludeList = f.read().splitlines()
+    for exclude in excludeList:
+        hosts.remove(exclude)
+	
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
     with gzip.open(permanent + "/hosts.gz", 'rt') as f:
@@ -614,17 +620,57 @@ else:
 
 sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
+# exclude dead domains
+postCrawlPath = "{permanent}/post-crawl-exclude".format(permanent=permanent)
+#print("postCrawlPath", postCrawlPath)
+if os.path.isfile(postCrawlPath):
+    PostCrawlExclude(hosts, postCrawlPath)
+
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
+
+    if linkedHostsAction != "postCrawlExclude":
+        # exclude dead domains in other language pairs
+        for dir in config["linkedHosts"]:
+            postCrawlPath = "{dir}/permanent/post-crawl-exclude".format(dir=dir)
+            if os.path.isfile(postCrawlPath):
+                print("postCrawlPath", postCrawlPath)
+	        PostCrawlExclude(hosts, postCrawlPath)
+		
     for dir in config["linkedHosts"]:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
+
+    if linkedHostsAction == "postCrawlExclude":
+        # create list of dead domains in post-crawl-exclude file, only for this language pair
+        print("Calc post-crawl exclude")
+        #hostsPath = permanent + "/hosts.gz"
+        #with gzip.open(hostsPath, 'rt') as f:
+        #    hosts = f.read().splitlines()
+        #hosts = set(hosts)
+	#print("hosts", hosts)
+
+        warcPath = permanent + "/warc"
+        domainDirs = os.listdir(warcPath)
+        for domainDir in domainDirs:
+            #print(domainDir)
+            warcFilePath = "{warcPath}/{domainDir}/httrack.warc.xz".format(warcPath=warcPath, domainDir=domainDir)
+            if os.path.isfile(warcFilePath):
+               hosts.remove(domainDir)
+        #print("hosts", hosts)
+
+        postCrawlPath = permanent + "/post-crawl-exclude"
+        with open(postCrawlPath, 'wt') as f:
+            f.write("\n".join(hosts))
+        exit()
+	
+sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+#exit(-1)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 #If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 InitConcatLogicLink(domainKey2Hosts)
-sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
 #print("domainKey2Hosts", domainKey2Hosts)
 
 #================================== Creater Moses EMS config========================#
