@@ -945,7 +945,7 @@ rule httrack_download:
     shell:
         'echo hostname=$HOSTNAME; '
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
-        'sync ; '
+        'sync {output} ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
