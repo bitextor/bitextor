@@ -27,7 +27,7 @@ linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent"
              "/home/s0565741/workspace/experiment/paracrawl/v3/lv-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/ga-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/sl-en/permanent"]
-linkedHostsAction: postCrawlExclude #remove
+linkedHostsAction: link # postCrawlExclude #remove
 
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
