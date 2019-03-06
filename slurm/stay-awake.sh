@@ -2,6 +2,6 @@
 
 while :
 do
-    scontrol update NodeName=baldur,gna,hel,loki,skaol,syn,zisa State=resume reason='whatever'
+    scontrol update NodeName=baldur,gna,hel,loki,skaol,zisa State=resume reason='whatever'
     sleep 600
 done
