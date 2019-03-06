@@ -665,7 +665,7 @@ if "linkedHosts" in config:
             f.write("\n".join(hosts))
         exit()
 	
-sys.stderr.write("#hosts to crawl=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
 #exit(-1)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
