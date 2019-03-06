@@ -426,14 +426,19 @@ else:
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
 def CreateDomainKey2HostMap(hosts):
-    domains={}
+    ret={}
     for host in hosts:
-        domain = tldextract.extract(host).domain
-        if domain not in domains:
-            domains[domain]=[]
-        domains[domain].append(host)
-        #print("subdomain", domain, host)
-    return domains
+        # don't merge blog sites
+        if host.find(".blogspot.") >= 0 or host.find(".wordpress.") >= 0:
+           key = host
+        else:
+           key = tldextract.extract(host).domain
+
+        if key not in ret:
+            ret[key]=[]
+        ret[key].append(host)
+        #print("subdomain", key, host)
+    return ret
 
 def FilterTLD(tlds):
     filtered_tlds={}
