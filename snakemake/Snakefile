@@ -396,6 +396,7 @@ else:
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 
 if "bicleaner" in config:
+  RAWOPTION="bicleaner.scores"
   BICLEANEROPTION=",bicleaner"
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
@@ -404,6 +405,7 @@ if "bicleaner" in config:
   tokeniserCheck(WORDTOK2)
 
 else:
+  RAWOPTION="segclean"
   BICLEANEROPTION=""
   BICLEANER_SORT="-k3,4"
   BICLEANER="segclean"
@@ -1303,7 +1305,7 @@ rule elrc:
 
 rule raw:
     input:
-        expand("{dir}/{webdomain}/{aligner}.bicleaner.scores.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER)
+        expand("{dir}/{webdomain}/{aligner}.{rawopt}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, rawopt=RAWOPTION)
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.raw.xz"
     run:
