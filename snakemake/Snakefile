@@ -992,7 +992,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        'xzcat {input} -f | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
+        'xzcat {input} -f | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
