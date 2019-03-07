@@ -55,6 +55,3 @@ docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 maxSizeWARC: 5000
 
-#initCorpusTrainPrefix: ["/tmp/train"]
-#dic: fsfsd
-
