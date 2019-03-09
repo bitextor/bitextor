@@ -4,7 +4,7 @@ OUTPUT=/dev/stdout
 
 exit_program()
 {
-  echo "USAGE: $1 [-t tmp-dir] SL TL SL_FILE TL_FILE DIC [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
+  echo "USAGE: $1 [-t tmp-dir] SL TL SL_FILE TL_FILE OUTPUTDIC WORDTOKENISERSL WORDTOKENISERTL [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
   echo "WHERE"
   echo "   -t tmp-dir            alternative tmp directory (/tmp by default)"
   echo "   SL                    source language code (two characters)"
@@ -12,8 +12,8 @@ exit_program()
   echo "   SL_FILE               file containing the source language segments (can be gzipped)"
   echo "   TL_FILE               file containing the target language segments (can be gzipped)"
   echo "   DIC                   output dictionary"
-  echo "   WORDTOKENISERSL       script used to tokenise source language words"
-  echo "   WORDTOKENISERTL       script used to tokenise target language words"
+  echo "   WORDTOKENISERSL       mandatory script used to tokenise source language words"
+  echo "   WORDTOKENISERTL       mandatory script used to tokenise target language words"
   echo "   PREPROCESSED_CORPUS   folder to store the resulting pre-processed files (tokenised, lowercased and leared). If no folder is specified, a temporal folder is created"
   echo "   PRODUCED_MODELS       folder to store the resulting models obtained as a by-product of the dictionaries building. If no folder is specified, a temporal folder is created"
   exit 1
