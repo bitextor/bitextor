@@ -640,9 +640,9 @@ if "linkedHosts" in config:
         # exclude dead domains in other language pairs
         for dir in config["linkedHosts"]:
             postCrawlPath = "{dir}/permanent/post-crawl-exclude".format(dir=dir)
-            if os.path.isfile(postCrawlPath):
-                print("postCrawlPath", postCrawlPath)
-	        PostCrawlExclude(hosts, postCrawlPath)
+            #print("postCrawlPath", postCrawlPath)
+	        if os.path.isfile(postCrawlPath):
+                PostCrawlExclude(hosts, postCrawlPath)
 		
     for dir in config["linkedHosts"]:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
