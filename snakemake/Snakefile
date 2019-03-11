@@ -641,7 +641,7 @@ if "linkedHosts" in config:
         for dir in config["linkedHosts"]:
             postCrawlPath = "{dir}/permanent/post-crawl-exclude".format(dir=dir)
             #print("postCrawlPath", postCrawlPath)
-	        if os.path.isfile(postCrawlPath):
+            if os.path.isfile(postCrawlPath):
                 PostCrawlExclude(hosts, postCrawlPath)
 		
     for dir in config["linkedHosts"]:
