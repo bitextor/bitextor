@@ -14,6 +14,7 @@ import html5lib
 import ftfy
 import pycld2 as cld2
 from lxml.html.clean import Cleaner
+import string
 from bs4 import BeautifulSoup
 from lxml import etree
 from boilerpipe.extract import Extractor
@@ -90,7 +91,6 @@ for record in f:
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(record.payload.read())
     url = record.url
-
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
@@ -101,17 +101,17 @@ for record in f:
         tree=""
         try:
             cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-            document = html5lib.parse(ftfy.fix_text(cleanhtml), treebuilder="lxml", namespaceHTMLElements=False)
-            tree = etree.tostring(document)
-        except:
+            document = html5lib.parse(ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False), treebuilder="lxml", namespaceHTMLElements=False)
+            tree = etree.tostring(document, encoding="utf-8")
+        except Exception as ex:
+            sys.stderr.write(str(ex)+"\n")
             continue
-
-        tree = etree.tostring(document)
-        cleantree = tree.decode("utf8").replace("&#160;", " ")
+        cleantree = tree.decode("utf-8").replace("&#160;", " ")
         cleantree = cleantree.replace("\t", " ")
 
         # lang id
-        lang = guess_lang_from_data2(cleantree)
+        #printable_str = ''.join(x for x in cleantree if x in string.printable)
+        lang = guess_lang_from_data2(etree.tostring(document))
         if len(languages) > 0 and lang not in languages:
             logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
         else:
