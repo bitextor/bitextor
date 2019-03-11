@@ -385,12 +385,12 @@ else:
 if "docAlignThreshold" in config:
     DOC_THRESHOLD  = config["docAlignThreshold"]
 else:
-    DOC_THRESHOLD = 0.0
+    DOC_THRESHOLD = 0.1
 
 if "bleuAlignThreshold" in config:
     BLEU_THRESHOLD = config["bleuAlignThreshold"]
 else:
-    BLEU_THRESHOLD = 0.0
+    BLEU_THRESHOLD = 0.2
 #print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
