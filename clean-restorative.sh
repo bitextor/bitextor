@@ -22,17 +22,19 @@ exp+=('sk')
 
 if [[ ${exp[*]}  =~ $TL ]];
 then
-paste ${INPUT_FILE}.d/f1 ${INPUT_FILE}.d/f2 \
-	${INPUT_FILE}.od/clean-corpus.${SL} \
-	${INPUT_FILE}.d/f4 \
-	${INPUT_FILE}.d/f5
-else
+	cat ${INPUT_FILE}.d/f4 > ${INPUT_FILE}.od/clean-corpus.${TL}
+fi
+
+if [[ ${exp[*]}  =~ $SL ]];
+then
+	cat ${INPUT_FILE}.d/f3 > ${INPUT_FILE}.od/clean-corpus.${SL}
+fi
+
+
 paste ${INPUT_FILE}.d/f1 ${INPUT_FILE}.d/f2 \
       ${INPUT_FILE}.od/clean-corpus.${SL} \
       ${INPUT_FILE}.od/clean-corpus.${TL} \
       ${INPUT_FILE}.d/f5
-fi
-
 
 
 rm -Rf $INPUT_FILE ${INPUT_FILE}.d ${INPUT_FILE}.od
