@@ -22,3 +22,7 @@
 	path = standoff
 	url = https://github.com/lpla/standoff
 	ignore = dirty
+[submodule "restorative-cleaning"]
+	path = restorative-cleaning
+	url = https://github.com/bitextor/restorative-cleaning
+	ignore = dirty
