@@ -29,7 +29,7 @@ namespace utils {
     }
 
     CompressedWriter::~CompressedWriter() {
-
+      write("\n");
     }
 
     void CompressedWriter::write(const std::string &s) {
