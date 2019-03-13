@@ -41,7 +41,7 @@ tmx: true
 storeRawCorpus: true
 elrc: true
 documentAligner: externalMT
-alignerCmd: "/home/hieu/workspace/experiment/issues/paracrawl/phi-system/translate-pipe.sh hr"
+alignerCmd: "/home/s0565741/workspace/experiment/paracrawl/phi-system/translate-pipe.sh hr"
 bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
