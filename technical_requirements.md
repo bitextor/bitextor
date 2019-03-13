@@ -22,7 +22,7 @@ Bitextor 7.0 is being used to produce the parallel corpora that will be released
 This corpus was created by crawling a total of 29,166 webs for 12 hours each of them, resulting in a total of 559G (compressed with [xz](https://en.wikipedia.org/wiki/Xz)). Processing was carried out on a super-computing cluster with 30 nodes of 36 cores (hardware threads) and 128GB of memory each. The cluster used PBS pro for job scheduling, which is fully supported by Bitextor 7.0.
 
 The process was carried out in two stages:
-* *Crawling*, which took X days (note that some websites were fully crawled in less than 12 hours), and
+* *Crawling*, which took about 18 days (note that some websites were fully crawled in less than 12 hours), and
 * *Processing*, which took 9 days, even though the cluster was fully used only during the first 6 days. During the remaining 3 days only about 100 of the largest websites crawled kept being processed, requiring only 4 of the nodes.
 
 ## 2- Considerations about the requirements of the different Bitextor modules
