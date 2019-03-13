@@ -11,15 +11,15 @@
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (you can do it with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or in case you are downloading a tarball just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependences (Boilerpipe); version 8 or later are required. In addition, a c++ compiler is required for compiling dependences. **libboost-all-dev** dependence is need to compile `clustercat` and `mgiza` projects. Optionally, **httrack** can be used for crawling if it is installed.
+Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the `clustercat` and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** can be used for crawling if it is installed.
 
-If you are using an apt-like package manager you can run the following command line to install all these dependences:
+If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
 `sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev`
 
-Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All these explained tools are available in most Unix-based operating systems repositories.
+Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
-Some additional Python libraries are required. They can be installed automatically with the tool pip by runing (use without `sudo` if you are running in a virtualenv):
+Some additional Python libraries are required. They can be installed automatically with the tool pip by running (use without `sudo` if you are running in a virtualenv):
 
 ```
 pip3 install -r requirements.txt
@@ -31,17 +31,17 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 `sudo apt install httrack`
 
-This dependency is not mandatory as a second parallel data crawler is provided in Bitextor (Creepy).
+This dependency is not mandatory as a second parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
 ## Submodules compilation
 
-To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
+To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the GitHub repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
 
 `./autogen.sh && make`
 
 ### Some known installation issues
 
-In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in requirements.txt). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace current version with version 1.5:
+In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in `requirements.txt`). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
 ```bash
 sudo pip3 uninstall tensorflow
 sudo pip3 install tensorflow==1.5.0
@@ -63,7 +63,7 @@ rm -rf boost_1_66_0*
 ```
 ## Run
 
-To run Bitextor use the main script `bitextor.sh`. In general, this script will take two parameters:
+To run Bitextor use the main script `bitextor.sh`. In general, this script takes two parameters:
 ```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
 ```
@@ -82,16 +82,16 @@ bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCON
 where
 * `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a JSON configuration file that allows to specify the specific requirements for each job in the cluster (for example, this file allows to specify if a job requires more RAM memory, or GPUs available, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
+* `<CLUSTERCONFIG>` is a JSON configuration file that specifies the specific requirements for each job in the cluster (for example, this file specifies if a job requires a certain amount of RAM memory, or access to one or more GPUs, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 
 ### Running Bitextor on a cluster
-In the case of running on a cluster with, for example, the SLURM workload manager installed, one could run Bitextor as:
+When running on a cluster with, for example, the [SLURM](https://slurm.schedmd.com/) workload manager installed, one could run Bitextor as:
 ```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 ```
-this command would run bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
+This command would run bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
 
-Now assume that we plan to train a neural MT (NMT) system with bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
+Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
 
 ```json
 {
@@ -112,7 +112,7 @@ Now assume that we plan to train a neural MT (NMT) system with bitextor for docu
 
 }
 ```
-this configuration file is telling the cluster to set option `gres` empty for all jobs but `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In SLURM `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a tesla GPU is required by these two jobs. Once we had our configuration file, we could call bitextor in the following way:
+This configuration file tells the cluster to set the option `gres` to empty for all jobs except for `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In [SLURM](https://slurm.schedmd.com/) `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a Tesla GPU is required by these two jobs. Once we had our configuration file, we could call bitextor in the following way:
 ```bash
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
 ```
@@ -135,7 +135,7 @@ lang2: fr
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 
-There are some more options that are rather basic but not mandatory as they take default values if they are not defined
+There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
 ```yaml
 bitextor: /home/user/bitextor
 
@@ -160,7 +160,7 @@ alcazar: false
 * `alcazar`: option that enables the library [alcazar](https://github.com/saintamh/alcazar/) for text extraction from HTML documents; by default `lxml` library is used
 
 ### Variables defining data sources
-The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
+The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
 hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
 
@@ -191,7 +191,7 @@ crawlTld: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
 ```
-* `httack`: if this option is enabled, HTTrack is used instead of the crawler based on Creepy
+* `httack`: if this option is enabled, HTTrack is used instead of the crawler based on [Creepy](https://github.com/Aitjcize/creepy)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
 * `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
@@ -214,11 +214,11 @@ The variable `documentAligner` can take three different values, each of them tak
 ```yaml
 dic: /home/user/en-fr.dic
 ```
-Option `dic` allows to specify the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`:
+Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 ```
-This variable must contain one or more **corpora prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
+This variable must contain one or more **corpus prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
 **Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
 
@@ -231,8 +231,8 @@ docAlignThreshold: 0.1
 * `alignerCmd`: command to call the external MT script
 * `docAlignThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.0 by default
 
-#### Variables for document alignment using home-brew neural MT
-If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having an available GPU. The following are mandatory variables in order to build the NMT system:
+#### Variables for document alignment using a home-brew neural MT system
+If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having a GPU available. The following are mandatory variables in order to build the NMT system:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 initCorpusDevPrefix: ['/home/user/Europarl.en-fr.dev']
@@ -278,14 +278,15 @@ bicleanerThreshold: 0.6
 * `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available at [https://github.com/bitextor/bitextor-data/releases/tag/bicleaner-v1.0]. They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
-If the bicleaner model is not availalbe, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
+If the bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
 ```
 * `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
-It is important to provide different parallel corpora for these two options as this helps bicleaner to deal with unkown words (that do not apear in the statistical dictionaries) during scoring.
+
+It is important to provide different parallel corpora for these two options as this helps bicleaner when dealing with unkown words (that do not apear in the statistical dictionaries) during scoring.
 
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
@@ -296,11 +297,11 @@ tmx: true
 
 deduped: false
 ```
-* `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, sich as length ratio; these indicators can be used later to filter-out some segment pairs manually
+* `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
 
-NOTE: In case you need to convert a TMX to a tab-separated TXT (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt)
+NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt)
 
 ## Pipeline description
 
@@ -309,7 +310,7 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
 3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
   1. one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
-  2. another using machine translation and a [TF/IDF ](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+  2. another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
 4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
   1. one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
   2. another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
