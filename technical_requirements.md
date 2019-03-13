@@ -47,7 +47,7 @@ Note that this is not actually a requirement since that, as already mentioned, B
 ### 2.3- Parallelisation
 Bitextor is a pipeline implemented using the [snakemake](https://snakemake.readthedocs.io/en/stable/) workflow management system. Snakemake is a make-like system that connects tasks in such a way that the output of each stage of the pipeline is used as as the input of the next one. Snakemake takes care of organising processing steps in the adequate order by building and subsequently traversing a directed acyclic graph (DAG). This also allows to parallelise the pipeline by running tasks that are not interdependent such as, for example, the situation in which more than one website is being processed at the same time.
 
-It is worth noting that, if more than one website is being processed at the same time, the memory used by the pipeline grows geometrically.
+It is worth noting that, if more than one website is being processed at the same time, the memory used by the pipeline grows accordingly.
 
 ### 2.4- Storage
 All the files produced by Bitextor are compressed with [xz](https://en.wikipedia.org/wiki/Xz)). Therefore, the stoarage neede is rather small. At the moment of crawling, it is difficult to estimate the amount of raw data that will be downloaded, given that it depends on the size of the website crawled (unless a size or time limit is set). However, once the raw data is downloaded, the worst-case estimation is that the remaining temporary and output files will require three times as much space in the disk. That is, if 1 GB is crawled from a website, it will be necessary to have 3 GB more available.
