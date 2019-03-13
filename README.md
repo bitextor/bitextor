@@ -24,6 +24,7 @@ Some additional Python libraries are required. They can be installed automatical
 ```
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
+pip3 install -r restorative-cleaning/requirements.txt
 ```
 
 As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
@@ -299,6 +300,7 @@ deduped: false
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
 
+NOTE: In case you need to convert a TMX to a tab-separated TXT (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt)
 
 ## Pipeline description
 

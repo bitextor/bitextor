@@ -121,6 +121,7 @@ def ValidateArgs(config):
            'bicleaner': {'type': 'string'},
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
+           'restorative': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
@@ -422,6 +423,11 @@ if "elrc" in config and config["elrc"]:
 else:
   ELRCSCORES=BICLEANER
   ELRCFIELDS=""
+
+if "restorative" in config and config["restorative"]:
+  RESTORATIVE="restorative"
+else:
+  RESTORATIVE="segclean"
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1277,9 +1283,17 @@ rule cleansegments:
 #================================== POST PROCESSING ==================================#
 
 
+rule restorative:
+    input:
+        "{prefix}.segclean.xz"
+    output:
+        "{prefix}.restorative.xz"
+    shell:
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+
 rule bicleaner:
     input:
-        segclean="{prefix}.segclean.xz",
+        segclean="{prefix}"+".{extension}.xz".format(extension=RESTORATIVE),
         model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{prefix}.bicleaner.scores.xz"

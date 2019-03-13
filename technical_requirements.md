@@ -6,15 +6,24 @@ This document describes the technical requirements of the tool Bitextor for its 
 Bitextor is a pipeline that carries out a reduction processing: it starts from a given amount of raw data crawled from the Internet and applies sub-sequential steps that identify parallel data (discarding all useless data) to produce a parallel corpus that will be, in most cases, much smaller than the initial data set. Therefore, it is worth noting that some of the technical requirements described below depend on the amount of raw data to be processed and the amount of actual amount of parallel data.
 
 ### 1.1- Minimum requirements
-Unix-based operating system: the tool has been tested on MacOS, Ubuntu 16.04 and 18.04
+The minimum requirements for running Bitextor 7.0 are:
+* **Unix-based operating system**: the tool has been tested on MacOS, Ubuntu 16.04 and 18.04
 * **Access to Internet**: only if crawling is required
 * **Memory**: 256MB of RAM
 * **Expected running time**: from 5 to 10 minutes on a desktop computer with an Intel® Core™ i5-7400 CPU — 3.00GHz, with an HDD with writing speed of 150 MB/s and reading speed of 200 MB/s
 
-### 1.2- Requirements for a medium-size task
-The following are the requirements needed to process a medium-size task. The case of use studied consists in processing data crawled during 12 hours from a single website. In this scenario, one can expect to require:
+For a more realistic task, i.e. crawling a website during 12 hours and processing the data downloaded, some of the requirements mentioned above would change:
 * **Memory**: 2GB of RAM
 * **Expected running time**: from 1.5 hours to 2.5 hours on a desktop computer with an Intel® Core™ i5-7400 CPU — 3.00GHz, with an HDD with writing speed of 150 MB/s and reading speed of 200 MB/s (plus 12 hours of crawling time)
+
+### 1.2- Massive data crawling use case: building Paracrawl2 English-Hungarian corpus
+Bitextor 7.0 is being used to produce the parallel corpora that will be released as part of the project [Paracrawl2: "Broader Web-Scale Provision of Parallel Corpora for European Languages"](http://paracrawl.eu). This section describes the requirements to produce one of the medium-size corpora, namely for the language pair English-Hungarian one.
+
+This corpus was created by crawling a total of 29,166 webs for 12 hours each of them, resulting in a total of 559G (compressed with [xz](https://en.wikipedia.org/wiki/Xz)). Processing was carried out on a super-computing cluster with 30 nodes of 36 cores (hardware threads) and 128GB of memory each. The cluster used PBS pro for job scheduling, which is fully supported by Bitextor 7.0.
+
+The process was carried out in two stages:
+* *Crawling*, which took X days (note that some websites were fully crawled in less than 12 hours), and
+* *Processing*, which took 9 days, even though the cluster was fully used only during the first 6 days. During the remaining 3 days only about 100 of the largest websites crawled kept being processed, requiring only 4 of the nodes.
 
 ## 2- Considerations about the requirements of the different Bitextor modules
 Bitextor is a pipeline implemented on snakemake workflow system. Snakemake is a make-like tool that enables an easy parallelisation of the different modules included in Bitextor when processing multiple websites at the same time. For each website to be processed, Bitextor carries out the following list of steps:

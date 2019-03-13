@@ -17,10 +17,10 @@ Requirements
 
 ~~~~~~
 git submodule update --init --recursive
-sudo apt install cmake g++ automake pkg-config openjdk-8-jdk python python-pip python-magic python3-magic libboost-all-dev maven
-sudo pip3 install python-Levenshtein tensorflow keras iso-639 langid nltk regex h5py warc3-wet tld
-#If you don't want to be bleeding edge with pip
-sudo pip install -r requirements.txt
+sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev
+pip3 install -r requirements.txt
+pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
+pip3 install -r restorative-cleaning/requirements.txt
 #If you are using Ubuntu 14.04 install tensorflow 1.4.1:
 sudo pip install tensorflow==1.4.1
 ~~~~~~
