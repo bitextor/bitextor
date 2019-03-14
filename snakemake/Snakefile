@@ -1264,7 +1264,7 @@ rule alignsegments_bleualign:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
                 for urlAlg in urlsFile:
                     #print("urlAlg", urlAlg)
-		    urlAlg = urlAlg.strip()
+                    urlAlg = urlAlg.strip()
                     if len(urlAlg) == 0:
                         continue
                     id=urlAlg.split("\t")[0]
