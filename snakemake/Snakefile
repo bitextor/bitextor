@@ -1263,7 +1263,7 @@ rule alignsegments_bleualign:
         with lzma.open(output.alignments, "wt") as algFile:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
                 for urlAlg in urlsFile:
-                    print("urlAlg", urlAlg)
+                    #print("urlAlg", urlAlg)
 		    urlAlg = urlAlg.strip()
                     if len(urlAlg) == 0:
                         continue
