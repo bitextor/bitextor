@@ -202,18 +202,18 @@ class CosineDistanceScorer(object):
         return all_csr
 
     def score(self, source_corpus, target_corpus):
-        start = time.time()
+        #start = time.time()
         self.vector_extractor.estimate_idf(source_corpus, target_corpus)
         #sys.stderr.write(
         #    "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
 
-        start = time.time()
+        #start = time.time()
         source_matrix = self.vector_extractor.extract(source_corpus)
         target_matrix = self.vector_extractor.extract(target_corpus)
         #sys.stderr.write(
         #    "Matrix extraction took {0:.5f} seconds\n".format(time.time() - start))
 
-        start = time.time()
+        #start = time.time()
         del self.vector_extractor
 
         if source_matrix.getnnz() == 0 or target_matrix.getnnz() == 0:
