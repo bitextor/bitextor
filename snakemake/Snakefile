@@ -22,8 +22,6 @@ from cerberus import Validator
 ###########################################################
 # UTILS
 
-shell.prefix("sync; set -euo pipefail; ")
-
 def binaryAvailable(cmd):
     cmd="command -v "+cmd+" > /dev/null"
     callout=os.system(cmd)
@@ -685,6 +683,9 @@ domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 InitConcatLogicLink(domainKey2Hosts)
 #print("domainKey2Hosts", domainKey2Hosts)
+
+# every shell command will run sync
+shell.prefix("sync; set -euo pipefail; ")
 
 #================================== Creater Moses EMS config========================#
 def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
