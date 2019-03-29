@@ -10,7 +10,7 @@ CalcPages(){
     pages=`cat $tmpfile | wc -l`
     properPages=`cat $tmpfile | grep -v "WARC-Target-URI: unknown" | wc -l`
 
-    echo -e "$domain\t$pages\t$properPages" > warc/$domain/page-count
+    echo -e "$domain\t$pages\t$properPages" >> page-count
 
     rm $tmpfile
 }
