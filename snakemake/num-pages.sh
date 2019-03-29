@@ -6,7 +6,7 @@ CalcPages(){
 
     tmpfile=$(mktemp)
     #echo $tmpfile
-    xzcat warc/$domain/httrack.warc.xz | grep WARC-Target-URI > $tmpfile
+    xzcat $domain/httrack.warc.xz | grep WARC-Target-URI > $tmpfile
     pages=`cat $tmpfile | wc -l`
     properPages=`cat $tmpfile | grep -v "WARC-Target-URI: unknown" | wc -l`
 
@@ -15,7 +15,7 @@ CalcPages(){
     rm $tmpfile
 }
 
-for domain in `ls warc` ; do
+for domain in `find warc -type d | grep -ve "warc$"` ; do
     CalcPages $domain
 done
 
