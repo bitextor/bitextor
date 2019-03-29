@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 CalcPages(){
+    domain=$1
+    echo Processing $domain
+
     tmpfile=$(mktemp)
     #echo $tmpfile
-    domain=$1
     xzcat warc/$domain/httrack.warc.xz | grep WARC-Target-URI > $tmpfile
     pages=`cat $tmpfile | wc -l`
     properPages=`cat $tmpfile | grep -v "WARC-Target-URI: unknown" | wc -l`
