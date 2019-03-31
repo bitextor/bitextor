@@ -575,7 +575,9 @@ def PostCrawlExclude(hosts, postCrawlPath):
     with open(postCrawlPath, "rt") as f:
         excludeList = f.read().splitlines()
     for exclude in excludeList:
-        hosts.remove(exclude)
+        exclude = exclude.strip()
+        if len(exclude) > 0: 
+            hosts.remove(exclude)
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
