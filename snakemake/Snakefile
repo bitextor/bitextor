@@ -1362,7 +1362,7 @@ rule tmx:
 
 rule deduped_tmx:
     input:
-        expand("{transientdir}/{webdomain}/{aligner}.{ext}.xz", transientdir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
+        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
