@@ -22,8 +22,6 @@ from cerberus import Validator
 ###########################################################
 # UTILS
 
-shell.prefix("sync; set -euo pipefail; ")
-
 def binaryAvailable(cmd):
     cmd="command -v "+cmd+" > /dev/null"
     callout=os.system(cmd)
@@ -585,8 +583,10 @@ def PostCrawlExclude(hosts, postCrawlPath):
     with open(postCrawlPath, "rt") as f:
         excludeList = f.read().splitlines()
     for exclude in excludeList:
-        hosts.remove(exclude)
-	
+        exclude = exclude.strip()
+        if len(exclude) > 0: 
+            hosts.remove(exclude)
+
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
     with gzip.open(permanent + "/hosts.gz", 'rt') as f:
@@ -693,6 +693,9 @@ domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 InitConcatLogicLink(domainKey2Hosts)
 #print("domainKey2Hosts", domainKey2Hosts)
+
+# every shell command will run sync
+shell.prefix("sync; set -euo pipefail; ")
 
 #================================== Creater Moses EMS config========================#
 def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
@@ -1271,6 +1274,10 @@ rule alignsegments_bleualign:
         with lzma.open(output.alignments, "wt") as algFile:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
                 for urlAlg in urlsFile:
+                    #print("urlAlg", urlAlg)
+                    urlAlg = urlAlg.strip()
+                    if len(urlAlg) == 0:
+                        continue
                     id=urlAlg.split("\t")[0]
                     urls="\t".join(urlAlg.strip().split("\t")[1:])
                     filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"

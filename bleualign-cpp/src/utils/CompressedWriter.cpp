@@ -9,7 +9,11 @@
 
 namespace utils {
 
-    CompressedWriter::CompressedWriter(const std::string &filename_out) : sink_out(filename_out), oqout(&qout) {
+    CompressedWriter::CompressedWriter(const std::string &filename_out)
+      : sink_out(filename_out),
+	oqout(&qout),
+	isEmpty(true)
+    {
       if (filename_out.size() > 3) {
           std::string ext = filename_out.substr(filename_out.size() - 3, 3);
           //std::cerr << ext << std::endl;
@@ -29,11 +33,14 @@ namespace utils {
     }
 
     CompressedWriter::~CompressedWriter() {
-
+      if (isEmpty) {
+        write("\n");
+      }
     }
 
     void CompressedWriter::write(const std::string &s) {
       oqout << s;
+      isEmpty = false;
     }
 
 }
