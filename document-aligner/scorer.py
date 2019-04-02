@@ -114,9 +114,9 @@ class DocumentVectorExtractor(object):
             elif self.idf_smooth == 1:
                 idf = math.log(self.ndocs / docs_with_term)
             elif self.idf_smooth == 2:
-                idf = math.log(1 + self.ndocs / docs_with_term)
+                idf = math.log(self.ndocs / (1 + docs_with_term))
             elif self.idf_smooth == 3:
-                idf = math.log(1 + self.max_count / docs_with_term)
+                idf = math.log(self.max_count / (1 + docs_with_term))
             elif self.idf_smooth == 4:
                 if self.ndocs > docs_with_term:
                     idf = math.log(
@@ -124,7 +124,7 @@ class DocumentVectorExtractor(object):
                 else:
                     idf = 0
             elif self.idf_smooth == 5:
-                idf = 1 + math.log(self.ndocs / (docs_with_term + 1))
+                idf = math.log(self.ndocs / (docs_with_term + 1))
 
             self.term2idf[term] = idf
             self.term2idx[term] = len(self.term2idx)
@@ -155,9 +155,9 @@ class DocumentVectorExtractor(object):
                 elif self.tf_smooth == 1:
                     tf = count
                 elif self.tf_smooth == 2:
-                    tf = 1 + math.log(count)
+                    tf = math.log(1 + count)
                 elif self.tf_smooth == 3:
-                    tf = 0.4 + 0.6 * count / local_max_count
+                    tf = 0.5 + 0.5 * (count / local_max_count)
                 elif self.tf_smooth == 4:
                     tf = count / local_max_count
                 elif self.tf_smooth == 5:

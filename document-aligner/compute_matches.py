@@ -100,7 +100,7 @@ if __name__ == "__main__":
         '--lang1', help='path to the translated foreign text', required=True)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
-    parser.add_argument('--tfidfsmooth', type=int, default=20)
+    parser.add_argument('--tfidfsmooth', type=int, default=14)
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
