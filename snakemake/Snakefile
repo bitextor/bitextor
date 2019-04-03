@@ -1303,7 +1303,7 @@ rule deferred_segments:
         "{dir}/url.xz",
         "{dir}/deferred_documents.xz"
     output:
-        "{dir}/" + SEGMENTALIGNER + DEFERREDSENTENCES + ".segalign.xz"
+        "{dir}/" + SEGMENTALIGNER + ".deferred.segalign.xz"
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
     
