@@ -88,7 +88,8 @@ def ValidateArgs(config):
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
-           'httrack': {'type': 'boolean'},
+           'httrack': {'type': 'boolean'}, #deprecated
+           'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
            'crawlerNumThreads': {'type': 'integer'},
            'maxSizeWARC': {'type': 'integer'},
@@ -157,7 +158,7 @@ def ValidateArgs(config):
 
             }
 
-    if "httrack" in config and config["httrack"] == True:
+    if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
         if not binaryAvailable("httrack"):
             sys.stderr.write("WARNING: HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
 
@@ -267,6 +268,9 @@ if "httrack" in config and config["httrack"]==True:
   CRAWLTARGET="httrack"
 else:
   CRAWLTARGET="creepy"
+
+if "crawler" in config:
+  CRAWLTARGET=config["crawler"]
 
 #Maximum size of the WARC file to be pre-processed: if it is exceeded the file is split
 if "maxSizeWARC" in config:
@@ -970,6 +974,15 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        'rm -rf $DIRNAME;'
+
+rule wget_download:
+    output:
+        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
+        'echo hostname=$HOSTNAME; '
+        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
