@@ -1,3 +1,4 @@
+
 # nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
 
 bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
@@ -50,3 +51,5 @@ bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 maxSizeWARC: 5000
+#bicleaner: /home/s0565741/workspace/experiment/paracrawl/v3/bicleaner_models/en-lt/training.en-lt.yaml
+#bicleanerThreshold: 0.7

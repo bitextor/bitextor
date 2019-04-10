@@ -52,4 +52,5 @@ bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 maxSizeWARC: 5000
-
+bicleaner: /home/s0565741/workspace/experiment/paracrawl/v3/bicleaner_models/en-ga/training.en-ga.yaml
+bicleanerThreshold: 0.7
