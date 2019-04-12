@@ -206,6 +206,7 @@ def ValidateArgs(config):
         exit()
 
 ###########################################################
+sys.stderr.write("Starting bitextor\n")
 
 ValidateArgs(config)
 
@@ -576,7 +577,7 @@ def PostCrawlExclude(hosts, postCrawlPath):
         excludeList = f.read().splitlines()
     for exclude in excludeList:
         exclude = exclude.strip()
-        if len(exclude) > 0: 
+        if len(exclude) > 0 and exclude in hosts: 
             hosts.remove(exclude)
 
 ###############################################################################################
@@ -631,7 +632,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
-#sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 # exclude dead domains
 postCrawlPath = "{permanent}/post-crawl-exclude".format(permanent=permanent)
@@ -676,7 +677,7 @@ if "linkedHosts" in config:
             f.write("\n".join(hosts))
         exit()
 	
-#sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
+sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
 #exit(-1)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
