@@ -105,6 +105,7 @@ def ValidateArgs(config):
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
+           'crawlFileTypes': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
@@ -330,6 +331,11 @@ if "crawlPageLimit" in config:
   CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
 else:
   CRAWLPAGELIMIT=""
+
+if "crawlFileTypes" in config:
+  CRAWLFILETYPES="-f "+str(config["crawlFileTypes"])
+else:
+  CRAWLFILETYPES=""
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
@@ -983,7 +989,7 @@ rule wget_download:
         '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
         'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 

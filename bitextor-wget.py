@@ -12,7 +12,7 @@ def system_check(cmd):
     subprocess.check_call(cmd, shell=True)
 
 
-def run(url, outPath, timeLimit, agent):
+def run(url, outPath, timeLimit, agent, filetypes):
     cmd = ""
     if timeLimit:
         cmd += "timeout {} ".format(timeLimit)
@@ -20,8 +20,12 @@ def run(url, outPath, timeLimit, agent):
     agentoption=""
     if agent != None:
         agentoption="--user-agent \""+agent+"\""
+    
+    filetypesoption=""
+    if filetypes != None:
+        filetypesoption="-A \""+filetypes+"\""
 
-    cmd += "wget --mirror --random-wait -q {URL} -P {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption)
+    cmd += "wget --mirror --random-wait {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT}  ".format(FILETYPES=filetypesoption,URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption)
     # print("cmd", cmd)
     try:
         system_check(cmd)
@@ -41,11 +45,13 @@ if __name__ == "__main__":
                         help='Maximum time to crawl.', required=False)
     parser.add_argument('-a', dest='agent',
                         help='User agent to be included in the crawler requests.', required=False, default=None)
+    parser.add_argument('-f', dest='filetypes',
+                        help='File types to be downloaded, comma separated. For example, "html,pdf"', required=False, default=None)
 
     args = parser.parse_args()
 
     print("Starting...")
 
-    run(args.url, args.outPath, args.timeLimit, args.agent)
+    run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes)
 
     print("Finished!")
