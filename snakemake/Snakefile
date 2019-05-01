@@ -277,23 +277,15 @@ else:
 #Tokenisers
 if "LANG1Tokenizer" in config:
   WORDTOK1=config["LANG1Tokenizer"]
-else:
-  WORDTOK1="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
 
 if "LANG2Tokenizer" in config:
   WORDTOK2=config["LANG2Tokenizer"]
-else:
-  WORDTOK2="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
 
 if "LANG1SentenceSplitter" in config:
   SENTTOK1=config["LANG1SentenceSplitter"]
-else:
-  SENTTOK1="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
 
 if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
-else:
-  SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
