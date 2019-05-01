@@ -9,7 +9,7 @@ import lzma
 print("# Starting")
 
 oparser = argparse.ArgumentParser(description="Hello")
-oparser.add_argument('--input-dir', dest='inDir', help='Root directory of domains', required=True)
+oparser.add_argument('--input-dir', dest='inDir', help='Transient directory', required=True)
 options = oparser.parse_args()
 
 for dir in os.listdir(options.inDir):
