@@ -44,6 +44,11 @@ crawlPageLimit: 100000
 crawlerNumThreads: 2
 crawlTld: false
 
+#mosesDir: /home/s0565741/workspace/github/mosesdecoder
+LANG1Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l mt -a -b -q"
+LANG2Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q"
+LANG1SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l mt"
+LANG2SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l en"
 deduped: true
 tmx: true
 storeRawCorpus: true
