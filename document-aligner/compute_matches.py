@@ -10,54 +10,6 @@ import numpy as np
 
 from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
-from common import open_xz_or_gzip_or_plain
-
-def munge_file_path(filepath):
-    if os.path.isfile(filepath):
-        return filepath
-    if os.path.isfile(filepath + ".gz"):
-        return filepath + ".gz"
-    if os.path.isfile(filepath + ".xz"):
-        return filepath + ".xz"
-    if os.path.isfile(filepath + ".bz2"):
-        return filepath + ".bz2"
-
-    # return nothing. file does not exist
-    return None
-
-
-def load_extracted(filepath):
-    filepath = munge_file_path(filepath)
-
-    with open_xz_or_gzip_or_plain(filepath) as fextract:
-        documents = defaultdict(list)
-
-        for line in fextract:
-            line_split = line.strip().split('\t', 1)
-            if len(line_split) != 2:
-                continue
-
-            url, text = line_split
-            documents[url].append(text)
-
-        return {d: "\n".join(documents[d]) for d in documents}
-
-
-def map_dic2list(documents):
-    mapping = []
-    text = []
-
-    for idx_documents, d in enumerate(documents):
-        mapping.append(d)
-        text.append(documents[d])
-
-    return {
-        'text': text,
-        'mapping': mapping
-    }
-
-
 def match(score_matrix_csr, threshold):
     score_matrix_coo = score_matrix_csr.tocoo()
     matches_list = []
@@ -100,7 +52,7 @@ if __name__ == "__main__":
         '--lang1', help='path to the translated foreign text', required=True)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
-    parser.add_argument('--tfidfsmooth', type=int, default=20)
+    parser.add_argument('--tfidfsmooth', type=int, default=14)
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
@@ -111,19 +63,13 @@ if __name__ == "__main__":
     #sys.stderr.write("threshold: {0}\n".format(args.threshold))
     #sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 
-    docs_lang2 = load_extracted(args.lang2)
-    docs_lang1 = load_extracted(args.lang1)
-
-    if len(docs_lang1) == 0 or len(docs_lang2) == 0:
+    if os.stat(args.lang1).st_size == 0 or os.stat(args.lang2).st_size == 0:
         sys.stderr.write(
-            "WARNING: No document alignments feasible: " + str(len(docs_lang1)) + " documents in foreign language and " + str(
-                len(docs_lang2)) + " documents in source language.\n")
+            "WARNING: No document alignments feasible: " + str(os.stat("file").st_size) + " documents in foreign language and " + str(
+                os.stat("file").st_size) + " documents in source language.\n")
         open(args.output_matches, 'a').close()
 
     else:
-
-        obj_lang2 = map_dic2list(docs_lang2)
-        obj_lang1 = map_dic2list(docs_lang1)
 
         word_extractor = WordExtractor(
             n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser)
@@ -134,7 +80,8 @@ if __name__ == "__main__":
                                       threshold=args.threshold,
                                       batch_size=args.batch_size)
 
-        m_csr = scorer.score(obj_lang2['text'], obj_lang1['text'])
+        urls, m_csr = scorer.score(args.lang2, args.lang1)
+        #sys.stderr.write(str(m_csr)+"\n")
         if m_csr is None:
             sys.stderr.write("WARNING: Documents do not contain any useful information to be used in alignment.\n")
             open(args.output_matches, 'a').close()
@@ -143,6 +90,6 @@ if __name__ == "__main__":
 
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):
-                    turl = obj_lang2['mapping'][matches[idx][0]]
-                    surl = obj_lang1['mapping'][matches[idx][1]]
+                    turl = urls[0][matches[idx][0]]
+                    surl = urls[1][matches[idx][1]]
                     f.write("{0:.5f}\t{1}\t{2}\n".format(match_costs[idx], surl, turl))

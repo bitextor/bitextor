@@ -10,7 +10,7 @@ import hashlib
 import os
 import magic
 import re
-import html5lib
+#import html5lib
 import ftfy
 import pycld2 as cld2
 from lxml.html.clean import Cleaner
@@ -21,7 +21,6 @@ from boilerpipe.extract import Extractor
 import alcazar.bodytext
 import logging
 import lzma
-
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -101,17 +100,18 @@ for record in f:
         tree=""
         try:
             cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-            document = html5lib.parse(ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False), treebuilder="lxml", namespaceHTMLElements=False)
-            tree = etree.tostring(document, encoding="utf-8")
+            tree = ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False)
+            #document = html5lib.parse(fixedtext, treebuilder="lxml", namespaceHTMLElements=False)
+            #tree = etree.tostring(document, encoding="utf-8")
         except Exception as ex:
             sys.stderr.write(str(ex)+"\n")
             continue
-        cleantree = tree.decode("utf-8").replace("&#160;", " ")
+        cleantree = tree.replace("&#160;", " ")
         cleantree = cleantree.replace("\t", " ")
 
         # lang id
         #printable_str = ''.join(x for x in cleantree if x in string.printable)
-        lang = guess_lang_from_data2(etree.tostring(document))
+        lang = guess_lang_from_data2(tree)
         if len(languages) > 0 and lang not in languages:
             logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
         else:
@@ -135,17 +135,14 @@ for record in f:
             else:
                 # If enabled get text with Alcazar library
                 if options.alcazar:
-                    btext = alcazar.bodytext.parse_article(cleantree)
+                    btext = alcazar.bodytext.parse_article(deboiled)
                     if btext.body_text:
                         plaintext = btext.body_text
                     else:
                         plaintext = ""
                 # Otherwise use beautifulsoup
                 else:
-                    if options.boilerpipe:
-                        soup = BeautifulSoup(deboiled, "lxml")
-                    else:
-                        soup = BeautifulSoup(cleantree, "lxml")
+                    soup = BeautifulSoup(deboiled, "lxml")
                     for script in soup(["script", "style", "img"]):
                         script.extract()  # rip it out
 
