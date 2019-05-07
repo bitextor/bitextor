@@ -970,7 +970,7 @@ rule concat_subdomains:
         GetDomainHosts
     output:
         "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
-    #priority: 9
+    priority: 9
     run:
         assert(len(input))
         if len(input) == 1:
@@ -990,7 +990,7 @@ rule warc2preprocess:
         html='{dir}/normalized_html.xz',
         text='{dir}/plain_text.xz',
         url='{dir}/url.xz'
-    #priority: 8
+    priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         'xzcat {input} -f | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
@@ -1047,7 +1047,7 @@ rule structuredistance2urldistance:
         '{dir}/url.xz'
     output:
         '{dir}/{num}.urldistance.xz'
-    #priority: 8
+    priority: 8
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-urlsdistance.py --html {input[1]} --url {input[2]} | xz -T 0 > {output}'
 
@@ -1133,7 +1133,7 @@ rule docaling_translate_nmt:
     output:
         temp("{dir}/{prefix}.nmt.extracted.deduped.translated.xz")
 
-    #priority: 40
+    priority: 40
 
     shell:
         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
@@ -1491,7 +1491,7 @@ rule mkcls:
         "{dir}/corpus.clean.{{lang}}".format(dir=preprocCorpusDir)
     output:
         "{dir}/corpus.{{lang}}.vcb.classes".format(dir=mgizaModelDir)
-    #priority: 40
+    priority: 40
 
     shell:
         "{PROFILING} {BITEXTOR}/clustercat/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
@@ -1505,7 +1505,7 @@ rule plain2snt:
         snt_1_2="{dir}/corpus.{l1}-{l2}-int-train.snt".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
         vcb1="{dir}/corpus.{l1}.vcb".format(dir=mgizaModelDir, l1=LANG1),
         vcb2="{dir}/corpus.{l2}.vcb".format(dir=mgizaModelDir, l2=LANG2)
-    #priority: 40
+    priority: 40
 
     shell:
         "mkdir -p {mgizaModelDir}; "
@@ -1572,7 +1572,7 @@ rule bicleaner_train_model:
         t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
     output:
         "{model}".format(model=BICLEANER_CONFIG)
-    #priority: 40
+    priority: 40
 
     shell:
         "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "

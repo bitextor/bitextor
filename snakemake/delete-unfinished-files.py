@@ -8,7 +8,7 @@ import lzma
 
 print("# Starting")
 
-oparser = argparse.ArgumentParser(description="Hello")
+oparser = argparse.ArgumentParser(description="Create script to delete corrupted files")
 oparser.add_argument('--input-dir', dest='inDir', help='Transient directory', required=True)
 options = oparser.parse_args()
 
