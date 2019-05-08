@@ -477,7 +477,7 @@ def FilterTLD(tlds):
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
         if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -s {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -583,7 +583,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
-                    cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    cmd = "ln -sfn {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
                     #print(cmd)
                     shell(cmd)
             else:
@@ -987,6 +987,10 @@ rule httrack_download:
 rule wget_download:
     output:
         '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
+    params:
+        url="http://{target}"
+    priority: 10
+    shell:
         'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES}; '
@@ -1009,7 +1013,7 @@ rule concat_subdomains:
     run:
         assert(len(input))
         if len(input) == 1:
-            cmd = "ln -s {input} {output}; "
+            cmd = "ln -sfn {input} {output}; "
         else:
             cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
         shell(cmd)
@@ -1029,7 +1033,7 @@ rule warc2preprocess:
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         'xzcat {input} -f | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
-        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
+        'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
