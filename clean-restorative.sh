@@ -39,4 +39,3 @@ paste ${INPUT_FILE}.d/f1 ${INPUT_FILE}.d/f2 \
 
 
 rm -Rf $INPUT_FILE ${INPUT_FILE}.d ${INPUT_FILE}.od
-

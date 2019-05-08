@@ -68,6 +68,11 @@ if __name__ == "__main__":
             "WARNING: No document alignments feasible: " + str(os.stat("file").st_size) + " documents in foreign language and " + str(
                 os.stat("file").st_size) + " documents in source language.\n")
         open(args.output_matches, 'a').close()
+    elif (args.lang1[-3:] == ".xz" and os.stat(args.lang1).st_size == 32) or (args.lang2[-3:] == ".xz" and os.stat(args.lang2).st_size == 32):
+        sys.stderr.write(
+            "WARNING: No document alignments feasible: " + str(os.stat(args.lang1).st_size) + " documents in foreign language and " + str(
+                os.stat(args.lang2).st_size) + " documents in source language.\n")
+        open(args.output_matches, 'a').close()
 
     else:
 
