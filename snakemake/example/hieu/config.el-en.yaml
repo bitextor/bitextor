@@ -30,12 +30,17 @@ lang2: en
 crawlTimeLimit: 43200s
 crawlPageLimit: 100000
 
+#mosesDir: /home/s0565741/workspace/github/mosesdecoder
+LANG1Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l el -a -b -q"
+LANG2Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q"
+LANG1SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l el"
+LANG2SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l en"
 deduped: true
 tmx: true
 storeRawCorpus: true
 elrc: true
 documentAligner: externalMT
-alignerCmd: "/lustre/home/dc007/bhaddow/phi-system/translate-pipe.sh el"
+alignerCmd: "/home/s0565741/workspace/experiment/paracrawl/phi-system/translate-pipe.sh el"
 bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
