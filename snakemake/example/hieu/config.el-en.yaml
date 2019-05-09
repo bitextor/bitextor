@@ -22,7 +22,7 @@ excludeHostsFile: blah
 crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
 httrack: true
 
-temp: /tmp
+temp: /raid0/tmp
 permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent
 transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/el-en/transient
 lang1: el

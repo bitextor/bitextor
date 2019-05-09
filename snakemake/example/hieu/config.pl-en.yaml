@@ -13,70 +13,36 @@ linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent"
              "/home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
              "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent"]
-linkedHostsAction: postCrawlExclude #remove
+linkedHostsAction: link #postCrawlExclude #remove
 
 langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/langstat-exclude-strings
 excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign/snakemake/exclude-hosts
 crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
+httrack: true
 
 temp: /raid0/tmp
 permanentDir: /home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent
 transientDir: /home/s0565741/workspace/experiment/paracrawl/v3/pl-en/transient
 lang1: pl
 lang2: en
-  #"dic: /home/hieu/permanent/software/bitextor-data/dics/en-fr.dic
-hunalignThreshold: 0
-maxlines: 5
 crawlTimeLimit: 43200s
 crawlPageLimit: 100000
-tmx: true
-nmt: false
-smt: true
-httrack: true
 
+#mosesDir: /home/s0565741/workspace/github/mosesdecoder
+LANG1Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l pl -a -b -q"
+LANG2Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q"
+LANG1SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l pl"
+LANG2SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign/preprocess/moses/ems/support/split-sentences.perl -b -l en"
+deduped: true
+tmx: true
+storeRawCorpus: true
 elrc: true
-crawlerNumThreads: 2
-crawlTld: false
-  #"bicleanerThreshold: 0.7
-#bicleaner: /home/hieu/transient/fr-en/bicleaner/en-fr.yaml
-#bicleanerCorpusTrainingPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.fr-en"]
-documentAligner: SMT
-alignerCmd: marek-smt
+documentAligner: externalMT
+alignerCmd: "/home/s0565741/workspace/experiment/paracrawl/phi-system/translate-pipe.sh pl"
 bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
-
-marianDir: /home/hieu/permanent/software/marian-dev
-subwordNmtDir: /home/hieu/permanent/software/subword-nmt
-mosesDir: /home/hieu/permanent/software/mosesdecoder
-
-marianArgs: [" --optimizer-delay 1 --mini-batch-fit --mini-batch 1000 --maxi-batch 1000",
-                 " --overwrite --keep-best --valid-metrics perplexity",
-                 " --valid-log valid.log --log train.log",
-                 " --dropout-rnn 0.2 --dropout-src 0.2 --dropout-trg 0.2 ",
-                 "--cost-type ce-mean-words --layer-normalization --exponential-smoothing --tied-embeddings",
-                 "--valid-metrics bleu"
-                ]
-#marianModelFile: model.npz.decoder.yml
-#marianModelFile: model.npz.best-perplexity.npz.decoder.yml
-marianModelFile: model.npz.best-bleu.npz.decoder.yml
-
-initCorpusTrainPrefix: ["/home/hieu/permanent/data/fr-en/train/europarl-v7.de-en",
-                       ]
-initCorpusDevPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006"]
-initCorpusTestPrefix: ["/home/hieu/permanent/data/fr-en/wmt07/dev/dev2006",
-                       "/home/hieu/permanent/data/fr-en/wmt07/dev/nc-dev2007",
-                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/devtest2006",
-                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/nc-devtest2007",
-                       "/home/hieu/permanent/data/fr-en/wmt07/devtest/test2006.de"]
-
-gpuId: 0
-LANG1Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l pl
-LANG2Tokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/tokenizer.perl -b -l en
-LANG2Detokenizer: /home/hieu/permanent/software/mosesdecoder/scripts/tokenizer/detokenizer.perl -l en
-LANG1SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l pl
-LANG2SentenceSplitter: /home/hieu/permanent/software/mosesdecoder/scripts/ems/support/split-sentences.perl -l en
-
-nmtVocabSize: 30000
-
-mgiza: /home/hieu/permanent/software/mgiza
+maxSizeWARC: 5000
+bicleanerThreshold: 0.7
+#bicleaner: /home/s0565741/workspace/experiment/paracrawl/v3/bicleaner_models/en-pl/training.en-pl.yaml
+#bicleanerThreshold: 0.7
