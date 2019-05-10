@@ -24,7 +24,7 @@ import lzma
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
-        data, isPlainText=False)
+        ''.join(x for x in data if x.isprintable()), isPlainText=False)
     return detected_languages[0][1]
 
 
