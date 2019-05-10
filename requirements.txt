@@ -2,14 +2,13 @@ beautifulsoup4==4.7.1
 h5py==2.8.0
 html2text==2018.1.9
 iso-639==0.4.5
-Keras==2.2.0
 langid==1.1.6
 matplotlib==2.2.2
 nltk==3.3
 python-Levenshtein==0.12.0
-scikit-learn==0.19.1
-sklearn==0.0
+scikit-learn==0.21.0
 tensorflow==1.13.1
+keras==2.2.4
 warc3-wet==0.2.3
 tld==0.9.1
 snakemake==5.4.2
@@ -32,3 +31,5 @@ alcazar==0.4.0
 python-magic==0.4.15
 mosestokenizer==1.0.0
 regex==2018.1.10
+requests==2.21.0
+urllib3<1.25

@@ -26,6 +26,7 @@ pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
 pip3 install -r restorative-cleaning/requirements.txt
 ```
+(if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
 
 As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
