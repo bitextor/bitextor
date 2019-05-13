@@ -17,7 +17,7 @@ Requirements
 
 ~~~~~~
 git submodule update --init --recursive
-sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev
+sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
 pip3 install -r restorative-cleaning/requirements.txt

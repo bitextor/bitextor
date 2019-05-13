@@ -15,7 +15,7 @@ Apart from downloading all submodules of this repository (which you can do with 
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
-`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
@@ -26,6 +26,7 @@ pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/vitaka/kenlm/archive/master.zip
 pip3 install -r restorative-cleaning/requirements.txt
 ```
+(if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
 
 As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
 
@@ -309,11 +310,11 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 1. **Crawling**: documents are downloaded from the specified websites
 2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
 3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
-  1. one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
-  2. another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+  - one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
+  - another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
 4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
-  1. one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
-  2. another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
+  - one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
+  - another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
 5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quality metrics
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
