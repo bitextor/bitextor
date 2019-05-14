@@ -2,6 +2,8 @@
 import sys
 import os
 import tldextract
+import argparse
+import gzip
 
 ###########################################################
 def CreateDomainKey2HostMap(hosts):
@@ -21,6 +23,16 @@ def CreateDomainKey2HostMap(hosts):
 
 ###########################################################
 
+oparser = argparse.ArgumentParser(description="Create x number of files with hosts from stdin. Make sure host with same key are in same file")
+oparser.add_argument('--num-groups', dest='numGroups', help='Number of groups to create', type=int, required=True)
+options = oparser.parse_args()
+
+files = []
+for i in range(options.numGroups):
+    fileName = "{}.gz".format(i)
+    file = gzip.open(fileName, "wt")
+    files.append(file)
+    
 hosts = set()
 
 for host in sys.stdin:
@@ -30,9 +42,19 @@ for host in sys.stdin:
 map = CreateDomainKey2HostMap(hosts)
 #print(keys)
 
+i = 0
 for key in map:
     #print(key)
+    ind = i % options.numGroups
+
+    file = files[ind]
     hosts = map[key]
     #print(hosts)
     for host in hosts:
-        print(host)
+        #print(host)
+        file.write(host + "\n")
+        
+    i += 1
+        
+for file in files:
+    file.close()

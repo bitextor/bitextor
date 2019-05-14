@@ -88,7 +88,8 @@ def ValidateArgs(config):
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
-           'httrack': {'type': 'boolean'},
+           'httrack': {'type': 'boolean'}, #deprecated
+           'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
            'crawlerNumThreads': {'type': 'integer'},
            'maxSizeWARC': {'type': 'integer'},
@@ -104,6 +105,7 @@ def ValidateArgs(config):
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
+           'crawlFileTypes': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
@@ -120,6 +122,7 @@ def ValidateArgs(config):
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
            'restorative': {'type': 'boolean'},
+           'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
@@ -156,7 +159,7 @@ def ValidateArgs(config):
 
             }
 
-    if "httrack" in config and config["httrack"] == True:
+    if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
         if not binaryAvailable("httrack"):
             sys.stderr.write("WARNING: HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
 
@@ -268,6 +271,9 @@ if "httrack" in config and config["httrack"]==True:
 else:
   CRAWLTARGET="creepy"
 
+if "crawler" in config:
+  CRAWLTARGET=config["crawler"]
+
 #Maximum size of the WARC file to be pre-processed: if it is exceeded the file is split
 if "maxSizeWARC" in config:
   MAXWARCSIZE="-m "+str(config["maxSizeWARC"])
@@ -277,23 +283,15 @@ else:
 #Tokenisers
 if "LANG1Tokenizer" in config:
   WORDTOK1=config["LANG1Tokenizer"]
-else:
-  WORDTOK1="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG1} -a -b -q".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
 
 if "LANG2Tokenizer" in config:
   WORDTOK2=config["LANG2Tokenizer"]
-else:
-  WORDTOK2="{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -l {LANG2} -a -b -q".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
 
 if "LANG1SentenceSplitter" in config:
   SENTTOK1=config["LANG1SentenceSplitter"]
-else:
-  SENTTOK1="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG1}".format(BITEXTOR=BITEXTOR, LANG1=LANG1)
 
 if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
-else:
-  SENTTOK2="{BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -b -l {LANG2}".format(BITEXTOR=BITEXTOR, LANG2=LANG2)
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -325,6 +323,11 @@ if "crawlPageLimit" in config:
   CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
 else:
   CRAWLPAGELIMIT=""
+
+if "crawlFileTypes" in config:
+  CRAWLFILETYPES="-f "+str(config["crawlFileTypes"])
+else:
+  CRAWLFILETYPES=""
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
@@ -423,6 +426,13 @@ else:
   ELRCSCORES=BICLEANER
   ELRCFIELDS=""
 
+if "deferredCrawling" in config and config["deferredCrawling"]:
+  DEFERREDFIELDS=",deferredseg1,checksum1,deferredseg2,checksum2"
+  DEFERREDSENTENCES=".deferred"
+else:
+  DEFERREDFIELDS=""
+  DEFERREDSENTENCES=""
+
 if "restorative" in config and config["restorative"]:
   RESTORATIVE="restorative"
 else:
@@ -459,7 +469,7 @@ def FilterTLD(tlds):
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
         if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -s {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -565,7 +575,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
-                    cmd = "ln -s {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    cmd = "ln -sfn {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
                     #print(cmd)
                     shell(cmd)
             else:
@@ -966,6 +976,19 @@ rule httrack_download:
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
+rule wget_download:
+    output:
+        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
+    params:
+        url="http://{target}"
+    priority: 10
+    shell:
+        'echo hostname=$HOSTNAME; '
+        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        'rm -rf $DIRNAME;'
+
 
 def GetDomainHosts(wildcards):
     output=[]
@@ -982,7 +1005,7 @@ rule concat_subdomains:
     run:
         assert(len(input))
         if len(input) == 1:
-            cmd = "ln -s {input} {output}; "
+            cmd = "ln -sfn {input} {output}; "
         else:
             cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
         shell(cmd)
@@ -1002,7 +1025,7 @@ rule warc2preprocess:
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         'xzcat {input} -f | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2}; '
-        'if [ "{boilerpipeCleaning}" == "" ]; then ln -s {output.html} {output.deboil}; fi'
+        'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1279,10 +1302,30 @@ rule alignsegments_bleualign:
                             algFile.write(urls+"\t"+line)
         os.sync()
 
+rule deferred_documents:
+    input:
+        "{dir}/normalized_html.xz",
+        "{dir}/url.xz"
+    output:
+        "{dir}/html5lib_plain_text.xz",
+        "{dir}/deferred_documents.xz"
+    shell:
+        'paste <(xzcat {input[0]}) <(xzcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
 
+rule deferred_segments:
+    input:
+        "{dir}/" + SEGMENTALIGNER + ".segalign.xz",
+        "{dir}/html5lib_plain_text.xz",
+        "{dir}/url.xz",
+        "{dir}/deferred_documents.xz"
+    output:
+        "{dir}/" + SEGMENTALIGNER + ".deferred.segalign.xz"
+    shell:
+        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
+    
 rule cleansegments:
     input:
-        "{dir}/" + SEGMENTALIGNER + ".segalign.xz"
+        "{dir}/" + SEGMENTALIGNER + DEFERREDSENTENCES + ".segalign.xz"
     output:
         "{dir}/"  + SEGMENTALIGNER + ".segclean.xz"
     shell:
@@ -1308,7 +1351,7 @@ rule bicleaner:
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | {PROFILING} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
         'else '
         '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
         'fi'
@@ -1327,7 +1370,7 @@ rule elrc:
     output:
         "{prefix}.elrc.xz"
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}" -s | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
 rule raw:
     input:
@@ -1359,7 +1402,7 @@ rule tmx:
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
     input:
@@ -1367,7 +1410,7 @@ rule deduped_tmx:
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
     shell:
-        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} -T {TMPDIR} --compress-program=gzip | {PROFILING} {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} -T {TMPDIR} --compress-program=gzip | {PROFILING} {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS}{DEFERREDFIELDS} | xz -T 0 > {output}"
 
 rule mt_parallel_data:
     input:

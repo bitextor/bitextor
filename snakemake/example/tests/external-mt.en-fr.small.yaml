@@ -21,7 +21,7 @@ lang2: fr
 ##HTTrack activation: if it is not activated, Creepy crawler is used
 httrack: true
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
-hosts: ["www.elenacaffe1863.com"]
+hosts: [""]
 #langstat: ~/permanent/langstat/langstats.all.gz
 #langstatThreshold: 50000000
 #langstatExcludeDomains: ~/permanent/bitextor/snakemake/exclude-domains

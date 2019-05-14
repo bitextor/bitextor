@@ -35,7 +35,7 @@ def system_check(cmd):
 
 
 def run(url, outPath, timeLimit, pageLimit, agent):
-    cmd = "httrack --skeleton -Q -q -%i0 -I0 -u2 -a --urlhack "
+    cmd = "httrack --skeleton -Q -q -%i0 -u2 -a "
 
     if timeLimit:
         cmd += " -E{}".format(timeLimit)
@@ -49,7 +49,7 @@ def run(url, outPath, timeLimit, pageLimit, agent):
 
     domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
 
-    cmd += " {URL} --robots=3 -O {DOWNLOAD_PATH} {AGENT} -* +*{DOMAIN}* -*.m4v -*.jpg -*.JPG -*.png -*.PNG -*.vcf ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
+    cmd += " {URL} --robots=3 --connection-per-second=2 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 --extended-parsing yes -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
     # print("cmd", cmd)
 
     system_check(cmd)
