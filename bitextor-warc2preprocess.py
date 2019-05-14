@@ -92,7 +92,7 @@ for record in f:
     pageSize = int(record['Content-Length'])
 
     if pageSize > 5242880:
-        print("Skipping page, over limit. " + url)
+        print("Skipping page, over limit. ", pageSize, url)
         continue
 
     #print("url", num, url, pageSize)
