@@ -87,10 +87,19 @@ plainTextFile = lzma.open(options.outDir + "/" + options.prefix + "plain_text.xz
 if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
 
+num = 0
 for record in f:
+    url = record.url
+    pageSize = int(record['Content-Length'])
+
+    if pageSize > 5242880:
+        print("Skipping page, over limit. " + url)
+        continue
+
+    #print("url", num, url, pageSize)
+
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(record.payload.read())
-    url = record.url
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
@@ -171,6 +180,8 @@ for record in f:
 
                     b64text = base64.b64encode(html.unescape(plaintext).encode())
                     plainTextFile.write(b64text + b"\n")
+
+    num += 1
 
 urlFile.close()
 langFile.close()
