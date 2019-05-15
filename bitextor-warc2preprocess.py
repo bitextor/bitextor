@@ -89,8 +89,11 @@ if options.boilerpipe:
 num = 0
 for record in f:
     url = record.url
-    pageSize = int(record['Content-Length'])
+    if url == "unknown":
+        print("Skipping page with unknown URL")
+        continue
 
+    pageSize = int(record['Content-Length'])
     if pageSize > 5242880:
         print("Skipping page, over limit. ", pageSize, url)
         continue
