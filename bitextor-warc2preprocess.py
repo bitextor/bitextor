@@ -91,7 +91,7 @@ cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=Fals
 
 for record in f:
     #Initial checks
-    if record.type == 'warcinfo':
+    if record.type == 'warcinfo' or record.type == 'request':
         continue
 
     url = record.url
@@ -107,7 +107,10 @@ for record in f:
     #print("url", num, url, pageSize)
 
     # We convert into UTF8 first of all
-    orig_encoding, text = convert_encoding(record.payload.read())
+    payload=record.payload.read()
+    if payload.lstrip()[0:7] == b"HTTP/1.":
+        payload=payload[payload.index(b"\r\n\r\n")+4:]
+    orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
