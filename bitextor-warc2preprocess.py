@@ -63,7 +63,7 @@ oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', defa
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 options = oparser.parse_args()
 
-logging.basicConfig(level=logging.INFO if options.verbose else logging.ERROR)
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
 
 f = warc.WARCFile(fileobj=sys.stdin.buffer)
 
@@ -87,7 +87,13 @@ if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
 
 num = 0
+cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
+
 for record in f:
+    #Initial checks
+    if record.type == 'warcinfo':
+        continue
+
     url = record.url
     if url == "unknown":
         print("Skipping page with unknown URL")
@@ -102,13 +108,13 @@ for record in f:
 
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(record.payload.read())
+    logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
     if len(text) > 0:
         # HTML is then normalized
-        cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
-
+        logging.info(url + ": cleaning html")
         tree=""
         try:
             cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
@@ -123,12 +129,14 @@ for record in f:
 
         # lang id
         #printable_str = ''.join(x for x in cleantree if x in string.printable)
+        logging.info(url + ": detecting language")
         lang = guess_lang_from_data2(tree)
         if len(languages) > 0 and lang not in languages:
             logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
         else:
             # If enabled, remove boilerplate HTML
             if options.boilerpipe:
+                logging.info(url + ": deboiling html")
                 extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
                 deboiled = extractor.getHTML()
             else:
@@ -147,6 +155,7 @@ for record in f:
             else:
                 # If enabled get text with Alcazar library
                 if options.alcazar:
+                    logging.info(url + ": Getting text with Alcazar")
                     btext = alcazar.bodytext.parse_article(deboiled)
                     if btext.body_text:
                         plaintext = btext.body_text
@@ -154,6 +163,7 @@ for record in f:
                         plaintext = ""
                 # Otherwise use beautifulsoup
                 else:
+                    logging.info(url + ": Getting text with BeautifulSoup")
                     soup = BeautifulSoup(deboiled, "lxml")
                     for script in soup(["script", "style", "img"]):
                         script.extract()  # rip it out
@@ -164,6 +174,7 @@ for record in f:
 
                 if len(plaintext) > 0:
                     # Guessing MIME of the file (checked on original content)
+                    logging.info(url + ": Getting mime")
                     mime = magic.from_buffer(text, mime=True)
                     mimeFile.write(mime.encode() + b"\n")
 
