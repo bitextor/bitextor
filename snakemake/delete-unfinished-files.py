@@ -10,6 +10,7 @@ print("# Starting")
 
 oparser = argparse.ArgumentParser(description="Create script to delete corrupted files")
 oparser.add_argument('--input-dir', dest='inDir', help='Transient directory', required=True)
+oparser.add_argument('--lang', dest='lang', help='Not english language', required=True)
 options = oparser.parse_args()
 
 for dir in os.listdir(options.inDir):
@@ -24,7 +25,7 @@ for dir in os.listdir(options.inDir):
           print("# {dir}".format(dir=dir))
           print(" rm -rf {dir}/encoding.xz {dir}/lang.xz {dir}/mime.xz {dir}/normalized_html.xz {dir}/plain_text.xz {dir}/url.xz {dir}/docalign".format(dir=dir))
 
-  #
+  # extracted file is corrupted
   file = "{dir}/docalign/en.extracted.xz".format(dir=dir)
   if os.path.isfile(file):
     with lzma.open(file, 'rb') as f:
@@ -35,4 +36,15 @@ for dir in os.listdir(options.inDir):
       except:
         print(" rm -rf {dir}/docalign/".format(dir=dir))
           
+  # translated file is corrupted
+  file = "{dir}/docalign/{lang}.customMT.extracted.deduped.translated.xz".format(dir=dir, lang=options.lang)
+  if os.path.isfile(file):
+    with lzma.open(file, 'rb') as f:
+      try:
+        for line in f:
+          pass
+          #print(line)
+      except:
+        print(" rm {file}".format(file=file))
+  
 print("# Finished")
