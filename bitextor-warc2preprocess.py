@@ -89,6 +89,9 @@ if options.boilerpipe:
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
 for record in f:
+    #Initial checks
+    if record.type == 'warcinfo':
+        continue
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(record.payload.read())
     url = record.url

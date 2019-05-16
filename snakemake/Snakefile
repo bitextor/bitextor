@@ -984,9 +984,10 @@ rule wget_download:
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
-        'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES}; '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
+        'WGETWARCPATH=$DIRNAME/output;'
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} --warc $WGETWARCPATH; '
+        'cat $WGETWARCPATH.warc | nice ionice -c 3 xz -c -T 0 > {output};'
         'rm -rf $DIRNAME;'
 
 

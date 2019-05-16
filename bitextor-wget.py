@@ -12,7 +12,7 @@ def system_check(cmd):
     subprocess.check_call(cmd, shell=True)
 
 
-def run(url, outPath, timeLimit, agent, filetypes):
+def run(url, outPath, timeLimit, agent, filetypes, warc):
     cmd = ""
     if timeLimit:
         cmd += "timeout {} ".format(timeLimit)
@@ -24,8 +24,12 @@ def run(url, outPath, timeLimit, agent, filetypes):
     filetypesoption=""
     if filetypes != None:
         filetypesoption="-A \""+filetypes+"\""
+    
+    if warc != None:
+        warcoption = "--warc-file \""+warc+"\""
 
-    cmd += "wget --mirror --random-wait {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT}  ".format(FILETYPES=filetypesoption,URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption)
+
+    cmd += "wget --mirror --random-wait {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(FILETYPES=filetypesoption,URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, WARC=warcoption)
     # print("cmd", cmd)
     try:
         system_check(cmd)
@@ -47,11 +51,13 @@ if __name__ == "__main__":
                         help='User agent to be included in the crawler requests.', required=False, default=None)
     parser.add_argument('-f', dest='filetypes',
                         help='File types to be downloaded, comma separated. For example, "html,pdf"', required=False, default=None)
+    parser.add_argument('--warc', dest='warc',
+                        help='Write output to a WARC file', required=False, default=None)
 
     args = parser.parse_args()
 
     print("Starting...")
 
-    run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes)
+    run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warc)
 
     print("Finished!")
