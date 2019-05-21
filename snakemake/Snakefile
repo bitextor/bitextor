@@ -105,6 +105,7 @@ def ValidateArgs(config):
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
            'crawlTimeLimit': {'type': 'string'},
+           'crawlWait': {'type': 'integer'},
            'crawlFileTypes': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
            'crawlerConnectionTimeout': {'type': 'integer'},
@@ -319,6 +320,10 @@ if "crawlTimeLimit" in config:
 else:
   CRAWLTIMELIMIT=""
 
+if "crawlWait" in config:
+  CRAWLWAIT="--wait "+str(config["crawlWait"])
+else:
+  CRAWLWAIT=""
 if "crawlPageLimit" in config:
   CRAWLPAGELIMIT="-p "+str(config["crawlPageLimit"])
 else:
@@ -354,9 +359,9 @@ else:
   CONTINUECRAWL=""
 
 
-############ OPTIONS FOR THE MALIGN ALIGNER ############
+############ OPTIONS FOR THE MT DOCUMENT ALIGNER ############
 
-#If documentAligner is enabled, Marek Střelec's MT-based document aligner is used [https://github.com/paracrawl/Malign]
+#If documentAligner is enabled, Marek Střelec's MT-based document aligner is used (bitextor/document-aligner)
 if "documentAligner" in config:
   if config["documentAligner"] == "externalMT":
     MT_COMMAND=config["alignerCmd"]
@@ -951,7 +956,6 @@ rule create_config:
 
 
 #================================== CRAWLING ======================================#
-#"http://www.elenacaffe1863.com/", "http://elenacaffe1863.com/", "http://vade-retro.fr"
 rule creepy_download:
     params:
         url="http://{target}"
@@ -960,7 +964,7 @@ rule creepy_download:
     priority: 10
     shell:
         #'echo {params.url}; '
-        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
 
 rule httrack_download:
     output:
@@ -972,7 +976,7 @@ rule httrack_download:
         'echo hostname=$HOSTNAME; '
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}; '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
         'rm -rf $DIRNAME;'
 
@@ -986,7 +990,7 @@ rule wget_download:
         'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
         'WGETWARCPATH=$DIRNAME/output;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} --warc $WGETWARCPATH; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc $WGETWARCPATH; '
         'cat $WGETWARCPATH.warc | nice ionice -c 3 xz -c -T 0 > {output};'
         'rm -rf $DIRNAME;'
 

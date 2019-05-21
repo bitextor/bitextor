@@ -24,6 +24,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+import requests
 from posixpath import join, dirname, normpath
 from ssl import CertificateError
 from threading import Thread, Lock
@@ -433,7 +434,7 @@ oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest
                      type=int)
 oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False,
                      default=None)
-oparser.add_argument("-T", help="Time delay between requests in seconds; by default it is set to 2s", dest="delay",
+oparser.add_argument("-T", "--wait", help="Time delay between requests in seconds; by default it is set to 2s", dest="delay",
                      required=False, default=2, type=int)
 oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load",
                      required=False, default=None)
@@ -448,6 +449,15 @@ oparser.add_argument("-D",
 oparser.add_argument("-v", help="Verbose mode.", dest="verbose", action='store_true')
 options = oparser.parse_args()
 
+rp = urllib.robotparser.RobotFileParser()
+if '//' not in options.URL:
+    options.URL = '%s%s' % ('http://', options.URL)
+robots = requests.get(options.URL+"/robots.txt").text.split("\n")
+for line in robots:
+    if "Crawl-delay" in line:
+        crawldelay=int(line.split(':')[1].strip())
+        if options.delay is None or crawldelay > int(options.delay):
+            options.delay = str(crawldelay)
 
 class MyCrawler(Crawler):
     def process_document(self, doc):
