@@ -1,8 +1,11 @@
 
 #include <iostream>
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filter/lzma.hpp>
 #include "CompressedWriter.h"
+
+#include <boost/iostreams/filter/gzip.hpp>
+#ifdef XZ_COMPRESS
+#include <boost/iostreams/filter/lzma.hpp>
+#endif
 
 
 namespace utils {
@@ -15,10 +18,12 @@ namespace utils {
 	  //std::cerr << "gzip" << std::endl;
           qout.push(boost::iostreams::gzip_compressor(boost::iostreams::gzip::best_compression));
         }
+#ifdef XZ_COMPRESS
         else if (ext == ".xz") {
 	  //std::cerr << "lzma" << std::endl;
           qout.push(boost::iostreams::lzma_compressor(boost::iostreams::lzma::best_compression));
         }
+#endif
       }
 
       qout.push(sink_out);

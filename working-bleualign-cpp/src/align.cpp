@@ -3,7 +3,7 @@
 #include "scorer.h"
 #include "ngram.h"
 #include "search.h"
-#include "../third_party/preprocess/util/string_piece.hh"
+#include "util/string_piece.hh"
 #include "utils/common.h"
 #include "utils/logging.h"
 

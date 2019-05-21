@@ -6,10 +6,10 @@
 #include "src/utils/logging.h"
 #include "src/utils/string_to_float.h"
 
-#include "third_party/preprocess/util/string_piece.hh"
-#include "third_party/preprocess/util/file_piece.hh"
-#include "third_party/preprocess/util/read_compressed.hh"
-#include "third_party/preprocess/util/exception.hh"
+#include "util/string_piece.hh"
+#include "util/file_piece.hh"
+#include "util/read_compressed.hh"
+#include "util/exception.hh"
 
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -27,9 +27,11 @@ std::string MungeFilePath(const std::string &filePath)
   else if (boost::filesystem::exists(filePath + ".gz")) {
     return filePath + ".gz";
   }
+#ifdef XZ_COMPRESS
   else if (boost::filesystem::exists(filePath + ".xz")) {
     return filePath + ".xz";
   }
+#endif
   else {
     UTIL_THROW(util::FileOpenException, "File does not exist");
   }
