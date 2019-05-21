@@ -72,7 +72,7 @@ if (BUILD_TEST)
 
     # Library
     ExternalProject_Get_Property(googletest binary_dir)
-    set(GTEST_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
+    set(GTEST_LIBRARY_PATH ${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
     set(GTEST_LIBRARY libgtest)
     add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
     set_target_properties(${GTEST_LIBRARY} PROPERTIES
