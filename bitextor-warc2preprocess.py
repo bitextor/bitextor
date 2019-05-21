@@ -96,12 +96,12 @@ for record in f:
 
     url = record.url
     if url == "unknown":
-        print("Skipping page with unknown URL")
+        logging.info("Skipping page with unknown URL")
         continue
 
     pageSize = int(record['Content-Length'])
     if pageSize > 5242880:
-        print("Skipping page, over limit. ", pageSize, url)
+        logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
 
     #print("url", num, url, pageSize)
