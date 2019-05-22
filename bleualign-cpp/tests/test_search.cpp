@@ -18,9 +18,9 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(0, 0, 1, 1),
-              utils::match(1, 1, 0, 0),
-              utils::match(2, 2, 2, 2),
+              utils::match(0, 0, 1, 1, 0.0f),
+              utils::match(1, 1, 0, 0, 0.0f),
+              utils::match(2, 2, 2, 2, 0.0f),
       };
 
       std::vector<utils::scoremap> scorelist;
@@ -60,9 +60,9 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(0, 0, 1, 1),
-              utils::match(1, 1, 3, 3),
-              utils::match(2, 2, 2, 2),
+              utils::match(0, 0, 1, 1, 0.0f),
+              utils::match(1, 1, 3, 3, 0.0f),
+              utils::match(2, 2, 2, 2, 0.0f),
       };
 
       std::vector<utils::scoremap> scorelist;
@@ -105,9 +105,9 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(1, 1, 1, 1),
-              utils::match(2, 2, 2, 2),
-              utils::match(3, 3, 0, 0),
+              utils::match(1, 1, 1, 1, 0.0f),
+              utils::match(2, 2, 2, 2, 0.0f),
+              utils::match(3, 3, 0, 0, 0.0f),
       };
 
       std::vector<utils::scoremap> scorelist;
@@ -162,16 +162,16 @@ namespace {
                                    2,
                                    8};
       utils::matches_vec expected = {
-              utils::match(0, 0, 6, 6),
-              utils::match(1, 1, 5, 5),
-              utils::match(3, 3, 3, 3),
-              utils::match(4, 4, 9, 9),
-              utils::match(5, 5, 4, 4),
-              utils::match(6, 6, 2, 2),
-              utils::match(7, 7, 0, 0),
-              utils::match(9, 9, 1, 1),
-              utils::match(10, 10, 7, 7),
-              utils::match(11, 11, 8, 8),
+              utils::match(0, 0, 6, 6, 0.0f),
+              utils::match(1, 1, 5, 5, 0.0f),
+              utils::match(3, 3, 3, 3, 0.0f),
+              utils::match(4, 4, 9, 9, 0.0f),
+              utils::match(5, 5, 4, 4, 0.0f),
+              utils::match(6, 6, 2, 2, 0.0f),
+              utils::match(7, 7, 0, 0, 0.0f),
+              utils::match(9, 9, 1, 1, 0.0f),
+              utils::match(10, 10, 7, 7, 0.0f),
+              utils::match(11, 11, 8, 8, 0.0f),
       };
 
       Munkres mm(12, 10);
@@ -190,8 +190,8 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(0, 0, 1, 1),
-              utils::match(1, 1, 0, 0),
+              utils::match(0, 0, 1, 1, 0.0f),
+              utils::match(1, 1, 0, 0, 0.0f),
       };
 
       std::vector<double> costs = {1, 6, 8, 2};
@@ -212,25 +212,25 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(0, 0, 0, 0),
-              utils::match(1, 1, 1, 1),
-              utils::match(2, 2, 2, 2),
-              utils::match(3, 3, 3, 3),
-              utils::match(5, 5, 4, 4),
-              utils::match(6, 6, 5, 5),
-              utils::match(7, 7, 6, 6),
-              utils::match(8, 8, 7, 7),
-              utils::match(9, 9, 8, 8),
-              utils::match(10, 10, 9, 9),
-              utils::match(11, 11, 10, 10),
-              utils::match(12, 12, 11, 11),
-              utils::match(13, 13, 12, 12),
-              utils::match(14, 14, 13, 13),
-              utils::match(15, 15, 14, 14),
-              utils::match(16, 16, 15, 15),
-              utils::match(17, 17, 16, 16),
-              utils::match(18, 18, 17, 17),
-              utils::match(19, 19, 18, 18),
+              utils::match(0, 0, 0, 0, 0.0f),
+              utils::match(1, 1, 1, 1, 0.0f),
+              utils::match(2, 2, 2, 2, 0.0f),
+              utils::match(3, 3, 3, 3, 0.0f),
+              utils::match(5, 5, 4, 4, 0.0f),
+              utils::match(6, 6, 5, 5, 0.0f),
+              utils::match(7, 7, 6, 6, 0.0f),
+              utils::match(8, 8, 7, 7, 0.0f),
+              utils::match(9, 9, 8, 8, 0.0f),
+              utils::match(10, 10, 9, 9, 0.0f),
+              utils::match(11, 11, 10, 10, 0.0f),
+              utils::match(12, 12, 11, 11, 0.0f),
+              utils::match(13, 13, 12, 12, 0.0f),
+              utils::match(14, 14, 13, 13, 0.0f),
+              utils::match(15, 15, 14, 14, 0.0f),
+              utils::match(16, 16, 15, 15, 0.0f),
+              utils::match(17, 17, 16, 16, 0.0f),
+              utils::match(18, 18, 17, 17, 0.0f),
+              utils::match(19, 19, 18, 18, 0.0f),
 
       };
       std::vector<double> costs = {0.6238, 0.3068, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
@@ -318,7 +318,7 @@ namespace {
     TEST(munkres, test_FilterMatches1) {
 
       utils::matches_vec matches = {
-              utils::match(0, 0, 0, 0),
+              utils::match(0, 0, 0, 0, 0.0f),
       };
       std::vector<utils::scoremap> scorelist;
       std::vector<int> dummy;
@@ -335,7 +335,7 @@ namespace {
     TEST(munkres, test_FilterMatches2) {
 
       utils::matches_vec matches = {
-              utils::match(0, 0, 0, 0),
+              utils::match(0, 0, 0, 0, 0.0),
       };
       std::vector<utils::scoremap> scorelist;
       std::vector<int> dummy;
@@ -352,13 +352,13 @@ namespace {
     TEST(munkres, test_FilterMatches3) {
 
       utils::matches_vec matches = {
-              utils::match(0, 0, 0, 0),
-              utils::match(1, 1, 1, 1),
-              utils::match(2, 2, 2, 2),
-              utils::match(3, 3, 3, 3),
+              utils::match(0, 0, 0, 0, 0.0),
+              utils::match(1, 1, 1, 1, 0.0),
+              utils::match(2, 2, 2, 2, 0.0),
+              utils::match(3, 3, 3, 3, 0.0),
       };
       utils::matches_vec expected = {
-              utils::match(2, 2, 2, 2),
+              utils::match(2, 2, 2, 2, 0.0),
       };
 
       std::vector<utils::scoremap> scorelist;
@@ -392,8 +392,8 @@ namespace {
 
       utils::matches_vec matches;
       utils::matches_vec expected = {
-              utils::match(0, 0, 1, 1),
-              utils::match(2, 2, 2, 2),
+              utils::match(0, 0, 1, 1, 0.0),
+              utils::match(2, 2, 2, 2, 0.0),
       };
 
       std::vector<utils::scoremap> scorelist;
