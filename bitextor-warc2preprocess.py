@@ -176,6 +176,7 @@ for record in f:
                                        re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
 
                 if len(plaintext) > 0:
+                    seen_md5[c.hexdigest()] = c.hexdigest()
                     # Guessing MIME of the file (checked on original content)
                     logging.info(url + ": Getting mime")
                     mime = magic.from_buffer(text, mime=True)
