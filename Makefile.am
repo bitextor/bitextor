@@ -24,7 +24,7 @@ compile-truecaser:
 	cd preprocess && cmake . && make -j4
 
 compile-bleualign:
-	cd bleualign-cpp && cmake . && make
+	cd bleualign-cpp && cmake -DBUILD_TEST=on . && make
 
 compile-clustercat:
 	cd clustercat && make 
