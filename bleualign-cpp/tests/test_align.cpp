@@ -13,7 +13,7 @@ namespace {
 
     TEST(align, test_align) {
 
-      std::vector<std::string> text1_doc = {
+      std::vector<std::string> text2_doc = {
               "Albatec | The Albanian People Skip to the navigation .",
               "Skip to the content .",
               "With friends and guests to share them if necessary their last piece of bread.",
@@ -26,7 +26,7 @@ namespace {
               "The country, which before the war, only one million inhabitants, has a high birthrate increase over three and a half million people and one of 38 to 70 years increased life expectancy.",
       };
 
-      std::vector<std::string> tex12translates_doc = {
+      std::vector<std::string> text1translated_doc = {
               "Albatec | Die Albaner Skip to the navigation .",
               "Skip to the content .",
               "on the other hand , are the Albanians in contrast to many of the &apos; benefits &apos; of the industrial society pampered Europeans , of course , very open @-@ minded and warm .",
@@ -46,7 +46,7 @@ namespace {
       std::vector<int> expected_correct_bigram = {5, 2, 4, 2, 2, 1, 6, 1, 5, 13, 2, 12, 4, 15, 2};
 
       std::vector<utils::scoremap> scorelist;
-      align::EvalSents(scorelist, tex12translates_doc, text1_doc, 2, 2);
+      align::EvalSents(scorelist, text1translated_doc, text2_doc, 2, 2);
 
       int pos = 0;
       for (size_t s = 0; s < scorelist.size(); ++s) {
@@ -68,19 +68,19 @@ namespace {
 
     TEST(align, test_align_emptyscorelist) {
 
-      std::vector<std::string> text1_doc = {
+      std::vector<std::string> text2_doc = {
               "Albatec | The Albanian People Skip to the navigation .",
               "Skip to the content .",
       };
 
-      std::vector<std::string> tex12translates_doc = {
+      std::vector<std::string> text1translated_doc = {
               "during the Türkenherrschaft came about 70 % of the Albanians to Islam , on 20 % were Orthodox and less than 10 % Catholics .",
               "since 1967 was constitution prohibited by any religion , churches and mosques were stockrooms or sports , turned into some served as museums .",
               "this is now everything undone .",
       };
 
       std::vector<utils::scoremap> scorelist;
-      align::EvalSents(scorelist, tex12translates_doc, text1_doc, 2, 2);
+      align::EvalSents(scorelist, text1translated_doc, text2_doc, 2, 2);
       ASSERT_EQ(scorelist.size(), 3);
 
     }

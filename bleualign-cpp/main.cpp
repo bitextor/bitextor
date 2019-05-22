@@ -83,7 +83,7 @@ void LoadData(utils::AlignData &align_data, const utils::Config &cfg) {
   if (matchLoaded) {
     LoadExtracted(align_data.umap_text1, cfg.text1_path);
     LoadExtracted(align_data.umap_text2, cfg.text2_path);
-    LoadExtracted(align_data.umap_text2translated, cfg.text2_translated_path);
+    LoadExtracted(align_data.umap_text1translated, cfg.text1_translated_path);
   }
 }
 
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
           ("help", "produce help message")
           ("text1", po::value<std::string>()->required(), "path to the first text file")
           ("text2", po::value<std::string>()->required(), "path to the second text file")
-          ("text2translated", po::value<std::string>()->required(), "path to the translated text file (text2 to text1)")
+          ("text1translated", po::value<std::string>()->required(), "path to the translated text file (text1 to text2)")
           ("output-dir", po::value<std::string>()->required(), "path to the output directory")
           ("matches", po::value<std::string>()->required(),
            "path to a file containing matched documents. Format: score <tab> uri(text1) <tab> uri(text2)")
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
   utils::Config cfg;
   cfg.text1_path = vm["text1"].as<std::string>();
   cfg.text2_path = vm["text2"].as<std::string>();
-  cfg.text2_translated_path = vm["text2translated"].as<std::string>();
+  cfg.text1_translated_path = vm["text1translated"].as<std::string>();
   cfg.output_dir = vm["output-dir"].as<std::string>();
   cfg.matches_path = vm["matches"].as<std::string>();
   cfg.doc_threshold = vm["doc-threshold"].as<float>();

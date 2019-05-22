@@ -1,6 +1,6 @@
 # Bleualign-cpp
 C++ sentence alignment tool based on [Bleualign](https://github.com/rsennrich/Bleualign).
-Bleualign-cpp is expected to be used together with [document-aligner](https://github.com/paracrawl/document-aligner).
+Bleualign-cpp is expected to be used together with [document-aligner](https://github.com/bitextor/bitextor/tree/master/document-aligner).
 
 ### Requirements
 - GCC, C++11 compiler
@@ -14,7 +14,9 @@ Bleualign-cpp is expected to be used together with [document-aligner](https://gi
 mkdir build
 cd build
 cmake .. -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release
+cd ..
 make -j 4
+tests/test_all
 ```
 
 
@@ -31,7 +33,7 @@ Bleualign-cpp outputs one *aligned.\<suffix\>.gz* file per document in a separat
 ##### Required Parameters
 * **--text1** - An input file in language1
 * **--text2** - An input file in language2
-* **--text2translated** - Translated content of the second input file (language2->language1)
+* **--text1translated** - Translated content of the first input file (language1->language2)
 * **--matches** - A document containing IDs of matched documents with scores.
 Format: `score \t ID1 \t ID2`
 * **--output_dir** - A path to the output directory. The *aligned.\*.gz* files will be outputted there.
