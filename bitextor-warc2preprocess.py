@@ -93,8 +93,10 @@ for record in f:
     #Initial checks
     if record.type == 'warcinfo' or record.type == 'request':
         continue
-
-    url = record.url
+    if record.url[0] == '<' and record.url[-1] == '>':
+        url = record.url[1:-1]
+    else:
+        url = record.url
     if url == "unknown":
         logging.info("Skipping page with unknown URL")
         continue

@@ -14,7 +14,6 @@ Bleualign-cpp is expected to be used together with [document-aligner](https://gi
 mkdir build
 cd build
 cmake .. -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release
-cd ..
 make -j 4
 tests/test_all
 ```

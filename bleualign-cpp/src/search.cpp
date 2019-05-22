@@ -123,7 +123,7 @@ namespace search {
         } else if (pointer == '<') {
           j -= 1;
         } else if (pointer == 'm') {
-          res.push_back(utils::match(i, i, j, j));
+          res.push_back(utils::match(i, i, j, j,*get_score(i,j)));
           i -= 1;
           j -= 1;
         } else {
@@ -494,9 +494,9 @@ namespace search {
         for (size_t c = 0; c < cols; ++c) {
           if (*get_mask(r, c) == 1) {
             if (transposed)
-              res.push_back(utils::match(c, c, r, r));
+              res.push_back(utils::match(c, c, r, r, *get_cost(r,c)));
             else
-              res.push_back(utils::match(r, r, c, c));
+              res.push_back(utils::match(r, r, c, c, *get_cost(r,c)));
             break;
           }
         }

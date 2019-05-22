@@ -26,7 +26,6 @@ namespace align {
 
       Align(matches, align_data.umap_text1translated.at(matched_text1_uri.data()),
             align_data.umap_text2.at(matched_text2_uri.data()), threshold);
-
       WriteAlignedTextToFile(output_path, matches, align_data.umap_text1.at(matched_text1_uri.data()),
                              align_data.umap_text2.at(matched_text2_uri.data()));
 
@@ -190,7 +189,7 @@ namespace align {
                     merged_pos_translated.at(max_pos_translate).first,
                     merged_pos_translated.at(max_pos_translate).second,
                     merged_pos_text2.at(max_pos_text2).first,
-                    merged_pos_text2.at(max_pos_text2).second);
+                    merged_pos_text2.at(max_pos_text2).second, max_val);
           }
 
 
@@ -290,15 +289,19 @@ namespace align {
       for (auto m: matches) {
         ss.str("");
 
-        for (size_t i = m.second.from; i <= m.second.to; ++i) {
+        for (size_t i = m.first.from; i <= m.first.to; ++i) {
           ss << text1_doc.at(i);
         }
 
         ss << "\t";
 
-        for (size_t i = m.first.from; i <= m.first.to; ++i) {
+        for (size_t i = m.second.from; i <= m.second.to; ++i) {
           ss << text2_doc.at(i);
         }
+ 
+ 	ss << "\t";
+
+        ss << m.score;
 
         ss << "\n";
 

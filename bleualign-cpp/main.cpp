@@ -104,14 +104,14 @@ void Process(const utils::Config &cfg) {
 
 std::string MakeOutputPath(const std::string &path_dir, const std::string &suffix) {
   std::stringstream ss;
-  ss << path_dir << "/aligned." << suffix << ".xz";
+  ss << path_dir << "/aligned." << suffix << ".gz";
   return ss.str();
 }
 
 void WriteAlignedTextToFile(const std::string &output_dir, const utils::matches_list &matches) {
 
   std::stringstream ss;
-  utils::CompressedWriter gw(output_dir + "/align.info.xz");
+  utils::CompressedWriter gw(output_dir + "/align.info.gz");
   for (size_t i = 0; i < matches.size(); ++i) {
     ss.str("");
 
