@@ -1,8 +1,6 @@
 bitextor: /home/hieu/workspace/github/paracrawl/bitextor.malign
-#hosts: ["www.elenacaffe1863.com","vade-retro.fr"]
-hosts: ["www.icgeb.org", "aletheia.ro", "ams.impa.br"]
+hosts: ["www.adfasdffdsaasdf.com"]
 #hostPath: /home/hieu/permanent/data/hosts/hosts.fr.3.gz
-#excludeHosts: ["vade-retro.fr"]
 
   #"langstat: /home/hieu/permanent/software/langstat/1k.gz
   #"langstatThreshold":10,

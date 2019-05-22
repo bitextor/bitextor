@@ -108,6 +108,6 @@ def spider(url, word, maxPages):
 if __name__ == "__main__":
     print("Starting...")
 
-    spider("http://www.elenacaffe1863.com/", "transformer", 1000)
+    spider("http://www.adfasdffdsaasdf.com/", "transformer", 1000)
 
     print("Finished")

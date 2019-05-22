@@ -1,5 +1,5 @@
 bitextor: /home/mespla/Projects/bitextor-malign
-hosts: ['www.elenacaffe1863.com','vade-retro.fr']
+hosts: ['www.adfasdffdsaasdf.com']
 #documentAligner: DIC
 documentAligner: externalMT
 temp: /tmp/transient
