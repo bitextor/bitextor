@@ -92,12 +92,12 @@ void Process(const utils::Config &cfg) {
   utils::AlignData align_data;
   LoadData(align_data, cfg);
 
-  WriteAlignedTextToFile(cfg.output_dir, align_data.matches);
-
   for (size_t i = 0; i < align_data.matches.size(); ++i) {
     std::string output_path = MakeOutputPath(cfg.output_dir, std::to_string(i));
     align::AlignDocuments(output_path, align_data, align_data.matches.at(i).first, align_data.matches.at(i).second, cfg.bleu_threshold);
   }
+
+  WriteAlignedTextToFile(cfg.output_dir, align_data.matches);
 
 }
 
