@@ -24,7 +24,7 @@ namespace utils {
         boost::iostreams::stream<boost::iostreams::file_sink> sink_out;
         boost::iostreams::filtering_streambuf<boost::iostreams::output> qout;
         std::ostream oqout;
-
+        bool isEmpty;
     };
 
 }
