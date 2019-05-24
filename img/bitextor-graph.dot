@@ -4,6 +4,7 @@ digraph Snakemake {
   #Nodes
   Creepy [label="Creepy\n-url"]
   Httrack [label="Httrack\n-url"]
+  Wget [label="Wget\n-url"]
   LETT [label="LETT\n-boiler"]
   DocalignDict [label="Docalign Dict\n-dic\n-wordtok1\n-wordtok2"]
   DocalignSMT [label="Docalign SMT\n-doc_threshold\n-wordtok1\n-mosesdir\n-model"]
@@ -26,7 +27,7 @@ digraph Snakemake {
   DedupTMX [style=rounded]
 
   #Relations
-  {Creepy,Httrack} -> LETT [style=dashed]
+  {Creepy,Httrack,Wget} -> LETT [style=dashed]
   LETT -> {DocalignDict,DocalignSMT,DocalignNMT,DocalignCustomMT}
   SymmetriseDic -> {DocalignDict,Hunalign} [label="!dict", style=dotted]
   TrainSMT -> DocalignSMT [label="!model", style=dotted]
