@@ -11,7 +11,7 @@
 
 ## Dependencies
 
-Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** can be used for crawling if it is installed.
+Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
@@ -181,9 +181,9 @@ langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
 ### Variables for crawling configuration
-Two crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy) and the other on the external tool [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 ```yaml
-httrack: true
+crawler: httrack
 
 crawlTimeLimit: 30s
 
@@ -192,7 +192,7 @@ crawlTld: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
 ```
-* `httack`: if this option is enabled, HTTrack is used instead of the crawler based on [Creepy](https://github.com/Aitjcize/creepy)
+* `crawler`: set which crawler is used (`wget`,`creepy` or `httrack`)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
 * `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
