@@ -11,6 +11,7 @@
 #include <vector>
 #include <stdexcept>
 #include <memory>
+#include <boost/unordered_map.hpp>
 
 
 namespace search {
@@ -51,6 +52,7 @@ namespace search {
         size_t rows = 0;
         size_t cols = 0;
 
+        boost::unordered_map<utils::sizet_pair, double> alignments;
         std::unique_ptr<double[]> scores;
         std::unique_ptr<char[]> back_pointers;
 

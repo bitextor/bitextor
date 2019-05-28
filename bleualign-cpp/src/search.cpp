@@ -11,7 +11,6 @@
 #include <memory>
 
 #include <boost/make_unique.hpp>
-#include <boost/unordered_map.hpp>
 #include <boost/functional/hash.hpp>
 
 
@@ -50,7 +49,6 @@ namespace search {
         throw std::runtime_error("Dimensions in Dynamic::process do not match!");
       }
 
-      boost::unordered_map<utils::sizet_pair, double> alignments;
       for (size_t s = 0; s < smap_list.size(); ++s) {
         utils::scoremap::reverse_iterator it = smap_list.at(s).rbegin();
         while (it != smap_list.at(s).rend()) {
@@ -88,7 +86,6 @@ namespace search {
 
         }
       }
-
     }
 
     void Dynamic::show() {
@@ -123,7 +120,15 @@ namespace search {
         } else if (pointer == '<') {
           j -= 1;
         } else if (pointer == 'm') {
-          res.push_back(utils::match(i, i, j, j,*get_score(i,j)));
+
+          double score;
+          boost::unordered_map<utils::sizet_pair, double>::const_iterator got = alignments.find({i, j});
+          if (got != alignments.end())
+            score = got->second;
+          else
+            score = 0;
+
+          res.push_back(utils::match(i, i, j, j, score));
           i -= 1;
           j -= 1;
         } else {
@@ -493,10 +498,12 @@ namespace search {
       for (size_t r = 0; r < rows; ++r) {
         for (size_t c = 0; c < cols; ++c) {
           if (*get_mask(r, c) == 1) {
-            if (transposed)
+            if (transposed){
               res.push_back(utils::match(c, c, r, r, *get_cost(r,c)));
-            else
+            }
+            else{
               res.push_back(utils::match(r, r, c, c, *get_cost(r,c)));
+            }
             break;
           }
         }
