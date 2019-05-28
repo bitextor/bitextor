@@ -20,7 +20,7 @@ namespace align {
 
     void AlignDocuments(const std::string &output_path, const utils::AlignData &align_data, const StringPiece matched_text1_uri,
                         StringPiece matched_text2_uri, double threshold) {
-      LOG_INFO << "Processing " << matched_text1_uri << " and " << matched_text2_uri;
+      //LOG_INFO << "Processing " << matched_text1_uri << " and " << matched_text2_uri;
 
       utils::matches_vec matches;
 
