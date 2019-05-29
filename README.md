@@ -200,6 +200,12 @@ crawlerConnectionTimeout: 10
 * `crawlerNumThreads`: **creepy-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
 * `crawlerConnectionTimeout`: **creepy-specific option** that allows to specify the connection timeout to a web server
 
+If you want to also crawl PDFs (only `wget` support for now), use these settings:
+```
+crawler: wget
+crawlFileTypes: "html,pdf"
+```
+
 ### Variables for document alignment
 Two strategies are implemented in bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
 
@@ -292,15 +298,21 @@ It is important to provide different parallel corpora for these two options as t
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
 ```yaml
+restorative: true
+
 elrc: true
 
 tmx: true
 
 deduped: false
+
+deferred: true
 ```
+* `restorative`: if this option is set, the [restorative cleaning](https://github.com/bitextor/restorative-cleaning) is applied to all sentences
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
+* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/lpla/standoff)
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 
