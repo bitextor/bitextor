@@ -32,3 +32,6 @@ model/Makefile.in
 stamp-h1
 utils/Makefile
 utils/Makefile.in
+.snakemake/
+__pycache__/
+utils/__pycache__/

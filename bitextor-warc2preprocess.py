@@ -21,6 +21,7 @@ from boilerpipe.extract import Extractor
 import alcazar.bodytext
 import logging
 import lzma
+import subprocess
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -44,6 +45,11 @@ def convert_encoding(data):
                 pass
 
     return None, ''
+
+def pdf2html(data):
+    pconverter = subprocess.Popen(["pdftohtml", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    converter_stdout, error = pconverter.communicate(input=data)
+    return converter_stdout.replace(b"&#160;",b" ")
 
 
 oparser = argparse.ArgumentParser(
@@ -112,8 +118,11 @@ for record in f:
     payload=record.payload.read()
     if payload.lstrip()[0:7] == b"HTTP/1.":
         payload=payload[payload.index(b"\r\n\r\n")+4:]
+    if url[-4:] == ".pdf":
+        payload = pdf2html(payload)
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
+
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
