@@ -32,7 +32,7 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 `sudo apt install httrack`
 
-This dependency is not mandatory as a second parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
+This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
 ## Submodules compilation
 
