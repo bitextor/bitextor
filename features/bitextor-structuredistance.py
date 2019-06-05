@@ -83,6 +83,8 @@ def extract_structure_representations(f, docs):
                         for tag in taglist:
                             translated_taglist.append(dic[tag])
                         docs[fileid] = "".join(translated_taglist)
+                    else:
+                        docs[fileid] = ""
             except html.parser.HTMLParseError:
                 pass
             finally:
