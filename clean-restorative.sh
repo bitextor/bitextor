@@ -16,7 +16,6 @@ cut -f 5- $INPUT_FILE > ${INPUT_FILE}.d/f5
 restorative-cleaning/restorative-cleaning.sh -s $SL -t $TL -f ${INPUT_FILE}.d/f3 \
                      -l ${INPUT_FILE}.d/f4 -o ${INPUT_FILE}.od &>/dev/null
 exp=()
-exp+=('bg')
 exp+=('cs')
 exp+=('sk')
 
