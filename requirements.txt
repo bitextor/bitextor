@@ -11,6 +11,7 @@ tensorflow==1.13.1
 keras==2.2.4
 warc3-wet==0.2.3
 tld==0.9.1
+git+https://github.com/pytries/datrie.git
 snakemake==5.4.2
 tqdm==4.28.1
 tldextract==2.2.0
@@ -25,7 +26,7 @@ openfile==0.0.7
 pycld2==0.31
 python-dateutil==2.7.5
 cchardet==2.1.4
-boilerpipe3==1.1
+git+https://github.com/lpla/boilerpipe3.git@patch-1
 cerberus==1.2
 alcazar==0.4.0
 python-magic==0.4.15

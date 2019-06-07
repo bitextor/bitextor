@@ -3,6 +3,7 @@
 =====
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
+[![Chat on Discord](https://camo.githubusercontent.com/b4175720ede4f2621aa066ffbabb70ae30044679/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f636861742d446973636f72642d627269676874677265656e2e737667)](https://discord.gg/etYDaZm)
 
 `bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
 1. The source where the parallel data will be searched: one or more websites (namely, bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
