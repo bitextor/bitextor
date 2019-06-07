@@ -117,10 +117,14 @@ for record in f:
     # We convert into UTF8 first of all
     payload=record.payload.read()
     if payload.lstrip()[0:7] == b"HTTP/1.":
-        try:
+        if b"\r\n\r\n" in payload:
             payload=payload[payload.index(b"\r\n\r\n")+4:]
-        except ValueError:
-            payload=payload[payload.index(b"\r\n\n")+4:]
+        elif b"\r\n\n" in payload:
+            payload=payload[payload.index(b"\r\n\n")+3:]
+        elif b"\r\n" in payload:
+            payload=payload[payload.index(b"\r\n")+2:]
+        elif b"\n" in payload:
+            payload=payload[payload.index(b"\n")+1:]
 
     if url[-4:] == ".pdf":
         payload = pdf2html(payload)
