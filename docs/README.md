@@ -1,5 +1,5 @@
 
-![Banner](img/banner.png?raw=true)
+![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/banner.png)
 =====
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
@@ -332,7 +332,7 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
-![Banner](img/bitextor7.png?raw=true)
+![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor7.png)
 =====
 
 ![Connecting Europe Facility](https://www.paracrawl.eu/images/logo_en_cef273x39.png)
