@@ -121,10 +121,10 @@ for record in f:
             payload=payload[payload.index(b"\r\n\r\n")+4:]
         elif b"\r\n\n" in payload:
             payload=payload[payload.index(b"\r\n\n")+3:]
-        elif b"\r\n" in payload:
-            payload=payload[payload.index(b"\r\n")+2:]
-        elif b"\n" in payload:
-            payload=payload[payload.index(b"\n")+1:]
+        elif b"\n\n<html>" in payload:
+            payload=payload[payload.index(b"\n\n")+2:]
+        elif b"\n\n\n" in payload:
+            payload=payload[payload.index(b"\n\n\n")+3:]
 
     if url[-4:] == ".pdf":
         payload = pdf2html(payload)
