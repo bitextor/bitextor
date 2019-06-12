@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import html
-import warc
+from warcio.archiveiterator import ArchiveIterator
 import base64
 import sys
 import argparse
@@ -22,6 +22,7 @@ import alcazar.bodytext
 import logging
 import lzma
 import subprocess
+import gzip
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -67,12 +68,16 @@ oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; i
                      required=False, default="")
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
+oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
-
-f = warc.WARCFile(fileobj=sys.stdin.buffer)
-
+if options.input[-3:] == ".xz":
+    f = ArchiveIterator(lzma.open(options.input,'r'))
+elif options.input[-3:] == ".gz":
+    f = ArchiveIterator(gzip.open(options.input,'r'))
+else:
+    f = ArchiveIterator(open(options.input,'r'))
 seen_md5 = {}
 magic.Magic(mime=True)
 
@@ -97,17 +102,17 @@ cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=Fals
 
 for record in f:
     #Initial checks
-    if record.type == 'warcinfo' or record.type == 'request':
+    if record.rec_type != 'response':
         continue
-    if record.url[0] == '<' and record.url[-1] == '>':
-        url = record.url[1:-1]
+    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
+        url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
-        url = record.url
+        url = record.rec_headers.get_header('WARC-Target-URI')
     if url == "unknown":
         logging.info("Skipping page with unknown URL")
         continue
 
-    pageSize = int(record['Content-Length'])
+    pageSize = int(record.rec_headers.get_header('Content-Length'))
     if pageSize > 5242880:
         logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
@@ -115,14 +120,14 @@ for record in f:
     #print("url", num, url, pageSize)
 
     # We convert into UTF8 first of all
-    payload=record.payload.read()
-    if payload.lstrip()[0:7] == b"HTTP/1.":
-        try:
-            payload=payload[payload.index(b"\r\n\r\n")+4:]
-        except ValueError:
-            payload=payload[payload.index(b"\r\n\n")+4:]
+    payload=record.content_stream().read()
+    #if payload.lstrip()[0:7] == b"HTTP/1.":
+    #    try:
+    #        payload=payload[payload.index(b"\r\n\r\n")+4:]
+    #    except ValueError:
+    #        payload=payload[payload.index(b"\r\n\n")+4:]
 
-    if url[-4:] == ".pdf":
+    if url[-4:] == ".pdf" or record.http_headers.get_header('Content-Type') == 'application/pdf':
         payload = pdf2html(payload)
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
