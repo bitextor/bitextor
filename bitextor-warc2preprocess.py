@@ -127,7 +127,7 @@ for record in f:
     #    except ValueError:
     #        payload=payload[payload.index(b"\r\n\n")+4:]
 
-    if url[-4:] == ".pdf" or record.http_headers.get_header('Content-Type') == 'application/pdf':
+    if url[-4:] == ".pdf" or record.rec_headers.get_header('Content-Type') == 'application/pdf':
         payload = pdf2html(payload)
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
