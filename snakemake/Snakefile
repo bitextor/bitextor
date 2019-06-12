@@ -88,6 +88,7 @@ def ValidateArgs(config):
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
+           'usepdfextract' : {'type' : 'string'},
            'httrack': {'type': 'boolean'}, #deprecated
            'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
@@ -265,6 +266,11 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
   boilerpipeCleaning = '--boilerpipe'
 else:
   boilerpipeCleaning = ''
+
+if "pdf-converter" in config and config["pdf-converter"]=="pdf-extract":
+  usepdfextract = "--pdf-extract"
+else:
+  usepdfextract = ""
 
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
@@ -1029,7 +1035,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
