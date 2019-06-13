@@ -26,3 +26,7 @@
 	path = restorative-cleaning
 	url = https://github.com/bitextor/restorative-cleaning
 	ignore = dirty
+[submodule "pdf-extract"]
+	path = pdf-extract
+	url = https://github.com/bitextor/pdf-extract
+	ignore = dirty
