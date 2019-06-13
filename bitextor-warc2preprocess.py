@@ -48,12 +48,12 @@ def convert_encoding(data):
     return None, ''
 
 def pdf2html(data):
-    pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    pconverter = subprocess.Popen(["pdftohtml", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return converter_stdout.replace(b"&#160;",b" ")
 
 def pdfextract(data):
-    pconverter = subprocess.Popen("datafile=`mktemp`; cat - > $datafile; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile -O $dataoutputfile ; cat $dataoutputfile ; rm $datafile $dataoutputfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile > /dev/null ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return converter_stdout
 
@@ -74,7 +74,7 @@ oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; i
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
-oparser.add_argument('--pdf-extract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs', default=False)
+oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs', default=False)
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -134,7 +134,7 @@ for record in f:
     #        payload=payload[payload.index(b"\r\n\n")+4:]
 
     if url[-4:] == ".pdf":
-        if options.pdf-extract:
+        if options.pdfextract:
             payload = pdfextract(payload)
         else:
             payload = pdf2html(payload)

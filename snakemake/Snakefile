@@ -88,7 +88,7 @@ def ValidateArgs(config):
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
-           'usepdfextract' : {'type' : 'string'},
+           'pdf-converter' : {'type' : 'string'},
            'httrack': {'type': 'boolean'}, #deprecated
            'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
@@ -268,7 +268,7 @@ else:
   boilerpipeCleaning = ''
 
 if "pdf-converter" in config and config["pdf-converter"]=="pdf-extract":
-  usepdfextract = "--pdf-extract"
+  usepdfextract = "--pdfextract"
 else:
   usepdfextract = ""
 
