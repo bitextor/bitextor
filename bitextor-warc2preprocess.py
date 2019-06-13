@@ -23,6 +23,8 @@ import logging
 import lzma
 import subprocess
 import gzip
+import zipfile
+import io
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -50,13 +52,46 @@ def convert_encoding(data):
 def pdf2html(data):
     pconverter = subprocess.Popen(["pdftohtml", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
-    return converter_stdout.replace(b"&#160;",b" ")
+    return [converter_stdout.replace(b"&#160;",b" ")]
 
 def pdfextract(data):
     pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile > /dev/null ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
-    return converter_stdout
+    return [converter_stdout]
 
+def openoffice2html(data):
+    datastream = io.BytesIO(data)
+    try:
+        openoffice_file = zipfile.ZipFile(datastream)
+    except zipfile.BadZipFile:
+        return []
+    return [openoffice_file.read('content.xml')]
+
+def office2html(data):
+    datastream = io.BytesIO(data)
+    try:
+        office_file = zipfile.ZipFile(datastream)
+    except zipfile.BadZipFile:
+        return []
+    #word/document.xml, ppt/slides/slide*.xml, xl/sharedStrings.xml
+    xmls = []
+    for xml in office_file.namelist():
+        if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
+            xmls.append(office_file.read(xml))
+    return xmls
+
+def epub2html(data):
+    datastream = io.BytesIO(data)
+    try:
+        epub_file = zipfile.ZipFile(datastream)
+    except zipfile.BadZipFile:
+        return []
+    #EPUB/*html
+    xmls = []
+    for xml in epub_file.namelist():
+        if "ml" == xml[-2:]:
+            xmls.append(epub_file.read(xml))
+    return xmls
 
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
@@ -125,43 +160,50 @@ for record in f:
 
     #print("url", num, url, pageSize)
 
-    # We convert into UTF8 first of all
     payload=record.content_stream().read()
-    #if payload.lstrip()[0:7] == b"HTTP/1.":
-    #    try:
-    #        payload=payload[payload.index(b"\r\n\r\n")+4:]
-    #    except ValueError:
-    #        payload=payload[payload.index(b"\r\n\n")+4:]
+    payloads = []
 
     if url[-4:] == ".pdf":
         if options.pdfextract:
-            payload = pdfextract(payload)
+            payloads = pdfextract(payload)
         else:
-            payload = pdf2html(payload)
-    orig_encoding, text = convert_encoding(payload)
-    logging.info("Processing document: " + url)
+            payloads = pdf2html(payload)
+    elif url[-4:] == ".odt" or url[-4:] == ".ods" or url[-4:] == ".odp":
+        payloads = openoffice2html(payload)
+    elif url[-5:] == ".docx" or url[-5:] == ".pptx" or url[-5:] == ".xlsx":
+        payloads = office2html(payload)
+    elif url[-5:] == ".epub":
+        payloads = epub2html(payload)
+    else:
+        payloads = [payload]
 
-    if orig_encoding is None:
-        logging.info("Encoding of document " + url + " could not be identified")
 
-    if len(text) > 0:
-        # HTML is then normalized
-        logging.info(url + ": cleaning html")
-        tree=""
-        try:
-            cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-            tree = ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False)
-            #document = html5lib.parse(fixedtext, treebuilder="lxml", namespaceHTMLElements=False)
-            #tree = etree.tostring(document, encoding="utf-8")
-        except Exception as ex:
-            sys.stderr.write(str(ex)+"\n")
-            continue
-        cleantree = tree.replace("&#160;", " ")
-        cleantree = cleantree.replace("\t", " ")
-
-        # lang id
-        #printable_str = ''.join(x for x in cleantree if x in string.printable)
-        logging.info(url + ": detecting language")
+    for payload in payloads:
+        # We convert into UTF8 first of all
+        orig_encoding, text = convert_encoding(payload)
+        logging.info("Processing document: " + url)
+    
+        if orig_encoding is None:
+            logging.info("Encoding of document " + url + " could not be identified")
+    
+        if len(text) > 0:
+            # HTML is then normalized
+            logging.info(url + ": cleaning html")
+            tree=""
+            try:
+                cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
+                tree = ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False)
+                #document = html5lib.parse(fixedtext, treebuilder="lxml", namespaceHTMLElements=False)
+                #tree = etree.tostring(document, encoding="utf-8")
+            except Exception as ex:
+                sys.stderr.write(str(ex)+"\n")
+                continue
+            cleantree = tree.replace("&#160;", " ")
+            cleantree = cleantree.replace("\t", " ")
+    
+            # lang id
+            #printable_str = ''.join(x for x in cleantree if x in string.printable)
+            logging.info(url + ": detecting language")
         lang = guess_lang_from_data2(tree)
         if len(languages) > 0 and lang not in languages:
             logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
@@ -173,59 +215,59 @@ for record in f:
                 deboiled = extractor.getHTML()
             else:
                 deboiled = cleantree
-
-            # We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
-            # files we discard them
-            c = hashlib.md5()
-            c.update(deboiled.encode())
-            # print("hash", c.hexdigest(), url)
-
-            # checking for duplicate content (duplicates are discarded)
-            if c.hexdigest() in seen_md5:
-                logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
-                pass
-            else:
-                # If enabled get text with Alcazar library
-                if options.alcazar:
-                    logging.info(url + ": Getting text with Alcazar")
-                    btext = alcazar.bodytext.parse_article(deboiled)
-                    if btext.body_text:
-                        plaintext = btext.body_text
-                    else:
-                        plaintext = ""
-                # Otherwise use beautifulsoup
+        
+                # We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
+                # files we discard them
+                c = hashlib.md5()
+                c.update(deboiled.encode())
+                # print("hash", c.hexdigest(), url)
+    
+                # checking for duplicate content (duplicates are discarded)
+                if c.hexdigest() in seen_md5:
+                    logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
+                    pass
                 else:
-                    logging.info(url + ": Getting text with BeautifulSoup")
-                    soup = BeautifulSoup(deboiled, "lxml")
-                    for script in soup(["script", "style", "img"]):
-                        script.extract()  # rip it out
-
-                    plaintext = soup.get_text()
-                    plaintext = re.sub(r"\n+", "\n",
-                                       re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
-
-                if len(plaintext) > 0:
-                    seen_md5[c.hexdigest()] = c.hexdigest()
-                    # Guessing MIME of the file (checked on original content)
-                    logging.info(url + ": Getting mime")
-                    mime = magic.from_buffer(text, mime=True)
-                    mimeFile.write(mime.encode() + b"\n")
-
-                    urlFile.write(url.encode() + b"\n")
-                    langFile.write(lang.encode() + b"\n")
-                    encodingFile.write(orig_encoding.encode() + b"\n")
-
-                    b64norm = base64.b64encode(cleantree.encode())
-                    normHtmlFile.write(b64norm + b"\n")
-
-                    if options.boilerpipe:
-                        b64deboil = base64.b64encode(deboiled.encode())
-                        deboilFile.write(b64deboil + b"\n")
-
-                    b64text = base64.b64encode(html.unescape(plaintext).encode())
-                    plainTextFile.write(b64text + b"\n")
-
-    num += 1
+                    # If enabled get text with Alcazar library
+                    if options.alcazar:
+                        logging.info(url + ": Getting text with Alcazar")
+                        btext = alcazar.bodytext.parse_article(deboiled)
+                        if btext.body_text:
+                            plaintext = btext.body_text
+                        else:
+                            plaintext = ""
+                    # Otherwise use beautifulsoup
+                    else:
+                        logging.info(url + ": Getting text with BeautifulSoup")
+                        soup = BeautifulSoup(deboiled, "lxml")
+                        for script in soup(["script", "style", "img"]):
+                            script.extract()  # rip it out
+    
+                        plaintext = soup.get_text()
+                        plaintext = re.sub(r"\n+", "\n",
+                                           re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+    
+                    if len(plaintext) > 0:
+                        seen_md5[c.hexdigest()] = c.hexdigest()
+                        # Guessing MIME of the file (checked on original content)
+                        logging.info(url + ": Getting mime")
+                        mime = magic.from_buffer(text, mime=True)
+                        mimeFile.write(mime.encode() + b"\n")
+    
+                        urlFile.write(url.encode() + b"\n")
+                        langFile.write(lang.encode() + b"\n")
+                        encodingFile.write(orig_encoding.encode() + b"\n")
+        
+                        b64norm = base64.b64encode(cleantree.encode())
+                        normHtmlFile.write(b64norm + b"\n")
+    
+                        if options.boilerpipe:
+                            b64deboil = base64.b64encode(deboiled.encode())
+                            deboilFile.write(b64deboil + b"\n")
+    
+                        b64text = base64.b64encode(html.unescape(plaintext).encode())
+                        plainTextFile.write(b64text + b"\n")
+    
+        num += 1
 
 urlFile.close()
 langFile.close()
