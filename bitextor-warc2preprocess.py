@@ -204,17 +204,17 @@ for record in f:
             # lang id
             #printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
-        lang = guess_lang_from_data2(tree)
-        if len(languages) > 0 and lang not in languages:
-            logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
-        else:
-            # If enabled, remove boilerplate HTML
-            if options.boilerpipe:
-                logging.info(url + ": deboiling html")
-                extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
-                deboiled = extractor.getHTML()
+            lang = guess_lang_from_data2(tree)
+            if len(languages) > 0 and lang not in languages:
+                logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
             else:
-                deboiled = cleantree
+                # If enabled, remove boilerplate HTML
+                if options.boilerpipe:
+                    logging.info(url + ": deboiling html")
+                    extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
+                    deboiled = extractor.getHTML()
+                else:
+                    deboiled = cleantree
         
                 # We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
                 # files we discard them
