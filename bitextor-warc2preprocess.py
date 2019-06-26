@@ -164,7 +164,6 @@ for record in f:
     url = url.lower()
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
-    print(record.http_headers.get_header('Content-Type'))
     #print("url", num, url, pageSize)
 
     payload=record.content_stream().read()
