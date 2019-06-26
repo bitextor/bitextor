@@ -152,18 +152,25 @@ for record in f:
     if url == "unknown":
         logging.info("Skipping page with unknown URL")
         continue
-
+    if "text/dns" in record.rec_headers.get_header('Content-Type'):
+        continue
     pageSize = int(record.rec_headers.get_header('Content-Length'))
     if pageSize > 5242880:
         logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
-
+    if record.http_headers.get_header('Content-Type') is not None:
+        if "image/" in record.http_headers.get_header('Content-Type') or "audio/" in record.http_headers.get_header('Content-Type') or "video/" in record.http_headers.get_header('Content-Type') or "text/x-component" in record.http_headers.get_header('Content-Type') or "text/x-js" in record.http_headers.get_header('Content-Type') or "text/javascript" in record.http_headers.get_header('Content-Type') or "application/x-javascript" in record.http_headers.get_header('Content-Type') or "text/css" in record.http_headers.get_header('Content-Type') or "application/javascript" in record.http_headers.get_header('Content-Type') or "application/x-shockwave-flash" in record.http_headers.get_header('Content-Type') or "application/octet-stream" in record.http_headers.get_header('Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
+            continue
+    url = url.lower()
+    if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
+        continue
+    print(record.http_headers.get_header('Content-Type'))
     #print("url", num, url, pageSize)
 
     payload=record.content_stream().read()
     payloads = []
 
-    if url[-4:] == ".pdf":
+    if url[-4:] == ".pdf" or (record.http_headers.get_header('Content-Type') is not None and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
             payloads = pdfextract(payload)
         else:
