@@ -42,5 +42,5 @@ bleualign: true
 docAlignThreshold: 0.1
 bleuAlignThreshold: 0.2
 maxSizeWARC: 5000
-#bicleanerThreshold: 0.7
-#bicleaner: /lustre/home/dc007/mespla/paracrawl-datarelease4/bicleaner_models/en-cs/training.en-cs.yaml
+bicleaner: /home/s0565741/workspace/experiment/paracrawl/v3/bicleaner_models/en-cs/training.en-cs.yaml
+bicleanerThreshold: 0.7
