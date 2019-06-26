@@ -50,7 +50,7 @@ def convert_encoding(data):
     return None, ''
 
 def pdf2html(data):
-    pconverter = subprocess.Popen(["pdftohtml", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout.replace(b"&#160;",b" ")]
 
