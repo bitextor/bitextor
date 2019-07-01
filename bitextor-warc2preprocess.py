@@ -158,7 +158,7 @@ for record in f:
     if pageSize > 5242880:
         logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
-    if record.http_headers.get_header('Content-Type') is not None:
+    if record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None:
         if "image/" in record.http_headers.get_header('Content-Type') or "audio/" in record.http_headers.get_header('Content-Type') or "video/" in record.http_headers.get_header('Content-Type') or "text/x-component" in record.http_headers.get_header('Content-Type') or "text/x-js" in record.http_headers.get_header('Content-Type') or "text/javascript" in record.http_headers.get_header('Content-Type') or "application/x-javascript" in record.http_headers.get_header('Content-Type') or "text/css" in record.http_headers.get_header('Content-Type') or "application/javascript" in record.http_headers.get_header('Content-Type') or "application/x-shockwave-flash" in record.http_headers.get_header('Content-Type') or "application/octet-stream" in record.http_headers.get_header('Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
             continue
     url = url.lower()
@@ -169,7 +169,7 @@ for record in f:
     payload=record.content_stream().read()
     payloads = []
 
-    if url[-4:] == ".pdf" or (record.http_headers.get_header('Content-Type') is not None and "application/pdf" in record.http_headers.get_header('Content-Type')):
+    if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
             payloads = pdfextract(payload)
         else:
