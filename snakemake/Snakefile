@@ -1051,19 +1051,21 @@ rule lettr2idx:
 
 rule idx2ridx_l1tol2:
     input:
-        '{dir}/idx.xz'
+        '{dir}/idx.xz',
+        expand("{dic}", dic=DIC)
     output:
         '{dir}/1.ridx.xz'
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG1} --lang2 {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {input[1]} --lang1 {LANG1} --lang2 {LANG2} | xz -T 0 > {output}'
 
 rule idx2ridx_l2tol1:
     input:
-        '{dir}/idx.xz'
+        '{dir}/idx.xz',
+        expand("{dic}", dic=DIC)
     output:
         '{dir}/2.ridx.xz'
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {DIC} --lang1 {LANG2} --lang2 {LANG1} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {input[1]} --lang1 {LANG2} --lang2 {LANG1} | xz -T 0 > {output}'
 
 rule ridx2imagesetoverlap:
     input:
