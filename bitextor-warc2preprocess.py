@@ -17,7 +17,23 @@ from lxml.html.clean import Cleaner
 import string
 from bs4 import BeautifulSoup
 from lxml import etree
-from boilerpipe.extract import Extractor
+import jpype
+import os
+import imp
+if jpype.isJVMStarted() != True:
+    jars = []
+    for top, dirs, files in os.walk(imp.find_module('pdfextract')[1]+'/data'):
+        for nm in files:
+            if nm[-4:] == ".jar":
+                jars.append(os.path.join(top, nm))
+    for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1]+'/data'):
+        for nm in files:
+            if nm[-4:] == ".jar":
+                jars.append(os.path.join(top, nm))
+    jpype.addClassPath(os.pathsep.join(jars))
+    jpype.startJVM(jpype.getDefaultJVMPath(),convertStrings=False)
+from boilerpipe.extract import Extractor as ExtrB
+from pdfextract.extract import Extractor as ExtrP
 import alcazar.bodytext
 import logging
 import lzma
@@ -25,6 +41,7 @@ import subprocess
 import gzip
 import zipfile
 import io
+
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -54,10 +71,14 @@ def pdf2html(data):
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout.replace(b"&#160;",b" ")]
 
-def pdfextract(data):
+def pdfextract_shell(data):
     pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile > /dev/null ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout]
+
+def pdfextract(data,extractor):
+    extractor.setData(data)
+    return [bytes(extractor.getHTML(),'utf8')]
 
 def openoffice2html(data):
     datastream = io.BytesIO(data)
@@ -137,7 +158,8 @@ plainTextFile = lzma.open(options.outDir + "/" + options.prefix + "plain_text.xz
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
-
+if options.pdfextract:
+    extractor = ExtrP()
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
@@ -165,13 +187,15 @@ for record in f:
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
     #print("url", num, url, pageSize)
-
+    if url[-11:] == "/robots.txt":
+        continue
     payload=record.content_stream().read()
     payloads = []
 
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
-            payloads = pdfextract(payload)
+            payloads = pdfextract(payload,extractor)
+            #payloads = pdfextract_shell(payload)
         else:
             payloads = pdf2html(payload)
     elif url[-4:] == ".odt" or url[-4:] == ".ods" or url[-4:] == ".odp":
@@ -217,7 +241,7 @@ for record in f:
                 # If enabled, remove boilerplate HTML
                 if options.boilerpipe:
                     logging.info(url + ": deboiling html")
-                    extractor = Extractor(extractor='ArticleExtractor', html=cleantree)
+                    extractor = ExtrB(extractor='ArticleExtractor', html=cleantree)
                     deboiled = extractor.getHTML()
                 else:
                     deboiled = cleantree
