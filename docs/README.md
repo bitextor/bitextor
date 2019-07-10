@@ -123,7 +123,7 @@ Note that, in this case, an additional option needs to be added to the `sbatch` 
 ## Bitextor configuration file
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample (`config.yaml`) can be found in this repository (`snakemake/example/tests/config.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
