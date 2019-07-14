@@ -1,4 +1,4 @@
-bitextor: /home/s0565741/workspace/github/paracrawl/bitextor.malign
+bitextor: /home/s0565741/workspace/github/paracrawl/bitextor
 
 langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
 langstatThreshold: 1000000

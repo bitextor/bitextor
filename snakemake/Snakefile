@@ -709,8 +709,8 @@ InitConcatLogicLink(domainKey2Hosts)
 #print("domainKey2Hosts", domainKey2Hosts)
 
 # every shell command will run sync
-#shell.prefix("sync; set -euo pipefail; ")
-shell.prefix("set -euo pipefail; ")
+shell.prefix("sync; set -euo pipefail; ")
+#shell.prefix("set -euo pipefail; ")
 
 #================================== Creater Moses EMS config========================#
 def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
