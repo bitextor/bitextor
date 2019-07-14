@@ -16,7 +16,7 @@ Apart from downloading all submodules of this repository (which you can do with 
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
-`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time`
+`sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
@@ -123,7 +123,7 @@ Note that, in this case, an additional option needs to be added to the `sbatch` 
 ## Bitextor configuration file
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`default.yaml`) can be found in this repository (`snakemake/example/tests/default.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample (`config.yaml`) can be found in this repository (`snakemake/example/tests/config.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:

@@ -125,7 +125,6 @@ urls1.add(fieldsdict['url1'])
 urls2.add(fieldsdict['url2'])
 idnum = 0
 for line in reader:
-    idnum += 1
     fields = line.split("\t")
     fields[-1] = fields[-1].strip()
 
@@ -137,6 +136,7 @@ for line in reader:
 
     # if a new segment pair is found:
     if curid != previd:
+        idnum += 1
         print_tu(prevfieldsdict, urls1, urls2, idnum)
         prevfieldsdict = fieldsdict
         urls1 = set()
