@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 exit_program()
 
 {
