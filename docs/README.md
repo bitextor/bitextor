@@ -10,7 +10,22 @@
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
 3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
-## Dependencies
+## Docker installation
+If you have `snap` package manager in your system, just install Docker using:
+```
+sudo snap install docker
+```
+
+Then, you only have to install `bitextor` using:
+```
+docker pull paracrawl/bitextor
+docker run -it paracrawl/bitextor
+```
+
+Bitextor folder is located at `/opt/bitextor`
+
+## Manual install
+### Dependencies
 
 Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
 
@@ -35,13 +50,13 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
-## Submodules compilation
+### Submodules compilation
 
 To compile all bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the GitHub repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
 
 `./autogen.sh && make`
 
-### Some known installation issues
+#### Some known installation issues
 
 In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in `requirements.txt`). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
 ```bash
