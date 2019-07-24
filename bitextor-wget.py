@@ -6,6 +6,8 @@ import sys
 import warc
 import os
 import requests
+import gzip
+import shutil
 
 def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
@@ -38,6 +40,10 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     try:
         system_check(cmd)
     except subprocess.CalledProcessError as grepexc:
+        if os.path.isfile(warcfilename+".warc.gz"):
+            with gzip.open(warcfilename+".warc.gz", 'rb') as f_in:
+                with open(warcfilename+".warc", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
         os.rename(warcfilename+".warc",warcfilename+".corrupt.warc")
         fr = warc.open(warcfilename+".corrupt.warc")
         fw = warc.open(warcfilename+".warc", "wb")
