@@ -30,7 +30,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
         filetypesoption="-A \""+filetypes+"\""
     
     if warcfilename != None:
-        warcoption = "--no-warc-compression --warc-file \""+warcfilename+"\""
+        warcoption = "--warc-file \""+warcfilename+"\""
 
 
     cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(WAIT=waitoption, FILETYPES=filetypesoption, URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, WARC=warcoption)
