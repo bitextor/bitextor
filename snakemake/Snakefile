@@ -1330,20 +1330,20 @@ rule deferred_documents:
 
 rule deferred_segments:
     input:
-        "{dir}/{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
+        "{dir}/"+"{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
         "{dir}/html5lib_plain_text.xz",
         "{dir}/url.xz",
         "{dir}/deferred_documents.xz"
     output:
-        "{dir}/{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
+        "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
     
 rule cleansegments:
     input:
-        "{dir}/{segaligner}{deferredsents}.segalign.xz".format(segaligner=SEGMENTALIGNER, deferredsents=DEFERREDSENTENCES)
+        "{dir}/"+"{segaligner}{deferredsents}.segalign.xz".format(segaligner=SEGMENTALIGNER, deferredsents=DEFERREDSENTENCES)
     output:
-        "{dir}/{segaligner}.segclean.xz".format(segaligner=SEGMENTALIGNER)
+        "{dir}/"+"{segaligner}.segclean.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
