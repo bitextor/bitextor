@@ -132,6 +132,7 @@ oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', defa
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs', default=False)
 oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language', default=False)
+oparser.add_argument('--langs', dest="langs", default="", help='List of languages to include (+) or ignore (%%): +l1,+l2,%%l3,%%l4')
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -145,10 +146,17 @@ seen_md5 = {}
 magic.Magic(mime=True)
 
 languages = []
+banned = []
 if options.l1 is not None:
     languages.append(options.l1)
 if options.l2 is not None:
     languages.append(options.l2)
+if options.langs is not None:
+    for l in options.langs.split(','):
+        if l[0] == '+':
+            languages.append(l[1:])
+        elif l[0] == '%':
+            banned.append(l[1:])
 
 if not options.xzlang:
     urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
@@ -244,7 +252,7 @@ for record in f:
             #printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
             lang = guess_lang_from_data2(tree)
-            if len(languages) > 0 and lang not in languages:
+            if (len(languages) > 0 and lang not in languages) or (lang in banned):
                 logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
             else:
                 # If enabled, remove boilerplate HTML
