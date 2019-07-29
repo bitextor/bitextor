@@ -151,7 +151,7 @@ if options.l1 is not None:
     languages.append(options.l1)
 if options.l2 is not None:
     languages.append(options.l2)
-if options.langs is not None:
+if options.langs is not "":
     for l in options.langs.split(','):
         if l[0] == '+':
             languages.append(l[1:])
