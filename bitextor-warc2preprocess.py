@@ -150,12 +150,13 @@ if options.l1 is not None:
 if options.l2 is not None:
     languages.append(options.l2)
 
-urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
-langFile = lzma.open(options.outDir + "/" + options.prefix + "lang.xz", "w")
-encodingFile = lzma.open(options.outDir + "/" + options.prefix + "encoding.xz", "w")
-mimeFile = lzma.open(options.outDir + "/" + options.prefix + "mime.xz", "w")
-normHtmlFile = lzma.open(options.outDir + "/" + options.prefix + "normalized_html.xz", "w")
-plainTextFile = lzma.open(options.outDir + "/" + options.prefix + "plain_text.xz", "w")
+if not options.xzlang:
+    urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
+    langFile = lzma.open(options.outDir + "/" + options.prefix + "lang.xz", "w")
+    encodingFile = lzma.open(options.outDir + "/" + options.prefix + "encoding.xz", "w")
+    mimeFile = lzma.open(options.outDir + "/" + options.prefix + "mime.xz", "w")
+    normHtmlFile = lzma.open(options.outDir + "/" + options.prefix + "normalized_html.xz", "w")
+    plainTextFile = lzma.open(options.outDir + "/" + options.prefix + "plain_text.xz", "w")
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
@@ -289,21 +290,23 @@ for record in f:
                         # Guessing MIME of the file (checked on original content)
                         logging.info(url + ": Getting mime")
                         mime = magic.from_buffer(text, mime=True)
-                        mimeFile.write(mime.encode() + b"\n")
 
-                        urlFile.write(url.encode() + b"\n")
-                        langFile.write(lang.encode() + b"\n")
-                        encodingFile.write(orig_encoding.encode() + b"\n")
+                        if not options.xzlang:
+                            mimeFile.write(mime.encode() + b"\n")
 
-                        b64norm = base64.b64encode(cleantree.encode())
-                        normHtmlFile.write(b64norm + b"\n")
+                            urlFile.write(url.encode() + b"\n")
+                            langFile.write(lang.encode() + b"\n")
+                            encodingFile.write(orig_encoding.encode() + b"\n")
 
-                        if options.boilerpipe:
-                            b64deboil = base64.b64encode(deboiled.encode())
-                            deboilFile.write(b64deboil + b"\n")
+                            b64norm = base64.b64encode(cleantree.encode())
+                            normHtmlFile.write(b64norm + b"\n")
 
-                        b64text = base64.b64encode(html.unescape(plaintext).encode())
-                        plainTextFile.write(b64text + b"\n")
+                            if options.boilerpipe:
+                                b64deboil = base64.b64encode(deboiled.encode())
+                                deboilFile.write(b64deboil + b"\n")
+
+                            b64text = base64.b64encode(html.unescape(plaintext).encode())
+                            plainTextFile.write(b64text + b"\n")
 
                         # language specific file is not open yet
                         if options.xzlang and lang not in langfiles:
@@ -323,13 +326,13 @@ for record in f:
                             langfile.write(plaintext.encode() + b"\n")
                             langfile.write(b"\n")
         num += 1
-
-urlFile.close()
-langFile.close()
-encodingFile.close()
-mimeFile.close()
-normHtmlFile.close()
-plainTextFile.close()
+if not options.xzlang:
+    urlFile.close()
+    langFile.close()
+    encodingFile.close()
+    mimeFile.close()
+    normHtmlFile.close()
+    plainTextFile.close()
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile.close()
