@@ -131,6 +131,7 @@ oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', defa
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs', default=False)
+oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language', default=False)
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -160,6 +161,11 @@ if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
 if options.pdfextract:
     extractor = ExtrP()
+
+# Grouping by language is optional
+if options.xzlang:
+    langfiles = {}
+
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
@@ -207,15 +213,17 @@ for record in f:
     else:
         payloads = [payload]
 
+    date = record.rec_headers.get_header('WARC-Date')
+    recordId = record.rec_headers.get_header('WARC-Record-ID')
 
     for payload in payloads:
         # We convert into UTF8 first of all
         orig_encoding, text = convert_encoding(payload)
         logging.info("Processing document: " + url)
-    
+
         if orig_encoding is None:
             logging.info("Encoding of document " + url + " could not be identified")
-    
+
         if len(text) > 0:
             # HTML is then normalized
             logging.info(url + ": cleaning html")
@@ -230,7 +238,7 @@ for record in f:
                 continue
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
-    
+
             # lang id
             #printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
@@ -245,13 +253,13 @@ for record in f:
                     deboiled = extractor.getHTML()
                 else:
                     deboiled = cleantree
-        
+
                 # We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
                 # files we discard them
                 c = hashlib.md5()
                 c.update(deboiled.encode())
                 # print("hash", c.hexdigest(), url)
-    
+
                 # checking for duplicate content (duplicates are discarded)
                 if c.hexdigest() in seen_md5:
                     logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
@@ -271,32 +279,49 @@ for record in f:
                         soup = BeautifulSoup(deboiled, "lxml")
                         for script in soup(["script", "style", "img"]):
                             script.extract()  # rip it out
-    
+
                         plaintext = soup.get_text()
                         plaintext = re.sub(r"\n+", "\n",
                                            re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
-    
+
                     if len(plaintext) > 0:
                         seen_md5[c.hexdigest()] = c.hexdigest()
                         # Guessing MIME of the file (checked on original content)
                         logging.info(url + ": Getting mime")
                         mime = magic.from_buffer(text, mime=True)
                         mimeFile.write(mime.encode() + b"\n")
-    
+
                         urlFile.write(url.encode() + b"\n")
                         langFile.write(lang.encode() + b"\n")
                         encodingFile.write(orig_encoding.encode() + b"\n")
-        
+
                         b64norm = base64.b64encode(cleantree.encode())
                         normHtmlFile.write(b64norm + b"\n")
-    
+
                         if options.boilerpipe:
                             b64deboil = base64.b64encode(deboiled.encode())
                             deboilFile.write(b64deboil + b"\n")
-    
+
                         b64text = base64.b64encode(html.unescape(plaintext).encode())
                         plainTextFile.write(b64text + b"\n")
-    
+
+                        # language specific file is not open yet
+                        if options.xzlang and lang not in langfiles:
+                            langfiles[lang] = lzma.open(options.outDir + "/" + options.prefix + lang + ".xz", "w")
+
+                        # write to language specific file
+                        if options.xzlang:
+                            langfile = langfiles[lang]
+                            langfile.write(("Content-Location: " + url).encode() + b"\n")
+                            langfile.write(("Content-Type: " + mime).encode() + b"\n")
+                            langfile.write(("Content-Language: " + lang).encode() + b"\n")
+                            langfile.write(("Content-Length: " + str(len(plaintext))).encode() + b"\n")
+                            langfile.write(("Date: " + date).encode() + b"\n")
+                            langfile.write(("X-WARC-Record-Id: " + recordId).encode() + b"\n")
+                            langfile.write(("X-WARC-Filename: " + options.input).encode() + b"\n")
+                            langfile.write(b"\n")
+                            langfile.write(plaintext.encode() + b"\n")
+                            langfile.write(b"\n")
         num += 1
 
 urlFile.close()
@@ -308,3 +333,6 @@ plainTextFile.close()
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile.close()
+if options.xzlang:
+    for key in langfiles:
+        langfiles[key].close()
