@@ -26,6 +26,7 @@ Some additional Python libraries are required. They can be installed automatical
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/bitextor/kenlm/archive/master.zip https://github.com/bitextor/python-pdfextract/archive/master.zip
 pip3 install -r restorative-cleaning/requirements.txt
+pip3 install -r bifixer/requirements.txt
 ```
 (if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
 
@@ -299,7 +300,7 @@ It is important to provide different parallel corpora for these two options as t
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
 ```yaml
-restorative: true
+bifixer: true
 
 elrc: true
 
@@ -309,7 +310,7 @@ deduped: false
 
 deferred: true
 ```
-* `restorative`: if this option is set, the [restorative cleaning](https://github.com/bitextor/restorative-cleaning) is applied to all sentences
+* `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal 
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared

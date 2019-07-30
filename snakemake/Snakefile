@@ -125,7 +125,7 @@ def ValidateArgs(config):
            'bicleaner': {'type': 'string'},
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
-           'restorative': {'type': 'boolean'},
+           'bifixer': {'type': 'boolean'},
            'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
@@ -446,10 +446,10 @@ else:
   DEFERREDFIELDS=""
   DEFERREDSENTENCES=""
 
-if "restorative" in config and config["restorative"]:
-  RESTORATIVE="restorative"
+if "bifixer" in config and config["bifixer"]:
+  BIFIXER="bifixer"
 else:
-  RESTORATIVE="segclean"
+  BIFIXER="segclean"
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1350,17 +1350,18 @@ rule cleansegments:
 #================================== POST PROCESSING ==================================#
 
 
-rule restorative:
+rule bifixer:
     input:
         "{prefix}.segclean.xz"
     output:
-        "{prefix}.restorative.xz"
+        "{prefix}.bifixer.xz"
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} | xz -T 0 > {output}'
 
 rule bicleaner:
     input:
-        segclean="{prefix}"+".{extension}.xz".format(extension=RESTORATIVE),
+        segclean="{prefix}"+".{extension}.xz".format(extension=BIFIXER),
         model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{prefix}.bicleaner.scores.xz"

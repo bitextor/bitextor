@@ -30,3 +30,7 @@
 	path = pdf-extract
 	url = https://github.com/bitextor/pdf-extract
 	ignore = dirty
+[submodule "bifixer"]
+	path = bifixer
+	url = https://github.com/bitextor/bifixer
+	ignore = dirty
