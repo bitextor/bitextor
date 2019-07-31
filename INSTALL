@@ -20,7 +20,6 @@ git submodule update --init --recursive
 sudo apt install cmake automake pkg-config python3 python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time python3-tk poppler-utils
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt https://github.com/bitextor/kenlm/archive/master.zip
-pip3 install -r restorative-cleaning/requirements.txt
 #If you are using Ubuntu 14.04 install tensorflow 1.4.1:
 sudo pip install tensorflow==1.4.1
 ~~~~~~
