@@ -99,7 +99,7 @@ Now assume that we plan to train a neural MT (NMT) system with Bitextor for docu
 {
     "__default__" :
     {
-        "gres": "",
+        "gres": ""
     },
 
     "docaling_translate_nmt" :

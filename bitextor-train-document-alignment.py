@@ -12,13 +12,12 @@ import os
 import sys
 import argparse
 import numpy as np
-
-np.random.seed(1058)
-
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.optimizers import SGD
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+np.random.seed(1058)
 
 oparser = argparse.ArgumentParser(
     description="usage: %prog [options]\nTool that processes a .ridx (reverse index) file (either from a file or from"

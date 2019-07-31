@@ -6,7 +6,6 @@ import sys
 import argparse
 import warc
 from dateutil.parser import parse
-import dateutil
 from datetime import datetime
 
 oparser = argparse.ArgumentParser(description="Script that takes a list of file paths from HTTrack crawled folder")
@@ -18,16 +17,15 @@ for fline in reader:
     filepath = fline.strip()
     # sys.stderr.write("filepath=" + filepath + "\n")
     if os.path.isfile(filepath):  # protect again extraneous 'Binary file (standard input) matches' at the end of stream
-        content = None
         url = None
         date = None
         with open(filepath, 'rb') as content_file:
             content = content_file.read()
-        for line in content.split(b"\n"):
-            if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier.*\[.*\],', line):
-                url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
-                date = re.sub(rb'.+by HTTrack Website.+\[.+\][^,]*, ', b'', re.sub(rb' -->.*', b'', line))
-                break
+            for line in content.split(b"\n"):
+                if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier.*\[.*\],', line):
+                    url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
+                    date = re.sub(rb'.+by HTTrack Website.+\[.+\][^,]*, ', b'', re.sub(rb' -->.*', b'', line))
+                    break
         if date is None:
             dvalue = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         else:

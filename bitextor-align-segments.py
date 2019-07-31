@@ -26,23 +26,23 @@ from tempfile import NamedTemporaryFile
 from external_processor import ExternalTextProcessor
 
 
-def run_aligner(filename1, filename2, dic, hunaligndir):
+def run_aligner(filename_s, filename_t, dic, hunaligndir):
     # option -ppthresh=10?
     if dic is None or dic == "":
         if hunaligndir is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "/dev/null", filename1,
-                        filename2]
+            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "/dev/null", filename_s,
+                        filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", "-realign", "/dev/null", filename1, filename2]
+            hunalign = [hunaligndir + "/hunalign", "-realign", "/dev/null", filename_s, filename_t]
     else:
         if hunaligndir is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", dic, filename1, filename2]
+            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", dic, filename_s, filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", dic, filename1, filename2]
+            hunalign = [hunaligndir + "/hunalign", dic, filename_s, filename_t]
 
     p = subprocess.Popen(hunalign, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    for line in p.stdout:
-        yield line
+    for line_o in p.stdout:
+        yield line_o
     return
 
 
@@ -88,8 +88,8 @@ def align(file1, file2, file1orig, file2orig, dic):
 
     except StopIteration:
         prev_hun = ""
-    for line in hunalign_output:
-        hun_line = line.strip()
+    for line_h in hunalign_output:
+        hun_line = line_h.strip()
         last_position1 = filereader1.tell()
         last_position2 = filereader2.tell()
         line1 = filereader1.readline().strip()
