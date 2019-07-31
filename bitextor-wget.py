@@ -6,6 +6,8 @@ import sys
 import warc
 import os
 import requests
+import gzip
+import shutil
 
 def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
@@ -30,14 +32,22 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
         filetypesoption="-A \""+filetypes+"\""
     
     if warcfilename != None:
-        warcoption = "--no-warc-compression --warc-file \""+warcfilename+"\""
+        warcoption = "--warc-file \""+warcfilename+"\""
 
 
     cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(WAIT=waitoption, FILETYPES=filetypesoption, URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, WARC=warcoption)
     # print("cmd", cmd)
     try:
         system_check(cmd)
+        if os.path.isfile(warcfilename+".warc.gz"):
+            with gzip.open(warcfilename+".warc.gz", 'rb') as f_in:
+                with open(warcfilename+".warc", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
     except subprocess.CalledProcessError as grepexc:
+        if os.path.isfile(warcfilename+".warc.gz"):
+            with gzip.open(warcfilename+".warc.gz", 'rb') as f_in:
+                with open(warcfilename+".warc", 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
         os.rename(warcfilename+".warc",warcfilename+".corrupt.warc")
         fr = warc.open(warcfilename+".corrupt.warc")
         fw = warc.open(warcfilename+".warc", "wb")

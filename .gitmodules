@@ -22,11 +22,11 @@
 	path = standoff
 	url = https://github.com/lpla/standoff
 	ignore = dirty
-[submodule "restorative-cleaning"]
-	path = restorative-cleaning
-	url = https://github.com/bitextor/restorative-cleaning
-	ignore = dirty
 [submodule "pdf-extract"]
 	path = pdf-extract
 	url = https://github.com/bitextor/pdf-extract
+	ignore = dirty
+[submodule "bifixer"]
+	path = bifixer
+	url = https://github.com/bitextor/bifixer
 	ignore = dirty

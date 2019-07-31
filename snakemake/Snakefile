@@ -10,6 +10,7 @@ import os
 import os.path
 import socket
 import shutil
+import subprocess
 from tld import get_tld
 from tqdm import tqdm
 from collections import defaultdict
@@ -18,6 +19,7 @@ from pathlib import Path
 from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
 from cerberus import Validator
+
 
 ###########################################################
 # UTILS
@@ -81,7 +83,7 @@ def ValidateArgs(config):
             'temp': {'type': 'string'},
             'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
-            'alcazar': {'type': 'boolean'},
+            'parser': {'type': 'string'},
             'onlyConcat': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
 
@@ -123,7 +125,7 @@ def ValidateArgs(config):
            'bicleaner': {'type': 'string'},
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
-           'restorative': {'type': 'boolean'},
+           'bifixer': {'type': 'boolean'},
            'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
@@ -244,10 +246,10 @@ if "maxlines" in config:
 else:
   MAXLINES=-1
 
-if "alcazar" in config and config["alcazar"]:
-  ALCAZAR = "--alcazar"
+if "parser" in config and config["parser"]:
+  PARSER = "--parser " + config["parser"]
 else:
-  ALCAZAR = ""
+  PARSER = ""
 
 if "profiling" in config and config["profiling"]:
   PROFILING="/usr/bin/time -v"
@@ -444,10 +446,10 @@ else:
   DEFERREDFIELDS=""
   DEFERREDSENTENCES=""
 
-if "restorative" in config and config["restorative"]:
-  RESTORATIVE="restorative"
+if "bifixer" in config and config["bifixer"]:
+  BIFIXER="bifixer"
 else:
-  RESTORATIVE="segclean"
+  BIFIXER="segclean"
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1036,7 +1038,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
@@ -1328,37 +1330,38 @@ rule deferred_documents:
 
 rule deferred_segments:
     input:
-        "{dir}/" + SEGMENTALIGNER + ".segalign.xz",
+        "{dir}/"+"{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
         "{dir}/html5lib_plain_text.xz",
         "{dir}/url.xz",
         "{dir}/deferred_documents.xz"
     output:
-        "{dir}/" + SEGMENTALIGNER + ".deferred.segalign.xz"
+        "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
     
 rule cleansegments:
     input:
-        "{dir}/" + SEGMENTALIGNER + DEFERREDSENTENCES + ".segalign.xz"
+        "{dir}/"+"{segaligner}{deferredsents}.segalign.xz".format(segaligner=SEGMENTALIGNER, deferredsents=DEFERREDSENTENCES)
     output:
-        "{dir}/"  + SEGMENTALIGNER + ".segclean.xz"
+        "{dir}/"+"{segaligner}.segclean.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
 #================================== POST PROCESSING ==================================#
 
 
-rule restorative:
+rule bifixer:
     input:
         "{prefix}.segclean.xz"
     output:
-        "{prefix}.restorative.xz"
+        "{prefix}.bifixer.xz"
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} | xz -T 0 > {output}'
 
 rule bicleaner:
     input:
-        segclean="{prefix}"+".{extension}.xz".format(extension=RESTORATIVE),
+        segclean="{prefix}"+".{extension}.xz".format(extension=BIFIXER),
         model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{prefix}.bicleaner.scores.xz"
