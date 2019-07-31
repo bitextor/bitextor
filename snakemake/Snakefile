@@ -127,6 +127,7 @@ def ValidateArgs(config):
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
            'bifixer': {'type': 'boolean'},
+           'bifixerOptions': {'type': 'string'},
            'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
@@ -451,6 +452,11 @@ if "bifixer" in config and config["bifixer"]:
   BIFIXER="bifixer"
 else:
   BIFIXER="segclean"
+
+if "bifixerOptions" in config:
+    BIFIXEROPTIONS=config["bifixerOptions"]
+else:
+    BIFIXEROPTIONS="--aggressive_dedup"
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1378,7 +1384,7 @@ rule bifixer:
         "{prefix}.bifixer.xz"
     shell:
         # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} {BIFIXEROPTIONS} | xz -T 0 > {output}'
 
 rule bicleaner:
     input:
