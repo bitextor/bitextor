@@ -123,6 +123,7 @@ def ValidateArgs(config):
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
            'bifixer': {'type': 'boolean'},
+           'bifixerOptions': {'type': 'string'},
            'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
@@ -286,6 +287,13 @@ if "maxSizeWARC" in config:
 else:
   MAXWARCSIZE=""
 
+#WARC files
+if "WARCFiles" in config:
+    WARCFILES=config["WARCFiles"]
+else:
+    WARCFILES=[]
+WARCDOMAIN="WARCFILES"
+
 #Tokenisers
 if "LANG1Tokenizer" in config:
   WORDTOK1=config["LANG1Tokenizer"]
@@ -448,6 +456,11 @@ if "bifixer" in config and config["bifixer"]:
 else:
   BIFIXER="segclean"
 
+if "bifixerOptions" in config:
+    BIFIXEROPTIONS=config["bifixerOptions"]
+else:
+    BIFIXEROPTIONS="--aggressive_dedup"
+
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
 def CreateDomainKey2HostMap(hosts):
@@ -484,14 +497,18 @@ def InitConcatLogicLink(domains):
             shell(cmd)
 
 def AddWARCFiles(domains, warcfiles):
-    domains["WARCFILES"] = []
+    domains[WARCDOMAIN] = []
     for wf in warcfiles:
         if os.path.isfile(wf):
-            domains["WARCFILES"].append(wf)
+            domains[WARCDOMAIN].append(wf)
         else:
             print("WARC {path} omitted: file not found".format(path=wf))
     return domains
 
+def InitWARCFilesConcatLogic(domains, warcfiles):
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.xz".format(transient=transient)):
+        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.xz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
+        shell(cmd)
 
 def LoadDomains(file_path):
     domains = set()
@@ -718,8 +735,11 @@ domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 InitConcatLogicLink(domainKey2Hosts)
 
-if "WARCFiles" in config and len(config["WARCFiles"]) != 0:
-    domainKey2Hosts = AddWARCFiles(domainKey2Hosts, config["WARCFiles"])
+if len(WARCFILES) != 0:
+    #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
+    domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
+    #If only one WARC is provided, creates a symbolic link to it 
+    InitWARCFilesConcatLogic(domainKey2Hosts, WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
 
@@ -1021,7 +1041,7 @@ rule wget_download:
 def GetDomainHosts(wildcards):
     output=[]
     for h in domainKey2Hosts[wildcards.target]:
-        if wildcards.target == "WARCFILES": # host is a WARC
+        if wildcards.target == WARCDOMAIN: # host is a WARC
             output.append(h)
         else:
             output.append('{dir}/warc/{host}/{crawler}.warc.xz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
@@ -1374,7 +1394,7 @@ rule bifixer:
         "{prefix}.bifixer.xz"
     shell:
         # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} {BIFIXEROPTIONS} | xz -T 0 > {output}'
 
 rule bicleaner:
     input:
