@@ -133,6 +133,11 @@ transientDir: /home/user/transient
 
 lang1: en
 lang2: fr
+
+LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
+LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
+LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
+LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
 ```
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
@@ -140,11 +145,6 @@ lang2: fr
 There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
 ```yaml
 bitextor: /home/user/bitextor
-
-LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
-LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
-LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
 
 temp: /home/user/transient
 
