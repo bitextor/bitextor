@@ -2,18 +2,14 @@
 # nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
 
 import sys
-import glob
 import gzip
 import lzma
 import tldextract
 import os
 import os.path
-import socket
 import shutil
 import subprocess
-from tld import get_tld
 from tqdm import tqdm
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
@@ -1359,7 +1355,7 @@ rule deferred_segments:
         "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
-    
+
 rule cleansegments:
     input:
         "{dir}/"+"{segaligner}{deferredsents}.segalign.xz".format(segaligner=SEGMENTALIGNER, deferredsents=DEFERREDSENTENCES)
