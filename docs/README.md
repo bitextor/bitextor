@@ -24,7 +24,7 @@ Some additional Python libraries are required. They can be installed automatical
 
 ```
 pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt https://github.com/bitextor/kenlm/archive/master.zip https://github.com/bitextor/python-pdfextract/archive/master.zip
+pip3 install -r bicleaner/requirements.txt https://github.com/bitextor/kenlm/archive/master.zip
 pip3 install -r bifixer/requirements.txt
 ```
 (if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
@@ -151,7 +151,7 @@ temp: /home/user/transient
 maxSizeWARC: 1000
 
 boilerpipeCleaning: true
-alcazar: false
+parser: "modest"
 ```
 * `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
 * `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
@@ -159,7 +159,7 @@ alcazar: false
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled
-* `alcazar`: option that enables the library [alcazar](https://github.com/saintamh/alcazar/) for text extraction from HTML documents; by default `lxml` library is used
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default)
 
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.

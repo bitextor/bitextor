@@ -83,7 +83,7 @@ def ValidateArgs(config):
             'temp': {'type': 'string'},
             'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
-            'alcazar': {'type': 'boolean'},
+            'parser': {'type': 'string'},
             'onlyConcat': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
 
@@ -247,10 +247,10 @@ if "maxlines" in config:
 else:
   MAXLINES=-1
 
-if "alcazar" in config and config["alcazar"]:
-  ALCAZAR = "--alcazar"
+if "parser" in config and config["parser"]:
+  PARSER = "--parser " + config["parser"]
 else:
-  ALCAZAR = ""
+  PARSER = ""
 
 if "profiling" in config and config["profiling"]:
   PROFILING="/usr/bin/time -v"
@@ -1059,7 +1059,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
