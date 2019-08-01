@@ -30,3 +30,7 @@
 	path = bifixer
 	url = https://github.com/bitextor/bifixer
 	ignore = dirty
+[submodule "bleualign-cpp"]
+	path = bleualign-cpp
+	url = https://github.com/bitextor/bleualign-cpp
+	ignore = dirty
