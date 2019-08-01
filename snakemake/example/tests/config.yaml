@@ -24,7 +24,6 @@ httrack: true
 hosts: ["www.adfasdffdsaasdf.com"]
 langstat: /home/bitextor/permanent/langstat/langstats.all.gz
 langstatThreshold: 50000000
-langstatExcludeDomains: /home/bitextor/permanent/bitextor/snakemake/exclude-domains
 # CREEPY CRAWLER SPECIFIC OPTIONS ##
 ##Crawling time limit in seconds (s)
 crawlTimeLimit: 30s
@@ -41,10 +40,10 @@ crawlerConnectionTimeout: 10
 # DICTIONARIES
 dic: /home/bitextor/permanent/en-fr.dic
 ##Corpus for bilingual dictionaries and-or SMT/NMT training, if dictionary or models not given, respectively.
-initCorpusTrainPrefix: ""
+initCorpusTrainPrefix: [""]
 #Corpus for SMT training
-initCorpusDevPrefix: ""
-initCorpusTestPrefix: ""
+initCorpusDevPrefix: [""]
+initCorpusTestPrefix: [""]
 ##If enabled, boilerpipe is filtered from HTML's
 boilerpipeCleaning: true
 
@@ -85,16 +84,24 @@ mgiza: /home/bitextor/permanent/bitextor/mgiza
 bicleaner: /home/bitextor/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ##Bicleaner model training corpus (note that option initCorpusTrainPrefix also needs to be defined with a different corpus to train probabilistic dictionaries)
-bicleanerCorpusTrainingPrefix: '/tmp/persistent/RF.en-fr'
+bicleanerCorpusTrainingPrefix: ['/tmp/persistent/RF.en-fr']
 ##Hunalign score
 ##Minimum reliability score for a pair of aligned segments to be considered acceptable (by default, only pairs of segments with negative score are discarded)
-minquality: 0
+hunalignThreshold: 0
 ##Maximum number of segments which can be accepted as wrong alignments; if this number is reached, the whole file pair is discarded
 maxlines: 5
+bleualign: true
+bleuAlignThreshold: 0.1
 
 
 # OUTPUT
 #elrc will enable ELRC quality metrics generation; tmx will enable TMX generation; deduped will generate a TXM file without repeated translation units
+bifixer: true
+
 elrc: true
+
 tmx: true
+
 deduped: false
+
+deferred: true
