@@ -95,12 +95,12 @@ def ValidateArgs(config):
            'WARCFiles': {'type': 'list'},
 
            'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'type': 'string'},
-           'LANG2Tokenizer': {'type': 'string'},
+           'LANG1Tokenizer': {'required': True, 'type': 'string'},
+           'LANG2Tokenizer': {'required': True, 'type': 'string'},
            'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'type': 'string'},
-           'LANG2SentenceSplitter': {'type': 'string'},
+           'LANG1SentenceSplitter': {'required': True, 'type': 'string'},
+           'LANG2SentenceSplitter': {'required': True, 'type': 'string'},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
