@@ -185,7 +185,6 @@ hostsFile: /home/user/hosts.gz
 
 langstat: /home/user/langstat/langstats.all.gz
 langstatThreshold: 50
-langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 ```
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
 * `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
@@ -313,7 +312,7 @@ bicleanerThreshold: 0.6
 If the bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
-bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
+bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 * `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
