@@ -189,7 +189,7 @@ langstatThreshold: 50
 langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 ```
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
-* `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
+* `hostsFile`: a path to a gzipped file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
 * `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
 ```
 0-0hamster.livejournal.com      el      17
@@ -332,13 +332,13 @@ tmx: true
 
 deduped: false
 
-deferred: true
+deferredCrawling: true
 ```
 * `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal. When using bifixer=true, it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [bifixer](https://github.com/bitextor/bifixer) repository. 
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/lpla/standoff)
+* `deferredCrawling`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/lpla/standoff)
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 
