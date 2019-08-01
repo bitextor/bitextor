@@ -50,8 +50,8 @@ def run_analyse(morph, text):
     panalyse = subprocess.Popen(morph, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     morph_stdout, error = panalyse.communicate(input=text)
     if len(error.strip()) == 0:
-        tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout))  # Not a good tokenisation
-        return tokenized_text
+        morphemes_tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout))
+        return morphemes_tokenized_text
     else:
         return text
 
