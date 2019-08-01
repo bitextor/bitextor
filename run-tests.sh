@@ -22,10 +22,6 @@ while getopts "hw:" i; do
       WORK=$OPTARG
       break
       ;;
-    --)
-      shift
-      break
-      ;;
      *)
       exit_program "$(basename "$0")"
       break

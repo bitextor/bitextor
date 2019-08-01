@@ -31,11 +31,11 @@ CLUSTERCONFIG=""
 
 if [[ $(command -v snakemake | wc -l) -eq 0 ]]; then
   >&2 echo "Bitextor cannot be run if the tool snakemake is not installed in the system";
-  exit -1
+  exit 1
 fi
 
 ARGS=$(getopt -o hs:j:c:g: -- "$@")
-eval set -- ${ARGS}
+eval set -- "${ARGS}"
 for i
 do
   case "$i" in
@@ -60,7 +60,7 @@ do
       shift
       ;;
     -h | --help)
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
       ;;
     --)
       shift
@@ -71,7 +71,7 @@ done
 
 if [[ "$SNAKEFILE" == "" ]]; then
   >&2 echo "Argument -s <SNAKEFILE> is mandatory. Please, specify a snakemake configuration file.";
-  exit -1
+  exit 1
 fi
 
-snakemake --snakefile "$(dirname $0)/snakemake/Snakefile" --configfile ${SNAKEFILE} -j ${NUMJOBS} ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname $0)"
+snakemake --snakefile "$(dirname "$0")/snakemake/Snakefile" --configfile "${SNAKEFILE}" -j "${NUMJOBS}" "${CLUSTERCOMMAND}" "${CLUSTERCONFIG}" --config bitextor="$(dirname "$0")"

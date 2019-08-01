@@ -43,7 +43,8 @@ def base_alphabet_to_10(letters):
 
 oparser = argparse.ArgumentParser(
     description="split - split a file into pieces\n\n"
-                "Output pieces of FILE to PREFIXaa, PREFIXab, ...; default size is 1000 lines, and default PREFIX is 'x'.\n"
+                "Output pieces of FILE to PREFIXaa, PREFIXab, ...; "
+                "default size is 1000 lines, and default PREFIX is 'x'.\n"
                 "With no FILE, or when FILE is -, read standard input.", formatter_class=RawTextHelpFormatter)
 oparser.add_argument('input', metavar='FILE', help='input WARC', nargs='?', default=sys.stdin)
 oparser.add_argument('prefix', metavar='PREFIX', help='prefix of the file names', nargs='?', default="x")
