@@ -95,12 +95,15 @@ def ValidateArgs(config):
            'WARCFiles': {'type': 'list'},
 
            'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'type': 'string'},
-           'LANG2Tokenizer': {'type': 'string'},
+           'LANG1Tokenizer': {'required': True, 'type': 'string'},
+           'LANG2Tokenizer': {'required': True, 'type': 'string'},
            'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'type': 'string'},
-           'LANG2SentenceSplitter': {'type': 'string'},
+           'LANG1SentenceSplitter': {'required': True, 'type': 'string'},
+           'LANG2SentenceSplitter': {'required': True, 'type': 'string'},
+
+           'LANG1MorphologicalAnalyser': {'type': 'string'},
+           'LANG2MorphologicalAnalyser':  {'type': 'string'},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
@@ -188,6 +191,7 @@ def ValidateArgs(config):
         else:
             schema['dic']['required']=True
             if "dic" in config and not os.path.isfile(config["dic"]):
+                sys.stderr.write("WARNING: dictionary {dic} was not found. Provide correct path to the dictionary or specify initCorpusTrainPrefix\n".format(dic=config["dic"]))
                 schema['initCorpusTrainPrefix']['required']=True
     else:
         schema['dic']['required']=True
@@ -306,6 +310,18 @@ if "LANG1SentenceSplitter" in config:
 
 if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
+
+if "LANG1MorphologicalAnalyser" in config:
+    MORPHTOK1="--morphanalyser_sl " + "\"" + str(config["LANG1MorphologicalAnalyser"]) + "\""
+else:
+    MORPHTOK1=""
+
+if "LANG2MorphologicalAnalyser" in config:
+    MORPHTOK2="--morphanalyser_tl " + "\"" + str(config["LANG2MorphologicalAnalyser"]) + "\""
+else:
+    MORPHTOK2=""
+
+
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -1086,7 +1102,7 @@ rule lettr2idx:
     output:
         '{dir}/idx.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" {MORPHTOK1} {MORTHTOK2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
 rule idx2ridx_l1tol2:
     input:
@@ -1332,7 +1348,7 @@ rule alignsegments_hunalign:
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
