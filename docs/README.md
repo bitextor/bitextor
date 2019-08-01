@@ -155,7 +155,7 @@ LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q
 LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
 LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
 ```
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 * `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
@@ -199,7 +199,7 @@ langstatThreshold: 50
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
-In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of xz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts` and/or `langstat`. 
+In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of xz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
 ```yaml
 hosts: ["www.elisabethtea.com", "vade-antea.fr"]
 WARCFiles: ["/home/user/warc1.warc.xz", "/home/user/warc2.warc.xz"]
@@ -347,11 +347,11 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 1. **Crawling**: documents are downloaded from the specified websites
 2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
 3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
-  - one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
-  - another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+    - one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
+    - another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
 4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
-  - one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
-  - another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
+    - one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
+    - another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
 5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quality metrics
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:

@@ -188,6 +188,7 @@ def ValidateArgs(config):
         else:
             schema['dic']['required']=True
             if "dic" in config and not os.path.isfile(config["dic"]):
+                sys.stderr.write("WARNING: dictionary {dic} was not found. Provide correct path to the dictionary or specify initCorpusTrainPrefix\n".format(dic=config["dic"]))
                 schema['initCorpusTrainPrefix']['required']=True
     else:
         schema['dic']['required']=True
