@@ -128,7 +128,7 @@ def ValidateArgs(config):
 
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
-           'hostPath': {'type': 'string'},
+           'hostsFile': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
            'excludeHostsFile': {'type': 'string'},
            'linkedHosts': {'type': 'list'},
@@ -655,11 +655,11 @@ else:
         hosts = hosts.union(newHosts)
         #sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
 
-    if "hostPath" in config:
-        path = config["hostPath"]
+    if "hostsFile" in config:
+        path = config["hostsFile"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
-            #sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
+            #sys.stderr.write("#hostsFile=" + str(len(newHosts)) + "\n")
 
         hosts = hosts.union(newHosts)
 
@@ -674,7 +674,7 @@ else:
         ExcludeHosts(hosts, excludeHosts)
 
     # if (len(hosts) == 0):
-    #     print("No hosts found. Need at least one of hosts, langstat, hostPath")
+    #     print("No hosts found. Need at least one of hosts, langstat, hostsFile")
     #     exit()
 
     with gzip.open(permanent + "/hosts.gz", 'wt') as f:

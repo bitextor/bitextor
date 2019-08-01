@@ -162,15 +162,18 @@ parser: "modest"
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default)
 
 ### Variables defining data sources
-The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
+The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
 hosts: ["www.elisabethtea.com","vade-antea.fr"]
+
+hostsFile: /home/user/hosts.gz
 
 langstat: /home/user/langstat/langstats.all.gz
 langstatThreshold: 50
 langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 ```
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
+* `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
 * `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
 ```
 0-0hamster.livejournal.com      el      17
@@ -180,6 +183,12 @@ langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 0-0hamster.livejournal.com      nn      29
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
+
+In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of xz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts` and/or `langstat`. 
+```yaml
+hosts: ["www.elisabethtea.com", "vade-antea.fr"]
+WARCFiles: ["/home/user/warc1.warc.xz", "/home/user/warc2.warc.xz"]
+```
 
 ### Variables for crawling configuration
 Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
@@ -309,7 +318,7 @@ deduped: false
 
 deferred: true
 ```
-* `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal 
+* `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal. When using bifixer=true, it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [bifixer](https://github.com/bitextor/bifixer) repository. 
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
