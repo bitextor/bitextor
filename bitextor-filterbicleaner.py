@@ -4,7 +4,7 @@
 # lower than a given threshold are discarded (also those unaligned segments are discarded)
 # 2. If, for a same document pair, a worng-alignment threshold is reached, the whole document pair is discarded
 #
-# Formato final del documento:
+# Document final format:
 # url1    url2    text1    text2
 #
 

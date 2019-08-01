@@ -12,10 +12,7 @@ import argparse
 import time
 import locale
 import re
-from sets import Set
 
-reload(sys)
-sys.setdefaultencoding("UTF-8")
 segdictotherdata = {}
 
 
@@ -23,16 +20,14 @@ def print_tu(urlstring1, urlstring2, restofdata):
     numid = 0
     for segid in restofdata.keys():
         numid += 1
-        urls1 = Set(urlstring1[segid])
-        urls2 = Set(urlstring2[segid])
+        urls1 = set(urlstring1[segid])
+        urls2 = set(urlstring2[segid])
         fieldsdict = restofdata[segid]
 
         print("   <tu tuid=\"" + str(numid) + "\" datatype=\"Text\">")
         infoTag = []
         if 'hunalign' in fieldsdict and fieldsdict['hunalign'] != "":
             print("    <prop type=\"score-aligner\">" + fieldsdict['hunalign'] + "</prop>")
-        if 'zipporah' in fieldsdict and fieldsdict['zipporah'] != "":
-            print("    <prop type=\"score-zipporah\">" + fieldsdict['zipporah'] + "</prop>")
         if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
             print("    <prop type=\"score-bicleaner\">" + fieldsdict['bicleaner'] + "</prop>")
         if 'numTokensSL' in fieldsdict and fieldsdict['numTokensSL'] != "" and 'numTokensTL' in fieldsdict and \
@@ -55,7 +50,7 @@ def print_tu(urlstring1, urlstring2, restofdata):
             print("     <prop type=\"source-document\">" + url.replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                                                                   "&gt;").replace(
                 "\"", "&quot;").replace("'", "&apos;") + "</prop>")
-        print("     <seg>" + fieldsdict['seg1'].decode("utf-8").replace("&", "&amp;").replace("<", "&lt;").replace(">",
+        print("     <seg>" + fieldsdict['seg1'].replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                                                                    "&gt;").replace(
             "\"", "&quot;").replace("'", "&apos;") + "</seg>")
         if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"]) < int(
@@ -69,7 +64,7 @@ def print_tu(urlstring1, urlstring2, restofdata):
             print("     <prop type=\"source-document\">" + url.replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                                                                   "&gt;").replace(
                 "\"", "&quot;").replace("'", "&apos;") + "</prop>")
-        print("     <seg>" + fieldsdict["seg2"].decode("utf-8").replace("&", "&amp;").replace("<", "&lt;").replace(">",
+        print("     <seg>" + fieldsdict["seg2"].replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                                                                    "&gt;").replace(
             "\"", "&quot;").replace("'", "&apos;") + "</seg>")
         if "numTokensTL" in fieldsdict and fieldsdict["numTokensTL"] != "" and int(fieldsdict["numTokensTL"]) < int(
@@ -99,8 +94,8 @@ oparser.add_argument("-m", "--max-length", help="Maximum length ratio between tw
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,"
-                          "zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL",
-                     default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL")
+                          "bicleaner,lengthratio,numTokensSL,numTokensTL",
+                     default="url1,url2,seg1,seg2,hunalign,bicleaner,lengthratio,numTokensSL,numTokensTL")
 options = oparser.parse_args()
 
 segdicturls1 = {}
@@ -127,8 +122,8 @@ print("   o-encoding=\"utf-8\">")
 print(" </header>")
 print(" <body>")
 
-urls1 = Set()
-urls2 = Set()
+urls1 = set()
+urls2 = set()
 for line in reader:
     fields = line.split("\t")
     fields[-1] = fields[-1].strip()
@@ -137,11 +132,11 @@ for line in reader:
     for field, column in zip(fields, columns):
         fieldsdict[column] = field
 
-    curid = fieldsdict['seg1'].encode("utf-8") + "\t" + fieldsdict['seg2'].encode("utf-8")
+    curid = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
     url1 = fieldsdict['url1']
     url2 = fieldsdict['url2']
     if curid not in segdicturls1:
-        tmp = Set()
+        tmp = set()
         tmp.add(url1)
         segdicturls1[curid] = tmp
     else:
@@ -150,7 +145,7 @@ for line in reader:
         segdicturls1[curid] = tmp
 
     if curid not in segdicturls2:
-        tmp = Set()
+        tmp = set()
         tmp.add(url2)
         segdicturls2[curid] = tmp
     else:

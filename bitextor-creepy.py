@@ -97,8 +97,8 @@ class Crawler(object):
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
 
-    def set_timeout(self, time):
-        self.timeout = time
+    def set_timeout(self, setted_time):
+        self.timeout = setted_time
 
     def add_url_filter(self, uf):
         self.url_filters.append(uf)
@@ -320,7 +320,7 @@ class Crawler(object):
                             else:
                                 conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
-                            if self.useragent == None:
+                            if self.useragent is None:
                                 conn.request('GET', quote(path, '?=&%/'))
                             else:
                                 conn.request('GET', quote(path, '?=&%/'), headers={'User-Agent': self.useragent})
@@ -340,7 +340,7 @@ class Crawler(object):
                             try:
                                 if not re.search(self.content_type_filter,
                                                  res.getheader('Content-Type')):
-                                    #sys.stderr.write(url + " discarded: wrong file type\n")
+                                    # sys.stderr.write(url + " discarded: wrong file type\n")
                                     conn.close()
                                     time.sleep(self.delay)
                                     self.delay_lock.release()
@@ -455,9 +455,10 @@ if '//' not in options.URL:
 robots = requests.get(options.URL+"/robots.txt").text.split("\n")
 for line in robots:
     if "Crawl-delay" in line:
-        crawldelay=int(line.split(':')[1].strip())
+        crawldelay = int(line.split(':')[1].strip())
         if options.delay is None or crawldelay > int(options.delay):
             options.delay = str(crawldelay)
+
 
 class MyCrawler(Crawler):
     def process_document(self, doc):

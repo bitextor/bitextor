@@ -17,8 +17,8 @@ oparser.add_argument("-f", "--filtering", help="Filter lines according to ELRC r
                      action="store_true", dest="isFiltering", default=False)
 oparser.add_argument("-c", "--columns",
                      help="Name of columns of the input tab separated file split by comma. Default: url1,url2,seg1,"
-                          "seg2,hunalign,zipporah,bicleaner",
-                     default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner")
+                          "seg2,hunalign,bicleaner",
+                     default="url1,url2,seg1,seg2,hunalign,bicleaner")
 
 options = oparser.parse_args()
 
@@ -51,8 +51,6 @@ for i in reader:
         fieldsdict["numTokensSL"] = str(numTokensSL)
         fieldsdict["numTokensTL"] = str(numTokensTL)
         if options.isFiltering:
-            if "zipporah" in fieldsdict:
-                fieldsdict["zipporah"] = str(round(float(fieldsdict["zipporah"]), 4))
             if "bicleaner" in fieldsdict and fieldsdict["bicleaner"].strip() != '':
                 fieldsdict["bicleaner"] = str(round(float(fieldsdict["bicleaner"]), 4))
             if int(fieldsdict["numTokensSL"]) >= 200 or int(fieldsdict["numTokensTL"]) >= 200 or fieldsdict[

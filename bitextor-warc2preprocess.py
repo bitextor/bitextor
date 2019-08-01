@@ -205,12 +205,14 @@ for record in f:
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
     # print("url", num, url, pageSize)
+
+    # Ignore robots.txt when processing records
     if url[-11:] == "/robots.txt":
         continue
-
     payload = record.content_stream().read()
     payloads = []
 
+    # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
             payloads = pdfextract(payload, extractor)
@@ -273,7 +275,7 @@ for record in f:
                     logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
                     pass
                 else:
-                    # If enabled get text with Alcazar library
+                    # get text with Alcazar library
                     if options.parser == "alcazar":
                         logging.info(url + ": Getting text with Alcazar")
                         btext = alcazar.bodytext.parse_article(deboiled)
@@ -281,14 +283,16 @@ for record in f:
                             plaintext = btext.body_text
                         else:
                             plaintext = ""
-                    # Otherwise use beautifulsoup
+                    # or get text with beautifulsoup
                     elif options.parser == "bs4":
+                        logging.info(url + ": Getting text with BeautifulSoup")
                         soup = BeautifulSoup(deboiled, "lxml")
                         for script in soup(["script", "style", "img"]):
                             script.extract()  # rip it out
                         plaintext = soup.get_text()
+                    # or get text with 'modest' library
                     else:
-                        logging.info(url + ": Getting text with BeautifulSoup")
+                        logging.info(url + ": Getting text with modest (selectolax)")
                         try:
                             tree = HTMLParser(deboiled)
                         except:

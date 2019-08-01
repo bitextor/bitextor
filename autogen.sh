@@ -20,10 +20,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-dir=`echo "$0" | sed 's,[^/]*$,,'`
+dir=$(echo "$0" | sed 's,[^/]*$,,')
 test "x${dir}" = "x" && dir='.'
 
-if test "x`cd "${dir}" 2>/dev/null && pwd`" != "x`pwd`"
+if test "x$(cd "${dir}" 2>/dev/null && pwd)" != "x$(pwd)"
 then
     echo "This script must be executed directly from the source directory."
     exit 1
