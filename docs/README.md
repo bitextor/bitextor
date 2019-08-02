@@ -20,6 +20,12 @@ docker pull paracrawl/bitextor
 docker run -it paracrawl/bitextor
 ```
 
+If you have `snap` package manager in your system, just install Docker using:
+```
+sudo snap install docker
+```
+
+
 Bitextor folder is located at `/opt/bitextor`, with all dependencies and compilations fulfilled.
 
 ## Manual installation
@@ -55,7 +61,7 @@ To compile all bitextor submodules you will first need to run the script `config
 
 `./autogen.sh && make`
 
-### Some known installation issues
+#### Some known installation issues
 
 In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in `requirements.txt`). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
 ```bash
