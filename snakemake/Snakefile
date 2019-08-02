@@ -1019,15 +1019,15 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.gz'
     priority: 10
     shell:
         #'echo {params.url}; '
-        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}'
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -1036,21 +1036,19 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}; '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME > {output}; '
         'rm -rf $DIRNAME;'
 
 rule wget_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.gz'
     params:
         url="http://{target}"
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
-        'WGETWARCPATH=$DIRNAME/output;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc $WGETWARCPATH; '
-        'cat $WGETWARCPATH.warc | nice ionice -c 3 xz -c -T 0 > {output};'
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}; '
         'rm -rf $DIRNAME;'
 
 
@@ -1060,26 +1058,26 @@ def GetDomainHosts(wildcards):
         if wildcards.target == WARCDOMAIN: # host is a WARC
             output.append(h)
         else:
-            output.append('{dir}/warc/{host}/{crawler}.warc.xz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
+            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
     return output
 
 rule concat_subdomains:
     input:
         GetDomainHosts
     output:
-        "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
+        "{dir}".format(dir=transient)+"/{target}/concat.warc.gz"
     priority: 9
     run:
         assert(len(input))
         if len(input) == 1:
             cmd = "ln -sfn {input} {output}; "
         else:
-            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
+            cmd = 'cat {input} > {output}; '
         shell(cmd)
 
 rule warc2preprocess:
     input:
-        '{dir}/concat.warc.xz'
+        '{dir}/concat.warc.gz'
     output:
         deboil='{dir}/deboilerplate_html.xz',
         encoding='{dir}/encoding.xz',

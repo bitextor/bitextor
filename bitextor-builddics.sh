@@ -23,7 +23,8 @@ fi
 
 ARGS=$(getopt "ht:" "$@")
 
-set -- "$ARGS"
+# shellcheck disable=SC2086
+set -- $ARGS
 for i
 do
   case "$i" in

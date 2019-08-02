@@ -3,11 +3,10 @@
 import argparse
 import subprocess
 import sys
-import warc
 import os
 import requests
-import gzip
-import shutil
+from warcio.archiveiterator import ArchiveIterator
+from warcio.warcwriter import WARCWriter
 
 
 def system_check(cmd):
@@ -33,8 +32,9 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
         filetypesoption = "-A \"" + filetypes + "\""
 
     warcoption = ""
+    warcfilebasename = warcfilename[0:warcfilename.find(".warc.gz")]
     if warcfilename is not None:
-        warcoption = "--warc-file \"" + warcfilename + "\""
+        warcoption = "--warc-file \"" + warcfilebasename + "\""
 
     cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
@@ -45,24 +45,22 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     # print("cmd", cmd)
     try:
         system_check(cmd)
-        if os.path.isfile(warcfilename + ".warc.gz"):
-            with gzip.open(warcfilename + ".warc.gz", 'rb') as f_in:
-                with open(warcfilename + ".warc", 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+        if not os.path.isfile(warcfilebasename + ".warc.gz"):
+            with open(warcfilebasename + ".warc", 'rb') as f_in:
+                with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+                    writer = WARCWriter(f_out, gzip=True)
+                    for record in ArchiveIterator(f_in):
+                        writer.write_record(record)
     except subprocess.CalledProcessError as grepexc:
-        if os.path.isfile(warcfilename + ".warc.gz"):
-            with gzip.open(warcfilename + ".warc.gz", 'rb') as f_in:
-                with open(warcfilename + ".warc", 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-        os.rename(warcfilename + ".warc", warcfilename + ".corrupt.warc")
-        fr = warc.open(warcfilename + ".corrupt.warc")
-        fw = warc.open(warcfilename + ".warc", "wb")
-        try:
-            for record in fr:
-                fw.write_record(record)
-            fw.close()
-        except (IOError, OSError):
-            fw.close()
+        corruptedwarcfile = warcfilebasename + ".warc.gz"
+        if not os.path.isfile(warcfilebasename + ".warc.gz"):
+            corruptedwarcfile = warcfilebasename + ".warc"
+        with open(corruptedwarcfile, 'rb') as f_in:
+            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+                writer = WARCWriter(f_out, gzip=True)
+                for record in ArchiveIterator(f_in):
+                    writer.write_record(record)
+                # try except here
 
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
 
