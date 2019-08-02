@@ -139,7 +139,7 @@ translated_index_text2 = {}
 load_dictionaries(options.dictionary, options.lang1, options.lang2, dic)
 
 if options.idx is None:
-    reader = sys.stdin;
+    reader = sys.stdin
 else:
     reader = open(options.idx, "r")
 
@@ -165,7 +165,7 @@ for i in index_text1:
     for j in index_text2:
         validpair = True
         if options.lett is not None:
-            rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[j])
+            rx = re.match('(https?://)([^/]+)([^?]*)(\?.*)?', documents[j])
             jhost = rx.group(2)
             if jhost != ihost:
                 validpair = False

@@ -11,20 +11,25 @@
 3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
 ## Docker installation
+
+If you want to easily install Bitextor, just use Docker commands:
+
+```
+docker pull paracrawl/bitextor
+
+docker run -it paracrawl/bitextor
+```
+
 If you have `snap` package manager in your system, just install Docker using:
 ```
 sudo snap install docker
 ```
 
-Then, you only have to install `bitextor` using:
-```
-docker pull paracrawl/bitextor
-docker run -it paracrawl/bitextor
-```
 
-Bitextor folder is located at `/opt/bitextor`
+Bitextor folder is located at `/opt/bitextor`, with all dependencies and compilations fulfilled.
 
-## Manual install
+## Manual installation
+
 ### Dependencies
 
 Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
@@ -114,7 +119,7 @@ Now assume that we plan to train a neural MT (NMT) system with Bitextor for docu
 {
     "__default__" :
     {
-        "gres": "",
+        "gres": ""
     },
 
     "docaling_translate_nmt" :
@@ -143,23 +148,28 @@ Bitextor uses a configuration file to define the variables required by the pipel
 ### Basic variables
 There are a few variables that are mandatory for running bitextor, independently of the task to be carried out:
 ```yaml
+bitextor: /home/user/bitextor
+
 permanentDir: /home/user/permanent/bitextor-output
 transientDir: /home/user/transient
 
 lang1: en
 lang2: fr
-```
-* `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
-* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
-
-There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
-```yaml
-bitextor: /home/user/bitextor
 
 LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
 LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
 LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
 LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+```
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
+* `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
+* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
+* `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above 
+* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above
+
+
+There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
+```yaml
 
 temp: /home/user/transient
 
@@ -167,25 +177,28 @@ maxSizeWARC: 1000
 
 boilerpipeCleaning: true
 parser: "modest"
+
+LANG1MorphologicalAnalyser: lt-proc lang1.bin 
+LANG2MorphologicalAnalyser: lt-proc lang2.bin
+
 ```
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled); if it is not specified it is assumed that it is the director where the script `bitextor.sh` is
-* `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. If no tokenizer is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) toolkit is used.
-* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. If no sentence splitter is set the one provided by the [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) toolkit is used.
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default)
-
+* `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: path to the Apertium's morphological analyser for `lang1` and `lang2`. If specified, this analyser will be used for dictionary-based document alignment, as well as hunalign segment alignment 
 ### Variables defining data sources
-The next set of options refer to the source from which data will be crawled. Two options can be specified for crawling: one is to specify a list of websites to be crawled, while the other one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
+The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
 hosts: ["www.elisabethtea.com","vade-antea.fr"]
 
+hostsFile: /home/user/hosts.gz
+
 langstat: /home/user/langstat/langstats.all.gz
 langstatThreshold: 50
-langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 ```
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
+* `hostsFile`: a path to a gzipped file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
 * `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
 ```
 0-0hamster.livejournal.com      el      17
@@ -195,6 +208,12 @@ langstatExcludeDomains: /home/user/bitextor/snakemake/exclude-domains
 0-0hamster.livejournal.com      nn      29
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
+
+In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of xz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
+```yaml
+hosts: ["www.elisabethtea.com", "vade-antea.fr"]
+WARCFiles: ["/home/user/warc1.warc.xz", "/home/user/warc2.warc.xz"]
+```
 
 ### Variables for crawling configuration
 Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
@@ -304,7 +323,7 @@ bicleanerThreshold: 0.6
 If the bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
-bicleanerCorpusTrainingPrefix: '/home/user/RF.en-fr'
+bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 * `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
@@ -322,13 +341,13 @@ tmx: true
 
 deduped: false
 
-deferred: true
+deferredCrawling: true
 ```
-* `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal 
+* `bifixer`: if this option is set, [bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal. When using bifixer=true, it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [bifixer](https://github.com/bitextor/bifixer) repository. 
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/lpla/standoff)
+* `deferredCrawling`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/lpla/standoff)
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 
@@ -338,11 +357,11 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 1. **Crawling**: documents are downloaded from the specified websites
 2. **Pre-processing**: downloaded documents are normalized, boilerplates are removed, plain text is extracted, and language is identified
 3. **Document alignment**: parallel documents are identified. Two strategies are implemented for this stage:
-  - one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
-  - another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
+    - one using bilingual lexica and a collection of features extracted from HTML; a linear regressor combines these resources to produce a score in [0,1], and
+    - another using machine translation and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) strategy to score document pairs
 4. **Segment alignment**: each pair of documents is processed to identify parallel segments. Again, two strategies are implemented:
-  - one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
-  - another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
+    - one using the tool [Hunalign](http://mokk.bme.hu/resources/hunalign/), and
+    - another using [Bleualign](https://github.com/rsennrich/Bleualign), that can only be used if the MT-based-document-alignment strategy is used (machine translations are used for both methods)
 5. **Post-processing**: final steps that allow to clean the parallel corpus obtained using the tool [bicleaner](https://github.com/bitextor/bicleaner), deduplicates translation units, and computes additional quality metrics
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:

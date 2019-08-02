@@ -33,5 +33,6 @@ stamp-h1
 utils/Makefile
 utils/Makefile.in
 .snakemake/
+.idea/
 __pycache__/
 utils/__pycache__/

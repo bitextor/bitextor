@@ -3,11 +3,11 @@
 import argparse
 import subprocess
 import sys
-import warc
 import os
 import requests
-import gzip
-import shutil
+from warcio.archiveiterator import ArchiveIterator
+from warcio.warcwriter import WARCWriter
+
 
 def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
@@ -15,51 +15,62 @@ def system_check(cmd):
 
     subprocess.check_call(cmd, shell=True)
 
+def check_wget_compression(cmd):
+    try:
+        subprocess.check_call(cmd, shell=True)
+        return True
+    except:
+        return False
 
 def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     cmd = ""
     if timeLimit:
         cmd += "timeout {} ".format(timeLimit)
-    waitoption=""
-    if wait != None:
-        waitoption="--wait "+wait
-    agentoption=""
-    if agent != None:
-        agentoption="--user-agent \""+agent+"\""
-    
-    filetypesoption=""
-    if filetypes != None:
-        filetypesoption="-A \""+filetypes+"\""
-    
-    if warcfilename != None:
-        warcoption = "--warc-file \""+warcfilename+"\""
+    waitoption = ""
+    if wait is not None:
+        waitoption = "--wait " + wait
+    agentoption = ""
+    if agent is not None:
+        agentoption = "--user-agent \"" + agent + "\""
+
+    filetypesoption = ""
+    if filetypes is not None:
+        filetypesoption = "-A \"" + filetypes + "\""
+
+    warcoption = ""
+    warcfilebasename = warcfilename[0:warcfilename.find(".warc.gz")]
+    if warcfilename is not None:
+        warcoption = "--warc-file \"" + warcfilebasename + "\""
 
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(WAIT=waitoption, FILETYPES=filetypesoption, URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, WARC=warcoption)
+    if check_wget_compression("wget --help | grep 'no-warc-compression'"):
+        warcoption += " --no-warc-compression"
+
+    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
+                                                                                                 FILETYPES=filetypesoption,
+                                                                                                 URL=url,
+                                                                                                 DOWNLOAD_PATH=outPath,
+                                                                                                 AGENT=agentoption,
+                                                                                                 WARC=warcoption)
     # print("cmd", cmd)
     try:
         system_check(cmd)
-        if os.path.isfile(warcfilename+".warc.gz"):
-            with gzip.open(warcfilename+".warc.gz", 'rb') as f_in:
-                with open(warcfilename+".warc", 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+        with open(warcfilebasename + ".warc", 'rb') as f_in:
+            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+                writer = WARCWriter(f_out, gzip=True)
+                for record in ArchiveIterator(f_in):
+                    writer.write_record(record)
     except subprocess.CalledProcessError as grepexc:
-        if os.path.isfile(warcfilename+".warc.gz"):
-            with gzip.open(warcfilename+".warc.gz", 'rb') as f_in:
-                with open(warcfilename+".warc", 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-        os.rename(warcfilename+".warc",warcfilename+".corrupt.warc")
-        fr = warc.open(warcfilename+".corrupt.warc")
-        fw = warc.open(warcfilename+".warc", "wb")
-        try:
-            for record in fr:
-                fw.write_record(record)
-            fw.close()
-        except (IOError, OSError):
-            fw.close()
+        with open(warcfilebasename + ".warc", 'rb') as f_in:
+            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+                writer = WARCWriter(f_out, gzip=True)
+                for record in ArchiveIterator(f_in):
+                    writer.write_record(record)
+                # try except here
 
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
 
+    system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -74,7 +85,8 @@ if __name__ == "__main__":
     parser.add_argument('-a', dest='agent',
                         help='User agent to be included in the crawler requests.', required=False, default=None)
     parser.add_argument('-f', dest='filetypes',
-                        help='File types to be downloaded, comma separated. For example, "html,pdf"', required=False, default=None)
+                        help='File types to be downloaded, comma separated. For example, "html,pdf"', required=False,
+                        default=None)
     parser.add_argument('--warc', dest='warcfilename',
                         help='Write output to a WARC file', required=False, default=None)
     parser.add_argument('--wait', dest='wait',
@@ -85,10 +97,10 @@ if __name__ == "__main__":
     print("Starting...")
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
-    robots = requests.get(args.url+"/robots.txt").text.split("\n")
+    robots = requests.get(args.url + "/robots.txt").text.split("\n")
     for line in robots:
         if "Crawl-delay" in line:
-            crawldelay=int(line.split(':')[1].strip())
+            crawldelay = int(line.split(':')[1].strip())
             if args.wait is None or crawldelay > int(args.wait):
                 args.wait = str(crawldelay)
     run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)

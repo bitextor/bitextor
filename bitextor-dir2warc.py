@@ -4,30 +4,31 @@ import os.path
 import re
 import sys
 import argparse
-import warc
+from warcio.warcwriter import WARCWriter
+from warcio.statusandheaders import StatusAndHeaders
 from dateutil.parser import parse
-import dateutil
 from datetime import datetime
 
 oparser = argparse.ArgumentParser(description="Script that takes a list of file paths from HTTrack crawled folder")
 options = oparser.parse_args()
 
 reader = sys.stdin
+writer = WARCWriter(sys.stdout.buffer, gzip=True)
+http_headers = StatusAndHeaders('200 OK', [], protocol='HTTP/1.0')
 
 for fline in reader:
     filepath = fline.strip()
     # sys.stderr.write("filepath=" + filepath + "\n")
     if os.path.isfile(filepath):  # protect again extraneous 'Binary file (standard input) matches' at the end of stream
-        content = None
         url = None
         date = None
         with open(filepath, 'rb') as content_file:
             content = content_file.read()
-        for line in content.split(b"\n"):
-            if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier.*\[.*\],', line):
-                url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
-                date = re.sub(rb'.+by HTTrack Website.+\[.+\][^,]*, ', b'', re.sub(rb' -->.*', b'', line))
-                break
+            for line in content.split(b"\n"):
+                if re.search(rb'<!-- Mirrored from .* by HTTrack Website Copier.*\[.*\],', line):
+                    url = re.sub(rb'.*<!-- Mirrored from ', b'', re.sub(rb' by HTTrack Website Copier.*', b'', line))
+                    date = re.sub(rb'.+by HTTrack Website.+\[.+\][^,]*, ', b'', re.sub(rb' -->.*', b'', line))
+                    break
         if date is None:
             dvalue = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
@@ -36,7 +37,7 @@ for fline in reader:
             except ValueError:
                 dvalue = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         if url is None:
-            warc_record = warc.WARCRecord(payload=content, headers={"WARC-Target-URI": "unknown", "WARC-Date": dvalue})
+            urlStr = "unknown"
         else:
             try:
                 urlStr = url.decode("utf8")
@@ -44,8 +45,9 @@ for fline in reader:
             except:
                 urlStr = "unknown-encoding"
                 # sys.stderr.write("HH2 " + urlStr + "\n")
+        with open(filepath, 'rb') as content_file:
+            record = writer.create_warc_record(urlStr, 'response',
+                                               payload=content_file,
+                                               http_headers=http_headers)
 
-            warc_record = warc.WARCRecord(payload=content, headers={"WARC-Target-URI": urlStr, "WARC-Date": dvalue})
-
-        f = warc.WARCFile(fileobj=sys.stdout.buffer)
-        f.write_record(warc_record)
+        writer.write_record(record)

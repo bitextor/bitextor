@@ -1,7 +1,5 @@
 #!/bin/bash
 
-OUTPUT=/dev/stdout
-
 exit_program()
 {
   echo "USAGE: $1 [-t tmp-dir] SL TL SL_FILE TL_FILE OUTPUTDIC WORDTOKENISERSL WORDTOKENISERTL [ PREPROCESSED_CORPUS [PRODUCED_MODELS] ]"
@@ -23,14 +21,15 @@ if [[ -z $TMPDIR ]]; then
   TMPDIR="/tmp"
 fi
 
-ARGS=$(getopt "ht:" $*)
+ARGS=$(getopt "ht:" "$@")
 
+# shellcheck disable=SC2086
 set -- $ARGS
 for i
 do
   case "$i" in
     -h|--help)
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
       ;;
     -t|--tmp-dir)
       shift
@@ -67,7 +66,7 @@ case $# in
     PREPROCCORPUS=$8
     if [ ! -d $8 ]; then
       echo "The path specified for storing the preprocessed files for the corpus is not valid."
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
     fi
     MODELSDIR=$(mktemp -d $TMPDIR/tempgizamodel.XXXXX)
     ;;
@@ -82,16 +81,16 @@ case $# in
     PREPROCCORPUS=$8
     if [ ! -d $8 ]; then
       echo "The path specified for storing the preprocessed files for the corpus is not valid."
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
     fi
     MODELSDIR=$9
     if [ ! -d $9 ]; then
       echo "The path specified for storing the models produced by GIZA++ is not valid."
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
     fi
     ;;
   *)
-    exit_program $(basename $0)
+    exit_program "$(basename "$0")"
     ;;
 esac
 echo $PREPROCCORPUS

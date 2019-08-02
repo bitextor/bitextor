@@ -10,14 +10,15 @@ exit_program()
   exit 1
 }
 
-ARGS=$(getopt "h" $*)
+ARGS=$(getopt "h" "$@")
 
+# shellcheck disable=SC2086
 set -- $ARGS
 for i
 do
   case "$i" in
     -h)
-      exit_program $(basename $0)
+      exit_program "$(basename "$0")"
       ;;
     --)
       shift
@@ -31,7 +32,7 @@ case $# in
     WEBDIR="$1"
     ;;
   *)
-    exit_program $(basename $0)
+    exit_program "$(basename "$0")"
     ;;
 esac
 

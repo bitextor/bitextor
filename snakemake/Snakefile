@@ -2,18 +2,14 @@
 # nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
 
 import sys
-import glob
 import gzip
 import lzma
 import tldextract
 import os
 import os.path
-import socket
 import shutil
 import subprocess
-from tld import get_tld
 from tqdm import tqdm
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from toolwrapper import ToolWrapper
@@ -96,18 +92,22 @@ def ValidateArgs(config):
            'crawlTld': {'type': 'boolean'},
            'crawlerNumThreads': {'type': 'integer'},
            'maxSizeWARC': {'type': 'integer'},
+           'WARCFiles': {'type': 'list'},
 
            'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'type': 'string'},
-           'LANG2Tokenizer': {'type': 'string'},
+           'LANG1Tokenizer': {'required': True, 'type': 'string'},
+           'LANG2Tokenizer': {'required': True, 'type': 'string'},
            'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'type': 'string'},
-           'LANG2SentenceSplitter': {'type': 'string'},
+           'LANG1SentenceSplitter': {'required': True, 'type': 'string'},
+           'LANG2SentenceSplitter': {'required': True, 'type': 'string'},
+
+           'LANG1MorphologicalAnalyser': {'type': 'string'},
+           'LANG2MorphologicalAnalyser':  {'type': 'string'},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
-           'crawlTimeLimit': {'type': 'string'},
+           'crawlTimeLimit': {'type': 'float'},
            'crawlWait': {'type': 'integer'},
            'crawlFileTypes': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},
@@ -126,11 +126,12 @@ def ValidateArgs(config):
            'bicleanerThreshold': {'type': 'float'},
            'elrc': {'type': 'boolean'},
            'bifixer': {'type': 'boolean'},
+           'bifixerOptions': {'type': 'string'},
            'deferredCrawling': {'type': 'boolean'},
 
            'deduped': {'type': 'boolean'},
            'hosts': {'type': 'list'},
-           'hostPath': {'type': 'string'},
+           'hostsFile': {'type': 'string'},
            'excludeHosts': {'type': 'list'},
            'excludeHostsFile': {'type': 'string'},
            'linkedHosts': {'type': 'list'},
@@ -190,6 +191,7 @@ def ValidateArgs(config):
         else:
             schema['dic']['required']=True
             if "dic" in config and not os.path.isfile(config["dic"]):
+                sys.stderr.write("WARNING: dictionary {dic} was not found. Provide correct path to the dictionary or specify initCorpusTrainPrefix\n".format(dic=config["dic"]))
                 schema['initCorpusTrainPrefix']['required']=True
     else:
         schema['dic']['required']=True
@@ -289,6 +291,13 @@ if "maxSizeWARC" in config:
 else:
   MAXWARCSIZE=""
 
+#WARC files
+if "WARCFiles" in config:
+    WARCFILES=config["WARCFiles"]
+else:
+    WARCFILES=[]
+WARCDOMAIN="WARCFILES"
+
 #Tokenisers
 if "LANG1Tokenizer" in config:
   WORDTOK1=config["LANG1Tokenizer"]
@@ -301,6 +310,18 @@ if "LANG1SentenceSplitter" in config:
 
 if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
+
+if "LANG1MorphologicalAnalyser" in config:
+    MORPHTOK1="--morphanalyser_sl " + "\"" + str(config["LANG1MorphologicalAnalyser"]) + "\""
+else:
+    MORPHTOK1=""
+
+if "LANG2MorphologicalAnalyser" in config:
+    MORPHTOK2="--morphanalyser_tl " + "\"" + str(config["LANG2MorphologicalAnalyser"]) + "\""
+else:
+    MORPHTOK2=""
+
+
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -340,7 +361,7 @@ else:
 if "crawlFileTypes" in config:
   CRAWLFILETYPES="-f "+str(config["crawlFileTypes"])
 else:
-  CRAWLFILETYPES=""
+  CRAWLFILETYPES="-f html,pdf"
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
@@ -451,6 +472,11 @@ if "bifixer" in config and config["bifixer"]:
 else:
   BIFIXER="segclean"
 
+if "bifixerOptions" in config:
+    BIFIXEROPTIONS=config["bifixerOptions"]
+else:
+    BIFIXEROPTIONS="--aggressive_dedup"
+
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
 def CreateDomainKey2HostMap(hosts):
@@ -486,6 +512,20 @@ def InitConcatLogicLink(domains):
  tld=tld)
             shell(cmd)
 
+def AddWARCFiles(domains, warcfiles):
+    domains[WARCDOMAIN] = []
+    for wf in warcfiles:
+        if os.path.isfile(wf):
+            domains[WARCDOMAIN].append(wf)
+        else:
+            print("WARC {path} omitted: file not found".format(path=wf))
+    return domains
+
+def InitWARCFilesConcatLogic(domains, warcfiles):
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.xz".format(transient=transient)):
+        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.xz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
+        shell(cmd)
+
 def LoadDomains(file_path):
     domains = set()
     with file_path.open("r") as f:
@@ -502,19 +542,19 @@ def GetDomainKeys(hosts):
         domain = tldextract.extract(host).domain
         keys.add(domain)
     return keys
-			    
+
 def ExcludeHosts(hosts, excludeHosts):
     excludeKeys = GetDomainKeys(excludeHosts)
 
-    hostsCopy = set(hosts)	
+    hostsCopy = set(hosts)
     print("BEFORE hosts", len(hosts), len(hostsCopy))
-	
+
     for host in hostsCopy:
         key = tldextract.extract(host).domain
         if key in excludeKeys:
             hosts.remove(host)
     print("AFTER hosts", len(hosts), len(hostsCopy))
-	
+
 def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
@@ -600,8 +640,10 @@ def PostCrawlExclude(hosts, postCrawlPath):
         excludeList = f.read().splitlines()
     for exclude in excludeList:
         exclude = exclude.strip()
-        if len(exclude) > 0 and exclude in hosts: 
+        if len(exclude) > 0 and exclude in hosts:
             hosts.remove(exclude)
+
+
 
 ###############################################################################################
 if os.path.isfile(permanent + "/hosts.gz"):
@@ -629,11 +671,11 @@ else:
         hosts = hosts.union(newHosts)
         #sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
 
-    if "hostPath" in config:
-        path = config["hostPath"]
+    if "hostsFile" in config:
+        path = config["hostsFile"]
         with gzip.open(path, 'rt') as f:
             newHosts = f.read().splitlines()
-            #sys.stderr.write("#hostPath=" + str(len(newHosts)) + "\n")
+            #sys.stderr.write("#hostsFile=" + str(len(newHosts)) + "\n")
 
         hosts = hosts.union(newHosts)
 
@@ -647,9 +689,9 @@ else:
             print("excludeHosts", len(excludeHosts))
         ExcludeHosts(hosts, excludeHosts)
 
-    if (len(hosts) == 0):
-        print("No hosts found. Need at least one of hosts, langstat, hostPath")
-        exit()
+    # if (len(hosts) == 0):
+    #     print("No hosts found. Need at least one of hosts, langstat, hostsFile")
+    #     exit()
 
     with gzip.open(permanent + "/hosts.gz", 'wt') as f:
         for host in hosts:
@@ -673,7 +715,7 @@ if "linkedHosts" in config:
             #print("postCrawlPath", postCrawlPath)
             if os.path.isfile(postCrawlPath):
                 PostCrawlExclude(hosts, postCrawlPath)
-		
+
     for dir in config["linkedHosts"]:
         LinkedHosts(permanent, dir, hosts, linkedHostsAction)
 
@@ -699,7 +741,7 @@ if "linkedHosts" in config:
         with open(postCrawlPath, 'wt') as f:
             f.write("\n".join(hosts))
         exit()
-	
+
 sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
 #exit(-1)
 
@@ -708,7 +750,15 @@ domainKey2Hosts = CreateDomainKey2HostMap(hosts)
 domainKey2Hosts = FilterTLD(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
 InitConcatLogicLink(domainKey2Hosts)
-#print("domainKey2Hosts", domainKey2Hosts)
+
+if len(WARCFILES) != 0:
+    #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
+    domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
+    #If only one WARC is provided, creates a symbolic link to it 
+    InitWARCFilesConcatLogic(domainKey2Hosts, WARCFILES)
+
+# print("domainKey2Hosts", domainKey2Hosts)
+
 
 # every shell command will run sync
 shell.prefix("sync; set -euo pipefail; ")
@@ -821,11 +871,11 @@ else:
     if "nmt" in config and config["nmt"]:
         OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
         OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
-    
+
     if "smt" in config and config["smt"]:
         OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
         OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-    
+
     #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
     if "tmx" in config and config["tmx"]:
         if "storeRawCorpus" in config and config["storeRawCorpus"]:
@@ -969,15 +1019,15 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.gz'
     priority: 10
     shell:
         #'echo {params.url}; '
-        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} | xz -c -T 0 > {output}'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}'
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -986,47 +1036,48 @@ rule httrack_download:
         #'mkdir -p {permanent}/warc/{wildcards.target} ; '
         'DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}; '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME | nice ionice -c 3 xz -c -T 0 > {output}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME > {output}; '
         'rm -rf $DIRNAME;'
 
 rule wget_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.xz'
+        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.gz'
     params:
         url="http://{target}"
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
-        'WGETWARCPATH=$DIRNAME/output;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc $WGETWARCPATH; '
-        'cat $WGETWARCPATH.warc | nice ionice -c 3 xz -c -T 0 > {output};'
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}; '
         'rm -rf $DIRNAME;'
 
 
 def GetDomainHosts(wildcards):
     output=[]
     for h in domainKey2Hosts[wildcards.target]:
-        output.append('{dir}/warc/{host}/{crawler}.warc.xz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
+        if wildcards.target == WARCDOMAIN: # host is a WARC
+            output.append(h)
+        else:
+            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
     return output
 
 rule concat_subdomains:
     input:
         GetDomainHosts
     output:
-        "{dir}".format(dir=transient)+"/{target}/concat.warc.xz"
+        "{dir}".format(dir=transient)+"/{target}/concat.warc.gz"
     priority: 9
     run:
         assert(len(input))
         if len(input) == 1:
             cmd = "ln -sfn {input} {output}; "
         else:
-            cmd = 'xzcat -T 0 {input} -f | xz -c -T 0 > {output}; '
+            cmd = 'cat {input} > {output}; '
         shell(cmd)
 
 rule warc2preprocess:
     input:
-        '{dir}/concat.warc.xz'
+        '{dir}/concat.warc.gz'
     output:
         deboil='{dir}/deboilerplate_html.xz',
         encoding='{dir}/encoding.xz',
@@ -1049,7 +1100,7 @@ rule lettr2idx:
     output:
         '{dir}/idx.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
 rule idx2ridx_l1tol2:
     input:
@@ -1295,7 +1346,7 @@ rule alignsegments_hunalign:
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:
@@ -1338,7 +1389,7 @@ rule deferred_segments:
         "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
-    
+
 rule cleansegments:
     input:
         "{dir}/"+"{segaligner}{deferredsents}.segalign.xz".format(segaligner=SEGMENTALIGNER, deferredsents=DEFERREDSENTENCES)
@@ -1357,7 +1408,7 @@ rule bifixer:
         "{prefix}.bifixer.xz"
     shell:
         # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} {BIFIXEROPTIONS} | xz -T 0 > {output}'
 
 rule bicleaner:
     input:

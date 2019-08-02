@@ -9,7 +9,7 @@
 # The script allows to crawl a website. It takes, as the input, a URL
 # and a nubmer of optional parameters (use option -h for more details).
 # The output is a WARC file
-
+import io
 import argparse
 import hashlib
 import http.client
@@ -29,9 +29,8 @@ from posixpath import join, dirname, normpath
 from ssl import CertificateError
 from threading import Thread, Lock
 from urllib.parse import quote
-
-import warc
-
+from warcio.warcwriter import WARCWriter
+from warcio.statusandheaders import StatusAndHeaders
 
 # SET THE SEED FOR REPRODUCIBILITY TESTS
 # SEED=4
@@ -46,6 +45,7 @@ class Document(object):
         self.text = res.read()
 
         self.headers = dict(res.getheaders())
+        self.response = res
         self.links = []
 
 
@@ -97,8 +97,8 @@ class Crawler(object):
     def set_content_type_filter(self, cf):
         self.content_type_filter = '(%s)' % ('|'.join(cf))
 
-    def set_timeout(self, time):
-        self.timeout = time
+    def set_timeout(self, setted_time):
+        self.timeout = setted_time
 
     def add_url_filter(self, uf):
         self.url_filters.append(uf)
@@ -320,7 +320,7 @@ class Crawler(object):
                             else:
                                 conn = http.client.HTTPSConnection(host, timeout=self.timeout)
 
-                            if self.useragent == None:
+                            if self.useragent is None:
                                 conn.request('GET', quote(path, '?=&%/'))
                             else:
                                 conn.request('GET', quote(path, '?=&%/'), headers={'User-Agent': self.useragent})
@@ -340,7 +340,7 @@ class Crawler(object):
                             try:
                                 if not re.search(self.content_type_filter,
                                                  res.getheader('Content-Type')):
-                                    #sys.stderr.write(url + " discarded: wrong file type\n")
+                                    # sys.stderr.write(url + " discarded: wrong file type\n")
                                     conn.close()
                                     time.sleep(self.delay)
                                     self.delay_lock.release()
@@ -455,9 +455,10 @@ if '//' not in options.URL:
 robots = requests.get(options.URL+"/robots.txt").text.split("\n")
 for line in robots:
     if "Crawl-delay" in line:
-        crawldelay=int(line.split(':')[1].strip())
+        crawldelay = int(line.split(':')[1].strip())
         if options.delay is None or crawldelay > int(options.delay):
             options.delay = str(crawldelay)
+
 
 class MyCrawler(Crawler):
     def process_document(self, doc):
@@ -465,9 +466,12 @@ class MyCrawler(Crawler):
             self.concurrency_lock.acquire()
             try:
                 # print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
-                warc_record = warc.WARCRecord(payload=doc.text, headers={"WARC-Target-URI": doc.url})
-                f = warc.WARCFile(fileobj=sys.stdout.buffer)
-                f.write_record(warc_record)
+                writer = WARCWriter(sys.stdout.buffer, gzip=True)
+                http_headers = StatusAndHeaders('200 OK', doc.response.headers.items(), protocol='HTTP/1.0')
+                record = writer.create_warc_record(doc.url, 'response',
+                                                   payload=io.BytesIO(doc.text),
+                                                   http_headers=http_headers)
+                writer.write_record(record)
                 self.crawlsize += sys.getsizeof(doc.text) / 1000000.0
                 if self.sizelimit is not None and self.crawlsize > self.sizelimit:
                     self.interrupt = True

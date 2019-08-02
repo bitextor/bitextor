@@ -20,8 +20,6 @@ def print_tu(fieldsdict, urls1, urls2, idnum):
     info_tag = []
     if 'hunalign' in fieldsdict and fieldsdict['hunalign'] != "":
         print("    <prop type=\"score-aligner\">" + fieldsdict['hunalign'] + "</prop>")
-    if 'zipporah' in fieldsdict and fieldsdict['zipporah'] != "":
-        print("    <prop type=\"score-zipporah\">" + fieldsdict['zipporah'] + "</prop>")
     if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
         print("    <prop type=\"score-bicleaner\">" + fieldsdict['bicleaner'] + "</prop>")
     # Output info data ILSP-FC specification
@@ -85,8 +83,8 @@ oparser.add_argument("-m", "--max-length", help="Maximum length ratio between tw
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,"
-                          "zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL",
-                     default="url1,url2,seg1,seg2,hunalign,zipporah,bicleaner,lengthratio,numTokensSL,numTokensTL")
+                          "bicleaner,lengthratio,numTokensSL,numTokensTL",
+                     default="url1,url2,seg1,seg2,hunalign,bicleaner,lengthratio,numTokensSL,numTokensTL")
 options = oparser.parse_args()
 
 columns = options.columns.split(',')
