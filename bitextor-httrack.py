@@ -35,7 +35,7 @@ def run(url, outPath, timeLimit, pageLimit, agent, wait):
 
     domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
 
-    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 --extended-parsing yes -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
+    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
     # print("cmd", cmd)
 
     system_check(cmd)
