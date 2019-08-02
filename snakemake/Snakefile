@@ -82,6 +82,7 @@ def ValidateArgs(config):
             'parser': {'type': 'string'},
             'onlyConcat': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
+            'giawarc': {'type': 'boolean'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -231,6 +232,11 @@ permanent=config["permanentDir"]
 transient=config["transientDir"]
 
 PROFILING=""
+
+if "giawarc" in config and config["giawarc"]:
+    PPROC = "giawarc"
+else:
+    PPROC = "w2p"
 
 if "temp" in config:
   TMPDIR=config["temp"]
@@ -628,7 +634,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
                 dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
-                    cmd = "ln -sfn {dir}/warc/{host} {dest}".format(dir=dir, host=host, dest=dest)
+                    cmd = "ln -sfn {dir}/warc/{host} {dest}".format( host=host, dest=dest)
                     #print(cmd)
                     shell(cmd)
             else:
@@ -1075,28 +1081,44 @@ rule concat_subdomains:
             cmd = 'cat {input} > {output}; '
         shell(cmd)
 
+rule giawarc:
+    input:
+        '{dir}/concat.warc.gz'
+    output:
+        lang='{dir}/giawarc/lang.xz',
+        mime='{dir}/giawarc/mime.xz',
+        text='{dir}/giawarc/plain_text.xz',
+        url='{dir}/giawarc/url.xz'
+    priority: 8
+    shell:
+        'mkdir -p {wildcards.dir}/giawarc;'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc {input};'
+        'gzip -d {wildcards.dir}/giawarc/* ;'
+        'xz {wildcards.dir}/giawarc/*'
+
 rule warc2preprocess:
     input:
         '{dir}/concat.warc.gz'
     output:
-        deboil='{dir}/deboilerplate_html.xz',
-        encoding='{dir}/encoding.xz',
-        lang='{dir}/lang.xz',
-        mime='{dir}/mime.xz',
-        html='{dir}/normalized_html.xz',
-        text='{dir}/plain_text.xz',
-        url='{dir}/url.xz'
+        deboil='{dir}/w2p/deboilerplate_html.xz',
+        encoding='{dir}/w2p/encoding.xz',
+        lang='{dir}/w2p/lang.xz',
+        mime='{dir}/w2p/mime.xz',
+        html='{dir}/w2p/normalized_html.xz',
+        text='{dir}/w2p/plain_text.xz',
+        url='{dir}/w2p/url.xz'
     priority: 8
     shell:
+        'mkdir -p {wildcards.dir}/w2p;' 
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir} --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        text='{dir}/plain_text.xz',
-        lang='{dir}/lang.xz',
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
+        lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
     output:
         '{dir}/idx.xz'
     shell:
@@ -1123,7 +1145,7 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{dir}/{num}.ridx.xz',
-        '{dir}/deboilerplate_html.xz'
+        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.imgoverlap.xz'
     shell:
@@ -1132,7 +1154,7 @@ rule ridx2imagesetoverlap:
 rule imagesetoverlap2structuredistance:
     input:
         '{dir}/{num}.imgoverlap.xz',
-        '{dir}/deboilerplate_html.xz'
+        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.structuredistance.xz'
     shell:
@@ -1141,8 +1163,8 @@ rule imagesetoverlap2structuredistance:
 rule structuredistance2urldistance:
     input:
         '{dir}/{num}.structuredistance.xz',
-        '{dir}/deboilerplate_html.xz',
-        '{dir}/url.xz'
+        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.urldistance.xz'
     priority: 8
@@ -1152,8 +1174,8 @@ rule structuredistance2urldistance:
 rule urldistance2mutuallylinked:
     input:
         '{dir}/{num}.urldistance.xz',
-        '{dir}/deboilerplate_html.xz',
-        '{dir}/url.xz'
+        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.mutuallylinked.xz'
     shell:
@@ -1162,7 +1184,7 @@ rule urldistance2mutuallylinked:
 rule mutuallylinked2urlscomparison:
     input:
         '{dir}/{num}.mutuallylinked.xz',
-        '{dir}/url.xz'
+        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.urlscomparison.xz'
     shell:
@@ -1171,7 +1193,7 @@ rule mutuallylinked2urlscomparison:
 rule urlscomparison2urlsoverlap:
     input:
         '{dir}/{num}.urlscomparison.xz',
-        '{dir}/deboilerplate_html.xz'
+        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{dir}/{num}.urlsoverlap.xz'
     shell:
@@ -1189,8 +1211,8 @@ rule aligndocumentsBitextor:
     input:
         '{dir}/1.rank.xz',
         '{dir}/2.rank.xz',
-        '{dir}/plain_text.xz',
-        '{dir}/url.xz'
+        '{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/docalign.bitextor.xz'
     shell:
@@ -1202,9 +1224,9 @@ rule aligndocumentsBitextor:
 
 rule docaling_extracted:
     input:
-        text='{dir}/plain_text.xz',
-        lang='{dir}/lang.xz',
-        url='{dir}/url.xz'
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         "{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         "{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
@@ -1286,8 +1308,8 @@ rule docaling_matches:
 rule aligndocumentsTrainedNMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}/plain_text.xz',
-        url='{dir}/url.xz',
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
         report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
     output:
         '{dir}/docalign.nmt.xz'
@@ -1299,8 +1321,8 @@ rule aligndocumentsTrainedNMT:
 rule aligndocumentsCustomMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}/plain_text.xz',
-        url='{dir}/url.xz'
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/docalign.customMT.xz'
     shell:
@@ -1309,8 +1331,8 @@ rule aligndocumentsCustomMT:
 rule aligndocumentsTrainedSMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}/plain_text.xz',
-        url='{dir}/url.xz'
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{dir}/docalign.smt.xz'
     shell:
@@ -1371,8 +1393,8 @@ rule alignsegments_bleualign:
 
 rule deferred_documents:
     input:
-        "{dir}/normalized_html.xz",
-        "{dir}/url.xz"
+        "{dir}"+"/{PPROC}/normalized_html.xz".format( PPROC=PPROC),
+        "{dir}"+"/{PPROC}/url.xz".format( PPROC=PPROC)
     output:
         "{dir}/html5lib_plain_text.xz",
         "{dir}/deferred_documents.xz"
@@ -1383,7 +1405,7 @@ rule deferred_segments:
     input:
         "{dir}/"+"{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
         "{dir}/html5lib_plain_text.xz",
-        "{dir}/url.xz",
+        "{dir}"+"/{PPROC}/url.xz".format( PPROC=PPROC),
         "{dir}/deferred_documents.xz"
     output:
         "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)

@@ -169,6 +169,8 @@ temp: /home/user/transient
 
 maxSizeWARC: 1000
 
+giawarc: false 
+
 boilerpipeCleaning: true
 parser: "modest"
 
@@ -178,8 +180,9 @@ LANG2MorphologicalAnalyser: lt-proc lang2.bin
 ```
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default)
+* `giawarc`: this options allows preprocessing WARC files using a program written in Go. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: `sudo snap install go`. Furthermore, the Go preprocessor itself has to be installed: `go get github.com/paracrawl/giawarc/...`. This command will build and place the necesary programs in `${HOME}/go/bin`.
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`.
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true`
 * `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: path to the Apertium's morphological analyser for `lang1` and `lang2`. If specified, this analyser will be used for dictionary-based document alignment, as well as hunalign segment alignment 
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
@@ -242,7 +245,7 @@ Two strategies are implemented in bitextor for document alignment. The first one
 documentAligner: DIC
 ```
 The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true`
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
