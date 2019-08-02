@@ -361,7 +361,7 @@ else:
 if "crawlFileTypes" in config:
   CRAWLFILETYPES="-f "+str(config["crawlFileTypes"])
 else:
-  CRAWLFILETYPES=""
+  CRAWLFILETYPES="-f html,pdf"
 
 #Option to set how many threads will be used for crawling (default value: 2). Note that too many threads can cause the server hosting the website to reject some of the simultaneous connections.
 if "crawlerNumThreads" in config:
