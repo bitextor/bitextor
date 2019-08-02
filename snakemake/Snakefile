@@ -107,7 +107,7 @@ def ValidateArgs(config):
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
-           'crawlTimeLimit': {'type': 'string'},
+           'crawlTimeLimit': {'type': 'float'},
            'crawlWait': {'type': 'integer'},
            'crawlFileTypes': {'type': 'string'},
            'crawlPageLimit': {'type': 'integer'},

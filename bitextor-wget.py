@@ -15,6 +15,12 @@ def system_check(cmd):
 
     subprocess.check_call(cmd, shell=True)
 
+def check_wget_compression(cmd):
+    try:
+        subprocess.check_call(cmd, shell=True)
+        return True
+    except:
+        return False
 
 def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     cmd = ""
@@ -36,7 +42,11 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     if warcfilename is not None:
         warcoption = "--warc-file \"" + warcfilebasename + "\""
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC} ".format(WAIT=waitoption,
+
+    if check_wget_compression("wget --help | grep 'no-warc-compression'"):
+        warcoption += " --no-warc-compression"
+
+    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
                                                                                                  URL=url,
                                                                                                  DOWNLOAD_PATH=outPath,
@@ -45,17 +55,13 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     # print("cmd", cmd)
     try:
         system_check(cmd)
-        if not os.path.isfile(warcfilebasename + ".warc.gz"):
-            with open(warcfilebasename + ".warc", 'rb') as f_in:
-                with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
-                    writer = WARCWriter(f_out, gzip=True)
-                    for record in ArchiveIterator(f_in):
-                        writer.write_record(record)
+        with open(warcfilebasename + ".warc", 'rb') as f_in:
+            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+                writer = WARCWriter(f_out, gzip=True)
+                for record in ArchiveIterator(f_in):
+                    writer.write_record(record)
     except subprocess.CalledProcessError as grepexc:
-        corruptedwarcfile = warcfilebasename + ".warc.gz"
-        if not os.path.isfile(warcfilebasename + ".warc.gz"):
-            corruptedwarcfile = warcfilebasename + ".warc"
-        with open(corruptedwarcfile, 'rb') as f_in:
+        with open(warcfilebasename + ".warc", 'rb') as f_in:
             with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
                 writer = WARCWriter(f_out, gzip=True)
                 for record in ArchiveIterator(f_in):
@@ -64,6 +70,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
 
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
 
+    system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
