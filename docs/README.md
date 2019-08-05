@@ -32,7 +32,12 @@ Bitextor folder is located at `/opt/bitextor`, with all dependencies and compila
 
 ### Dependencies
 
-Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
+Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`), 
+there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project. 
+Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies. 
+The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects. 
+Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed. 
+Additionally, [giawarc](github.com/paracrawl/giawarc) can be used optionally for WARC files preprocessing. 
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
@@ -54,6 +59,16 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 `sudo apt install httrack`
 
 This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
+
+As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: 
+
+`sudo snap install go`.
+ 
+Furthermore, the Go preprocessor itself has to be installed: 
+
+`go get github.com/paracrawl/giawarc/...`
+
+This command will build and place the necessary programs in `${HOME}/go/bin`.
 
 ### Submodules compilation
 
@@ -186,7 +201,7 @@ LANG2MorphologicalAnalyser: lt-proc lang2.bin
 ```
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
-* `giawarc`: this options allows preprocessing WARC files using a program written in Go. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: `sudo snap install go`. Furthermore, the Go preprocessor itself has to be installed: `go get github.com/paracrawl/giawarc/...`. This command will build and place the necesary programs in `${HOME}/go/bin`.
+* `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used. 
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`.
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true`
 * `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: path to the Apertium's morphological analyser for `lang1` and `lang2`. If specified, this analyser will be used for dictionary-based document alignment, as well as hunalign segment alignment 
@@ -212,10 +227,10 @@ langstatThreshold: 50
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
-In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of xz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
+In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
 ```yaml
 hosts: ["www.elisabethtea.com", "vade-antea.fr"]
-WARCFiles: ["/home/user/warc1.warc.xz", "/home/user/warc2.warc.xz"]
+WARCFiles: ["/home/user/warc1.warc.gz", "/home/user/warc2.warc.gz"]
 ```
 
 ### Variables for crawling configuration
