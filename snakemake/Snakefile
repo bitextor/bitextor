@@ -1092,9 +1092,7 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc {input};'
-        'gzip -d {wildcards.dir}/giawarc/* ;'
-        'xz {wildcards.dir}/giawarc/*'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc {input}'
 
 rule warc2preprocess:
     input:
