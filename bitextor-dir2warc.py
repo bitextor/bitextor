@@ -14,7 +14,6 @@ options = oparser.parse_args()
 
 reader = sys.stdin
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
-http_headers = StatusAndHeaders('200 OK', [], protocol='HTTP/1.0')
 
 for fline in reader:
     filepath = fline.strip()
@@ -47,7 +46,6 @@ for fline in reader:
                 # sys.stderr.write("HH2 " + urlStr + "\n")
         with open(filepath, 'rb') as content_file:
             record = writer.create_warc_record(urlStr, 'response',
-                                               payload=content_file,
-                                               http_headers=http_headers)
+                                               payload=content_file)
 
         writer.write_record(record)

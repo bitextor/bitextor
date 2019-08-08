@@ -467,10 +467,9 @@ class MyCrawler(Crawler):
             try:
                 # print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
                 writer = WARCWriter(sys.stdout.buffer, gzip=True)
-                http_headers = StatusAndHeaders('200 OK', doc.response.headers.items(), protocol='HTTP/1.0')
                 record = writer.create_warc_record(doc.url, 'response',
-                                                   payload=io.BytesIO(doc.text),
-                                                   http_headers=http_headers)
+                                                   payload=io.BytesIO(doc.text)
+                                                   )
                 writer.write_record(record)
                 self.crawlsize += sys.getsizeof(doc.text) / 1000000.0
                 if self.sizelimit is not None and self.crawlsize > self.sizelimit:
