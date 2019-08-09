@@ -27,19 +27,18 @@ from selectolax.parser import HTMLParser
 
 if not jpype.isJVMStarted():
     jars = []
-    for top, dirs, files in os.walk(imp.find_module('pdfextract')[1]+'/data'):
+    for top, dirs, files in os.walk(imp.find_module('pdfextract')[1] + '/data'):
         for nm in files:
             if nm[-4:] == ".jar":
                 jars.append(os.path.join(top, nm))
-    for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1]+'/data'):
+    for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1] + '/data'):
         for nm in files:
             if nm[-4:] == ".jar":
                 jars.append(os.path.join(top, nm))
     jpype.addClassPath(os.pathsep.join(jars))
-    jpype.startJVM(jpype.getDefaultJVMPath(),convertStrings=False)
+    jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
 from boilerpipe.extract import Extractor as ExtrB
 from pdfextract.extract import Extractor as ExtrP
-
 
 
 def guess_lang_from_data2(data):
@@ -66,7 +65,7 @@ def convert_encoding(data):
 def pdf2html(data):
     pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
-    return [converter_stdout.replace(b"&#160;",b" ")]
+    return [converter_stdout.replace(b"&#160;", b" ")]
 
 
 def pdfextract_shell(data):
@@ -77,7 +76,7 @@ def pdfextract_shell(data):
 
 def pdfextract(data, extractor):
     extractor.setData(data)
-    return [bytes(extractor.getHTML(),'utf8')]
+    return [bytes(extractor.getHTML(), 'utf8')]
 
 
 def openoffice2html(data):
@@ -133,16 +132,19 @@ oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; i
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
-oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs', default=False)
-oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language', default=False)
-oparser.add_argument('--langs', dest="langs", default="", help='List of languages to include (+) or ignore (%%): +l1,+l2,%%l3,%%l4')
+oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
+                     default=False)
+oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language',
+                     default=False)
+oparser.add_argument('--langs', dest="langs", default="",
+                     help='List of languages to include (+) or ignore (%%): +l1,+l2,%%l3,%%l4')
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
 if options.input[-3:] == ".xz":
-    f = ArchiveIterator(lzma.open(options.input,'r'))
+    f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
-    f = ArchiveIterator(gzip.open(options.input,'r'))
+    f = ArchiveIterator(gzip.open(options.input, 'r'))
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 seen_md5 = {}
@@ -174,10 +176,6 @@ if options.boilerpipe:
 if options.pdfextract:
     extractor = ExtrP()
 
-# Grouping by language is optional
-if options.xzlang:
-    langfiles = {}
-
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
@@ -199,7 +197,17 @@ for record in f:
         logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
     if record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None:
-        if "image/" in record.http_headers.get_header('Content-Type') or "audio/" in record.http_headers.get_header('Content-Type') or "video/" in record.http_headers.get_header('Content-Type') or "text/x-component" in record.http_headers.get_header('Content-Type') or "text/x-js" in record.http_headers.get_header('Content-Type') or "text/javascript" in record.http_headers.get_header('Content-Type') or "application/x-javascript" in record.http_headers.get_header('Content-Type') or "text/css" in record.http_headers.get_header('Content-Type') or "application/javascript" in record.http_headers.get_header('Content-Type') or "application/x-shockwave-flash" in record.http_headers.get_header('Content-Type') or "application/octet-stream" in record.http_headers.get_header('Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
+        if "image/" in record.http_headers.get_header('Content-Type') or "audio/" in record.http_headers.get_header(
+                'Content-Type') or "video/" in record.http_headers.get_header(
+                'Content-Type') or "text/x-component" in record.http_headers.get_header(
+                'Content-Type') or "text/x-js" in record.http_headers.get_header(
+                'Content-Type') or "text/javascript" in record.http_headers.get_header(
+                'Content-Type') or "application/x-javascript" in record.http_headers.get_header(
+                'Content-Type') or "text/css" in record.http_headers.get_header(
+                'Content-Type') or "application/javascript" in record.http_headers.get_header(
+                'Content-Type') or "application/x-shockwave-flash" in record.http_headers.get_header(
+                'Content-Type') or "application/octet-stream" in record.http_headers.get_header(
+                'Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
             continue
     url = url.lower()
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
@@ -245,7 +253,7 @@ for record in f:
                 cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
                 tree = ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False)
             except Exception as ex:
-                sys.stderr.write(str(ex)+"\n")
+                sys.stderr.write(str(ex) + "\n")
                 continue
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
@@ -309,8 +317,8 @@ for record in f:
                             continue
                         plaintext = tree.body.text(separator='\n')
                     plaintext = re.sub(r"\n+", "\n",
-                                        re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
-    
+                                       re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+
                     if len(plaintext) > 0:
                         seen_md5[c.hexdigest()] = c.hexdigest()
                         # Guessing MIME of the file (checked on original content)
@@ -334,23 +342,21 @@ for record in f:
                             b64text = base64.b64encode(html.unescape(plaintext).encode())
                             plainTextFile.write(b64text + b"\n")
 
-                        # language specific file is not open yet
-                        if options.xzlang and lang not in langfiles:
-                            langfiles[lang] = lzma.open(options.outDir + "/" + options.prefix + lang + ".xz", "w")
-
-                        # write to language specific file
+                        # append to language specific file
                         if options.xzlang:
-                            langfile = langfiles[lang]
-                            langfile.write(("Content-Location: " + url).encode() + b"\n")
-                            langfile.write(("Content-Type: " + mime).encode() + b"\n")
-                            langfile.write(("Content-Language: " + lang).encode() + b"\n")
-                            langfile.write(("Content-Length: " + str(len(plaintext))).encode() + b"\n")
-                            langfile.write(("Date: " + date).encode() + b"\n")
-                            langfile.write(("X-WARC-Record-Id: " + recordId).encode() + b"\n")
-                            langfile.write(("X-WARC-Filename: " + options.input).encode() + b"\n")
+                            langfile = lzma.open(options.outDir + "/" + options.prefix + lang + ".xz", "a")
+                            header = "Content-Location: " + url + "\n"
+                            header += "Content-Type: " + mime + "\n"
+                            header += "Content-Language: " + lang + "\n"
+                            header += "Content-Length: " + str(len(plaintext)) + "\n"
+                            header += "Date: " + date + "\n"
+                            header += "X-WARC-Record-Id: " + recordId + "\n"
+                            header += "X-WARC-Filename: " + options.input + "\n"
+                            langfile.write(header.encode())
                             langfile.write(b"\n")
-                            langfile.write(plaintext.encode() + b"\n")
+                            langfile.write(plaintext.encode())
                             langfile.write(b"\n")
+                            langfile.close()
         num += 1
 if not options.xzlang:
     urlFile.close()
@@ -362,6 +368,3 @@ if not options.xzlang:
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile.close()
-if options.xzlang:
-    for key in langfiles:
-        langfiles[key].close()
