@@ -322,12 +322,12 @@ if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
 
 if "LANG1MorphologicalAnalyser" in config:
-    MORPHTOK1="--morphanalyser_sl " + "\"" + str(config["LANG1MorphologicalAnalyser"]) + "\""
+    MORPHTOK1=config["LANG1MorphologicalAnalyser"]
 else:
     MORPHTOK1=""
 
 if "LANG2MorphologicalAnalyser" in config:
-    MORPHTOK2="--morphanalyser_tl " + "\"" + str(config["LANG2MorphologicalAnalyser"]) + "\""
+    MORPHTOK2=config["LANG2MorphologicalAnalyser"]
 else:
     MORPHTOK2=""
 
@@ -517,8 +517,8 @@ def FilterTLD(tlds):
 
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
-        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -531,9 +531,9 @@ def AddWARCFiles(domains, warcfiles):
             print("WARC {path} omitted: file not found".format(path=wf))
     return domains
 
-def InitWARCFilesConcatLogic(domains, warcfiles):
-    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.xz".format(transient=transient)):
-        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.xz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
+def InitWARCFilesConcatLogic( warcfiles):
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.gz".format(transient=transient)):
+        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.gz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
 
 def LoadDomains(file_path):
@@ -742,7 +742,7 @@ if "linkedHosts" in config:
         domainDirs = os.listdir(warcPath)
         for domainDir in domainDirs:
             #print(domainDir)
-            warcFilePath = "{warcPath}/{domainDir}/httrack.warc.xz".format(warcPath=warcPath, domainDir=domainDir)
+            warcFilePath = "{warcPath}/{domainDir}/httrack.warc.gz".format(warcPath=warcPath, domainDir=domainDir)
             if os.path.isfile(warcFilePath):
                hosts.remove(domainDir)
         #print("hosts", hosts)
@@ -765,7 +765,7 @@ if len(WARCFILES) != 0:
     #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
     domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
     #If only one WARC is provided, creates a symbolic link to it 
-    InitWARCFilesConcatLogic(domainKey2Hosts, WARCFILES)
+    InitWARCFilesConcatLogic( WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
 
@@ -875,7 +875,7 @@ OUTPUT=[]
 
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
-        OUTPUT.append("{dir}/{tld}/concat.warc.xz".format(dir=transient, tld=tld))
+        OUTPUT.append("{dir}/{tld}/concat.warc.gz".format(dir=transient, tld=tld))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     if "nmt" in config and config["nmt"]:
@@ -1164,7 +1164,7 @@ rule lettr2idx:
     output:
         '{dir}/idx.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" --morphanalyser1 "{MORPHTOK1}" --morphanalyser2 "{MORPHTOK2}" -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
 rule idx2ridx_l1tol2:
     input:
@@ -1345,7 +1345,7 @@ rule docaling_matches:
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK2}' --morph_analyser '{MORPHTOK2}'"
 
 rule aligndocumentsTrainedNMT:
     input:
@@ -1410,7 +1410,7 @@ rule alignsegments_hunalign:
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
 
 rule alignsegments_bleualign:
     input:

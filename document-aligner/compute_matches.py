@@ -57,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
     parser.add_argument('--word_tokeniser', help='Word tokeniser executable path', required=True)
+    parser.add_argument('--morph_analyser', help='Morphologycal analyser executable path')
 
     args = parser.parse_args()
 
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     else:
 
         word_extractor = WordExtractor(
-            n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser)
+            n=args.ngram_size, ignore_set=None, word_tokeniser_cmd=args.word_tokeniser, morph_analyser_cmd=args.morph_analyser)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
                                       metric='cosine',

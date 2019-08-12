@@ -45,17 +45,6 @@ def run_aligner(filename_s, filename_t, dic, hunaligndir):
         yield line_o
     return
 
-
-def run_analyse(morph, text):
-    panalyse = subprocess.Popen(morph, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    morph_stdout, error = panalyse.communicate(input=text)
-    if len(error.strip()) == 0:
-        morphemes_tokenized_text = re.sub(r"\^", "", re.sub(r"[/<][^$]*\$", "", morph_stdout))
-        return morphemes_tokenized_text
-    else:
-        return text
-
-
 def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, sent_tokeniser, word_tokeniser):
     proc_sent = ExternalTextProcessor(sent_tokeniser.split(' '))
     proc_word = ExternalTextProcessor(word_tokeniser.split(' '))
@@ -63,10 +52,9 @@ def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, se
     tokenized_segs = proc_sent.process(content).strip()
     tmp_file_origtext.write(tokenized_segs.encode())
     tokenized_text = proc_word.process(tokenized_segs)
-
-    if morphanal is not None:
-        morphanalyser = ["/bin/bash", morphanal]
-        tokenized_text = run_analyse(morphanalyser, tokenized_text)
+    if morphanal:
+        proc_morph = ExternalTextProcessor(morphanal.split(' '))
+        tokenized_text = proc_morph.process(tokenized_text)
     tmp_file.write(tokenized_text.lower().encode())
 
 
@@ -142,9 +130,9 @@ oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scor
 oparser.add_argument("-t", "--tmp-dir",
                      help="Temporary directory to be used for internal temporary files (/tmp by default)",
                      dest="tmpdir", required=False, default="/tmp")
-oparser.add_argument("--morphanalyser_sl", help="Path to the Apertium's morphological analyser for SL to TL",
+oparser.add_argument("--morph-analyser_sl", help="Path to the morphological analyser for SL to TL",
                      dest="morphanal1", default=None)
-oparser.add_argument("--morphanalyser_tl", help="Path to the Apertium's morphological analyser for TL to SL",
+oparser.add_argument("--morph-analyser_tl", help="Path to the morphological analyser for TL to SL",
                      dest="morphanal2", default=None)
 oparser.add_argument("--sent-tokeniser_sl", help="Path to the sentence tokeniser for SL", dest="senttok1", default=None)
 oparser.add_argument("--sent-tokeniser_tl", help="Path to the sentence tokeniser for TL", dest="senttok2", default=None)

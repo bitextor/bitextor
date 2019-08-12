@@ -25,9 +25,13 @@ def _ngram_helper(words, n, hash_values):
     return ngrams
 
 #Given a document ('page'), tokenizes it and return its 'n'-grams
-def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, page):
-    proc = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
-    segments = proc.process(page).split("\n")
+def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, morph_analyser_cmd, page):
+    proc_word = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
+    tokenized = proc_word.process(page)
+    if morph_analyser_cmd:
+        proc_morph = ExternalTextProcessor(morph_analyser_cmd.split(' '))
+        tokenized = proc_morph.process(tokenized)
+    segments = tokenized.split("\n")
 #    segments = page.split("\n")
     words = []
     for s in segments:
@@ -62,10 +66,10 @@ class ExtractionMapper(object):
 
 class WordExtractor(ExtractionMapper):
 
-    def __init__(self, word_tokeniser_cmd, n=1, hash_values=False, ignore_set=None):
+    def __init__(self, word_tokeniser_cmd, morph_analyser_cmd=None, n=1, hash_values=False, ignore_set=None):
         super(WordExtractor, self).__init__(
             extraction_function=partial(ngrams_from_text,
-                                        n, hash_values, ignore_set, word_tokeniser_cmd))
+                                        n, hash_values, ignore_set, word_tokeniser_cmd, morph_analyser_cmd))
 
 
 class DocumentVectorExtractor(object):
