@@ -32,27 +32,17 @@ oparser = argparse.ArgumentParser(
                 "about the files in a crawled website to produce an index with all the words in these files and the "
                 "list of documents in which each of them appear")
 oparser.add_argument('--text', dest='text',
-                     help='File produced by bitextor-warc2preprocess containing the text of all the records in the '
-                          'WARC file encoded as base 64 (each line corresponds to a record)',
-                     required=True)
+                     help='File produced by bitextor-tokenize containing the tokenized text of all the records'
+                     'in the WARC file encoded as base 64 (each line corresponds to a single record)', required=True)
 oparser.add_argument('--lang', dest='lang',
-                     help='File produced by bitextor-warc2preprocess containing the language of each of the records '
-                          'in the WARC file encoded as base 64 (each line corresponds to a record)',
-                     required=True)
+                    help='File produced by bitextor-warc2preprocess containing the language of each of the records '
+                    'in the WARC file encoded as base 64 (each line corresponds to a record)',required=True)
 oparser.add_argument("-m", "--max-occ",
                      help="Maximum number of occurrences of a word in one language to be kept in the index", type=int,
                      dest="maxo", default=-1)
-oparser.add_argument("--morphanalyser1", help="Path to the morphological analyser for language 1",
-                     dest="morphanal1", default=None)
-oparser.add_argument("--morphanalyser2", help="Path to the morphological analyser for language 2",
-                     dest="morphanal2", default=None)
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1",
                      required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2",
-                     required=True)
-oparser.add_argument("--wordtokeniser1", help="Word tokeniser script for language 1", dest="wordtokeniser1",
-                     required=True)
-oparser.add_argument("--wordtokeniser2", help="Word tokeniser script for language 2", dest="wordtokeniser2",
                      required=True)
 
 options = oparser.parse_args()
@@ -62,6 +52,7 @@ word_map = {}
 
 punctuation = get_unicode_punct()
 
+
 with open_xz_or_gzip_or_plain(options.text) as text_reader:
     with open_xz_or_gzip_or_plain(options.lang) as lang_reader:
 
@@ -69,26 +60,9 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader:
             ##################
             # Parsing the text:
             ##################
-            text = base64.b64decode(line.strip()).decode("utf-8")
+            tokenized_text = base64.b64decode(line.strip()).decode("utf-8")
             lang = next(lang_reader, None).strip()
-            proc = None
-
-            # Getting the bag of words in the document
-            if lang == options.lang1:
-                proc_word = ExternalTextProcessor(options.wordtokeniser1.split(' '))
-                if options.morphanal1:
-                    proc_morph = ExternalTextProcessor(options.morphanal1.split(' '))
-                else:
-                    proc_morph = None
-            elif lang == options.lang2:
-                proc_word = ExternalTextProcessor(options.wordtokeniser2.split(' '))
-                if options.morphanal2:
-                    proc_morph = ExternalTextProcessor(options.morphanal2.split(' '))
-                else: proc_morph = None
-
-            tokenized_text = proc_word.process(text).lower()
-            if proc_morph is not None:
-                tokenized_text = proc_morph.process(tokenized_text)
+            
             sorted_uniq_wordlist = set(tokenized_text.split())
 
             # Trimming non-aplphanumerics:
@@ -108,11 +82,11 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader:
                     word_map[lang][word].append(docnumber)
             docnumber = docnumber + 1
 
-    for map_lang, map_vocabulary in list(word_map.items()):
-        for map_word, map_doc in list(map_vocabulary.items()):
-            if options.maxo == -1 or len(word_map[map_lang][map_word]) <= options.maxo:
-                sorted_docs = sorted(word_map[map_lang][map_word], reverse=True)
-                for doc_list_idx in range(0, len(sorted_docs) - 1):
-                    sorted_docs[doc_list_idx] = str(sorted_docs[doc_list_idx] - sorted_docs[doc_list_idx + 1])
-                sorted_docs[len(sorted_docs) - 1] = str(sorted_docs[len(sorted_docs) - 1])
-                print(map_lang + "\t" + map_word + "\t" + ":".join(reversed(sorted_docs)))
+for map_lang, map_vocabulary in list(word_map.items()):
+    for map_word, map_doc in list(map_vocabulary.items()):
+        if options.maxo == -1 or len(word_map[map_lang][map_word]) <= options.maxo:
+            sorted_docs = sorted(word_map[map_lang][map_word], reverse=True)
+            for doc_list_idx in range(0, len(sorted_docs) - 1):
+                sorted_docs[doc_list_idx] = str(sorted_docs[doc_list_idx] - sorted_docs[doc_list_idx + 1])
+            sorted_docs[len(sorted_docs) - 1] = str(sorted_docs[len(sorted_docs) - 1])
+            print(map_lang + "\t" + map_word + "\t" + ":".join(reversed(sorted_docs)))
