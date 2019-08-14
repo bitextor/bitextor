@@ -45,17 +45,14 @@ def run_aligner(filename_s, filename_t, dic, hunaligndir):
         yield line_o
     return
 
-def extract_encoded_text(encodedtext, tmp_file, tmp_file_origtext, morphanal, sent_tokeniser, word_tokeniser):
+
+def extract_encoded_text(encodedtext, encodedtokenized, tmp_file, tmp_file_origtext, sent_tokeniser):
     proc_sent = ExternalTextProcessor(sent_tokeniser.split(' '))
-    proc_word = ExternalTextProcessor(word_tokeniser.split(' '))
     content = base64.b64decode(encodedtext).decode("utf-8").replace("\t", " ")
     tokenized_segs = proc_sent.process(content).strip()
     tmp_file_origtext.write(tokenized_segs.encode())
-    tokenized_text = proc_word.process(tokenized_segs)
-    if morphanal:
-        proc_morph = ExternalTextProcessor(morphanal.split(' '))
-        tokenized_text = proc_morph.process(tokenized_text)
-    tmp_file.write(tokenized_text.lower().encode())
+    content_tokenized = base64.b64decode(encodedtokenized)
+    tmp_file.write(content_tokenized)
 
 
 def align(file1, file2, file1orig, file2orig, dic):
@@ -130,14 +127,8 @@ oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scor
 oparser.add_argument("-t", "--tmp-dir",
                      help="Temporary directory to be used for internal temporary files (/tmp by default)",
                      dest="tmpdir", required=False, default="/tmp")
-oparser.add_argument("--morph-analyser_sl", help="Path to the morphological analyser for SL to TL",
-                     dest="morphanal1", default=None)
-oparser.add_argument("--morph-analyser_tl", help="Path to the morphological analyser for TL to SL",
-                     dest="morphanal2", default=None)
 oparser.add_argument("--sent-tokeniser_sl", help="Path to the sentence tokeniser for SL", dest="senttok1", default=None)
 oparser.add_argument("--sent-tokeniser_tl", help="Path to the sentence tokeniser for TL", dest="senttok2", default=None)
-oparser.add_argument("--word-tokeniser_sl", help="Path to the word tokeniser for SL", dest="wordtok1", default=None)
-oparser.add_argument("--word-tokeniser_tl", help="Path to the word tokeniser for TL", dest="wordtok2", default=None)
 
 options = oparser.parse_args()
 
@@ -162,11 +153,11 @@ for line in reader_list:
     filename2 = fields[1]
     encodedtext1 = fields[2]
     encodedtext2 = fields[3]
+    encodedtokenized1 = fields[4]
+    encodedtokenized2 = fields[5]
 
-    extract_encoded_text(encodedtext1, tmp_file1, tmp_file1_origtext, options.morphanal1, options.senttok1,
-                         options.wordtok1)
-    extract_encoded_text(encodedtext2, tmp_file2, tmp_file2_origtext, options.morphanal2, options.senttok2,
-                         options.wordtok2)
+    extract_encoded_text(encodedtext1, encodedtokenized1, tmp_file1, tmp_file1_origtext, options.senttok1)
+    extract_encoded_text(encodedtext2, encodedtokenized2, tmp_file2, tmp_file2_origtext, options.senttok2)
 
     tmp_file1_name = tmp_file1.name
     tmp_file2_name = tmp_file2.name
@@ -184,3 +175,4 @@ for line in reader_list:
     os.remove(tmp_file1_origtext.name)
     os.remove(tmp_file2.name)
     os.remove(tmp_file2_origtext.name)
+

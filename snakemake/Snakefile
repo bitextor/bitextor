@@ -1164,7 +1164,7 @@ rule tokenize:
     output:
         '{dir}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --lang1 {LANG1} --lang2 {LANG2} --output-dir {wildcards.dir}/{PPROC} --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}"'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --lang1 {LANG1} --lang2 {LANG2} --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1416,11 +1416,22 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
-        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz"
+        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
+        "{dir}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
+        "{dir}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
+        'tokenized=$(mktemp "{TMPDIR}/tokenized.docalign.XXXXXX");'
+        'while IFS= read -r line;'
+        'do url1=$(echo $line | cut -d " " -f 1);'
+        'url2=$(echo $line | cut -d " " -f 2);'
+        't1=$(xzcat {input[3]} | sed -n "$(xzcat {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
+        't2=$(xzcat {input[3]} | sed -n "$(xzcat {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
+        'echo -e "$t1\t$t2";'
+        'done < <(xzcat {input[1]}) > $tokenized;'
+        'paste <(xzcat {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
+        'rm $tokenized;'
 
 rule alignsegments_bleualign:
     input:
