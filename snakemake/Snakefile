@@ -1274,7 +1274,7 @@ rule aligndocumentsBitextor:
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
-rule docaling_extracted:
+rule docalign_extracted:
     input:
         text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
         lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
@@ -1286,7 +1286,18 @@ rule docaling_extracted:
         'mkdir -p {wildcards.dir}/docalign; '
         '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "{SENTTOK1}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
 
-rule docaling_deduped:
+rule docalign_tokenize:
+    input:
+        text='{dir}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
+    output:
+        "{dir}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+    shell:
+        'mkdir -p {wildcards.dir}/docalign;'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+
+rule docalign_deduped:
     input:
         "{dir}/{lang}.extracted.xz"
     output:
@@ -1294,7 +1305,7 @@ rule docaling_deduped:
     shell:
         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
-rule docaling_translate_nmt:
+rule docalign_translate_nmt:
     input:
         source = "{dir}/{prefix}/extracted.deduped.xz"
         ,
@@ -1311,7 +1322,7 @@ rule docaling_translate_nmt:
         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
-rule docaling_translate_smt:
+rule docalign_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
@@ -1328,7 +1339,7 @@ rule docaling_translate_smt:
         'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docaling_custom_translate:
+rule docalign_custom_translate:
     input:
         "{prefix}.extracted.deduped.xz",
     output:
@@ -1338,7 +1349,7 @@ rule docaling_custom_translate:
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docaling_substitute_translated:
+rule docalign_substitute_translated:
     input:
         extracted="{prefix}.extracted.xz",
         deduped="{prefix}.extracted.deduped.xz",
@@ -1348,14 +1359,23 @@ rule docaling_substitute_translated:
     shell:
         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
-rule docaling_matches:
+rule docalign_tokenize_translated:
     input:
-        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz",
-        l2="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2)
+        translated="{dir}/docalign/" + "{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz"
+    output:
+        "{dir}/docalign/"+"{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.tokenized.xz"
+    shell:
+        "{PROFILING} python {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
+
+
+rule docalign_matches:
+    input:
+        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
+        l2="{dir}/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK2}' --morph_analyser '{MORPHTOK2}'"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 rule aligndocumentsTrainedNMT:
     input:
@@ -1426,11 +1446,11 @@ rule alignsegments_hunalign:
         'while IFS= read -r line;'
         'do url1=$(echo $line | cut -d " " -f 1);'
         'url2=$(echo $line | cut -d " " -f 2);'
-        't1=$(xzcat {input[3]} | sed -n "$(xzcat {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
-        't2=$(xzcat {input[3]} | sed -n "$(xzcat {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
+        't1=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
+        't2=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
         'echo -e "$t1\t$t2";'
-        'done < <(xzcat {input[1]}) > $tokenized;'
-        'paste <(xzcat {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
+        'done < <(xzcat -T 0 {input[1]}) > $tokenized;'
+        'paste <(xzcat -T 0 {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
         'rm $tokenized;'
 
 rule alignsegments_bleualign:

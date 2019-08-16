@@ -14,7 +14,8 @@ from external_processor import ExternalTextProcessor
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
-#Given a list of words ('words') returns a list of all 'n'-grams
+
+# Given a list of words ('words') returns a list of all 'n'-grams
 def _ngram_helper(words, n, hash_values):
     words = [w.strip() for w in words if w.strip()]
     ngrams = (" ".join(words[i:i + n]) for i in
@@ -24,15 +25,10 @@ def _ngram_helper(words, n, hash_values):
         return map(hash, ngrams)
     return ngrams
 
-#Given a document ('page'), tokenizes it and return its 'n'-grams
-def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, morph_analyser_cmd, page):
-    proc_word = ExternalTextProcessor(word_tokeniser_cmd.split(' '))
-    tokenized = proc_word.process(page)
-    if morph_analyser_cmd:
-        proc_morph = ExternalTextProcessor(morph_analyser_cmd.split(' '))
-        tokenized = proc_morph.process(tokenized)
-    segments = tokenized.split("\n")
-#    segments = page.split("\n")
+
+# Given a tokenized document ('page'), returns its 'n'-grams
+def ngrams_from_text(n, hash_values, ignore_set, page):
+    segments = page.split("\n")
     words = []
     for s in segments:
         words.extend(s.split(' '))
@@ -43,7 +39,8 @@ def ngrams_from_text(n, hash_values, ignore_set, word_tokeniser_cmd, morph_analy
 
     return ngrams
 
-#Only extract_single is being used
+
+# Only extract_single is being used
 class ExtractionMapper(object):
 
     def __init__(self, extraction_function=None):
@@ -66,10 +63,10 @@ class ExtractionMapper(object):
 
 class WordExtractor(ExtractionMapper):
 
-    def __init__(self, word_tokeniser_cmd, morph_analyser_cmd=None, n=1, hash_values=False, ignore_set=None):
+    def __init__(self, n=1, hash_values=False, ignore_set=None):
         super(WordExtractor, self).__init__(
             extraction_function=partial(ngrams_from_text,
-                                        n, hash_values, ignore_set, word_tokeniser_cmd, morph_analyser_cmd))
+                                        n, hash_values, ignore_set))
 
 
 class DocumentVectorExtractor(object):
@@ -89,13 +86,13 @@ class DocumentVectorExtractor(object):
         self.max_count = 0
         self.tf_smooth = smooth // 6
         self.idf_smooth = smooth % 6
-        #sys.stderr.write("TF: {0}\nIDF: {1}\n".format(
+        # sys.stderr.write("TF: {0}\nIDF: {1}\n".format(
         #    self.tf_smooth, self.idf_smooth))
         assert int(self.tf_smooth) in range(7)
         assert int(self.idf_smooth) in range(6)
         self.lda_dim = lda_dim
 
-    #Yields the url and plain text of each document read from file, grouping by url
+    # Yields the url and plain text of each document read from file, grouping by url
     def iterate_corpus(self,openfile):
         prevurl=""
         prevtext=""
@@ -114,7 +111,9 @@ class DocumentVectorExtractor(object):
                 prevurl = url
                 prevtext = text
         yield prevurl, prevtext
-    #Given all source and target corpus file objects, counts how many times a word is found in different documents (source and target together, given that target is translated into source language) (AKA, idf)
+
+    # Given all source and target corpus file objects, counts how many times a word is found in different documents
+    # (source and target together, given that target is translated into source language) (AKA, idf)
     def estimate_idf(self, source_corpus, target_corpus):
         counts = Counter()
         self.ndocs = 0
@@ -163,9 +162,11 @@ class DocumentVectorExtractor(object):
             self.term2idf[term] = idf
             self.term2idx[term] = len(self.term2idx)
 
-        #sys.stderr.write("{0} terms, {1} ignored\n".format(
+        # sys.stderr.write("{0} terms, {1} ignored\n".format(
         #    len(self.term2idx), len(self.ignored_terms)))
-    #Given a corpus file object and the number of documents it contains, counts word frequencies in each document (tf), returning the resulting tf-idf matrix and document urls
+
+    # Given a corpus file object and the number of documents it contains, counts word frequencies in each document (tf),
+    # returning the resulting tf-idf matrix and document urls
     def extract(self, corpus, lencorpus):
         m = lil_matrix((lencorpus, len(self.term2idx)), dtype=float32)
         doc_idx = 0
@@ -179,8 +180,8 @@ class DocumentVectorExtractor(object):
             local_sum = float(sum(counts.values()))
             for ngram, count in counts.items():
                 if ngram not in self.term2idx:
-                    #if ngram not in self.ignored_terms:
-                        #sys.stderr.write("unknown ngram: %s\n" % ngram)
+                    # if ngram not in self.ignored_terms:
+                        # sys.stderr.write("unknown ngram: %s\n" % ngram)
                     continue
 
                 idf = self.term2idf[ngram]
@@ -239,7 +240,7 @@ class CosineDistanceScorer(object):
 
         return all_csr
 
-    def munge_file_path(self,filepath):
+    def munge_file_path(self, filepath):
         if os.path.isfile(filepath):
             return filepath
         if os.path.isfile(filepath + ".gz"):
@@ -259,21 +260,21 @@ class CosineDistanceScorer(object):
 
         with open_xz_or_gzip_or_plain(source_filepath) as source_file:
             with open_xz_or_gzip_or_plain(target_filepath) as target_file:
-                #start = time.time()
+                # start = time.time()
                 self.vector_extractor.estimate_idf(source_file, target_file)
-                #sys.stderr.write(
+                # sys.stderr.write(
                 #    "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
 
-        #start = time.time()
-        #Calculate tf and obtain tf-idf with urls
+        # start = time.time()
+        # Calculate tf and obtain tf-idf with urls
         with open_xz_or_gzip_or_plain(source_filepath) as source_file:
-            urls[0], source_matrix = self.vector_extractor.extract(source_file,self.vector_extractor.ndocs_sl)
+            urls[0], source_matrix = self.vector_extractor.extract(source_file, self.vector_extractor.ndocs_sl)
         with open_xz_or_gzip_or_plain(target_filepath) as target_file:
-            urls[1], target_matrix = self.vector_extractor.extract(target_file,self.vector_extractor.ndocs_tl)
-        #sys.stderr.write(
+            urls[1], target_matrix = self.vector_extractor.extract(target_file, self.vector_extractor.ndocs_tl)
+        # sys.stderr.write(
         #    "Matrix extraction took {0:.5f} seconds\n".format(time.time() - start))
-        #sys.stderr.write(str(source_matrix)+"\n"+str(target_matrix)+"\n")
-        #start = time.time()
+        # sys.stderr.write(str(source_matrix)+"\n"+str(target_matrix)+"\n")
+        # start = time.time()
         del self.vector_extractor
 
         if source_matrix.getnnz() == 0 or target_matrix.getnnz() == 0:
@@ -281,6 +282,6 @@ class CosineDistanceScorer(object):
         else:
             d = self.batched_pairwise_distances(source_matrix, target_matrix)
 
-        #sys.stderr.write(
+        # sys.stderr.write(
         #    "Scoring took {0:.5f} seconds\n".format(time.time() - start))
-        return urls,d
+        return urls, d
