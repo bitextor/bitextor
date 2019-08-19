@@ -229,12 +229,11 @@ langstatThreshold: 50
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
-In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
+In addition, it is possible to specify one or multple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/) files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files (each record compressed individually), which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
 ```yaml
 hosts: ["www.elisabethtea.com", "vade-antea.fr"]
 WARCFiles: ["/home/user/warc1.warc.gz", "/home/user/warc2.warc.gz"]
 ```
-
 ### Variables for crawling configuration
 Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 ```yaml
