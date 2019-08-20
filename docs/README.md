@@ -190,6 +190,7 @@ temp: /home/user/transient
 
 maxSizeWARC: 1000
 
+xzlang: false
 giawarc: false 
 
 boilerpipeCleaning: true
@@ -201,10 +202,14 @@ LANG2MorphologicalAnalyser: path/to/morph-analyser2
 ```
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
+* `xzlang`: group preprocessing output by languages (create a separate file for each language found, not just LANG1 and LANG2). This has the benefit of avoiding repeating preprocessing when crawling the same webs for different pair of languages. This option requires the installation of the Go library mentioned above.
 * `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used. 
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`.
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true`
 * `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: scripts for morphological analysis (lemmatizer/stemmer) for `lang1` and `lang2`. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`.
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
+* `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: path to the Apertium's morphological analyser for `lang1` and `lang2`. If specified, this analyser will be used for dictionary-based document alignment, as well as hunalign segment alignment 
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
@@ -227,12 +232,11 @@ langstatThreshold: 50
 ```
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
-In addition, it is possible to specify one or multple WARC files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
+In addition, it is possible to specify one or multple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/) files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files (each record compressed individually), which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`. 
 ```yaml
 hosts: ["www.elisabethtea.com", "vade-antea.fr"]
 WARCFiles: ["/home/user/warc1.warc.gz", "/home/user/warc2.warc.gz"]
 ```
-
 ### Variables for crawling configuration
 Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 ```yaml
@@ -266,7 +270,7 @@ Two strategies are implemented in bitextor for document alignment. The first one
 documentAligner: DIC
 ```
 The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true`
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true` or `xzlang: true`
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
