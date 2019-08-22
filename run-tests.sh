@@ -52,36 +52,36 @@ fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/creepy.warc.gz ]; then
 	mkdir -p "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org
 	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/greenpeace.canada.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/creepy.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org
         wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/greenpeace.canada.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/creepy.warc.gz
 fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr
         wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/primeminister.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/creepy.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr
         wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/primeminister.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/creepy.warc.gz
 fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru
         wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/kremlin.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/creepy.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.xz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru
         wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/kremlin.warc.xz | xzcat - | gzip > "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.gz
 fi
