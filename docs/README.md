@@ -49,7 +49,8 @@ Some additional Python libraries are required. They can be installed automatical
 
 ```
 pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt https://github.com/bitextor/kenlm/archive/master.zip
+pip3 install -r bicleaner/requirements.txt
+pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
 pip3 install -r bifixer/requirements.txt
 ```
 (if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
