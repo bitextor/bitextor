@@ -84,7 +84,7 @@ sudo pip3 uninstall tensorflow
 sudo pip3 install tensorflow==1.5.0
 ```
 
-In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
+In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
 Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
 ```bash
@@ -344,10 +344,10 @@ If the bicleaner model is not available, the pipeline will try to train one auto
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
-* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
+* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the Bicleaner model 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 
-It is important to provide different parallel corpora for these two options as this helps bicleaner when dealing with unkown words (that do not apear in the statistical dictionaries) during scoring.
+It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
 
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
