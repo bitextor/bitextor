@@ -41,7 +41,7 @@ Additionally, [giawarc](github.com/paracrawl/giawarc) can be used optionally for
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
-`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils`
+`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl`
 
 Furthermore, most of the scripts in bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
@@ -59,7 +59,9 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 `sudo apt install httrack`
 
-This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
+Also, `heritrix` can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
+
+These two crawler dependencies are not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
 As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: 
 
@@ -259,6 +261,14 @@ If you want to also crawl PDFs (only `wget` support for now), use these settings
 ```
 crawler: wget
 crawlFileTypes: "html,pdf"
+```
+
+If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and the job name that you used to manually crawl from the web interface:
+
+```
+crawler: heritrix
+heritrixPath: /home/user/heritrix-3.4.0-SNAPSHOT
+heritrixJobName: myurljobname
 ```
 
 ### Variables for document alignment

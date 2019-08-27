@@ -116,6 +116,8 @@ def ValidateArgs(config):
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
+           'heritrixPath': {'type': 'string'},
+           'heritrixJobName': {'type': 'string'},
 
            'documentAligner': {'type': 'string'},
            'mosesDir': {'type': 'string'},
@@ -397,6 +399,15 @@ if "resumePreviousCrawl" in config:
 else:
   CONTINUECRAWL=""
 
+if "heritrixPath" in config:
+  HERITRIXPATH=config["heritrixPath"]
+else:
+  HERITRIXPATH=""
+
+if "heritrixJobName" in config:
+  HERITRIXJOBNAME=config["heritrixJobName"]
+else:
+  HERITRIXJOBNAME=""
 
 ############ OPTIONS FOR THE MT DOCUMENT ALIGNER ############
 
@@ -1060,6 +1071,19 @@ rule wget_download:
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}; '
         'rm -rf $DIRNAME;'
+
+rule heritrix_download:
+    output:
+        '{dir}/warc'.format(dir=permanent)+'/{target}/heritrix.warc.gz'
+    params:
+        url="http://{target}"
+    priority: 10
+    shell:
+        'echo hostname=$HOSTNAME; echo "PLEASE, CREATE AND RUN $HERITRIXJOB JOB IN THE $HERITRIXPATH RUNNING INSTANCE"; '
+        'echo "Waiting for the warc.gz to be finished; "'
+        'while [ ! -f $HERITRIXPATH/jobs/$HERITRIXJOBNAME/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
+        'cp $HERITRIXPATH/jobs/$HERITRIXJOB/latest/warcs/*warc.gz {output}; '
+        'rm -rf $DIRNAME; '
 
 
 def GetDomainHosts(wildcards):
