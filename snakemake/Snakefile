@@ -1082,8 +1082,8 @@ rule heritrix_download:
         'echo hostname=$HOSTNAME; echo "PLEASE, CREATE AND RUN {HERITRIXJOBNAME} JOB IN THE {HERITRIXPATH} RUNNING INSTANCE"; '
         'echo "Waiting for the warc.gz to be finished"; '
         'while [ ! -f {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
+        'echo "Job {HERITRIXJOBNAME} finished!"; '
         'cp {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz {output}; '
-        'rm -rf $DIRNAME; '
 
 
 def GetDomainHosts(wildcards):
