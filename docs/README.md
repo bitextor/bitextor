@@ -61,6 +61,8 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 Also, `heritrix` can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
 
+Note that `heritrix` needs to be run manually, creating jobs using the web interface. In `heritrix` Wiki there are instructions about [how to run it](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) and [how to create a crawl job](https://github.com/internetarchive/heritrix3/wiki/A%20Quick%20Guide%20to%20Running%20Your%20First%20Crawl%20Job).
+
 These two crawler dependencies are not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
 As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: 
