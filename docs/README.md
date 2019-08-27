@@ -85,7 +85,7 @@ sudo pip3 uninstall tensorflow
 sudo pip3 install tensorflow==1.5.0
 ```
 
-In addition, some users haver reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
+In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
 Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
 ```bash
@@ -197,8 +197,8 @@ giawarc: false
 boilerpipeCleaning: true
 parser: "modest"
 
-LANG1MorphologicalAnalyser: lt-proc lang1.bin 
-LANG2MorphologicalAnalyser: lt-proc lang2.bin
+LANG1MorphologicalAnalyser: path/to/morph-analyser1 
+LANG2MorphologicalAnalyser: path/to/morph-analyser2
 
 ```
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
@@ -207,7 +207,7 @@ LANG2MorphologicalAnalyser: lt-proc lang2.bin
 * `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used. 
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`.
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
-* `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: path to the Apertium's morphological analyser for `lang1` and `lang2`. If specified, this analyser will be used for dictionary-based document alignment, as well as hunalign segment alignment 
+* `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: scripts for morphological analysis (lemmatizer/stemmer) for `lang1` and `lang2`. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
@@ -345,10 +345,10 @@ If the bicleaner model is not available, the pipeline will try to train one auto
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
-* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the bicleaner model 
+* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the Bicleaner model 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 
-It is important to provide different parallel corpora for these two options as this helps bicleaner when dealing with unkown words (that do not apear in the statistical dictionaries) during scoring.
+It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
 
 ### Other post-processing variables
 Some other options can be configured to specify the output format of our corpus:
