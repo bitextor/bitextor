@@ -1079,10 +1079,10 @@ rule heritrix_download:
         url="http://{target}"
     priority: 10
     shell:
-        'echo hostname=$HOSTNAME; echo "PLEASE, CREATE AND RUN $HERITRIXJOB JOB IN THE $HERITRIXPATH RUNNING INSTANCE"; '
-        'echo "Waiting for the warc.gz to be finished; "'
-        'while [ ! -f $HERITRIXPATH/jobs/$HERITRIXJOBNAME/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
-        'cp $HERITRIXPATH/jobs/$HERITRIXJOB/latest/warcs/*warc.gz {output}; '
+        'echo hostname=$HOSTNAME; echo "PLEASE, CREATE AND RUN {HERITRIXJOBNAME} JOB IN THE {HERITRIXPATH} RUNNING INSTANCE"; '
+        'echo "Waiting for the warc.gz to be finished"; '
+        'while [ ! -f {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
+        'cp {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz {output}; '
         'rm -rf $DIRNAME; '
 
 
