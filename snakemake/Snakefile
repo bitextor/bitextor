@@ -1444,8 +1444,8 @@ rule alignsegments_hunalign:
     shell:
         'tokenized=$(mktemp "{TMPDIR}/tokenized.docalign.XXXXXX");'
         'while IFS= read -r line;'
-        'do url1=$(echo $line | cut -f 1);'
-        'url2=$(echo $line | cut -f 2);'
+        'do url1=$(echo "$line" | cut -f 1);'
+        'url2=$(echo "$line" | cut -f 2);'
         't1=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
         't2=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
         'echo -e "$t1\t$t2";'
