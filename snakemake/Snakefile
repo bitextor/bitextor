@@ -117,7 +117,8 @@ def ValidateArgs(config):
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
            'heritrixPath': {'type': 'string'},
-           'heritrixJobName': {'type': 'string'},
+           'heritrixUrl': {'type': 'string'},
+           'heritrixUser': {'type': 'string'},
 
            'documentAligner': {'type': 'string'},
            'mosesDir': {'type': 'string'},
@@ -404,10 +405,15 @@ if "heritrixPath" in config:
 else:
   HERITRIXPATH=""
 
-if "heritrixJobName" in config:
-  HERITRIXJOBNAME=config["heritrixJobName"]
+if "heritrixUrl" in config:
+  HERITRIXURL=config["heritrixUrl"]
 else:
-  HERITRIXJOBNAME=""
+  HERITRIXURL="https://localhost:8443"
+
+if "heritrixUser" in config:
+  HERITRIXUSER=config["heritrixUser"]
+else:
+  HERITRIXUSER="admin:admin"
 
 ############ OPTIONS FOR THE MT DOCUMENT ALIGNER ############
 
@@ -1079,11 +1085,18 @@ rule heritrix_download:
         url="http://{target}"
     priority: 10
     shell:
-        'echo hostname=$HOSTNAME; echo "PLEASE, CREATE AND RUN {HERITRIXJOBNAME} JOB IN THE {HERITRIXPATH} RUNNING INSTANCE"; '
+        'echo hostname=$HOSTNAME; '
+        'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
+        'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
+        'cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml; '
+        'curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml; '
+        'curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'curl -v -d "action=launch" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'echo "Waiting for the warc.gz to be finished"; '
-        'while [ ! -f {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
-        'echo "Job {HERITRIXJOBNAME} finished!"; '
-        'cp {HERITRIXPATH}/jobs/{HERITRIXJOBNAME}/latest/warcs/*warc.gz {output}; '
+        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
+        'echo "Job {wildcards.target} finished!"; '
+        'cp {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz {output}; '
 
 
 def GetDomainHosts(wildcards):
