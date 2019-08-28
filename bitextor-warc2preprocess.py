@@ -24,6 +24,7 @@ import gzip
 import zipfile
 import io
 from selectolax.parser import HTMLParser
+import mmh3
 
 if not jpype.isJVMStarted():
     jars = []
@@ -127,6 +128,8 @@ oparser.add_argument("--boilerpipe", action="store_true", default=False,
 oparser.add_argument("--parser", dest="parser", default="bs4",
                      help="Use 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'modest' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
+oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts', required=True)
+oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
 oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; if not specified it is empty string',
                      required=False, default="")
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
@@ -163,6 +166,13 @@ if options.langs is not "":
         elif l[0] == '%':
             banned.append(l[1:])
 
+previous_crawl_hashes=set()
+
+if options.inputHash:
+    with lzma.open(options.inputHash,"r") as f:
+        for line in f:
+            previous_crawl_hashes.add(int(line.strip()))
+
 if not options.xzlang:
     urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
     langFile = lzma.open(options.outDir + "/" + options.prefix + "lang.xz", "w")
@@ -175,6 +185,8 @@ if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
 if options.pdfextract:
     extractor = ExtrP()
+
+plainTextHashFile = lzma.open(options.outputHash, "w")
 
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
@@ -318,6 +330,11 @@ for record in f:
                         plaintext = tree.body.text(separator='\n')
                     plaintext = re.sub(r"\n+", "\n",
                                        re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+                    
+                    plaintext_hash=mmh3.hash(plaintext)
+
+                    if plaintext_hash in previous_crawl_hashes:
+                        continue
 
                     if len(plaintext) > 0:
                         seen_md5[c.hexdigest()] = c.hexdigest()
@@ -357,6 +374,8 @@ for record in f:
                             langfile.write(plaintext.encode())
                             langfile.write(b"\n")
                             langfile.close()
+                        plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
+
         num += 1
 if not options.xzlang:
     urlFile.close()

@@ -89,6 +89,7 @@ def ValidateArgs(config):
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
            'pdf-converter' : {'type' : 'string'},
+           'plainTextHashes' : {'type': 'string'},
            'httrack': {'type': 'boolean'}, #deprecated
            'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
@@ -288,6 +289,11 @@ if "pdf-converter" in config and config["pdf-converter"]=="pdf-extract":
   usepdfextract = "--pdfextract"
 else:
   usepdfextract = ""
+
+if "plainTextHashes" in config:
+  PLAINTEXTHASHES= "--input_hash "+config["plainTextHashes"]
+else:
+  PLAINTEXTHASHES=""
 
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
@@ -1086,18 +1092,20 @@ rule heritrix_download:
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
+        'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" != "" ] ; then heritrix -a {HERITRIXUSER} ; fi ; '
+        'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
         'cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml; '
         'curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml; '
         'curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
-        'curl -v -d "action=launch" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'echo "Waiting for the warc.gz to be finished"; '
         'RUNTIME=0; '
-        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 1 ; RUNTIME=$((RUNTIME+1)) ; if [ $RUNTIME -gt $CRAWLTIMELIMIT ] ; then curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; done; '
+        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 1 ; RUNTIME=$((RUNTIME+1)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt {CRAWLTIMELIMIT} ] ; then curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
         'echo "Job {wildcards.target} finished!"; '
-        'cp {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz {output}; '
+        'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
 
 
 def GetDomainHosts(wildcards):
@@ -1130,11 +1138,11 @@ rule giawarc:
         lang='{dir}/giawarc/lang.xz',
         mime='{dir}/giawarc/mime.xz',
         text='{dir}/giawarc/plain_text.xz',
-        url='{dir}/giawarc/url.xz'
+        url='{dir}/giawarc/url.xz',
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 rule giawarcXzlang:
     input:
@@ -1144,7 +1152,7 @@ rule giawarcXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc-xzlang/xzlang;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 rule warc2preprocessXzlang:
     input:
@@ -1155,7 +1163,7 @@ rule warc2preprocessXzlang:
     shell:
         'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz --input {PLAINTEXTHASHES} {input} {usepdfextract} {PARSER}; '
 
 rule warc2preprocess:
     input:
@@ -1167,12 +1175,12 @@ rule warc2preprocess:
         mime='{dir}/w2p/mime.xz',
         html='{dir}/w2p/normalized_html.xz',
         text='{dir}/w2p/plain_text.xz',
-        url='{dir}/w2p/url.xz'
+        url='{dir}/w2p/url.xz',
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p;' 
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --output_hash {permanent}/plain_text_hashes.xz --lang1 {LANG1} --lang2 {LANG2} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 rule xzlangToBitextor:
