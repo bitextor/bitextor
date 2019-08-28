@@ -542,7 +542,9 @@ if options.sizelimit is not None:
 
 if options.timelimit is not None:
     unit = options.timelimit[-1]
-    if unit == 'h':
+    if unit == 'd':
+        crawler.timelimit = float(options.timelimit[:-1]) * 86400 
+    elif unit == 'h':
         crawler.timelimit = float(options.timelimit[:-1]) * 3600
     elif unit == 'm':
         crawler.timelimit = float(options.timelimit[:-1]) * 60
