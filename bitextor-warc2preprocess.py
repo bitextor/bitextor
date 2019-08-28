@@ -169,8 +169,8 @@ if options.langs is not "":
 previous_crawl_hashes=set()
 
 if options.inputHash:
-    with lzma.open(options.inputHash,"r") as f:
-        for line in f:
+    with lzma.open(options.inputHash,"r") as fh:
+        for line in fh:
             previous_crawl_hashes.add(int(line.strip()))
 
 if not options.xzlang:
