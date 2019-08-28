@@ -1094,7 +1094,8 @@ rule heritrix_download:
         'curl -v -d "action=launch" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'echo "Waiting for the warc.gz to be finished"; '
-        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 2 ; done; '
+        'RUNTIME=0; '
+        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 1 ; RUNTIME=$((RUNTIME+1)) ; if [ $RUNTIME -gt $CRAWLTIMELIMIT ] ; then curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; done; '
         'echo "Job {wildcards.target} finished!"; '
         'cp {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz {output}; '
 
