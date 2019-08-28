@@ -61,8 +61,6 @@ As we explained above, the web crawler HTTrack can be used in Bitextor. To do so
 
 Also, `heritrix` can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
 
-Note that `heritrix` daemon needs to be run before `bitextor`. In `heritrix` Wiki there are instructions about [how to run it](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1).
-
 These two crawler dependencies are not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor ([Creepy](https://github.com/Aitjcize/creepy)).
 
 As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap: 
@@ -204,6 +202,7 @@ parser: "modest"
 LANG1MorphologicalAnalyser: path/to/morph-analyser1 
 LANG2MorphologicalAnalyser: path/to/morph-analyser2
 
+plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
@@ -212,6 +211,8 @@ LANG2MorphologicalAnalyser: path/to/morph-analyser2
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`.
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
 * `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: scripts for morphological analysis (lemmatizer/stemmer) for `lang1` and `lang2`. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors.
+
 ### Variables defining data sources
 The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 ```yaml
@@ -265,12 +266,16 @@ crawler: wget
 crawlFileTypes: "html,pdf"
 ```
 
-If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix`, the url (default is localhost:8443) and the user:password (default is "admin:admin"):
+If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is "admin:admin"):
 
 ```
 crawler: heritrix
 heritrixPath: /home/user/heritrix-3.4.0-20190418
+heritrixUrl: "https://localhost:8443"
+heritrixUser: "admin:admin"
 ```
+
+Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and resume from the latest. If crawl takes longer than the crawl time limit, it will automatically create a checkpoint for a future incremental crawl.
 
 ### Variables for document alignment
 Two strategies are implemented in bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
