@@ -77,7 +77,10 @@ def pdfextract_shell(data):
 
 def pdfextract(data, extractor):
     extractor.setData(data)
-    return [bytes(extractor.getHTML(), 'utf8')]
+    try:
+        return [bytes(extractor.getHTML(), 'utf8')]
+    except:
+        return [b""]
 
 
 def openoffice2html(data):
