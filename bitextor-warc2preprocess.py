@@ -151,6 +151,8 @@ elif options.input[-3:] == ".gz":
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 seen_md5 = {}
+seen_md5_plain_text = {}
+
 magic.Magic(mime=True)
 
 languages = []
@@ -284,7 +286,7 @@ for record in f:
                 # checking for duplicate content (duplicates are discarded)
                 if c.hexdigest() in seen_md5:
                     logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
-                    pass
+                    continue
                 else:
                     # get text with Alcazar library
                     if options.parser == "alcazar":
@@ -321,6 +323,11 @@ for record in f:
                         plaintext = tree.body.text(separator='\n')
                     plaintext = re.sub(r"\n+", "\n",
                                        re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+                    c = hashlib.md5()
+                    c.update(plaintext.encode())
+                    if c.hexdigest() in seen_md5_plain_text:
+                        logging.info("Repeated plain text file:\t" + url + "\tfirst occurrence\t" + seen_md5_plain_text[c.hexdigest()])
+                        continue
 
                     if len(plaintext) > 0:
                         seen_md5[c.hexdigest()] = c.hexdigest()
