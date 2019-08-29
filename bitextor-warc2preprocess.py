@@ -151,8 +151,8 @@ elif options.input[-3:] == ".gz":
     f = ArchiveIterator(gzip.open(options.input, 'r'))
 else:
     f = ArchiveIterator(open(options.input, 'r'))
-seen_html = {}
-seen_plain_text = {}
+seen_html = set()
+seen_plain_text = set()
 
 magic.Magic(mime=True)
 
