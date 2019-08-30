@@ -191,7 +191,8 @@ if options.boilerpipe:
 if options.pdfextract:
     extractor = ExtrP()
 
-plainTextHashFile = lzma.open(options.outputHash, "w")
+if options.outputHash:
+    plainTextHashFile = lzma.open(options.outputHash, "w")
 
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
@@ -380,7 +381,8 @@ for record in f:
                             langfile.write(plaintext.encode())
                             langfile.write(b"\n")
                             langfile.close()
-                        plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
+                        if options.outputHash:
+                            plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
 
         num += 1
 if not options.xzlang:
@@ -390,6 +392,8 @@ if not options.xzlang:
     mimeFile.close()
     normHtmlFile.close()
     plainTextFile.close()
+    if options.outputHash:
+        plainTextHashFile.close()
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile.close()
