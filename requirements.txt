@@ -27,3 +27,4 @@ requests==2.22.0
 urllib3==1.25.3
 selectolax==0.1.13
 python-pdfextract==1.0.1.0
+mmh3==2.5.1
