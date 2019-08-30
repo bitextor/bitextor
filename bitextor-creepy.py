@@ -11,7 +11,6 @@
 # The output is a WARC file
 import io
 import argparse
-import hashlib
 import http.client
 import logging
 import pickle
@@ -31,6 +30,7 @@ from threading import Thread, Lock
 from urllib.parse import quote
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
+import mmh3
 
 # SET THE SEED FOR REPRODUCIBILITY TESTS
 # SEED=4
@@ -356,9 +356,9 @@ class Crawler(object):
                             time.sleep(self.delay)
                             self.delay_lock.release()
 
-                            c = hashlib.md5()
-                            c.update(re.sub(rb"href\s*=\s*['\"]\s*([^'\"]+)['\"]", b"", doc.text))
-                            if c.hexdigest() not in self.seencontent:
+                            html_hash = mmh3.hash(re.sub(rb"href\s*=\s*['\"]\s*([^'\"]+)['\"]", b"", doc.text),signed=False)
+                            if html_hash not in self.seencontent:
+                                self.seencontent.add(html_hash)
                                 # Make unique list (these are the links in the document)
                                 try:
                                     links = re.findall("href\s*=\s*['\"]\s*([^'\"]+)['\"]", doc.text.decode('utf8'))
@@ -459,6 +459,7 @@ for line in robots:
         if options.delay is None or crawldelay > int(options.delay):
             options.delay = str(crawldelay)
 
+writer = WARCWriter(sys.stdout.buffer, gzip=True)
 
 class MyCrawler(Crawler):
     def process_document(self, doc):
@@ -466,10 +467,11 @@ class MyCrawler(Crawler):
             self.concurrency_lock.acquire()
             try:
                 # print base64.b64encode(doc.text)+"\t"+doc.url+"\t"+str(time.time())
-                writer = WARCWriter(sys.stdout.buffer, gzip=True)
-                record = writer.create_warc_record(doc.url, 'response',
-                                                   payload=io.BytesIO(doc.text)
-                                                   )
+                headers_list = doc.response.getheaders()
+
+                http_headers = StatusAndHeaders('200 OK', headers_list, protocol='HTTP/1.0')
+
+                record = writer.create_warc_record(doc.url, 'response', payload=io.BytesIO(doc.text), http_headers=http_headers)
                 writer.write_record(record)
                 self.crawlsize += sys.getsizeof(doc.text) / 1000000.0
                 if self.sizelimit is not None and self.crawlsize > self.sizelimit:
