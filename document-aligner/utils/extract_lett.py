@@ -37,8 +37,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--langs", dest="languages",
                         help="Languages to be extracted (comma-separated)", required=True)
-    parser.add_argument("--splitter", dest="splitter",
-                        help="Sentence splitting script", required=True)
+    parser.add_argument("--splitter1", dest="splitter1",
+                        help="Sentence splitting script for lang1", required=True)
+    parser.add_argument("--splitter2", dest="splitter2",
+                        help="Sentence splitting script for lang2", required=True)
     parser.add_argument("--output_prefix", dest="output_prefix", default="",
                         help="Prefix for output files within directory", required=False)
     parser.add_argument("--output_dir", dest="output_dir", default=".",
@@ -86,7 +88,12 @@ if __name__ == "__main__":
             if not text:
                 continue
 
-            for extracted_line in split_sentences(text, args.splitter):
+            if lang == langs_parse[1]:
+                splitted = split_sentences(text, args.splitter2)
+            else:
+                splitted = split_sentences(text, args.splitter1)
+
+            for extracted_line in splitted:
                 extracted_line = extracted_line.strip()
                 if not extracted_line:
                     continue
