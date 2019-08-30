@@ -153,7 +153,9 @@ elif options.input[-3:] == ".gz":
     f = ArchiveIterator(gzip.open(options.input, 'r'))
 else:
     f = ArchiveIterator(open(options.input, 'r'))
-seen_md5 = {}
+seen_html = set()
+seen_plain_text = set()
+
 magic.Magic(mime=True)
 
 languages = []
@@ -288,15 +290,14 @@ for record in f:
                 else:
                     deboiled = cleantree
 
-                # We compute MD5 on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
+                # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
                 # files we discard them
-                c = hashlib.md5()
-                c.update(deboiled.encode())
+                html_hash=mmh3.hash(deboiled,signed =False)
                 # print("hash", c.hexdigest(), url)
                 # checking for duplicate content (duplicates are discarded)
-                if c.hexdigest() in seen_md5:
-                    logging.info("Repeated file:\t" + url + "\tfirst occurrence\t" + seen_md5[c.hexdigest()])
-                    pass
+                if html_hash in seen_html:
+                    logging.info("Repeated file:\t" + url)
+                    continue
                 else:
                     # get text with Alcazar library
                     if options.parser == "alcazar":
@@ -336,11 +337,13 @@ for record in f:
                     
                     plaintext_hash=mmh3.hash(plaintext,signed =False)
 
-                    if plaintext_hash in previous_crawl_hashes:
+                    if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
+                        logging.info("Repeated plain text file:\t" + url)
                         continue
 
                     if len(plaintext) > 0:
-                        seen_md5[c.hexdigest()] = c.hexdigest()
+                        seen_html.add(html_hash)
+                        seen_plain_text.add(plaintext_hash)
                         # Guessing MIME of the file (checked on original content)
                         logging.info(url + ": Getting mime")
                         mime = magic.from_buffer(text, mime=True)
