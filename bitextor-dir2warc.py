@@ -5,7 +5,6 @@ import re
 import sys
 import argparse
 from warcio.warcwriter import WARCWriter
-from warcio.statusandheaders import StatusAndHeaders
 from dateutil.parser import parse
 from datetime import datetime
 
