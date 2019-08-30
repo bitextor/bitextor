@@ -131,7 +131,7 @@ oparser.add_argument("--boilerpipe", action="store_true", default=False,
 oparser.add_argument("--parser", dest="parser", default="bs4",
                      help="Use 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'modest' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
-oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts', required=True)
+oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
 oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; if not specified it is empty string',
                      required=False, default="")
