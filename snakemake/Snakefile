@@ -517,8 +517,8 @@ def FilterTLD(tlds):
 
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
-        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.xz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.xz {transient}/{tld}/concat.warc.xz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -532,8 +532,8 @@ def AddWARCFiles(domains, warcfiles):
     return domains
 
 def InitWARCFilesConcatLogic(domains, warcfiles):
-    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.xz".format(transient=transient)):
-        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.xz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.gz".format(transient=transient)):
+        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.gz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
 
 def LoadDomains(file_path):
@@ -742,7 +742,7 @@ if "linkedHosts" in config:
         domainDirs = os.listdir(warcPath)
         for domainDir in domainDirs:
             #print(domainDir)
-            warcFilePath = "{warcPath}/{domainDir}/httrack.warc.xz".format(warcPath=warcPath, domainDir=domainDir)
+            warcFilePath = "{warcPath}/{domainDir}/httrack.warc.gz".format(warcPath=warcPath, domainDir=domainDir)
             if os.path.isfile(warcFilePath):
                hosts.remove(domainDir)
         #print("hosts", hosts)
@@ -875,7 +875,7 @@ OUTPUT=[]
 
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
-        OUTPUT.append("{dir}/{tld}/concat.warc.xz".format(dir=transient, tld=tld))
+        OUTPUT.append("{dir}/{tld}/concat.warc.gz".format(dir=transient, tld=tld))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     if "nmt" in config and config["nmt"]:
