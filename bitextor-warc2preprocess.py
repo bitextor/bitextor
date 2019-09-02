@@ -49,7 +49,7 @@ def guess_lang_from_data2(data):
     return detected_languages[0][1]
 
 def guess_lang_from_data3(model, data):
-    language, probability, reliable, proportion = model.get_languages(data)
+    language, probability, reliable, proportion = model.get_language(data)
     return language
 
 
@@ -166,7 +166,7 @@ magic.Magic(mime=True)
 languages = []
 banned = []
 if options.langid == "cld3":
-    model = cld3.LanguageIdentifier()
+    cld3model = cld3.LanguageIdentifier()
 
 if options.l1 is not None:
     languages.append(options.l1)
@@ -278,7 +278,7 @@ for record in f:
             # printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
             if (options.langid == "cld3"):
-                lang = guess_lang_from_data3(tree)
+                lang = guess_lang_from_data3(cld3model, tree)
             else: 
                 lang = guess_lang_from_data2(tree)
             if (len(languages) > 0 and lang not in languages) or (lang in banned):
