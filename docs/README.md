@@ -71,7 +71,14 @@ This dependency is not mandatory as `wget` is supported and a Python parallel da
   ```
 
 * **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
-  * With `bitextor-warc2preprocess.py`: `Cython` and `protobuf`, which can be installed like this: `pip3 install Cython` and `sudo snap protobuf`.
+  * With `bitextor-warc2preprocess.py`: `Cython` and `protobuf`.
+
+    ```bash
+    sudo snap install protobuf
+    pip3 install Cython
+    pip3 install git+https://github.com/iamthebot/cld3
+    ```
+
   * With `giawarc`: `protobuf`, which can be installed with snap: `sudo snap install protobuf`. Make sure that you install version 3.7.0 or higher.
 
 ### Submodules compilation
