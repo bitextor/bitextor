@@ -37,7 +37,7 @@ there are some external tools that need to be in the path before installing the 
 Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies.
 The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects.
 Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
-Additionally, [giawarc](github.com/paracrawl/giawarc) can be used optionally for WARC files preprocessing.
+Additionally, [giawarc](https://github.com/paracrawl/giawarc) can be used optionally for WARC files preprocessing.
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
