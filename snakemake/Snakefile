@@ -1490,21 +1490,32 @@ rule bicleaner:
         '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $4 "\t" $3 }}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache parallel -k --block 5M --pipe python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
         'fi'
 
-rule bicleanerfilter:
+# combine bicleanerfilter and elrc into one rule, and using awk instead
+rule bicleaner_filter_elrc:
     input:
         "{prefix}.bicleaner.scores.xz"
     output:
-        "{prefix}.bicleaner.xz"
-    shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz -T 0 > {output}'
-
-rule elrc:
-    input:
-        "{prefix}."+"{extension}".format(extension=BICLEANER)+".xz"
-    output:
         "{prefix}.elrc.xz"
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | awk -F\'\t\' \'{{ if ($NF >= {BICLEANER_THRESHOLD}) {{ print $0 }} }}\' | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
+
+
+
+# rule bicleanerfilter:
+#     input:
+#         "{prefix}.bicleaner.scores.xz"
+#     output:
+#         "{prefix}.bicleaner.xz"
+#     shell:
+#         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz -T 0 > {output}'
+#
+# rule elrc:
+#     input:
+#         "{prefix}."+"{extension}".format(extension=BICLEANER)+".xz"
+#     output:
+#         "{prefix}.elrc.xz"
+#     shell:
+#         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
 rule raw:
     input:
