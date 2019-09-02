@@ -11,6 +11,7 @@ import magic
 import re
 import ftfy
 import pycld2 as cld2
+import cld3
 from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 import jpype
@@ -46,6 +47,10 @@ def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
         ''.join(x for x in data if x.isprintable()), isPlainText=False)
     return detected_languages[0][1]
+
+def guess_lang_from_data3(model, data):
+    language, probability, reliable, proportion = model.get_languages(data)
+    return language
 
 
 def convert_encoding(data):
@@ -142,6 +147,8 @@ oparser.add_argument('--xzlang', action="store_true", help='Separate output into
                      default=False)
 oparser.add_argument('--langs', dest="langs", default="",
                      help='List of languages to include (+) or ignore (%%): +l1,+l2,%%l3,%%l4')
+oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
+
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -158,6 +165,9 @@ magic.Magic(mime=True)
 
 languages = []
 banned = []
+if options.langid == "cld3":
+    model = cld3.LanguageIdentifier()
+
 if options.l1 is not None:
     languages.append(options.l1)
 if options.l2 is not None:
@@ -267,7 +277,10 @@ for record in f:
             # lang id
             # printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
-            lang = guess_lang_from_data2(tree)
+            if (options.langid == "cld3"):
+                lang = guess_lang_from_data3(tree)
+            else: 
+                lang = guess_lang_from_data2(tree)
             if (len(languages) > 0 and lang not in languages) or (lang in banned):
                 logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
             else:
