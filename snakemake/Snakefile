@@ -764,7 +764,7 @@ InitConcatLogicLink(domainKey2Hosts)
 if len(WARCFILES) != 0:
     #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
     domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
-    #If only one WARC is provided, creates a symbolic link to it 
+    #If only one WARC is provided, creates a symbolic link to it
     InitWARCFilesConcatLogic(domainKey2Hosts, WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
@@ -896,6 +896,8 @@ else:
             OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     else:
         OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+
+print(OUTPUT, domainKey2Hosts)
 
 rule all:
     input:
@@ -1115,7 +1117,7 @@ rule warc2preprocessXzlang:
         directory('{dir}/w2p-xzlang/xzlang')
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
+        'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;'
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
 
@@ -1132,7 +1134,7 @@ rule warc2preprocess:
         url='{dir}/w2p/url.xz'
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/w2p;' 
+        'mkdir -p {wildcards.dir}/w2p;'
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
@@ -1483,9 +1485,9 @@ rule bicleaner:
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | {PROFILING} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | cut -f3,4 | {PROFILING} {BITEXTOR}/preprocess/bin/cache parallel -k --block 5M --pipe python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
         'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
+        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $4 "\t" $3 }}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache parallel -k --block 5M --pipe python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
         'fi'
 
 rule bicleanerfilter:
