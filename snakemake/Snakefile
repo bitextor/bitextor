@@ -1131,6 +1131,8 @@ rule concat_subdomains:
             cmd = 'cat {input} > {output}; '
         shell(cmd)
 
+# Preprocessing using giawarc with 'bitextor' format
+# Does not produce normalized_html nor deboilerplate
 rule giawarc:
     input:
         '{dir}/concat.warc.gz'
@@ -1144,6 +1146,9 @@ rule giawarc:
         'mkdir -p {wildcards.dir}/giawarc;'
         '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
+# Preprocessing using giawarc with 'xzlang' format
+# Writes output in giawarc-xzlang/xzlang
+# Produces a file for each language found
 rule giawarcXzlang:
     input:
         '{dir}/concat.warc.gz'
@@ -1154,6 +1159,9 @@ rule giawarcXzlang:
         'mkdir -p {wildcards.dir}/giawarc-xzlang/xzlang;'
         '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
+# Preprocssing using bitextor-warc2preprocess with 'xzlang' format
+# Writes output in w2p-xzlang/xzlang
+# Produces a file for each language found
 rule warc2preprocessXzlang:
     input:
         '{dir}/concat.warc.gz'
@@ -1165,6 +1173,7 @@ rule warc2preprocessXzlang:
         #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz --input {PLAINTEXTHASHES} {input} {usepdfextract} {PARSER}; '
 
+# Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
     input:
         '{dir}/concat.warc.gz'
@@ -1183,6 +1192,8 @@ rule warc2preprocess:
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --output_hash {permanent}/plain_text_hashes.xz --lang1 {LANG1} --lang2 {LANG2} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
+# Converts 'xzlang' output to 'bitextor' format
+# Used because the rest of rules are not yet adapted to use xzlang format
 rule xzlangToBitextor:
     input:
         '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
@@ -1194,13 +1205,16 @@ rule xzlangToBitextor:
     shell:
         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -f bitextor -o {wildcards.dir}/{PPROC} {input}'
 
-rule xzlangToBitextorLang:
-    input:
-        '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
-    output:
-        directory('{dir}/{PPROC}/bitextorlang')
-    shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang {input}'
+# Converts 'xzlang' output to 'bitextorlang' format
+# 'bitextorlang' = 'bitextor' format separated by languages (one folder for each language, each folder has 'mime.xz', 'plain_text.xz' and 'url.xz'
+# Currently not used, since this format is not yet supported by the rest of the rules
+# rule xzlangToBitextorLang:
+#     input:
+#         '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
+#     output:
+#         directory('{dir}/{PPROC}/bitextorlang')
+#     shell:
+#         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang {input}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
