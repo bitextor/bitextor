@@ -2,14 +2,15 @@
     "__default__" :
     {
         "gres": "",
-	"oversubscribe": ""
+        "oversubscribe": "",
+        "cpus-per-task": ""
     },
 
     "httrack_download" :
     {
         "oversubscribe": "-s"
     },
-    
+
     "docaling_translate_nmt" :
     {
         "gres": "--gres gpu:tesla:1"
@@ -24,15 +25,35 @@
     {
         "gres": "--gres gpu:tesla:1"
     },
-    
+
     "train_nmt":
     {
         "gres": "--gres gpu:tesla:1"
     },
-    
+
     "translate_test":
     {
         "gres": "--gres gpu:tesla:1"
-    }
+    },
+
+    "bicleaner":
+    {
+        "cpus-per-task": "--cpus-per-task 8"
+    },
+
+    "docaling_custom_translate":
+    {
+        "cpus-per-task": "--cpus-per-task 8"
+    },
+
+    "docaling_nmt_translate":
+    {
+        "cpus-per-task": "--cpus-per-task 8"
+    },
+
+    "docaling_smt_translate":
+    {
+        "cpus-per-task": "--cpus-per-task 8"
+    },
 
 }

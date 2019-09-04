@@ -1,0 +1,44 @@
+bitextor: /fs/meili0/faheem/bitextor
+langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
+langstatThreshold: 1000000
+# linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+#               "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+#               "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
+#               "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
+#               "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent"]
+linkedHostsAction: link #postCrawlExclude #remove
+
+langstatExcludeStrings: /home/s0565741/workspace/github/paracrawl/bitextor.malign.old/snakemake/langstat-exclude-strings
+excludeHostsFile: /home/s0565741/workspace/github/paracrawl/bitextor.malign.old/snakemake/exclude-hosts
+crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
+httrack: true
+
+temp: /raid0/tmp
+permanentDir: /fs/meili0/faheem/testing/permanent
+transientDir: /fs/meili0/faheem/testing/transient
+lang1: pl
+lang2: en
+crawlTimeLimit: 43200s
+crawlPageLimit: 100000
+
+#mosesDir: /home/s0565741/workspace/github/mosesdecoder
+LANG1Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign.old/preprocess/moses/tokenizer/tokenizer.perl -l pl -a -b -q"
+LANG2Tokenizer: "/home/s0565741/workspace/github/paracrawl/bitextor.malign.old/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q"
+LANG1SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign.old/preprocess/moses/ems/support/split-sentences.perl -b -l pl"
+LANG2SentenceSplitter: "/home/s0565741/workspace/github/paracrawl/bitextor.malign.old/preprocess/moses/ems/support/split-sentences.perl -b -l en"
+deduped: true
+tmx: true
+storeRawCorpus: true
+elrc: true
+documentAligner: externalMT
+alignerCmd: "/fs/meili0/faheem/bitextor.malign/mt_models/serverNMT.sh pl en sigyn hretha"
+bleualign: true
+docAlignThreshold: 0.1
+bleuAlignThreshold: 0.2
+maxSizeWARC: 5000
+bicleaner: /home/s0565741/workspace/experiment/paracrawl/v3/bicleaner_models/en-pl/training.en-pl.yaml
+bicleanerThreshold: 0.7
+parallelBlock: 50000
+parallelMemfree: 20000000
+parallelTranslate: true
+parallelBicleaner: true

@@ -164,6 +164,11 @@ def ValidateArgs(config):
 
            'mgiza': {'type': 'string'},
 
+           'parallelBlock' : {'type': 'integer'},
+           'parallelMemfree' : {'type': 'integer'},
+           'parallelTranslate' : {'type': 'boolean'},
+           'parallelBicleaner' : {'type': 'boolean'},
+
             }
 
     if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
@@ -486,6 +491,34 @@ if "bifixerOptions" in config:
     BIFIXEROPTIONS=config["bifixerOptions"]
 else:
     BIFIXEROPTIONS="--aggressive_dedup"
+
+
+############ MEMORY AND PARALLEL PROCESSING OPTIONS OPTIONS ############
+
+
+# Set options for parallel command (for translation and bicleaner)
+if "parallelBlock" in config and config["parallelBlock"]:
+    PARALLEL_BLOCK=config["parallelBlock"]
+else:
+    PARALLEL_BLOCK=5000000
+
+if "parallelMemfree" in config and config["parallelMemfree"]:
+    PARALLEL_MEMFREE=config["parallelMemfree"]
+else:
+    PARALLEL_MEMFREE=20000000
+
+if "parallelTranslate" in config and config["parallelTranslate"]:
+    PARALLEL_TRANS_CMD="parallel -k --block {PARALLEL_BLOCK} --memfree {PARALLEL_MEMFREE} --pipe".format(PARALLEL_BLOCK=PARALLEL_BLOCK, PARALLEL_MEMFREE=PARALLEL_MEMFREE)
+else:
+    PARALLEL_TRANS_CMD=""
+
+
+if "parallelBicleaner" in config and config["parallelBicleaner"]:
+    PARALLEL_BICLEANER_CMD="parallel -k --block {PARALLEL_BLOCK} --memfree {PARALLEL_MEMFREE} --pipe".format(PARALLEL_BLOCK=PARALLEL_BLOCK, PARALLEL_MEMFREE=PARALLEL_MEMFREE)
+else:
+    PARALLEL_BICLEANER_CMD=""
+
+
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1286,59 +1319,102 @@ rule docaling_deduped:
     shell:
         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
+
 rule docaling_translate_nmt:
     input:
-        source = "{dir}/{prefix}/extracted.deduped.xz"
+        source = "{dir}/{lang}.extracted.xz"
         ,
         configFile = "{dir}/config.json".format(dir=transient)
         ,
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}.nmt.extracted.deduped.translated.xz")
+        "{dir}/{lang}.nmt.extracted.translated.xz",
 
     priority: 40
 
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir ) | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
 
 rule docaling_translate_smt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
+        source = "{dir}/{lang}.extracted.xz"
         ,
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
 
     output:
-        temp("{dir}/{prefix}.smt.extracted.deduped.translated.xz")
-
+        "{dir}/{lang}.smt.extracted.translated.xz",
+    threads: 8
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
 
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
-
+        'paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} ) | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi; '
 
 rule docaling_custom_translate:
     input:
-        "{prefix}.extracted.deduped.xz",
+        "{dir}/{lang}.extracted.xz",
     output:
-        temp("{prefix}.customMT.extracted.deduped.translated.xz")
+        "{dir}/{lang}.customMT.extracted.translated.xz",
+    threads: 8
     shell:
-        'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        'paste <(xzcat -T 0 {input} | cut -f1 ) <(xzcat -T 0 {input} | cut -f2 | {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND} ) | xz -c -T 0 > {output}; '
+        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
 
-
-rule docaling_substitute_translated:
-    input:
-        extracted="{prefix}.extracted.xz",
-        deduped="{prefix}.extracted.deduped.xz",
-        translated="{prefix}.{mttype}.extracted.deduped.translated.xz"
-    output:
-        "{prefix}.{mttype}.extracted.translated.xz"
-    shell:
-        'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
+# rule docaling_translate_nmt:
+#     input:
+#         source = "{dir}/{prefix}/extracted.deduped.xz"
+#         ,
+#         configFile = "{dir}/config.json".format(dir=transient)
+#         ,
+#         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
+#
+#     output:
+#         temp("{dir}/{prefix}.nmt.extracted.deduped.translated.xz")
+#
+#     priority: 40
+#
+#     shell:
+#         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
+#         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+#
+# rule docaling_translate_smt:
+#     input:
+#         source = "{dir}/{prefix}.extracted.deduped.xz"
+#         ,
+#         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
+#
+#     output:
+#         temp("{dir}/{prefix}.smt.extracted.deduped.translated.xz")
+#
+#     params:
+#         smtDir = "{0}/smt-dir".format(config["transientDir"])
+#
+#     shell:
+#         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
+#         'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
+#
+# rule docaling_custom_translate:
+#     input:
+#         "{prefix}.extracted.deduped.xz",
+#     output:
+#         temp("{prefix}.customMT.extracted.deduped.translated.xz")
+#     shell:
+#         'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
+#         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+#
+#
+# rule docaling_substitute_translated:
+#     input:
+#         extracted="{prefix}.extracted.xz",
+#         deduped="{prefix}.extracted.deduped.xz",
+#         translated="{prefix}.{mttype}.extracted.deduped.translated.xz"
+#     output:
+#         "{prefix}.{mttype}.extracted.translated.xz"
+#     shell:
+#         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
 rule docaling_matches:
     input:
@@ -1482,13 +1558,14 @@ rule bicleaner:
         model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{prefix}.bicleaner.scores.xz"
+    threads: 8
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | cut -f3,4 | {PROFILING} {BITEXTOR}/preprocess/bin/cache parallel -k --block 5M --pipe python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
+        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | cut -f3,4 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_BICLEANER_CMD} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
         'else '
-        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $4 "\t" $3 }}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache parallel -k --block 5M --pipe python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
-        'fi'
+        '  paste <(xzcat -T 0 -f {input.segclean}) <(xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $4 "\t" $3 }}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_BICLEANER_CMD} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --score_only --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} ) | xz -T 0 > {output}; '
+        'fi; '
 
 # combine bicleanerfilter and elrc into one rule, and using awk instead
 rule bicleaner_filter_elrc:
