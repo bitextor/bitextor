@@ -1117,7 +1117,6 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
 
 rule warc2preprocess:
@@ -1134,7 +1133,6 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p;' 
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
