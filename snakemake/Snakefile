@@ -887,6 +887,10 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
 
         for file in PPROCFILES:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/{PPROC}/{file}.xz".format(dir=permanent, tld=tld, PPROC=PPROC, file=file))
+
+        if DOCALIGNEXT != "bitextor":
+            PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l1}.extracted.xz".format(dir=permanent, tld=tld, PPROC=PPROC,l1=LANG1))
+            PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=permanent, tld=tld, PPROC=PPROC,l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     if "nmt" in config and config["nmt"]:
@@ -1304,10 +1308,10 @@ rule docalign_extracted:
         lang='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
         url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        "{transient}".format(transient=transient) + "/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1)
+        "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1)
     shell:
-        'mkdir -p {transient}/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "{SENTTOK1}" --prune_type "words" --prune 80 --output_dir {transient}/{wildcards.target}/docalign'
+        'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "{SENTTOK1}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
@@ -1315,10 +1319,10 @@ rule docalign_tokenize:
         lang='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
         url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
     output:
-        "{transient}".format(transient=transient) + "/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {transient}/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "" --prune_type "words" --prune 80 --output_dir {transient}/{wildcards.target}/docalign'
+        'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_deduped:
     input:
