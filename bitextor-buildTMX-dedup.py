@@ -13,7 +13,7 @@ import time
 import locale
 import re
 from xml.sax.saxutils import escape
-
+import gzip
 
 def print_tu(fieldsdict, urls1, urls2, idnum):
     print("   <tu tuid=\"" + str(idnum) + "\" datatype=\"Text\">")
@@ -85,6 +85,7 @@ oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2,hunalign,"
                           "bicleaner,lengthratio,numTokensSL,numTokensTL",
                      default="url1,url2,seg1,seg2,hunalign,bicleaner,lengthratio,numTokensSL,numTokensTL")
+oparser.add_argument("-d", "--dedupe-txt", help="Filename of deduped.txt file", type=str, dest="dedupefile")
 options = oparser.parse_args()
 
 columns = options.columns.split(',')
@@ -122,29 +123,35 @@ urls2 = set()
 urls1.add(fieldsdict['url1'])
 urls2.add(fieldsdict['url2'])
 idnum = 0
-for line in reader:
-    fields = line.split("\t")
-    fields[-1] = fields[-1].strip()
+with gzip.open(options.dedupefile, 'wb') as df:
+    for line in reader:
+        fields = line.split("\t")
+        fields[-1] = fields[-1].strip()
 
-    fieldsdict = dict()
-    for field, column in zip(fields, columns):
-        fieldsdict[column] = field
+        fieldsdict = dict()
+        for field, column in zip(fields, columns):
+            fieldsdict[column] = field
 
-    curid = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
+        curid = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
 
-    # if a new segment pair is found:
-    if curid != previd:
-        idnum += 1
-        print_tu(prevfieldsdict, urls1, urls2, idnum)
-        prevfieldsdict = fieldsdict
-        urls1 = set()
-        urls2 = set()
-    urls1.add(fieldsdict['url1'])
-    urls2.add(fieldsdict['url2'])
+        # if a new segment pair is found:
+        if curid != previd:
+            idnum += 1
+            print_tu(prevfieldsdict, urls1, urls2, idnum)
+            to_write="\t".join([prevfieldsdict["seg1"], prevfieldsdict["seg2"]])+"\n"
+            df.write(to_write.encode())
 
-    previd = curid
+            prevfieldsdict = fieldsdict
+            urls1 = set()
+            urls2 = set()
+        urls1.add(fieldsdict['url1'])
+        urls2.add(fieldsdict['url2'])
 
-print_tu(fieldsdict, urls1, urls2, idnum + 1)
-print(" </body>")
-print("</tmx>")
-reader.close()
+        previd = curid
+
+    print_tu(fieldsdict, urls1, urls2, idnum + 1)
+    to_write = "\t".join([fieldsdict["seg1"], fieldsdict["seg2"]])+"\n"
+    df.write(to_write.encode())
+    print(" </body>")
+    print("</tmx>")
+    reader.close()
