@@ -598,6 +598,7 @@ def ExcludeHosts(hosts, excludeHosts):
             hosts.remove(host)
     print("AFTER hosts", len(hosts), len(hostsCopy))
 
+
 def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
@@ -929,8 +930,6 @@ else:
             OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     else:
         OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-
-print(OUTPUT, domainKey2Hosts)
 
 rule all:
     input:
@@ -1299,7 +1298,7 @@ rule aligndocumentsBitextor:
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
-rule docaling_extracted:
+rule docalign_extracted:
     input:
         text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
         lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
@@ -1309,18 +1308,26 @@ rule docaling_extracted:
         "{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.dir}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+        'langs=$( xzcat {input.lang} | LC_ALL=C sort -u | xargs ); '
 
-rule docaling_deduped:
-    input:
-        "{dir}/{lang}.extracted.xz"
-    output:
-        temp("{dir}/{lang}.extracted.deduped.xz")
-    shell:
-        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
+        'if [[ ${{langs[@]}} =~ {LANG1} ]] && [[ ${{langs[@]}} =~ {LANG2} ]]; then '
+        '  {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign ; '
+        'else '
+        '  touch {dir}/empty && xz {dir}/empty && mv {dir}/empty.xz {output[0]} ; '
+        '  touch {dir}/empty && xz {dir}/empty && mv {dir}/empty.xz {output[1]} ; '
+        '  >&2 echo "EARLY STOPPING: Discontinuing domain $(basename {wildcards.dir}), as {LANG1} or {LANG2} not found" ; '
+        'fi; '
 
+# rule docalign_deduped:
+#     input:
+#         "{dir}/{lang}.extracted.xz"
+#     output:
+#         temp("{dir}/{lang}.extracted.deduped.xz")
+#     shell:
+#         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
+#
 
-rule docaling_translate_nmt:
+rule docalign_translate_nmt:
     input:
         source = "{dir}/{lang}.extracted.xz"
         ,
@@ -1334,10 +1341,15 @@ rule docaling_translate_nmt:
     priority: 40
 
     shell:
-        'paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir ) | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
+        'if [ $(wc {input.source} -c | cut -f1 -d\' \' ) -le 32 ]; then '
+        '  touch {dir}/empty && xz {dir}/empty && mv {dir}/empty.xz {output} ; ; '
+        'else '
+        '  paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir ) | xz -c -T 0 > {output}; '
+        '  if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
+        'fi ; '
 
-rule docaling_translate_smt:
+
+rule docalign_translate_smt:
     input:
         source = "{dir}/{lang}.extracted.xz"
         ,
@@ -1350,20 +1362,32 @@ rule docaling_translate_smt:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
 
     shell:
-        'paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} ) | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi; '
+        'if [ $(wc {input.source} -c | cut -f1 -d\' \' ) -le 32 ]; then '
+        '  touch {dir}/empty && xz {dir}/empty && mv {dir}/empty.xz {output} ; '
+        'else '
+        '  paste <(xzcat -T 0 {input.source} | cut -f1 ) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} ) | xz -c -T 0 > {output}; '
+        '  if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi; '
+        'fi ; '
 
-rule docaling_custom_translate:
+
+
+rule docalign_custom_translate:
     input:
         "{dir}/{lang}.extracted.xz",
     output:
         "{dir}/{lang}.customMT.extracted.translated.xz",
     threads: 8
     shell:
-        'paste <(xzcat -T 0 {input} | cut -f1 ) <(xzcat -T 0 {input} | cut -f2 | {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND} ) | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
+        'if [ $(wc {input} -c | cut -f1 -d\' \' ) -le 32 ]; then '
+        '  touch {dir}/empty && xz {dir}/empty && mv {dir}/empty.xz {output} ; '
+        'else '
+        '   paste <(xzcat -T 0 {input} | cut -f1 ) <(xzcat -T 0 {input} | cut -f2 | {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND} ) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi; '
+        'fi ; '
 
-# rule docaling_translate_nmt:
+
+
+# rule docalign_translate_nmt:
 #     input:
 #         source = "{dir}/{prefix}/extracted.deduped.xz"
 #         ,
@@ -1380,7 +1404,7 @@ rule docaling_custom_translate:
 #         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
 #         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 #
-# rule docaling_translate_smt:
+# rule docalign_translate_smt:
 #     input:
 #         source = "{dir}/{prefix}.extracted.deduped.xz"
 #         ,
@@ -1396,7 +1420,7 @@ rule docaling_custom_translate:
 #         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
 #         'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 #
-# rule docaling_custom_translate:
+# rule docalign_custom_translate:
 #     input:
 #         "{prefix}.extracted.deduped.xz",
 #     output:
@@ -1406,7 +1430,7 @@ rule docaling_custom_translate:
 #         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 #
 #
-# rule docaling_substitute_translated:
+# rule docalign_substitute_translated:
 #     input:
 #         extracted="{prefix}.extracted.xz",
 #         deduped="{prefix}.extracted.deduped.xz",
@@ -1416,7 +1440,7 @@ rule docaling_custom_translate:
 #     shell:
 #         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
-rule docaling_matches:
+rule docalign_matches:
     input:
         l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz",
         l2="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2)
