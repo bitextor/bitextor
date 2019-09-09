@@ -259,12 +259,12 @@ else:
 if "xzlang" in config and config["xzlang"]:
     PPROC=PPROC+"-xzlang"
 
-if "preprocessLangs" in config:
+if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGS = "--langs " + config['preprocessLangs']
 else:
     PPROCLANGS = ""
 
-if "targetLangs" in config:
+if "targetLangs" in config and config["targetLangs"]:
     TARGETLANGS = "--langs " + config['targetLangs']
 else:
     TARGETLANGS = ""
