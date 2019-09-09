@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             if args.tokenized:
                 split = split_sentences(text, None)
-            elif lang == langs_parse[1]:
+            elif len(langs_parse) > 1 and lang == langs_parse[1]:
                 split = split_sentences(text, args.splitter2)
             else:
                 split = split_sentences(text, args.splitter1)
