@@ -1307,7 +1307,7 @@ rule docalign_tokenize:
         "{dir}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.dir}/docalign;'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "" --splitter2 "" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
 
 rule docalign_deduped:
     input:
