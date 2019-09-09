@@ -103,6 +103,8 @@ def ValidateArgs(config):
             'profiling': {'type': 'boolean'},
             'giawarc': {'type': 'boolean'},
             'xzlang': {'type': 'boolean'},
+            'preprocessLangs': {'type': 'string'},
+            'targetLangs': {'type': 'string'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -256,6 +258,17 @@ else:
 
 if "xzlang" in config and config["xzlang"]:
     PPROC=PPROC+"-xzlang"
+
+if "preprocessLangs" in config:
+    PPROCLANGS = "--langs " + config['preprocessLangs']
+else:
+    PPROCLANGS = ""
+
+if "targetLangs" in config:
+    TARGETLANGS = "--langs " + config['targetLangs']
+else:
+    TARGETLANGS = ""
+
 
 if "temp" in config:
   TMPDIR=config["temp"]
@@ -1152,7 +1165,7 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {output};' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {output} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --xzlang --output-dir {output} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
@@ -1169,7 +1182,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.domain}/w2p;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {permanent}/preprocess/{wildcards.domain}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {permanent}/preprocess/{wildcards.domain}/w2p --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 # Converts 'xzlang' output to 'bitextor' format
@@ -1323,7 +1336,7 @@ rule docalign_extracted:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKDICT}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKDICT}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
@@ -1334,7 +1347,7 @@ rule docalign_tokenize:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docaling_deduped:
     input:
