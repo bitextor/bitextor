@@ -9,6 +9,7 @@ import os
 import os.path
 import shutil
 import subprocess
+import ast
 from tqdm import tqdm
 from contextlib import contextmanager
 from pathlib import Path
@@ -36,6 +37,23 @@ def tokeniserCheck(cmd):
     except FunctionTimedOut:
         sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
         exit(1)
+
+def getLangOrDefaultFromDict (dict, lang1, lang2):
+    if lang1 in dict:
+        l1 = dict[lang1]
+    elif "default" in dict:
+        l1 = dict["default"]
+    else:
+        l1 = None
+
+    if lang2 in dict:
+        l2 = dict[lang2]
+    elif "default" in dict:
+        l2 = dict["default"]
+    else:
+        l2 = None
+
+    return l1, l2
 
 def systemCheck(cmd):
     #sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
@@ -98,15 +116,11 @@ def ValidateArgs(config):
            'WARCFiles': {'type': 'list'},
 
            'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'required': True, 'type': 'string'},
-           'LANG2Tokenizer': {'required': True, 'type': 'string'},
            'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'required': True, 'type': 'string'},
-           'LANG2SentenceSplitter': {'required': True, 'type': 'string'},
-
-           'LANG1MorphologicalAnalyser': {'type': 'string'},
-           'LANG2MorphologicalAnalyser':  {'type': 'string'},
+           'sentenceSplitters': {'required': True, 'type': 'string'},
+           'wordTokenizers': {'required': True, 'type': 'string'},
+           'morphologicalAnalysers': {'type': 'string'},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
@@ -310,27 +324,24 @@ else:
 WARCDOMAIN="WARCFILES"
 
 #Tokenisers
-if "LANG1Tokenizer" in config:
-  WORDTOK1=config["LANG1Tokenizer"]
+SENTTOKDICT = config["sentenceSplitters"]
+SENTTOK1, SENTTOK2 = getLangOrDefaultFromDict(ast.literal_eval(SENTTOKDICT), LANG1, LANG2)
+if not SENTTOK1 or not SENTTOK2:
+    sys.stderr.write("Sentence splitters for LANG1 and LANG2 are mandatory\n")
+    exit(1)
 
-if "LANG2Tokenizer" in config:
-  WORDTOK2=config["LANG2Tokenizer"]
+WORDTOKDICT = config["wordTokenizers"]
+WORDTOK1, WORDTOK2 = getLangOrDefaultFromDict(ast.literal_eval(WORDTOKDICT), LANG1, LANG2)
+if not WORDTOK1 or not WORDTOK2:
+    sys.stderr.write("Word tokenizers for LANG1 and LANG2 are mandatory\n")
+    exit(1)
 
-if "LANG1SentenceSplitter" in config:
-  SENTTOK1=config["LANG1SentenceSplitter"]
-
-if "LANG2SentenceSplitter" in config:
-  SENTTOK2=config["LANG2SentenceSplitter"]
-
-if "LANG1MorphologicalAnalyser" in config:
-    MORPHTOK1=config["LANG1MorphologicalAnalyser"]
+if "morphologicalAnalysers" in config:
+    MORPHTOKDICT = config["morphologicalAnalysers"]
+    MORPHTOK1, MORPHTOK2 = getLangOrDefaultFromDict(ast.literal_eval(MORPHTOKDICT), LANG1, LANG2)
 else:
-    MORPHTOK1=""
-
-if "LANG2MorphologicalAnalyser" in config:
-    MORPHTOK2=config["LANG2MorphologicalAnalyser"]
-else:
-    MORPHTOK2=""
+    MORPHTOKDICT = ""
+    MORPHTOK1, MORPHTOK2 = "", ""
 
 
 
@@ -1192,10 +1203,7 @@ rule tokenize:
     output:
         '{permanent}'.format(permanent=permanent)+'/preprocess/{target}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
     shell:
-        'splitters=\'{{ \"{LANG1}\" : \"{SENTTOK1}\", \"{LANG2}\" : \"{SENTTOK2}\" }}\' ; '
-        'tokenizers=\'{{ \"{LANG1}\" : \"{WORDTOK1}\", \"{LANG2}\" : \"{WORDTOK2}\" }}\' ; '
-        'lemmatizers=\'{{ \"{LANG1}\" : \"{MORPHTOK1}\", \"{LANG2}\" : \"{MORPHTOK2}\" }}\' ; '
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --langs {LANG1},{LANG2} --sentence-splitters "$splitters" --word-tokenizers "$tokenizers" --morph-analysers "$lemmatizers" | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --langs {LANG1},{LANG2} --sentence-splitters "{SENTTOKDICT}" --word-tokenizers "{WORDTOKDICT}" --morph-analysers "{MORPHTOKDICT}" | xz -T 0 > {output}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1315,7 +1323,7 @@ rule docalign_extracted:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKDICT}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
@@ -1326,7 +1334,7 @@ rule docalign_tokenize:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "" --splitter2 "" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docaling_deduped:
     input:
@@ -1396,7 +1404,7 @@ rule docalign_tokenize_translated:
     output:
         "{dir}/docalign/"+"{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.tokenized.xz"
     shell:
-        "{PROFILING} python {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
 rule docalign_matches:
     input:

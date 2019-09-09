@@ -12,11 +12,22 @@ import os
 import string
 import sys
 import html
+import ast
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
 from external_processor import ExternalTextProcessor
 from common import open_xz_or_gzip_or_plain
 
+def get_name(output_dir, prefix, language, tokenized, xz):
+    if tokenized:
+        basename = "{0}{1}.extracted.tokenized".format(prefix, language)
+    else:
+        basename = "{0}{1}.extracted".format(prefix, language)
+
+    if xz:
+        return os.path.join(output_dir, basename+".xz")
+    else:
+        return os.path.join(output_dir, basename+".gz")
 
 def filter_digits_and_punctuation(original_text):
     text_split = original_text.split()
@@ -41,12 +52,14 @@ def split_sentences(original_text, sentence_splitter_cmd):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--langs", dest="languages",
-                        help="Languages to be extracted (comma-separated)", required=True)
-    parser.add_argument("--splitter1", dest="splitter1",
-                        help="Sentence splitting script for lang1", required=True)
-    parser.add_argument("--splitter2", dest="splitter2",
-                        help="Sentence splitting script for lang2", required=True)
+    parser.add_argument("--langs", dest="languages", default="",
+                        help="Languages to be extracted (comma-separated). "
+                             "If non are specified, all the languages found will be extracted.")
+    parser.add_argument("--splitters", dest="splitters", default="",
+                        help="A map of sentence splitter commands. "
+                             "Format: {\"lang1\": \"script1\", ... , \"langN\": \"scriptN\", \"default\": \"defaultScript\"}. "
+                             "For languages that are not in this map but are in 'langs', the defaultScript will be used. "
+                             "If defaultScript is not specified, language will be omitted.")
     parser.add_argument("--tokenized", dest="tokenized", action="store_true",
                         help='Don\'t apply sentence splitter to the text (split by newlines only). '
                              'Output files will be named <lang>.extracted.tokenized.gz')
@@ -69,24 +82,24 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    langs_parse = args.languages.strip().split(',')
-    # print("langs_parse", langs_parse)
+    if not args.tokenized:
+        try:
+            args.splitters = ast.literal_eval(args.splitters)
+        except:
+            print("Sentence splitters incorrect format", file=sys.stderr)
+            sys.exit(1)
+
+    if args.languages != "":
+        langs_parse = args.languages.strip().split(',')
+    else:
+        langs_parse = []
 
     lang_file = {}
     for l in langs_parse:
         if not l.strip():
             continue
-        if args.tokenized:
-            basename = "{0}{1}.extracted.tokenized".format(args.output_prefix, l)
-        else:
-            basename = "{0}{1}.extracted".format(args.output_prefix, l)
 
-        if args.xz:
-            lang_file[l] = lzma.open(os.path.join(
-                args.output_dir, basename+".xz"), "wb")
-        else:
-            lang_file[l] = gzip.open(os.path.join(
-                args.output_dir, basename+".gz"), "wb")
+        lang_file[l] = lzma.open(get_name(args.output_dir, args.output_prefix, l, args.tokenized, args.xz), "wb")
 
     with open_xz_or_gzip_or_plain(args.textFile) as text_reader, \
             open_xz_or_gzip_or_plain(args.langFile) as lang_reader, \
@@ -96,7 +109,7 @@ if __name__ == "__main__":
             lang = next(lang_reader, None).strip()
             uri = next(url_reader, None).strip()
 
-            if lang not in langs_parse:
+            if langs_parse and lang not in langs_parse:
                 continue
 
             if not text:
@@ -104,10 +117,12 @@ if __name__ == "__main__":
 
             if args.tokenized:
                 split = split_sentences(text, None)
-            elif len(langs_parse) > 1 and lang == langs_parse[1]:
-                split = split_sentences(text, args.splitter2)
+            elif lang in args.splitters:
+                split = split_sentences(text, args.splitters[lang])
+            elif "default" in args.splitters:
+                split = split_sentences(text, args.splitters["default"])
             else:
-                split = split_sentences(text, args.splitter1)
+                continue
 
             for extracted_line in split:
 
@@ -124,8 +139,12 @@ if __name__ == "__main__":
                     if len(extracted_line.split()) > args.prune_threshold:
                         continue
 
-                lang_file[lang].write("{0}\t{1}\n".format(
-                    uri, extracted_line).encode("utf-8"))
+                if lang not in lang_file:
+                    lang_file[lang] = lzma.open(get_name(args.output_dir, args.output_prefix, lang, args.tokenized, args.xz), "wb")
+
+                lang_file[lang].write("{0}\t{1}\n".format(uri, extracted_line).encode("utf-8"))
+
+
 
         # print("lang_file", lang_file)
         for f in lang_file:
