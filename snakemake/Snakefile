@@ -1192,7 +1192,10 @@ rule tokenize:
     output:
         '{permanent}'.format(permanent=permanent)+'/preprocess/{target}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --lang1 {LANG1} --lang2 {LANG2} --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
+        'splitters=\'{{ \"{LANG1}\" : \"{SENTTOK1}\", \"{LANG2}\" : \"{SENTTOK2}\" }}\' ; '
+        'tokenizers=\'{{ \"{LANG1}\" : \"{WORDTOK1}\", \"{LANG2}\" : \"{WORDTOK2}\" }}\' ; '
+        'lemmatizers=\'{{ \"{LANG1}\" : \"{MORPHTOK1}\", \"{LANG2}\" : \"{MORPHTOK2}\" }}\' ; '
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --langs {LANG1},{LANG2} --sentence-splitters "$splitters" --word-tokenizers "$tokenizers" --morph-analysers "$lemmatizers" | xz -T 0 > {output}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
