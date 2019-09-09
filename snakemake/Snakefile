@@ -1315,7 +1315,7 @@ rule docalign_extracted:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
@@ -1326,13 +1326,13 @@ rule docalign_tokenize:
         "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
         'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "" --splitter2 "" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
 
-rule docalign_deduped:
+rule docaling_deduped:
     input:
-        "{dir}/{lang}.extracted.xz"
+        "{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/{lang}.extracted.xz"
     output:
-        temp("{dir}/{lang}.extracted.deduped.xz")
+        temp("{transient}".format(transient=transient)+"/{target}/docalign/{lang}.extracted.deduped.xz")
     shell:
         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
@@ -1380,13 +1380,13 @@ rule docalign_custom_translate:
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docalign_substitute_translated:
+rule docaling_substitute_translated:
     input:
-        extracted="{prefix}.extracted.xz",
-        deduped="{prefix}.extracted.deduped.xz",
-        translated="{prefix}.{mttype}.extracted.deduped.translated.xz"
+        extracted="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/{prefix}.extracted.xz",
+        deduped="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.extracted.deduped.xz",
+        translated="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.deduped.translated.xz"
     output:
-        "{prefix}.{mttype}.extracted.translated.xz"
+        "{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.translated.xz"
     shell:
         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
@@ -1398,13 +1398,12 @@ rule docalign_tokenize_translated:
     shell:
         "{PROFILING} python {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
-
 rule docalign_matches:
     input:
-        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
-        l2="{dir}/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        l1="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
+        l2="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     output:
-        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
+        "{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
         "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
@@ -1631,15 +1630,15 @@ rule mt_parallel_data:
 
 rule bleualign:
     input:
-        extracted_l1="{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        extracted_l2="{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{dir}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        extracted_l1="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
+        translated="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
+        matches="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
-        "{dir}/bleualign/align.info.gz"
+        "{transient}".format(transient=transient)+"/{target}/bleualign/align.info.gz"
     shell:
-        "mkdir -p {wildcards.dir}/bleualign; "
-        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text1translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.dir}/bleualign"
+        "mkdir -p {transient}/{wildcards.target}/bleualign; "
+        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text1translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {transient}/{wildcards.target}/bleualign"
 
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
