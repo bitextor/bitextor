@@ -43,8 +43,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--langs", dest="languages",
                         help="Languages to be extracted (comma-separated)", required=True)
-    parser.add_argument("--splitter", dest="splitter",
-                        help="Sentence splitting script", required=True)
+    parser.add_argument("--splitter1", dest="splitter1",
+                        help="Sentence splitting script for lang1", required=True)
+    parser.add_argument("--splitter2", dest="splitter2",
+                        help="Sentence splitting script for lang2", required=True)
     parser.add_argument("--tokenized", dest="tokenized", action="store_true",
                         help='Don\'t apply sentence splitter to the text (split by newlines only). '
                              'Output files will be named <lang>.extracted.tokenized.gz')
@@ -102,8 +104,10 @@ if __name__ == "__main__":
 
             if args.tokenized:
                 split = split_sentences(text, None)
+            elif lang == langs_parse[1]:
+                split = split_sentences(text, args.splitter2)
             else:
-                split = split_sentences(text, args.splitter)
+                split = split_sentences(text, args.splitter1)
 
             for extracted_line in split:
 

@@ -1292,10 +1292,11 @@ rule docalign_extracted:
         lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
         url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        "{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1)
+        "{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {wildcards.dir}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter "{SENTTOK1}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
 
 rule docalign_tokenize:
     input:
