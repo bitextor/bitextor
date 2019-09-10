@@ -2,7 +2,7 @@
 
 INPUT_FILE=$(mktemp) 
 cat > "$INPUT_FILE"
-python3 bifixer/bifixer/bifixer.py "${INPUT_FILE}" "${INPUT_FILE}".o "$1" "$2" "$3" &>/dev/null
+python3 bifixer/bifixer/bifixer.py "${INPUT_FILE}" "${INPUT_FILE}".o "$1" "$2" "$3"
 
 cat "${INPUT_FILE}".o
 
