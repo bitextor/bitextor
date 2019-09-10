@@ -8,10 +8,14 @@ temp: /home/bitextor/transient
 permanentDir: /home/bitextor/permanent/bitextor-output
 transientDir: /home/bitextor/transient
 ##Segment spliters and word tokenizers
-LANG1Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
-LANG2Tokenizer: /home/bitextor/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
-LANG1SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-LANG2SentenceSplitter: /home/bitextor/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+wordTokenizers: "{
+  'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
+  'fr: '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr'
+}"
+sentenceSplitters: "{
+  'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
+  'fr: '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr'
+}"
 ##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 lang1: en
 lang2: fr

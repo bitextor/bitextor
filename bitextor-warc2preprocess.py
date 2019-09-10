@@ -187,7 +187,6 @@ if options.pdfextract:
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
-print(languages)
 for record in f:
     # Initial checks
     if record.rec_type != 'response':

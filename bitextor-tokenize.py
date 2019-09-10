@@ -118,4 +118,6 @@ with open_xz_or_gzip_or_plain(options.text) as text_reader, \
             wordtok = get_lang_or_default(options.tokenizers, lang)
             morphtok = get_lang_or_default(options.lemmatizers, lang)
             extract_encoded_text(encodedtext, senttok, wordtok, morphtok)
+        else:
+            print(encodedtext)
 
