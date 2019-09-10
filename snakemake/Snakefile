@@ -108,6 +108,7 @@ def ValidateArgs(config):
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
+           'dataDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
            'pdf-converter' : {'type' : 'string'},
            'httrack': {'type': 'boolean'}, #deprecated
@@ -248,6 +249,7 @@ LANG2=config["lang2"]
 #Working paths
 permanent=config["permanentDir"]
 transient=config["transientDir"]
+data=config["dataDir"]
 
 PROFILING=""
 
@@ -540,8 +542,8 @@ def FilterTLD(tlds):
 
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
-        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -658,7 +660,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
             if linkedHostsAction == "remove" or linkedHostsAction == "postCrawlExclude":
                 hosts.remove(host)
             elif linkedHostsAction == "link":
-                dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
+                dest = "{permanent}/warc/{host}".format(permanent=data, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
                     cmd = "ln -sfn {dir}/warc/{host} {dest}".format( host=host, dest=dest)
@@ -750,7 +752,7 @@ if "linkedHosts" in config:
                 PostCrawlExclude(hosts, postCrawlPath)
 
     for dir in config["linkedHosts"]:
-        LinkedHosts(permanent, dir, hosts, linkedHostsAction)
+        LinkedHosts(data, dir, hosts, linkedHostsAction)
 
     if linkedHostsAction == "postCrawlExclude":
         # create list of dead domains in post-crawl-exclude file, only for this language pair
@@ -908,11 +910,11 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
             PPROCFILES = ["lang", "mime", "plain_text", "url", "deboilerplate_html", "normalized_html", "encoding", "plain_tokenized"]
 
         for file in PPROCFILES:
-                PPROCOUTPUT.append("{dir}/preprocess/{tld}/{PPROC}/{file}.xz".format(dir=permanent, tld=tld, PPROC=PPROC, file=file))
+                PPROCOUTPUT.append("{dir}/{tld}/{PPROC}/{file}.xz".format(dir=data, tld=tld, PPROC=PPROC, file=file))
 
         if DOCALIGNEXT != "bitextor":
-            PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l1}.extracted.xz".format(dir=permanent, tld=tld, PPROC=PPROC,l1=LANG1))
-            PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=permanent, tld=tld, PPROC=PPROC,l2=LANG2))
+            PPROCOUTPUT.append("{dir}/{tld}/docalign/{l1}.extracted.xz".format(dir=data, tld=tld, PPROC=PPROC,l1=LANG1))
+            PPROCOUTPUT.append("{dir}/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=data, tld=tld, PPROC=PPROC,l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     if "nmt" in config and config["nmt"]:
@@ -1067,7 +1069,7 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/creepy.warc.gz'
     priority: 10
     shell:
         #'echo {params.url}; '
@@ -1075,7 +1077,7 @@ rule creepy_download:
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/httrack.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -1089,7 +1091,7 @@ rule httrack_download:
 
 rule wget_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/wget.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -1106,7 +1108,7 @@ def GetDomainHosts(wildcards):
         if wildcards.target == WARCDOMAIN: # host is a WARC
             output.append(h)
         else:
-            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
+            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=data, host=h, crawler=CRAWLTARGET))
     return output
 
 rule concat_subdomains:
@@ -1130,14 +1132,14 @@ rule giawarc:
     input:
         '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        lang='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/giawarc/lang.xz',
-        mime='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/giawarc/mime.xz',
-        text='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/giawarc/plain_text.xz',
-        url='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/giawarc/url.xz'
+        lang='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/lang.xz',
+        mime='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/mime.xz',
+        text='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text.xz',
+        url='{data}/preprocess/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz'
     priority: 8
     shell:
-        'mkdir -p {permanent}/preprocess/{wildcards.domain}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {permanent}/preprocess/{wildcards.domain}/giawarc {input}'
+        'mkdir -p {data}/preprocess/{wildcards.domain}/giawarc;'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {data}/preprocess/{wildcards.domain}/giawarc {input}'
 
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
@@ -1146,7 +1148,7 @@ rule giawarcXzlang:
     input:
         '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        directory('{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/giawarc-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/xzlang')
     priority: 8
     shell:
         'mkdir -p {output};'
@@ -1159,7 +1161,7 @@ rule warc2preprocessXzlang:
     input:
         '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        directory('{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang')
     priority: 8
     shell:
         'mkdir -p {output};' 
@@ -1170,31 +1172,31 @@ rule warc2preprocess:
     input:
         '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        deboil='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/deboilerplate_html.xz',
-        encoding='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/encoding.xz',
-        lang='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/lang.xz',
-        mime='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/mime.xz',
-        html='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/normalized_html.xz',
-        text='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/plain_text.xz',
-        url='{permanent}/'.format(permanent=permanent) + 'preprocess/{domain}/w2p/url.xz'
+        deboil='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/deboilerplate_html.xz',
+        encoding='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/encoding.xz',
+        lang='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/lang.xz',
+        mime='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/mime.xz',
+        html='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/normalized_html.xz',
+        text='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/plain_text.xz',
+        url='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/url.xz'
     priority: 8
     shell:
-        'mkdir -p {permanent}/preprocess/{wildcards.domain}/w2p;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {permanent}/preprocess/{wildcards.domain}/w2p --input {input} {usepdfextract} {PARSER}; '
+        'mkdir -p {data}/preprocess/{wildcards.domain}/w2p;'
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {data}/preprocess/{wildcards.domain}/w2p --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 # Converts 'xzlang' output to 'bitextor' format
 # Used because the rest of rules are not yet adapted to use xzlang format
 rule xzlangToBitextor:
     input:
-        '{permanent}/preprocess/{target}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
+        '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
     output:
-        lang='{permanent}/preprocess/{target}/{PPROC}/lang.xz',
-        mime='{permanent}/preprocess/{target}/{PPROC}/mime.xz',
-        text='{permanent}/preprocess/{target}/{PPROC}/plain_text.xz',
-        url='{permanent}/preprocess/{target}/{PPROC}/url.xz'
+        lang='{dir}/{PPROC}/lang.xz',
+        mime='{dir}/{PPROC}/mime.xz',
+        text='{dir}/{PPROC}/plain_text.xz',
+        url='{dir}/{PPROC}/url.xz'
     shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -f bitextor -o {permanent}/preprocess/{wildcards.target}/{PPROC} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -f bitextor -o {wildcards.dir}/{PPROC} {input}'
 
 # Converts 'xzlang' output to 'bitextorlang' format
 # 'bitextorlang' = 'bitextor' format separated by languages (one folder for each language, each folder has 'mime.xz', 'plain_text.xz' and 'url.xz'
@@ -1209,18 +1211,18 @@ rule xzlangToBitextor:
 
 rule tokenize:
     input:
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}' + '/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}' + '/{PPROC}/lang.xz'.format(PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/lang.xz'.format(PPROC=PPROC)
     output:
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --langs {LANG1},{LANG2} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" | xz -T 0 > {output}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
-        lang='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
     output:
         '{transient}'.format(transient=transient)+'/{target}/idx.xz'
     shell:
@@ -1247,7 +1249,7 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.ridx.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz'
     shell:
@@ -1256,7 +1258,7 @@ rule ridx2imagesetoverlap:
 rule imagesetoverlap2structuredistance:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz'
     shell:
@@ -1265,8 +1267,8 @@ rule imagesetoverlap2structuredistance:
 rule structuredistance2urldistance:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urldistance.xz'
     priority: 8
@@ -1276,8 +1278,8 @@ rule structuredistance2urldistance:
 rule urldistance2mutuallylinked:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urldistance.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.mutuallylinked.xz'
     shell:
@@ -1286,7 +1288,7 @@ rule urldistance2mutuallylinked:
 rule mutuallylinked2urlscomparison:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.mutuallylinked.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlscomparison.xz'
     shell:
@@ -1295,7 +1297,7 @@ rule mutuallylinked2urlscomparison:
 rule urlscomparison2urlsoverlap:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlscomparison.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlsoverlap.xz'
     shell:
@@ -1313,8 +1315,8 @@ rule aligndocumentsBitextor:
     input:
         '{transient}'.format(transient=transient)+'/{target}/1.rank.xz',
         '{transient}'.format(transient=transient)+'/{target}/2.rank.xz',
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        '{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/docalign.bitextor.xz'
     shell:
@@ -1326,30 +1328,30 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        lang='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
-        url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
-        lang='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
-        url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
     output:
-        "{permanent}".format(permanent=permanent) + "/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {permanent}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {permanent}/preprocess/{wildcards.target}/docalign'
+        'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
 rule docaling_deduped:
     input:
-        "{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/{lang}.extracted.xz"
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/{lang}.extracted.xz"
     output:
         temp("{transient}".format(transient=transient)+"/{target}/docalign/{lang}.extracted.deduped.xz")
     shell:
@@ -1401,7 +1403,7 @@ rule docalign_custom_translate:
 
 rule docaling_substitute_translated:
     input:
-        extracted="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/{prefix}.extracted.xz",
+        extracted="{data}/preprocess".format(data=data)+"/{target}/docalign/{prefix}.extracted.xz",
         deduped="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.extracted.deduped.xz",
         translated="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.deduped.translated.xz"
     output:
@@ -1420,7 +1422,7 @@ rule docalign_tokenize_translated:
 rule docalign_matches:
     input:
         l1="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
-        l2="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     output:
         "{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
@@ -1429,8 +1431,8 @@ rule docalign_matches:
 rule aligndocumentsTrainedNMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
         report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
     output:
         '{transient}'.format(transient=transient) + '/{target}/docalign.nmt.xz'
@@ -1441,8 +1443,8 @@ rule aligndocumentsTrainedNMT:
 rule aligndocumentsCustomMT:
     input:
         matches="{transient}".format(transient=transient) + "/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
     output:
         '{transient}'.format(transient=transient) + '/{target}/docalign.customMT.xz'
     shell:
@@ -1451,8 +1453,8 @@ rule aligndocumentsCustomMT:
 rule aligndocumentsTrainedSMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{permanent}'.format(permanent=permanent)+'/preprocess/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
     output:
         '{transient}'.format(transient=transient) + '/{target}/docalign.smt.xz'
     shell:
@@ -1485,8 +1487,8 @@ rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
         "{transient}".format(transient=transient)+"/{target}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
-        "{permanent}".format(permanent=permanent)+"/preprocess/{target}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
-        "{permanent}".format(permanent=permanent)+"/preprocess/{target}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
     output:
         '{transient}'.format(transient=transient)+'/{target}/hunalign.segalign.xz'
     shell:
@@ -1649,8 +1651,8 @@ rule mt_parallel_data:
 
 rule bleualign:
     input:
-        extracted_l1="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        extracted_l2="{permanent}".format(permanent=permanent)+"/preprocess/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
+        extracted_l1="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
         translated="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
         matches="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:

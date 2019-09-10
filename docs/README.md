@@ -188,6 +188,7 @@ There are a few variables that are mandatory for running Bitextor, independently
 bitextor: /home/user/bitextor
 
 permanentDir: /home/user/permanent/bitextor-output
+dataDir: /home/user/permanent/data
 transientDir: /home/user/transient
 
 lang1: en
@@ -205,7 +206,7 @@ sentenceSplitters: {
 ```
 
 * `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
-* `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
+* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline
 * `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`
 * `wordTokenizers`: scripts for word-tokenization. You must specify scripts at least for `lang1` and `lang2` (one of them can be specified as `default`). These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above
 * `sentenceSplitters`: scripts for sentence splitting. Again, scripts for `lang1` and `lang2` are mandatory. All the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above
