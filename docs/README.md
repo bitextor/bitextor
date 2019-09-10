@@ -193,44 +193,36 @@ transientDir: /home/user/transient
 lang1: en
 lang2: fr
 
-LANG1Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en
-LANG2Tokenizer: /home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr
-LANG1SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en
-LANG2SentenceSplitter: /home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr
+wordTokenizers: {
+  'fr': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr',
+  'default': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en'
+}
+
+sentenceSplitters: {
+  'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
+  'default': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en'
+}
 ```
 
 * `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
 * `permanentDir` and `transientDir`: Folders used during processing: `permanentDir` will contain the results of crawling, i.e. the parallel corpus built and the WARC files obtained through crawling; `transientDir` will contain the rest of files generated during processing
-* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
-* `LANG1Tokenizer` and `LANG2Tokenizer`: scripts for word-tokenization both for `lang1` and `lang2`. These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above
-* `LANG1SentenceSplitter` and `LANG2SentenceSplitter`: scripts for sentence splitting both for `lang1` and `lang2`. Again the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above
+* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`
+* `wordTokenizers`: scripts for word-tokenization. You must specify scripts at least for `lang1` and `lang2` (one of them can be specified as `default`). These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above
+* `sentenceSplitters`: scripts for sentence splitting. Again, scripts for `lang1` and `lang2` are mandatory. All the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above
 
 There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
 
 ```yaml
-
 temp: /home/user/transient
 
-maxSizeWARC: 1000
-
-xzlang: false
-giawarc: false
-
-boilerpipeCleaning: true
-parser: "modest"
-
-LANG1MorphologicalAnalyser: path/to/morph-analyser1
-LANG2MorphologicalAnalyser: path/to/morph-analyser2
-
+morphologicalAnalysers: {
+  'lang1': 'path/to/morph-analyser1',
+  'lang2': 'path/to/morph-analyser2'
+}
 ```
 
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
-* `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
-* `xzlang`: group preprocessing output by languages (create a separate file for each language found, not just LANG1 and LANG2). This has the benefit of avoiding repeating preprocessing when crawling the same webs for different pair of languages. This option requires the installation of the Go library mentioned above.
-* `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used.
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`.
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
-* `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: scripts for morphological analysis (lemmatizer/stemmer) for `lang1` and `lang2`. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
 
 ### Variables defining data sources
 
@@ -295,6 +287,32 @@ If you want to also crawl PDFs (only `wget` support for now), use these settings
 crawler: wget
 crawlFileTypes: "html,pdf"
 ```
+
+### Preprocessing variables
+
+After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
+
+```yaml
+maxSizeWARC: 1000
+
+xzlang: false
+giawarc: false
+
+boilerpipeCleaning: true
+parser: "modest"
+
+onlyPreprocessing: false
+
+preprocessLangs: "en,es,fr"
+```
+
+* `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
+* `xzlang`: group preprocessing output by languages (create a separate file for each language found, not just LANG1 and LANG2). This has the benefit of avoiding repeating preprocessing when crawling the same webs for different pair of languages. This option requires the installation of the Go library mentioned above
+* `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
+* `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
+* `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
 
 ### Variables for document alignment
 
