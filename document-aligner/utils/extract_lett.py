@@ -17,6 +17,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
 from external_processor import ExternalTextProcessor
 from common import open_xz_or_gzip_or_plain
 
+
 def filter_digits_and_punctuation(original_text):
     text_split = original_text.split()
     if len(text_split) == 1 and sum([1 for m in text_split[0] if m in string.punctuation + string.digits]) > len(
@@ -27,8 +28,13 @@ def filter_digits_and_punctuation(original_text):
 
 
 def split_sentences(original_text, sentence_splitter_cmd):
-    proc = ExternalTextProcessor(sentence_splitter_cmd.split())
-    output = html.unescape(proc.process(original_text.replace("\n\n", "\n")))
+    if sentence_splitter_cmd:
+        proc = ExternalTextProcessor(sentence_splitter_cmd.split())
+        text_split = proc.process(original_text.replace("\n\n", "\n"))
+    else:
+        text_split = original_text.replace("\n\n", "\n")
+
+    output = html.unescape(text_split)
 
     return [n for n in output.split("\n") if filter_digits_and_punctuation(n)]
 
@@ -41,6 +47,9 @@ if __name__ == "__main__":
                         help="Sentence splitting script for lang1", required=True)
     parser.add_argument("--splitter2", dest="splitter2",
                         help="Sentence splitting script for lang2", required=True)
+    parser.add_argument("--tokenized", dest="tokenized", action="store_true",
+                        help='Don\'t apply sentence splitter to the text (split by newlines only). '
+                             'Output files will be named <lang>.extracted.tokenized.gz')
     parser.add_argument("--output_prefix", dest="output_prefix", default="",
                         help="Prefix for output files within directory", required=False)
     parser.add_argument("--output_dir", dest="output_dir", default=".",
@@ -67,12 +76,17 @@ if __name__ == "__main__":
     for l in langs_parse:
         if not l.strip():
             continue
+        if args.tokenized:
+            basename = "{0}{1}.extracted.tokenized".format(args.output_prefix, l)
+        else:
+            basename = "{0}{1}.extracted".format(args.output_prefix, l)
+
         if args.xz:
             lang_file[l] = lzma.open(os.path.join(
-                args.output_dir, "{0}{1}.extracted.xz".format(args.output_prefix, l)), "wb")
+                args.output_dir, basename+".xz"), "wb")
         else:
             lang_file[l] = gzip.open(os.path.join(
-                args.output_dir, "{0}{1}.extracted.gz".format(args.output_prefix, l)), "wb")
+                args.output_dir, basename+".gz"), "wb")
 
     with open_xz_or_gzip_or_plain(args.textFile) as text_reader, \
             open_xz_or_gzip_or_plain(args.langFile) as lang_reader, \
@@ -88,12 +102,15 @@ if __name__ == "__main__":
             if not text:
                 continue
 
-            if lang == langs_parse[1]:
-                splitted = split_sentences(text, args.splitter2)
+            if args.tokenized:
+                split = split_sentences(text, None)
+            elif len(langs_parse) > 1 and lang == langs_parse[1]:
+                split = split_sentences(text, args.splitter2)
             else:
-                splitted = split_sentences(text, args.splitter1)
+                split = split_sentences(text, args.splitter1)
 
-            for extracted_line in splitted:
+            for extracted_line in split:
+
                 extracted_line = extracted_line.strip()
                 if not extracted_line:
                     continue

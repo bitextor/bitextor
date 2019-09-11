@@ -337,12 +337,12 @@ if "LANG2SentenceSplitter" in config:
   SENTTOK2=config["LANG2SentenceSplitter"]
 
 if "LANG1MorphologicalAnalyser" in config:
-    MORPHTOK1="--morphanalyser_sl " + "\"" + str(config["LANG1MorphologicalAnalyser"]) + "\""
+    MORPHTOK1=config["LANG1MorphologicalAnalyser"]
 else:
     MORPHTOK1=""
 
 if "LANG2MorphologicalAnalyser" in config:
-    MORPHTOK2="--morphanalyser_tl " + "\"" + str(config["LANG2MorphologicalAnalyser"]) + "\""
+    MORPHTOK2=config["LANG2MorphologicalAnalyser"]
 else:
     MORPHTOK2=""
 
@@ -560,7 +560,7 @@ def AddWARCFiles(domains, warcfiles):
             print("WARC {path} omitted: file not found".format(path=wf))
     return domains
 
-def InitWARCFilesConcatLogic(domains, warcfiles):
+def InitWARCFilesConcatLogic( warcfiles):
     if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.gz".format(transient=transient)):
         cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.gz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
@@ -794,7 +794,7 @@ if len(WARCFILES) != 0:
     #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
     domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
     #If only one WARC is provided, creates a symbolic link to it 
-    InitWARCFilesConcatLogic(domainKey2Hosts, WARCFILES)
+    InitWARCFilesConcatLogic( WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
 
@@ -1137,6 +1137,7 @@ rule concat_subdomains:
             cmd = 'cat {input} > {output}; '
         shell(cmd)
 
+#================================== PREPROCESSING ======================================#
 # Preprocessing using giawarc with 'bitextor' format
 # Does not produce normalized_html nor deboilerplate
 rule giawarc:
@@ -1176,7 +1177,6 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {wildcards.dir}/w2p-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
@@ -1194,7 +1194,6 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p;' 
-        #By removing the checkpoint every time, we ensure that rule split_warc will be re-run every time, which allows to resume the pipeline if this step breaks
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --output_hash {permanent}/plain_text_hashes.xz --lang1 {LANG1} --lang2 {LANG2} --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
@@ -1222,15 +1221,24 @@ rule xzlangToBitextor:
 #     shell:
 #         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang {input}'
 
+rule tokenize:
+    input:
+        '{dir}' + '/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
+        '{dir}' + '/{PPROC}/lang.xz'.format(PPROC=PPROC)
+    output:
+        '{dir}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
+    shell:
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --lang1 {LANG1} --lang2 {LANG2} --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
+
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        text='{dir}'+'/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
-        lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
+        text='{dir}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
     output:
         '{dir}/idx.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} --wordtokeniser1 "{WORDTOK1}" --wordtokeniser2 "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
 rule idx2ridx_l1tol2:
     input:
@@ -1330,7 +1338,7 @@ rule aligndocumentsBitextor:
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
-rule docaling_extracted:
+rule docalign_extracted:
     input:
         text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
         lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
@@ -1342,7 +1350,18 @@ rule docaling_extracted:
         'mkdir -p {wildcards.dir}/docalign; '
         '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
 
-rule docaling_deduped:
+rule docalign_tokenize:
+    input:
+        text='{dir}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
+    output:
+        "{dir}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+    shell:
+        'mkdir -p {wildcards.dir}/docalign;'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "" --splitter2 "" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+
+rule docalign_deduped:
     input:
         "{dir}/{lang}.extracted.xz"
     output:
@@ -1350,7 +1369,7 @@ rule docaling_deduped:
     shell:
         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
-rule docaling_translate_nmt:
+rule docalign_translate_nmt:
     input:
         source = "{dir}/{prefix}/extracted.deduped.xz"
         ,
@@ -1367,7 +1386,7 @@ rule docaling_translate_nmt:
         'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
-rule docaling_translate_smt:
+rule docalign_translate_smt:
     input:
         source = "{dir}/{prefix}.extracted.deduped.xz"
         ,
@@ -1384,7 +1403,7 @@ rule docaling_translate_smt:
         'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docaling_custom_translate:
+rule docalign_custom_translate:
     input:
         "{prefix}.extracted.deduped.xz",
     output:
@@ -1394,7 +1413,7 @@ rule docaling_custom_translate:
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docaling_substitute_translated:
+rule docalign_substitute_translated:
     input:
         extracted="{prefix}.extracted.xz",
         deduped="{prefix}.extracted.deduped.xz",
@@ -1404,14 +1423,23 @@ rule docaling_substitute_translated:
     shell:
         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
-rule docaling_matches:
+rule docalign_tokenize_translated:
     input:
-        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz",
-        l2="{dir}/"+"{l2}.extracted.xz".format(l2=LANG2)
+        translated="{dir}/docalign/" + "{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.xz"
+    output:
+        "{dir}/docalign/"+"{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.tokenized.xz"
+    shell:
+        "{PROFILING} python {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
+
+
+rule docalign_matches:
+    input:
+        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
+        l2="{dir}/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     output:
         "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --word_tokeniser '{WORDTOK1}'"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 rule aligndocumentsTrainedNMT:
     input:
@@ -1472,11 +1500,22 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
-        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz"
+        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
+        "{dir}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
+        "{dir}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
     output:
         '{dir}/hunalign.segalign.xz'
     shell:
-        'xzcat -T 0 -f {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" {MORPHTOK1} {MORPHTOK2} | xz -T 0 > {output}'
+        'tokenized=$(mktemp "{TMPDIR}/tokenized.docalign.XXXXXX");'
+        'while IFS= read -r line;'
+        'do url1=$(echo "$line" | cut -f 1);'
+        'url2=$(echo "$line" | cut -f 2);'
+        't1=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
+        't2=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
+        'echo -e "$t1\t$t2";'
+        'done < <(xzcat -T 0 {input[1]}) > $tokenized;'
+        'paste <(xzcat -T 0 {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
+        'rm $tokenized;'
 
 rule alignsegments_bleualign:
     input:
