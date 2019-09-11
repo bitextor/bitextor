@@ -11,6 +11,7 @@ import magic
 import re
 import ftfy
 import pycld2 as cld2
+import cld3
 from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 import jpype
@@ -46,6 +47,10 @@ def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
         ''.join(x for x in data if x.isprintable()), isPlainText=False)
     return detected_languages[0][1]
+
+def guess_lang_from_data3(model, data):
+    language, probability, reliable, proportion = model.get_language(data)
+    return language
 
 
 def convert_encoding(data):
@@ -131,6 +136,8 @@ oparser.add_argument("--boilerpipe", action="store_true", default=False,
 oparser.add_argument("--parser", dest="parser", default="bs4",
                      help="Use 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'modest' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
+oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
+oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
 oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; if not specified it is empty string',
                      required=False, default="")
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
@@ -142,6 +149,7 @@ oparser.add_argument('--xzlang', action="store_true", help='Separate output into
                      default=False)
 oparser.add_argument('--langs', dest="langs", default="",
                      help='List of languages to include or ignore (%%): l1,l2,%%l3,%%l4')
+oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -158,6 +166,9 @@ magic.Magic(mime=True)
 
 languages = []
 banned = []
+if options.langid == "cld3":
+    cld3model = cld3.LanguageIdentifier()
+
 if options.l1 is not None:
     languages.append(options.l1)
 if options.l2 is not None:
@@ -171,6 +182,13 @@ if options.langs is not "":
         else:
             languages.append(l)
 
+previous_crawl_hashes=set()
+
+if options.inputHash:
+    with lzma.open(options.inputHash,"r") as fh:
+        for line in fh:
+            previous_crawl_hashes.add(int(line.strip()))
+
 if not options.xzlang:
     urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
     langFile = lzma.open(options.outDir + "/" + options.prefix + "lang.xz", "w")
@@ -183,6 +201,9 @@ if options.boilerpipe:
     deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
 if options.pdfextract:
     extractor = ExtrP()
+
+if options.outputHash:
+    plainTextHashFile = lzma.open(options.outputHash, "w")
 
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
@@ -270,7 +291,10 @@ for record in f:
             # lang id
             # printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
-            lang = guess_lang_from_data2(tree)
+            if (options.langid == "cld3"):
+                lang = guess_lang_from_data3(cld3model, tree)
+            else: 
+                lang = guess_lang_from_data2(tree)
             if (len(languages) > 0 and lang not in languages) or (lang in banned):
                 logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
             else:
@@ -329,7 +353,7 @@ for record in f:
                     
                     plaintext_hash=mmh3.hash(plaintext,signed =False)
 
-                    if plaintext_hash in seen_plain_text:
+                    if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
                         logging.info("Repeated plain text file:\t" + url)
                         continue
 
@@ -372,6 +396,9 @@ for record in f:
                             langfile.write(plaintext.encode())
                             langfile.write(b"\n")
                             langfile.close()
+                        if options.outputHash:
+                            plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
+
         num += 1
 if not options.xzlang:
     urlFile.close()
@@ -380,6 +407,8 @@ if not options.xzlang:
     mimeFile.close()
     normHtmlFile.close()
     plainTextFile.close()
+    if options.outputHash:
+        plainTextHashFile.close()
 # Boilerpipe cleaning is optional
 if options.boilerpipe:
     deboilFile.close()

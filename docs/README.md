@@ -41,7 +41,7 @@ Additionally, [giawarc](https://github.com/paracrawl/giawarc) can be used option
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
-`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils`
+`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl`
 
 Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
@@ -56,21 +56,33 @@ pip3 install -r bifixer/requirements.txt
 
 (if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
 
-As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command:
+### Optional dependencies
 
-`sudo apt install httrack`
-
+* **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`.  
 This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
 
-As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap:
+* **heritrix3** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
+This dependency is also not mandatory.
 
-`sudo snap install go`
+* **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
-Furthermore, the Go preprocessor itself has to be installed:
+  ```bash
+  # install go
+  sudo snap install go
+  # build and place the necessary programs in $HOME/go/bin
+  go get github.com/paracrawl/giawarc/...
+  ```
 
-`go get github.com/paracrawl/giawarc/...`
+* **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
+  * With `bitextor-warc2preprocess.py`: `Cython` and `protobuf`.
 
-This command will build and place the necessary programs in `${HOME}/go/bin`
+    ```bash
+    sudo snap install protobuf
+    pip3 install Cython
+    pip3 install git+https://github.com/iamthebot/cld3
+    ```
+
+  * With `giawarc`: `protobuf`, which can be installed with snap: `sudo snap install protobuf`. Make sure that you install version 3.7.0 or higher.
 
 ### Submodules compilation
 
@@ -252,7 +264,7 @@ langstatThreshold: 50
 
 * `langstatThreshold`: minimum number of documents in each language so the web domain is considered for crawling.
 
-In addition, it is possible to specify one or multple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/) files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files (each record compressed individually), which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`.
+In addition, it is possible to specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/) files to use, using the option `WARCFiles`. It allows to  a define a list of gz compressed WARC files (each record compressed individually), which will be used to extract parallel data. This and the previous options are not mutually exclusive: `WARCFiles` can be used along with `hosts`, `hostsFile` and/or `langstat`.
 
 ```yaml
 hosts: ["www.elisabethtea.com", "vade-antea.fr"]
@@ -289,6 +301,17 @@ crawler: wget
 crawlFileTypes: "html,pdf"
 ```
 
+If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is "admin:admin"):
+
+```yaml
+crawler: heritrix
+heritrixPath: /home/user/heritrix-3.4.0-20190418
+heritrixUrl: "https://localhost:8443"
+heritrixUser: "admin:admin"
+```
+
+Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and resume from the latest. If crawl takes longer than the crawl time limit, it will automatically create a checkpoint for a future incremental crawl.
+
 ### Preprocessing variables
 
 After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
@@ -305,6 +328,10 @@ parser: "modest"
 onlyPreprocessing: false
 
 preprocessLangs: "en,es,fr"
+
+langId: cld2
+
+plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
@@ -314,6 +341,8 @@ preprocessLangs: "en,es,fr"
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
+* `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
+* `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors
 
 ### Variables for document alignment
 
