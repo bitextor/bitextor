@@ -10,8 +10,6 @@ import hashlib
 import magic
 import re
 import ftfy
-import pycld2 as cld2
-import cld3
 from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 import jpype
@@ -167,7 +165,11 @@ magic.Magic(mime=True)
 languages = []
 banned = []
 if options.langid == "cld3":
+    import cld3
     cld3model = cld3.LanguageIdentifier()
+else:
+    import pycld2 as cld2
+
 
 if options.l1 is not None:
     languages.append(options.l1)

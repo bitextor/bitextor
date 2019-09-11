@@ -116,35 +116,36 @@ for field, column in zip(prevfields, columns):
     fieldsdict[column] = field
 
 prevfieldsdict = fieldsdict
-previd = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
-urls1 = set()
-urls2 = set()
-urls1.add(fieldsdict['url1'])
-urls2.add(fieldsdict['url2'])
-idnum = 0
-for line in reader:
-    fields = line.split("\t")
-    fields[-1] = fields[-1].strip()
-
-    fieldsdict = dict()
-    for field, column in zip(fields, columns):
-        fieldsdict[column] = field
-
-    curid = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
-
-    # if a new segment pair is found:
-    if curid != previd:
-        idnum += 1
-        print_tu(prevfieldsdict, urls1, urls2, idnum)
-        prevfieldsdict = fieldsdict
-        urls1 = set()
-        urls2 = set()
+if len(fieldsdict) > 4:
+    previd = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
+    urls1 = set()
+    urls2 = set()
     urls1.add(fieldsdict['url1'])
     urls2.add(fieldsdict['url2'])
+    idnum = 0
+    for line in reader:
+        fields = line.split("\t")
+        fields[-1] = fields[-1].strip()
 
-    previd = curid
+        fieldsdict = dict()
+        for field, column in zip(fields, columns):
+            fieldsdict[column] = field
 
-print_tu(fieldsdict, urls1, urls2, idnum + 1)
+        curid = fieldsdict['seg1'] + "\t" + fieldsdict['seg2']
+
+        # if a new segment pair is found:
+        if curid != previd:
+            idnum += 1
+            print_tu(prevfieldsdict, urls1, urls2, idnum)
+            prevfieldsdict = fieldsdict
+            urls1 = set()
+            urls2 = set()
+        urls1.add(fieldsdict['url1'])
+        urls2.add(fieldsdict['url2'])
+
+        previd = curid
+
+    print_tu(fieldsdict, urls1, urls2, idnum + 1)
 print(" </body>")
 print("</tmx>")
 reader.close()
