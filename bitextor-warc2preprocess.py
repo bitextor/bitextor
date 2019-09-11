@@ -148,9 +148,8 @@ oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract 
 oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language',
                      default=False)
 oparser.add_argument('--langs', dest="langs", default="",
-                     help='List of languages to include (+) or ignore (%%): +l1,+l2,%%l3,%%l4')
+                     help='List of languages to include or ignore (%%): l1,l2,%%l3,%%l4')
 oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
-
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -180,6 +179,8 @@ if options.langs is not "":
             languages.append(l[1:])
         elif l[0] == '%':
             banned.append(l[1:])
+        else:
+            languages.append(l)
 
 previous_crawl_hashes=set()
 

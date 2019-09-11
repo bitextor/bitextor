@@ -9,6 +9,7 @@ import os
 import os.path
 import shutil
 import subprocess
+import ast
 from tqdm import tqdm
 from contextlib import contextmanager
 from pathlib import Path
@@ -36,6 +37,23 @@ def tokeniserCheck(cmd):
     except FunctionTimedOut:
         sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
         exit(1)
+
+def getLangOrDefaultFromDict (dict, lang1, lang2):
+    if lang1 in dict:
+        l1 = dict[lang1]
+    elif "default" in dict:
+        l1 = dict["default"]
+    else:
+        l1 = None
+
+    if lang2 in dict:
+        l2 = dict[lang2]
+    elif "default" in dict:
+        l2 = dict["default"]
+    else:
+        l2 = None
+
+    return l1, l2
 
 def systemCheck(cmd):
     #sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
@@ -81,13 +99,17 @@ def ValidateArgs(config):
             'maxlines': {'type': 'integer'},
             'parser': {'type': 'string'},
             'onlyConcat': {'type': 'boolean'},
+            'onlyPreprocessing': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
             'giawarc': {'type': 'boolean'},
             'xzlang': {'type': 'boolean'},
+            'preprocessLangs': {'type': 'string'},
+            'targetLangs': {'type': 'string'},
 	    'langId': {'type': 'string'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
+           'dataDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
            'pdf-converter' : {'type' : 'string'},
            'plainTextHashes' : {'type': 'string'},
@@ -99,15 +121,11 @@ def ValidateArgs(config):
            'WARCFiles': {'type': 'list'},
 
            'dic': {'type': 'string'},
-           'LANG1Tokenizer': {'required': True, 'type': 'string'},
-           'LANG2Tokenizer': {'required': True, 'type': 'string'},
            'LANG2Detokenizer': {'type': 'string'},
 
-           'LANG1SentenceSplitter': {'required': True, 'type': 'string'},
-           'LANG2SentenceSplitter': {'required': True, 'type': 'string'},
-
-           'LANG1MorphologicalAnalyser': {'type': 'string'},
-           'LANG2MorphologicalAnalyser':  {'type': 'string'},
+           'sentenceSplitters': {'required': True, 'type': 'dict'},
+           'wordTokenizers': {'required': True, 'type': 'dict'},
+           'morphologicalAnalysers': {'type': 'string'},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
@@ -236,6 +254,7 @@ LANG2=config["lang2"]
 #Working paths
 permanent=config["permanentDir"]
 transient=config["transientDir"]
+data=config["dataDir"]
 
 PROFILING=""
 
@@ -246,6 +265,16 @@ else:
 
 if "xzlang" in config and config["xzlang"]:
     PPROC=PPROC+"-xzlang"
+
+if "preprocessLangs" in config and config["preprocessLangs"]:
+    PPROCLANGS = "--langs " + config['preprocessLangs']
+else:
+    PPROCLANGS = ""
+
+if "targetLangs" in config and config["targetLangs"]:
+    TARGETLANGS = "--langs " + config['targetLangs']
+else:
+    TARGETLANGS = ""
 
 if "langId" in config:
     LANGID = config["langId"]
@@ -324,29 +353,24 @@ else:
 WARCDOMAIN="WARCFILES"
 
 #Tokenisers
-if "LANG1Tokenizer" in config:
-  WORDTOK1=config["LANG1Tokenizer"]
+SENTTOK1, SENTTOK2 = getLangOrDefaultFromDict(config["sentenceSplitters"], LANG1, LANG2)
+SENTTOKS = str(dict(config["sentenceSplitters"]))
+if not SENTTOK1 or not SENTTOK2:
+    sys.stderr.write("Sentence splitters for LANG1 and LANG2 are mandatory\n")
+    exit(1)
 
-if "LANG2Tokenizer" in config:
-  WORDTOK2=config["LANG2Tokenizer"]
+WORDTOK1, WORDTOK2 = getLangOrDefaultFromDict(config["wordTokenizers"], LANG1, LANG2)
+WORDTOKS = str(dict(config["wordTokenizers"]))
+if not WORDTOK1 or not WORDTOK2:
+    sys.stderr.write("Word tokenizers for LANG1 and LANG2 are mandatory\n")
+    exit(1)
 
-if "LANG1SentenceSplitter" in config:
-  SENTTOK1=config["LANG1SentenceSplitter"]
-
-if "LANG2SentenceSplitter" in config:
-  SENTTOK2=config["LANG2SentenceSplitter"]
-
-if "LANG1MorphologicalAnalyser" in config:
-    MORPHTOK1=config["LANG1MorphologicalAnalyser"]
+if "morphologicalAnalysers" in config:
+    MORPHTOK1, MORPHTOK2 = getLangOrDefaultFromDict(config["morphologicalAnalysers"], LANG1, LANG2)
+    MORPHTOKS = str(dict(config["morphologicalAnalysers"]))
 else:
-    MORPHTOK1=""
-
-if "LANG2MorphologicalAnalyser" in config:
-    MORPHTOK2=config["LANG2MorphologicalAnalyser"]
-else:
-    MORPHTOK2=""
-
-
+    MORPHTOKS = ""
+    MORPHTOK1, MORPHTOK2 = "", ""
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -546,8 +570,8 @@ def FilterTLD(tlds):
 
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
-        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=permanent, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
+            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -664,7 +688,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
             if linkedHostsAction == "remove" or linkedHostsAction == "postCrawlExclude":
                 hosts.remove(host)
             elif linkedHostsAction == "link":
-                dest = "{permanent}/warc/{host}".format(permanent=permanent, host=host)
+                dest = "{permanent}/warc/{host}".format(permanent=data, host=host)
 
                 if not (os.path.exists(dest) or os.path.islink(dest)):
                     cmd = "ln -sfn {dir}/warc/{host} {dest}".format( host=host, dest=dest)
@@ -756,7 +780,7 @@ if "linkedHosts" in config:
                 PostCrawlExclude(hosts, postCrawlPath)
 
     for dir in config["linkedHosts"]:
-        LinkedHosts(permanent, dir, hosts, linkedHostsAction)
+        LinkedHosts(data, dir, hosts, linkedHostsAction)
 
     if linkedHostsAction == "postCrawlExclude":
         # create list of dead domains in post-crawl-exclude file, only for this language pair
@@ -901,10 +925,24 @@ def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, tes
 #================================== TARGET FILES ==================================#
 
 OUTPUT=[]
+PPROCOUTPUT=[]
 
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
         OUTPUT.append("{dir}/{tld}/concat.warc.gz".format(dir=transient, tld=tld))
+elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
+    for tld in domainKey2Hosts.keys():
+        if "giawarc" in PPROC or "xzlang" in PPROC:
+            PPROCFILES = ["lang", "mime", "plain_text", "url", "plain_tokenized"]
+        else:
+            PPROCFILES = ["lang", "mime", "plain_text", "url", "deboilerplate_html", "normalized_html", "encoding", "plain_tokenized"]
+
+        for file in PPROCFILES:
+                PPROCOUTPUT.append("{dir}/{tld}/{PPROC}/{file}.xz".format(dir=data, tld=tld, PPROC=PPROC, file=file))
+
+        if DOCALIGNEXT != "bitextor":
+            PPROCOUTPUT.append("{dir}/{tld}/docalign/{l1}.extracted.xz".format(dir=data, tld=tld, PPROC=PPROC,l1=LANG1))
+            PPROCOUTPUT.append("{dir}/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=data, tld=tld, PPROC=PPROC,l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
     if "nmt" in config and config["nmt"]:
@@ -928,7 +966,8 @@ else:
 
 rule all:
     input:
-        expand("{target}", target=OUTPUT)
+        expand("{target}", target=OUTPUT),
+        expand("{preprocess}", preprocess=PPROCOUTPUT)
 
 #================================== SMT ======================================#
 
@@ -1058,7 +1097,7 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/creepy.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/creepy.warc.gz'
     priority: 10
     shell:
         #'echo {params.url}; '
@@ -1066,7 +1105,7 @@ rule creepy_download:
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/httrack.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/httrack.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -1080,7 +1119,7 @@ rule httrack_download:
 
 rule wget_download:
     output:
-        '{dir}/warc'.format(dir=permanent)+'/{target}/wget.warc.gz'
+        '{dir}/warc'.format(dir=data)+'/{target}/wget.warc.gz'
     params:
         url="http://{target}"
     priority: 10
@@ -1120,7 +1159,7 @@ def GetDomainHosts(wildcards):
         if wildcards.target == WARCDOMAIN: # host is a WARC
             output.append(h)
         else:
-            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=permanent, host=h, crawler=CRAWLTARGET))
+            output.append('{dir}/warc/{host}/{crawler}.warc.gz'.format(dir=data, host=h, crawler=CRAWLTARGET))
     return output
 
 rule concat_subdomains:
@@ -1142,59 +1181,59 @@ rule concat_subdomains:
 # Does not produce normalized_html nor deboilerplate
 rule giawarc:
     input:
-        '{dir}/concat.warc.gz'
+        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        lang='{dir}/giawarc/lang.xz',
-        mime='{dir}/giawarc/mime.xz',
-        text='{dir}/giawarc/plain_text.xz',
-        url='{dir}/giawarc/url.xz',
+        lang='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/lang.xz',
+        mime='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/mime.xz',
+        text='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text.xz',
+        url='{data}/preprocess/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz'
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
+        'mkdir -p {data}/preprocess/{wildcards.domain}/giawarc;'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {data}/preprocess/{wildcards.domain}/giawarc -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
 # Produces a file for each language found
 rule giawarcXzlang:
     input:
-        '{dir}/concat.warc.gz'
+        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        directory('{dir}/giawarc-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/xzlang')
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/giawarc-xzlang/xzlang;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
+        'mkdir -p {output};'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output} -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'xzlang' format
 # Writes output in w2p-xzlang/xzlang
 # Produces a file for each language found
 rule warc2preprocessXzlang:
     input:
-        '{dir}/concat.warc.gz'
+        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        directory('{dir}/w2p-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang')
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {wildcards.dir}/w2p-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        'mkdir -p {output};' 
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
     input:
-        '{dir}/concat.warc.gz'
+        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
     output:
-        deboil='{dir}/w2p/deboilerplate_html.xz',
-        encoding='{dir}/w2p/encoding.xz',
-        lang='{dir}/w2p/lang.xz',
-        mime='{dir}/w2p/mime.xz',
-        html='{dir}/w2p/normalized_html.xz',
-        text='{dir}/w2p/plain_text.xz',
-        url='{dir}/w2p/url.xz',
+        deboil='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/deboilerplate_html.xz',
+        encoding='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/encoding.xz',
+        lang='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/lang.xz',
+        mime='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/mime.xz',
+        html='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/normalized_html.xz',
+        text='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/plain_text.xz',
+        url='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/url.xz'
     priority: 8
     shell:
-        'mkdir -p {wildcards.dir}/w2p;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --output_hash {permanent}/plain_text_hashes.xz --lang1 {LANG1} --lang2 {LANG2} --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        'mkdir -p {data}/preprocess/{wildcards.domain}/w2p;'
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {data}/preprocess/{wildcards.domain}/w2p --output_hash {permanent}/plain_text_hashes.xz --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 # Converts 'xzlang' output to 'bitextor' format
@@ -1223,20 +1262,20 @@ rule xzlangToBitextor:
 
 rule tokenize:
     input:
-        '{dir}' + '/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
-        '{dir}' + '/{PPROC}/lang.xz'.format(PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/lang.xz'.format(PPROC=PPROC)
     output:
-        '{dir}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
+        '{data}/preprocess'.format(data=data)+'/{target}' + '/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC)
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --lang1 {LANG1} --lang2 {LANG2} --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" --word-tokeniser_sl "{WORDTOK1}" --word-tokeniser_tl "{WORDTOK2}" --morph-analyser_sl "{MORPHTOK1}" --morph-analyser_tl "{MORPHTOK2}" | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input[0]} --lang {input[1]} --langs {LANG1},{LANG2} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" | xz -T 0 > {output}'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        text='{dir}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
-        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
     output:
-        '{dir}/idx.xz'
+        '{transient}'.format(transient=transient)+'/{target}/idx.xz'
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 --lang {input.lang} --text {input.text} | xz -T 0 > {output}'
 
@@ -1260,58 +1299,58 @@ rule idx2ridx_l2tol1:
 
 rule ridx2imagesetoverlap:
     input:
-        '{dir}/{num}.ridx.xz',
-        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.ridx.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.imgoverlap.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-imagesetoverlap.py --html {input[1]} | xz -T 0 > {output}'
 
 rule imagesetoverlap2structuredistance:
     input:
-        '{dir}/{num}.imgoverlap.xz',
-        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.structuredistance.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-structuredistance.py --html {input[1]} | xz -T 0 > {output}'
 
 rule structuredistance2urldistance:
     input:
-        '{dir}/{num}.structuredistance.xz',
-        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
-        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.urldistance.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.urldistance.xz'
     priority: 8
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-urlsdistance.py --html {input[1]} --url {input[2]} | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
-        '{dir}/{num}.urldistance.xz',
-        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
-        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.urldistance.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.mutuallylinked.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.mutuallylinked.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-mutuallylinked.py --html {input[1]} --url {input[2]} | xz -T 0 > {output}'
 
 rule mutuallylinked2urlscomparison:
     input:
-        '{dir}/{num}.mutuallylinked.xz',
-        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.mutuallylinked.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.urlscomparison.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.urlscomparison.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-urlscomparison.py --url {input[1]} | xz -T 0 > {output}'
 
 rule urlscomparison2urlsoverlap:
     input:
-        '{dir}/{num}.urlscomparison.xz',
-        '{dir}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/{num}.urlscomparison.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/deboilerplate_html.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/{num}.urlsoverlap.xz'
+        '{transient}'.format(transient=transient)+'/{target}/{num}.urlsoverlap.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-urlsetoverlap.py --html {input[1]} | xz -T 0 > {output}'
 
@@ -1325,12 +1364,12 @@ rule urlsoverlap2rank:
 
 rule aligndocumentsBitextor:
     input:
-        '{dir}/1.rank.xz',
-        '{dir}/2.rank.xz',
-        '{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        '{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        '{transient}'.format(transient=transient)+'/{target}/1.rank.xz',
+        '{transient}'.format(transient=transient)+'/{target}/2.rank.xz',
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        '{dir}/docalign.bitextor.xz'
+        '{transient}'.format(transient=transient)+'/{target}/docalign.bitextor.xz'
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --text {input[2]} --url {input[3]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
 
@@ -1340,32 +1379,32 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        lang='{dir}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
-        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
     output:
-        "{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        "{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {wildcards.dir}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --langs {LANG1},{LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "{SENTTOK1}" --splitter2 "{SENTTOK2}" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+        'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
-        text='{dir}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
-        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
-        url='{dir}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_tokenized.xz'.format(PPROC=PPROC),
+        lang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
     output:
-        "{dir}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
-        'mkdir -p {wildcards.dir}/docalign;'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized --langs {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitter1 "" --splitter2 "" --prune_type "words" --prune 80 --output_dir {wildcards.dir}/docalign'
+        'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
-rule docalign_deduped:
+rule docaling_deduped:
     input:
-        "{dir}/{lang}.extracted.xz"
+        "{data}/preprocess".format(data=data)+"/{target}/docalign/{lang}.extracted.xz"
     output:
-        temp("{dir}/{lang}.extracted.deduped.xz")
+        temp("{transient}".format(transient=transient)+"/{target}/docalign/{lang}.extracted.deduped.xz")
     shell:
         "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
 
@@ -1413,13 +1452,13 @@ rule docalign_custom_translate:
         'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
 
 
-rule docalign_substitute_translated:
+rule docaling_substitute_translated:
     input:
-        extracted="{prefix}.extracted.xz",
-        deduped="{prefix}.extracted.deduped.xz",
-        translated="{prefix}.{mttype}.extracted.deduped.translated.xz"
+        extracted="{data}/preprocess".format(data=data)+"/{target}/docalign/{prefix}.extracted.xz",
+        deduped="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.extracted.deduped.xz",
+        translated="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.deduped.translated.xz"
     output:
-        "{prefix}.{mttype}.extracted.translated.xz"
+        "{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.translated.xz"
     shell:
         'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
 
@@ -1429,48 +1468,46 @@ rule docalign_tokenize_translated:
     output:
         "{dir}/docalign/"+"{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.tokenized.xz"
     shell:
-        "{PROFILING} python {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
-
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
 rule docalign_matches:
     input:
-        l1="{dir}/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
-        l2="{dir}/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        l1="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
+        l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     output:
-        "{dir}/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
+        "{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
         "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
 rule aligndocumentsTrainedNMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
         report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
     output:
-        '{dir}/docalign.nmt.xz'
+        '{transient}'.format(transient=transient) + '/{target}/docalign.nmt.xz'
 
     shell:
-        'mkdir -p {wildcards.dir}/docalign; '
         '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
 rule aligndocumentsCustomMT:
     input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        matches="{transient}".format(transient=transient) + "/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
     output:
-        '{dir}/docalign.customMT.xz'
+        '{transient}'.format(transient=transient) + '/{target}/docalign.customMT.xz'
     shell:
         '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
 rule aligndocumentsTrainedSMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text='{dir}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
-        url='{dir}'+'/{PPROC}/url.xz'.format( PPROC=PPROC)
+        text='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/plain_text.xz'.format( PPROC=PPROC),
+        url='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/url.xz'.format( PPROC=PPROC),
     output:
-        '{dir}/docalign.smt.xz'
+        '{transient}'.format(transient=transient) + '/{target}/docalign.smt.xz'
     shell:
         '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext {input.text} --url {input.url} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
@@ -1500,11 +1537,11 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
-        "{dir}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
-        "{dir}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
-        "{dir}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
+        "{transient}".format(transient=transient)+"/{target}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/plain_tokenized.xz".format(PPROC=PPROC)
     output:
-        '{dir}/hunalign.segalign.xz'
+        '{transient}'.format(transient=transient)+'/{target}/hunalign.segalign.xz'
     shell:
         'tokenized=$(mktemp "{TMPDIR}/tokenized.docalign.XXXXXX");'
         'while IFS= read -r line;'
@@ -1665,15 +1702,15 @@ rule mt_parallel_data:
 
 rule bleualign:
     input:
-        extracted_l1="{dir}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
-        extracted_l2="{dir}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
-        translated="{dir}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
+        extracted_l1="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
+        extracted_l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2),
+        translated="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}.{mttype}.extracted.translated.xz".format(l1=LANG1,mttype=DOCALIGNEXT),
+        matches="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
     output:
-        "{dir}/bleualign/align.info.gz"
+        "{transient}".format(transient=transient)+"/{target}/bleualign/align.info.gz"
     shell:
-        "mkdir -p {wildcards.dir}/bleualign; "
-        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text1translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.dir}/bleualign"
+        "mkdir -p {transient}/{wildcards.target}/bleualign; "
+        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text1translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {transient}/{wildcards.target}/bleualign"
 
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
