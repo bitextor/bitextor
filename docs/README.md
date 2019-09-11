@@ -41,7 +41,7 @@ Additionally, [giawarc](https://github.com/paracrawl/giawarc) can be used option
 
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
-`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils`
+`sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl`
 
 Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
@@ -60,6 +60,9 @@ pip3 install -r bifixer/requirements.txt
 
 * **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`.  
 This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
+
+* **heritrix3** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
+This dependency is also not mandatory.
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
@@ -233,6 +236,7 @@ parser: "modest"
 LANG1MorphologicalAnalyser: path/to/morph-analyser1
 LANG2MorphologicalAnalyser: path/to/morph-analyser2
 
+plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
@@ -243,6 +247,7 @@ LANG2MorphologicalAnalyser: path/to/morph-analyser2
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`.
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
 * `LANG1MorphologicalAnalyser` and `LANG2MorphologicalAnalyser`: scripts for morphological analysis (lemmatizer/stemmer) for `lang1` and `lang2`. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors.
 
 ### Variables defining data sources
 
@@ -307,6 +312,17 @@ If you want to also crawl PDFs (only `wget` support for now), use these settings
 crawler: wget
 crawlFileTypes: "html,pdf"
 ```
+
+If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is "admin:admin"):
+
+```
+crawler: heritrix
+heritrixPath: /home/user/heritrix-3.4.0-20190418
+heritrixUrl: "https://localhost:8443"
+heritrixUser: "admin:admin"
+```
+
+Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and resume from the latest. If crawl takes longer than the crawl time limit, it will automatically create a checkpoint for a future incremental crawl.
 
 ### Variables for document alignment
 

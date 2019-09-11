@@ -90,6 +90,7 @@ def ValidateArgs(config):
            'transientDir': {'required': True, 'type': 'string'},
            'boilerpipeCleaning': {'type': 'boolean'},
            'pdf-converter' : {'type' : 'string'},
+           'plainTextHashes' : {'type': 'string'},
            'httrack': {'type': 'boolean'}, #deprecated
            'crawler': {'type': 'string'},
            'crawlTld': {'type': 'boolean'},
@@ -117,6 +118,9 @@ def ValidateArgs(config):
            'crawlerConnectionTimeout': {'type': 'integer'},
            'dumpCurrentCrawl': {'type': 'string'},
            'resumePreviousCrawl': {'type': 'string'},
+           'heritrixPath': {'type': 'string'},
+           'heritrixUrl': {'type': 'string'},
+           'heritrixUser': {'type': 'string'},
 
            'documentAligner': {'type': 'string'},
            'mosesDir': {'type': 'string'},
@@ -292,6 +296,11 @@ if "pdf-converter" in config and config["pdf-converter"]=="pdf-extract":
 else:
   usepdfextract = ""
 
+if "plainTextHashes" in config:
+  PLAINTEXTHASHES= "--input_hash "+config["plainTextHashes"]
+else:
+  PLAINTEXTHASHES=""
+
 #Option to use HTTrack for crawling instead of the native bitextor crawler
 if "httrack" in config and config["httrack"]==True:
   CRAWLTARGET="httrack"
@@ -403,6 +412,20 @@ if "resumePreviousCrawl" in config:
 else:
   CONTINUECRAWL=""
 
+if "heritrixPath" in config:
+  HERITRIXPATH=config["heritrixPath"]
+else:
+  HERITRIXPATH=""
+
+if "heritrixUrl" in config:
+  HERITRIXURL=config["heritrixUrl"]
+else:
+  HERITRIXURL="https://localhost:8443"
+
+if "heritrixUser" in config:
+  HERITRIXUSER=config["heritrixUser"]
+else:
+  HERITRIXUSER="admin:admin"
 
 ############ OPTIONS FOR THE MT DOCUMENT ALIGNER ############
 
@@ -1067,6 +1090,29 @@ rule wget_download:
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path "$DIRNAME" {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}; '
         'rm -rf $DIRNAME;'
 
+rule heritrix_download:
+    output:
+        '{dir}/warc'.format(dir=permanent)+'/{target}/heritrix.warc.gz'
+    params:
+        url="http://{target}"
+    priority: 10
+    shell:
+        'echo hostname=$HOSTNAME; '
+        'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" != "" ] ; then heritrix -a {HERITRIXUSER} ; fi ; '
+        'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
+        'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
+        'cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml; '
+        'curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml; '
+        'curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+        'echo "Waiting for the warc.gz to be finished"; '
+        'RUNTIME=0; '
+        'while [ ! -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz ] ; do sleep 1 ; RUNTIME=$((RUNTIME+1)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt {CRAWLTIMELIMIT} ] ; then curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
+        'echo "Job {wildcards.target} finished!"; '
+        'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
+
 
 def GetDomainHosts(wildcards):
     output=[]
@@ -1101,11 +1147,11 @@ rule giawarc:
         lang='{dir}/giawarc/lang.xz',
         mime='{dir}/giawarc/mime.xz',
         text='{dir}/giawarc/plain_text.xz',
-        url='{dir}/giawarc/url.xz'
+        url='{dir}/giawarc/url.xz',
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc -l {LANGID} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
@@ -1118,7 +1164,7 @@ rule giawarcXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc-xzlang/xzlang;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang -l {LANGID} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang -l {LANGID} --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'xzlang' format
 # Writes output in w2p-xzlang/xzlang
@@ -1131,7 +1177,7 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {wildcards.dir}/w2p-xzlang/xzlang --output_hash {permanent}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
@@ -1144,11 +1190,11 @@ rule warc2preprocess:
         mime='{dir}/w2p/mime.xz',
         html='{dir}/w2p/normalized_html.xz',
         text='{dir}/w2p/plain_text.xz',
-        url='{dir}/w2p/url.xz'
+        url='{dir}/w2p/url.xz',
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --langid {LANGID} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --output_hash {permanent}/plain_text_hashes.xz --lang1 {LANG1} --lang2 {LANG2} --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 # Converts 'xzlang' output to 'bitextor' format
