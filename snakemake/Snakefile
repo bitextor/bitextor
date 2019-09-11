@@ -84,6 +84,7 @@ def ValidateArgs(config):
             'profiling': {'type': 'boolean'},
             'giawarc': {'type': 'boolean'},
             'xzlang': {'type': 'boolean'},
+	    'langId': {'type': 'string'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -241,6 +242,11 @@ else:
 
 if "xzlang" in config and config["xzlang"]:
     PPROC=PPROC+"-xzlang"
+
+if "langId" in config:
+    LANGID = config["langId"]
+else:
+    LANGID = "cld2"
 
 if "temp" in config:
   TMPDIR=config["temp"]
@@ -1099,7 +1105,7 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {wildcards.dir}/giawarc -l {LANGID} {input}'
 
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
@@ -1112,7 +1118,7 @@ rule giawarcXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/giawarc-xzlang/xzlang;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {wildcards.dir}/giawarc-xzlang/xzlang -l {LANGID} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'xzlang' format
 # Writes output in w2p-xzlang/xzlang
@@ -1125,7 +1131,7 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p-xzlang/xzlang;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {wildcards.dir}/w2p-xzlang/xzlang --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
@@ -1142,7 +1148,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {wildcards.dir}/w2p;' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {boilerpipeCleaning} --output-dir {wildcards.dir}/w2p --lang1 {LANG1} --lang2 {LANG2} --langid {LANGID} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
 
 # Converts 'xzlang' output to 'bitextor' format
