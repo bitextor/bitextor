@@ -171,11 +171,7 @@ else:
     import pycld2 as cld2
 
 
-if options.l1 is not None:
-    languages.append(options.l1)
-if options.l2 is not None:
-    languages.append(options.l2)
-if options.langs is not "":
+if options.langs:
     for l in options.langs.split(','):
         if l[0] == '+':
             languages.append(l[1:])
@@ -183,6 +179,13 @@ if options.langs is not "":
             banned.append(l[1:])
         else:
             languages.append(l)
+
+# make sure that if languages are specified, lang1 and lang2 are among them
+if languages:
+    if options.l1 is not None:
+        languages.append(options.l1)
+    if options.l2 is not None:
+        languages.append(options.l2)
 
 previous_crawl_hashes=set()
 

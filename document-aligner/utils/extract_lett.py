@@ -52,6 +52,8 @@ def split_sentences(original_text, sentence_splitter_cmd):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--lang1", dest="l1", default="", help="Source language")
+    parser.add_argument("--lang2", dest="l2", default="", help="Target language")
     parser.add_argument("--langs", dest="languages", default="",
                         help="Languages to be extracted (comma-separated). "
                              "If non are specified, all the languages found will be extracted.")
@@ -93,6 +95,13 @@ if __name__ == "__main__":
         langs_parse = args.languages.strip().split(',')
     else:
         langs_parse = []
+
+    # make sure that if languages are specified, lang1 and lang2 are among them
+    if langs_parse:
+        if args.l1 and args.l1 not in langs_parse:
+            langs_parse.append(args.l1)
+        if args.l2 and args.l2 not in langs_parse:
+            langs_parse.append(args.l2)
 
     lang_file = {}
     for l in langs_parse:

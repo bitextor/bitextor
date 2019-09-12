@@ -1216,7 +1216,7 @@ rule warc2preprocessXzlang:
     priority: 8
     shell:
         'mkdir -p {output};' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output} --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output} --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
@@ -1387,7 +1387,7 @@ rule docalign_extracted:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
     shell:
         'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
 rule docalign_tokenize:
     input:
@@ -1398,7 +1398,7 @@ rule docalign_tokenize:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
         'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --lang2 {LANG2} --plaintextfile {input.text} --urlfile {input.url} --langfile {input.lang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
 rule docaling_deduped:
     input:
