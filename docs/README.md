@@ -58,10 +58,9 @@ pip3 install -r bifixer/requirements.txt
 
 ### Optional dependencies
 
-* **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`.  
-This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
+* **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`. This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
 
-* **heritrix3** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": https://github.com/internetarchive/heritrix3/wiki#downloads
+* **heritrix3:** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
 This dependency is also not mandatory.
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
@@ -250,7 +249,7 @@ langstat: /home/user/langstat/langstats.all.gz
 langstatThreshold: 50
 ```
 
-* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *https://github.com/bitextor/bitextor* the host would be *github.com*
+* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
 * `hostsFile`: a path to a gzipped file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.  
 * `langstat`: file containing language statistics of a collection of websites (hosts). The langstat file is a tab-separated list of tuples *host - language - amount of documents*. For example:
 
@@ -301,7 +300,7 @@ crawler: wget
 crawlFileTypes: "html,pdf"
 ```
 
-If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is "admin:admin"):
+If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is 'admin:admin'):
 
 ```yaml
 crawler: heritrix
@@ -328,6 +327,7 @@ parser: "modest"
 onlyPreprocessing: false
 
 preprocessLangs: "en,es,fr"
+targetLangs: "en,fr"
 
 langId: cld2
 
@@ -341,6 +341,7 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
+* `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors
 
