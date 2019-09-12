@@ -570,8 +570,8 @@ def FilterTLD(tlds):
 
 def InitConcatLogicLink(domains):
     for tld,hosts in domains.items():
-        if len(hosts) == 1 and  os.path.isfile("{permanent}/warc/{host}/{crawler}.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{transient}/{tld}/concat.warc.gz".format(tld=tld,transient=transient)):
-            cmd="mkdir -p {transient}/{tld}; ln -sfn {permanent}/warc/{host}/{crawler}.warc.gz {transient}/{tld}/concat.warc.gz".format(permanent=data, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
+        if len(hosts) == 1 and  os.path.isfile("{data}/warc/{host}/{crawler}.warc.gz".format(data=data, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{data}/preprocess/{tld}/concat.warc.gz".format(tld=tld,data=data)):
+            cmd="mkdir -p {data}/preprocess/{tld}; ln -sfn {data}/warc/{host}/{crawler}.warc.gz {data}/preprocess/{tld}/concat.warc.gz".format(data=data, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
@@ -585,8 +585,8 @@ def AddWARCFiles(domains, warcfiles):
     return domains
 
 def InitWARCFilesConcatLogic( warcfiles):
-    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{transient}/WARCFILES/concat.warc.gz".format(transient=transient)):
-        cmd="mkdir -p {transient}/{domain}; ln -sfn {warcpath} {transient}/{domain}/concat.warc.gz".format(transient=transient, warcpath=warcfiles[0], domain=WARCDOMAIN)
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{data}/WARCFILES/concat.warc.gz".format(data=data)):
+        cmd="mkdir -p {data}/preprocess/{domain}; ln -sfn {warcpath} {data}/preprocess/{domain}/concat.warc.gz".format(data=data, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
 
 def LoadDomains(file_path):
@@ -929,7 +929,7 @@ PPROCOUTPUT=[]
 
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
-        OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=transient, tld=tld))
+        OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=data, tld=tld))
 elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
     for tld in domainKey2Hosts.keys():
         if "giawarc" in PPROC or "xzlang" in PPROC:
@@ -1166,7 +1166,7 @@ rule concat_subdomains:
     input:
         GetDomainHosts
     output:
-        "{dir}".format(dir=transient)+"/{target}/concat.warc.gz"
+        "{dir}".format(dir=data)+"/preprocess/{target}/concat.warc.gz"
     priority: 9
     run:
         assert(len(input))
@@ -1181,7 +1181,7 @@ rule concat_subdomains:
 # Does not produce normalized_html nor deboilerplate
 rule giawarc:
     input:
-        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
+        '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
         lang='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/lang.xz',
         mime='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/mime.xz',
@@ -1197,7 +1197,7 @@ rule giawarc:
 # Produces a file for each language found
 rule giawarcXzlang:
     input:
-        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
+        '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
         directory('{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/xzlang')
     priority: 8
@@ -1210,7 +1210,7 @@ rule giawarcXzlang:
 # Produces a file for each language found
 rule warc2preprocessXzlang:
     input:
-        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
+        '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
         directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang')
     priority: 8
@@ -1221,7 +1221,7 @@ rule warc2preprocessXzlang:
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
     input:
-        '{dir}'.format(dir=transient)+'/{domain}/concat.warc.gz'
+        '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
         deboil='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/deboilerplate_html.xz',
         encoding='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/encoding.xz',
