@@ -225,22 +225,6 @@ if you already have an updated version of keras, check if the engine is properly
 ])
   fi
 
-AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
-  AC_MSG_CHECKING([for h5py for Python])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import h5py; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- h5py:   Please, install v2.6 or later and try again: sudo pip install h5py
-])
-  fi
-  
   AC_MSG_CHECKING([for WARC for Python3])
   ac_supports_python_ver=`python3 -c "import sys; \
 from warcio.archiveiterator import ArchiveIterator; \
@@ -315,35 +299,6 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-
-  AC_MSG_CHECKING([for iso-639 for Python])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import iso639; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires iso639 for Python. Please, install with 'sudo pip install iso-639' and try again.
-])
-  fi
-
-  AC_MSG_CHECKING([for LangID for Python])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import langid; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires langid for Python. Please, install v1.1.4 or later and try again: sudo pip install langid
-])
-  fi
-
   AC_MSG_CHECKING([for NLTK for Python])
   ac_supports_python_ver=`python3 -c "import sys; \
 import nltk; \
@@ -366,7 +321,7 @@ pip install --upgrade nltk
   else
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
+- nltk:   Please, install nltk and try again: pip install nltk
 ])
   fi
 
