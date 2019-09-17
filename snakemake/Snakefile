@@ -105,7 +105,7 @@ def ValidateArgs(config):
             'xzlang': {'type': 'boolean'},
             'preprocessLangs': {'type': 'string'},
             'targetLangs': {'type': 'string'},
-	    'langId': {'type': 'string'},
+	        'langId': {'type': 'string'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -945,6 +945,7 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
             PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=data, tld=tld, PPROC=PPROC,l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+    OUTPUT.append("{dir}/plain_text_hashes_list.xz".format(dir=permanent))
     if "nmt" in config and config["nmt"]:
         OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
         OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
@@ -953,7 +954,7 @@ else:
         OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
         OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
 
-    #Optional TMX: if option enabled, TMX is generated; otherwhise, tab-separated .sent file is generated
+    #Optional TMX: if option enabled, TMX is generated; otherwise, tab-separated .sent file is generated
     if "tmx" in config and config["tmx"]:
         if "storeRawCorpus" in config and config["storeRawCorpus"]:
             OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
@@ -1186,11 +1187,12 @@ rule giawarc:
         lang='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/lang.xz',
         mime='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/mime.xz',
         text='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text.xz',
-        url='{data}/preprocess/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz'
+        url='{data}/preprocess/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz',
+        hashes='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text_hashes.xz'
     priority: 8
     shell:
         'mkdir -p {data}/preprocess/{wildcards.domain}/giawarc;'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {data}/preprocess/{wildcards.domain}/giawarc -l {LANGID} --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bitextor -o {data}/preprocess/{wildcards.domain}/giawarc -l {LANGID} --output_hash {output.hashes} {PLAINTEXTHASHES} {input}'
 
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
@@ -1199,11 +1201,12 @@ rule giawarcXzlang:
     input:
         '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
-        directory('{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/xzlang'),
+        '{data}/'.format(data=data) + 'preprocess/{domain}/giawarc-xzlang/plain_text_hashes.xz'
     priority: 8
     shell:
-        'mkdir -p {output};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output} -l {LANGID} --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz {PLAINTEXTHASHES} {input}'
+        'mkdir -p {output[0]};'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'xzlang' format
 # Writes output in w2p-xzlang/xzlang
@@ -1212,11 +1215,12 @@ rule warc2preprocessXzlang:
     input:
         '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
-        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang')
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang'),
+        '{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/plain_text_hashes.xz'
     priority: 8
     shell:
-        'mkdir -p {output};' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output} --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        'mkdir -p {output[0]};' 
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Preprocessing using bitextor-warc2preprocess with 'bitextor' format
 rule warc2preprocess:
@@ -1229,12 +1233,22 @@ rule warc2preprocess:
         mime='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/mime.xz',
         html='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/normalized_html.xz',
         text='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/plain_text.xz',
-        url='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/url.xz'
+        url='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/url.xz',
+        hashes='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/plain_text_hashes.xz'
     priority: 8
     shell:
         'mkdir -p {data}/preprocess/{wildcards.domain}/w2p;'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {data}/preprocess/{wildcards.domain}/w2p --output_hash {data}/preprocess/{wildcards.domain}/plain_text_hashes.xz --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} {boilerpipeCleaning} --output-dir {data}/preprocess/{wildcards.domain}/w2p --output_hash {output.hashes} --langid {LANGID} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         'if [ "{boilerpipeCleaning}" == "" ]; then ln -sfn {output.html} {output.deboil}; fi'
+
+# Create a list of files that contain paths of plain_text_hash.xz of the original domains
+rule create_list_of_hashes:
+    input:
+        expand('{data}/preprocess/{domain}/{PPROC}/plain_text_hashes.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys()))
+    output:
+        '{permanent}'.format(permanent=permanent) + '/plain_text_hashes_list.xz'
+    shell:
+        'for hash in {input}; do echo $hash; done | xz -T 0 > {output}'
 
 # Converts 'xzlang' output to 'bitextor' format
 # Used because the rest of rules are not yet adapted to use xzlang format
@@ -1242,10 +1256,10 @@ rule xzlangToBitextor:
     input:
         '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
     output:
-        lang='{dir}/{PPROC}/lang.xz',
-        mime='{dir}/{PPROC}/mime.xz',
-        text='{dir}/{PPROC}/plain_text.xz',
-        url='{dir}/{PPROC}/url.xz'
+        lang='{dir}'+'/{PPROC}/lang.xz'.format(PPROC=PPROC),
+        mime='{dir}'+'/{PPROC}/mime.xz'.format(PPROC=PPROC),
+        text='{dir}'+'/{PPROC}/plain_text.xz'.format(PPROC=PPROC),
+        url='{dir}'+'/{PPROC}/url.xz'.format(PPROC=PPROC)
     shell:
         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -f bitextor -o {wildcards.dir}/{PPROC} {input}'
 
@@ -1468,7 +1482,14 @@ rule docalign_tokenize_translated:
     output:
         "{dir}/docalign/"+"{l1}".format(l1=LANG1) + ".{mttype}.extracted.translated.tokenized.xz"
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
+        'read -r -a WORDTOK <<< "{WORDTOK2}"; '
+        'if [ -z "{MORPHTOK2}" ]; '
+        'then {PROFILING} paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | "${{WORDTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
+        'else '
+        'read -r -a MORPHTOK <<< "{MORPHTOK2}";'
+        '{PROFILING} paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | "${{WORDTOK[@]}}" | "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
+        'fi'
+        # "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
 rule docalign_matches:
     input:
