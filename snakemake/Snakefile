@@ -9,7 +9,7 @@ import os
 import os.path
 import shutil
 import subprocess
-import ast
+import mmh3
 from tqdm import tqdm
 from contextlib import contextmanager
 from pathlib import Path
@@ -197,6 +197,7 @@ def ValidateArgs(config):
     config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()})
 
     #Mandatory options depending on the document aligner method choosen
+    #Mandatory options depending on the document aligner method choosen
     if "documentAligner" in config:
         if config["documentAligner"]=='NMT':
             schema['marianDir']['required']=True
@@ -350,7 +351,8 @@ if "WARCFiles" in config:
     WARCFILES=config["WARCFiles"]
 else:
     WARCFILES=[]
-WARCDOMAIN="WARCFILES"
+
+WARCDOMAIN="WARCFILES-" + str(mmh3.hash(",".join(WARCFILES), signed=False))
 
 #Tokenisers
 SENTTOK1, SENTTOK2 = getLangOrDefaultFromDict(config["sentenceSplitters"], LANG1, LANG2)
@@ -584,8 +586,9 @@ def AddWARCFiles(domains, warcfiles):
             print("WARC {path} omitted: file not found".format(path=wf))
     return domains
 
-def InitWARCFilesConcatLogic( warcfiles):
-    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{data}/WARCFILES/concat.warc.gz".format(data=data)):
+def InitWARCFilesConcatLogic(warcfiles):
+    hash = mmh3.hash(warcfiles[0], signed=False)
+    if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{data}/preprocess/WARCFILES-{hash}/concat.warc.gz".format(data=data, hash=str(hash))):
         cmd="mkdir -p {data}/preprocess/{domain}; ln -sfn {warcpath} {data}/preprocess/{domain}/concat.warc.gz".format(data=data, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
 
@@ -1187,7 +1190,7 @@ rule giawarc:
         lang='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/lang.xz',
         mime='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/mime.xz',
         text='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text.xz',
-        url='{data}/preprocess/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz',
+        url='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/url.xz',
         hashes='{data}/'.format(data=data) + 'preprocess/{domain}/giawarc/plain_text_hashes.xz'
     priority: 8
     shell:
@@ -1244,11 +1247,15 @@ rule warc2preprocess:
 # Create a list of files that contain paths of plain_text_hash.xz of the original domains
 rule create_list_of_hashes:
     input:
-        expand('{data}/preprocess/{domain}/{PPROC}/plain_text_hashes.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys()))
+        hash=expand('{data}/preprocess/{domain}/{PPROC}/plain_text_hashes.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys())),
+        # lang=expand('{data}/preprocess/{domain}/{PPROC}/lang.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys()))
     output:
         '{permanent}'.format(permanent=permanent) + '/plain_text_hashes_list.xz'
     shell:
-        'for hash in {input}; do echo $hash; done | xz -T 0 > {output}'
+        # we should do this if we want all the hashes for lang1 and lang2
+        # 'while IFS= read -r line ; do echo "$line" ; done < <(paste <(xzcat {input.lang}) <(xzcat {input.hash}) | grep "{LANG1}\|{LANG2}") | xz -T 0 > {output}'
+        # this outputs the path of the plain_text_hashes.xz file (that may contain hashes of texts in any language) for every domain
+        'for hash in {input.hash}; do echo $hash; done | xz -T 0 > {output}'
 
 # Converts 'xzlang' output to 'bitextor' format
 # Used because the rest of rules are not yet adapted to use xzlang format
@@ -1484,10 +1491,10 @@ rule docalign_tokenize_translated:
     shell:
         'read -r -a WORDTOK <<< "{WORDTOK2}"; '
         'if [ -z "{MORPHTOK2}" ]; '
-        'then {PROFILING} paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | "${{WORDTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
+        'then paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
         'else '
         'read -r -a MORPHTOK <<< "{MORPHTOK2}";'
-        '{PROFILING} paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | "${{WORDTOK[@]}}" | "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
+        'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | {PROFILING} "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
         'fi'
         # "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
