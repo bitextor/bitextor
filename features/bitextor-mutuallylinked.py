@@ -10,15 +10,16 @@ pathname = os.path.dirname(sys.argv[0])
 sys.path.append(pathname + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
-def extract_urls(html_file, url_file, docs):
+
+def extract_urls(html_file, url_file, docs, fileid):
     with open_xz_or_gzip_or_plain(html_file) as hd:
         with open_xz_or_gzip_or_plain(url_file) as ud:
-            fileid = 1
             for url in ud:
                 html_content = base64.b64decode(next(hd, None)).decode("utf-8")
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
                 docs[fileid] = [url, set(list(links))]
                 fileid += 1
+    return fileid
 
 
 oparser = argparse.ArgumentParser(
@@ -28,10 +29,14 @@ oparser.add_argument('ridx', metavar='RIDX', nargs='?',
                      help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
                           'the script will read from the standard input)',
                      default=None)
-oparser.add_argument("--html", help="File produced during pre-processing containing all HTML files in a WARC file",
-                     dest="html", required=True)
-oparser.add_argument("--url", help="File produced during pre-processing containing all the URLs in a WARC file",
-                     dest="url", required=True)
+oparser.add_argument("--html1", help="File produced during pre-processing containing all HTML files in a WARC file for SL",
+                     dest="html1", required=True)
+oparser.add_argument("--html2", help="File produced during pre-processing containing all HTML files in a WARC file for TL",
+                     dest="html2", required=True)
+oparser.add_argument("--url1", help="File produced during pre-processing containing all the URLs in a WARC file for SL",
+                     dest="url1", required=True)
+oparser.add_argument("--url2", help="File produced during pre-processing containing all the URLs in a WARC file for TL",
+                     dest="url2", required=True)
 options = oparser.parse_args()
 
 if options.ridx is None:
@@ -41,7 +46,10 @@ else:
 
 index = {}
 documents = {}
-extract_urls(options.html, options.url, documents)
+offset = 1
+offset = extract_urls(options.html1, documents, offset)
+offset = extract_urls(options.html2, documents, offset)
+
 
 for i in reader:
     fields = i.strip().split("\t")

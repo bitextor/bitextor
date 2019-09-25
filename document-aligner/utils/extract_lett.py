@@ -75,12 +75,7 @@ if __name__ == "__main__":
                         default="words", help="Prune sentences either by words or charaters", required=False)
     parser.add_argument("-x", "--xz", dest="xz", action="store_true",
                         help="Use xz as the compression tool")
-    parser.add_argument('--langfile', dest='langFile', help='File containing the language code of each HTML file')
-    parser.add_argument('--plaintextfile', dest='textFile',
-                        help='File containing the plain text extracted from the HTML documents in a WARC file, '
-                             'encoded in base64')
-    parser.add_argument('--urlfile', dest='urlFile',
-                        help='File containing the list of urls of the documents in a WARC file')
+    parser.add_argument('--bitextorlang', dest='bitextorlangFolder', help='Bitextorlang folder')
 
     args = parser.parse_args()
 
@@ -104,54 +99,53 @@ if __name__ == "__main__":
             langs_parse.append(args.l2)
 
     lang_file = {}
-    for l in langs_parse:
-        if not l.strip():
+    if args.tokenized:
+        text_file_name = "/plain_tokenized.xz"
+    else:
+        text_file_name = "/plain_text.xz"
+    for lang in langs_parse:
+        if not lang.strip():
             continue
 
-        lang_file[l] = lzma.open(get_name(args.output_dir, args.output_prefix, l, args.tokenized, args.xz), "wb")
+        lang_file[lang] = lzma.open(get_name(args.output_dir, args.output_prefix, lang, args.tokenized, args.xz), "wb")
 
-    with open_xz_or_gzip_or_plain(args.textFile) as text_reader, \
-            open_xz_or_gzip_or_plain(args.langFile) as lang_reader, \
-            open_xz_or_gzip_or_plain(args.urlFile) as url_reader:
-        for line in text_reader:
-            text = base64.b64decode(line.strip()).decode("utf-8")
-            lang = next(lang_reader, None).strip()
-            uri = next(url_reader, None).strip()
+        with open_xz_or_gzip_or_plain(args.bitextorlang+"/"+lang+text_file_name) as text_reader, \
+                open_xz_or_gzip_or_plain(args.bitextorlang+"/"+lang+"/url.xz") as url_reader:
+            for line in text_reader:
+                text = base64.b64decode(line.strip()).decode("utf-8")
+                uri = next(url_reader, None).strip()
 
-            if langs_parse and lang not in langs_parse:
-                continue
-
-            if not text:
-                continue
-
-            if args.tokenized:
-                split = split_sentences(text, None)
-            elif lang in args.splitters:
-                split = split_sentences(text, args.splitters[lang])
-            elif "default" in args.splitters:
-                split = split_sentences(text, args.splitters["default"])
-            else:
-                continue
-
-            for extracted_line in split:
-
-                extracted_line = extracted_line.strip()
-                if not extracted_line:
+                if not text:
                     continue
 
-                # prune long sentences
-                extracted_line = extracted_line
-                if args.prune_type == "chars":
-                    if len(extracted_line) > args.prune_threshold:
-                        continue
-                elif args.prune_type == "words":
-                    if len(extracted_line.split()) > args.prune_threshold:
+                if args.tokenized:
+                    split = split_sentences(text, None)
+                elif lang in args.splitters:
+                    split = split_sentences(text, args.splitters[lang])
+                elif "default" in args.splitters:
+                    split = split_sentences(text, args.splitters["default"])
+                else:
+                    continue
+
+                for extracted_line in split:
+
+                    extracted_line = extracted_line.strip()
+                    if not extracted_line:
                         continue
 
-                if lang not in lang_file:
-                    lang_file[lang] = lzma.open(get_name(args.output_dir, args.output_prefix, lang, args.tokenized, args.xz), "wb")
+                    # prune long sentences
+                    extracted_line = extracted_line
+                    if args.prune_type == "chars":
+                        if len(extracted_line) > args.prune_threshold:
+                            continue
+                    elif args.prune_type == "words":
+                        if len(extracted_line.split()) > args.prune_threshold:
+                            continue
 
-                lang_file[lang].write("{0}\t{1}\n".format(uri, extracted_line).encode("utf-8"))
+                    if lang not in lang_file:
+                        lang_file[lang] = lzma.open(get_name(args.output_dir, args.output_prefix, lang, args.tokenized, args.xz), "wb")
+
+                    lang_file[lang].write("{0}\t{1}\n".format(uri, extracted_line).encode("utf-8"))
 
 
 
