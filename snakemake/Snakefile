@@ -170,7 +170,7 @@ def ValidateArgs(config):
            'initCorpusDevPrefix': {'type': 'list'},
            'initCorpusTestPrefix': {'type': 'list'},
 
-           'bicleanerCorpusTrainingPrefix': {'type': 'string'},
+           'bicleanerCorpusTrainingPrefix': {'type': 'list'},
 
            'nmt': {'type': 'boolean'},
            'smt': {'type': 'boolean'},
