@@ -1458,41 +1458,16 @@ rule docalign_matches:
     shell:
         "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
-rule aligndocumentsTrainedNMT:
+rule aligndocumentsMT:
     input:
         matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         text1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/plain_text.xz'.format( PPROC=PPROC,LANG1=LANG1),
         text2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/plain_text.xz'.format( PPROC=PPROC,LANG2=LANG2),
         url1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        url2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2),
-        report="{transientdir}/nmt-dir/evaluation/report".format(transientdir=transient)
+        url2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2)
     output:
-        '{transient}'.format(transient=transient) + '/{target}/docalign.nmt.xz'
+        '{transient}'.format(transient=transient) + '/{target}/'+'docalign.{mttype}.xz'.format(mttype=DOCALIGNEXT)
 
-    shell:
-        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext1 {input.text1} --plaintext2 {input.text2} --url1 {input.url1} --url2 {input.url2} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
-
-rule aligndocumentsCustomMT:
-    input:
-        matches="{transient}".format(transient=transient) + "/{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/plain_text.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        text2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/plain_text.xz'.format( PPROC=PPROC,LANG2=LANG2),
-        url1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        url2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2),
-    output:
-        '{transient}'.format(transient=transient) + '/{target}/docalign.customMT.xz'
-    shell:
-        '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext1 {input.text1} --plaintext2 {input.text2} --url1 {input.url1} --url2 {input.url2} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
-
-rule aligndocumentsTrainedSMT:
-    input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
-        text1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/plain_text.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        text2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/plain_text.xz'.format( PPROC=PPROC,LANG2=LANG2),
-        url1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        url2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2),
-    output:
-        '{transient}'.format(transient=transient) + '/{target}/docalign.smt.xz'
     shell:
         '{PROFILING} python3 {BITEXTOR}/document-aligner/build_docs.py --matches {input.matches} --plaintext1 {input.text1} --plaintext2 {input.text2} --url1 {input.url1} --url2 {input.url2} --threshold {DOC_THRESHOLD} | xz -c -T 0 > {output}'
 
