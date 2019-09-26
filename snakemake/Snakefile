@@ -258,15 +258,12 @@ data=config["dataDir"]
 PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
-    PPROC = "giawarc"
+    PPROC = "giawarc-xzlang"
     FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
     # FILES=["plain_text.xz", "plain_tokenized.xz", "normalized_html.xz", "deboilerplate_html.xz", "mime.xz", "url.xz"]
     FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
-
-# if "xzlang" in config and config["xzlang"]:
-PPROC=PPROC+"-xzlang"
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGS = "--langs " + config['preprocessLangs']
@@ -1199,14 +1196,16 @@ rule giawarcXzlang:
 # Produces a file for each language found
 rule warc2preprocessXzlang:
     input:
-        '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
+        '{data}'.format(data=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
-        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/xzlang'),
-        '{data}/'.format(data=data) + 'preprocess/{domain}/w2p-xzlang/plain_text_hashes.xz'
+        directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang'),
+        '{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang/plain_text_hashes.xz',
+        expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=[LANG1, LANG2], file=FILES)
+
     priority: 8
     shell:
         'mkdir -p {output[0]};' 
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --xzlang --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
 
 # Create a list of files that contain paths of plain_text_hash.xz of the original domains
 rule create_list_of_hashes:
@@ -1226,13 +1225,13 @@ rule create_list_of_hashes:
 # Currently not used, since this format is not yet supported by the rest of the rules
 rule xzlangToBitextorLang:
     input:
-        '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
+        '{dir}' + '/giawarc-xzlang/xzlang'
     output:
-        directory('{dir}'+'/{PPROC}/bitextorlang'.format(PPROC=PPROC)),
-        expand('{{dir}}'+'/{PPROC}/bitextorlang/{lang}/{file}', PPROC=PPROC, lang=[LANG1, LANG2], file=FILES)
+        directory('{dir}'+'/giawarc-xzlang/bitextorlang'),
+        expand('{{dir}}'+'/giawarc-xzlang/bitextorlang/{lang}/{file}', lang=[LANG1, LANG2], file=FILES)
     shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang -f bitextorlang {input} ;'
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {wildcards.dir}/{PPROC}/bitextorlang --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}"'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/giawarc-xzlang/bitextorlang -f bitextorlang {input} ;'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {wildcards.dir}/giawarc-xzlang/bitextorlang --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}"'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:

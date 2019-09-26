@@ -136,8 +136,6 @@ oparser.add_argument("--parser", dest="parser", default="bs4",
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
-oparser.add_argument('--prefix', dest='prefix', help='Prefix of the file name; if not specified it is empty string',
-                     required=False, default="")
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
@@ -194,16 +192,8 @@ if options.inputHash:
         for line in fh:
             previous_crawl_hashes.add(int(line.strip()))
 
-if not options.xzlang:
-    urlFile = lzma.open(options.outDir + "/" + options.prefix + "url.xz", "w")
-    langFile = lzma.open(options.outDir + "/" + options.prefix + "lang.xz", "w")
-    encodingFile = lzma.open(options.outDir + "/" + options.prefix + "encoding.xz", "w")
-    mimeFile = lzma.open(options.outDir + "/" + options.prefix + "mime.xz", "w")
-    normHtmlFile = lzma.open(options.outDir + "/" + options.prefix + "normalized_html.xz", "w")
-    plainTextFile = lzma.open(options.outDir + "/" + options.prefix + "plain_text.xz", "w")
 # Boilerpipe cleaning is optional
-if options.boilerpipe:
-    deboilFile = lzma.open(options.outDir + "/" + options.prefix + "deboilerplate_html.xz", "w")
+
 if options.pdfextract:
     extractor = ExtrP()
 
@@ -271,6 +261,7 @@ for record in f:
     else:
         payloads = [payload]
 
+    files_dict = dict()
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
     for payload in payloads:
@@ -296,6 +287,7 @@ for record in f:
             # lang id
             # printable_str = ''.join(x for x in cleantree if x in string.printable)
             logging.info(url + ": detecting language")
+            lang = ""
             if (options.langid == "cld3"):
                 lang = guess_lang_from_data3(cld3model, tree)
             else: 
@@ -303,6 +295,20 @@ for record in f:
             if (len(languages) > 0 and lang not in languages) or (lang in banned):
                 logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
             else:
+                if not options.xzlang:
+                    if lang not in files_dict:
+                        urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
+                        langFile = lzma.open(options.outDir + "/" + lang + "/lang.xz", "w")
+                        encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
+                        mimeFile = lzma.open(options.outDir + "/" + lang + "/mime.xz", "w")
+                        normHtmlFile = lzma.open(options.outDir + "/" + lang + "/normalized_html.xz", "w")
+                        plainTextFile = lzma.open(options.outDir + "/" + lang + "/plain_text.xz", "w")
+                        if options.boilerpipe:
+                            deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
+                            files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
+                        else:
+                            files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
+
                 # If enabled, remove boilerplate HTML
                 if options.boilerpipe:
                     logging.info(url + ": deboiling html")
@@ -370,24 +376,23 @@ for record in f:
                         mime = magic.from_buffer(text, mime=True)
 
                         if not options.xzlang:
-                            mimeFile.write(mime.encode() + b"\n")
+                            files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
 
-                            urlFile.write(url.encode() + b"\n")
-                            langFile.write(lang.encode() + b"\n")
-                            encodingFile.write(orig_encoding.encode() + b"\n")
+                            files_dict[lang]["urlFile"].write(url.encode() + b"\n")
+                            files_dict[lang]["langFile"].write(lang.encode() + b"\n")
+                            files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
 
                             b64norm = base64.b64encode(cleantree.encode())
-                            normHtmlFile.write(b64norm + b"\n")
+                            files_dict[lang]["normHtmlFile"].write(b64norm + b"\n")
 
                             if options.boilerpipe:
                                 b64deboil = base64.b64encode(deboiled.encode())
-                                deboilFile.write(b64deboil + b"\n")
+                                files_dict[lang]["deboilFile"].write(b64deboil + b"\n")
 
                             b64text = base64.b64encode(html.unescape(plaintext).encode())
-                            plainTextFile.write(b64text + b"\n")
-
+                            files_dict[lang]["plainTextFile"].write(b64text + b"\n")
                         # append to language specific file
-                        if options.xzlang:
+                        else:
                             langfile = lzma.open(options.outDir + "/" + options.prefix + lang, mode="a", format=lzma.FORMAT_XZ)
                             header = "Content-Location: " + url + "\n"
                             header += "Content-Type: " + mime + "\n"
@@ -401,6 +406,7 @@ for record in f:
                             langfile.write(plaintext.encode())
                             langfile.write(b"\n")
                             langfile.close()
+
                         if options.outputHash:
                             plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
 
