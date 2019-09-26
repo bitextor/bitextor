@@ -75,7 +75,7 @@ if __name__ == "__main__":
                         default="words", help="Prune sentences either by words or charaters", required=False)
     parser.add_argument("-x", "--xz", dest="xz", action="store_true",
                         help="Use xz as the compression tool")
-    parser.add_argument('--bitextorlang', dest='bitextorlangFolder', help='Bitextorlang folder')
+    parser.add_argument('--bitextorlang', dest='bitextorlang', help='Bitextorlang folder')
 
     args = parser.parse_args()
 

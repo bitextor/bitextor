@@ -102,7 +102,6 @@ def ValidateArgs(config):
             'onlyPreprocessing': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
             'giawarc': {'type': 'boolean'},
-            'xzlang': {'type': 'boolean'},
             'preprocessLangs': {'type': 'string'},
             'targetLangs': {'type': 'string'},
 	        'langId': {'type': 'string'},
@@ -263,8 +262,8 @@ if "giawarc" in config and config["giawarc"]:
 else:
     PPROC = "w2p"
 
-if "xzlang" in config and config["xzlang"]:
-    PPROC=PPROC+"-xzlang"
+# if "xzlang" in config and config["xzlang"]:
+PPROC=PPROC+"-xzlang"
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGS = "--langs " + config['preprocessLangs']
@@ -933,13 +932,12 @@ if "onlyConcat" in config and config["onlyConcat"]:
         OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=data, tld=tld))
 elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
     for tld in domainKey2Hosts.keys():
-        if "giawarc" in PPROC or "xzlang" in PPROC:
-            PPROCFILES = ["lang", "mime", "plain_text", "url", "plain_tokenized"]
-        else:
-            PPROCFILES = ["lang", "mime", "plain_text", "url", "deboilerplate_html", "normalized_html", "encoding", "plain_tokenized"]
+        # if "giawarc" in PPROC or "xzlang" in PPROC:
+        #     PPROCFILES = ["lang", "mime", "plain_text", "url", "plain_tokenized"]
+        # else:
+        #     PPROCFILES = ["lang", "mime", "plain_text", "url", "deboilerplate_html", "normalized_html", "encoding", "plain_tokenized"]
 
-        for file in PPROCFILES:
-                PPROCOUTPUT.append("{dir}/preprocess/{tld}/{PPROC}/{file}.xz".format(dir=data, tld=tld, PPROC=PPROC, file=file))
+        PPROCOUTPUT.append(directory("{dir}/preprocess/{tld}/{PPROC}/bitextorlang".format(dir=data, tld=tld, PPROC=PPROC)))
 
         if DOCALIGNEXT != "bitextor":
             PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l1}.extracted.xz".format(dir=data, tld=tld, PPROC=PPROC,l1=LANG1))
@@ -1229,7 +1227,7 @@ rule xzlangToBitextorLang:
     output:
         directory('{dir}/{PPROC}/bitextorlang')
     shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang -f bitextorlang {input} ;'
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {wildcards.dir}/{PPROC}/bitextorlang --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}"'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
@@ -1354,7 +1352,7 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/'.format( PPROC=PPROC)
+        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC)
     output:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
@@ -1364,8 +1362,7 @@ rule docalign_extracted:
 
 rule docalign_tokenize:
     input:
-        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/'.format( PPROC=PPROC)
-
+        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC)
     output:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:

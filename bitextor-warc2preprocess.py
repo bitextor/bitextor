@@ -388,7 +388,7 @@ for record in f:
 
                         # append to language specific file
                         if options.xzlang:
-                            langfile = lzma.open(options.outDir + "/" + options.prefix + lang + ".xz", "a")
+                            langfile = lzma.open(options.outDir + "/" + options.prefix + lang, mode="a", format=lzma.FORMAT_XZ)
                             header = "Content-Location: " + url + "\n"
                             header += "Content-Type: " + mime + "\n"
                             header += "Content-Language: " + lang + "\n"
