@@ -203,6 +203,8 @@ if options.outputHash:
 num = 0
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
+files_dict = dict()
+
 for record in f:
     # Initial checks
     if record.rec_type != 'response':
@@ -261,7 +263,6 @@ for record in f:
     else:
         payloads = [payload]
 
-    files_dict = dict()
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
     for payload in payloads:
@@ -416,14 +417,15 @@ for record in f:
 
         num += 1
 if not options.xzlang:
-    urlFile.close()
-    langFile.close()
-    encodingFile.close()
-    mimeFile.close()
-    normHtmlFile.close()
-    plainTextFile.close()
+    for lang in files_dict:
+        files_dict[lang]["urlFile"].close()
+        files_dict[lang]["langFile"].close()
+        files_dict[lang]["encodingFile"].close()
+        files_dict[lang]["mimeFile"].close()
+        files_dict[lang]["normHtmlFile"].close()
+        files_dict[lang]["plainTextFile"].close()
+        if options.boilerpipe:
+            files_dict[lang]["deboilFile"].close()
     if options.outputHash:
         plainTextHashFile.close()
-# Boilerpipe cleaning is optional
-if options.boilerpipe:
-    deboilFile.close()
+
