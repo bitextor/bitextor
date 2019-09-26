@@ -297,6 +297,8 @@ for record in f:
             else:
                 if not options.xzlang:
                     if lang not in files_dict:
+                        if not os.path.exists(options.outDir + "/" + lang):
+                            os.makedirs(options.outDir + "/" + lang)
                         urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
                         langFile = lzma.open(options.outDir + "/" + lang + "/lang.xz", "w")
                         encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
