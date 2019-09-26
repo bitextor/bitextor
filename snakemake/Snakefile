@@ -262,7 +262,7 @@ if "giawarc" in config and config["giawarc"]:
     FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
-    FILES=["plain_text.xz", "plain_tokenized.xz", "normalized_html.xz", "mime.xz", "url.xz"]
+    FILES=["plain_text.xz", "plain_tokenized.xz", "deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGS = "--langs " + config['preprocessLangs']
@@ -1266,8 +1266,8 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.ridx.xz',
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/normalized_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/normalized_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
 
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz'
@@ -1277,8 +1277,8 @@ rule ridx2imagesetoverlap:
 rule imagesetoverlap2structuredistance:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz',
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/normalized_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/normalized_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz'
     shell:
@@ -1287,8 +1287,8 @@ rule imagesetoverlap2structuredistance:
 rule structuredistance2urldistance:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.structuredistance.xz',
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/normalized_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/normalized_html.xz'.format( PPROC=PPROC,LANG2=LANG2),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG2=LANG2),
         '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
         '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2)
 
@@ -1301,8 +1301,8 @@ rule structuredistance2urldistance:
 rule urldistance2mutuallylinked:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urldistance.xz',
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/normalized_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/normalized_html.xz'.format( PPROC=PPROC,LANG2=LANG2),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG2=LANG2),
         '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
         '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/url.xz'.format( PPROC=PPROC,LANG2=LANG2)
     output:
@@ -1323,8 +1323,8 @@ rule mutuallylinked2urlscomparison:
 rule urlscomparison2urlsoverlap:
     input:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlscomparison.xz',
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/normalized_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
-        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/normalized_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG1=LANG1),
+        '{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format( PPROC=PPROC,LANG2=LANG2)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlsoverlap.xz'
     shell:
