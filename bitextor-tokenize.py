@@ -104,6 +104,8 @@ lang_files = {}
 folder = os.fsencode(options.folder)
 for langfolder in os.listdir(folder):
     lang = os.fsdecode(langfolder)
+    if not os.path.isdir(options.folder+"/"+lang) or len(lang) > 2:
+        continue
     fullname = os.path.join(options.folder, lang+"/plain_text.xz")
     if os.path.isfile(fullname) and (not langs or lang in langs):
         with open_xz_or_gzip_or_plain(fullname) as text_reader:

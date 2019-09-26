@@ -103,8 +103,14 @@ if __name__ == "__main__":
         text_file_name = "/plain_tokenized.xz"
     else:
         text_file_name = "/plain_text.xz"
-    for lang in langs_parse:
+    folder = os.fsencode(args.bitextorlang)
+    for lang in os.listdir(folder):
+        lang = os.fsdecode(lang)
+        if not os.path.isdir(args.bitextorlang + "/" + lang) or len(lang) > 2:
+            continue
         if not lang.strip():
+            continue
+        if langs_parse and lang not in langs_parse:
             continue
 
         lang_file[lang] = lzma.open(get_name(args.output_dir, args.output_prefix, lang, args.tokenized, args.xz), "wb")
