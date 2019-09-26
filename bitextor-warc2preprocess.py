@@ -309,6 +309,8 @@ for record in f:
                             deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
                             files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
                         else:
+                            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
+                                os.symlink(options.outDir + "/" + lang + "/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
                             files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
 
                 # If enabled, remove boilerplate HTML

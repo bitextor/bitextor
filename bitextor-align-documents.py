@@ -30,10 +30,16 @@ oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extensi
                                                               'documents from lang1 to lang2', default=None)
 oparser.add_argument('ridx2', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned '
                                                               'documents from lang2 to lang1', default=None)
-oparser.add_argument('--text', dest='text', help='File produced by bitextor-warc2preprocess containing the text of '
+oparser.add_argument('--text1', dest='text1', help='File produced by bitextor-warc2preprocess containing the text of '
                                                  'all the records in the WARC file encoded as base 64 (each line '
                                                  'corresponds to a record)', required=True)
-oparser.add_argument('--url', dest='url', help='File produced by bitextor-warc2preprocess containing the url of each '
+oparser.add_argument('--text2', dest='text2', help='File produced by bitextor-warc2preprocess containing the text of '
+                                                 'all the records in the WARC file encoded as base 64 (each line '
+                                                 'corresponds to a record)', required=True)
+oparser.add_argument('--url1', dest='url1', help='File produced by bitextor-warc2preprocess containing the url of each '
+                                               'of the records in the WARC file encoded as base 64 (each line '
+                                               'corresponds to a record)', required=True)
+oparser.add_argument('--url2', dest='url2', help='File produced by bitextor-warc2preprocess containing the url of each '
                                                'of the records in the WARC file encoded as base 64 (each line '
                                                'corresponds to a record)', required=True)
 oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file "
@@ -86,12 +92,13 @@ documentsFile2 = set()
 
 # Files containing base64 encoded text and url are read and stored in a document map
 counter = 1
-with open_xz_or_gzip_or_plain(options.text) as text_reader:
-    with open_xz_or_gzip_or_plain(options.url) as url_reader:
-        for text in text_reader:
-            url = next(url_reader, None).strip()
-            documents[counter] = (url, text.strip())  # URL parsed_text_base64
-            counter += 1
+for text_path, url_path in [(options.text1, options.url1), (options.text2, options.url2)]:
+    with open_xz_or_gzip_or_plain(text_path) as text_reader:
+        with open_xz_or_gzip_or_plain(url_path) as url_reader:
+            for text in text_reader:
+                url = next(url_reader, None).strip()
+                documents[counter] = (url, text.strip())  # URL parsed_text_base64
+                counter += 1
 
 if not combine:
     # Reading the .ridx file with the preliminary alignment

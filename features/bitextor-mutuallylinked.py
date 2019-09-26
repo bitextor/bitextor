@@ -47,8 +47,8 @@ else:
 index = {}
 documents = {}
 offset = 1
-offset = extract_urls(options.html1, documents, offset)
-offset = extract_urls(options.html2, documents, offset)
+offset = extract_urls(options.html1, options.url1, documents, offset)
+offset = extract_urls(options.html2, options.url2, documents, offset)
 
 
 for i in reader:
