@@ -259,8 +259,11 @@ PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc"
+    FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
+    # FILES=["plain_text.xz", "plain_tokenized.xz", "normalized_html.xz", "deboilerplate_html.xz", "mime.xz", "url.xz"]
+    FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
 
 # if "xzlang" in config and config["xzlang"]:
 PPROC=PPROC+"-xzlang"
@@ -1225,7 +1228,8 @@ rule xzlangToBitextorLang:
     input:
         '{dir}' + '/{PPROC}/xzlang'.format(PPROC=PPROC)
     output:
-        directory('{dir}/{PPROC}/bitextorlang')
+        directory('{dir}'+'/{PPROC}/bitextorlang'.format(PPROC=PPROC)),
+        expand('{{dir}}'+'/{PPROC}/bitextorlang/{lang}/{file}', PPROC=PPROC, lang=[LANG1, LANG2], file=FILES)
     shell:
         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/{PPROC}/bitextorlang -f bitextorlang {input} ;'
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {wildcards.dir}/{PPROC}/bitextorlang --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}"'
@@ -1346,8 +1350,6 @@ rule aligndocumentsBitextor:
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --text1 {input[2]} --text2 {input[3]} --url1 {input[4]} --url2 {input[5]} -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
 
-
-
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
 rule docalign_extracted:
@@ -1457,7 +1459,7 @@ rule docalign_matches:
 
 rule aligndocumentsMT:
     input:
-        matches="{dir}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
+        matches="{transient}/".format(transient=transient)+"{target}/docalign/"+"{l1}-{l2}.{mttype}.matches".format(l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT),
         text1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/plain_text.xz'.format( PPROC=PPROC,LANG1=LANG1),
         text2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/plain_text.xz'.format( PPROC=PPROC,LANG2=LANG2),
         url1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/url.xz'.format( PPROC=PPROC,LANG1=LANG1),
@@ -1495,7 +1497,8 @@ rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient),
         "{transient}".format(transient=transient)+"/{target}/docalign."+"{extension}".format(extension=DOCALIGNEXT)+".xz",
-        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/url.xz".format(PPROC=PPROC),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG1}/url.xz".format(PPROC=PPROC, LANG1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG2}/url.xz".format(PPROC=PPROC, LANG2=LANG2),
         "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG1}/plain_tokenized.xz".format(PPROC=PPROC,LANG1=LANG1),
         "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG2}/plain_tokenized.xz".format(PPROC=PPROC,LANG2=LANG2)
 
@@ -1506,8 +1509,8 @@ rule alignsegments_hunalign:
         'while IFS= read -r line;'
         'do url1=$(echo "$line" | cut -f 1);'
         'url2=$(echo "$line" | cut -f 2);'
-        't1=$(xzcat -T 0 {input[3]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
-        't2=$(xzcat -T 0 {input[4]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url2$" | cut -d: -f1)p");'
+        't1=$(xzcat -T 0 {input[4]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
+        't2=$(xzcat -T 0 {input[5]} | sed -n "$(xzcat -T 0 {input[3]} | grep -n "^$url2$" | cut -d: -f1)p");'
         'echo -e "$t1\t$t2";'
         'done < <(xzcat -T 0 {input[1]}) > $tokenized;'
         'paste <(xzcat -T 0 {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
