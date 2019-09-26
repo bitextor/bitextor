@@ -943,7 +943,6 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
             PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{l2}.extracted.tokenized.xz".format(dir=data, tld=tld, PPROC=PPROC,l2=LANG2))
 else:
     OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    # OUTPUT.append("{dir}/plain_text_hashes_list.xz".format(dir=permanent))
     if "nmt" in config and config["nmt"]:
         OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
         OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
@@ -1198,28 +1197,14 @@ rule warc2preprocess:
         '{data}'.format(data=data)+'/preprocess/{domain}/concat.warc.gz'
     output:
         directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang'),
-        # '{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang/plain_text_hashes.xz',
+        '{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang/plain_text_hashes.xz',
         expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=[LANG1, LANG2], file=FILES)
 
     priority: 8
     shell:
         'mkdir -p {output[0]};' 
-        # '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {output[0]} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" ;'
-
-# Create a list of files that contain paths of plain_text_hash.xz of the original domains
-# rule create_list_of_hashes:
-#     input:
-#         hash=expand('{data}/preprocess/{domain}/{PPROC}/plain_text_hashes.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys())),
-#         # lang=expand('{data}/preprocess/{domain}/{PPROC}/lang.xz', data=data, PPROC=PPROC, domain=list(domainKey2Hosts.keys()))
-#     output:
-#         '{permanent}'.format(permanent=permanent) + '/plain_text_hashes_list.xz'
-#     shell:
-#         # we should do this if we want all the hashes for lang1 and lang2
-#         # 'while IFS= read -r line ; do echo "$line" ; done < <(paste <(xzcat {input.lang}) <(xzcat {input.hash}) | grep "{LANG1}\|{LANG2}") | xz -T 0 > {output}'
-#         # this outputs the path of the plain_text_hashes.xz file (that may contain hashes of texts in any language) for every domain
-#         'for hash in {input.hash}; do echo $hash; done | xz -T 0 > {output}'
 
 # Converts 'xzlang' output to 'bitextorlang' format
 # 'bitextorlang' = 'bitextor' format separated by languages (one folder for each language, each folder has 'mime.xz', 'plain_text.xz' and 'url.xz'
