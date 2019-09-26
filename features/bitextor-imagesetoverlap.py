@@ -10,9 +10,8 @@ pathname = os.path.dirname(sys.argv[0])
 sys.path.append(pathname + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
-def extract_images(f, docs):
+def extract_images(f, docs, fileid):
     with open_xz_or_gzip_or_plain(f) as fd:
-        fileid = 1
         for html_base64enc in fd:
             # To compute the edit distance at the level of characters, HTML tags must be encoded as characters and
             # not strings:
@@ -20,6 +19,7 @@ def extract_images(f, docs):
                                base64.b64decode(html_base64enc.strip()).decode("utf-8"), re.S)
             docs[fileid] = set(list(links))
             fileid += 1
+    return fileid
 
 
 oparser = argparse.ArgumentParser(
@@ -29,8 +29,10 @@ oparser.add_argument('ridx', metavar='RIDX', nargs='?',
                      help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
                           'the script will read from the standard input)',
                      default=None)
-oparser.add_argument("--html", help="File produced during pre-processing containing all HTML files in a WARC file",
-                     dest="html", required=True)
+oparser.add_argument("--html1", help="File produced during pre-processing containing all HTML files in a WARC file",
+                     dest="html1", required=True)
+oparser.add_argument("--html2", help="File produced during pre-processing containing all HTML files in a WARC file",
+                     dest="html2", required=True)
 options = oparser.parse_args()
 
 if options.ridx is None:
@@ -40,7 +42,9 @@ else:
 
 index = {}
 documents = {}
-extract_images(options.html, documents)
+offset = 1
+offset = extract_images(options.html1, documents, offset)
+offset = extract_images(options.html2, documents, offset)
 
 for i in reader:
     fields = i.strip().split("\t")
