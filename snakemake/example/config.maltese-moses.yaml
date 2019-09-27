@@ -1,0 +1,67 @@
+# nohup ~/.local/bin/snakemake --snakefile ../../Snakefile --cluster "sbatch --nice {cluster.oversubscribe} {cluster.gres}" --cluster-config ../cluster.json --cores 4222 -j 4222 -k --configfile  config.pt-en.yaml  &
+
+bitextor: /home/lpla/permanent/bitextor/
+
+#langstat: /home/s0565741/workspace/experiment/issues/paracrawl/langstat/langstats.all.gz
+#langstatThreshold: 1000000
+#hostPath: /home/s0565741/workspace/experiment/issues/paracrawl/prevHosts/hosts.mt.gz
+#linkedHosts: ["/home/s0565741/workspace/experiment/paracrawl/v3/hu-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/fr-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/de-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/it-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/es-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/pt-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/nl-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/cs-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/pl-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/da-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/el-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/ro-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/sv-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/fi-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/hr-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/bg-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/sk-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/et-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/lt-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/lv-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/ga-en/permanent",
+#             "/home/s0565741/workspace/experiment/paracrawl/v3/sl-en/permanent"]
+linkedHostsAction: link # postCrawlExclude #remove
+
+langstatExcludeStrings: /home/lpla/permanent/bitextor/snakemake/langstat-exclude-strings
+excludeHostsFile: /home/lpla/permanent/bitextor/snakemake/exclude-hosts
+crawlerUserAgent: Mozilla/5.0 (compatible; Paracrawl; +http://statmt.org/paracrawl/robots.html)
+httrack: true
+
+temp: /home/lpla/tmp
+giawarc: true
+parser: "bs4"
+permanentDir: /home/lpla/test-maltese-moses-latest-giawarc-2/permanent
+transientDir: /home/lpla/test-maltese-moses-latest-giawarc-2/transient
+lang1: mt
+lang2: en
+crawlTimeLimit: 43200s
+crawlPageLimit: 100000
+crawlerNumThreads: 2
+crawlTld: false
+
+#mosesDir: /home/s0565741/workspace/github/mosesdecoder
+LANG1Tokenizer: "/home/lpla/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -l mt -a -b -q"
+LANG2Tokenizer: "/home/lpla/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q"
+LANG1SentenceSplitter: "/home/lpla/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -b -l mt"
+LANG2SentenceSplitter: "/home/lpla/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -b -l en"
+deduped: true
+tmx: true
+storeRawCorpus: true
+elrc: true
+documentAligner: externalMT
+alignerCmd: "/home/lpla/translate-pipe.sh mt"
+bleualign: true
+docAlignThreshold: 0.1
+bleuAlignThreshold: 0.2
+maxSizeWARC: 5000
+bicleaner: /home/lpla/bicleaner-model/en-mt/en-mt.yaml
+bicleanerThreshold: 0.7
+
+#profiling: true
