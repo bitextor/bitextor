@@ -307,13 +307,13 @@ for record in f:
                 if options.boilerpipe:
                     logging.info(url + ": deboiling html")
                     extractor = ExtrB(extractor='ArticleExtractor', html=cleantree)
-                    deboiled = extractor.getHTML()
+                    deboiled = str(extractor.getHTML())
                 else:
                     deboiled = cleantree
 
-                # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled): if we get duplicate
-                # files we discard them
-                html_hash=mmh3.hash(deboiled,signed =False)
+                # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled):
+                # if we get duplicate files we discard them
+                html_hash=mmh3.hash(deboiled, signed=False)
                 # print("hash", c.hexdigest(), url)
                 # checking for duplicate content (duplicates are discarded)
                 if html_hash in seen_html:
