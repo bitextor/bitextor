@@ -108,6 +108,8 @@ for langfolder in os.listdir(folder):
         continue
     fullname = os.path.join(options.folder, lang+"/plain_text.xz")
     if os.path.isfile(fullname) and (not langs or lang in langs):
+        if lang not in lang_files:
+            lang_files[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
         with open_xz_or_gzip_or_plain(fullname) as text_reader:
             for line in text_reader:
                 encodedtext = line.strip()
@@ -115,8 +117,6 @@ for langfolder in os.listdir(folder):
                 wordtok = get_lang_or_default(options.tokenizers, lang)
                 morphtok = get_lang_or_default(options.lemmatizers, lang)
                 tokenized = extract_encoded_text(encodedtext, senttok, wordtok, morphtok)
-
-                if lang not in lang_files:
-                    lang_files[lang] = lzma.open(os.path.join(options.folder, lang+"/plain_tokenized.xz"), "wb")
-
                 lang_files[lang].write("{}\n".format(tokenized).encode("utf-8"))
+for lang in lang_files:
+    lang_files[lang].close()

@@ -1189,9 +1189,9 @@ rule giawarcXzlang:
         'mkdir -p {output[0]};'
         '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
-# Preprocssing using bitextor-warc2preprocess with 'xzlang' format
-# Writes output in w2p-xzlang/xzlang
-# Produces a file for each language found
+# Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
+# Writes output in w2p/bitextorlang
+# Produces a folder for each language found
 rule warc2preprocess:
     input:
         '{data}'.format(data=data)+'/preprocess/{domain}/concat.warc.gz'
@@ -1199,24 +1199,35 @@ rule warc2preprocess:
         directory('{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang'),
         '{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang/plain_text_hashes.xz',
         expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=[LANG1, LANG2], file=FILES)
-
     priority: 8
     shell:
-        'mkdir -p {output[0]};' 
+        'mkdir -p {output[0]};'
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG1}; '
+        'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
+        'xz {output[0]}/{LANG1}/*; fi; '
+        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG2}; '
+        'touch {output[0]}/{LANG2}/plain_text {output[0]}/{LANG2}/mime {output[0]}/{LANG2}/url {output[0]}/{LANG2}/normalized_html {output[0]}/{LANG2}/deboilerplate_html ;'
+        'xz {output[0]}/{LANG2}/*; fi; '
 
 # Converts 'xzlang' output to 'bitextorlang' format
-# 'bitextorlang' = 'bitextor' format separated by languages (one folder for each language, each folder has 'mime.xz', 'plain_text.xz' and 'url.xz'
-# Currently not used, since this format is not yet supported by the rest of the rules
+# Currently used for giawarc xzlang -> bitextorlang conversion
 rule xzlangToBitextorLang:
     input:
-        '{dir}' + '/giawarc-xzlang/xzlang'
+        '{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data)
     output:
-        directory('{dir}'+'/giawarc-xzlang/bitextorlang'),
-        expand('{{dir}}'+'/giawarc-xzlang/bitextorlang/{lang}/{file}', lang=[LANG1, LANG2], file=FILES)
+        directory('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang'.format(data=data)),
+        expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=[LANG1, LANG2], file=FILES)
     shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/giawarc-xzlang/bitextorlang -f bitextorlang {input} ;'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {output[0]} -f bitextorlang {input} ;'
+        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG1}; '
+        'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url;'
+        'xz {output[0]}/{LANG1}/*; fi;'
+        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG2}; '
+        'touch {output[0]}/{LANG2}/plain_text {output[0]}/{LANG2}/mime {output[0]}/{LANG2}/url;'
+        'xz {output[0]}/{LANG2}/*; fi; '
 
+# tokenize every bitextorlang/{lang}/plain_text.xz to obtain bitextorlang/{lang}/plain_tokenized.xz
 rule tokenize:
     input:
         bitextorlang='{data}/preprocess/{{target}}/{PPROC}/bitextorlang'.format(PPROC=PPROC, data=data),
