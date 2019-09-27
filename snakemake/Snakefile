@@ -259,10 +259,10 @@ PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc-xzlang"
-    FILES=["plain_text.xz", "plain_tokenized.xz", "mime.xz", "url.xz"]
+    FILES=["plain_text.xz", "mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
-    FILES=["plain_text.xz", "plain_tokenized.xz", "deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
+    FILES=["plain_text.xz", "deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGS = "--langs " + config['preprocessLangs']
@@ -1204,7 +1204,6 @@ rule warc2preprocess:
     shell:
         'mkdir -p {output[0]};' 
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {output[0]} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" ;'
 
 # Converts 'xzlang' output to 'bitextorlang' format
 # 'bitextorlang' = 'bitextor' format separated by languages (one folder for each language, each folder has 'mime.xz', 'plain_text.xz' and 'url.xz'
@@ -1217,12 +1216,21 @@ rule xzlangToBitextorLang:
         expand('{{dir}}'+'/giawarc-xzlang/bitextorlang/{lang}/{file}', lang=[LANG1, LANG2], file=FILES)
     shell:
         '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {wildcards.dir}/giawarc-xzlang/bitextorlang -f bitextorlang {input} ;'
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {wildcards.dir}/giawarc-xzlang/bitextorlang --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}"'
+
+rule tokenize:
+    input:
+        bitextorlang='{data}/preprocess/{{target}}/{PPROC}/bitextorlang'.format(PPROC=PPROC, data=data),
+        plainSl='{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{l1}/plain_text.xz'.format(PPROC=PPROC, data=data, l1=LANG1),
+        plainTL='{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{l2}/plain_text.xz'.format(PPROC=PPROC, data=data, l2=LANG2)
+    output:
+        '{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{l1}/plain_tokenized.xz'.format(data=data,PPROC=PPROC, l1=LANG1),
+        '{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{l2}/plain_tokenized.xz'.format(data=data,PPROC=PPROC, l2=LANG2)
+    shell:
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {input.bitextorlang} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" ;'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        foo='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format(PPROC=PPROC),
         text1='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/plain_tokenized.xz'.format(PPROC=PPROC,LANG1=LANG1),
         text2='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG2}/plain_tokenized.xz'.format(PPROC=PPROC,LANG2=LANG2),
     output:
@@ -1340,7 +1348,9 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC)
+        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC),
+        plainSL='{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{LANG1}/plain_text.xz'.format(data=data, PPROC=PPROC, LANG1=LANG1),
+        plainTL='{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{LANG2}/plain_text.xz'.format(data=data, PPROC=PPROC, LANG2=LANG2)
     output:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l1}.extracted.xz".format(l1=LANG1),
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.xz".format(l2=LANG2)
@@ -1350,7 +1360,8 @@ rule docalign_extracted:
 
 rule docalign_tokenize:
     input:
-        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC)
+        bitextorlang='{data}/preprocess'.format(data=data)+'/{target}'+'/{PPROC}/bitextorlang'.format( PPROC=PPROC),
+        tokenizedTL='{data}/preprocess/{{target}}/{PPROC}/bitextorlang/{l2}/plain_tokenized.xz'.format(data=data, PPROC=PPROC, l2=LANG2)
     output:
         "{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
     shell:
