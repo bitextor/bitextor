@@ -474,6 +474,10 @@ else:
   MT_COMMAND=""
   DOCALIGNEXT="bitextor"
 
+if "onlyPreprocessing" in config and config["onlyPreprocessing"]:
+    DOCALIGNEXT="customMT"
+    MT_COMMAND="cat -"
+
 if "mosesDir" in config:
   MOSESDIR = config["mosesDir"]
 else:
