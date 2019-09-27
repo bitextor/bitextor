@@ -1,0 +1,3 @@
+nav:
+        - Home: 'docs/README.md'
+        - Technical requirements: 'docs/technical_requirements.md'
