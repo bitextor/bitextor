@@ -301,18 +301,17 @@ for record in f:
                         if not os.path.exists(options.outDir + "/" + lang):
                             os.makedirs(options.outDir + "/" + lang)
                         urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
-                        langFile = lzma.open(options.outDir + "/" + lang + "/lang.xz", "w")
                         encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
                         mimeFile = lzma.open(options.outDir + "/" + lang + "/mime.xz", "w")
                         normHtmlFile = lzma.open(options.outDir + "/" + lang + "/normalized_html.xz", "w")
                         plainTextFile = lzma.open(options.outDir + "/" + lang + "/plain_text.xz", "w")
                         if options.boilerpipe:
                             deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
-                            files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
+                            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
                         else:
                             if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
                                 os.symlink(options.outDir + "/" + lang + "/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
-                            files_dict[lang] = {"urlFile": urlFile, "langFile": langFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
+                            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
 
                 # If enabled, remove boilerplate HTML
                 if options.boilerpipe:
@@ -384,7 +383,6 @@ for record in f:
                             files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
 
                             files_dict[lang]["urlFile"].write(url.encode() + b"\n")
-                            files_dict[lang]["langFile"].write(lang.encode() + b"\n")
                             files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
 
                             b64norm = base64.b64encode(cleantree.encode())
@@ -419,7 +417,6 @@ for record in f:
 if not options.xzlang:
     for lang in files_dict:
         files_dict[lang]["urlFile"].close()
-        files_dict[lang]["langFile"].close()
         files_dict[lang]["encodingFile"].close()
         files_dict[lang]["mimeFile"].close()
         files_dict[lang]["normHtmlFile"].close()
