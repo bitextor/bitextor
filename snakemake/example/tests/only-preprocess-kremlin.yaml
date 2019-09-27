@@ -1,0 +1,10 @@
+bitextor: ~/permanent/bitextor
+httrack: false
+hosts: ["kremlin.ru"]
+dataDir: ~/permanent/data
+lang1: en
+lang2: fr
+documentAligner: externalMT
+alignerCmd: "bash ~/permanent/bitextor/snakemake/example/dummy-translate.sh"
+profiling: true
+onlyPreprocessing: true
