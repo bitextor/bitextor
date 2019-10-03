@@ -1182,7 +1182,7 @@ rule concat_subdomains:
 # Preprocessing using giawarc with 'xzlang' format
 # Writes output in giawarc-xzlang/xzlang
 # Produces a file for each language found
-rule giawarcXzlang:
+rule giawarc:
     input:
         '{dir}'.format(dir=data)+'/preprocess/{domain}/concat.warc.gz'
     output:

@@ -330,7 +330,6 @@ After crawling, the downloaded web are processed to extract clean text, detect l
 ```yaml
 maxSizeWARC: 1000
 
-xzlang: false
 giawarc: false
 
 boilerpipeCleaning: true
@@ -347,10 +346,9 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
-* `xzlang`: group preprocessing output by languages (create a separate file for each language found, not just LANG1 and LANG2). This has the benefit of avoiding repeating preprocessing when crawling the same webs for different pair of languages. This option requires the installation of the Go library mentioned above
 * `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true` or `xzlang: true`
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true` or `xzlang: true`
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
 * `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
@@ -367,7 +365,7 @@ documentAligner: DIC
 
 The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
 
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true` or `xzlang: true`
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true`
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
