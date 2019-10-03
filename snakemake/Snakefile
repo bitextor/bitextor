@@ -1150,7 +1150,7 @@ rule heritrix_download:
         'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'echo "Waiting for the warc.gz to be finished"; '
         'RUNTIME=0; '
-        'while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ] ; do sleep 5 ; RUNTIME=$((RUNTIME+1)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt {CRAWLTIMELIMIT} ] ; then curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
+        'while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ] ; do sleep 5 ; RUNTIME=$((RUNTIME+5)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ] ; then curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
         'echo "Job {wildcards.target} finished!"; '
         'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
 
@@ -1513,7 +1513,6 @@ rule alignsegments_hunalign:
         "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG2}/url.xz".format(PPROC=PPROC, LANG2=LANG2),
         "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG1}/plain_tokenized.xz".format(PPROC=PPROC,LANG1=LANG1),
         "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/{LANG2}/plain_tokenized.xz".format(PPROC=PPROC,LANG2=LANG2)
-
     output:
         '{transient}'.format(transient=transient)+'/{target}/hunalign.segalign.xz'
     shell:
@@ -1521,8 +1520,12 @@ rule alignsegments_hunalign:
         'while IFS= read -r line;'
         'do url1=$(echo "$line" | cut -f 1);'
         'url2=$(echo "$line" | cut -f 2);'
-        't1=$(xzcat -T 0 {input[4]} | sed -n "$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | cut -d: -f1)p");'
-        't2=$(xzcat -T 0 {input[5]} | sed -n "$(xzcat -T 0 {input[3]} | grep -n "^$url2$" | cut -d: -f1)p");'
+        # TODO: fix bug when same url appears twice
+        # TODO: escape '$'
+        'n1=$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | head -n 1 | cut -d: -f1);'
+        'n2=$(xzcat -T 0 {input[3]} | grep -n "^$url2$" | head -n 1 |cut -d: -f1);'
+        't1=$(xzcat -T 0 {input[4]} | sed -n "${{n1}}p");'
+        't2=$(xzcat -T 0 {input[5]} | sed -n "${{n2}}p");'
         'echo -e "$t1\t$t2";'
         'done < <(xzcat -T 0 {input[1]}) > $tokenized;'
         'paste <(xzcat -T 0 {input[1]}) $tokenized | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'

@@ -153,8 +153,6 @@ if __name__ == "__main__":
 
                     lang_file[lang].write("{0}\t{1}\n".format(uri, extracted_line).encode("utf-8"))
 
-
-
-        # print("lang_file", lang_file)
-        for f in lang_file:
-            lang_file[f].close()
+    # print("lang_file", lang_file)
+    for f in lang_file:
+        lang_file[f].close()
