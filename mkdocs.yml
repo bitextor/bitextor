@@ -7,5 +7,5 @@ repo_url: https://github.com/bitextor/bitextor/
 edit_uri: ""
 
 nav:
-    - Home: 'docs/README.md'
-    - Technical requirements: 'docs/technical_requirements.md'
+    - Home: 'README.md'
+    - Technical requirements: 'technical_requirements.md'
