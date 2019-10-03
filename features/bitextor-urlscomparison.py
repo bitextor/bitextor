@@ -10,9 +10,8 @@ pathname = os.path.dirname(sys.argv[0])
 sys.path.append(pathname + "/../utils")
 from common import open_xz_or_gzip_or_plain
 
-def read_urls(f, docs):
+def read_urls(f, docs, fileid):
     with open_xz_or_gzip_or_plain(f) as fd:
-        fileid = 1
         for u in fd:
             u = u.strip()
             rx = re.match('(https?://[^/:]+)', u)
@@ -23,6 +22,7 @@ def read_urls(f, docs):
                 url = u
             docs[fileid] = url
             fileid += 1
+    return fileid
 
 
 oparser = argparse.ArgumentParser(
@@ -32,8 +32,10 @@ oparser.add_argument('ridx', metavar='RIDX', nargs='?',
                      help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
                           'the script will read from the standard input)',
                      default=None)
-oparser.add_argument("--url", help="File produced during pre-processing containing all the URLs in a WARC file",
-                     dest="url", required=True)
+oparser.add_argument("--url1", help="File produced during pre-processing containing all the URLs in a WARC file for SL",
+                     dest="url1", required=True)
+oparser.add_argument("--url2", help="File produced during pre-processing containing all the URLs in a WARC file for TL",
+                     dest="url2", required=True)
 options = oparser.parse_args()
 
 if options.ridx is None:
@@ -43,7 +45,9 @@ else:
 
 index = {}
 documents = {}
-read_urls(options.url, documents)
+offset = 1
+offset = read_urls(options.url1, documents, offset)
+offset = read_urls(options.url2, documents, offset)
 
 for i in reader:
     fields = i.strip().split("\t")

@@ -48,9 +48,8 @@ from common import open_xz_or_gzip_or_plain
 
 # print("pathname", pathname)
 
-def extract_structure_representations(f, docs):
+def extract_structure_representations(f, docs, fileid):
     with open_xz_or_gzip_or_plain(f) as fd:
-        fileid = 1
         dic = {}
         charidx = 32
         dic[''] = '_'
@@ -89,6 +88,7 @@ def extract_structure_representations(f, docs):
                 pass
             finally:
                 fileid += 1
+    return fileid
 
 
 oparser = argparse.ArgumentParser(
@@ -98,8 +98,10 @@ oparser.add_argument('ridx', metavar='RIDX', nargs='?',
                      help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
                           'the script will read from the standard input)',
                      default=None)
-oparser.add_argument("--html", help="File produced during pre-processing containing all HTML files in a WARC file",
-                     dest="html", required=True)
+oparser.add_argument("--html1", help="File produced during pre-processing containing all HTML files in a WARC file",
+                     dest="html1", required=True)
+oparser.add_argument("--html2", help="File produced during pre-processing containing all HTML files in a WARC file",
+                     dest="html2", required=True)
 options = oparser.parse_args()
 
 if options.ridx is None:
@@ -108,7 +110,10 @@ else:
     reader = open(options.ridx, "r")
 
 documents = {}
-extract_structure_representations(options.html, documents)
+offset = 1
+offset = extract_structure_representations(options.html1, documents, offset)
+offset = extract_structure_representations(options.html2, documents, offset)
+
 
 for i in reader:
     fields = i.strip().split("\t")

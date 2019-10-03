@@ -18,25 +18,22 @@ import os
 import sys
 import base64
 import argparse
-import subprocess
-import re
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from unicodepunct import get_unicode_punct
 from utils.common import open_xz_or_gzip_or_plain
-from external_processor import ExternalTextProcessor
 
 
 oparser = argparse.ArgumentParser(
     description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information "
                 "about the files in a crawled website to produce an index with all the words in these files and the "
                 "list of documents in which each of them appear")
-oparser.add_argument('--text', dest='text',
+oparser.add_argument('--text1', dest='text1',
                      help='File produced by bitextor-tokenize containing the tokenized text of all the records'
-                     'in the WARC file encoded as base 64 (each line corresponds to a single record)', required=True)
-oparser.add_argument('--lang', dest='lang',
-                    help='File produced by bitextor-warc2preprocess containing the language of each of the records '
-                    'in the WARC file encoded as base 64 (each line corresponds to a record)',required=True)
+                     'in the WARC file encoded as base 64 (each line corresponds to a single record) for SL Language', required=True)
+oparser.add_argument('--text2', dest='text2',
+                     help='File produced by bitextor-tokenize containing the tokenized text of all the records'
+                     'in the WARC file encoded as base 64 (each line corresponds to a single record) for TL Language', required=True)
 oparser.add_argument("-m", "--max-occ",
                      help="Maximum number of occurrences of a word in one language to be kept in the index", type=int,
                      dest="maxo", default=-1)
@@ -53,16 +50,15 @@ word_map = {}
 punctuation = get_unicode_punct()
 
 
-with open_xz_or_gzip_or_plain(options.text) as text_reader:
-    with open_xz_or_gzip_or_plain(options.lang) as lang_reader:
+for file_path, lang in [(options.text1, options.lang1), (options.text2, options.lang2)]:
+    with open_xz_or_gzip_or_plain(file_path) as text_reader:
 
         for line in text_reader:
             ##################
             # Parsing the text:
             ##################
             tokenized_text = base64.b64decode(line.strip()).decode("utf-8")
-            lang = next(lang_reader, None).strip()
-            
+
             sorted_uniq_wordlist = set(tokenized_text.split())
 
             # Trimming non-aplphanumerics:

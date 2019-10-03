@@ -6,6 +6,7 @@ import argparse
 import base64
 import string
 import ast
+import lzma
 from external_processor import ExternalTextProcessor
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
@@ -24,8 +25,7 @@ def get_lang_or_default(dict, lang):
 
 def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser):
     if not sent_tokeniser:
-        print(encoded)
-        return
+        return encoded
 
     proc_sent = ExternalTextProcessor(sent_tokeniser.split())
     content = base64.b64decode(encoded).decode("utf-8").replace("\t", " ")
@@ -38,8 +38,7 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
 
     if not word_tokeniser:
         b64text = base64.b64encode(tokenized_filtered.lower().encode("utf-8"))
-        print(b64text.decode())
-        return
+        return b64text.decode()
 
     proc_word = ExternalTextProcessor(word_tokeniser.split())
     tokenized_text = proc_word.process(tokenized_filtered)
@@ -49,19 +48,12 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         tokenized_text = proc_morph.process(tokenized_text)
 
     b64text = base64.b64encode(tokenized_text.lower().encode("utf-8"))
-    print(b64text.decode())
+    return b64text.decode()
 
 
 oparser = argparse.ArgumentParser(
     description="Tool that tokenizes (sentences, tokens and morphemes) plain text")
-oparser.add_argument('--text', dest='text',
-                     help='File produced by bitextor-warc2preprocess containing the text of all the records in the '
-                          'WARC file encoded as base 64 (each line corresponds to a record)',
-                     required=True)
-oparser.add_argument('--lang', dest='lang',
-                     help='File produced by bitextor-warc2preprocess containing the language of each of the records '
-                          'in the WARC file encoded as base 64 (each line corresponds to a record)',
-                     required=True)
+oparser.add_argument('--folder', dest='folder', help='Bitextorlang folder', required=True)
 oparser.add_argument('--langs', dest='langs', default=None,
                      help="List of  two-character language codes (comma-separated) to tokenize. "
                           "If not specified, every language will be processed")
@@ -107,17 +99,24 @@ except:
     print("Morphological analysers incorrect format")
     sys.exit(1)
 
-with open_xz_or_gzip_or_plain(options.text) as text_reader, \
-        open_xz_or_gzip_or_plain(options.lang) as lang_reader:
-    for line in text_reader:
-        encodedtext = line.strip()
-        lang = next(lang_reader, None).strip()
+lang_files = {}
 
-        if not langs or lang in langs:
-            senttok = get_lang_or_default(options.splitters, lang)
-            wordtok = get_lang_or_default(options.tokenizers, lang)
-            morphtok = get_lang_or_default(options.lemmatizers, lang)
-            extract_encoded_text(encodedtext, senttok, wordtok, morphtok)
-        else:
-            print(encodedtext)
-
+folder = os.fsencode(options.folder)
+for langfolder in os.listdir(folder):
+    lang = os.fsdecode(langfolder)
+    if not os.path.isdir(options.folder+"/"+lang) or len(lang) > 2:
+        continue
+    fullname = os.path.join(options.folder, lang+"/plain_text.xz")
+    if os.path.isfile(fullname) and (not langs or lang in langs):
+        if lang not in lang_files:
+            lang_files[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
+        with open_xz_or_gzip_or_plain(fullname) as text_reader:
+            for line in text_reader:
+                encodedtext = line.strip()
+                senttok = get_lang_or_default(options.splitters, lang)
+                wordtok = get_lang_or_default(options.tokenizers, lang)
+                morphtok = get_lang_or_default(options.lemmatizers, lang)
+                tokenized = extract_encoded_text(encodedtext, senttok, wordtok, morphtok)
+                lang_files[lang].write("{}\n".format(tokenized).encode("utf-8"))
+for lang in lang_files:
+    lang_files[lang].close()
