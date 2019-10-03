@@ -66,34 +66,31 @@ This dependency is also not mandatory.
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
-  ```bash
-  # install go
-  sudo snap install go
-  # build and place the necessary programs in $HOME/go/bin
-  go get github.com/paracrawl/giawarc/...
-  ```
+```bash
+# install go
+sudo snap install go
+# build and place the necessary programs in $HOME/go/bin
+go get github.com/paracrawl/giawarc/...
+```
 
 * **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
-  * With `bitextor-warc2preprocess.py`: `Cython` and `protobuf`.
 
-    ```bash
-    # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
-    # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
-    sudo apt-get install autoconf automake libtool curl make g++ unzip
-    wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protobuf-all-3.9.1.tar.gz
-    tar -zxvf protobuf-all-3.9.1.tar.gz
-    cd protobuf-3.9.1
-    ./configure
-    make
-    make check
-    sudo make install
-    sudo ldconfig
-    
-    pip3 install Cython # Install Cython dependency for cld3
-    pip3 install git+https://github.com/iamthebot/cld3 # Install cld3 Python fork
-    ```
+```bash
+# Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
+# Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
+sudo apt-get install autoconf automake libtool curl make g++ unzip
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protobuf-all-3.9.1.tar.gz
+tar -zxvf protobuf-all-3.9.1.tar.gz
+cd protobuf-3.9.1
+./configure
+make
+make check
+sudo make install
+sudo ldconfig
 
-  * With `giawarc`: `protobuf`, which can be installed with snap: `sudo snap install protobuf`. Make sure that you install version 3.7.0 or higher.
+pip3 install Cython # Install Cython dependency for cld3
+pip3 install git+https://github.com/iamthebot/cld3 # Install cld3 Python fork
+```
 
 ### Submodules compilation
 
