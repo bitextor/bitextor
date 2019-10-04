@@ -309,7 +309,8 @@ for record in f:
                             deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
                             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
                         else:
-                            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
+                            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")\
+                                    and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
                                 os.symlink(options.outDir + "/" + lang + "/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
                             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
 
@@ -351,7 +352,7 @@ for record in f:
                         try:
                             tree = HTMLParser(deboiled)
                         except:
-                            print("Tree structure issues in HTML/XML. Ignoring this document")
+                            logging.info("Tree structure issues in HTML/XML. Ignoring this document")
                             continue
                         for tag in tree.css('script'):
                             tag.decompose()
@@ -360,7 +361,7 @@ for record in f:
                         for tag in tree.css('img'):
                             tag.decompose()
                         if tree.body is None:
-                            print("Body is empty. Ignoring this document")
+                            logging.info("Body is empty. Ignoring this document")
                             continue
                         plaintext = tree.body.text(separator='\n')
                     plaintext = re.sub(r"\n+", "\n",
@@ -396,7 +397,7 @@ for record in f:
                             files_dict[lang]["plainTextFile"].write(b64text + b"\n")
                         # append to language specific file
                         else:
-                            langfile = lzma.open(options.outDir + "/" + options.prefix + lang, mode="a", format=lzma.FORMAT_XZ)
+                            langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
                             header = "Content-Location: " + url + "\n"
                             header += "Content-Type: " + mime + "\n"
                             header += "Content-Language: " + lang + "\n"

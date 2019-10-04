@@ -3,28 +3,19 @@
 import html
 from warcio.archiveiterator import ArchiveIterator
 import base64
-import sys
 import argparse
 import cchardet
-import hashlib
 import magic
 import re
 import ftfy
-from lxml.html.clean import Cleaner
-from bs4 import BeautifulSoup
-import jpype
 import os
-import imp
-import alcazar.bodytext
 import logging
 import lzma
-import subprocess
 import gzip
-import zipfile
-import io
-from selectolax.parser import HTMLParser
 import mmh3
+import time
 from html.parser import HTMLParser
+
 
 class SimpleParser(HTMLParser):
     startNL = ["ul", "ol", "dl", "tr"]
@@ -53,15 +44,13 @@ class SimpleParser(HTMLParser):
             self.parsed = self.parsed + newdata
 
     def getText(self):
-        self.parsed = re.sub(r"\n+", "\n",
-                        re.sub(r" *\n *", "\n",
-                        re.sub(r" +", " ",
-                        re.sub(r"\r", "", self.parsed))))\
-                        .strip()
+        self.parsed = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n",
+                                                  re.sub(r" +", " ", re.sub(r"\r", "", self.parsed)))).strip()
         return self.parsed
 
     def resetText(self):
-        self.parsed=""
+        self.parsed = ""
+        self.lastTok = ""
 
 
 def guess_lang_from_data2(data):
@@ -81,13 +70,14 @@ def convert_encoding(data):
         encoding = "utf-8"
     if len(data) > 0:
         # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is catched here
+        # is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
             except:
                 pass
     return None, ''
+
 
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
@@ -167,8 +157,8 @@ for record in f:
     # Initial checks
     if record.rec_type != 'response':
         continue
-    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[
-        -1] == '>':
+    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' \
+            and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
         url = record.rec_headers.get_header('WARC-Target-URI')
@@ -235,6 +225,7 @@ for record in f:
             parser.resetText()
             parser.feed(text)
             plaintext = parser.getText()
+            plaintext = ftfy.fix_text(plaintext, fix_entities=False, fix_character_width=False)
             # lang id
             logging.info(url + ": detecting language")
             lang = ""
@@ -287,7 +278,7 @@ for record in f:
                             files_dict[lang]["plainTextFile"].write(b64text + b"\n")
                         # append to language specific file
                         else:
-                            langfile = lzma.open(options.outDir + "/" + options.prefix + lang, mode="a",
+                            langfile = lzma.open(options.outDir + "/" + lang, mode="a",
                                                  format=lzma.FORMAT_XZ)
                             header = "Content-Location: " + url + "\n"
                             header += "Content-Type: " + mime + "\n"
