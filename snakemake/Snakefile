@@ -1207,10 +1207,10 @@ rule warc2preprocess:
     shell:
         'mkdir -p {output[0]};'
         '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
-        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG1}; '
+        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG1}; '
         'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
         'xz {output[0]}/{LANG1}/*; fi; '
-        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG2}; '
+        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG2}; '
         'touch {output[0]}/{LANG2}/plain_text {output[0]}/{LANG2}/mime {output[0]}/{LANG2}/url {output[0]}/{LANG2}/normalized_html {output[0]}/{LANG2}/deboilerplate_html ;'
         'xz {output[0]}/{LANG2}/*; fi; '
 
@@ -1383,67 +1383,60 @@ rule docalign_tokenize:
         'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
         '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --lang2 {LANG2} --bitextorlang {input.bitextorlang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
-rule docaling_deduped:
-    input:
-        "{data}/preprocess".format(data=data)+"/{target}/docalign/{lang}.extracted.xz"
-    output:
-        temp("{transient}".format(transient=transient)+"/{target}/docalign/{lang}.extracted.deduped.xz")
-    shell:
-        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
-
 rule docalign_translate_nmt:
     input:
-        source = "{dir}/{prefix}/extracted.deduped.xz"
-        ,
-        configFile = "{dir}/config.json".format(dir=transient)
-        ,
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
+        configFile = "{transient}/config.json".format(transient=transient),
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
-
     output:
-        temp("{dir}/{prefix}.nmt.extracted.deduped.translated.xz")
-
+        "{transient}/{{domain}}/docalign/{l1}.nmt.extracted.translated.xz".format(transient=transient, l1=LANG1)
     priority: 40
-
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 rule docalign_translate_smt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
-        ,
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
-
     output:
-        temp("{dir}/{prefix}.smt.extracted.deduped.translated.xz")
-
+        "{transient}/{{domain}}/docalign/{l1}.smt.extracted.translated.xz".format(transient=transient, l1=LANG1)
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
-
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 
 rule docalign_custom_translate:
     input:
-        "{prefix}.extracted.deduped.xz",
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2)
     output:
-        temp("{prefix}.customMT.extracted.deduped.translated.xz")
+        "{transient}/{{domain}}/docalign/{l1}.customMT.extracted.translated.xz".format(transient=transient, l1=LANG1)
     shell:
-        'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
-
-
-rule docaling_substitute_translated:
-    input:
-        extracted="{data}/preprocess".format(data=data)+"/{target}/docalign/{prefix}.extracted.xz",
-        deduped="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.extracted.deduped.xz",
-        translated="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.deduped.translated.xz"
-    output:
-        "{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.translated.xz"
-    shell:
-        'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {MT_COMMAND}) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 rule docalign_tokenize_translated:
     input:
