@@ -186,6 +186,10 @@ def ValidateArgs(config):
 
            'mgiza': {'type': 'string'},
 
+           'parallelBlock' : {'type': 'integer'},
+           'parallelMemfree' : {'type': 'integer'},
+           'parallelTranslate' : {'type': 'boolean'},
+
             }
 
     if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
@@ -546,6 +550,25 @@ if "bifixerOptions" in config:
     BIFIXEROPTIONS=config["bifixerOptions"]
 else:
     BIFIXEROPTIONS="--aggressive_dedup"
+
+###### MEMORY AND PARALLEL PROCESSING OPTIONS OPTIONS ############
+
+
+# Set options for parallel command (for translation and bicleaner)
+if "parallelBlock" in config and config["parallelBlock"]:
+    PARALLEL_BLOCK=config["parallelBlock"]
+else:
+    PARALLEL_BLOCK=5000000
+
+if "parallelMemfree" in config and config["parallelMemfree"]:
+    PARALLEL_MEMFREE=config["parallelMemfree"]
+else:
+    PARALLEL_MEMFREE=20000000
+
+if "parallelTranslate" in config and config["parallelTranslate"]:
+    PARALLEL_TRANS_CMD="parallel -k --block {PARALLEL_BLOCK} --memfree {PARALLEL_MEMFREE} --pipe".format(PARALLEL_BLOCK=PARALLEL_BLOCK, PARALLEL_MEMFREE=PARALLEL_MEMFREE)
+else:
+    PARALLEL_TRANS_CMD=""
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1398,7 +1421,7 @@ rule docalign_translate_nmt:
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
 
@@ -1417,7 +1440,7 @@ rule docalign_translate_smt:
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
 
@@ -1434,7 +1457,7 @@ rule docalign_custom_translate:
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {MT_COMMAND}) | xz -c -T 0 > {output}; '
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
 
