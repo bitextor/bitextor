@@ -114,13 +114,13 @@ Depending on the version of *libboost* that you are using, you may experience so
 ```bash
 sudo apt-get remove libboost-all-dev
 sudo apt-get autoremove
-wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz
-tar xvf boost_1_66_0.tar.gz
-cd boost_1_66_0/
+wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+tar xvf boost_1_71_0.tar.gz
+cd boost_1_71_0/
 ./bootstrap.sh
 ./b2 -j16 --layout=system install || echo FAILURE
 cd ..
-rm -rf boost_1_66_0*
+rm -rf boost_1_71_0*
 ```
 
 ## Run
