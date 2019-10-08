@@ -3,6 +3,7 @@
 import html
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
+from warcio.statusandheaders import StatusAndHeaders
 import base64
 import sys
 import argparse
@@ -23,8 +24,6 @@ import subprocess
 import gzip
 import zipfile
 import io
-from selectolax.parser import HTMLParser
-import mmh3
 from io import BytesIO
 
 if not jpype.isJVMStarted():
@@ -39,7 +38,6 @@ if not jpype.isJVMStarted():
                 jars.append(os.path.join(top, nm))
     jpype.addClassPath(os.pathsep.join(jars))
     jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
-from boilerpipe.extract import Extractor as ExtrB
 from pdfextract.extract import Extractor as ExtrP
 
 
@@ -188,6 +186,14 @@ for record in f:
     payload = record.content_stream().read()
     payloads = []
 
+    if not record.http_headers or record.http_headers.to_str()[:7] != "HTTP/1.":
+        if record.http_headers:
+            payload = record.http_headers.to_bytes() + payload
+        # TODO: check Content-Type (might be text/xml)
+        http_headers = StatusAndHeaders('200 OK', [('Content-Type', 'text/html'), ('Content-Length', '0')], protocol='HTTP/1.0')
+    else:
+        http_headers = record.http_headers
+
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
@@ -225,7 +231,9 @@ for record in f:
                 continue
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
-            fo.write_record(fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree.encode('utf8')), warc_headers=record.rec_headers, http_headers=record.http_headers))
+            cleantree = cleantree.encode('utf-8')
+            http_headers.replace_header('Content-Length', str(len(cleantree)))
+            fo.write_record(fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers))
 
 
 
