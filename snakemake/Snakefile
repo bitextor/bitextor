@@ -1521,9 +1521,8 @@ rule alignsegments_hunalign:
         'do url1=$(echo "$line" | cut -f 1);'
         'url2=$(echo "$line" | cut -f 2);'
         # TODO: fix bug when same url appears twice
-        # TODO: escape '$'
-        'n1=$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | head -n 1 | cut -d: -f1);'
-        'n2=$(xzcat -T 0 {input[3]} | grep -n "^$url2$" | head -n 1 |cut -d: -f1);'
+        'n1=$(xzcat -T 0 {input[2]} | grep -n "^$url1\$" | head -n 1 | cut -d: -f1);'
+        'n2=$(xzcat -T 0 {input[3]} | grep -n "^$url2\$" | head -n 1 |cut -d: -f1);'
         't1=$(xzcat -T 0 {input[4]} | sed -n "${{n1}}p");'
         't2=$(xzcat -T 0 {input[5]} | sed -n "${{n2}}p");'
         'echo -e "$t1\t$t2";'
