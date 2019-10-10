@@ -27,10 +27,6 @@ import mmh3
 
 if not jpype.isJVMStarted():
     jars = []
-    for top, dirs, files in os.walk(imp.find_module('pdfextract')[1] + '/data'):
-        for nm in files:
-            if nm[-4:] == ".jar":
-                jars.append(os.path.join(top, nm))
     for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1] + '/data'):
         for nm in files:
             if nm[-4:] == ".jar":
@@ -38,8 +34,6 @@ if not jpype.isJVMStarted():
     jpype.addClassPath(os.pathsep.join(jars))
     jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
 from boilerpipe.extract import Extractor as ExtrB
-from pdfextract.extract import Extractor as ExtrP
-
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -81,8 +75,6 @@ oparser.add_argument('--input_hash', dest='inputHash', help='Input path for prev
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
-oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
-                     default=False)
 oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language',
                      default=False)
 oparser.add_argument('--langs', dest="langs", default="",
@@ -133,11 +125,6 @@ if options.inputHash:
     with lzma.open(options.inputHash,"r") as fh:
         for line in fh:
             previous_crawl_hashes.add(int(line.strip()))
-
-# Boilerpipe cleaning is optional
-
-if options.pdfextract:
-    extractor = ExtrP()
 
 if options.outputHash:
     plainTextHashFile = lzma.open(options.outputHash, "w")
@@ -200,7 +187,7 @@ for record in f:
                         files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
                     else:
                         if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
-                            os.symlink(options.outDir + "/" + lang + "/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
+                            os.symlink("normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
                         files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
 
             # If enabled, remove boilerplate HTML

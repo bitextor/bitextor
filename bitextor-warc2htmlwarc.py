@@ -143,6 +143,7 @@ if options.pdfextract:
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
+fo.write_record(fo.create_warcinfo_record(filename=options.output, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
 
 for record in f:
     # Initial checks
@@ -233,6 +234,7 @@ for record in f:
             cleantree = cleantree.replace("\t", " ")
             cleantree = cleantree.encode('utf-8')
             http_headers.replace_header('Content-Length', str(len(cleantree)))
+            http_headers.replace_header('Content-Type', 'text/html')
             fo.write_record(fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers))
 
 
