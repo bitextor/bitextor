@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 
-import html
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
-import base64
 import sys
 import argparse
 import cchardet
-import hashlib
-import magic
 import re
 import ftfy
 from lxml.html.clean import Cleaner
-from bs4 import BeautifulSoup
 import jpype
 import os
 import imp
-import alcazar.bodytext
 import logging
 import lzma
 import subprocess
@@ -118,7 +112,7 @@ oparser = argparse.ArgumentParser(
                 "normalization, deduplication. The result is a WARC file.")
 oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
-oparser.add_argument('--output', dest='output', help='Output WARC file', required=True)
+oparser.add_argument('--output', dest='output', help='Output WARC file', default=sys.stdout)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
@@ -136,14 +130,21 @@ elif options.input == sys.stdin:
 else:
     f = ArchiveIterator(open(options.input, 'rb'))
 
-fo = WARCWriter(open(options.output,'wb'), gzip=True)
+if options.output == sys.stdout:
+    fo = WARCWriter(options.output.buffer, gzip=True)
+else:
+    fo = WARCWriter(open(options.output,'wb'), gzip=True)
 
 if options.pdfextract:
     extractor = ExtrP()
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
-fo.write_record(fo.create_warcinfo_record(filename=options.output, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
+if options.output == sys.stdout:
+    filename = options.input
+else:
+    filename = options.output
+fo.write_record(fo.create_warcinfo_record(filename=filename, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
 
 for record in f:
     # Initial checks
@@ -235,7 +236,5 @@ for record in f:
             cleantree = cleantree.encode('utf-8')
             http_headers.replace_header('Content-Length', str(len(cleantree)))
             http_headers.replace_header('Content-Type', 'text/html')
-            fo.write_record(fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers))
-
-
-
+            record = fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers)
+            fo.write_record(record)

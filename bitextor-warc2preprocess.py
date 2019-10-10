@@ -17,6 +17,7 @@ import lzma
 import gzip
 from selectolax.parser import HTMLParser
 import mmh3
+import sys
 
 if not jpype.isJVMStarted():
     jars = []
@@ -76,10 +77,13 @@ oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
     f = ArchiveIterator(gzip.open(options.input, 'r'))
+elif options.input == "-":
+    f = ArchiveIterator(gzip.open(sys.stdin.buffer, 'r'))
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 seen_html = set()
@@ -136,7 +140,7 @@ for record in f:
         logging.info("Skipping page with unknown URL")
         continue
     url = url.lower()
-    url = url.replace('\t',' ')
+    url = url.replace('\t', ' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
 
