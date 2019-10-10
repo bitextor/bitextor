@@ -198,7 +198,8 @@ for record in f:
             if html_hash in seen_html:
                 logging.info("Repeated file:\t" + url)
                 continue
-                # get text with Alcazar library
+
+            # get text with Alcazar library
             if options.parser == "alcazar":
                 logging.info(url + ": Getting text with Alcazar")
                 btext = alcazar.bodytext.parse_article(deboiled)
@@ -213,6 +214,7 @@ for record in f:
                 for script in soup(["script", "style", "img"]):
                     script.extract()  # rip it out
                 plaintext = soup.get_text()
+
             # or get text with 'modest' library
             else:
                 logging.info(url + ": Getting text with modest (selectolax)")
@@ -231,54 +233,54 @@ for record in f:
                     logging.info("Body is empty. Ignoring this document")
                     continue
                 plaintext = tree.body.text(separator='\n')
-                plaintext = re.sub(r"\n+", "\n",re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
 
-                plaintext_hash=mmh3.hash(plaintext,signed =False)
+            plaintext = re.sub(r"\n+", "\n",re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+            plaintext_hash=mmh3.hash(plaintext,signed =False)
 
-                if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
-                    logging.info("Repeated plain text file:\t" + url)
-                    continue
+            if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
+                logging.info("Repeated plain text file:\t" + url)
+                continue
 
-                if len(plaintext) > 0:
-                    seen_html.add(html_hash)
-                    seen_plain_text.add(plaintext_hash)
-                    # Guessing MIME of the file (checked on original content)
-                    logging.info(url + ": Getting mime")
-                    mime = magic.from_buffer(text, mime=True)
+            if len(plaintext) > 0:
+                seen_html.add(html_hash)
+                seen_plain_text.add(plaintext_hash)
+                # Guessing MIME of the file (checked on original content)
+                logging.info(url + ": Getting mime")
+                mime = magic.from_buffer(text, mime=True)
 
-                    if not options.xzlang:
-                        files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
+                if not options.xzlang:
+                    files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
 
-                        files_dict[lang]["urlFile"].write(url.encode() + b"\n")
-                        files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
+                    files_dict[lang]["urlFile"].write(url.encode() + b"\n")
+                    files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
 
-                        b64norm = base64.b64encode(text.encode())
-                        files_dict[lang]["normHtmlFile"].write(b64norm + b"\n")
+                    b64norm = base64.b64encode(text.encode())
+                    files_dict[lang]["normHtmlFile"].write(b64norm + b"\n")
 
-                        if options.boilerpipe:
-                            b64deboil = base64.b64encode(deboiled.encode())
-                            files_dict[lang]["deboilFile"].write(b64deboil + b"\n")
+                    if options.boilerpipe:
+                        b64deboil = base64.b64encode(deboiled.encode())
+                        files_dict[lang]["deboilFile"].write(b64deboil + b"\n")
 
-                        b64text = base64.b64encode(html.unescape(plaintext).encode())
-                        files_dict[lang]["plainTextFile"].write(b64text + b"\n")
-                    # append to language specific file
-                    else:
-                        langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
-                        header = "Content-Location: " + url + "\n"
-                        header += "Content-Type: " + mime + "\n"
-                        header += "Content-Language: " + lang + "\n"
-                        header += "Content-Length: " + str(len(plaintext)) + "\n"
-                        header += "Date: " + date + "\n"
-                        header += "X-WARC-Record-Id: " + recordId + "\n"
-                        header += "X-WARC-Filename: " + options.input + "\n"
-                        langfile.write(header.encode())
-                        langfile.write(b"\n")
-                        langfile.write(plaintext.encode())
-                        langfile.write(b"\n")
-                        langfile.close()
+                    b64text = base64.b64encode(html.unescape(plaintext).encode())
+                    files_dict[lang]["plainTextFile"].write(b64text + b"\n")
+                # append to language specific file
+                else:
+                    langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
+                    header = "Content-Location: " + url + "\n"
+                    header += "Content-Type: " + mime + "\n"
+                    header += "Content-Language: " + lang + "\n"
+                    header += "Content-Length: " + str(len(plaintext)) + "\n"
+                    header += "Date: " + date + "\n"
+                    header += "X-WARC-Record-Id: " + recordId + "\n"
+                    header += "X-WARC-Filename: " + options.input + "\n"
+                    langfile.write(header.encode())
+                    langfile.write(b"\n")
+                    langfile.write(plaintext.encode())
+                    langfile.write(b"\n")
+                    langfile.close()
 
-                    if options.outputHash:
-                        plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
+                if options.outputHash:
+                    plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
 
 if not options.xzlang:
     for lang in files_dict:
