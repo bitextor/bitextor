@@ -3,14 +3,10 @@
 import html
 from warcio.archiveiterator import ArchiveIterator
 import base64
-import sys
 import argparse
 import cchardet
-import hashlib
 import magic
 import re
-import ftfy
-from lxml.html.clean import Cleaner
 from bs4 import BeautifulSoup
 import jpype
 import os
@@ -18,10 +14,7 @@ import imp
 import alcazar.bodytext
 import logging
 import lzma
-import subprocess
 import gzip
-import zipfile
-import io
 from selectolax.parser import HTMLParser
 import mmh3
 
@@ -129,8 +122,6 @@ if options.inputHash:
 if options.outputHash:
     plainTextHashFile = lzma.open(options.outputHash, "w")
 
-cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
-
 files_dict = dict()
 
 for record in f:
@@ -186,7 +177,8 @@ for record in f:
                         deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
                         files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
                     else:
-                        if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
+                        if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")\
+                                and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
                             os.symlink("normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
                         files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
 
@@ -206,42 +198,40 @@ for record in f:
             if html_hash in seen_html:
                 logging.info("Repeated file:\t" + url)
                 continue
-            else:
                 # get text with Alcazar library
-                if options.parser == "alcazar":
-                    logging.info(url + ": Getting text with Alcazar")
-                    btext = alcazar.bodytext.parse_article(deboiled)
-                    if btext.body_text:
-                        plaintext = btext.body_text
-                    else:
-                        plaintext = ""
-                # or get text with beautifulsoup
-                elif options.parser == "bs4":
-                    logging.info(url + ": Getting text with BeautifulSoup")
-                    soup = BeautifulSoup(deboiled, "lxml")
-                    for script in soup(["script", "style", "img"]):
-                        script.extract()  # rip it out
-                    plaintext = soup.get_text()
-                # or get text with 'modest' library
+            if options.parser == "alcazar":
+                logging.info(url + ": Getting text with Alcazar")
+                btext = alcazar.bodytext.parse_article(deboiled)
+                if btext.body_text:
+                    plaintext = btext.body_text
                 else:
-                    logging.info(url + ": Getting text with modest (selectolax)")
-                    try:
-                        tree = HTMLParser(deboiled)
-                    except:
-                        print("Tree structure issues in HTML/XML. Ignoring this document")
-                        continue
-                    for tag in tree.css('script'):
-                        tag.decompose()
-                    for tag in tree.css('style'):
-                        tag.decompose()
-                    for tag in tree.css('img'):
-                        tag.decompose()
-                    if tree.body is None:
-                        print("Body is empty. Ignoring this document")
-                        continue
-                    plaintext = tree.body.text(separator='\n')
-                plaintext = re.sub(r"\n+", "\n",
-                                   re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+                    plaintext = ""
+            # or get text with beautifulsoup
+            elif options.parser == "bs4":
+                logging.info(url + ": Getting text with BeautifulSoup")
+                soup = BeautifulSoup(deboiled, "lxml")
+                for script in soup(["script", "style", "img"]):
+                    script.extract()  # rip it out
+                plaintext = soup.get_text()
+            # or get text with 'modest' library
+            else:
+                logging.info(url + ": Getting text with modest (selectolax)")
+                try:
+                    tree = HTMLParser(deboiled)
+                except:
+                    logging.info("Tree structure issues in HTML/XML. Ignoring this document")
+                    continue
+                for tag in tree.css('script'):
+                    tag.decompose()
+                for tag in tree.css('style'):
+                    tag.decompose()
+                for tag in tree.css('img'):
+                    tag.decompose()
+                if tree.body is None:
+                    logging.info("Body is empty. Ignoring this document")
+                    continue
+                plaintext = tree.body.text(separator='\n')
+                plaintext = re.sub(r"\n+", "\n",re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
 
                 plaintext_hash=mmh3.hash(plaintext,signed =False)
 
@@ -273,7 +263,7 @@ for record in f:
                         files_dict[lang]["plainTextFile"].write(b64text + b"\n")
                     # append to language specific file
                     else:
-                        langfile = lzma.open(options.outDir + "/" + options.prefix + lang, mode="a", format=lzma.FORMAT_XZ)
+                        langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
                         header = "Content-Location: " + url + "\n"
                         header += "Content-Type: " + mime + "\n"
                         header += "Content-Language: " + lang + "\n"
