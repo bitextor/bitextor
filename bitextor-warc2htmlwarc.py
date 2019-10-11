@@ -2,7 +2,6 @@
 
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
-from warcio.statusandheaders import StatusAndHeaders
 import sys
 import argparse
 import cchardet
@@ -19,6 +18,7 @@ import gzip
 import zipfile
 import io
 from io import BytesIO
+
 
 if not jpype.isJVMStarted():
     jars = []
@@ -144,11 +144,12 @@ if options.output == sys.stdout:
     filename = options.input
 else:
     filename = options.output
+
 fo.write_record(fo.create_warcinfo_record(filename=filename, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
 
 for record in f:
     # Initial checks
-    if record.rec_type != 'response':
+    if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
     if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
@@ -191,9 +192,11 @@ for record in f:
     if not record.http_headers or record.http_headers.to_str()[:7] != "HTTP/1.":
         if record.http_headers:
             payload = record.http_headers.to_bytes() + payload
-        # TODO: check Content-Type (might be text/xml)
-        http_headers = StatusAndHeaders('200 OK', [('Content-Type', 'text/html'), ('Content-Length', '0')], protocol='HTTP/1.0')
+        record_type = 'resource'
+        http_headers = None
+
     else:
+        record_type = 'response'
         http_headers = record.http_headers
 
     # Extract payloads (XML) from non-HTML document formats
@@ -234,7 +237,6 @@ for record in f:
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
             cleantree = cleantree.encode('utf-8')
-            http_headers.replace_header('Content-Length', str(len(cleantree)))
-            http_headers.replace_header('Content-Type', 'text/html')
-            record = fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers)
-            fo.write_record(record)
+
+            newrecord = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(cleantree), http_headers=http_headers)
+            fo.write_record(newrecord)

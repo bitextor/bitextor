@@ -153,7 +153,7 @@ files_dict = dict()
 
 for record in f:
     # Initial checks
-    if record.rec_type != 'response':
+    if record.rec_type != 'response' and record.red_type != 'resource':
         continue
     if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' \
             and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
