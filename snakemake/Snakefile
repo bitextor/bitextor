@@ -1206,7 +1206,8 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py --input {input});'
+        # '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
 # Writes output in w2p/bitextorlang
@@ -1221,7 +1222,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py --input {input} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {usepdfextract} {PARSER}; '
         'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG1}; '
         'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
         'xz {output[0]}/{LANG1}/*; fi; '
@@ -1536,9 +1537,8 @@ rule alignsegments_hunalign:
         'do url1=$(echo "$line" | cut -f 1);'
         'url2=$(echo "$line" | cut -f 2);'
         # TODO: fix bug when same url appears twice
-        # TODO: escape '$'
-        'n1=$(xzcat -T 0 {input[2]} | grep -n "^$url1$" | head -n 1 | cut -d: -f1);'
-        'n2=$(xzcat -T 0 {input[3]} | grep -n "^$url2$" | head -n 1 |cut -d: -f1);'
+        'n1=$(xzcat -T 0 {input[2]} | grep -n "^$url1\$" | head -n 1 | cut -d: -f1);'
+        'n2=$(xzcat -T 0 {input[3]} | grep -n "^$url2\$" | head -n 1 |cut -d: -f1);'
         't1=$(xzcat -T 0 {input[4]} | sed -n "${{n1}}p");'
         't2=$(xzcat -T 0 {input[5]} | sed -n "${{n2}}p");'
         'echo -e "$t1\t$t2";'

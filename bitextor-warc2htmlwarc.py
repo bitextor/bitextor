@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
 
-import html
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
-from warcio.statusandheaders import StatusAndHeaders
-import base64
 import sys
 import argparse
 import cchardet
-import hashlib
-import magic
 import re
 import ftfy
 from lxml.html.clean import Cleaner
-from bs4 import BeautifulSoup
 import jpype
 import os
 import imp
-import alcazar.bodytext
 import logging
 import lzma
 import subprocess
@@ -25,6 +18,7 @@ import gzip
 import zipfile
 import io
 from io import BytesIO
+
 
 if not jpype.isJVMStarted():
     jars = []
@@ -47,7 +41,7 @@ def convert_encoding(data):
         encoding = "utf-8"
     if len(data) > 0:
         # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is catched here
+        # is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
@@ -118,7 +112,7 @@ oparser = argparse.ArgumentParser(
                 "normalization, deduplication. The result is a WARC file.")
 oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
-oparser.add_argument('--output', dest='output', help='Output WARC file', required=True)
+oparser.add_argument('--output', dest='output', help='Output WARC file', default=sys.stdout)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
@@ -136,17 +130,26 @@ elif options.input == sys.stdin:
 else:
     f = ArchiveIterator(open(options.input, 'rb'))
 
-fo = WARCWriter(open(options.output,'wb'), gzip=True)
+if options.output == sys.stdout:
+    fo = WARCWriter(options.output.buffer, gzip=True)
+else:
+    fo = WARCWriter(open(options.output,'wb'), gzip=True)
 
 if options.pdfextract:
     extractor = ExtrP()
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
+if options.output == sys.stdout:
+    filename = options.input
+else:
+    filename = options.output
+
+fo.write_record(fo.create_warcinfo_record(filename=filename, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
 
 for record in f:
     # Initial checks
-    if record.rec_type != 'response':
+    if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
     if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
@@ -189,9 +192,11 @@ for record in f:
     if not record.http_headers or record.http_headers.to_str()[:7] != "HTTP/1.":
         if record.http_headers:
             payload = record.http_headers.to_bytes() + payload
-        # TODO: check Content-Type (might be text/xml)
-        http_headers = StatusAndHeaders('200 OK', [('Content-Type', 'text/html'), ('Content-Length', '0')], protocol='HTTP/1.0')
+        record_type = 'resource'
+        http_headers = None
+
     else:
+        record_type = 'response'
         http_headers = record.http_headers
 
     # Extract payloads (XML) from non-HTML document formats
@@ -218,6 +223,7 @@ for record in f:
         logging.info("Processing document: " + url)
         if orig_encoding is None:
             logging.info("Encoding of document " + url + " could not be identified")
+            continue
 
         if len(text) > 0:
             # HTML is then normalized
@@ -232,8 +238,5 @@ for record in f:
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
             cleantree = cleantree.encode('utf-8')
-            http_headers.replace_header('Content-Length', str(len(cleantree)))
-            fo.write_record(fo.create_warc_record(uri=url, record_type='response', payload=BytesIO(cleantree), http_headers=http_headers))
-
-
-
+            newrecord = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(cleantree), http_headers=http_headers)
+            fo.write_record(newrecord)
