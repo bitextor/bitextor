@@ -41,7 +41,7 @@ def convert_encoding(data):
         encoding = "utf-8"
     if len(data) > 0:
         # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is catched here
+        # is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
@@ -223,6 +223,7 @@ for record in f:
         logging.info("Processing document: " + url)
         if orig_encoding is None:
             logging.info("Encoding of document " + url + " could not be identified")
+            continue
 
         if len(text) > 0:
             # HTML is then normalized
@@ -237,6 +238,5 @@ for record in f:
             cleantree = tree.replace("&#160;", " ")
             cleantree = cleantree.replace("\t", " ")
             cleantree = cleantree.encode('utf-8')
-
             newrecord = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(cleantree), http_headers=http_headers)
             fo.write_record(newrecord)
