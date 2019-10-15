@@ -14,7 +14,6 @@ import imp
 import alcazar.bodytext
 import logging
 import lzma
-import gzip
 from selectolax.parser import HTMLParser
 import mmh3
 import sys
@@ -81,9 +80,9 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
-    f = ArchiveIterator(gzip.open(options.input, 'r'))
+    f = ArchiveIterator(open(options.input, 'rb'))
 elif options.input == "-":
-    f = ArchiveIterator(gzip.open(sys.stdin.buffer, 'r'))
+    f = ArchiveIterator(sys.stdin.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 seen_html = set()
