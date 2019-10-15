@@ -510,6 +510,7 @@ else:
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 if "deferredCrawling" in config and config["deferredCrawling"]:
+  print("WTF")
   DEFERREDFIELDS=",deferredseg1,checksum1,deferredseg2,checksum2"
   DEFERREDSENTENCES=".deferred"
 else:
@@ -1693,9 +1694,10 @@ rule deduped_tmx:
     input:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     output:
-        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
+        tmx="{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz",
+        txt="{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.txt.xz"
     shell:
-        "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} -f {output.txt} | xz -T 0 > {output.tmx}"
 
 rule mt_parallel_data:
     input:

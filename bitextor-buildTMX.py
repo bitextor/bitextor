@@ -19,6 +19,7 @@ import argparse
 import time
 import locale
 import re
+import lzma
 from xml.sax.saxutils import escape
 
 
@@ -99,6 +100,8 @@ oparser.add_argument("-c", "--columns",
                      default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given",
                      dest="no_delete_seg", action='store_true')
+oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
+                     dest="text_file_deduped")
 oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. Like 'bifixerhash', 'seg1,seg2' , 'checksum1,checksum2'")
 
 options = oparser.parse_args()
@@ -107,6 +110,14 @@ if options.clean_alignments is not None:
     reader = open(options.clean_alignments, "r")
 else:
     reader = sys.stdin
+
+text_writer = None
+if options.text_file_deduped and options.dedup:
+    if options.text_file_deduped[-3:] == ".xz":
+        text_writer = lzma.open(options.text_file_deduped, "wt")
+    else:
+        text_writer = open(options.text_file_deduped, "w")
+
 print("<?xml version=\"1.0\"?>")
 print("<tmx version=\"1.4\">")
 print(" <header")
@@ -159,6 +170,8 @@ for line in reader:
         urls2 = set()
     else:
         printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
+        if text_writer:
+            text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
         urls1 = set()
         urls2 = set()
         urls1.add(fieldsdict['url1'])
@@ -170,6 +183,7 @@ for line in reader:
 if options.dedup:
     idcounter += 1
     printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
+    text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
 print(" </body>")
 print("</tmx>")
 reader.close()
