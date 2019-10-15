@@ -2,6 +2,7 @@
 
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
+from warcio.statusandheaders import StatusAndHeaders
 import sys
 import argparse
 import cchardet
@@ -14,7 +15,6 @@ import imp
 import logging
 import lzma
 import subprocess
-import gzip
 import zipfile
 import io
 from io import BytesIO
@@ -124,7 +124,7 @@ fo = None
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
-    f = ArchiveIterator(gzip.open(options.input, 'r'))
+    f = ArchiveIterator(open(options.input, 'rb'))
 elif options.input == sys.stdin:
     f = ArchiveIterator(options.input.buffer)
 else:
@@ -198,6 +198,12 @@ for record in f:
     else:
         record_type = 'response'
         http_headers = record.http_headers
+        try:
+            http_headers.to_ascii_bytes()
+        except UnicodeEncodeError:
+            # if header is non ascii, create a new header, with status code only
+            # content length and content type will be filled before writing
+            http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
 
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
@@ -230,13 +236,17 @@ for record in f:
             logging.info(url + ": cleaning html")
             tree = ""
             try:
-                cleanhtml = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
-                tree = ftfy.fix_text(cleanhtml, fix_entities=False, fix_character_width=False)
+                clean_html = cleaner.clean_html(re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE))
+                tree = ftfy.fix_text(clean_html, fix_entities=False, fix_character_width=False)
             except Exception as ex:
                 sys.stderr.write(str(ex) + "\n")
                 continue
-            cleantree = tree.replace("&#160;", " ")
-            cleantree = cleantree.replace("\t", " ")
-            cleantree = cleantree.encode('utf-8')
-            newrecord = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(cleantree), http_headers=http_headers)
-            fo.write_record(newrecord)
+            clean_tree = tree.replace("&#160;", " ")
+            clean_tree = clean_tree.replace("\t", " ")
+            clean_tree = clean_tree.encode('utf-8')
+            if http_headers:
+                http_headers.replace_header('Content-Length', str(len(clean_tree)))
+                http_headers.replace_header('Content-Type', 'text/html')
+            new_record = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(clean_tree), http_headers=http_headers)
+            fo.write_record(new_record)
+
