@@ -16,7 +16,7 @@
 	ignore = dirty
 [submodule "preprocess"]
 	path = preprocess
-	url = https://github.com/kpu/preprocess
+	url = https://github.com/bitextor/preprocess
 	ignore = dirty
 [submodule "standoff"]
 	path = standoff

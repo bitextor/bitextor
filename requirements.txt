@@ -4,7 +4,7 @@ python-Levenshtein==0.12.0
 scikit-learn==0.21.3
 tensorflow==1.14
 keras==2.2.4
-warcio==1.6.3
+warcio==1.7.1
 snakemake==5.6.0
 tldextract==2.2.1
 tqdm==4.34.0
