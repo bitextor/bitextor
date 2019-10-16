@@ -510,7 +510,6 @@ else:
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
 if "deferredCrawling" in config and config["deferredCrawling"]:
-  print("WTF")
   DEFERREDFIELDS=",deferredseg1,checksum1,deferredseg2,checksum2"
   DEFERREDSENTENCES=".deferred"
 else:
