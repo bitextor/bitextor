@@ -53,17 +53,17 @@ fi
 
 if [ ! -f "${WORK}"/data/warc/greenpeace.org/creepy.warc.gz ]; then
 	mkdir -p "${WORK}"/data/warc/greenpeace.org
-	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/greenpeace.canada.warc.xz | xzcat - | gzip > "${WORK}"/data/warc/greenpeace.org/creepy.warc.gz
+	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/data/warc/greenpeace.org/creepy.warc.gz
 fi
 
 if [ ! -f "${WORK}"/data/warc/kremlin.ru/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/data/warc/kremlin.ru
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/kremlin.warc.xz | xzcat - | gzip > "${WORK}"/data/warc/kremlin.ru/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/data/warc/kremlin.ru/creepy.warc.gz
 fi
 
 if [ ! -f "${WORK}"/data/warc/primeminister.gr/creepy.warc.gz ]; then
         mkdir -p "${WORK}"/data/warc/primeminister.gr
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc/primeminister.warc.xz | xzcat - | gzip > "${WORK}"/data/warc/primeminister.gr/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/data/warc/primeminister.gr/creepy.warc.gz
 fi
 
 
