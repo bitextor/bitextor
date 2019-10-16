@@ -44,7 +44,7 @@ for fline in reader:
                 urlStr = "unknown-encoding"
                 # sys.stderr.write("HH2 " + urlStr + "\n")
         with open(filepath, 'rb') as content_file:
-            record = writer.create_warc_record(urlStr, 'response',
+            record = writer.create_warc_record(urlStr, 'resource', warc_content_type="application/http; msgtype=response",
                                                payload=content_file)
 
         writer.write_record(record)

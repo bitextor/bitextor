@@ -19,14 +19,16 @@ import argparse
 import time
 import locale
 import re
+import lzma
 from xml.sax.saxutils import escape
 
 
-def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, checksum=None, no_delete_seg=False):
+def printseg(lang, columns, urls, seg, fieldsdict, mint, deferred=None, checksum=None, no_delete_seg=False):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
     if "url1" in columns:
-        print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
+        for url in urls:
+            print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
     if deferred:
         print("     <prop type=\"deferred-seg\">" + deferred + "</prop>")
     if checksum:
@@ -42,6 +44,38 @@ def printseg(lang, columns, url, seg, fieldsdict, mint, deferred=None, checksum=
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
     print("    </tuv>")
 
+
+def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fieldsdict, mint, no_delete_seg):
+    print("   <tu tuid=\"" + str(idcounter) + "\" datatype=\"Text\">")
+    infoTag = []
+    if 'hunalign' in fieldsdict and fieldsdict['hunalign'] != "":
+        print("    <prop type=\"score-aligner\">" + fieldsdict['hunalign'] + "</prop>")
+    if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
+        print("    <prop type=\"score-bicleaner\">" + fieldsdict['bicleaner'] + "</prop>")
+    # Output info data ILSP-FC specification
+    if re.sub("[^0-9]", "", fieldsdict["seg1"]) != re.sub("[^0-9]", "", fieldsdict["seg2"]):
+        infoTag.append("different numbers in TUVs")
+    print("    <prop type=\"type\">1:1</prop>")
+    if re.sub(r'\W+', '', fieldsdict["seg1"]) == re.sub(r'\W+', '', fieldsdict["seg2"]):
+        infoTag.append("equal TUVs")
+    if len(infoTag) > 0:
+        print("    <prop type=\"info\">" + "|".join(infoTag) + "</prop>")
+
+    if 'deferredseg1' not in fieldsdict or fieldsdict['deferredseg1'] == "":
+        fieldsdict['deferredseg1'] = None
+    if 'deferredseg2' not in fieldsdict or fieldsdict['deferredseg2'] == "":
+        fieldsdict['deferredseg2'] = None
+    if 'checksum1' not in fieldsdict:
+        fieldsdict['checksum1'] = None
+    if 'checksum2' not in fieldsdict:
+        fieldsdict['checksum2'] = None
+
+    printseg(lang1, columns, urls1, fieldsdict['seg1'], fieldsdict, mint, fieldsdict['deferredseg1'],
+             fieldsdict['checksum1'], no_delete_seg)
+    printseg(lang2, columns, urls2, fieldsdict['seg2'], fieldsdict, mint, fieldsdict['deferredseg2'],
+             fieldsdict['checksum2'], no_delete_seg)
+
+    print("   </tu>")
 
 oparser = argparse.ArgumentParser(
     description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX "
@@ -61,17 +95,29 @@ oparser.add_argument("-m", "--max-length", help="Maximum length ratio between tw
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other "
-                          "options:hunalign,bicleaner,lengthratio,numTokensSL,numTokensTL,deferredseg1,"
+                          "options:hunalign,bifixerhash,bifixerscore,bicleaner,lengthratio,numTokensSL,numTokensTL,deferredseg1,"
                           "deferredseg2,checksum1,checksum2",
                      default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given",
                      dest="no_delete_seg", action='store_true')
+oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
+                     dest="text_file_deduped")
+oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. Like 'bifixerhash', 'seg1,seg2' , 'checksum1,checksum2'")
+
 options = oparser.parse_args()
 
 if options.clean_alignments is not None:
     reader = open(options.clean_alignments, "r")
 else:
     reader = sys.stdin
+
+text_writer = None
+if options.text_file_deduped and options.dedup:
+    if options.text_file_deduped[-3:] == ".xz":
+        text_writer = lzma.open(options.text_file_deduped, "wt")
+    else:
+        text_writer = open(options.text_file_deduped, "w")
+
 print("<?xml version=\"1.0\"?>")
 print("<tmx version=\"1.4\">")
 print(" <header")
@@ -87,54 +133,57 @@ print("   o-encoding=\"utf-8\">")
 print(" </header>")
 print(" <body>")
 
-idcounter = 0
+idcounter = -1
+prev_hash = ""
+prev_fieldsdict = {}
+urls1 = set()
+urls2 = set()
 for line in reader:
     idcounter += 1
     fields = line.split("\t")
     fields[-1] = fields[-1].strip()
     columns = options.columns.split(',')
     fieldsdict = dict()
+    line_hash = ""
     for field, column in zip(fields, columns):
         fieldsdict[column] = field
+
+    if options.dedup:
+        for part in options.dedup.split(','):
+            line_hash = line_hash + "\t" + fieldsdict[part]
     if 'seg1' not in fieldsdict:
         fieldsdict['seg1'] = ""
     if 'seg2' not in fieldsdict:
         fieldsdict['seg2'] = ""
 
-    print("   <tu tuid=\"" + str(idcounter) + "\" datatype=\"Text\">")
-    infoTag = []
-    if 'hunalign' in fieldsdict and fieldsdict['hunalign'] != "":
-        print("    <prop type=\"score-aligner\">" + fieldsdict['hunalign'] + "</prop>")
-    if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
-        print("    <prop type=\"score-bicleaner\">" + fieldsdict['bicleaner'] + "</prop>")
-    # Output info data ILSP-FC specification
-    if re.sub("[^0-9]", "", fieldsdict["seg1"]) != re.sub("[^0-9]", "", fieldsdict["seg2"]):
-        infoTag.append("different numbers in TUVs")
-    print("    <prop type=\"type\">1:1</prop>")
-    if re.sub(r'\W+', '', fieldsdict["seg1"]) == re.sub(r'\W+', '', fieldsdict["seg2"]):
-        infoTag.append("equal TUVs")
-    if len(infoTag) > 0:
-        print("    <prop type=\"info\">" + "|".join(infoTag) + "</prop>")
+    if (prev_hash == line_hash or prev_hash == "") and options.dedup:
+        urls1.add(fieldsdict['url1'])
+        urls2.add(fieldsdict['url2'])
+        prev_hash = line_hash
+        prev_fieldsdict = fieldsdict
+    elif not options.dedup:
+        urls1.add(fieldsdict['url1'])
+        urls2.add(fieldsdict['url2'])
+        printtu(idcounter+1, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
+                options.no_delete_seg)
+        urls1 = set()
+        urls2 = set()
+    else:
+        printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
+        if text_writer:
+            text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
+        urls1 = set()
+        urls2 = set()
+        urls1.add(fieldsdict['url1'])
+        urls2.add(fieldsdict['url2'])
+        prev_hash = line_hash
+        prev_fieldsdict = fieldsdict
 
-    deferredseg1 = None
-    deferredseg2 = None
-    checksum1 = None
-    checksum2 = None
-    if 'deferredseg1' in fieldsdict and fieldsdict['deferredseg1'] != "":
-        deferredseg1 = fieldsdict['deferredseg1']
-    if 'deferredseg2' in fieldsdict and fieldsdict['deferredseg2'] != "":
-        deferredseg2 = fieldsdict['deferredseg2']
-    if 'checksum1' in fieldsdict:
-        checksum1 = fieldsdict['checksum1']
-    if 'checksum2' in fieldsdict:
-        checksum2 = fieldsdict['checksum2']
 
-    printseg(options.lang1, columns, fieldsdict['url1'], fieldsdict['seg1'], fieldsdict, options.mint, deferredseg1,
-             checksum1, options.no_delete_seg)
-    printseg(options.lang2, columns, fieldsdict['url2'], fieldsdict['seg2'], fieldsdict, options.mint, deferredseg2,
-             checksum2, options.no_delete_seg)
-
-    print("   </tu>")
+if options.dedup:
+    idcounter += 1
+    printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
+    text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
 print(" </body>")
 print("</tmx>")
 reader.close()

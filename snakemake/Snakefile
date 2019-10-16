@@ -186,6 +186,10 @@ def ValidateArgs(config):
 
            'mgiza': {'type': 'string'},
 
+           'parallelBlock' : {'type': 'integer'},
+           'parallelMemfree' : {'type': 'integer'},
+           'parallelTranslate' : {'type': 'boolean'},
+
             }
 
     if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
@@ -311,6 +315,10 @@ if "dic" in config:
   DIC=config["dic"]
 else:
   DIC=None
+
+if "deduped" in config:
+    DEDUP='--dedup "seg1,seg2"'
+    BICLEANER_SORT="LC_ALL=C sort -t$'\t' -k3,4 -T "+TMPDIR+" --compress-program=gzip |"
 
 #Option to remove Boilerpipe html: if the option is enabled, boilerpipe is not used
 if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
@@ -501,21 +509,47 @@ else:
 #print("DOC_THRESHOLD", DOC_THRESHOLD, "BLEU_THRESHOLD", BLEU_THRESHOLD)
 
 ############ FILTERING AND POST-PROCESSING OPTIONS ############
+if "deferredCrawling" in config and config["deferredCrawling"]:
+  print("WTF")
+  DEFERREDFIELDS=",deferredseg1,checksum1,deferredseg2,checksum2"
+  DEFERREDSENTENCES=".deferred"
+else:
+  DEFERREDFIELDS=""
+  DEFERREDSENTENCES=""
+
+if "bifixer" in config and config["bifixer"]:
+  BIFIXER="bifixer"
+  BIFIXERFIELD=",bifixerhash,bifixerscore"
+  BICLEANER_SORT=""
+  DEDUP='--dedup "bifixerhash"'
+  if DEFERREDFIELDS != "":
+      CACHEOPTIONS='-k 10,11'
+  else:
+      CACHEOPTIONS='-k 6,7'
+else:
+  BIFIXER="segclean"
+  BIFIXERFIELD=""
+  CACHEOPTIONS='-k 3,4'
+
+if "bifixerOptions" in config:
+    BIFIXEROPTIONS=config["bifixerOptions"]
+else:
+    BIFIXEROPTIONS="--aggressive_dedup"
 
 if "bicleaner" in config:
   RAWOPTION="bicleaner.scores"
   BICLEANEROPTION=",bicleaner"
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
-  BICLEANER_SORT="-r -k6,6 -k3,4"
   tokeniserCheck(WORDTOK1)
   tokeniserCheck(WORDTOK2)
-
 else:
   RAWOPTION="segclean"
   BICLEANEROPTION=""
-  BICLEANER_SORT="-k3,4"
-  BICLEANER="segclean"
+  if BIFIXER:
+    BICLEANER="bifixer"
+  else:
+    BICLEANER="segclean"
   BICLEANER_CONFIG=""
 
 if "bicleanerThreshold" in config:
@@ -530,22 +564,27 @@ else:
   ELRCSCORES=BICLEANER
   ELRCFIELDS=""
 
-if "deferredCrawling" in config and config["deferredCrawling"]:
-  DEFERREDFIELDS=",deferredseg1,checksum1,deferredseg2,checksum2"
-  DEFERREDSENTENCES=".deferred"
-else:
-  DEFERREDFIELDS=""
-  DEFERREDSENTENCES=""
 
-if "bifixer" in config and config["bifixer"]:
-  BIFIXER="bifixer"
-else:
-  BIFIXER="segclean"
 
-if "bifixerOptions" in config:
-    BIFIXEROPTIONS=config["bifixerOptions"]
+
+###### MEMORY AND PARALLEL PROCESSING OPTIONS OPTIONS ############
+
+
+# Set options for parallel command (for translation and bicleaner)
+if "parallelBlock" in config and config["parallelBlock"]:
+    PARALLEL_BLOCK=config["parallelBlock"]
 else:
-    BIFIXEROPTIONS="--aggressive_dedup"
+    PARALLEL_BLOCK=5000000
+
+if "parallelMemfree" in config and config["parallelMemfree"]:
+    PARALLEL_MEMFREE=config["parallelMemfree"]
+else:
+    PARALLEL_MEMFREE=20000000
+
+if "parallelTranslate" in config and config["parallelTranslate"]:
+    PARALLEL_TRANS_CMD="parallel -k --block {PARALLEL_BLOCK} --memfree {PARALLEL_MEMFREE} --pipe".format(PARALLEL_BLOCK=PARALLEL_BLOCK, PARALLEL_MEMFREE=PARALLEL_MEMFREE)
+else:
+    PARALLEL_TRANS_CMD=""
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
@@ -1191,7 +1230,8 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py --input {input} {usepdfextract} );'
+        # '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
 # Writes output in w2p/bitextorlang
@@ -1206,11 +1246,11 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} --input {input} {usepdfextract} {PARSER}; '
-        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG1}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {PARSER}; '
+        'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG1}; '
         'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
         'xz {output[0]}/{LANG1}/*; fi; '
-        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files"; mkdir -p {output[0]}/{LANG2}; '
+        'if [ ! -f {output[0]}/{LANG2}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG2}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG2}; '
         'touch {output[0]}/{LANG2}/plain_text {output[0]}/{LANG2}/mime {output[0]}/{LANG2}/url {output[0]}/{LANG2}/normalized_html {output[0]}/{LANG2}/deboilerplate_html ;'
         'xz {output[0]}/{LANG2}/*; fi; '
 
@@ -1383,67 +1423,60 @@ rule docalign_tokenize:
         'mkdir -p {data}/preprocess/{wildcards.target}/docalign; '
         '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGS} --lang2 {LANG2} --bitextorlang {input.bitextorlang} --prune_type "words" --prune 80 --output_dir {data}/preprocess/{wildcards.target}/docalign'
 
-rule docaling_deduped:
-    input:
-        "{data}/preprocess".format(data=data)+"/{target}/docalign/{lang}.extracted.xz"
-    output:
-        temp("{transient}".format(transient=transient)+"/{target}/docalign/{lang}.extracted.deduped.xz")
-    shell:
-        "xzcat -T 0 {input}  | cut -d$'\t' -f 2 | sort -T {TMPDIR} --compress-program=gzip | uniq | xz -c -T 0 > {output}"
-
 rule docalign_translate_nmt:
     input:
-        source = "{dir}/{prefix}/extracted.deduped.xz"
-        ,
-        configFile = "{dir}/config.json".format(dir=transient)
-        ,
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
+        configFile = "{transient}/config.json".format(transient=transient),
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
-
     output:
-        temp("{dir}/{prefix}.nmt.extracted.deduped.translated.xz")
-
+        "{transient}/{{domain}}/docalign/{l1}.nmt.extracted.translated.xz".format(transient=transient, l1=LANG1)
     priority: 40
-
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {wildcards.dir} {permanent}/nmt-dir | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 rule docalign_translate_smt:
     input:
-        source = "{dir}/{prefix}.extracted.deduped.xz"
-        ,
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
-
     output:
-        temp("{dir}/{prefix}.smt.extracted.deduped.translated.xz")
-
+        "{transient}/{{domain}}/docalign/{l1}.smt.extracted.translated.xz".format(transient=transient, l1=LANG1)
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
-
     shell:
-        'xzcat -T 0 {input.source} | {PROFILING} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 
 rule docalign_custom_translate:
     input:
-        "{prefix}.extracted.deduped.xz",
+        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2)
     output:
-        temp("{prefix}.customMT.extracted.deduped.translated.xz")
+        "{transient}/{{domain}}/docalign/{l1}.customMT.extracted.translated.xz".format(transient=transient, l1=LANG1)
     shell:
-        'xzcat -T 0 {input} | {MT_COMMAND} | xz -c -T 0 > {output}; '
-        'if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi'
-
-
-rule docaling_substitute_translated:
-    input:
-        extracted="{data}/preprocess".format(data=data)+"/{target}/docalign/{prefix}.extracted.xz",
-        deduped="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.extracted.deduped.xz",
-        translated="{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.deduped.translated.xz"
-    output:
-        "{transient}".format(transient=transient)+"/{target}/docalign/{prefix}.{mttype}.extracted.translated.xz"
-    shell:
-        'xzcat -T 0 {input.extracted} | {PROFILING} python3 {BITEXTOR}/document-aligner/substitute_translated.py --deduplicated {input.deduped} --translated {input.translated} | xz -c -T 0 > {output}'
+        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
+        '   touch empty && xz empty && mv empty.xz {output};'
+        'else'
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
+        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        'fi'
 
 rule docalign_tokenize_translated:
     input:
@@ -1553,24 +1586,27 @@ rule alignsegments_bleualign:
 
 rule deferred_documents:
     input:
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/normalized_html.xz",
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/url.xz"
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/normalized_html.xz",
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/url.xz"
     output:
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/html5lib_plain_text.xz",
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/deferred_documents.xz"
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/html5lib_plain_text.xz",
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/deferred_documents.xz"
     shell:
         'paste <(xzcat {input[0]}) <(xzcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
 
 rule deferred_segments:
     input:
-        "{dir}/"+"{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/html5lib_plain_text.xz",
-        "{dir}"+"/{PPROC}/url.xz".format( PPROC=PPROC),
-        "{dir}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{lang}/deferred_documents.xz"
+        "{transient}".format(transient=transient)+"/{target}"+"/{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG1}/html5lib_plain_text.xz".format(LANG1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG1}/url.xz".format(LANG1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG1}/deferred_documents.xz".format(LANG1=LANG1),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG2}/html5lib_plain_text.xz".format(LANG2=LANG2),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG2}/url.xz".format(LANG2=LANG2),
+        "{data}/preprocess".format(data=data)+"/{target}"+"/{PPROC}/bitextorlang/".format( PPROC=PPROC)+"{LANG2}/deferred_documents.xz".format(LANG2=LANG2)
     output:
-        "{dir}/"+"{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
+        "{transient}".format(transient=transient)+"/{target}"+"/{segaligner}.deferred.segalign.xz".format(segaligner=SEGMENTALIGNER)
     shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]}) <(xzcat {input[2]}) <(xzcat {input[3]})) > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(xzcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) > {output}'
 
 rule cleansegments:
     input:
@@ -1590,7 +1626,7 @@ rule bifixer:
         "{prefix}.bifixer.xz"
     shell:
         # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} {BIFIXEROPTIONS} | xz -T 0 > {output}'
+        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bifixer.sh {LANG1} {LANG2} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
 
 rule bicleaner:
     input:
@@ -1601,9 +1637,9 @@ rule bicleaner:
     shell:
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | {PROFILING} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
         'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5}}\' | {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ print $1 "\t" $2 "\t" $4 "\t" $3 "\t" $5 "\t" $6}}\' | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | xz -T 0 > {output}; '
         'fi'
 
 rule bicleanerfilter:
@@ -1620,7 +1656,7 @@ rule elrc:
     output:
         "{prefix}.elrc.xz"
     shell:
-        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
 rule raw:
     input:
@@ -1652,15 +1688,16 @@ rule tmx:
     output:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.not-deduped.tmx.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
     input:
         "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.sent.xz"
     output:
-        "{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz"
+        tmx="{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.tmx.xz",
+        txt="{permanentdir}".format(permanentdir=config["permanentDir"])+"/{l1}-{l2}.deduped.txt.xz"
     shell:
-        "xzcat -T 0 -f {input} | LC_ALL=C sort -t$'\t' {BICLEANER_SORT} -T {TMPDIR} --compress-program=gzip | {PROFILING} {BITEXTOR}/bitextor-buildTMX-dedup.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{BICLEANEROPTION}{ELRCFIELDS}{DEFERREDFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} -f {output.txt} | xz -T 0 > {output.tmx}"
 
 rule mt_parallel_data:
     input:
