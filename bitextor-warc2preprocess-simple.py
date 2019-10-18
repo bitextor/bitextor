@@ -10,7 +10,7 @@ import re
 import os
 import logging
 import lzma
-import gzip
+import sys
 import mmh3
 from html.parser import HTMLParser
 
@@ -102,7 +102,9 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
-    f = ArchiveIterator(gzip.open(options.input, 'r'))
+    f = ArchiveIterator(open(options.input, 'rb'))
+elif options.input == "-":
+    f = ArchiveIterator(sys.stdin.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 
@@ -153,16 +155,16 @@ files_dict = dict()
 
 for record in f:
     # Initial checks
-    if record.rec_type != 'response' and record.red_type != 'resource':
+    if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
-    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' \
-            and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
+    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
         url = record.rec_headers.get_header('WARC-Target-URI')
     if url == "unknown":
         logging.info("Skipping page with unknown URL")
         continue
+
     url = url.lower()
     url = url.replace('\t', ' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" \
@@ -175,85 +177,90 @@ for record in f:
         continue
     payload = record.content_stream().read()
 
-
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
+
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
-    if len(text) > 0:
-        parser.resetText()
-        parser.feed(text)
-        plaintext = parser.getText()
-        # lang id
-        logging.info(url + ": detecting language")
-        lang = ""
-        if options.langid == "cld3":
-            lang = guess_lang_from_data3(cld3model, plaintext)
+    if not os.path.exists(options.outDir):
+        os.makedirs(options.outDir)
+
+    if len(text) == 0:
+        continue
+
+    # stripping out html tags
+    parser.resetText()
+    parser.feed(text)
+    plaintext = parser.getText()
+    # lang id
+    logging.info(url + ": detecting language")
+    lang = ""
+    if options.langid == "cld3":
+        lang = guess_lang_from_data3(cld3model, plaintext)
+    else:
+        lang = guess_lang_from_data2(plaintext)
+
+    if (len(languages) > 0 and lang not in languages) or (lang in banned):
+        logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
+        continue
+
+    if not options.xzlang and lang not in files_dict:
+        if not os.path.exists(options.outDir + "/" + lang):
+            os.makedirs(options.outDir + "/" + lang)
+        urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
+        encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
+        mimeFile = lzma.open(options.outDir + "/" + lang + "/mime.xz", "w")
+        normHtmlFile = lzma.open(options.outDir + "/" + lang + "/normalized_html.xz", "w")
+        plainTextFile = lzma.open(options.outDir + "/" + lang + "/plain_text.xz", "w")
+        if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz") and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
+            os.symlink("/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
+        files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
+
+    plaintext_hash = mmh3.hash(plaintext, signed=False)
+
+    if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
+        logging.info("Repeated plain text file:\t" + url)
+        continue
+
+    if len(plaintext) > 0:
+        seen_plain_text.add(plaintext_hash)
+        # Guessing MIME of the file (checked on original content)
+        logging.info(url + ": Getting mime")
+        mime = magic.from_buffer(text, mime=True)
+
+        if not options.xzlang:
+            files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
+
+            files_dict[lang]["urlFile"].write(url.encode() + b"\n")
+            files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
+
+            b64norm = base64.b64encode(plaintext.encode())
+            files_dict[lang]["normHtmlFile"].write(b64norm + b"\n")
+
+            b64text = base64.b64encode(html.unescape(plaintext).encode())
+            files_dict[lang]["plainTextFile"].write(b64text + b"\n")
+        # append to language specific file
         else:
-            lang = guess_lang_from_data2(plaintext)
+            langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
+            header = "Content-Location: " + url + "\n"
+            header += "Content-Type: " + mime + "\n"
+            header += "Content-Language: " + lang + "\n"
+            header += "Content-Length: " + str(len(plaintext)) + "\n"
+            header += "Date: " + date + "\n"
+            header += "X-WARC-Record-ID: " + recordId + "\n"
+            header += "X-WARC-Filename: " + options.input + "\n"
+            langfile.write(header.encode())
+            langfile.write(b"\n")
+            langfile.write(plaintext.encode())
+            langfile.write(b"\n")
+            langfile.close()
 
-        if (len(languages) > 0 and lang not in languages) or (lang in banned):
-            logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
-        else:
-            if not options.xzlang:
-                if lang not in files_dict:
-                    if not os.path.exists(options.outDir + "/" + lang):
-                        os.makedirs(options.outDir + "/" + lang)
-                    urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
-                    encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
-                    mimeFile = lzma.open(options.outDir + "/" + lang + "/mime.xz", "w")
-                    normHtmlFile = lzma.open(options.outDir + "/" + lang + "/normalized_html.xz", "w")
-                    plainTextFile = lzma.open(options.outDir + "/" + lang + "/plain_text.xz", "w")
-                    if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")\
-                            and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
-                        os.symlink("/normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
-                    files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile,
-                                            "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
-
-            plaintext_hash = mmh3.hash(plaintext, signed=False)
-
-            if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
-                logging.info("Repeated plain text file:\t" + url)
-                continue
-            if len(plaintext) > 0:
-                seen_plain_text.add(plaintext_hash)
-                # Guessing MIME of the file (checked on original content)
-                logging.info(url + ": Getting mime")
-                mime = magic.from_buffer(text, mime=True)
-
-                if not options.xzlang:
-                    files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
-
-                    files_dict[lang]["urlFile"].write(url.encode() + b"\n")
-                    files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
-
-                    b64norm = base64.b64encode(plaintext.encode())
-                    files_dict[lang]["normHtmlFile"].write(b64norm + b"\n")
-
-                    b64text = base64.b64encode(html.unescape(plaintext).encode())
-                    files_dict[lang]["plainTextFile"].write(b64text + b"\n")
-                # append to language specific file
-                else:
-                    langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)
-                    header = "Content-Location: " + url + "\n"
-                    header += "Content-Type: " + mime + "\n"
-                    header += "Content-Language: " + lang + "\n"
-                    header += "Content-Length: " + str(len(plaintext)) + "\n"
-                    header += "Date: " + date + "\n"
-                    header += "X-WARC-Record-Id: " + recordId + "\n"
-                    header += "X-WARC-Filename: " + options.input + "\n"
-                    langfile.write(header.encode())
-                    langfile.write(b"\n")
-                    langfile.write(plaintext.encode())
-                    langfile.write(b"\n")
-                    langfile.close()
-
-                if options.outputHash:
-                    plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
+        if options.outputHash:
+            plainTextHashFile.write(str(plaintext_hash).encode() + b"\n")
 
 if not options.xzlang:
     for lang in files_dict:
@@ -262,6 +269,6 @@ if not options.xzlang:
         files_dict[lang]["mimeFile"].close()
         files_dict[lang]["normHtmlFile"].close()
         files_dict[lang]["plainTextFile"].close()
-    if options.outputHash:
-        plainTextHashFile.close()
+if options.outputHash:
+    plainTextHashFile.close()
 
