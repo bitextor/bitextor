@@ -168,7 +168,7 @@ def ValidateArgs(config):
            'initCorpusTrainPrefix': {'type': 'list'},
            'initCorpusDevPrefix': {'type': 'list'},
            'initCorpusTestPrefix': {'type': 'list'},
-
+           'mkcls': {'type':'boolean'},
            'bicleanerCorpusTrainingPrefix': {'type': 'list'},
 
            'nmt': {'type': 'boolean'},
@@ -306,6 +306,11 @@ else:
 
 if "profiling" in config and config["profiling"]:
   PROFILING="/usr/bin/time -v"
+
+if "mkcls" in config and config["mkcls"]:
+  MKCLS="/mgiza/mgizapp/inst/mkcls"
+else:
+  MKCLS="/clustercat/bin/mkcls"
 
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)
@@ -1791,6 +1796,56 @@ rule symmetrise_dic:
         t3t.close()
         dic.close()
         os.sync()
+
+#Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
+rule lex_dic:
+    input:
+        vcb1="{dir}/corpus.{l1}.filtered.vcb".format(dir=mgizaModelDir, l1=LANG1),
+        vcb2="{dir}/corpus.{l2}.filtered.vcb".format(dir=mgizaModelDir, l2=LANG2),
+        t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
+        t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
+    output:
+        e2f="{file}.lex.e2f.gz".format(file=DIC),
+        f2e="{file}.lex.f2e.gz".format(file=DIC)
+    run:
+        svocabulary={}
+        tvocabulary={}
+        svcb=open(input.vcb1,"r")
+        tvcb=open(input.vcb2,"r")
+        for line in svcb:
+            item=line.strip().split(" ")
+            svocabulary[item[0]]=item[1]
+
+        for line in tvcb:
+            item=line.strip().split(" ")
+            tvocabulary[item[0]]=item[1]
+
+        t3s=open(input.t3_1,"r")
+        t3t=open(input.t3_2,"r")
+        dice2f=gzip.open(output[0], "wt")
+        dicf2e=gzip.open(output[1], "wt")
+
+        for line in t3t:
+            item=line.strip().split(" ")
+            value = float(item[2])
+            if value > 0.1:
+                if item[0] in svocabulary and item[1] in tvocabulary:
+                    dice2f.write("{0} {1} {2}\n".format(svocabulary[item[0]],tvocabulary[item[1]],item[2]))
+
+        for line in t3s:
+            item=line.strip().split(" ")
+            value = float(item[2])
+            if value > 0.1:
+                if item[1] in svocabulary and item[0] in tvocabulary:
+                    dicf2e.write("{0} {1} {2}\n".format(tvocabulary[item[0]],svocabulary[item[1]],item[2]))
+        svcb.close()
+        tvcb.close()
+        t3s.close()
+        t3t.close()
+        dice2f.close()
+        dicf2e.close()
+        os.sync()
+
 rule filter_dics:
     input:
         "{prefix}.vcb"
@@ -1831,7 +1886,7 @@ rule mkcls:
     priority: 40
 
     shell:
-        "{PROFILING} {BITEXTOR}/clustercat/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
+        "{PROFILING} {BITEXTOR}{MKCLS} -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
 
 rule plain2snt:
     input:
@@ -1905,8 +1960,8 @@ rule bicleaner_train_model:
     input:
         corpusl1=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG1),
         corpusl2=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG2),
-        t3_1="{dir}/corpus.{l1}-{l2}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2),
-        t3_2="{dir}/corpus.{l2}-{l1}.t3.final".format(dir=mgizaModelDir, l1=LANG1, l2=LANG2)
+        e2f="{file}.lex.e2f.gz".format(file=DIC),
+        f2e="{file}.lex.f2e.gz".format(file=DIC)
     output:
         "{model}".format(model=BICLEANER_CONFIG)
     priority: 40
@@ -1916,11 +1971,8 @@ rule bicleaner_train_model:
         "paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training; "
         "DIR=$(dirname {BICLEANER_CONFIG}); "
         "echo $DIR; "
-        "cp {input.t3_1} $DIR/{LANG1}.dic; "
-        "cp {input.t3_2} $DIR/{LANG2}.dic; "
-        "gzip $DIR/{LANG1}.dic $DIR/{LANG2}.dic; "
         "lines=$(cat $training | wc -l); "
         "trainlines=$(echo \"$lines*4/10\" | bc); "
         "testlines=$(echo \"($lines-2*$trainlines)/2\" | bc); "
-        '{PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d $DIR/{LANG1}.dic.gz -D $DIR/{LANG2}.dic.gz -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; '
+        '{PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -c $DIR/{LANG1}-{LANG2}.classifier -g $trainlines -w $trainlines --good_test_examples $testlines --wrong_test_examples $testlines -m {BICLEANER_CONFIG} --classifier_type random_forest; '
         "rm $training"
