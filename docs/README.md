@@ -372,7 +372,7 @@ The variable `documentAligner` can take three different values, each of them tak
 dic: /home/user/en-fr.dic
 ```
 
-Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix`:
+Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix` using `mgiza` tools:
 
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
@@ -381,6 +381,12 @@ initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
 This variable must contain one or more **corpus prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
 **Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
+
+If you are running out of memory in the `mkcls` rule, maybe you should activate original `mkcls` binary instead of `clustercat` interface using:
+
+````yaml
+mkcls: true
+```
 
 #### Variables for document alignment using external MT
 
