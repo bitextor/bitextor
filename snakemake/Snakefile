@@ -168,7 +168,7 @@ def ValidateArgs(config):
            'initCorpusTrainPrefix': {'type': 'list'},
            'initCorpusDevPrefix': {'type': 'list'},
            'initCorpusTestPrefix': {'type': 'list'},
-
+           'mkcls': {'type':'boolean'},
            'bicleanerCorpusTrainingPrefix': {'type': 'list'},
 
            'nmt': {'type': 'boolean'},
@@ -306,6 +306,11 @@ else:
 
 if "profiling" in config and config["profiling"]:
   PROFILING="/usr/bin/time -v"
+
+if "mkcls" in config and config["mkcls"]:
+  MKCLS="/mgiza/mgizapp/inst/mkcls"
+else:
+  MKCLS="/clustercat/bin/mkcls"
 
 systemCheck("mkdir -p " + permanent)
 systemCheck("mkdir -p " + transient)
@@ -1881,7 +1886,7 @@ rule mkcls:
     priority: 40
 
     shell:
-        "{PROFILING} {BITEXTOR}/clustercat/bin/mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
+        "{PROFILING} {BITEXTOR}{MKCLS} -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null"
 
 rule plain2snt:
     input:
