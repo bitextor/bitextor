@@ -117,6 +117,9 @@ if languages:
 
 previous_crawl_hashes=set()
 
+if not os.path.exists(options.outDir):
+    os.makedirs(options.outDir)
+
 if options.inputHash:
     with lzma.open(options.inputHash,"r") as fh:
         for line in fh:
@@ -155,9 +158,6 @@ for record in f:
     logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
-
-    if not os.path.exists(options.outDir):
-        os.makedirs(options.outDir)
 
     if len(text) == 0:
         continue

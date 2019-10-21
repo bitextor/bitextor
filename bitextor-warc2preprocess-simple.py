@@ -44,12 +44,7 @@ class SimpleParser(HTMLParser):
     def getText(self):
         self.parsed = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n",
                                                   re.sub(r" +", " ", re.sub(r"\r", "", self.parsed)))).strip()
-        return self.parsed
-
-    def resetText(self):
-        self.parsed = ""
-        self.lastTok = ""
-
+        return self.parsed + "\n"
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -108,8 +103,6 @@ elif options.input == "-":
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 
-parser = SimpleParser()
-
 seen_html = set()
 seen_plain_text = set()
 
@@ -141,6 +134,9 @@ if languages:
         languages.append(options.l2)
 
 previous_crawl_hashes = set()
+
+if not os.path.exists(options.outDir):
+    os.makedirs(options.outDir)
 
 if options.inputHash:
     with lzma.open(options.inputHash, "r") as fh:
@@ -186,14 +182,11 @@ for record in f:
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
 
-    if not os.path.exists(options.outDir):
-        os.makedirs(options.outDir)
-
     if len(text) == 0:
         continue
 
     # stripping out html tags
-    parser.resetText()
+    parser = SimpleParser()
     parser.feed(text)
     plaintext = parser.getText()
     # lang id
