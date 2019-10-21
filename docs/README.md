@@ -384,7 +384,7 @@ This variable must contain one or more **corpus prefixes**. For a given prefix (
 
 If you are running out of memory in the `mkcls` rule, maybe you should activate original `mkcls` binary instead of `clustercat` interface using:
 
-````yaml
+```yaml
 mkcls: true
 ```
 
