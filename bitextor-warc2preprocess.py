@@ -15,6 +15,7 @@ import alcazar.bodytext
 import logging
 import lzma
 from selectolax.parser import HTMLParser
+from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
 import sys
 
@@ -27,6 +28,38 @@ if not jpype.isJVMStarted():
     jpype.addClassPath(os.pathsep.join(jars))
     jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
 from boilerpipe.extract import Extractor as ExtrB
+
+
+class SimpleParser(HTMLTokenizer):
+    startNL = ["ul", "ol", "dl", "tr"]
+    endNL = ["p", "div", "li", "dd", "dt", "th", "td", "h1", "h2", "h3", "h4", "h5", "h6"]
+    selfNL = ["br"]
+    noText = ["script", "noscript", "style"]
+    lastTok = ""
+    parsed = ""
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.startNL:
+            self.parsed = self.parsed + "\n"
+        self.lastTok = tag
+
+    def handle_endtag(self, tag):
+        if tag in self.endNL:
+            self.parsed = self.parsed + "\n"
+
+    def handle_startendtag(self, tag, attrs):
+        if tag in self.selfNL:
+            self.parsed = self.parsed + "\n"
+
+    def handle_data(self, data):
+        if self.lastTok not in self.noText:
+            newdata = data.replace("\r\n", " ").replace("\n", " ")
+            self.parsed = self.parsed + newdata
+
+    def getText(self):
+        self.parsed = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n",
+                                                  re.sub(r" +", " ", re.sub(r"\r", "", self.parsed)))).strip()
+        return self.parsed + "\n"
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -61,7 +94,7 @@ oparser.add_argument("--verbose", action="store_true", default=False,
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
 oparser.add_argument("--parser", dest="parser", default="bs4",
-                     help="Use 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'modest' is used")
+                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
@@ -229,7 +262,7 @@ for record in f:
         plaintext = soup.get_text()
 
     # or get text with 'modest' library
-    else:
+    elif options.parser == "modest":
         logging.info(url + ": Getting text with modest (selectolax)")
         try:
             tree = HTMLParser(deboiled)
@@ -246,6 +279,13 @@ for record in f:
             logging.info("Body is empty. Ignoring this document")
             continue
         plaintext = tree.body.text(separator='\n')
+
+    # or use an HTML tokenizer
+    else:
+        logging.info(url + ": Getting text with HTML tokenizer")
+        parser = SimpleParser()
+        parser.feed(text)
+        plaintext = parser.getText()
 
     plaintext_hash=mmh3.hash(plaintext,signed =False)
 
