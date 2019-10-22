@@ -174,6 +174,10 @@ for record in f:
         logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
         continue
 
+    if lang == "un":
+        logging.info("Language of document " + url + " could not be identified")
+        continue 
+
     if not options.xzlang and lang not in files_dict:
         if not os.path.exists(options.outDir + "/" + lang):
             os.makedirs(options.outDir + "/" + lang)

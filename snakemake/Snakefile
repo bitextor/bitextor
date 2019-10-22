@@ -1234,7 +1234,7 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py --input {input} {usepdfextract} );'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py --cleanhtml --ftfy --input {input} {usepdfextract} );'
         # '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
@@ -1250,7 +1250,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {PARSER}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py --cleanhtml --ftfy --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {PARSER}; '
         'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG1}; '
         'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
         'xz {output[0]}/{LANG1}/*; fi; '

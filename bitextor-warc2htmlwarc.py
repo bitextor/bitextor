@@ -116,6 +116,10 @@ oparser.add_argument('--output', dest='output', help='Output WARC file', default
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
+oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you to fix possible encoding problems',
+                    default=False)
+oparser.add_argument('--cleanhtml', action='store_true', help='Clean HTML to remove javascript, css and head tags',
+                     default=False)
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -197,6 +201,8 @@ for record in f:
     else:
         record_type = 'response'
         http_headers = record.http_headers
+        # Transfer-Encoding: chunked header causes error with giawarc
+        http_headers.remove_header("Transfer-Encoding")
         try:
             http_headers.to_ascii_bytes()
         except UnicodeEncodeError:
@@ -204,8 +210,6 @@ for record in f:
             # content length and content type will be filled before writing
             http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
 
-    # Transfer-Encoding: chunked header causes error with giawarc
-    http_headers.remove_header("Transfer-Encoding")
 
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
@@ -241,8 +245,16 @@ for record in f:
         logging.info(url + ": cleaning html")
         tree = ""
         try:
-            clean_html = cleaner.clean_html(text)
-            tree = ftfy.fix_text(clean_html, fix_entities=False, fix_character_width=False)
+            if options.cleanhtml:
+                clean_html = cleaner.clean_html(text)
+            else:
+                clean_html = text
+
+            if options.ftfy:
+                tree = ftfy.fix_text(clean_html, fix_entities=False, fix_character_width=False)
+            else:
+                tree = clean_html
+
         except Exception as ex:
             sys.stderr.write(str(ex) + "\n")
             continue
