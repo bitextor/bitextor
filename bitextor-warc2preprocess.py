@@ -10,7 +10,7 @@ import re
 from bs4 import BeautifulSoup
 import jpype
 import os
-import imp
+import importlib
 import alcazar.bodytext
 import logging
 import lzma
@@ -20,7 +20,7 @@ import sys
 
 if not jpype.isJVMStarted():
     jars = []
-    for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1] + '/data'):
+    for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'):
         for nm in files:
             if nm[-4:] == ".jar":
                 jars.append(os.path.join(top, nm))

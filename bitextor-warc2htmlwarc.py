@@ -11,7 +11,7 @@ import ftfy
 from lxml.html.clean import Cleaner
 import jpype
 import os
-import imp
+import importlib
 import logging
 import lzma
 import subprocess
@@ -22,11 +22,7 @@ from io import BytesIO
 
 if not jpype.isJVMStarted():
     jars = []
-    for top, dirs, files in os.walk(imp.find_module('pdfextract')[1] + '/data'):
-        for nm in files:
-            if nm[-4:] == ".jar":
-                jars.append(os.path.join(top, nm))
-    for top, dirs, files in os.walk(imp.find_module('boilerpipe')[1] + '/data'):
+    for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("pdfextract").get_filename()) + '/data'):
         for nm in files:
             if nm[-4:] == ".jar":
                 jars.append(os.path.join(top, nm))
