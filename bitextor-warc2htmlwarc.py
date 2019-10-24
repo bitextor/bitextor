@@ -18,16 +18,6 @@ import subprocess
 import zipfile
 import io
 from io import BytesIO
-
-
-if not jpype.isJVMStarted():
-    jars = []
-    for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("pdfextract").get_filename()) + '/data'):
-        for nm in files:
-            if nm[-4:] == ".jar":
-                jars.append(os.path.join(top, nm))
-    jpype.addClassPath(os.pathsep.join(jars))
-    jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
 from pdfextract.extract import Extractor as ExtrP
 
 
