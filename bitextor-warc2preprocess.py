@@ -15,6 +15,7 @@ import alcazar.bodytext
 import logging
 import lzma
 from selectolax.parser import HTMLParser
+from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
 import sys
 
@@ -28,10 +29,42 @@ if not jpype.isJVMStarted():
     jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
 from boilerpipe.extract import Extractor as ExtrB
 
+
+class SimpleParser(HTMLTokenizer):
+    startNL = ["ul", "ol", "dl", "tr"]
+    endNL = ["p", "div", "li", "dd", "dt", "th", "td", "h1", "h2", "h3", "h4", "h5", "h6"]
+    selfNL = ["br"]
+    noText = ["script", "noscript", "style"]
+    lastTok = ""
+    parsed = ""
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.startNL:
+            self.parsed = self.parsed + "\n"
+        self.lastTok = tag
+
+    def handle_endtag(self, tag):
+        if tag in self.endNL:
+            self.parsed = self.parsed + "\n"
+
+    def handle_startendtag(self, tag, attrs):
+        if tag in self.selfNL:
+            self.parsed = self.parsed + "\n"
+
+    def handle_data(self, data):
+        if self.lastTok not in self.noText:
+            newdata = data.replace("\r\n", " ").replace("\n", " ")
+            self.parsed = self.parsed + newdata
+
+    def get_text(self):
+        return self.parsed.strip() + "\n"
+
+
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
         ''.join(x for x in data if x.isprintable()), isPlainText=False)
     return detected_languages[0][1]
+
 
 def guess_lang_from_data3(model, data):
     language, probability, reliable, proportion = model.get_language(data)
@@ -43,8 +76,8 @@ def convert_encoding(data):
     if encoding is None:
         encoding = "utf-8"
     if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is catched here
+        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
+        # the error is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
@@ -61,7 +94,7 @@ oparser.add_argument("--verbose", action="store_true", default=False,
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
 oparser.add_argument("--parser", dest="parser", default="bs4",
-                     help="Use 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'modest' is used")
+                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
@@ -85,6 +118,7 @@ elif options.input == "-":
     f = ArchiveIterator(sys.stdin.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'r'))
+
 seen_html = set()
 seen_plain_text = set()
 
@@ -97,7 +131,6 @@ if options.langid == "cld3":
     cld3model = cld3.LanguageIdentifier()
 else:
     import pycld2 as cld2
-
 
 if options.langs:
     for l in options.langs.split(','):
@@ -149,23 +182,27 @@ for record in f:
     # Ignore robots.txt when processing records
     if url[-11:] == "/robots.txt":
         continue
+
     payload = record.content_stream().read()
 
-    date = record.rec_headers.get_header('WARC-Date')
-    recordId = record.rec_headers.get_header('WARC-Record-ID')
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
+        continue
 
-    if len(text) == 0:
+    date = record.rec_headers.get_header('WARC-Date')
+    recordId = record.rec_headers.get_header('WARC-Record-ID')
+    
+    if len(text.strip()) == 0:
         continue
 
     # lang id
     logging.info(url + ": detecting language")
     lang = ""
-    if (options.langid == "cld3"):
+
+    if options.langid == "cld3":
         lang = guess_lang_from_data3(cld3model, text)
     else:
         lang = guess_lang_from_data2(text)
@@ -193,7 +230,7 @@ for record in f:
             if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz") and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
                 os.symlink("normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
-
+    
     # If enabled, remove boilerplate HTML
     if options.boilerpipe:
         logging.info(url + ": deboiling html")
@@ -204,8 +241,7 @@ for record in f:
 
     # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled):
     # if we get duplicate files we discard them
-    html_hash=mmh3.hash(deboiled, signed=False)
-    # print("hash", c.hexdigest(), url)
+    html_hash = mmh3.hash(deboiled, signed=False)
     # checking for duplicate content (duplicates are discarded)
     if html_hash in seen_html:
         logging.info("Repeated file:\t" + url)
@@ -223,13 +259,18 @@ for record in f:
     # or get text with beautifulsoup
     elif options.parser == "bs4":
         logging.info(url + ": Getting text with BeautifulSoup")
-        soup = BeautifulSoup(deboiled, "lxml")
+        try:
+            soup = BeautifulSoup(deboiled, "lxml")
+        except Exception as ex:
+            logging.info("Exception ocurred when processing " + url + " with BeautifulSoup")
+            continue
+
         for script in soup(["script", "style", "img"]):
             script.extract()  # rip it out
         plaintext = soup.get_text()
 
     # or get text with 'modest' library
-    else:
+    elif options.parser == "modest":
         logging.info(url + ": Getting text with modest (selectolax)")
         try:
             tree = HTMLParser(deboiled)
@@ -247,13 +288,22 @@ for record in f:
             continue
         plaintext = tree.body.text(separator='\n')
 
-    plaintext_hash=mmh3.hash(plaintext,signed =False)
+    # or use an HTML tokenizer
+    else:
+        logging.info(url + ": Getting text with HTML tokenizer")
+        parser = SimpleParser()
+        parser.feed(text)
+        plaintext = parser.get_text()
+
+    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+    plaintext_hash = mmh3.hash(plaintext, signed = False)
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
         logging.info("Repeated plain text file:\t" + url)
         continue
 
     if len(plaintext) > 0:
+        
         seen_html.add(html_hash)
         seen_plain_text.add(plaintext_hash)
         # Guessing MIME of the file (checked on original content)
@@ -262,7 +312,6 @@ for record in f:
 
         if not options.xzlang:
             files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
-
             files_dict[lang]["urlFile"].write(url.encode() + b"\n")
             files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
 
