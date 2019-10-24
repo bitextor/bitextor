@@ -36,8 +36,8 @@ def convert_encoding(data):
     if encoding is None:
         encoding = "utf-8"
     if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is caught here
+        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
+        # the error is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
@@ -181,7 +181,6 @@ for record in f:
     url = url.replace('\t',' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
-    # print("url", num, url, pageSize)
 
     # Ignore robots.txt when processing records
     if url[-11:] == "/robots.txt":
@@ -211,7 +210,6 @@ for record in f:
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfextract:
             payloads = pdfextract(payload, extractor)
-            # payloads = pdfextract_shell(payload)
         else:
             payloads = pdf2html(payload)
     elif url[-4:] == ".odt" or url[-4:] == ".ods" or url[-4:] == ".odp":
@@ -252,11 +250,10 @@ for record in f:
                 tree = clean_html
 
         except Exception as ex:
-            sys.stderr.write(str(ex) + "\n")
+            logging.info("Skipping " + url + ": " + str(ex))
             continue
         clean_tree = tree.replace("&#160;", " ")
         clean_tree = clean_tree.replace("\t", " ")
-        clean_tree = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", clean_tree))))
         clean_tree = clean_tree.encode('utf-8')
         if http_headers:
             http_headers.replace_header('Content-Length', str(len(clean_tree)))

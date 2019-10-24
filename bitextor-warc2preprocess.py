@@ -57,9 +57,7 @@ class SimpleParser(HTMLTokenizer):
             self.parsed = self.parsed + newdata
 
     def getText(self):
-        self.parsed = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n",
-                                                  re.sub(r" +", " ", re.sub(r"\r", "", self.parsed)))).strip()
-        return self.parsed + "\n"
+        return self.parsed.strip() + "\n"
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
@@ -76,8 +74,8 @@ def convert_encoding(data):
     if encoding is None:
         encoding = "utf-8"
     if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, the error
-        # is catched here
+        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
+        # the error is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
@@ -182,17 +180,20 @@ for record in f:
     # Ignore robots.txt when processing records
     if url[-11:] == "/robots.txt":
         continue
+
     payload = record.content_stream().read()
 
-    date = record.rec_headers.get_header('WARC-Date')
-    recordId = record.rec_headers.get_header('WARC-Record-ID')
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(payload)
     logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
+        continue
 
-    if len(text) == 0:
+    date = record.rec_headers.get_header('WARC-Date')
+    recordId = record.rec_headers.get_header('WARC-Record-ID')
+    
+    if len(text.strip()) == 0:
         continue
 
     # lang id
@@ -226,7 +227,7 @@ for record in f:
             if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz") and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
                 os.symlink("normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
-
+    
     # If enabled, remove boilerplate HTML
     if options.boilerpipe:
         logging.info(url + ": deboiling html")
@@ -238,7 +239,6 @@ for record in f:
     # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled):
     # if we get duplicate files we discard them
     html_hash=mmh3.hash(deboiled, signed=False)
-    # print("hash", c.hexdigest(), url)
     # checking for duplicate content (duplicates are discarded)
     if html_hash in seen_html:
         logging.info("Repeated file:\t" + url)
@@ -256,7 +256,12 @@ for record in f:
     # or get text with beautifulsoup
     elif options.parser == "bs4":
         logging.info(url + ": Getting text with BeautifulSoup")
-        soup = BeautifulSoup(deboiled, "lxml")
+        try:
+            soup = BeautifulSoup(deboiled, "lxml")
+        except Exception as ex:
+            logging.info("Exception ocurred when processing " + url + " with BeautifulSoup")
+            continue
+
         for script in soup(["script", "style", "img"]):
             script.extract()  # rip it out
         plaintext = soup.get_text()
@@ -288,12 +293,14 @@ for record in f:
         plaintext = parser.getText()
 
     plaintext_hash=mmh3.hash(plaintext,signed =False)
+    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
         logging.info("Repeated plain text file:\t" + url)
         continue
 
     if len(plaintext) > 0:
+        
         seen_html.add(html_hash)
         seen_plain_text.add(plaintext_hash)
         # Guessing MIME of the file (checked on original content)
@@ -302,7 +309,6 @@ for record in f:
 
         if not options.xzlang:
             files_dict[lang]["mimeFile"].write(mime.encode() + b"\n")
-
             files_dict[lang]["urlFile"].write(url.encode() + b"\n")
             files_dict[lang]["encodingFile"].write(orig_encoding.encode() + b"\n")
 
