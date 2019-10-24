@@ -56,13 +56,15 @@ class SimpleParser(HTMLTokenizer):
             newdata = data.replace("\r\n", " ").replace("\n", " ")
             self.parsed = self.parsed + newdata
 
-    def getText(self):
+    def get_text(self):
         return self.parsed.strip() + "\n"
+
 
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
         ''.join(x for x in data if x.isprintable()), isPlainText=False)
     return detected_languages[0][1]
+
 
 def guess_lang_from_data3(model, data):
     language, probability, reliable, proportion = model.get_language(data)
@@ -116,6 +118,7 @@ elif options.input == "-":
     f = ArchiveIterator(sys.stdin.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'r'))
+
 seen_html = set()
 seen_plain_text = set()
 
@@ -128,7 +131,6 @@ if options.langid == "cld3":
     cld3model = cld3.LanguageIdentifier()
 else:
     import pycld2 as cld2
-
 
 if options.langs:
     for l in options.langs.split(','):
@@ -199,7 +201,8 @@ for record in f:
     # lang id
     logging.info(url + ": detecting language")
     lang = ""
-    if (options.langid == "cld3"):
+
+    if options.langid == "cld3":
         lang = guess_lang_from_data3(cld3model, text)
     else:
         lang = guess_lang_from_data2(text)
@@ -238,7 +241,7 @@ for record in f:
 
     # We compute a hash on the HTML (either normalized one or after boilerpipe if enabled):
     # if we get duplicate files we discard them
-    html_hash=mmh3.hash(deboiled, signed=False)
+    html_hash = mmh3.hash(deboiled, signed=False)
     # checking for duplicate content (duplicates are discarded)
     if html_hash in seen_html:
         logging.info("Repeated file:\t" + url)
@@ -290,10 +293,10 @@ for record in f:
         logging.info(url + ": Getting text with HTML tokenizer")
         parser = SimpleParser()
         parser.feed(text)
-        plaintext = parser.getText()
+        plaintext = parser.get_text()
 
-    plaintext_hash=mmh3.hash(plaintext,signed =False)
     plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
+    plaintext_hash = mmh3.hash(plaintext, signed = False)
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
         logging.info("Repeated plain text file:\t" + url)

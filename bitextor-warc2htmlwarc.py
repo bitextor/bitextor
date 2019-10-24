@@ -119,8 +119,10 @@ oparser.add_argument('--cleanhtml', action='store_true', help='Clean HTML to rem
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+
 f = None
 fo = None
+
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
@@ -133,7 +135,7 @@ else:
 if options.output == sys.stdout:
     fo = WARCWriter(options.output.buffer, gzip=True)
 else:
-    fo = WARCWriter(open(options.output,'wb'), gzip=True)
+    fo = WARCWriter(open(options.output, 'wb'), gzip=True)
 
 if options.pdfextract:
     extractor = ExtrP()
@@ -177,6 +179,7 @@ for record in f:
                 'Content-Type') or "application/octet-stream" in record.http_headers.get_header(
                 'Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
             continue
+
     url = url.lower()
     url = url.replace('\t',' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
@@ -185,6 +188,7 @@ for record in f:
     # Ignore robots.txt when processing records
     if url[-11:] == "/robots.txt":
         continue
+
     payload = record.content_stream().read()
     payloads = []
 
@@ -204,7 +208,6 @@ for record in f:
             # if header is non ascii, create a new header, with status code only
             # content length and content type will be filled before writing
             http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
-
 
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
@@ -235,11 +238,13 @@ for record in f:
         text = re.sub('encoding *= *"[^"]+"', '', text, flags=re.IGNORECASE)
         if len(text.strip()) == 0:
             continue
-        # HTML is then normalized
-        logging.info(url + ": cleaning html")
+
+        clean_html = ""
         tree = ""
         try:
             if options.cleanhtml:
+                # HTML is then normalized
+                logging.info(url + ": cleaning HTML")
                 clean_html = cleaner.clean_html(text)
             else:
                 clean_html = text
