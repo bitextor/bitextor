@@ -243,7 +243,6 @@ def ValidateArgs(config):
         exit()
 
 ###########################################################
-sys.stderr.write("Starting bitextor\n")
 
 ValidateArgs(config)
 
@@ -810,7 +809,7 @@ else:
         for host in hosts:
             f.write("%s\n" % host)
 
-sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
+#sys.stderr.write("#hosts=" + str(len(hosts)) + "\n")
 
 # exclude dead domains
 postCrawlPath = "{permanent}/post-crawl-exclude".format(permanent=permanent)
@@ -855,7 +854,7 @@ if "linkedHosts" in config:
             f.write("\n".join(hosts))
         exit()
 
-sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
+#sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
 #exit(-1)
 
 domainKey2Hosts = CreateDomainKey2HostMap(hosts)
@@ -1964,7 +1963,6 @@ rule bicleaner_train_model:
         f2e="{file}.lex.f2e.gz".format(file=DIC)
     output:
         "{model}".format(model=BICLEANER_CONFIG)
-    priority: 40
 
     shell:
         "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "

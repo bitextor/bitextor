@@ -26,6 +26,6 @@ regex==2019.08.19
 requests==2.22.0
 urllib3==1.25.6
 selectolax==0.2.1
-python-pdfextract==1.0.1.1
+python-pdfextract==1.0.1.2
 mmh3==2.5.1
 jpype1==0.7.0
