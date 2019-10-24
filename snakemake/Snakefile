@@ -104,7 +104,9 @@ def ValidateArgs(config):
             'giawarc': {'type': 'boolean'},
             'preprocessLangs': {'type': 'string'},
             'targetLangs': {'type': 'string'},
-	        'langId': {'type': 'string'},
+	    'disableFTFY': {'type': 'boolean'},
+	    'cleanHTML': {'type': 'boolean'},
+	    'langId': {'type': 'string'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -276,6 +278,16 @@ if "targetLangs" in config and config["targetLangs"]:
     TARGETLANGS = "--langs " + config['targetLangs']
 else:
     TARGETLANGS = ""
+
+if "disableFTFY" in config and config["disableFTFY"]:
+    FTFY = ""
+else:
+    FTFY= "--ftfy"
+
+if "cleanHTML" in config and config["cleanHTML"]:
+    CLEANHTML = "--cleanhtml"
+else:
+    CLEANHTML = ""
 
 if "langId" in config:
     LANGID = config["langId"]
@@ -1233,7 +1245,7 @@ rule giawarc:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py --cleanhtml --ftfy --input {input} {usepdfextract} );'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} );'
         # '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {output[0]} -l {LANGID} --output_hash {output[1]} {PLAINTEXTHASHES} {input}'
 
 # Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
@@ -1249,7 +1261,7 @@ rule warc2preprocess:
     priority: 8
     shell:
         'mkdir -p {output[0]};'
-        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py --cleanhtml --ftfy --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {PARSER}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGS} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {output[0]} --output_hash {output[1]} {PLAINTEXTHASHES} {PARSER}; '
         'if [ ! -f {output[0]}/{LANG1}/plain_text.xz ] ; then >&2 echo "WARNING: no \'{LANG1}\' data found in {wildcards.domain}. Creating empty files instead"; mkdir -p {output[0]}/{LANG1}; '
         'touch {output[0]}/{LANG1}/plain_text {output[0]}/{LANG1}/mime {output[0]}/{LANG1}/url {output[0]}/{LANG1}/normalized_html {output[0]}/{LANG1}/deboilerplate_html ;'
         'xz {output[0]}/{LANG1}/*; fi; '

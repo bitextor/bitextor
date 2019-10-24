@@ -339,17 +339,22 @@ targetLangs: "en,fr"
 
 langId: cld2
 
+disableFTFY: false
+cleanHTML: false
+
 plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 
 * `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
 * `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) and ['modest'](https://github.com/rushter/selectolax) (default). NOTE: does not do anything `giawarc: true`
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax) or an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
 * `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
+* `disableFTFY`: ftfy is a tool that solves encoding errors. Use this option to disable this step
+* `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
 * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors
 
 ### Variables for document alignment
