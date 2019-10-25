@@ -21,7 +21,7 @@ import os
 import argparse
 import base64
 import subprocess
-import re
+import string
 from tempfile import NamedTemporaryFile
 from external_processor import ExternalTextProcessor
 
@@ -50,7 +50,11 @@ def extract_encoded_text(encodedtext, encodedtokenized, tmp_file, tmp_file_origt
     proc_sent = ExternalTextProcessor(sent_tokeniser.split(' '))
     content = base64.b64decode(encodedtext).decode("utf-8").replace("\t", " ")
     tokenized_segs = proc_sent.process(content).strip()
-    tmp_file_origtext.write(tokenized_segs.encode())
+    tokenized_filtered = ""
+    for sent in tokenized_segs.split("\n"):
+        if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
+            tokenized_filtered += sent + "\n"
+    tmp_file_origtext.write(tokenized_filtered.encode())
     content_tokenized = base64.b64decode(encodedtokenized)
     tmp_file.write(content_tokenized)
 

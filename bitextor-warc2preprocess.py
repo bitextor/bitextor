@@ -295,8 +295,8 @@ for record in f:
         parser.feed(text)
         plaintext = parser.get_text()
 
-    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))
-    plaintext_hash = mmh3.hash(plaintext, signed = False)
+    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"^\s+$", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext))))).strip()
+    plaintext_hash = mmh3.hash(plaintext, signed=False)
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
         logging.info("Repeated plain text file:\t" + url)
