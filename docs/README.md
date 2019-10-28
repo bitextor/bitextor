@@ -339,7 +339,7 @@ targetLangs: "en,fr"
 
 langId: cld2
 
-disableFTFY: false
+ftfy: false
 cleanHTML: false
 
 plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
@@ -353,7 +353,7 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, every language will be processed during this step. NOTE: does not do anything will `giawarc: true`
 * `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
-* `disableFTFY`: ftfy is a tool that solves encoding errors. Use this option to disable this step
+* `ftfy`: ftfy is a tool that solves encoding errors. By default it is enabled. Include `ftfy: false` in your configuration file to disable this step
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
 * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors
 

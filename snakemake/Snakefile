@@ -104,7 +104,7 @@ def ValidateArgs(config):
             'giawarc': {'type': 'boolean'},
             'preprocessLangs': {'type': 'string'},
             'targetLangs': {'type': 'string'},
-	    'disableFTFY': {'type': 'boolean'},
+	    'ftfy': {'type': 'boolean'},
 	    'cleanHTML': {'type': 'boolean'},
 	    'langId': {'type': 'string'},
 
@@ -279,10 +279,10 @@ if "targetLangs" in config and config["targetLangs"]:
 else:
     TARGETLANGS = ""
 
-if "disableFTFY" in config and config["disableFTFY"]:
+if "ftfy" in config and not config["ftfy"]:
     FTFY = ""
 else:
-    FTFY= "--ftfy"
+    FTFY = "--ftfy"
 
 if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
