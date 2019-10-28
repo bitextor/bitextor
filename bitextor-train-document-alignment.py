@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+#  This file is part of Bitextor.
+#
+#  Bitextor is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Bitextor is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
+
 #
 # 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a
 # dictionary. It is possible to provide two ridx files and combine them

@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
 
 
+#  This file is part of Bitextor.
+#
+#  Bitextor is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Bitextor is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
+
+
 # 1. Reading from STDIN a set of aligned documents. The input format is:
 #   filename1	filename2	clean_text1_in_base64	clean_text2_in_base64
 # 2. Text is cleaned and, for every aligned pair, both texts are dumped, in the same order in two temporary files.

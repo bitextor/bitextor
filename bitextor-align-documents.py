@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+#  This file is part of Bitextor.
+#
+#  Bitextor is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Bitextor is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
+
 # 1. Two RIDX files and and LETT file are taken as the input by this script. LETT contains information about all the
 # files in the website. Each RIDX files contains, for each document in a language, the list of most promising files
 # in another language to be parallel and a confidence score.
