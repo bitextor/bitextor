@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+from common import open_xz_or_gzip_or_plain
 import argparse
 import sys
 import os
@@ -10,6 +9,17 @@ import numpy as np
 
 from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
 
+
+def discardbytime(match_costs, matches, times1, times2, timewindow):
+    filtered_cost=[]
+    filtered_matches=[]
+    for cost, match in zip(match_costs, matches):
+        t1 = times1[match[0]]
+        t2 = times2[match[1]]
+        if abs(t1-t2) < timewindow:
+            filtered_cost.append(cost)
+            filtered_matches.append(match)
+    return filtered_cost, filtered_matches
 
 def match(score_matrix_csr, threshold):
     score_matrix_coo = score_matrix_csr.tocoo()
@@ -51,6 +61,9 @@ if __name__ == "__main__":
         '--lang2', help='path to the extracted text', required=True)
     parser.add_argument(
         '--lang1', help='path to the translated foreign text', required=True)
+    parser.add_argument('--date-lang1', help='path to a file containing dates when files in the extracted text were created; it is possible to set a window of time for comparison', default=None)
+    parser.add_argument('--date-lang2', help='path to a file containing dates when files in the translated foreing text were created; it is possible to set a window of time for comparison', default=None)
+    parser.add_argument('--time-window', help='time window in days to compare dates in which documents were created; only valid if --date is defined', type=int, default=7)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
     parser.add_argument('--tfidfsmooth', type=int, default=14)
@@ -93,6 +106,15 @@ if __name__ == "__main__":
             open(args.output_matches, 'a').close()
         else:
             match_costs, matches = match(m_csr, threshold=args.threshold)
+            if options.date_lang1 != None and options.date_lang2 != None:
+                with open_xz_or_gzip_or_plain(options.date_lang1) as dates1:
+                    for date in dates1:
+                        times1.append(int(date.strip()))
+                with open_xz_or_gzip_or_plain(options.date_lang2) as dates2:
+                    for date in dates2:
+                        times2.append(int(date.strip()))
+
+                match_costs, matches = discardbytime(match_costs, matches, times1, times2, options.time_window)
 
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):

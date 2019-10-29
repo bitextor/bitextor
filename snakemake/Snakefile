@@ -105,6 +105,9 @@ def ValidateArgs(config):
             'preprocessLangs': {'type': 'string'},
             'targetLangs': {'type': 'string'},
 	        'langId': {'type': 'string'},
+           'dates_lang1': {'type': 'string'},
+           'dates_lang2': {'type': 'string'},
+           'date_window': {'type': 'integer'},
 
            'permanentDir': {'required': True, 'type': 'string'},
            'transientDir': {'required': True, 'type': 'string'},
@@ -195,6 +198,29 @@ def ValidateArgs(config):
     if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
         if not binaryAvailable("httrack"):
             sys.stderr.write("WARNING: HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
+
+    dateslang1=None
+    dateslang2=None
+    datewindow=None
+    if ("dates_lang1" in config)
+        dateslang1=config["dates_lang1"]
+    if ("dates_lang2" in config) 
+        dateslang2=config["dates_lang2"]
+    if ("date_window" in config) 
+        datewindow=config["date_window"]
+
+    if dateslang1 != None and dateslang2 == None:
+        sys.stderr.write("Error: if dates_lang1 is defined, dates_lang2 must be defined as well")
+        exit(-1)
+
+    if dateslang1 == None and dateslang2 != None:
+        sys.stderr.write("Error: if dates_lang2 is defined, dates_lang1 must be defined as well")
+        exit(-1)
+
+    if dateslang1 != None and dateslang2 != None and datewindow == None:
+        sys.stderr.write("Error: if dates_lang1 and dates_lang2 are defined, date_window must be defined as well")
+        exit(-1)
+
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
     config.update({k: [ os.path.expanduser(el) for el in v ] if 'Config' in k and v is list else v for k, v in config.items()})
@@ -1496,10 +1522,13 @@ rule docalign_matches:
     input:
         l1="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
         l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2)
+        d1=dateslang1,
+        d2=dateslang2,
+        dwindow=datewindow
     output:
         "{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.matches"
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} --date-lang1 {input.d1} --date-lang2 {input.d2} --time-window {input.dwindow}"
 
 rule aligndocumentsMT:
     input:
