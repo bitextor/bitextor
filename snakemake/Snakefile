@@ -1596,7 +1596,8 @@ rule alignsegments_bleualign:
                     filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"
                     with open_gzip_or_plain(filename) as sentFile:
                         for line in sentFile:
-                            algFile.write(urls+"\t"+line)
+                            if line.strip():
+                                algFile.write(urls+"\t"+line)
         os.sync()
 
 rule deferred_documents:
