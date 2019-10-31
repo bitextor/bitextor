@@ -68,8 +68,10 @@ for line in e2f:
         if item[1] in a3dic[item[0]]:
             value1 = float(a3dic[item[0]][item[1]])
             value2 = float(item[2])
-            hmean = 2/((1/value1)+(1/value2))
-
+            if value1 == 0 or value2 == 0:
+                hmean = 0.0
+            else:
+                hmean = 2/((1/value1)+(1/value2))
             if hmean > 0.1:
                 if item[1] in svocabulary and item[0] in tvocabulary:
                     if item[0].isalpha() or item[1].isalpha():
