@@ -38,22 +38,14 @@ def tokeniserCheck(cmd):
         sys.stderr.write("ERROR: tokeniser could not complete within 5 seconds and was terminated. Is it buffering stdout? (if you are using Moses tokeniser, add -b)\n")
         exit(1)
 
-def getLangOrDefaultFromDict (dict, lang1, lang2):
-    if lang1 in dict:
-        l1 = dict[lang1]
-    elif "default" in dict:
-        l1 = dict["default"]
-    else:
-        l1 = None
+def get_lang_or_default_from_dict(scripts_dict, language):
+    script = ""
+    if language in scripts_dict:
+        script = scripts_dict[language]
+    elif "default" in scripts_dict:
+        script = scripts_dict["default"]
 
-    if lang2 in dict:
-        l2 = dict[lang2]
-    elif "default" in dict:
-        l2 = dict["default"]
-    else:
-        l2 = None
-
-    return l1, l2
+    return script
 
 def systemCheck(cmd):
     #sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
@@ -380,21 +372,25 @@ else:
 WARCDOMAIN="WARCFILES-" + str(mmh3.hash(",".join(WARCFILES), signed=False))
 
 #Tokenisers
-SENTTOK1, SENTTOK2 = getLangOrDefaultFromDict(config["sentenceSplitters"], LANG1, LANG2)
-SENTTOKS = str(dict(config["sentenceSplitters"]))
+SENTTOKS = config["sentenceSplitters"]
+SENTTOK1 = get_lang_or_default_from_dict(config["sentenceSplitters"], LANG1)
+SENTTOK2 = get_lang_or_default_from_dict(config["sentenceSplitters"], LANG2)
 if not SENTTOK1 or not SENTTOK2:
     sys.stderr.write("Sentence splitters for LANG1 and LANG2 are mandatory\n")
     exit(1)
 
-WORDTOK1, WORDTOK2 = getLangOrDefaultFromDict(config["wordTokenizers"], LANG1, LANG2)
-WORDTOKS = str(dict(config["wordTokenizers"]))
+WORDTOKS = config["wordTokenizers"]
+WORDTOK1 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG1)
+WORDTOK2 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG2)
+
 if not WORDTOK1 or not WORDTOK2:
     sys.stderr.write("Word tokenizers for LANG1 and LANG2 are mandatory\n")
     exit(1)
 
 if "morphologicalAnalysers" in config:
-    MORPHTOK1, MORPHTOK2 = getLangOrDefaultFromDict(config["morphologicalAnalysers"], LANG1, LANG2)
-    MORPHTOKS = str(dict(config["morphologicalAnalysers"]))
+    MORPHTOKS = config["morphologicalAnalysers"]
+    MORPHTOK1 = get_lang_or_default_from_dict(config["morphologicalAnalysers"], LANG1)
+    MORPHTOK2 = get_lang_or_default_from_dict(config["morphologicalAnalysers"], LANG2)
 else:
     MORPHTOKS = ""
     MORPHTOK1, MORPHTOK2 = "", ""
@@ -1153,7 +1149,7 @@ rule creepy_download:
     params:
         url="http://{target}"
     output:
-        '{dir}/warc'.format(dir=data)+'/{target}/creepy.warc.gz'
+        '{dir}/warc/{{target}}/creepy.warc.gz'.format(dir=data)
     priority: 10
     shell:
         #'echo {params.url}; '
@@ -1161,7 +1157,7 @@ rule creepy_download:
 
 rule httrack_download:
     output:
-        '{dir}/warc'.format(dir=data)+'/{target}/httrack.warc.gz'
+        '{dir}/warc/{{target}}/httrack.warc.gz'.format(dir=data)
     params:
         url="http://{target}"
     priority: 10
@@ -1175,7 +1171,7 @@ rule httrack_download:
 
 rule wget_download:
     output:
-        '{dir}/warc'.format(dir=data)+'/{target}/wget.warc.gz'
+        '{dir}/warc/{{target}}/wget.warc.gz'.format(dir=data)
     params:
         url="http://{target}"
     priority: 10
@@ -1187,7 +1183,7 @@ rule wget_download:
 
 rule heritrix_download:
     output:
-        '{dir}/warc'.format(dir=data)+'/{target}/heritrix.warc.gz'
+        '{dir}/warc/{{target}}/heritrix.warc.gz'.format(dir=data)
     params:
         url="http://{target}"
     priority: 10
@@ -1222,7 +1218,7 @@ rule concat_subdomains:
     input:
         GetDomainHosts
     output:
-        "{dir}".format(dir=data)+"/preprocess/{target}/concat.warc.gz"
+        "{dir}/preprocess/{{target}}/concat.warc.gz".format(dir=data)
     priority: 9
     run:
         assert(len(input))
@@ -1261,7 +1257,7 @@ rule warc2preprocess:
     input:
         '{data}/preprocess/{{domain}}/concat.warc.gz'.format(data=data)
     output:
-        hash='{data}/'.format(data=data) + 'preprocess/{domain}/w2p/bitextorlang/plain_text_hashes.xz',
+        hash='{data}/preprocess/{{domain}}/w2p/bitextorlang/plain_text_hashes.xz'.format(data=data),
         files=expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
         folder='{data}/preprocess/{{domain}}/w2p/bitextorlang'.format(data=data)
@@ -1293,14 +1289,15 @@ rule xzlangToBitextorLang:
 
 # tokenize every bitextorlang/{lang}/plain_text.xz to obtain bitextorlang/{lang}/plain_tokenized.xz
 rule tokenize:
-    input:
-        expand('{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz', data=data, pproc=PPROC, lang=PPROCLANGS)
+    input: '{dir}/{lang}/plain_text.xz'
     params:
-        folder='{data}/preprocess/{{target}}/{pproc}/bitextorlang'.format(pproc=PPROC, data=data)
+        splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
+        tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
+        lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang)
     output:
-        expand('{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz', data=data, pproc=PPROC, lang=PPROCLANGS)
+        '{dir}/{lang}/plain_tokenized.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --folder {params.folder} --sentence-splitters "{SENTTOKS}" --word-tokenizers "{WORDTOKS}" --morph-analysers "{MORPHTOKS}" ;'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" | xz -c > {output};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1422,27 +1419,28 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        expand('{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz', data=data, pproc=PPROC, lang=PPROCLANGS)
-    params:
-        bitextorlang_folder='{data}/preprocess/{{target}}/{pproc}/bitextorlang'.format(data=data, pproc=PPROC),
-        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
+        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_text.xz'.format(data=data, pproc=PPROC),
+        url='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/url.xz'.format(data=data, pproc=PPROC)
     output:
-        expand('{data}/preprocess/{{target}}/docalign/{lang}.extracted.xz', data=data, lang=PPROCLANGS)
+        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.xz'.format(data=data)
+    params:
+        splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
+        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
     shell:
-        'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --bitextorlang {params.bitextorlang_folder} --splitters "{SENTTOKS}" --prune_type "words" --prune 80 --output_dir {params.docalign_folder}'
+        'mkdir -p {params.docalign_folder};'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --splitter "{params.splitter}" --prune_type "words" --prune 80 --text {input.text} --url {input.url} | xz -T 0 -c > {output};'
 
 rule docalign_tokenize:
     input:
-        expand('{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz', data=data, pproc=PPROC, lang=TARGETLANGS)
+        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(data=data, pproc=PPROC),
+        url='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/url.xz'.format(data=data, pproc=PPROC)
     params:
-        bitextorlang_folder='{data}/preprocess/{{target}}/{pproc}/bitextorlang'.format(data=data, pproc=PPROC),
         docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
     output:
-        expand('{data}/preprocess/{{target}}/docalign/{lang}.extracted.tokenized.xz', data=data, lang=TARGETLANGS)
+        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.tokenized.xz'.format(data=data)
     shell:
         'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py -x --tokenized {TARGETLANGSOPT} --lang2 {LANG2} --bitextorlang {params.bitextorlang_folder} --prune_type "words" --prune 80 --output_dir {params.docalign_folder}'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --tokenized --text {input.text} --url {input.url} --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
 
 rule docalign_translate_nmt:
     input:
