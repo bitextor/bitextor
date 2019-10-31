@@ -30,8 +30,8 @@ parser.add_argument('--output', help='Output file path', required=False, default
 args = parser.parse_args()
 
 dic = None
-if args.output is sys.stdout:
-    dic = args.output
+if args.output is sys.stdout or args.output == "-":
+    dic = sys.stdout
 else:
     dic = open(args.output, 'wt')
 
@@ -40,12 +40,12 @@ tvocabulary = set()
 svcb = open(args.vcb1, "r")
 tvcb = open(args.vcb2, "r")
 for line in svcb:
-    item = line.strip().split(" ")
+    item = line.strip().split("	")
     if int(item[2]) > 10:  # Hapax legomenon filter
         svocabulary.add(item[1])
 
 for line in tvcb:
-    item = line.strip().split(" ")
+    item = line.strip().split("	")
     if int(item[2]) > 10:
         tvocabulary.add(item[1])
 
