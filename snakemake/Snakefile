@@ -21,15 +21,15 @@ from cerberus import Validator
 ###########################################################
 # UTILS
 
-def binaryAvailable(cmd):
-    cmd="command -v "+cmd+" > /dev/null"
-    callout=os.system(cmd)
+def binary_available(cmd):
+    cmd = "command -v " + cmd + " > /dev/null"
+    callout = os.system(cmd)
     if callout == 0:
         return True
     else:
         return False
 
-def tokeniserCheck(cmd):
+def tokeniser_check(cmd):
     proc = ToolWrapper(cmd.split())
     line = proc.writeline('test.test')
     try:
@@ -47,7 +47,7 @@ def get_lang_or_default_from_dict(scripts_dict, language):
 
     return script
 
-def systemCheck(cmd):
+def system_check(cmd):
     #sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
     #sys.stderr.flush()
 
@@ -82,7 +82,7 @@ def open_gzip_or_plain(file_path):
             f.close()
 
 
-def ValidateArgs(config):
+def validate_args(config):
     schema = {'bitextor': {'required': True, 'type': 'string'},
             'lang1': {'required': True, 'type': 'string', 'maxlength': 2},
             'lang2': {'required': True, 'type': 'string', 'maxlength': 2},
@@ -187,7 +187,7 @@ def ValidateArgs(config):
             }
 
     if ("httrack" in config and config["httrack"] == True) or ("crawler" in config and config["crawler"] == 'httrack'):
-        if not binaryAvailable("httrack"):
+        if not binary_available("httrack"):
             sys.stderr.write("WARNING: HTTrack is not installed. Install it or disable option 'httrack' in the configuration file.\n")
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
@@ -238,7 +238,7 @@ def ValidateArgs(config):
 
 ###########################################################
 
-ValidateArgs(config)
+validate_args(config)
 
 #Local bitextor installation
 BITEXTOR=config["bitextor"]
@@ -319,8 +319,8 @@ if "mkcls" in config and config["mkcls"]:
 else:
   MKCLS="/clustercat/bin/mkcls"
 
-systemCheck("mkdir -p " + permanent)
-systemCheck("mkdir -p " + transient)
+system_check("mkdir -p " + permanent)
+system_check("mkdir -p " + transient)
 
 #Dictionary
 if "dic" in config:
@@ -556,8 +556,8 @@ if "bicleaner" in config:
   BICLEANEROPTION=",bicleaner"
   BICLEANER="bicleaner"
   BICLEANER_CONFIG=config["bicleaner"]
-  tokeniserCheck(WORDTOK1)
-  tokeniserCheck(WORDTOK2)
+  tokeniser_check(WORDTOK1)
+  tokeniser_check(WORDTOK2)
 else:
   RAWOPTION="segclean"
   BICLEANEROPTION=""
@@ -599,7 +599,7 @@ else:
 
 #========================= MAPPING URLS AND OUTPUT FILES =========================#
 
-def CreateDomainKey2HostMap(hosts):
+def create_domain_key_2_host_map(hosts):
     ret={}
     for host in hosts:
         # don't merge blog sites
@@ -614,7 +614,7 @@ def CreateDomainKey2HostMap(hosts):
         #print("subdomain", key, host)
     return ret
 
-def FilterTLD(tlds):
+def filter_tld(tlds):
     filtered_tlds={}
     if os.path.isfile("{permanent}/domains.gz".format(permanent=permanent)):
         with open_gzip_or_plain("{permanent}/domains.gz".format(permanent=permanent)) as f:
@@ -625,14 +625,14 @@ def FilterTLD(tlds):
     else:
         return tlds
 
-def InitConcatLogicLink(domains):
+def init_concat_logic_link(domains):
     for tld,hosts in domains.items():
         if len(hosts) == 1 and  os.path.isfile("{data}/warc/{host}/{crawler}.warc.gz".format(data=data, host=hosts[0], crawler=CRAWLTARGET)) and not os.path.isfile("{data}/preprocess/{tld}/concat.warc.gz".format(tld=tld,data=data)):
             cmd="mkdir -p {data}/preprocess/{tld}; ln -sfn {data}/warc/{host}/{crawler}.warc.gz {data}/preprocess/{tld}/concat.warc.gz".format(data=data, host=hosts[0], crawler=CRAWLTARGET, transient=transient,
  tld=tld)
             shell(cmd)
 
-def AddWARCFiles(domains, warcfiles):
+def add_warc_files(domains, warcfiles):
     domains[WARCDOMAIN] = []
     for wf in warcfiles:
         if os.path.isfile(wf):
@@ -641,12 +641,12 @@ def AddWARCFiles(domains, warcfiles):
             print("WARC {path} omitted: file not found".format(path=wf))
     return domains
 
-def InitWARCFilesConcatLogic(warcfiles):
+def init_warc_files_concat_logic(warcfiles):
     if len(warcfiles) == 1 and os.path.isfile(warcfiles[0]) and not os.path.isfile("{data}/preprocess/{domain}/concat.warc.gz".format(data=data, domain=WARCDOMAIN)):
         cmd="mkdir -p {data}/preprocess/{domain}; ln -sfn {warcpath} {data}/preprocess/{domain}/concat.warc.gz".format(data=data, warcpath=warcfiles[0], domain=WARCDOMAIN)
         shell(cmd)
 
-def LoadDomains(file_path):
+def load_domains(file_path):
     domains = set()
     with file_path.open("r") as f:
         for line in f:
@@ -656,15 +656,15 @@ def LoadDomains(file_path):
 
     return domains
 
-def GetDomainKeys(hosts):
+def get_domain_keys(hosts):
     keys = set()
     for host in hosts:
         domain = tldextract.extract(host).domain
         keys.add(domain)
     return keys
 
-def ExcludeHosts(hosts, excludeHosts):
-    excludeKeys = GetDomainKeys(excludeHosts)
+def exclude_hosts(hosts, excludeHosts):
+    excludeKeys = get_domain_keys(excludeHosts)
 
     hostsCopy = set(hosts)
     print("BEFORE hosts", len(hosts), len(hostsCopy))
@@ -675,13 +675,13 @@ def ExcludeHosts(hosts, excludeHosts):
             hosts.remove(host)
     print("AFTER hosts", len(hosts), len(hostsCopy))
 
-def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
+def get_hosts_from_langstat(langstat_path, lang1, lang2, threshold, exclude_path):
     print("langstat_path", langstat_path, file=sys.stderr)
     l12 = [lang1.lower(), lang2.lower()]
 
     excluded_set = set()
     if exclude_path:
-        excluded_set = LoadDomains(Path(exclude_path))
+        excluded_set = load_domains(Path(exclude_path))
 
     hostsToCrawl = set()
 
@@ -727,7 +727,7 @@ def GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path):
 
     return hostsToCrawl
 
-def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
+def linked_hosts(permanent, dir, hosts, linkedHostsAction):
     #print("dir", dir)
     cmd = "mkdir -p " + permanent + "/warc"
     shell(cmd)
@@ -755,7 +755,7 @@ def LinkedHosts(permanent, dir, hosts, linkedHostsAction):
                 sys.stderr.write("Unknown linkedHostsAction:" + linkedHostsAction + "\n")
                 exit()
 
-def PostCrawlExclude(hosts, postCrawlPath):
+def post_crawl_exclude(hosts, postCrawlPath):
     with open(postCrawlPath, "rt") as f:
         excludeList = f.read().splitlines()
     for exclude in excludeList:
@@ -785,7 +785,7 @@ else:
         threshold = int(config["langstatThreshold"])
         exclude_path = config["langstatExcludeStrings"]
 
-        newHosts = GetHostsFromLangstat(langstat_path, lang1, lang2, threshold, exclude_path)
+        newHosts = get_hosts_from_langstat(langstat_path, lang1, lang2, threshold, exclude_path)
         hosts = hosts.union(newHosts)
         #sys.stderr.write("#hosts found in langstat=" + str(len(newHosts)) + "\n")
 
@@ -799,13 +799,13 @@ else:
 
     if "excludeHosts" in config:
         excludeHosts = config["excludeHosts"]
-        ExcludeHosts(hosts, excludeHosts)
+        exclude_hosts(hosts, excludeHosts)
 
     if "excludeHostsFile" in config:
         with open(config["excludeHostsFile"], "rt") as f:
             excludeHosts = f.read().splitlines()
             print("excludeHosts", len(excludeHosts))
-        ExcludeHosts(hosts, excludeHosts)
+        exclude_hosts(hosts, excludeHosts)
 
     # if (len(hosts) == 0):
     #     print("No hosts found. Need at least one of hosts, langstat, hostsFile")
@@ -821,7 +821,7 @@ else:
 postCrawlPath = "{permanent}/post-crawl-exclude".format(permanent=permanent)
 #print("postCrawlPath", postCrawlPath)
 if os.path.isfile(postCrawlPath):
-    PostCrawlExclude(hosts, postCrawlPath)
+    post_crawl_exclude(hosts, postCrawlPath)
 
 if "linkedHosts" in config:
     linkedHostsAction = config["linkedHostsAction"]
@@ -832,10 +832,10 @@ if "linkedHosts" in config:
             postCrawlPath = "{dir}/permanent/post-crawl-exclude".format(dir=dir)
             #print("postCrawlPath", postCrawlPath)
             if os.path.isfile(postCrawlPath):
-                PostCrawlExclude(hosts, postCrawlPath)
+                post_crawl_exclude(hosts, postCrawlPath)
 
     for dir in config["linkedHosts"]:
-        LinkedHosts(data, dir, hosts, linkedHostsAction)
+        linked_hosts(data, dir, hosts, linkedHostsAction)
 
     if linkedHostsAction == "postCrawlExclude":
         # create list of dead domains in post-crawl-exclude file, only for this language pair
@@ -863,17 +863,17 @@ if "linkedHosts" in config:
 #sys.stderr.write("#hosts to crawl/process=" + str(len(hosts)) + "\n")
 #exit(-1)
 
-domainKey2Hosts = CreateDomainKey2HostMap(hosts)
+domainKey2Hosts = create_domain_key_2_host_map(hosts)
 #If file domains.gz exists in the permanent directory, the dictionary domainKey2Hosts is filtered to contain only those TLD in this file
-domainKey2Hosts = FilterTLD(domainKey2Hosts)
+domainKey2Hosts = filter_tld(domainKey2Hosts)
 #Function that checks if a domain has only one WARC and, if so, it creates a symbolic link
-InitConcatLogicLink(domainKey2Hosts)
+init_concat_logic_link(domainKey2Hosts)
 
 if len(WARCFILES) != 0:
     #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
-    domainKey2Hosts = AddWARCFiles(domainKey2Hosts, WARCFILES)
+    domainKey2Hosts = add_warc_files(domainKey2Hosts, WARCFILES)
     #If only one WARC is provided, creates a symbolic link to it 
-    InitWARCFilesConcatLogic( WARCFILES)
+    init_warc_files_concat_logic(WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
 
@@ -883,7 +883,7 @@ shell.prefix("sync; set -euo pipefail; ")
 #shell.prefix("set -euo pipefail; ")
 
 #================================== Creater Moses EMS config========================#
-def CreateMosesEMSConfig(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
+def create_moses_ems_config(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, testPrefixes):
     with open("{mosesDir}/scripts/ems/example/config.basic.moses2".format(mosesDir=mosesDir), "r") as file:
         lines = file.read().split("\n")
         print("lines", len(lines))
@@ -1058,11 +1058,11 @@ rule train_smt_with_crawl_data_create_config:
         crawlPref = "{dir}/crawl".format(dir=permanent)
         trainData.append(crawlPref)
 
-        CreateMosesEMSConfig("{0}/smt-dir-crawl".format(transient),
-                            MOSESDIR, config["mgiza"],
-                            trainData,
-                            config["initCorpusDevPrefix"],
-                            config["initCorpusTestPrefix"])
+        create_moses_ems_config("{0}/smt-dir-crawl".format(transient),
+                                MOSESDIR, config["mgiza"],
+                                trainData,
+                                config["initCorpusDevPrefix"],
+                                config["initCorpusTestPrefix"])
 
 rule train_smt_all:
     input:
@@ -1086,11 +1086,11 @@ rule train_smt_all_create_config:
         cmd = "mkdir -p {dir}/smt-dir/steps/1".format(dir=transient)
         shell(cmd)
 
-        CreateMosesEMSConfig("{0}/smt-dir".format(transient),
-                            MOSESDIR, config["mgiza"],
-                            config["initCorpusTrainPrefix"],
-                            config["initCorpusDevPrefix"],
-                            config["initCorpusTestPrefix"])
+        create_moses_ems_config("{0}/smt-dir".format(transient),
+                                MOSESDIR, config["mgiza"],
+                                config["initCorpusTrainPrefix"],
+                                config["initCorpusDevPrefix"],
+                                config["initCorpusTestPrefix"])
 
 #================================== NMT ======================================#
 
@@ -1205,7 +1205,7 @@ rule heritrix_download:
         'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
 
 
-def GetDomainHosts(wildcards):
+def get_domain_hosts(wildcards):
     output=[]
     for h in domainKey2Hosts[wildcards.target]:
         if wildcards.target == WARCDOMAIN: # host is a WARC
@@ -1216,7 +1216,7 @@ def GetDomainHosts(wildcards):
 
 rule concat_subdomains:
     input:
-        GetDomainHosts
+        get_domain_hosts
     output:
         "{dir}/preprocess/{{target}}/concat.warc.gz".format(dir=data)
     priority: 9
