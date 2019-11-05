@@ -7,8 +7,8 @@ import base64
 import string
 import ast
 import lzma
+from toolwrapper import ToolWrapper
 from external_processor import ExternalTextProcessor
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 
@@ -23,32 +23,44 @@ def get_lang_or_default(dict, lang):
     else:
         return None
 
-def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser):
-    if not sent_tokeniser:
+def extract_encoded_text(encoded, proc_sent, proc_word, proc_morph, sent_writer, tok_writer):
+    if not proc_sent:
         return encoded
 
-    proc_sent = ExternalTextProcessor(sent_tokeniser.split())
     content = base64.b64decode(encoded).decode("utf-8").replace("\t", " ")
     tokenized_segs = proc_sent.process(content).strip()
-    tokenized_filtered = ""
+    if tokenized_segs == None:
+        return None
+    else:
+        tokenized_filtered = []
+    
+        for sent in tokenized_segs.split("\n"):
+            if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
+                tokenized_filtered.append(sent)
+        b64text = base64.b64encode("\n".join(tokenized_filtered).lower().encode("utf-8"))
+        sent_writer.write("{}\n".format(b64text.decode()).encode("utf-8"))    
+        if not proc_word:
+            return b64text.decode()
 
-    for sent in tokenized_segs.split("\n"):
-        if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
-            tokenized_filtered += sent + "\n"
+        word_tokenized_text = []
+        for line in tokenized_filtered:
+            proc_word.writeline(line)
+            word_tokenized_text.append(proc_word.readline())
+        if not proc_morph:
+            b64text = base64.b64encode("\n".join(word_tokenized_text).lower().encode("utf-8"))
+            tok_writer.write("{}\n".format(b64text.decode()).encode("utf-8"))
+            return b64text.decode()
+ 
+        morph_tokenized_text = []
+        if proc_morph:
+            for line in word.tokenized_text:
+                proc_morph.writeline(tokenized_text)
+                morph_tokenized_text.append(proc_morph.readline())
+    
+        b64text = base64.b64encode(morph_tokenized_text.lower().encode("utf-8"))
+        tok_writer.write("{}\n".format(b64text.encode("utf-8")))
 
-    if not word_tokeniser:
-        b64text = base64.b64encode(tokenized_filtered.lower().encode("utf-8"))
         return b64text.decode()
-
-    proc_word = ExternalTextProcessor(word_tokeniser.split())
-    tokenized_text = proc_word.process(tokenized_filtered)
-
-    if morph_analyser:
-        proc_morph = ExternalTextProcessor(morph_analyser.split())
-        tokenized_text = proc_morph.process(tokenized_text)
-
-    b64text = base64.b64encode(tokenized_text.lower().encode("utf-8"))
-    return b64text.decode()
 
 
 oparser = argparse.ArgumentParser(
@@ -99,24 +111,43 @@ except:
     print("Morphological analysers incorrect format")
     sys.exit(1)
 
-lang_files = {}
+lang_files_tok = {}
+lang_files_sent = {}
 
 folder = os.fsencode(options.folder)
 for langfolder in os.listdir(folder):
     lang = os.fsdecode(langfolder)
+    senttok = get_lang_or_default(options.splitters, lang)
+
+    wordtok = get_lang_or_default(options.tokenizers, lang)
+    if wordtok != None:
+        wordtok_tool = ToolWrapper(wordtok.split())
+    else:
+        wordtok_tool = None
+
+    morphtok = get_lang_or_default(options.lemmatizers, lang)
+    if morphtok != None:
+        morphtok_tool = ToolWrapper(morphtok.split())
+    else:
+        morphtok_tool = None
+
     if not os.path.isdir(options.folder+"/"+lang) or len(lang) > 2:
         continue
     fullname = os.path.join(options.folder, lang+"/plain_text.xz")
     if os.path.isfile(fullname) and (not langs or lang in langs):
-        if lang not in lang_files:
-            lang_files[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
+        if lang not in lang_files_sent:
+            lang_files_sent[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_sentsplit.xz"), "wb")
+
+        if lang not in lang_files_tok:
+            lang_files_tok[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
         with open_xz_or_gzip_or_plain(fullname) as text_reader:
             for line in text_reader:
                 encodedtext = line.strip()
-                senttok = get_lang_or_default(options.splitters, lang)
-                wordtok = get_lang_or_default(options.tokenizers, lang)
-                morphtok = get_lang_or_default(options.lemmatizers, lang)
-                tokenized = extract_encoded_text(encodedtext, senttok, wordtok, morphtok)
-                lang_files[lang].write("{}\n".format(tokenized).encode("utf-8"))
+                if senttok != None:
+                    senttok_tool = ExternalTextProcessor(senttok.split())
+                else:
+                    senttok_tool = None
+
+                extract_encoded_text(encodedtext, senttok_tool, wordtok_tool, morphtok_tool, lang_files_sent[lang], lang_files_tok[lang])
 for lang in lang_files:
     lang_files[lang].close()
