@@ -38,15 +38,6 @@ def filter_digits_and_punctuation(original_text):
     return True
 
 
-def split_sentences(original_text, sentence_splitter_cmd):
-    if sentence_splitter_cmd:
-        proc = ExternalTextProcessor(sentence_splitter_cmd.split())
-        text_split = proc.process(original_text.replace("\n\n", "\n"))
-    else:
-        text_split = original_text.replace("\n\n", "\n")
-
-    output = html.unescape(text_split)
-
     return [n for n in output.split("\n") if filter_digits_and_punctuation(n)]
 
 
@@ -102,7 +93,7 @@ if __name__ == "__main__":
     if args.tokenized:
         text_file_name = "/plain_tokenized.xz"
     else:
-        text_file_name = "/plain_text.xz"
+        text_file_name = "/plain_sentsplit.xz"
     folder = os.fsencode(args.bitextorlang)
     for lang in os.listdir(folder):
         lang = os.fsdecode(lang)
@@ -124,23 +115,12 @@ if __name__ == "__main__":
                 if not text:
                     continue
 
-                if args.tokenized:
-                    split = split_sentences(text, None)
-                elif lang in args.splitters:
-                    split = split_sentences(text, args.splitters[lang])
-                elif "default" in args.splitters:
-                    split = split_sentences(text, args.splitters["default"])
-                else:
-                    continue
-
-                for extracted_line in split:
-
+                for extracted_line in text.split("\n"):
                     extracted_line = extracted_line.strip()
-                    if not extracted_line:
+                    if not extracted_line or not filter_digits_and_punctuation(extracted_line):
                         continue
 
                     # prune long sentences
-                    extracted_line = extracted_line
                     if args.prune_type == "chars":
                         if len(extracted_line) > args.prune_threshold:
                             continue
