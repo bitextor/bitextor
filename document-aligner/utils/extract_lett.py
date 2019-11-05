@@ -52,8 +52,6 @@ if __name__ == "__main__":
     parser.add_argument("--text", dest="text_file", required=True,
                         help='File containing the plain text extracted from the HTML documents in a WARC file, '
                              'encoded in base64')
-    parser.add_argument("--url", dest="url_file", required=True,
-                        help="File containing the list of urls of the documents in a WARC file")
     parser.add_argument("--splitter", dest="splitter", default="",
                         help="Sentence splitting command")
     parser.add_argument("--tokenized", dest="tokenized", action="store_true",
@@ -66,11 +64,10 @@ if __name__ == "__main__":
                         default="words", help="Prune sentences either by words or characters", required=False)
     args = parser.parse_args()
 
-    with open_xz_or_gzip_or_plain(args.text_file) as text_reader, \
-            open_xz_or_gzip_or_plain(args.url_file) as url_reader:
+    counter = 1
+    with open_xz_or_gzip_or_plain(args.text_file) as text_reader:
         for line in text_reader:
             text = base64.b64decode(line.strip()).decode("utf-8")
-            uri = next(url_reader, None).strip()
 
             if not text:
                 continue
@@ -95,4 +92,6 @@ if __name__ == "__main__":
                     if len(extracted_line.split()) > args.prune_threshold:
                         continue
 
-                print("{0}\t{1}".format(uri, extracted_line))
+                print("{0}\t{1}".format(str(counter), extracted_line))
+
+            counter = counter + 1

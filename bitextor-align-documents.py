@@ -34,9 +34,6 @@ import argparse
 from operator import itemgetter
 import lzma
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain
-
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) "
                                               "file (either from a file or from the standard input) and produces a "
                                               "list of aligned documents. If two ridx files are provided, "
@@ -45,31 +42,21 @@ oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extensi
                                                               'documents from lang1 to lang2', default=None)
 oparser.add_argument('ridx2', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned '
                                                               'documents from lang2 to lang1', default=None)
-oparser.add_argument('--text1', dest='text1', help='File produced by bitextor-warc2preprocess containing the text of '
-                                                 'all the records in the WARC file encoded as base 64 (each line '
-                                                 'corresponds to a record)', required=True)
-oparser.add_argument('--text2', dest='text2', help='File produced by bitextor-warc2preprocess containing the text of '
-                                                 'all the records in the WARC file encoded as base 64 (each line '
-                                                 'corresponds to a record)', required=True)
-oparser.add_argument('--url1', dest='url1', help='File produced by bitextor-warc2preprocess containing the url of each '
-                                               'of the records in the WARC file encoded as base 64 (each line '
-                                               'corresponds to a record)', required=True)
-oparser.add_argument('--url2', dest='url2', help='File produced by bitextor-warc2preprocess containing the url of each '
-                                               'of the records in the WARC file encoded as base 64 (each line '
-                                               'corresponds to a record)', required=True)
+oparser.add_argument('--lines1', dest='ndoc1', help='Number of documents in lang1', required=True)
+oparser.add_argument('--lines2', dest='ndoc2', help='Number of documents in lang2', required=True)
 oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file "
                                                     "when performing bidirectional document alignment. This parameter "
                                                     "is set by default to 1, which means that only documents being "
-                                                    "mutualy the best alignment option will be aligned. Note that "
+                                                    "mutually the best alignment option will be aligned. Note that "
                                                     "this option is only used when two ridx files are provided",
                      type=int, dest="candidate_num", default=1)
-oparser.add_argument("-r", "--ridx", help="If this option is defined, the rinal ridx file used for aligning the "
+oparser.add_argument("-r", "--ridx", help="If this option is defined, the final ridx file used for aligning the "
                                           "documents will be saved in the path specified (when two ridx files are "
                                           "provided, the ridx obtained when merging both files will be used)",
                      dest="oridx", type=argparse.FileType('w'), default=None)
 oparser.add_argument("-i", "--iterations", help="Number of iterations to keep looking for paired documents (only "
                                                 "works without the non-symmetric option, if both options, then uses 1 "
-                                                "iteration). Can also doundetermined iterations until all possible "
+                                                "iteration). Can also do undetermined iterations until all possible "
                                                 "documents are paired. To do that, just write 'converge' as number of "
                                                 "iterations", dest="iterations", default="1")
 oparser.add_argument("-s", "--nonsymmetric", help="Write document alignments even if they are not backwards aligned ("
@@ -102,18 +89,9 @@ else:
 
 indices = {}
 indicesProb = {}
-documents = {}
+documents = set(range(1, int(options.ndoc1) + int(options.ndoc2) + 1))
 documentsFile2 = set()
-
-# Files containing base64 encoded text and url are read and stored in a document map
-counter = 1
-for text_path, url_path in [(options.text1, options.url1), (options.text2, options.url2)]:
-    with open_xz_or_gzip_or_plain(text_path) as text_reader:
-        with open_xz_or_gzip_or_plain(url_path) as url_reader:
-            for text in text_reader:
-                url = next(url_reader, None).strip()
-                documents[counter] = (url, text.strip())  # URL parsed_text_base64
-                counter += 1
+file2_start_counter = int(options.ndoc1)
 
 if not combine:
     # Reading the .ridx file with the preliminary alignment
@@ -144,13 +122,14 @@ else:
 
     iterationList = list(range(0, int(iterations)))
     pairedDocs = set()
-    # In each iteration we read the whole file of document relationships and candidates, but we ignore already paired
-    # documents
+    # In each iteration we read the whole file of document relationships and candidates,
+    # but we ignore already paired documents
     for iteration in iterationList:
         reader2.seek(0)
         reader1.seek(0)
-        if converge:  # We create an infinite loop adding 1 item to the iteration list if we want to stop when the
-            # algorithm converges
+        if converge:
+            # We create an infinite loop adding 1 item to the iteration list
+            # if we want to stop when the algorithm converges
             iterationList.append(iteration + 1)
 
         # We store both directions of document relationships for printing purposes
@@ -167,8 +146,8 @@ else:
                 for candidate_idx in candidateIterations:
                     field_n = fields[candidate_idx].split(":")
                     if len(field_n) == 2 and int(fields[0]) not in pairedDocs and int(field_n[0]) not in pairedDocs:
-                        # Avoid pairing docs already paired in previous iterations of the algorithm, in case you
-                        # specified the parameter
+                        # Avoid pairing docs already paired in previous iterations of the algorithm,
+                        # in case you specified the parameter
                         if int(field_n[0]) not in best_ridx2_inv:
                             best_ridx2_inv[int(field_n[0])] = {}
                             documentsFile2.add(int(fields[0]))
@@ -182,8 +161,8 @@ else:
                         num_candidates = num_candidates + 1
                         candidateIterations.append(num_candidates - 1)
 
-        # Reading the .ridx file with the preliminary alignment in the other direction and combining this information
-        # with the previous one
+        # Reading the .ridx file with the preliminary alignment in the other direction
+        # and combining this information with the previous one
         pairedDocsLine = set()
         for line_ridx1 in reader1:
             new_candidate_list = {}
@@ -226,9 +205,8 @@ else:
         pairedDocs.update(pairedDocsLine)
 
         if options.nonsymmetric:
-            for document in sorted(list(set(
-                    documents.keys()) - pairedDocs)):  # We now print the relationships of the first read
-                # relationships file with unpaired documents
+            for document in sorted(list(documents - pairedDocs)):
+                # We now print the relationships of the first read relationships file with unpaired documents
                 if int(document) in best_ridx2 and len(best_ridx2[int(document)]) >= 1:
                     new_candidate_list = best_ridx2[int(document)]
                     candidateDocuments.append(len(new_candidate_list))
@@ -245,8 +223,8 @@ else:
                             score = element.split(':')[1]
                             document2 = element.split(':')[0]
                             options.oridx.write("{0}\t{1}:{2}\n".format(document2, document, score))
-        # End of the iterations if the result did not change from the previous iteration (exit point of the endless
-        # loop)
+        # End of the iterations if the result did not change from the previous iteration
+        # (exit point of the endless loop)
         if len(candidateDocuments) == 0:
             break
     # Close files
@@ -256,13 +234,12 @@ else:
         options.oridx.close()
 
 for k in indices:
-    if indices[k] in documents.keys():
-        if indices[k] in documentsFile2:  # Write the output keeping the language documents always in the same order
+    if indices[k] in documents:
+        if indices[k] in documentsFile2:
+            # Write the output keeping the language documents always in the same order
             # (this is done because of the non-symmetric option that causes swaps in the last algorithm)
-            print("{0}\t{1}\t{2}\t{3}".format(documents[k][0], documents[indices[k]][0], documents[k][1],
-                                              documents[indices[k]][1]))
+            print("{0}\t{1}".format(str(k), str(indices[k]-file2_start_counter)))
         else:
-            print("{1}\t{0}\t{3}\t{2}".format(documents[k][0], documents[indices[k]][0], documents[k][1],
-                                              documents[indices[k]][1]))
+            print("{1}\t{0}".format(str(k-file2_start_counter), str(indices[k])))
         if not options.nonsymmetric:
-            del documents[k]
+            documents.remove(k)
