@@ -1,4 +1,3 @@
-from common import open_xz_or_gzip_or_plain
 import argparse
 import sys
 import os
@@ -6,6 +5,8 @@ import os.path
 from collections import defaultdict
 
 import numpy as np
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
+from common import open_xz_or_gzip_or_plain
 
 from scorer import CosineDistanceScorer, WordExtractor, _ngram_helper
 
@@ -106,10 +107,10 @@ if __name__ == "__main__":
             open(args.output_matches, 'a').close()
         else:
             match_costs, matches = match(m_csr, threshold=args.threshold)
-            if options.date_lang1 != None and options.date_lang2 != None:
+            if args.date_lang1 != None and args.date_lang2 != None:
                 with open_xz_or_gzip_or_plain(options.date_lang1) as dates1:
                     for date in dates1:
-                        times1.append(int(date.strip()))
+                        imes1.append(int(date.strip()))
                 with open_xz_or_gzip_or_plain(options.date_lang2) as dates2:
                     for date in dates2:
                         times2.append(int(date.strip()))
