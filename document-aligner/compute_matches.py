@@ -101,6 +101,9 @@ if __name__ == "__main__":
                                       batch_size=args.batch_size)
 
         urls, m_csr = scorer.score(args.lang2, args.lang1)
+
+        times1=[]
+        times2=[]
         # sys.stderr.write(str(m_csr)+"\n")
         if m_csr is None:
             sys.stderr.write("WARNING: Documents do not contain any useful information to be used in alignment.\n")
@@ -108,14 +111,14 @@ if __name__ == "__main__":
         else:
             match_costs, matches = match(m_csr, threshold=args.threshold)
             if args.date_lang1 != None and args.date_lang2 != None:
-                with open_xz_or_gzip_or_plain(options.date_lang1) as dates1:
+                with open_xz_or_gzip_or_plain(args.date_lang1) as dates1:
                     for date in dates1:
-                        imes1.append(int(date.strip()))
-                with open_xz_or_gzip_or_plain(options.date_lang2) as dates2:
+                        times1.append(int(date.strip()))
+                with open_xz_or_gzip_or_plain(args.date_lang2) as dates2:
                     for date in dates2:
                         times2.append(int(date.strip()))
 
-                match_costs, matches = discardbytime(match_costs, matches, times1, times2, options.time_window)
+                match_costs, matches = discardbytime(match_costs, matches, times1, times2, args.time_window)
 
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):

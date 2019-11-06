@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import sys
 import os
 import argparse
@@ -142,7 +143,7 @@ for langfolder in os.listdir(folder):
             lang_files_tok[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
         with open_xz_or_gzip_or_plain(fullname) as text_reader:
             for line in text_reader:
-                encodedtext = line.strip()
+                encodedtext = re.sub(r'(\s*[\r\n]+\s*)+', r'\r\n', line.strip())
                 if senttok != None:
                     senttok_tool = ExternalTextProcessor(senttok.split())
                 else:
