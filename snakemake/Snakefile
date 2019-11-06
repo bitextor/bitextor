@@ -1524,8 +1524,6 @@ rule docalign_matches:
 rule docalign_bitextor2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
-        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
@@ -1534,14 +1532,12 @@ rule docalign_bitextor2docalign_full:
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
-        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
         'rm $sorted'
 
 rule matches2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
-        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
@@ -1550,7 +1546,7 @@ rule matches2docalign_full:
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'LC_ALL=C sort -nk2 {input.indices} > $sorted;'
-        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --column1 1 --column2 2 --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --column1 1 --column2 2 --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
         'rm $sorted'
 
 rule hunaligndic:
@@ -1579,7 +1575,7 @@ rule alignsegments_hunalign:
         '{transientdir}/hunalign_dic'.format(transientdir=transient, extension=DOCALIGNEXT),
         "{transient}/{{target}}/docalign.full.{extension}.xz".format(transient=transient,extension=DOCALIGNEXT)
     output:
-        '{transient}/{{target}}/hunalign.segalign.xz'.format(transient=transient)
+        '{transient}/{{target}}/hunalign.segalign.indices.xz'.format(transient=transient)
     shell:
         'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
 
@@ -1587,7 +1583,7 @@ rule alignsegments_bleualign:
     input:
         aligned_urls="{dir}/bleualign/align.info.gz"
     output:
-        alignments='{dir}/bleualign.segalign.xz'
+        alignments='{dir}/bleualign.segalign.indices.xz'
     run:
         with lzma.open(output.alignments, "wt") as algFile:
             with open_gzip_or_plain(input.aligned_urls) as urlsFile:
@@ -1604,6 +1600,31 @@ rule alignsegments_bleualign:
                             if line.strip():
                                 algFile.write(urls+"\t"+line)
         os.sync()
+
+rule segalign_indices2url:
+    input:
+        segalign='{transient}/{{target}}/{segaligner}.segalign.indices.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
+        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+    output:
+        segalign=temp('{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER)),
+    run:
+        lang1_dict = {}
+        lang2_dict = {}
+        counter = 1
+        with lzma.open(input.url1, "rt") as url_reader:
+            for line in url_reader:
+                lang1_dict[counter] = line.strip()
+                counter = counter + 1
+        counter = 1
+        with lzma.open(input.url2, "rt") as url_reader:
+            for line in url_reader:
+                lang2_dict[counter] = line.strip()
+                counter = counter + 1
+        with lzma.open(input.segalign, "rt") as reader, lzma.open(output.segalign, "wt") as writer:
+            for line in reader:
+                fields = line.strip().split('\t')
+                writer.write('{}\t{}\t{}\n'.format(lang1_dict[int(fields[0])], lang2_dict[int(fields[1])], "\t".join(fields[2:])))
 
 rule deferred_documents:
     input:
@@ -1638,7 +1659,6 @@ rule cleansegments:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
 #================================== POST PROCESSING ==================================#
-
 
 rule bifixer:
     input:

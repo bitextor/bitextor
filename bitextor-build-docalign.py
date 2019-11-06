@@ -29,11 +29,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--indices', dest='indices', required=True,
                         help='Output of the document aligner: pairs of document indices')
-    parser.add_argument('--url1', help='Path to the file with the list of URLs in LANG1', required=True)
     parser.add_argument('--text1', help='Path to the file with the plain text of the documents in LANG1', required=True)
     parser.add_argument('--tokenized1', required=True,
                         help='Path to the file with the tokenized text of the documents crawled in LANG1')
-    parser.add_argument('--url2', help='Path to the file with the list of URLs in LANG2', required=True),
     parser.add_argument('--text2', help='Path to the file with the plain text of the documents in LANG2', required=True)
     parser.add_argument('--tokenized2', required=True,
                         help='Path to the file with the tokenized text of the documents crawled in LANG2')
@@ -60,9 +58,10 @@ if __name__ == "__main__":
 
     reader.seek(0)
 
-    with open_xz_or_gzip_or_plain(args.tokenized1) as tok_reader1, open_xz_or_gzip_or_plain(args.tokenized2) as tok_reader2, \
-            open_xz_or_gzip_or_plain(args.text1) as text_reader1, open_xz_or_gzip_or_plain(args.text2) as text_reader2,\
-            open_xz_or_gzip_or_plain(args.url1) as url_reader1, open_xz_or_gzip_or_plain(args.url2) as url_reader2:
+    with open_xz_or_gzip_or_plain(args.tokenized1) as tok_reader1, \
+            open_xz_or_gzip_or_plain(args.tokenized2) as tok_reader2, \
+            open_xz_or_gzip_or_plain(args.text1) as text_reader1, \
+            open_xz_or_gzip_or_plain(args.text2) as text_reader2:
 
         doc1_current_line = 1
         doc2_current_line = 1
@@ -73,19 +72,17 @@ if __name__ == "__main__":
             doc1 = int(fields[args.column1])
             doc2 = int(fields[args.column2])
             while doc1_current_line <= doc1:
-                url1 = next(url_reader1, None).strip()
                 text1 = next(text_reader1, None).strip()
                 tok1 = next(tok_reader1, None).strip()
                 doc1_current_line = doc1_current_line + 1
 
             while doc2_last_written != doc2:
                 if doc2_current_line <= doc2:
-                    url2 = next(url_reader2, None).strip()
                     text2 = next(text_reader2, None).strip()
                     tok2 = next(tok_reader2, None).strip()
 
                     if doc2_current_line == doc2:
-                        print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(url1, url2, text1, text2, tok1, tok2))
+                        print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(doc1, doc2, text1, text2, tok1, tok2))
                         doc2_last_written = doc2
                     elif doc2_current_line in lang2_docs:
                         lang2_read_docs[doc2_current_line] = (url2, text2, tok2)
@@ -95,6 +92,6 @@ if __name__ == "__main__":
 
                 if doc2 in lang2_read_docs:
                     url2, text2, tok2 = lang2_read_docs[doc2]
-                    print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(url1, url2, text1, text2, tok1, tok2))
+                    print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(doc1, doc2, text1, text2, tok1, tok2))
                     del lang2_read_docs[doc2]
                     doc2_last_written = doc2
