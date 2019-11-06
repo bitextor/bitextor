@@ -1519,27 +1519,38 @@ rule docalign_matches:
     shell:
         "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
-rule aligndocumentsMT:
-    input: "{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches".format(transient=transient, l1=LANG1, l2=LANG2, mttype=DOCALIGNEXT)
-    output: '{transient}/{{target}}/docalign.{mttype}.xz'.format(transient=transient, mttype=MTTYPE)
-    shell: 'ln -s {input} {output}'
-
 #================================== SEGMENT ALIGNMENT ==================================#
 
-rule indices2docalign:
+rule docalign_bitextor2docalign_full:
     input:
-        indices='{transient}/{{target}}/docalign.{extension}.xz'.format(transient=transient, extension=DOCALIGNEXT),
+        indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
         url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=DOCALIGNEXT))
+    output: temp('{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient))
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
         '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
+        'rm $sorted'
+
+rule matches2docalign_full:
+    input:
+        indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
+        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+    output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE))
+    shell:
+        'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
+        'LC_ALL=C sort -nk2 {input.indices} > $sorted;'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --column1 1 --column2 2 --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
         'rm $sorted'
 
 rule hunaligndic:

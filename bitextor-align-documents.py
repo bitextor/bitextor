@@ -42,8 +42,8 @@ oparser.add_argument('ridx1', metavar='RIDX', nargs='?', help='File with extensi
                                                               'documents from lang1 to lang2', default=None)
 oparser.add_argument('ridx2', metavar='RIDX', nargs='?', help='File with extension .ridx (reverse index) for aligned '
                                                               'documents from lang2 to lang1', default=None)
-oparser.add_argument('--lines1', dest='ndoc1', help='Number of documents in lang1', required=True)
-oparser.add_argument('--lines2', dest='ndoc2', help='Number of documents in lang2', required=True)
+oparser.add_argument('--lines1', dest='ndoc1', help='Number of documents in lang1', required=True, type=int)
+oparser.add_argument('--lines2', dest='ndoc2', help='Number of documents in lang2', required=True, type=int)
 oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candidates taken into account for every file "
                                                     "when performing bidirectional document alignment. This parameter "
                                                     "is set by default to 1, which means that only documents being "
@@ -89,9 +89,9 @@ else:
 
 indices = {}
 indicesProb = {}
-documents = set(range(1, int(options.ndoc1) + int(options.ndoc2) + 1))
+documents = set(range(1, options.ndoc1 + options.ndoc2 + 1))
 documentsFile2 = set()
-file2_start_counter = int(options.ndoc1)
+file2_start_counter = options.ndoc1
 
 if not combine:
     # Reading the .ridx file with the preliminary alignment

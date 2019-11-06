@@ -37,6 +37,10 @@ if __name__ == "__main__":
     parser.add_argument('--text2', help='Path to the file with the plain text of the documents in LANG2', required=True)
     parser.add_argument('--tokenized2', required=True,
                         help='Path to the file with the tokenized text of the documents crawled in LANG2')
+    parser.add_argument('--column1', help='Column that contains the first document of the document pairs',
+                        default=0, type=int)
+    parser.add_argument('--column2', help='Column that contains the second document of the document pairs',
+                        default=1, type=int)
 
     args = parser.parse_args()
 
@@ -50,17 +54,9 @@ if __name__ == "__main__":
     else:
         reader = open(args.indices, 'r')
 
-    column1 = 0
-    column2 = 1
-
     for line in reader:
         fields = line.split('\t')
-        if len(fields) == 3:
-            column1 = 1
-            column2 = 2
-            lang2_docs.add(int(fields[2]))
-        else:
-            lang2_docs.add(int(fields[1]))
+        lang2_docs.add(int(fields[args.column2]))
 
     reader.seek(0)
 
@@ -74,8 +70,8 @@ if __name__ == "__main__":
 
         for line in reader:
             fields = line.strip().split('\t')
-            doc1 = int(fields[column1])
-            doc2 = int(fields[column2])
+            doc1 = int(fields[args.column1])
+            doc2 = int(fields[args.column2])
             while doc1_current_line <= doc1:
                 url1 = next(url_reader1, None).strip()
                 text1 = next(text_reader1, None).strip()
