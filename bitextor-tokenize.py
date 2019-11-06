@@ -149,5 +149,8 @@ for langfolder in os.listdir(folder):
                     senttok_tool = None
 
                 extract_encoded_text(encodedtext, senttok_tool, wordtok_tool, morphtok_tool, lang_files_sent[lang], lang_files_tok[lang])
-for lang in lang_files:
-    lang_files[lang].close()
+for lang in lang_files_tok:
+    lang_files_tok[lang].close()
+for lang in lang_files_sent:
+    lang_files_sent[lang].close()
+
