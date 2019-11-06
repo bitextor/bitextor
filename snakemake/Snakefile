@@ -1535,11 +1535,11 @@ rule indices2docalign:
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=DOCALIGNEXT)
+    output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=DOCALIGNEXT))
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
-        'python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
+        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --url1 {input.url1} --url2 {input.url2} --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
         'rm $sorted'
 
 rule hunaligndic:

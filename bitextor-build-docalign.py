@@ -73,11 +73,9 @@ if __name__ == "__main__":
         doc2_last_written = 0
 
         for line in reader:
-            column2 = False
-            fields = line.split('\t')
+            fields = line.strip().split('\t')
             doc1 = int(fields[column1])
             doc2 = int(fields[column2])
-
             while doc1_current_line <= doc1:
                 url1 = next(url_reader1, None).strip()
                 text1 = next(text_reader1, None).strip()
