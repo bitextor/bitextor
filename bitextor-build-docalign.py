@@ -85,13 +85,13 @@ if __name__ == "__main__":
                         print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(doc1, doc2, text1, text2, tok1, tok2))
                         doc2_last_written = doc2
                     elif doc2_current_line in lang2_docs:
-                        lang2_read_docs[doc2_current_line] = (url2, text2, tok2)
+                        lang2_read_docs[doc2_current_line] = (text2, tok2)
                         lang2_docs.remove(doc2_current_line)
 
                     doc2_current_line = doc2_current_line + 1
 
                 if doc2 in lang2_read_docs:
-                    url2, text2, tok2 = lang2_read_docs[doc2]
+                    text2, tok2 = lang2_read_docs[doc2]
                     print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(doc1, doc2, text1, text2, tok1, tok2))
                     del lang2_read_docs[doc2]
                     doc2_last_written = doc2

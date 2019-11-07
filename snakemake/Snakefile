@@ -1671,7 +1671,7 @@ rule bifixer:
 
 rule bicleaner:
     input:
-        segclean="{prefix}"+".{extension}.xz".format(extension=BIFIXER),
+        segclean="{{prefix}}.{extension}.xz".format(extension=BIFIXER),
         model="{model}".format(model=BICLEANER_CONFIG)
     output:
         "{prefix}.bicleaner.scores.xz"
