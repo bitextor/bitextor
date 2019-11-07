@@ -24,6 +24,7 @@ import ast
 import lzma
 from toolwrapper import ToolWrapper
 from external_processor import ExternalTextProcessor
+import html
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
@@ -46,11 +47,11 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
     content = base64.b64decode(encoded).decode("utf-8").replace("\t", " ")
     tokenized_segs = []
     seg = ""
-    sent_tokeniser.writeline(content.strip() + "\n")
+    sent_tokeniser.writeline(html.escape(content.strip()) + "\n")
     while seg != "<P>":
         seg = sent_tokeniser.readline().strip()
         if seg != "" and seg != "<P>":
-            tokenized_segs.append(seg)
+            tokenized_segs.append(html.unescape(seg))
 
     tokenized_filtered = []
     for sent in tokenized_segs:

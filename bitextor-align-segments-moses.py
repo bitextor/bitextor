@@ -40,6 +40,7 @@ import subprocess
 import string
 from tempfile import NamedTemporaryFile
 from toolwrapper import ToolWrapper
+import html
 
 
 def run_aligner(filename_s, filename_t, dic, hunaligndir):
@@ -66,12 +67,11 @@ def extract_encoded_text(encodedtext, encodedtokenized, tmp_file, tmp_file_origt
     content = base64.b64decode(encodedtext).decode("utf-8").replace("\t", " ")
     tokenized_segs = []
     seg = ""
-    sent_tokeniser.writeline(content.rstrip('\n') + "\n")
+    sent_tokeniser.writeline(html.escape(content.rstrip('\n')) + "\n")
     while seg != "<P>":
         seg = sent_tokeniser.readline().strip()
         if seg != "" and seg != "<P>":
-            tokenized_segs.append(seg)
-
+            tokenized_segs.append(html.unescape(seg))
 
     tokenized_filtered = ""
     for sent in tokenized_segs:
