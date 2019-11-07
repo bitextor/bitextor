@@ -29,15 +29,22 @@ def extract_encoded_text(encoded, proc_sent, proc_word, proc_morph, sent_writer,
         return encoded
 
     content = base64.b64decode(encoded).decode("utf-8").replace("\t", " ")
-    tokenized_segs = proc_sent.process(content).strip()
-    if tokenized_segs == None:
+    content = re.sub(r'(\s*[\r\n]+\s*)+', r'\n', content.strip()).strip()
+    content += "\n"
+
+    if proc_sent == None:
         return None
     else:
         tokenized_filtered = []
-    
-        for sent in tokenized_segs.split("\n"):
-            if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
-                tokenized_filtered.append(sent)
+
+        proc_sent.writeline(content)
+        tokenized_seg = proc_sent.readline().strip()
+        while tokenized_seg != "" and tokenized_seg != "<P>":
+            if sum([1 for m in tokenized_seg if m in string.punctuation + string.digits]) < len(tokenized_seg) // 2:
+                tokenized_filtered.append(tokenized_seg)
+            tokenized_seg = proc_sent.readline().strip()
+
+
         b64text = base64.b64encode("\n".join(tokenized_filtered).lower().encode("utf-8"))
         sent_writer.write("{}\n".format(b64text.decode()).encode("utf-8"))    
         if not proc_word:
@@ -119,6 +126,10 @@ folder = os.fsencode(options.folder)
 for langfolder in os.listdir(folder):
     lang = os.fsdecode(langfolder)
     senttok = get_lang_or_default(options.splitters, lang)
+    if senttok != None:
+        senttok_tool = ToolWrapper(senttok.split())
+    else:
+        senttok_tool = None
 
     wordtok = get_lang_or_default(options.tokenizers, lang)
     if wordtok != None:
@@ -143,12 +154,7 @@ for langfolder in os.listdir(folder):
             lang_files_tok[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")
         with open_xz_or_gzip_or_plain(fullname) as text_reader:
             for line in text_reader:
-                encodedtext = re.sub(r'(\s*[\r\n]+\s*)+', r'\r\n', line.strip())
-                if senttok != None:
-                    senttok_tool = ExternalTextProcessor(senttok.split())
-                else:
-                    senttok_tool = None
-
+                encodedtext = line.strip()
                 extract_encoded_text(encodedtext, senttok_tool, wordtok_tool, morphtok_tool, lang_files_sent[lang], lang_files_tok[lang])
 for lang in lang_files_tok:
     lang_files_tok[lang].close()
