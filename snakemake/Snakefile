@@ -1508,7 +1508,6 @@ rule docalign_tokenize_translated:
         'read -r -a MORPHTOK <<< "{MORPHTOK2}";'
         'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | {PROFILING} "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
         'fi'
-        # "{PROFILING} python3 {BITEXTOR}/document-aligner/utils/tokenize_lett.py --text {input.translated} --word-tokeniser '{WORDTOK2}' --morph-analyser '{MORPHTOK2}' | xz -T 0 > {output}"
 
 rule docalign_matches:
     input:
@@ -1666,7 +1665,6 @@ rule bifixer:
     output:
         "{prefix}.bifixer.xz"
     shell:
-        # 'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/clean-restorative.sh {LANG1} {LANG2} | xz -T 0 > {output}'
         "xzcat -T 0 -f {input} | {PROFILING} python3 bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
 
 rule bicleaner:
@@ -1676,12 +1674,15 @@ rule bicleaner:
     output:
         "{prefix}.bicleaner.scores.xz"
     shell:
+        'scores=$(mktemp "{TMPDIR}/bicleaner.scores.XXXXXX");'
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
         'if [ "$slang" == "{LANG1}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} | xz -T 0 > {output}; '
+        '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
         'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | xz -T 0 > {output}; '
-        'fi'
+        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG}  | awk \' BEGIN {{FS="\t"; OFS=","}} {{ t = $3; $3 = $4; $4 = t; print;}}\' > $scores; '
+        'fi;'
+        'paste <(xzcat -T 0 {input.segclean}) $scores | xz -T 0 > {output};'
+        'rm $scores;'
 
 rule bicleanerfilter:
     input:
