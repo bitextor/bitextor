@@ -15,8 +15,8 @@ def discardbytime(match_costs, matches, times1, times2, timewindow):
     filtered_cost=[]
     filtered_matches=[]
     for cost, match in zip(match_costs, matches):
-        t1 = times1[match[0]]
-        t2 = times2[match[1]]
+        t1 = times1[match[1]]
+        t2 = times2[match[0]]
         if abs(t1-t2) < timewindow:
             filtered_cost.append(cost)
             filtered_matches.append(match)

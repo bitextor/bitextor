@@ -1515,8 +1515,8 @@ rule docalign_matches_datewindow:
     input:
         l1="{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}".format(l1=LANG1)+".{mttype}.extracted.translated.tokenized.xz",
         l2="{data}/preprocess".format(data=data)+"/{target}/docalign/"+"{l2}.extracted.tokenized.xz".format(l2=LANG2),
-        d1="{data}/preprocess".format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/date.xz'.format(PPROC=PPROC,LANG1=LANG1),
-        d2="{data}/preprocess".format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG1}/date.xz'.format(PPROC=PPROC,LANG1=LANG1),
+        d1="{data}/preprocess".format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG}/date.xz'.format(PPROC=PPROC,LANG=LANG1),
+        d2="{data}/preprocess".format(data=data)+'/{target}'+'/{PPROC}/bitextorlang/{LANG}/date.xz'.format(PPROC=PPROC,LANG=LANG2),
     output:
         "{transient}".format(transient=transient)+"/{target}/docalign/"+"{l1}-{l2}".format(l1=LANG1,l2=LANG2)+".{mttype}.datewindow.matches"
     shell:
