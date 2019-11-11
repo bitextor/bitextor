@@ -986,7 +986,7 @@ if "onlyConcat" in config and config["onlyConcat"]:
 elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
     for tld in domainKey2Hosts.keys():
         for lang in PPROCLANGS:
-            for file in FILES:
+            for file in FILES + ["plain_tokenized.xz", "plain_sentences.xz"]:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/{pproc}/bitextorlang/{lang}/{file}".format(dir=data, tld=tld, pproc=PPROC, lang=lang, file=file))
 
         if DOCALIGNEXT != "bitextor":
@@ -1297,9 +1297,10 @@ rule tokenize:
         tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
         lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang)
     output:
-        '{dir}/{lang}/plain_tokenized.xz'
+        tok='{dir}/{lang}/plain_tokenized.xz',
+        sent='{dir}/{lang}/plain_sentences.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" | xz -c > {output};'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1419,15 +1420,14 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_text.xz'.format(data=data, pproc=PPROC)
+        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(data=data, pproc=PPROC)
     output:
         '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.xz'.format(data=data)
     params:
-        splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
         docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
     shell:
         'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --splitter "{params.splitter}" --prune_type "words" --prune 80 --text {input.text}| xz -T 0 -c > {output};'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --prune_type "words" --prune 80 --text {input.text} | xz -T 0 -c > {output};'
 
 rule docalign_tokenize:
     input:
@@ -1438,7 +1438,7 @@ rule docalign_tokenize:
         '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.tokenized.xz'.format(data=data)
     shell:
         'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --tokenized --text {input.text} --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --text {input.text} --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
 
 rule docalign_translate_nmt:
     input:
@@ -1523,8 +1523,8 @@ rule docalign_matches:
 rule docalign_bitextor2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: temp('{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient))
@@ -1537,8 +1537,8 @@ rule docalign_bitextor2docalign_full:
 rule matches2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE))
@@ -1576,7 +1576,7 @@ rule alignsegments_hunalign:
     output:
         '{transient}/{{target}}/hunalign.segalign.indices.xz'.format(transient=transient)
     shell:
-        'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
+        'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" | xz -T 0 > {output};'
 
 rule alignsegments_bleualign:
     input:

@@ -20,7 +20,6 @@ import os
 import argparse
 import base64
 import string
-import ast
 import lzma
 from external_processor import ExternalTextProcessor
 
@@ -29,21 +28,14 @@ from utils.common import open_xz_or_gzip_or_plain
 
 
 def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser):
-    if not sent_tokeniser:
-        return encoded
-
     proc_sent = ExternalTextProcessor(sent_tokeniser.split())
     content = base64.b64decode(encoded).decode("utf-8").replace("\t", " ")
-    tokenized_segs = proc_sent.process(content).strip()
+    tokenized_segments = proc_sent.process(content).strip()
     tokenized_filtered = ""
 
-    for sent in tokenized_segs.split("\n"):
+    for sent in tokenized_segments.split("\n"):
         if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
             tokenized_filtered += sent + "\n"
-
-    if not word_tokeniser:
-        b64text = base64.b64encode(tokenized_filtered.lower().encode("utf-8"))
-        return b64text.decode()
 
     proc_word = ExternalTextProcessor(word_tokeniser.split())
     tokenized_text = proc_word.process(tokenized_filtered)
@@ -52,8 +44,9 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         proc_morph = ExternalTextProcessor(morph_analyser.split())
         tokenized_text = proc_morph.process(tokenized_text)
 
-    b64text = base64.b64encode(tokenized_text.lower().encode("utf-8"))
-    return b64text.decode()
+    b64sentences = base64.b64encode(tokenized_filtered.encode("utf-8"))
+    b64tokenized = base64.b64encode(tokenized_text.lower().encode("utf-8"))
+    return b64sentences, b64tokenized
 
 
 oparser = argparse.ArgumentParser(
@@ -62,11 +55,14 @@ oparser.add_argument('--text', dest='text', help='Plain text file', required=Tru
 oparser.add_argument('--sentence-splitter', dest='splitter', required=True, help="Sentence splitter commands")
 oparser.add_argument('--word-tokenizer', dest='tokenizer', required=True, help="Word tokenisation command")
 oparser.add_argument('--morph-analyser', dest='lemmatizer', help="Morphological analyser command")
+oparser.add_argument('--sentences-output', default="plain_sentences.xz", dest='sent_output', help="Path of the output file that will contain sentence splitted text")
+oparser.add_argument('--tokenized-output', default="plain_tokenized.xz", dest='tok_output', help="Path of the output file that will contain sentence splitted and tokenized text")
 
 options = oparser.parse_args()
 
-with open_xz_or_gzip_or_plain(options.text) as reader:
+with open_xz_or_gzip_or_plain(options.text) as reader, lzma.open(options.sent_output, "w") as sent_writer, lzma.open(options.tok_output, "w") as tok_writer:
     for line in reader:
         encoded_text = line.strip()
-        tokenized = extract_encoded_text(encoded_text, options.splitter, options.tokenizer, options.lemmatizer)
-        print(tokenized)
+        sentences, tokenized = extract_encoded_text(encoded_text, options.splitter, options.tokenizer, options.lemmatizer)
+        sent_writer.write(sentences + b"\n")
+        tok_writer.write(tokenized + b"\n")
