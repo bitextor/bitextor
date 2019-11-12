@@ -256,10 +256,10 @@ PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc-xzlang"
-    FILES=["plain_text.xz", "mime.xz", "url.xz"]
+    FILES=["mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
-    FILES=["plain_text.xz", "deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
+    FILES=["deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGSOPT = "--langs " + config['preprocessLangs']
@@ -983,7 +983,7 @@ PPROCOUTPUT=[]
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
         OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=data, tld=tld))
-elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
+else:
     for tld in domainKey2Hosts.keys():
         for lang in PPROCLANGS:
             for file in FILES + ["plain_tokenized.xz", "plain_sentences.xz"]:
@@ -995,31 +995,29 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
 
             for lang in TARGETLANGS:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{lang}.extracted.tokenized.xz".format(dir=data, tld=tld, pproc=PPROC,lang=lang))
-else:
-    OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    if "nmt" in config and config["nmt"]:
-        OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
-        OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
-
-    if "smt" in config and config["smt"]:
-        OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-        OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-
-    #Optional TMX: if option enabled, TMX is generated; otherwise, tab-separated .sent file is generated
-    if "tmx" in config and config["tmx"]:
-        if "storeRawCorpus" in config and config["storeRawCorpus"]:
-            OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-        if "deduped" in config and config["deduped"]:
-            OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-        else:
-            OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    else:
+    if "onlyPreprocessing" not in config or not config["onlyPreprocessing"]:
         OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+        if "nmt" in config and config["nmt"]:
+            OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
+            OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
+
+        if "smt" in config and config["smt"]:
+            OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+            OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+
+        #Optional TMX: if option enabled, TMX is generated
+        if "tmx" in config and config["tmx"]:
+            if "storeRawCorpus" in config and config["storeRawCorpus"]:
+                OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+            if "deduped" in config and config["deduped"]:
+                OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+            else:
+                OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 
 rule all:
     input:
-        expand("{target}", target=OUTPUT),
-        expand("{preprocess}", preprocess=PPROCOUTPUT)
+        expand("{preprocess}", preprocess=PPROCOUTPUT),
+        expand("{target}", target=OUTPUT)
 
 #================================== SMT ======================================#
 
@@ -1259,6 +1257,7 @@ rule warc2preprocess:
         '{data}/preprocess/{{domain}}/concat.warc.gz'.format(data=data)
     output:
         hash='{data}/preprocess/{{domain}}/w2p/bitextorlang/plain_text_hashes.xz'.format(data=data),
+        plain=temp(expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS)),
         files=expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
         folder='{data}/preprocess/{{domain}}/w2p/bitextorlang'.format(data=data)
@@ -1282,7 +1281,8 @@ rule xzlangToBitextorLang:
         # '{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data)
         expand('{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang/{lang}', data=data, lang=PPROCLANGS)
     output:
-        expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
+        plain=temp(expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS, file=FILES)),
+        files=expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
         xzlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data),
         bitextorlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang'.format(data=data)
