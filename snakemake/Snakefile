@@ -1527,7 +1527,7 @@ rule docalign_bitextor2docalign_full:
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: temp('{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient))
+    output: '{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
@@ -1541,7 +1541,7 @@ rule matches2docalign_full:
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE))
+    output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'LC_ALL=C sort -nk2 {input.indices} > $sorted;'
@@ -1606,7 +1606,7 @@ rule segalign_indices2url:
         url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output:
-        segalign=temp('{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER)),
+        segalign='{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
     run:
         lang1_dict = {}
         lang2_dict = {}
