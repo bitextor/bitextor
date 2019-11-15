@@ -16,18 +16,19 @@
 
 import argparse
 import base64
-import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../..")
-from utils.common import open_xz_or_gzip_or_plain
-
+import lzma
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--text", dest="text_file", required=True,
+    parser.add_argument("--sentences_file", dest="sent_file", required=True,
                         help='File containing the sentence splitted plain text extracted from the HTML documents '
                              'in a WARC file, encoded in base64')
+    parser.add_argument("--tokenized_file", dest="tok_file", required=False, default="",
+                        help="File containing the sentence splitted tokenized text extracted from the HTML documents")
+    parser.add_argument("--extracted_output", dest="out_extracted", default="extracted.xz",
+                        help='Path of the output file that will contain extracted sentences')
+    parser.add_argument("--tokenized_output", dest="out_tokenized", default="tokenized.xz",
+                        help='Path of the outupt file that will contain tokenized sentences')
     parser.add_argument("--output_prefix", dest="output_prefix", default="", required=False,
                         help="Prefix for output files within directory")
     parser.add_argument("--prune", dest="prune_threshold", type=int, default=80,
@@ -37,21 +38,51 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     counter = 0
-    with open_xz_or_gzip_or_plain(args.text_file) as text_reader:
-        for line in text_reader:
-            counter = counter + 1
-            text = base64.b64decode(line.strip()).decode("utf-8")
-            if not text:
-                continue
-            for extracted_line in text.split("\n"):
-                extracted_line = extracted_line.strip()
-                if not extracted_line:
-                    continue
-                # prune long sentences
-                if args.prune_type == "chars":
-                    if len(extracted_line) > args.prune_threshold:
+
+    if args.tok_file:
+        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.tok_file, "rt") as tok_reader, \
+                lzma.open(args.out_extracted, "wt") as sent_writer, lzma.open(args.out_tokenized, "wt") as tok_writer:
+            for sent_doc in sent_reader:
+                counter = counter + 1
+                tok_doc = next(tok_reader, None)
+                sent_text = base64.b64decode(sent_doc.strip()).decode("utf-8")
+                tok_text = base64.b64decode(tok_doc.strip()).decode("utf-8")
+
+                for line in list(zip(sent_text.split("\n"), tok_text.split("\n"))):
+                    sent_line = line[0].strip()
+                    tok_line = line[1].strip()
+
+                    if not sent_line or not tok_line:
                         continue
-                elif args.prune_type == "words":
-                    if len(extracted_line.split()) > args.prune_threshold:
+
+                    # prune long sentences
+                    if args.prune_type == "chars":
+                        if len(sent_line) > args.prune_threshold:
+                            continue
+                    elif args.prune_type == "words":
+                        if len(sent_line.split()) > args.prune_threshold:
+                            continue
+
+                    sent_writer.write("{}\t{}\n".format(str(counter), sent_line))
+                    tok_writer.write("{}\t{}\n".format(str(counter), tok_line))
+
+    else:
+        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.out_extracted, "wt") as sent_writer:
+            for line in sent_reader:
+                counter = counter + 1
+                text = base64.b64decode(line.strip()).decode("utf-8")
+
+                for extracted_line in text.split("\n"):
+                    extracted_line = extracted_line.strip()
+
+                    if not extracted_line:
                         continue
-                print("{0}\t{1}".format(str(counter), extracted_line))
+
+                    # prune long sentences
+                    if args.prune_type == "chars":
+                        if len(extracted_line) > args.prune_threshold:
+                            continue
+                    elif args.prune_type == "words":
+                        if len(extracted_line.split()) > args.prune_threshold:
+                            continue
+                    sent_writer.write("{}\t{}\n".format(str(counter), extracted_line))

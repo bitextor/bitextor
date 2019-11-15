@@ -1418,27 +1418,32 @@ rule aligndocumentsBitextor:
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
+# unless lang.extracted.tokenized.xz is required, execute docalign_extracted_rule (ambiguity workaround)
+ruleorder: docalign_extracted > docalign_extracted_and_tokenized
+
 rule docalign_extracted:
     input:
-        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(data=data, pproc=PPROC)
+        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
     output:
-        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.xz'.format(data=data)
+        '{dir}/docalign/{lang}.extracted.xz'
     params:
-        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
+        docalign_folder='{dir}/docalign'
     shell:
         'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --prune_type "words" --prune 80 --text {input.text} | xz -T 0 -c > {output};'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
 
-rule docalign_tokenize:
+rule docalign_extracted_and_tokenized:
     input:
-        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(data=data, pproc=PPROC)
+        sent='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC),
+        tok='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(pproc=PPROC)
     params:
-        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
+        docalign_folder='{dir}/docalign'
     output:
-        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.tokenized.xz'.format(data=data)
+        sent_extracted='{dir}/docalign/{lang}.extracted.xz',
+        tok_extracted='{dir}/docalign/{lang}.extracted.tokenized.xz'
     shell:
         'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --text {input.text} --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.sent} --tokenized_file {input.tok} --prune_type "words" --prune 80 --extracted_output {output.sent_extracted} --tokenized_output {output.tok_extracted}'
 
 rule docalign_translate_nmt:
     input:
@@ -1527,7 +1532,7 @@ rule docalign_bitextor2docalign_full:
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: temp('{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient))
+    output: '{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
@@ -1541,7 +1546,7 @@ rule matches2docalign_full:
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: temp('{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE))
+    output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
         'LC_ALL=C sort -nk2 {input.indices} > $sorted;'
@@ -1606,7 +1611,7 @@ rule segalign_indices2url:
         url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output:
-        segalign=temp('{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER)),
+        segalign='{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
     run:
         lang1_dict = {}
         lang2_dict = {}
