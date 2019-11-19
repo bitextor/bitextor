@@ -16,46 +16,19 @@
 
 import argparse
 import base64
-import os
-import string
-import sys
-import html
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
-from external_processor import ExternalTextProcessor
-from common import open_xz_or_gzip_or_plain
-
-
-def filter_digits_and_punctuation(original_text):
-    text_split = original_text.split()
-    if len(text_split) == 1 and sum([1 for m in text_split[0] if m in string.punctuation + string.digits]) > len(
-            text_split[0]) // 2:
-        return False
-
-    return True
-
-
-def split_sentences(original_text, sentence_splitter_cmd):
-    if sentence_splitter_cmd:
-        proc = ExternalTextProcessor(sentence_splitter_cmd.split())
-        text_split = proc.process(original_text.replace("\n\n", "\n"))
-    else:
-        text_split = original_text.replace("\n\n", "\n")
-
-    output = html.unescape(text_split)
-
-    return [n for n in output.split("\n") if filter_digits_and_punctuation(n)]
-
+import lzma
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--text", dest="text_file", required=True,
-                        help='File containing the plain text extracted from the HTML documents in a WARC file, '
-                             'encoded in base64')
-    parser.add_argument("--splitter", dest="splitter", default="",
-                        help="Sentence splitting command")
-    parser.add_argument("--tokenized", dest="tokenized", action="store_true",
-                        help='Don\'t apply sentence splitter to the text (split by newlines only).')
+    parser.add_argument("--sentences_file", dest="sent_file", required=True,
+                        help='File containing the sentence splitted plain text extracted from the HTML documents '
+                             'in a WARC file, encoded in base64')
+    parser.add_argument("--tokenized_file", dest="tok_file", required=False, default="",
+                        help="File containing the sentence splitted tokenized text extracted from the HTML documents")
+    parser.add_argument("--extracted_output", dest="out_extracted", default="extracted.xz",
+                        help='Path of the output file that will contain extracted sentences')
+    parser.add_argument("--tokenized_output", dest="out_tokenized", default="tokenized.xz",
+                        help='Path of the outupt file that will contain tokenized sentences')
     parser.add_argument("--output_prefix", dest="output_prefix", default="", required=False,
                         help="Prefix for output files within directory")
     parser.add_argument("--prune", dest="prune_threshold", type=int, default=80,
@@ -64,34 +37,52 @@ if __name__ == "__main__":
                         default="words", help="Prune sentences either by words or characters", required=False)
     args = parser.parse_args()
 
-    counter = 1
-    with open_xz_or_gzip_or_plain(args.text_file) as text_reader:
-        for line in text_reader:
-            text = base64.b64decode(line.strip()).decode("utf-8")
+    counter = 0
 
-            if not text:
-                continue
+    if args.tok_file:
+        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.tok_file, "rt") as tok_reader, \
+                lzma.open(args.out_extracted, "wt") as sent_writer, lzma.open(args.out_tokenized, "wt") as tok_writer:
+            for sent_doc in sent_reader:
+                counter = counter + 1
+                tok_doc = next(tok_reader, None)
+                sent_text = base64.b64decode(sent_doc.strip()).decode("utf-8")
+                tok_text = base64.b64decode(tok_doc.strip()).decode("utf-8")
 
-            if args.tokenized:
-                split = split_sentences(text, None)
-            else:
-                split = split_sentences(text, args.splitter)
+                for line in list(zip(sent_text.split("\n"), tok_text.split("\n"))):
+                    sent_line = line[0].strip()
+                    tok_line = line[1].strip()
 
-            for extracted_line in split:
-
-                extracted_line = extracted_line.strip()
-                if not extracted_line:
-                    continue
-
-                # prune long sentences
-                extracted_line = extracted_line
-                if args.prune_type == "chars":
-                    if len(extracted_line) > args.prune_threshold:
-                        continue
-                elif args.prune_type == "words":
-                    if len(extracted_line.split()) > args.prune_threshold:
+                    if not sent_line or not tok_line:
                         continue
 
-                print("{0}\t{1}".format(str(counter), extracted_line))
+                    # prune long sentences
+                    if args.prune_type == "chars":
+                        if len(sent_line) > args.prune_threshold:
+                            continue
+                    elif args.prune_type == "words":
+                        if len(sent_line.split()) > args.prune_threshold:
+                            continue
 
-            counter = counter + 1
+                    sent_writer.write("{}\t{}\n".format(str(counter), sent_line))
+                    tok_writer.write("{}\t{}\n".format(str(counter), tok_line))
+
+    else:
+        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.out_extracted, "wt") as sent_writer:
+            for line in sent_reader:
+                counter = counter + 1
+                text = base64.b64decode(line.strip()).decode("utf-8")
+
+                for extracted_line in text.split("\n"):
+                    extracted_line = extracted_line.strip()
+
+                    if not extracted_line:
+                        continue
+
+                    # prune long sentences
+                    if args.prune_type == "chars":
+                        if len(extracted_line) > args.prune_threshold:
+                            continue
+                    elif args.prune_type == "words":
+                        if len(extracted_line.split()) > args.prune_threshold:
+                            continue
+                    sent_writer.write("{}\t{}\n".format(str(counter), extracted_line))
