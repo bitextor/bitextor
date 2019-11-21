@@ -74,7 +74,7 @@ for file_path, lang in [(options.text1, options.lang1), (options.text2, options.
             ##################
             tokenized_text = base64.b64decode(line.strip()).decode("utf-8")
 
-            sorted_uniq_wordlist = set(tokenized_text.split())
+            sorted_uniq_wordlist = sorted(set(tokenized_text.split()))
 
             # Trimming non-aplphanumerics:
             clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]

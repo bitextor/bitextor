@@ -1754,7 +1754,7 @@ rule mt_parallel_data:
          ,
          l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
     shell:
-         "xzcat -T 0 -f {input} | cut -f 3,4 | sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
+         "xzcat -T 0 -f {input} | cut -f 3,4 | LC_ALL=C sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
