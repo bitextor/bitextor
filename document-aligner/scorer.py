@@ -19,12 +19,13 @@ import time
 import os
 from collections import Counter
 from functools import partial
+from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 
 from numpy import float32, isnan
 from scipy.sparse import vstack as sp_vstack
 from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from external_processor import ExternalTextProcessor
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import open_xz_or_gzip_or_plain
@@ -68,6 +69,12 @@ class ExtractionMapper(object):
 
     def extract_single(self, page):
         return self.ef(page)
+
+    def extract_single_batch_to_set(self, pages):
+        counter = Counter()
+        for page in pages:
+            counter.update(set(self.extract_single(page)))
+        return counter
 
     def extract_source(self, corpus):
         return self.extract(corpus)
@@ -129,20 +136,34 @@ class DocumentVectorExtractor(object):
 
     # Given all source and target corpus file objects, counts how many times a word is found in different documents
     # (source and target together, given that target is translated into source language) (AKA, idf)
-    def estimate_idf(self, source_corpus, target_corpus):
+    def estimate_idf(self, source_corpus, target_corpus, jobs=1, batch=10000):
         counts = Counter()
         self.ndocs = 0
         self.ndocs_sl = 0
-        for url, page in self.iterate_corpus(source_corpus):
-            counts.update(set(self.ef.extract_single(page)))
-            self.ndocs += 1
-            self.ndocs_sl += 1
         self.ndocs_tl = 0
-        for url, page in self.iterate_corpus(target_corpus):
-            counts.update(set(self.ef.extract_single(page)))
-            self.ndocs += 1
-            self.ndocs_tl += 1
 
+        def count_ngrams(corpus):
+            # start = time.time()
+            pages = []
+            pool = Pool(jobs)
+            for _, page in self.iterate_corpus(corpus):
+                if len(pages) < batch:
+                    pages.append(page)
+                if len(pages) == batch:
+                    pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
+                    pages = []
+                self.ndocs += 1
+            if len(pages):
+                pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
+            pool.close()
+            pool.join()
+            # end = time.time()
+            # sys.stderr.write("completed count_ngrams in {0:.5f}\n".format(end - start))
+
+        count_ngrams(source_corpus)
+        self.ndocs_sl = self.ndocs
+        count_ngrams(target_corpus)
+        self.ndocs_tl = self.ndocs - self.ndocs_sl
         self.term2idf = {}
         self.term2idx = {}
         self.ignored_terms = set()
@@ -185,7 +206,7 @@ class DocumentVectorExtractor(object):
     def extract(self, corpus, lencorpus):
         m = lil_matrix((lencorpus, len(self.term2idx)), dtype=float32)
         doc_idx = 0
-        url_list=[]
+        url_list = []
         for url, page in self.iterate_corpus(corpus):
             url_list.append(url)
             counts = Counter(self.ef.extract_single(page))
@@ -196,7 +217,7 @@ class DocumentVectorExtractor(object):
             for ngram, count in counts.items():
                 if ngram not in self.term2idx:
                     # if ngram not in self.ignored_terms:
-                        # sys.stderr.write("unknown ngram: %s\n" % ngram)
+                    # sys.stderr.write("unknown ngram: %s\n" % ngram)
                     continue
 
                 idf = self.term2idf[ngram]
@@ -222,13 +243,13 @@ class DocumentVectorExtractor(object):
             doc_idx += 1
 
         m = csr_matrix(m, dtype=float32)
-        return url_list,m
+        return url_list, m
 
 
 class CosineDistanceScorer(object):
 
     def __init__(self, extraction_mapper, min_count, metric='cosine',
-                 smooth=0, threshold=0.1, batch_size=10000):
+                 smooth=0, threshold=0.1, batch_size=10000, jobs=1):
         self.name = "Cosine Distance Scorer"
         self.metric = metric
         self.vector_extractor = DocumentVectorExtractor(
@@ -236,9 +257,9 @@ class CosineDistanceScorer(object):
             smooth=smooth)
         self.threshold = threshold
         self.batch_size = batch_size
+        self.jobs = jobs
 
     def batched_pairwise_distances(self, x_csr, y_csr):
-
         def get_row_batch(m, batch):
             for cols_step in range(math.ceil(m.shape[0] / batch)):
                 yield m[cols_step * batch:(cols_step + 1) * batch]
@@ -247,7 +268,7 @@ class CosineDistanceScorer(object):
         for idx, X_batch in enumerate(get_row_batch(x_csr, self.batch_size)):
             pd = 1 - pairwise_distances(X_batch, y_csr, metric=self.metric)
             pd[(isnan(pd)) | (pd < self.threshold)] = 0
-
+        
             if all_csr is None:
                 all_csr = csr_matrix(pd, dtype=float32)
             else:
@@ -264,7 +285,7 @@ class CosineDistanceScorer(object):
             return filepath + ".xz"
         if os.path.isfile(filepath + ".bz2"):
             return filepath + ".bz2"
-    
+
         # return nothing. file does not exist
         return None
 
@@ -276,7 +297,7 @@ class CosineDistanceScorer(object):
         with open_xz_or_gzip_or_plain(source_filepath) as source_file:
             with open_xz_or_gzip_or_plain(target_filepath) as target_file:
                 # start = time.time()
-                self.vector_extractor.estimate_idf(source_file, target_file)
+                self.vector_extractor.estimate_idf(source_file, target_file, jobs=self.jobs)
                 # sys.stderr.write(
                 #    "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
 
