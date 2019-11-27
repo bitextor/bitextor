@@ -21,10 +21,11 @@ from collections import Counter
 from functools import partial
 from multiprocessing import Pool
 
-from numpy import float32, isnan
+from numpy import float32, isnan, clip
 from scipy.sparse import vstack as sp_vstack
 from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.preprocessing import normalize
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
 from common import open_xz_or_gzip_or_plain
@@ -303,16 +304,32 @@ class CosineDistanceScorer(object):
             for cols_step in range(math.ceil(m.shape[0] / batch)):
                 yield m[cols_step * batch:(cols_step + 1) * batch]
 
-        all_csr = None
-        for idx, X_batch in enumerate(get_row_batch(x_csr, self.batch_size)):
-            pd = 1 - pairwise_distances(X_batch, y_csr, metric=self.metric)
-            pd[(isnan(pd)) | (pd < self.threshold)] = 0
-        
-            if all_csr is None:
-                all_csr = csr_matrix(pd, dtype=float32)
-            else:
-                all_csr = sp_vstack((all_csr, csr_matrix(pd, dtype=float32)))
+        start = time.time()
 
+        normalize(x_csr, copy=False)
+        normalize(y_csr, copy=False)
+        all_csr = x_csr * y_csr.T
+        all_csr.data *= -1
+        all_csr.data += 1
+        clip(all_csr.data, 0, 2, out=all_csr.data)
+        all_csr.data = 1 - all_csr.data
+        all_csr.data[all_csr.data < self.threshold] = 0
+        all_csr.eliminate_zeros()
+
+        # all_csr = None
+        #
+        # for idx, X_batch in enumerate(get_row_batch(x_csr, self.batch_size)):
+        #     pd = 1 - pairwise_distances(X_batch, y_csr, metric=self.metric)
+        #     pd[(isnan(pd)) | (pd < self.threshold)] = 0
+        #
+        #     if all_csr is None:
+        #         all_csr = csr_matrix(pd, dtype=float32)
+        #     else:
+        #         all_csr = sp_vstack((all_csr, csr_matrix(pd, dtype=float32)))
+        #
+        # print(all_csr)
+        end = time.time()
+        sys.stderr.write("pairwise distances computed in {:.5f}\n".format(end-start))
         return all_csr
 
     def munge_file_path(self, filepath):
