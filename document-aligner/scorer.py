@@ -134,6 +134,20 @@ class DocumentVectorExtractor(object):
                 prevtext = text
         yield prevurl, prevtext
 
+    def iterate_corpus_in_batches(self, openfile, batch_size=10000):
+        pages = []
+        urls = []
+        for url, page in self.iterate_corpus(openfile):
+            if len(urls) < batch_size:
+                pages.append(page)
+                urls.append(url)
+            if len(urls) == batch_size:
+                yield urls, pages
+                pages = []
+                urls = []
+        if len(urls) != 0:
+            yield urls, pages
+
     # Given all source and target corpus file objects, counts how many times a word is found in different documents
     # (source and target together, given that target is translated into source language) (AKA, idf)
     def estimate_idf(self, source_corpus, target_corpus, jobs=1, batch_size=10000):
@@ -144,19 +158,9 @@ class DocumentVectorExtractor(object):
 
         def count_ngrams(corpus, pool):
             # start = time.time()
-            pages = []
-            # pool = Pool(jobs)
-            for _, page in self.iterate_corpus(corpus):
-                if len(pages) < batch_size:
-                    pages.append(page)
-                if len(pages) == batch_size:
-                    pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
-                    pages = []
-                self.ndocs += 1
-            if len(pages):
+            for _, pages in self.iterate_corpus_in_batches(corpus, batch_size):
+                self.ndocs += len(pages)
                 pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
-            # pool.close()
-            # pool.join()
             # end = time.time()
             # sys.stderr.write("completed count_ngrams in {0:.5f}\n".format(end - start))
 
@@ -251,7 +255,6 @@ class DocumentVectorExtractor(object):
     def extract(self, corpus, lencorpus, jobs=1, batch_size=10000):
         m = lil_matrix((lencorpus, len(self.term2idx)), dtype=float32)
         doc_idx = 0
-        start_doc_idx = 0
         url_list = []
 
         def cb(results):
@@ -262,21 +265,12 @@ class DocumentVectorExtractor(object):
         def err_cb(error):
             sys.stderr.write(str(error) + "\n")
 
-        pages = []
         start = time.time()
         pool = Pool(jobs)
-        for url, page in self.iterate_corpus(corpus):
-            if len(pages) == 0:
-                start_doc_idx = doc_idx
-            url_list.append(url)
-            if len(pages) < batch_size:
-                pages.append(page)
-            if len(pages) == batch_size:
-                pool.apply_async(self.process_documents, args=(start_doc_idx, pages,), callback=cb, error_callback=err_cb)
-                pages = []
-            doc_idx = doc_idx + 1
-        if len(pages):
-            pool.apply_async(self.process_documents, args=(start_doc_idx, pages,), callback=cb, error_callback=err_cb)
+        for urls, pages in self.iterate_corpus_in_batches(corpus, batch_size):
+            url_list.extend(urls)
+            pool.apply_async(self.process_documents, args=(doc_idx, pages,), callback=cb, error_callback=err_cb)
+            doc_idx += len(urls)
         pool.close()
         pool.join()
         end = time.time()
@@ -313,6 +307,7 @@ class CosineDistanceScorer(object):
         all_csr.data += 1
         clip(all_csr.data, 0, 2, out=all_csr.data)
         all_csr.data = 1 - all_csr.data
+        # clip(all_csr.data, -1, 1, all_csr.data)
         all_csr.data[all_csr.data < self.threshold] = 0
         all_csr.eliminate_zeros()
 
