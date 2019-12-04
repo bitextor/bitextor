@@ -156,24 +156,26 @@ class DocumentVectorExtractor(object):
         self.ndocs_sl = 0
         self.ndocs_tl = 0
 
-        def count_ngrams(corpus, pool):
-            # start = time.time()
-            for _, pages in self.iterate_corpus_in_batches(corpus, batch_size):
-                self.ndocs += len(pages)
-                pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
-            # end = time.time()
-            # sys.stderr.write("completed count_ngrams in {0:.5f}\n".format(end - start))
+        def count_ngrams(corpus):
+            start = time.time()
+            if jobs == 1:
+                for _, page in self.iterate_corpus(corpus):
+                    self.ndocs += 1
+                    counts.update(set(self.ef.extract_single(page)))
+            else:
+                pool = Pool(jobs)
+                for _, pages in self.iterate_corpus_in_batches(corpus, batch_size):
+                    self.ndocs += len(pages)
+                    pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
+                pool.close()
+                pool.join()
+            end = time.time()
+            sys.stderr.write("completed estimate_idf in {0:.5f}\n".format(end - start))
 
-        start = time.time()
-        pool = Pool(jobs)
-        count_ngrams(source_corpus, pool)
+        count_ngrams(source_corpus)
         self.ndocs_sl = self.ndocs
-        count_ngrams(target_corpus, pool)
+        count_ngrams(target_corpus)
         self.ndocs_tl = self.ndocs - self.ndocs_sl
-        pool.close()
-        pool.join()
-        end = time.time()
-        sys.stderr.write("completed estimate_idf in {0:.5f}\n".format(end-start))
         self.term2idf = {}
         self.term2idx = {}
         self.ignored_terms = set()
@@ -211,6 +213,24 @@ class DocumentVectorExtractor(object):
         # sys.stderr.write("{0} terms, {1} ignored\n".format(
         #    len(self.term2idx), len(self.ignored_terms)))
 
+    def get_tf(self, count, local_max_count, local_sum):
+        tf = 1
+        if self.tf_smooth == 0:
+            tf = 1
+        elif self.tf_smooth == 1:
+            tf = count
+        elif self.tf_smooth == 2:
+            tf = math.log(1 + count)
+        elif self.tf_smooth == 3:
+            tf = 0.5 + 0.5 * (count / local_max_count)
+        elif self.tf_smooth == 4:
+            tf = count / local_max_count
+        elif self.tf_smooth == 5:
+            tf = count / local_sum
+        elif self.tf_smooth == 6:
+            tf = math.sqrt(count)
+        return tf
+
     def process_documents(self, start_doc_idx, pages):
         results = {}
         doc_idx = start_doc_idx
@@ -226,25 +246,9 @@ class DocumentVectorExtractor(object):
                     # if ngram not in self.ignored_terms:
                     # sys.stderr.write("unknown ngram: %s\n" % ngram)
                     continue
-
                 idf = self.term2idf[ngram]
                 idx = self.term2idx[ngram]
-
-                tf = 1
-                if self.tf_smooth == 0:
-                    tf = 1
-                elif self.tf_smooth == 1:
-                    tf = count
-                elif self.tf_smooth == 2:
-                    tf = math.log(1 + count)
-                elif self.tf_smooth == 3:
-                    tf = 0.5 + 0.5 * (count / local_max_count)
-                elif self.tf_smooth == 4:
-                    tf = count / local_max_count
-                elif self.tf_smooth == 5:
-                    tf = count / local_sum
-                elif self.tf_smooth == 6:
-                    tf = math.sqrt(count)
+                tf = self.get_tf(count, local_max_count, local_sum)
                 results[doc_idx][0].append(idx)
                 results[doc_idx][1].append(tf*idf)
             doc_idx = doc_idx + 1
@@ -266,13 +270,30 @@ class DocumentVectorExtractor(object):
             sys.stderr.write(str(error) + "\n")
 
         start = time.time()
-        pool = Pool(jobs)
-        for urls, pages in self.iterate_corpus_in_batches(corpus, batch_size):
-            url_list.extend(urls)
-            pool.apply_async(self.process_documents, args=(doc_idx, pages,), callback=cb, error_callback=err_cb)
-            doc_idx += len(urls)
-        pool.close()
-        pool.join()
+        if jobs == 1:
+            for url, page in self.iterate_corpus(corpus):
+                url_list.append(url)
+                counts = Counter(self.ef.extract_single(page))
+                if not counts:
+                    continue
+                local_max_count = float(max(counts.values()))
+                local_sum = float(sum(counts.values()))
+                for ngram, count in counts.items():
+                    if ngram not in self.term2idx:
+                        continue
+                    idf = self.term2idf[ngram]
+                    idx = self.term2idx[ngram]
+                    tf = self.get_tf(count, local_max_count, local_sum)
+                    m[doc_idx, idx] = tf*idf
+                doc_idx += 1
+        else:
+            pool = Pool(jobs)
+            for urls, pages in self.iterate_corpus_in_batches(corpus, batch_size):
+                url_list.extend(urls)
+                pool.apply_async(self.process_documents, args=(doc_idx, pages,), callback=cb, error_callback=err_cb)
+                doc_idx += len(urls)
+            pool.close()
+            pool.join()
         end = time.time()
         sys.stderr.write("tfidf took {0:.5f}\n".format(end-start))
 
@@ -293,36 +314,38 @@ class CosineDistanceScorer(object):
         self.batch_size = batch_size
         self.jobs = jobs
 
+    def partial_pairwise_distance(self, normalized_y_csr, x_csr_batch):
+        normalize(x_csr_batch, copy=False)
+        part_csr = x_csr_batch * normalized_y_csr.T
+        part_csr.data[part_csr.data < self.threshold] = 0
+        part_csr.eliminate_zeros()
+        return part_csr
+
     def batched_pairwise_distances(self, x_csr, y_csr):
         def get_row_batch(m, batch):
             for cols_step in range(math.ceil(m.shape[0] / batch)):
                 yield m[cols_step * batch:(cols_step + 1) * batch]
 
+        all_csr = None
+
         start = time.time()
-
-        normalize(x_csr, copy=False)
-        normalize(y_csr, copy=False)
-        all_csr = x_csr * y_csr.T
-        all_csr.data *= -1
-        all_csr.data += 1
-        clip(all_csr.data, 0, 2, out=all_csr.data)
-        all_csr.data = 1 - all_csr.data
-        # clip(all_csr.data, -1, 1, all_csr.data)
-        all_csr.data[all_csr.data < self.threshold] = 0
-        all_csr.eliminate_zeros()
-
-        # all_csr = None
-        #
-        # for idx, X_batch in enumerate(get_row_batch(x_csr, self.batch_size)):
-        #     pd = 1 - pairwise_distances(X_batch, y_csr, metric=self.metric)
-        #     pd[(isnan(pd)) | (pd < self.threshold)] = 0
-        #
-        #     if all_csr is None:
-        #         all_csr = csr_matrix(pd, dtype=float32)
-        #     else:
-        #         all_csr = sp_vstack((all_csr, csr_matrix(pd, dtype=float32)))
-        #
-        # print(all_csr)
+        if self.jobs == 1:
+            normalize(y_csr, copy=False)
+            normalize(x_csr, copy=False)
+            all_csr = x_csr * y_csr.T
+            all_csr.data[all_csr.data < self.threshold] = 0
+            all_csr.eliminate_zeros()
+        else:
+            normalize(y_csr, copy=False)
+            pool = Pool(self.jobs)
+            results = pool.map(partial(self.partial_pairwise_distance, y_csr), get_row_batch(x_csr, self.batch_size))
+            pool.close()
+            pool.join()
+            for r in results:
+                if all_csr is None:
+                    all_csr = csr_matrix(r, dtype=float32)
+                else:
+                    all_csr = sp_vstack((all_csr, r))
         end = time.time()
         sys.stderr.write("pairwise distances computed in {:.5f}\n".format(end-start))
         return all_csr
