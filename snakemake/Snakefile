@@ -256,10 +256,10 @@ PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc-xzlang"
-    FILES=["plain_text.xz", "mime.xz", "url.xz"]
+    FILES=["mime.xz", "url.xz"]
 else:
     PPROC = "w2p"
-    FILES=["plain_text.xz", "deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
+    FILES=["deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGSOPT = "--langs " + config['preprocessLangs']
@@ -983,10 +983,10 @@ PPROCOUTPUT=[]
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
         OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=data, tld=tld))
-elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
+else:
     for tld in domainKey2Hosts.keys():
         for lang in PPROCLANGS:
-            for file in FILES:
+            for file in FILES + ["plain_tokenized.xz", "plain_sentences.xz"]:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/{pproc}/bitextorlang/{lang}/{file}".format(dir=data, tld=tld, pproc=PPROC, lang=lang, file=file))
 
         if DOCALIGNEXT != "bitextor":
@@ -995,31 +995,29 @@ elif "onlyPreprocessing" in config and config["onlyPreprocessing"]:
 
             for lang in TARGETLANGS:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{lang}.extracted.tokenized.xz".format(dir=data, tld=tld, pproc=PPROC,lang=lang))
-else:
-    OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    if "nmt" in config and config["nmt"]:
-        OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
-        OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
-
-    if "smt" in config and config["smt"]:
-        OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-        OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
-
-    #Optional TMX: if option enabled, TMX is generated; otherwise, tab-separated .sent file is generated
-    if "tmx" in config and config["tmx"]:
-        if "storeRawCorpus" in config and config["storeRawCorpus"]:
-            OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-        if "deduped" in config and config["deduped"]:
-            OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-        else:
-            OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
-    else:
+    if "onlyPreprocessing" not in config or not config["onlyPreprocessing"]:
         OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+        if "nmt" in config and config["nmt"]:
+            OUTPUT.append("{dir}/nmt-dir/evaluation/report".format(dir=transient))
+            OUTPUT.append("{dir}/nmt-dir-crawl/evaluation/report".format(dir=transient))
+
+        if "smt" in config and config["smt"]:
+            OUTPUT.append("{dir}/smt-dir/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+            OUTPUT.append("{dir}/smt-dir-crawl/steps/1/REPORTING_report.1.DONE".format(dir=transient))
+
+        #Optional TMX: if option enabled, TMX is generated
+        if "tmx" in config and config["tmx"]:
+            if "storeRawCorpus" in config and config["storeRawCorpus"]:
+                OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+            if "deduped" in config and config["deduped"]:
+                OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+            else:
+                OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
 
 rule all:
     input:
-        expand("{target}", target=OUTPUT),
-        expand("{preprocess}", preprocess=PPROCOUTPUT)
+        expand("{preprocess}", preprocess=PPROCOUTPUT),
+        expand("{target}", target=OUTPUT)
 
 #================================== SMT ======================================#
 
@@ -1259,6 +1257,7 @@ rule warc2preprocess:
         '{data}/preprocess/{{domain}}/concat.warc.gz'.format(data=data)
     output:
         hash='{data}/preprocess/{{domain}}/w2p/bitextorlang/plain_text_hashes.xz'.format(data=data),
+        plain=temp(expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS)),
         files=expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
         folder='{data}/preprocess/{{domain}}/w2p/bitextorlang'.format(data=data)
@@ -1282,7 +1281,8 @@ rule xzlangToBitextorLang:
         # '{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data)
         expand('{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang/{lang}', data=data, lang=PPROCLANGS)
     output:
-        expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
+        plain=temp(expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS, file=FILES)),
+        files=expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
         xzlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data),
         bitextorlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang'.format(data=data)
@@ -1297,9 +1297,10 @@ rule tokenize:
         tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
         lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang)
     output:
-        '{dir}/{lang}/plain_tokenized.xz'
+        tok='{dir}/{lang}/plain_tokenized.xz',
+        sent='{dir}/{lang}/plain_sentences.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" | xz -c > {output};'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1417,28 +1418,32 @@ rule aligndocumentsBitextor:
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
+# unless lang.extracted.tokenized.xz is required, execute docalign_extracted_rule (ambiguity workaround)
+ruleorder: docalign_extracted > docalign_extracted_and_tokenized
+
 rule docalign_extracted:
     input:
-        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_text.xz'.format(data=data, pproc=PPROC)
+        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
     output:
-        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.xz'.format(data=data)
+        '{dir}/docalign/{lang}.extracted.xz'
     params:
-        splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
-        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
+        docalign_folder='{dir}/docalign'
     shell:
         'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --splitter "{params.splitter}" --prune_type "words" --prune 80 --text {input.text}| xz -T 0 -c > {output};'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
 
-rule docalign_tokenize:
+rule docalign_extracted_and_tokenized:
     input:
-        text='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(data=data, pproc=PPROC)
+        sent='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC),
+        tok='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(pproc=PPROC)
     params:
-        docalign_folder='{data}/preprocess/{{target}}/docalign'.format(data=data)
+        docalign_folder='{dir}/docalign'
     output:
-        '{data}/preprocess/{{target}}/docalign/{{lang}}.extracted.tokenized.xz'.format(data=data)
+        sent_extracted='{dir}/docalign/{lang}.extracted.xz',
+        tok_extracted='{dir}/docalign/{lang}.extracted.tokenized.xz'
     shell:
         'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --tokenized --text {input.text} --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
+        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.sent} --tokenized_file {input.tok} --prune_type "words" --prune 80 --extracted_output {output.sent_extracted} --tokenized_output {output.tok_extracted}'
 
 rule docalign_translate_nmt:
     input:
@@ -1523,8 +1528,8 @@ rule docalign_matches:
 rule docalign_bitextor2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: '{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient)
@@ -1537,8 +1542,8 @@ rule docalign_bitextor2docalign_full:
 rule matches2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_text.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE)
@@ -1576,7 +1581,7 @@ rule alignsegments_hunalign:
     output:
         '{transient}/{{target}}/hunalign.segalign.indices.xz'.format(transient=transient)
     shell:
-        'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --lang1 {LANG1} --lang2 {LANG2} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --sent-tokeniser_sl "{SENTTOK1}" --sent-tokeniser_tl "{SENTTOK2}" | xz -T 0 > {output};'
+        'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" | xz -T 0 > {output};'
 
 rule alignsegments_bleualign:
     input:
@@ -1749,7 +1754,7 @@ rule mt_parallel_data:
          ,
          l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
     shell:
-         "xzcat -T 0 -f {input} | cut -f 3,4 | sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
+         "xzcat -T 0 -f {input} | cut -f 3,4 | LC_ALL=C sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
 
