@@ -21,10 +21,9 @@ from collections import Counter
 from functools import partial
 from multiprocessing import Pool
 
-from numpy import float32, isnan, clip
+from numpy import float32
 from scipy.sparse import vstack as sp_vstack
 from scipy.sparse import csr_matrix, lil_matrix
-from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.preprocessing import normalize
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../utils")
@@ -157,7 +156,7 @@ class DocumentVectorExtractor(object):
         self.ndocs_tl = 0
 
         def count_ngrams(corpus):
-            start = time.time()
+            # start = time.time()
             if jobs == 1:
                 for _, page in self.iterate_corpus(corpus):
                     self.ndocs += 1
@@ -169,8 +168,8 @@ class DocumentVectorExtractor(object):
                     pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
                 pool.close()
                 pool.join()
-            end = time.time()
-            sys.stderr.write("completed estimate_idf in {0:.5f}\n".format(end - start))
+            # end = time.time()
+            # sys.stderr.write("completed estimate_idf in {0:.5f}\n".format(end - start))
 
         count_ngrams(source_corpus)
         self.ndocs_sl = self.ndocs
@@ -269,7 +268,7 @@ class DocumentVectorExtractor(object):
         def err_cb(error):
             sys.stderr.write(str(error) + "\n")
 
-        start = time.time()
+        # start = time.time()
         if jobs == 1:
             for url, page in self.iterate_corpus(corpus):
                 url_list.append(url)
@@ -294,8 +293,8 @@ class DocumentVectorExtractor(object):
                 doc_idx += len(urls)
             pool.close()
             pool.join()
-        end = time.time()
-        sys.stderr.write("tfidf took {0:.5f}\n".format(end-start))
+        # end = time.time()
+        # sys.stderr.write("tfidf took {0:.5f}\n".format(end-start))
 
         m = csr_matrix(m, dtype=float32)
         return url_list, m
@@ -303,10 +302,9 @@ class DocumentVectorExtractor(object):
 
 class CosineDistanceScorer(object):
 
-    def __init__(self, extraction_mapper, min_count, metric='cosine',
+    def __init__(self, extraction_mapper, min_count,
                  smooth=0, threshold=0.1, batch_size=10000, jobs=1):
         self.name = "Cosine Distance Scorer"
-        self.metric = metric
         self.vector_extractor = DocumentVectorExtractor(
             extraction_mapper=extraction_mapper, min_count=min_count,
             smooth=smooth)
@@ -328,7 +326,7 @@ class CosineDistanceScorer(object):
 
         all_csr = None
 
-        start = time.time()
+        # start = time.time()
         if self.jobs == 1:
             normalize(y_csr, copy=False)
             normalize(x_csr, copy=False)
@@ -346,8 +344,8 @@ class CosineDistanceScorer(object):
                     all_csr = csr_matrix(r, dtype=float32)
                 else:
                     all_csr = sp_vstack((all_csr, r))
-        end = time.time()
-        sys.stderr.write("pairwise distances computed in {:.5f}\n".format(end-start))
+        # end = time.time()
+        # sys.stderr.write("pairwise distances computed in {:.5f}\n".format(end-start))
         return all_csr
 
     def munge_file_path(self, filepath):

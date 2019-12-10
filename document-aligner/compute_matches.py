@@ -96,7 +96,6 @@ if __name__ == "__main__":
         word_extractor = WordExtractor(n=args.ngram_size, ignore_set=None)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
-                                      metric='cosine',
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
                                       batch_size=args.batch_size,
