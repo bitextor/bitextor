@@ -398,10 +398,12 @@ mkcls: true
 ```yaml
 alignerCmd: "example/dummy-translate.sh"
 docAlignThreshold: 0.1
+docAlignWorkers: 2
 ```
 
 * `alignerCmd`: command to call the external MT script
 * `docAlignThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.0 by default
+* `docAlignWorkers`: number of parallel processes that will be run during document alignment; the default is 1 (no parallelization), and recommended values are between 1 and 4 
 
 #### Variables for document alignment using a home-brew neural MT system
 

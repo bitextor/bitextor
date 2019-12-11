@@ -139,6 +139,7 @@ def validate_args(config):
            'bleualign': {'type': 'boolean'},
            'docAlignThreshold': {'type': 'float'},
            'bleuAlignThreshold': {'type': 'float'},
+           'docAlignWorkers': {'type': 'integer'},
 
            'bicleaner': {'type': 'string'},
            'bicleanerThreshold': {'type': 'float'},
@@ -497,6 +498,11 @@ if "documentAligner" in config:
 else:
   MT_COMMAND=""
   DOCALIGNEXT="bitextor"
+
+if "docAlignWorkers" in config:
+  DOCALIGNPARALLEL = "-j " + str(config["docAlignWorkers"])
+else:
+  DOCALIGNPARALLEL = ""
 
 if "onlyPreprocessing" in config and config["onlyPreprocessing"]:
     DOCALIGNEXT="customMT"
@@ -1521,7 +1527,7 @@ rule docalign_matches:
     output:
         "{transient}/{{target}}/docalign/{l1}-{l2}.{{mttype}}.matches".format(transient=transient, l1=LANG1,l2=LANG2)
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
