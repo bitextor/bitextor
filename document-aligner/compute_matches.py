@@ -74,8 +74,10 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=10000)
     parser.add_argument('-j', '--jobs', type=int, default=1, dest='jobs')
     args = parser.parse_args()
-    if args.jobs == 0:
-        args.jobs = None
+
+    if args.jobs <= 0:
+        args.jobs = os.cpu_count() - args.jobs
+
     # sys.stderr.write("threshold: {0}\n".format(args.threshold))
     # sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 

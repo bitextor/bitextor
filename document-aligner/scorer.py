@@ -162,7 +162,7 @@ class DocumentVectorExtractor(object):
                     self.ndocs += 1
                     counts.update(set(self.ef.extract_single(page)))
             else:
-                pool = Pool(jobs)
+                pool = Pool(jobs-1)
                 for _, pages in self.iterate_corpus_in_batches(corpus, batch_size):
                     self.ndocs += len(pages)
                     pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
@@ -286,7 +286,7 @@ class DocumentVectorExtractor(object):
                     m[doc_idx, idx] = tf*idf
                 doc_idx += 1
         else:
-            pool = Pool(jobs)
+            pool = Pool(jobs-1)
             for urls, pages in self.iterate_corpus_in_batches(corpus, batch_size):
                 url_list.extend(urls)
                 pool.apply_async(self.process_documents, args=(doc_idx, pages,), callback=cb, error_callback=err_cb)
