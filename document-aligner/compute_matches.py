@@ -72,8 +72,11 @@ if __name__ == "__main__":
     parser.add_argument('--output_matches', help='output file', required=True)
     parser.add_argument('--threshold', type=float, default=0.1)
     parser.add_argument('--batch_size', type=int, default=10000)
-
+    parser.add_argument('-j', '--jobs', type=int, default=1, dest='jobs')
     args = parser.parse_args()
+
+    if args.jobs <= 0:
+        args.jobs = os.cpu_count() - args.jobs
 
     # sys.stderr.write("threshold: {0}\n".format(args.threshold))
     # sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
@@ -92,14 +95,13 @@ if __name__ == "__main__":
         open(args.output_matches, 'a').close()
 
     else:
-
         word_extractor = WordExtractor(n=args.ngram_size, ignore_set=None)
         scorer = CosineDistanceScorer(extraction_mapper=word_extractor,
                                       min_count=args.min_count,
-                                      metric='cosine',
                                       smooth=args.tfidfsmooth,
                                       threshold=args.threshold,
-                                      batch_size=args.batch_size)
+                                      batch_size=args.batch_size,
+                                      jobs=args.jobs)
 
         urls, m_csr = scorer.score(args.lang2, args.lang1)
         # sys.stderr.write(str(m_csr)+"\n")
