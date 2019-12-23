@@ -62,10 +62,10 @@ def match(score_matrix_csr, threshold):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--lang2', help='path to the extracted text', required=True)
-    parser.add_argument(
-        '--lang1', help='path to the translated foreign text', required=True)
+    parser.add_argument('--url1', help='path to the URL file for lang1, one URL per line', required=True)
+    parser.add_argument('--lang1', help='path to the tokenized translated foreign text, with one base64 document per line', required=True)
+    parser.add_argument('--url2', help='path to the URL file for lang2, one URL per line', required=True)
+    parser.add_argument('--lang2', help='path to the tokenized lang2 text, with one base64 document per line', required=True)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
     parser.add_argument('--tfidfsmooth', type=int, default=14)
@@ -103,7 +103,7 @@ if __name__ == "__main__":
                                       batch_size=args.batch_size,
                                       jobs=args.jobs)
 
-        urls, m_csr = scorer.score(args.lang2, args.lang1)
+        urls, m_csr = scorer.score(args.lang2, args.lang1, args.url2, args.url1)
         # sys.stderr.write(str(m_csr)+"\n")
         if m_csr is None:
             sys.stderr.write("WARNING: Documents do not contain any useful information to be used in alignment.\n")

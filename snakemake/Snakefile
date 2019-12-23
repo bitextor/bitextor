@@ -995,12 +995,6 @@ else:
             for file in FILES + ["plain_tokenized.xz", "plain_sentences.xz"]:
                 PPROCOUTPUT.append("{dir}/preprocess/{tld}/{pproc}/bitextorlang/{lang}/{file}".format(dir=data, tld=tld, pproc=PPROC, lang=lang, file=file))
 
-        if DOCALIGNEXT != "bitextor":
-            for lang in PPROCLANGS:
-                PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{lang}.extracted.xz".format(dir=data, tld=tld, pproc=PPROC,lang=lang))
-
-            for lang in TARGETLANGS:
-                PPROCOUTPUT.append("{dir}/preprocess/{tld}/docalign/{lang}.extracted.tokenized.xz".format(dir=data, tld=tld, pproc=PPROC,lang=lang))
     if "onlyPreprocessing" not in config or not config["onlyPreprocessing"]:
         OUTPUT.append("{dir}/{l1}-{l2}.sent.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
         if "nmt" in config and config["nmt"]:
@@ -1418,43 +1412,27 @@ rule aligndocumentsBitextor:
         '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
         '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
-        '{transient}'.format(transient=transient)+'/{target}/docalign.bitextor.xz'
+        '{transient}/{{target}}/{l1}-{l2}.bitextor.matches'.format(transient=transient, l1=LANG1, l2=LANG2)
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --lines1 $(xzcat {input[2]} | wc -l) --lines2 $(xzcat {input[3]} | wc -l) -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --lines1 $(xzcat {input[2]} | wc -l) --lines2 $(xzcat {input[3]} | wc -l) -n 1 -i converge -r /dev/null {input[0]} {input[1]} > {output}'
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
-# unless lang.extracted.tokenized.xz is required, execute docalign_extracted_rule (ambiguity workaround)
-ruleorder: docalign_extracted > docalign_extracted_and_tokenized
-
 rule docalign_extracted:
     input:
-        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
+        '{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
     output:
         '{dir}/docalign/{lang}.extracted.xz'
     params:
         docalign_folder='{dir}/docalign'
     shell:
         'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
-
-rule docalign_extracted_and_tokenized:
-    input:
-        sent='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC),
-        tok='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(pproc=PPROC)
-    params:
-        docalign_folder='{dir}/docalign'
-    output:
-        sent_extracted='{dir}/docalign/{lang}.extracted.xz',
-        tok_extracted='{dir}/docalign/{lang}.extracted.tokenized.xz'
-    shell:
-        'mkdir -p {params.docalign_folder}; '
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.sent} --tokenized_file {input.tok} --prune_type "words" --prune 80 --extracted_output {output.sent_extracted} --tokenized_output {output.tok_extracted}'
+        'xzcat -T 0 {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
 
 rule docalign_translate_nmt:
     input:
         source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
-        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
+        target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
         configFile = "{transient}/config.json".format(transient=transient),
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
     output:
@@ -1462,18 +1440,18 @@ rule docalign_translate_nmt:
     priority: 40
     shell:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
-        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
+        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 1 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
+        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
 
 rule docalign_translate_smt:
     input:
         source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
-        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2),
+        target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
     output:
         "{transient}/{{domain}}/docalign/{l1}.smt.extracted.translated.xz".format(transient=transient, l1=LANG1)
@@ -1486,14 +1464,13 @@ rule docalign_translate_smt:
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
-
 
 rule docalign_custom_translate:
     input:
         source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
-        target="{data}/preprocess/{{domain}}/docalign/{l2}.extracted.xz".format(data=data, l2=LANG2)
+        target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
     output:
         "{transient}/{{domain}}/docalign/{l1}.customMT.extracted.translated.xz".format(transient=transient, l1=LANG1)
     shell:
@@ -1503,8 +1480,16 @@ rule docalign_custom_translate:
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
+        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2| wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
+
+rule translated2base64:
+    input:
+        "{dir}/{prefix}.extracted.translated.xz"
+    output:
+        "{dir}/{prefix}.translated_sentences.xz"
+    shell:
+        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py > {output}"
 
 rule docalign_tokenize_translated:
     input:
@@ -1520,44 +1505,104 @@ rule docalign_tokenize_translated:
         'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | {PROFILING} "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
         'fi'
 
+rule translatedtokenized2base64:
+    input:
+        "{dir}/{prefix}.extracted.translated.tokenized.xz"
+    output:
+        "{dir}/{prefix}.translated_tokenized.xz"
+    shell:
+        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py > {output}"
+
 rule docalign_matches:
     input:
-        l1="{transient}/{{target}}/docalign/{l1}.{{mttype}}.extracted.translated.tokenized.xz".format(transient=transient,l1=LANG1),
-        l2="{data}/preprocess/{{target}}/docalign/{l2}.extracted.tokenized.xz".format(data=data, l2=LANG2)
+        l1="{transient}/{{target}}/docalign/{l1}.{{mttype}}.translated_tokenized.xz".format(transient=transient,l1=LANG1),
+        l2="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l2}/plain_tokenized.xz".format(data=data, pproc=PPROC, l2=LANG2),
+        u1="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l1}/url.xz".format(data=data, pproc=PPROC, l1=LANG1),
+        u2="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l2}/url.xz".format(data=data, pproc=PPROC, l2=LANG2),
     output:
-        "{transient}/{{target}}/docalign/{l1}-{l2}.{{mttype}}.matches".format(transient=transient, l1=LANG1,l2=LANG2)
+        "{transient}/{{target}}/{l1}-{l2}.{{mttype}}.matches".format(transient=transient, l1=LANG1,l2=LANG2)
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --url1 {input.u1} --lang1 {input.l1} --url2 {input.u2} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
-rule docalign_bitextor2docalign_full:
-    input:
-        indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-        tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: '{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient)
-    shell:
-        'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
-        'xzcat -T 0 {input.indices} | LC_ALL=C sort -nk1 > $sorted;'
-        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
-        'rm $sorted'
+################# BLEUALIGN RULES #################
 
-rule matches2docalign_full:
+rule matches2bleualign:
     input:
-        indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
+        indices='{transient}/{{target}}/{l1}-{l2}.{{docalignext}}.matches'.format(transient=transient, l1=LANG1, l2=LANG2),
         plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        translated1='{transient}/{{target}}/docalign/{l1}.{{docalignext}}.translated_sentences.xz'.format(transient=transient,l1=LANG1),
+    output: '{transient}/{{target}}/bleualign.docalign.{{docalignext}}.xz'.format(transient=transient)
+    params:
+        c1=lambda wildcards: 1 if wildcards.docalignext == 'bitextor' else 2,
+        c2=lambda wildcards: 2 if wildcards.docalignext == 'bitextor' else 3
+    shell:
+         '''
+        cut -f {params.c1},{params.c2} {input.indices} |
+        LC_ALL=C sort -nk1 |
+        {PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --columns1 {input.url1} {input.plain1} {input.translated1} --columns2 {input.url2} {input.plain2} |
+        awk -F\'\t\' \'{{print $2,$6,$3,$7,$4}}\' OFS=\'\t\' \ |
+        xz -T 0 -f > {output}' # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> text1translated
+        '''
+
+rule bleualign:
+    input:
+        "{{dir}}/bleualign.docalign.{extension}.xz".format(extension=DOCALIGNEXT)
+    output:
+        "{dir}/bleualign/align.info.gz"
+    shell:
+        "mkdir -p {wildcards.dir}/bleualign; "
+        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --documents {input} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.dir}/bleualign"
+
+rule alignsegments_bleualign:
+    input:
+        aligned_urls="{dir}/bleualign/align.info.gz"
+    output:
+        alignments='{dir}/bleualign.segalign.xz'
+    run:
+        with lzma.open(output.alignments, "wt") as algFile:
+            with open_gzip_or_plain(input.aligned_urls) as urlsFile:
+                for urlAlg in urlsFile:
+                    #print("urlAlg", urlAlg)
+                    urlAlg = urlAlg.strip()
+                    if len(urlAlg) == 0:
+                        continue
+                    id=urlAlg.split("\t")[0]
+                    urls="\t".join(urlAlg.strip().split("\t")[1:])
+                    filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"
+                    with open_gzip_or_plain(filename) as sentFile:
+                        for line in sentFile:
+                            if line.strip():
+                                algFile.write(urls+"\t"+line)
+        os.sync()
+
+################# HUNALIGN RULES #################
+
+rule matches2hunalign:
+    input:
+        indices='{transient}/{{target}}/{l1}-{l2}.{{docalignext}}.matches'.format(transient=transient, l1=LANG1, l2=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
+        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
         tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
         tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE)
+    output: '{transient}/{{target}}/hunalign.docalign.{{docalignext}}.xz'.format(transient=transient)
+    params:
+        c1=lambda wildcards: 1 if wildcards.docalignext == 'bitextor' else 2,
+        c2=lambda wildcards: 2 if wildcards.docalignext == 'bitextor' else 3
     shell:
-        'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
-        'LC_ALL=C sort -nk2 {input.indices} > $sorted;'
-        '{PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --indices $sorted --column1 1 --column2 2 --text1 {input.plain1} --text2 {input.plain2} --tokenized1 {input.tok1} --tokenized2 {input.tok2} | xz -T 0 -c > {output};'
-        'rm $sorted'
+         '''
+        cut -f {params.c1},{params.c2} {input.indices} |
+        LC_ALL=C sort -nk1  |
+        {PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} |
+        awk -F\'\t\' \'{{print $2,$6,$3,$7,$4,$8}}\' OFS=\'\t\' |
+        xz -T 0 -f > {output} # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> tok1 <tab> tok2
+        '''
 
 rule hunaligndic:
     input:
@@ -1583,58 +1628,13 @@ rule hunaligndic:
 rule alignsegments_hunalign:
     input:
         '{transientdir}/hunalign_dic'.format(transientdir=transient, extension=DOCALIGNEXT),
-        "{transient}/{{target}}/docalign.full.{extension}.xz".format(transient=transient,extension=DOCALIGNEXT)
+        "{transient}/{{target}}/hunalign.docalign.{extension}.xz".format(transient=transient,extension=DOCALIGNEXT)
     output:
-        '{transient}/{{target}}/hunalign.segalign.indices.xz'.format(transient=transient)
+        '{transient}/{{target}}/hunalign.segalign.xz'.format(transient=transient)
     shell:
         'xzcat -T 0 {input[1]} | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input[0]} -t {TMPDIR} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" | xz -T 0 > {output};'
 
-rule alignsegments_bleualign:
-    input:
-        aligned_urls="{dir}/bleualign/align.info.gz"
-    output:
-        alignments='{dir}/bleualign.segalign.indices.xz'
-    run:
-        with lzma.open(output.alignments, "wt") as algFile:
-            with open_gzip_or_plain(input.aligned_urls) as urlsFile:
-                for urlAlg in urlsFile:
-                    #print("urlAlg", urlAlg)
-                    urlAlg = urlAlg.strip()
-                    if len(urlAlg) == 0:
-                        continue
-                    id=urlAlg.split("\t")[0]
-                    urls="\t".join(urlAlg.strip().split("\t")[1:])
-                    filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"
-                    with open_gzip_or_plain(filename) as sentFile:
-                        for line in sentFile:
-                            if line.strip():
-                                algFile.write(urls+"\t"+line)
-        os.sync()
-
-rule segalign_indices2url:
-    input:
-        segalign='{transient}/{{target}}/{segaligner}.segalign.indices.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
-        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-    output:
-        segalign='{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
-    run:
-        lang1_dict = {}
-        lang2_dict = {}
-        counter = 1
-        with lzma.open(input.url1, "rt") as url_reader:
-            for line in url_reader:
-                lang1_dict[counter] = line.strip()
-                counter = counter + 1
-        counter = 1
-        with lzma.open(input.url2, "rt") as url_reader:
-            for line in url_reader:
-                lang2_dict[counter] = line.strip()
-                counter = counter + 1
-        with lzma.open(input.segalign, "rt") as reader, lzma.open(output.segalign, "wt") as writer:
-            for line in reader:
-                fields = line.strip().split('\t')
-                writer.write('{}\t{}\t{}\n'.format(lang1_dict[int(fields[0])], lang2_dict[int(fields[1])], "\t".join(fields[2:])))
+##################################################
 
 rule deferred_documents:
     input:
@@ -1763,20 +1763,6 @@ rule mt_parallel_data:
          "xzcat -T 0 -f {input} | cut -f 3,4 | LC_ALL=C sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
          "rm corpus"
-
-################# BLEUALIGN RULES #################
-
-rule bleualign:
-    input:
-        extracted_l1="{data}/preprocess/{{target}}/docalign/{l1}.extracted.xz".format(data=data,l1=LANG1),
-        extracted_l2="{data}/preprocess/{{target}}/docalign/{l2}.extracted.xz".format(data=data,l2=LANG2),
-        translated="{transient}/{{target}}/docalign/{l1}.{mttype}.extracted.translated.xz".format(transient=transient,l1=LANG1,mttype=DOCALIGNEXT),
-        matches="{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches".format(transient=transient,l1=LANG1,l2=LANG2,mttype=DOCALIGNEXT)
-    output:
-        "{transient}/{{target}}/bleualign/align.info.gz".format(transient=transient)
-    shell:
-        "mkdir -p {transient}/{wildcards.target}/bleualign; "
-        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --text1 {input.extracted_l1} --text2 {input.extracted_l2} --text1translated {input.translated} --matches {input.matches} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {transient}/{wildcards.target}/bleualign"
 
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
