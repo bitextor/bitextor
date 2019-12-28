@@ -117,6 +117,7 @@ oparser.add_argument('--output', dest='output', help='Output WARC file', default
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
+oparser.add_argument('--pdfpass', dest='pdfpass', help='Pass PDFs verbatime to file', default=None)
 oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you to fix possible encoding problems',
                     default=False)
 oparser.add_argument('--cleanhtml', action='store_true', help='Clean HTML to remove javascript, css and head tags',
@@ -127,6 +128,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 
 f = None
 fo = None
+po = None
 
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
@@ -142,7 +144,10 @@ if options.output == sys.stdout:
 else:
     fo = WARCWriter(open(options.output, 'wb'), gzip=True)
 
-if options.pdfextract:
+if options.pdfpass is not None:
+    po = WARCWriter(open(options.pdfpass, 'wb'), gzip=True)
+
+if not options.pdfpass and options.pdfextract:
     extractor = ExtrP()
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
@@ -216,6 +221,10 @@ for record in f:
 
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
+        if options.pdfpass:
+            new_record = po.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(payload), http_headers=http_headers)
+            po.write_record(new_record)
+            continue ### do not process further!
         if options.pdfextract:
             payloads = pdfextract(payload, extractor)
         else:
