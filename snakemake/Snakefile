@@ -256,11 +256,11 @@ data=config["dataDir"]
 PROFILING=""
 
 if "giawarc" in config and config["giawarc"]:
-    PPROC = "giawarc-xzlang"
-    FILES=["mime.xz", "url.xz"]
+    PPROC = "giawarc"
+    FILES=["mime.gz", "url.gz"]
 else:
     PPROC = "w2p"
-    FILES=["deboilerplate_html.xz", "normalized_html.xz", "mime.xz", "url.xz"]
+    FILES=["deboilerplate_html.gz", "normalized_html.gz", "mime.gz", "url.gz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGSOPT = "--langs " + config['preprocessLangs']
@@ -992,8 +992,8 @@ if "onlyConcat" in config and config["onlyConcat"]:
 else:
     for tld in domainKey2Hosts.keys():
         for lang in PPROCLANGS:
-            for file in FILES + ["plain_tokenized.xz", "plain_sentences.xz"]:
-                PPROCOUTPUT.append("{dir}/preprocess/{tld}/{pproc}/bitextorlang/{lang}/{file}".format(dir=data, tld=tld, pproc=PPROC, lang=lang, file=file))
+            for file in FILES + ["plain_tokenized.gz", "plain_sentences.gz"]:
+                PPROCOUTPUT.append("{dir}/preprocess/{tld}/{pproc}/{lang}/{file}".format(dir=data, tld=tld, pproc=PPROC, lang=lang, file=file))
 
         if DOCALIGNEXT != "bitextor":
             for lang in PPROCLANGS:
@@ -1233,86 +1233,72 @@ rule concat_subdomains:
         shell(cmd)
 
 #================================== PREPROCESSING ======================================#
-# Preprocessing using giawarc with 'xzlang' format
-# Writes output in giawarc-xzlang/xzlang
-# Produces a file for each language found
+# Preprocessing using giawarc with 'bitextorlang' format using GZip compression
+# Writes output in {data}/preprocess/{domain}/giawarc
 rule giawarc:
     input:
         '{data}/preprocess/{{domain}}/concat.warc.gz'.format(data=data)
     output:
-        files=expand("{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang/{lang}", data=data, lang=PPROCLANGS),
-        hash='{data}/preprocess/{{domain}}/giawarc-xzlang/plain_text_hashes.xz'.format(data=data)
+        plain=temp(expand('{data}/preprocess/{{domain}}/giawarc/{lang}/plain_text.gz', data=data, lang=PPROCLANGS)),
+        files=expand("{data}/preprocess/{{domain}}/giawarc/{lang}/{file}", data=data, lang=PPROCLANGS, file=FILES),
+        hash='{data}/preprocess/{{domain}}/giawarc/plain_text_hashes.xz'.format(data=data)
     params:
-        folder="{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang".format(data=data)
+        folder="{data}/preprocess/{{domain}}/giawarc".format(data=data)
     priority: 8
     threads: 2
     shell:
         'mkdir -p {params.folder};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f xzlang -o {params.folder} -l {LANGID} --output_hash {output.hash} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} );'
+        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bilang -o {params.folder} -l {LANGID} --output_hash {output.hash} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} );'
         'for lang in {PPROCLANGS}; do '
-        'if [ ! -f {params.folder}/$lang ] ; '
+        'if [ ! -f {params.folder}/$lang/plain_text.gz ] ; '
         'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'
-        'touch {params.folder}/$lang; xz {params.folder}/$lang ; mv {params.folder}/$lang.xz {params.folder}/$lang; '
+        'mkdir -p {params.folder}/$lang;'
+        'touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url ;'
+        'gzip {params.folder}/$lang/*;'
         'fi; done'
 
-# Preprocssing using bitextor-warc2preprocess with 'bitextolang' format
-# Writes output in w2p/bitextorlang
-# Produces a folder for each language found
+# Preprocssing using bitextor-warc2preprocess with 'bitextorlang' format with GZip compression
+# Writes output in {data}/preprocess/{domain}/w2p
 rule warc2preprocess:
     input:
         '{data}/preprocess/{{domain}}/concat.warc.gz'.format(data=data)
     output:
-        hash='{data}/preprocess/{{domain}}/w2p/bitextorlang/plain_text_hashes.xz'.format(data=data),
-        plain=temp(expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS)),
-        files=expand('{data}/preprocess/{{domain}}/w2p/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
+        hash='{data}/preprocess/{{domain}}/w2p/plain_text_hashes.xz'.format(data=data),
+        plain=temp(expand('{data}/preprocess/{{domain}}/w2p/{lang}/plain_text.gz', data=data, lang=PPROCLANGS)),
+        files=expand('{data}/preprocess/{{domain}}/w2p/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
-        folder='{data}/preprocess/{{domain}}/w2p/bitextorlang'.format(data=data)
+        folder='{data}/preprocess/{{domain}}/w2p'.format(data=data)
     priority: 8
     threads: 2
     shell:
         'mkdir -p {params.folder};'
-        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}; '
         'for lang in {PPROCLANGS}; do '
-        'if [ ! -f {params.folder}/$lang/plain_text.xz ]; '
+        'if [ ! -f {params.folder}/$lang/plain_text.gz ]; '
         'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'
         'mkdir -p {params.folder}/$lang;'
         'touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url {params.folder}/$lang/normalized_html {params.folder}/$lang/deboilerplate_html ;'
-        'xz {params.folder}/$lang/*;'
+        'gzip {params.folder}/$lang/*;'
         'fi ; done'
 
-# Converts 'xzlang' output to 'bitextorlang' format
-# Currently used for giawarc xzlang -> bitextorlang conversion
-rule xzlangToBitextorLang:
-    input:
-        # '{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data)
-        expand('{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang/{lang}', data=data, lang=PPROCLANGS)
-    output:
-        plain=temp(expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/plain_text.xz', data=data, lang=PPROCLANGS, file=FILES)),
-        files=expand('{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
-    params:
-        xzlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/xzlang'.format(data=data),
-        bitextorlang_folder='{data}/preprocess/{{domain}}/giawarc-xzlang/bitextorlang'.format(data=data)
-    shell:
-        '{PROFILING} nice ionice -c 3 ~/go/bin/bitextorlang -c xz -o {params.bitextorlang_folder} -f bitextorlang {params.xzlang_folder} ;'
-
-# tokenize every bitextorlang/{lang}/plain_text.xz to obtain bitextorlang/{lang}/plain_tokenized.xz
+# tokenize every bitextorlang/{lang}/plain_text.gz to obtain bitextorlang/{lang}/plain_tokenized.gz
 rule tokenize:
-    input: '{dir}/{lang}/plain_text.xz'
+    input: '{dir}/{lang}/plain_text.gz'
     params:
         splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
         tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
         lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang)
     output:
-        tok='{dir}/{lang}/plain_tokenized.xz',
-        sent='{dir}/{lang}/plain_sentences.xz'
+        tok='{dir}/{lang}/plain_tokenized.gz',
+        sent='{dir}/{lang}/plain_sentences.gz'
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
     input:
-        text1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data,pproc=PPROC,lang=LANG1),
-        text2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data,pproc=PPROC,lang=LANG2),
+        text1='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data,pproc=PPROC,lang=LANG1),
+        text2='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data,pproc=PPROC,lang=LANG2),
     output:
         '{transient}/{{target}}/idx.xz'.format(transient=transient)
     shell:
@@ -1339,9 +1325,8 @@ rule idx2ridx_l2tol1:
 rule ridx2imagesetoverlap:
     input:
         '{transient}/{{target}}/{{num}}.ridx.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format(data=data,pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format(data=data,pproc=PPROC,LANG2=LANG2)
-
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/deboilerplate_html.gz'.format(data=data,pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/deboilerplate_html.gz'.format(data=data,pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.imgoverlap.xz'
     shell:
@@ -1350,8 +1335,8 @@ rule ridx2imagesetoverlap:
 rule imagesetoverlap2structuredistance:
     input:
         '{transient}/{{target}}/{{num}}.imgoverlap.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}/{{target}}/{{num}}.structuredistance.xz'.format(transient=transient)
     shell:
@@ -1360,10 +1345,10 @@ rule imagesetoverlap2structuredistance:
 rule structuredistance2urldistance:
     input:
         '{transient}/{{target}}/{{num}}.structuredistance.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG2=LANG2),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG2=LANG2),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
 
     output:
         '{transient}/{{target}}/{{num}}.urldistance.xz'.format(transient=transient)
@@ -1374,10 +1359,10 @@ rule structuredistance2urldistance:
 rule urldistance2mutuallylinked:
     input:
         '{transient}/{{target}}/{{num}}.urldistance.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG2=LANG2),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG2=LANG2),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}/{{target}}/{{num}}.mutuallylinked.xz'.format(transient=transient)
     shell:
@@ -1386,8 +1371,8 @@ rule urldistance2mutuallylinked:
 rule mutuallylinked2urlscomparison:
     input:
         '{transient}/{{target}}/{{num}}.mutuallylinked.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}/{{target}}/{{num}}.urlscomparison.xz'.format(transient=transient)
     shell:
@@ -1396,8 +1381,8 @@ rule mutuallylinked2urlscomparison:
 rule urlscomparison2urlsoverlap:
     input:
         '{transient}/{{target}}/{{num}}.urlscomparison.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deboilerplate_html.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/deboilerplate_html.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}'.format(transient=transient)+'/{target}/{num}.urlsoverlap.xz'
     shell:
@@ -1415,12 +1400,12 @@ rule aligndocumentsBitextor:
     input:
         '{transient}/{{target}}/1.rank.xz'.format(transient=transient),
         '{transient}/{{target}}/2.rank.xz'.format(transient=transient),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz'.format(data=data, pproc=PPROC,LANG1=LANG1),
-        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz'.format(data=data, pproc=PPROC,LANG2=LANG2)
+        '{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz'.format(data=data, pproc=PPROC,LANG1=LANG1),
+        '{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz'.format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         '{transient}'.format(transient=transient)+'/{target}/docalign.bitextor.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --lines1 $(xzcat {input[2]} | wc -l) --lines2 $(xzcat {input[3]} | wc -l) -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
+        '{PROFILING} {BITEXTOR}/bitextor-align-documents.py --lines1 $(zcat {input[2]} | wc -l) --lines2 $(zcat {input[3]} | wc -l) -n 1 -i converge -r /dev/null {input[0]} {input[1]} | xz -T 0 > {output}'
 
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
@@ -1429,7 +1414,7 @@ ruleorder: docalign_extracted > docalign_extracted_and_tokenized
 
 rule docalign_extracted:
     input:
-        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
+        text='{{dir}}/{pproc}/{{lang}}/plain_sentences.gz'.format(pproc=PPROC)
     output:
         '{dir}/docalign/{lang}.extracted.xz'
     params:
@@ -1440,8 +1425,8 @@ rule docalign_extracted:
 
 rule docalign_extracted_and_tokenized:
     input:
-        sent='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC),
-        tok='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_tokenized.xz'.format(pproc=PPROC)
+        sent='{{dir}}/{pproc}/{{lang}}/plain_sentences.gz'.format(pproc=PPROC),
+        tok='{{dir}}/{pproc}/{{lang}}/plain_tokenized.gz'.format(pproc=PPROC)
     params:
         docalign_folder='{dir}/docalign'
     output:
@@ -1534,10 +1519,10 @@ rule docalign_matches:
 rule docalign_bitextor2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign.bitextor.xz'.format(transient=transient),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-        tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_sentences.gz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_sentences.gz'.format(data=data, pproc=PPROC, lang=LANG2),
+        tok1='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data, pproc=PPROC, lang=LANG1),
+        tok2='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: '{transient}/{{target}}/docalign.full.bitextor.xz'.format(transient=transient)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
@@ -1548,10 +1533,10 @@ rule docalign_bitextor2docalign_full:
 rule matches2docalign_full:
     input:
         indices='{transient}/{{target}}/docalign/{l1}-{l2}.{mttype}.matches'.format(transient=transient, l1=LANG1, l2=LANG2, mttype=MTTYPE),
-        plain1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        plain2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_sentences.xz'.format(data=data, pproc=PPROC, lang=LANG2),
-        tok1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        tok2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/plain_tokenized.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        plain1='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_sentences.gz'.format(data=data, pproc=PPROC, lang=LANG1),
+        plain2='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_sentences.gz'.format(data=data, pproc=PPROC, lang=LANG2),
+        tok1='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data, pproc=PPROC, lang=LANG1),
+        tok2='{data}/preprocess/{{target}}/{pproc}/{lang}/plain_tokenized.gz'.format(data=data, pproc=PPROC, lang=LANG2),
     output: '{transient}/{{target}}/docalign.full.{extension}.xz'.format(transient=transient, extension=MTTYPE)
     shell:
         'sorted=$(mktemp "{TMPDIR}/docalign.sorted.XXXXXX");'
@@ -1614,20 +1599,20 @@ rule alignsegments_bleualign:
 rule segalign_indices2url:
     input:
         segalign='{transient}/{{target}}/{segaligner}.segalign.indices.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
-        url1='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG1),
-        url2='{data}/preprocess/{{target}}/{pproc}/bitextorlang/{lang}/url.xz'.format(data=data, pproc=PPROC, lang=LANG2),
+        url1='{data}/preprocess/{{target}}/{pproc}/{lang}/url.gz'.format(data=data, pproc=PPROC, lang=LANG1),
+        url2='{data}/preprocess/{{target}}/{pproc}/{lang}/url.gz'.format(data=data, pproc=PPROC, lang=LANG2),
     output:
         segalign='{transient}/{{target}}/{segaligner}.segalign.xz'.format(transient=transient, segaligner=SEGMENTALIGNER),
     run:
         lang1_dict = {}
         lang2_dict = {}
         counter = 1
-        with lzma.open(input.url1, "rt") as url_reader:
+        with gzip.open(input.url1, "rt") as url_reader:
             for line in url_reader:
                 lang1_dict[counter] = line.strip()
                 counter = counter + 1
         counter = 1
-        with lzma.open(input.url2, "rt") as url_reader:
+        with gzip.open(input.url2, "rt") as url_reader:
             for line in url_reader:
                 lang2_dict[counter] = line.strip()
                 counter = counter + 1
@@ -1638,27 +1623,27 @@ rule segalign_indices2url:
 
 rule deferred_documents:
     input:
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/normalized_html.xz".format(data=data, pproc=PPROC),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/url.xz".format(data=data, pproc=PPROC)
+        "{data}/preprocess/{{target}}/{pproc}/{{lang}}/normalized_html.gz".format(data=data, pproc=PPROC),
+        "{data}/preprocess/{{target}}/{pproc}/{{lang}}/url.gz".format(data=data, pproc=PPROC)
     output:
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/html5lib_plain_text.xz".format(data=data, pproc=PPROC),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/deferred_documents.xz".format(data=data, pproc=PPROC)
+        "{data}/preprocess/{{target}}/{pproc}/{{lang}}/html5lib_plain_text.xz".format(data=data, pproc=PPROC),
+        "{data}/preprocess/{{target}}/{pproc}/{{lang}}/deferred_documents.xz".format(data=data, pproc=PPROC)
     shell:
-        'paste <(xzcat {input[0]}) <(xzcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
+        'paste <(zcat {input[0]}) <(zcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
 
 rule deferred_segments:
     input:
         "{transient}/{{target}}/{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER, transient=transient),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG2=LANG2),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz".format(data=data, pproc=PPROC,LANG2=LANG2),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG2=LANG2)
+        "{data}/preprocess/{{target}}/{pproc}/{LANG1}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz".format(data=data, pproc=PPROC,LANG1=LANG1),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG1}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG2}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG2=LANG2),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz".format(data=data, pproc=PPROC,LANG2=LANG2),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG2}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG2=LANG2)
     output:
         "{transient}/{{target}}/{segaligner}.deferred.segalign.xz".format(transient=transient,segaligner=SEGMENTALIGNER)
     shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(xzcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) > {output}'
 
 rule cleansegments:
     input:

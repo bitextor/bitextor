@@ -29,6 +29,7 @@ import importlib
 import alcazar.bodytext
 import logging
 import lzma
+import gzip
 from selectolax.parser import HTMLParser
 from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
@@ -100,6 +101,15 @@ def convert_encoding(data):
                 pass
     return None, ''
 
+
+def open_xz_or_gzip(path, mode):
+    if path[-3:] == '.gz':
+        return gzip.open(path, mode)
+    elif path[-3:] == '.xz':
+        return lzma.open(path, mode)
+    else:
+        return open(path, mode)
+
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
                 "normalization, deduplication, MIME and language identification, and boilerplate removing. The result"
@@ -121,6 +131,7 @@ oparser.add_argument('--xzlang', action="store_true", help='Separate output into
 oparser.add_argument('--langs', dest="langs", default="",
                      help='List of languages to include or ignore (%%): l1,l2,%%l3,%%l4')
 oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
+oparser.add_argument('--compression', dest='compression', default='gz', choices={'xz','gz'}, help='Compression type for the output files')
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -169,12 +180,12 @@ if not os.path.exists(options.outDir):
     os.makedirs(options.outDir)
 
 if options.inputHash:
-    with lzma.open(options.inputHash,"r") as fh:
+    with open_xz_or_gzip(options.inputHash, 'r') as fh:
         for line in fh:
             previous_crawl_hashes.add(int(line.strip()))
 
 if options.outputHash:
-    plainTextHashFile = lzma.open(options.outputHash, "w")
+    plainTextHashFile = open_xz_or_gzip(options.outputHash, "w")
 
 files_dict = dict()
 
@@ -233,17 +244,17 @@ for record in f:
     if not options.xzlang and lang not in files_dict:
         if not os.path.exists(options.outDir + "/" + lang):
             os.makedirs(options.outDir + "/" + lang)
-        urlFile = lzma.open(options.outDir + "/" + lang + "/url.xz", "w")
-        encodingFile = lzma.open(options.outDir + "/" + lang + "/encoding.xz", "w")
-        mimeFile = lzma.open(options.outDir + "/" + lang + "/mime.xz", "w")
-        normHtmlFile = lzma.open(options.outDir + "/" + lang + "/normalized_html.xz", "w")
-        plainTextFile = lzma.open(options.outDir + "/" + lang + "/plain_text.xz", "w")
+        urlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/url." + options.compression, "w")
+        encodingFile = open_xz_or_gzip(options.outDir + "/" + lang + "/encoding." + options.compression, "w")
+        mimeFile = open_xz_or_gzip(options.outDir + "/" + lang + "/mime." + options.compression, "w")
+        normHtmlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/normalized_html." + options.compression, "w")
+        plainTextFile = open_xz_or_gzip(options.outDir + "/" + lang + "/plain_text." + options.compression, "w")
         if options.boilerpipe:
-            deboilFile = lzma.open(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz", "w")
+            deboilFile = open_xz_or_gzip(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression, "w")
             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
         else:
-            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz") and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html.xz"):
-                os.symlink("normalized_html.xz", options.outDir + "/" + lang + "/" + "deboilerplate_html.xz")
+            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression) and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression):
+                os.symlink("normalized_html." + options.compression, options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression)
             files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
     
     # If enabled, remove boilerplate HTML

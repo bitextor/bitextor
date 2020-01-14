@@ -20,7 +20,7 @@ import os
 import argparse
 import base64
 import string
-import lzma
+import gzip
 from external_processor import ExternalTextProcessor
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
@@ -60,7 +60,7 @@ oparser.add_argument('--tokenized-output', default="plain_tokenized.xz", dest='t
 
 options = oparser.parse_args()
 
-with open_xz_or_gzip_or_plain(options.text) as reader, lzma.open(options.sent_output, "w") as sent_writer, lzma.open(options.tok_output, "w") as tok_writer:
+with open_xz_or_gzip_or_plain(options.text) as reader, gzip.open(options.sent_output, "w") as sent_writer, gzip.open(options.tok_output, "w") as tok_writer:
     for line in reader:
         encoded_text = line.strip()
         sentences, tokenized = extract_encoded_text(encoded_text, options.splitter, options.tokenizer, options.lemmatizer)
