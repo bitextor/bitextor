@@ -988,7 +988,7 @@ PPROCOUTPUT=[]
 
 if "onlyConcat" in config and config["onlyConcat"]:
     for tld in domainKey2Hosts.keys():
-        OUTPUT.append("{dir}/warc/{tld}/concat.warc.gz".format(dir=data, tld=tld))
+        OUTPUT.append("{dir}/preprocess/{tld}/concat.warc.gz".format(dir=data, tld=tld))
 else:
     for tld in domainKey2Hosts.keys():
         for lang in PPROCLANGS:
