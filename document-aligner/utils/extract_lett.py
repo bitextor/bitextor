@@ -16,7 +16,6 @@
 
 import argparse
 import base64
-import lzma
 import sys
 import os
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
 
     if args.tok_file:
         with open_xz_or_gzip_or_plain(args.sent_file) as sent_reader, open_xz_or_gzip_or_plain(args.tok_file) as tok_reader, \
-                lzma.open(args.out_extracted, "wt") as sent_writer, lzma.open(args.out_tokenized, "wt") as tok_writer:
+                open_xz_or_gzip_or_plain(args.out_extracted, "wt") as sent_writer, open_xz_or_gzip_or_plain(args.out_tokenized, "wt") as tok_writer:
             for sent_doc in sent_reader:
                 counter = counter + 1
                 tok_doc = next(tok_reader, None)
@@ -72,7 +71,7 @@ if __name__ == "__main__":
                     tok_writer.write("{}\t{}\n".format(str(counter), tok_line))
 
     else:
-        with open_xz_or_gzip_or_plain(args.sent_file) as sent_reader, lzma.open(args.out_extracted, "wt") as sent_writer:
+        with open_xz_or_gzip_or_plain(args.sent_file) as sent_reader, open_xz_or_gzip_or_plain(args.out_extracted, "wt") as sent_writer:
             for line in sent_reader:
                 counter = counter + 1
                 text = base64.b64decode(line.strip()).decode("utf-8")
