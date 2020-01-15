@@ -48,6 +48,7 @@ Furthermore, most of the scripts in Bitextor are written in Python 3. Because of
 Some additional Python libraries are required. They can be installed automatically with the tool pip by running (use without `sudo` if you are running in a virtualenv):
 
 ```bash
+pip3 install --upgrade pip
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt
 pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
