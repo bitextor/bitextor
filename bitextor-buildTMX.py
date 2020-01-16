@@ -153,11 +153,12 @@ prev_hash = ""
 prev_fieldsdict = {}
 urls1 = set()
 urls2 = set()
+columns = options.columns.split(',')
+    
 for line in reader:
     idcounter += 1
     fields = line.split("\t")
     fields[-1] = fields[-1].strip()
-    columns = options.columns.split(',')
     fieldsdict = dict()
     line_hash = ""
     for field, column in zip(fields, columns):
