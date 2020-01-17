@@ -1489,7 +1489,7 @@ rule translated2base64:
     output:
         "{dir}/{prefix}.translated_sentences.xz"
     shell:
-        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py > {output}"
+        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule docalign_tokenize_translated:
     input:
@@ -1511,18 +1511,16 @@ rule translatedtokenized2base64:
     output:
         "{dir}/{prefix}.translated_tokenized.xz"
     shell:
-        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py > {output}"
+        "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule docalign_matches:
     input:
         l1="{transient}/{{target}}/docalign/{l1}.{{mttype}}.translated_tokenized.xz".format(transient=transient,l1=LANG1),
-        l2="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l2}/plain_tokenized.xz".format(data=data, pproc=PPROC, l2=LANG2),
-        u1="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l1}/url.xz".format(data=data, pproc=PPROC, l1=LANG1),
-        u2="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l2}/url.xz".format(data=data, pproc=PPROC, l2=LANG2),
+        l2="{data}/preprocess/{{target}}/{pproc}/bitextorlang/{l2}/plain_tokenized.xz".format(data=data, pproc=PPROC, l2=LANG2)
     output:
         "{transient}/{{target}}/{l1}-{l2}.{{mttype}}.matches".format(transient=transient, l1=LANG1,l2=LANG2)
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --url1 {input.u1} --lang1 {input.l1} --url2 {input.u2} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
+        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
 
 #================================== SEGMENT ALIGNMENT ==================================#
 
@@ -1545,40 +1543,17 @@ rule matches2bleualign:
         cut -f {params.c1},{params.c2} {input.indices} |
         LC_ALL=C sort -nk1 |
         {PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --columns1 {input.url1} {input.plain1} {input.translated1} --columns2 {input.url2} {input.plain2} |
-        awk -F\'\t\' \'{{print $2,$6,$3,$7,$4}}\' OFS=\'\t\' \ |
-        xz -T 0 -f > {output}' # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> text1translated
+        awk -F\'\t\' \'{{print $2,$6,$3,$7,$4}}\' OFS=\'\t\' |
+        xz -T 0 -f > {output} # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> text1translated
         '''
-
-rule bleualign:
-    input:
-        "{{dir}}/bleualign.docalign.{extension}.xz".format(extension=DOCALIGNEXT)
-    output:
-        "{dir}/bleualign/align.info.gz"
-    shell:
-        "mkdir -p {wildcards.dir}/bleualign; "
-        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --documents {input} --doc-threshold {DOC_THRESHOLD} --bleu-threshold {BLEU_THRESHOLD} --output-dir {wildcards.dir}/bleualign"
 
 rule alignsegments_bleualign:
     input:
-        aligned_urls="{dir}/bleualign/align.info.gz"
+        "{{dir}}/bleualign.docalign.{extension}.xz".format(extension=DOCALIGNEXT)
     output:
-        alignments='{dir}/bleualign.segalign.xz'
-    run:
-        with lzma.open(output.alignments, "wt") as algFile:
-            with open_gzip_or_plain(input.aligned_urls) as urlsFile:
-                for urlAlg in urlsFile:
-                    #print("urlAlg", urlAlg)
-                    urlAlg = urlAlg.strip()
-                    if len(urlAlg) == 0:
-                        continue
-                    id=urlAlg.split("\t")[0]
-                    urls="\t".join(urlAlg.strip().split("\t")[1:])
-                    filename=wildcards.dir+"/bleualign/aligned."+str(id)+".gz"
-                    with open_gzip_or_plain(filename) as sentFile:
-                        for line in sentFile:
-                            if line.strip():
-                                algFile.write(urls+"\t"+line)
-        os.sync()
+        "{dir}/bleualign.segalign.xz"
+    shell:
+        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --documents {input} --bleu-threshold {BLEU_THRESHOLD} | xz -T 0 -c > {output}"
 
 ################# HUNALIGN RULES #################
 
@@ -1598,7 +1573,7 @@ rule matches2hunalign:
     shell:
          '''
         cut -f {params.c1},{params.c2} {input.indices} |
-        LC_ALL=C sort -nk1  |
+        LC_ALL=C sort -nk1 |
         {PROFILING} python3 {BITEXTOR}/bitextor-build-docalign.py --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} |
         awk -F\'\t\' \'{{print $2,$6,$3,$7,$4,$8}}\' OFS=\'\t\' |
         xz -T 0 -f > {output} # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> tok1 <tab> tok2

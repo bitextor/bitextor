@@ -34,9 +34,13 @@ if __name__ == "__main__":
     prevtext = ""
     for line in sent_reader:
         line_split = line.strip().split('\t', 1)
-        if len(line_split) != 2:
+        if len(line_split) == 0:
             continue
-        url, text = line_split
+        elif len(line_split) == 1:
+            url = line_split[0]
+            text = ""
+        else:
+            url, text = line_split
         if url == prevurl:
             prevtext = prevtext + "\n" + text
         elif prevurl == "":

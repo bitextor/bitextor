@@ -56,31 +56,23 @@ def ngrams_from_text(n, hash_values, ignore_set, page):
     return ngrams
 
 
-# Only extract_single is being used
+def base64decode(text):
+    return base64.b64decode(text.strip()).decode("utf-8").strip()
+
+
 class ExtractionMapper(object):
 
     def __init__(self, extraction_function=None):
         self.ef = extraction_function
 
-    def extract(self, corpus, pool=None):
-        if pool is not None:
-            return pool.map(self.ef, corpus)
-        return map(self.ef, corpus)
+    def extract_single(self, b64page):
+        return self.ef(base64decode(b64page))
 
-    def extract_single(self, page):
-        return self.ef(page)
-
-    def extract_single_batch_to_set(self, pages):
+    def extract_single_in_batches(self, b64pages):
         counter = Counter()
-        for page in pages:
-            counter.update(set(self.extract_single(page)))
+        for b64page in b64pages:
+            counter.update(set(self.extract_single(b64page)))
         return counter
-
-    def extract_source(self, corpus):
-        return self.extract(corpus)
-
-    def extract_target(self, corpus):
-        return self.extract(corpus)
 
 
 class WordExtractor(ExtractionMapper):
@@ -114,34 +106,17 @@ class DocumentVectorExtractor(object):
         assert int(self.idf_smooth) in range(6)
         self.lda_dim = lda_dim
 
-    # Yields the url and plain text of each document read from file, grouping by url
     @staticmethod
-    def iterate_corpus(text_file, url_file):
-        for line in text_file:
-            text = base64.b64decode(line.strip()).decode("utf-8")
-            url = next(url_file, None).strip()
-            yield url, text
-
-    @staticmethod
-    def iterate_corpus_only(text_file):
-        for line in text_file:
-            text = base64.b64decode(line.strip()).decode("utf-8")
-            yield text
-
-    @staticmethod
-    def iterate_corpus_in_batches(text_file, url_file, batch_size=10000):
+    def iterate_corpus_in_batches(text_file, batch_size=10000):
         pages = []
-        urls = []
-        for url, page in DocumentVectorExtractor.iterate_corpus(text_file, url_file):
-            if len(urls) < batch_size:
+        for page in text_file:
+            if len(pages) < batch_size:
                 pages.append(page)
-                urls.append(url)
-            if len(urls) == batch_size:
-                yield urls, pages
+            if len(pages) == batch_size:
+                yield pages
                 pages = []
-                urls = []
-        if len(urls) != 0:
-            yield urls, pages
+        if len(pages) != 0:
+            yield pages
 
     # Given all source and target corpus file objects, counts how many times a word is found in different documents
     # (source and target together, given that target is translated into source language) (AKA, idf)
@@ -154,14 +129,14 @@ class DocumentVectorExtractor(object):
         def count_ngrams(corpus):
             # start = time.time()
             if jobs == 1:
-                for page in self.iterate_corpus_only(corpus):
+                for page in corpus:
                     self.ndocs += 1
                     counts.update(set(self.ef.extract_single(page)))
             else:
-                pool = Pool(jobs-1)
+                pool = Pool(jobs - 1)
                 for pages in self.iterate_corpus_in_batches(corpus, batch_size):
                     self.ndocs += len(pages)
-                    pool.apply_async(self.ef.extract_single_batch_to_set, args=(pages,), callback=counts.update)
+                    pool.apply_async(self.ef.extract_single_in_batches, args=(pages,), callback=counts.update)
                 pool.close()
                 pool.join()
             # end = time.time()
@@ -232,8 +207,9 @@ class DocumentVectorExtractor(object):
         for page in pages:
             counts = Counter(self.ef.extract_single(page))
             if not counts:
+                doc_idx += 1
                 continue
-            results[doc_idx] = [],[]
+            results[doc_idx] = [], []
             local_max_count = float(max(counts.values()))
             local_sum = float(sum(counts.values()))
             for ngram, count in counts.items():
@@ -245,16 +221,15 @@ class DocumentVectorExtractor(object):
                 idx = self.term2idx[ngram]
                 tf = self.get_tf(count, local_max_count, local_sum)
                 results[doc_idx][0].append(idx)
-                results[doc_idx][1].append(tf*idf)
+                results[doc_idx][1].append(tf * idf)
             doc_idx = doc_idx + 1
         return results
 
     # Given a corpus file object and the number of documents it contains, counts word frequencies in each document (tf),
-    # returning the resulting tf-idf matrix and document urls
-    def extract(self, corpus_file, urls_file, lencorpus, jobs=1, batch_size=10000):
+    # returning the resulting tf-idf matrix
+    def extract(self, corpus_file, lencorpus, jobs=1, batch_size=10000):
         m = lil_matrix((lencorpus, len(self.term2idx)), dtype=float32)
         doc_idx = 0
-        url_list = []
 
         def cb(results):
             for doc_idx in results:
@@ -266,10 +241,10 @@ class DocumentVectorExtractor(object):
 
         # start = time.time()
         if jobs == 1:
-            for url, page in self.iterate_corpus(corpus_file, urls_file):
-                url_list.append(url)
+            for page in corpus_file:
                 counts = Counter(self.ef.extract_single(page))
                 if not counts:
+                    doc_idx += 1
                     continue
                 local_max_count = float(max(counts.values()))
                 local_sum = float(sum(counts.values()))
@@ -279,21 +254,20 @@ class DocumentVectorExtractor(object):
                     idf = self.term2idf[ngram]
                     idx = self.term2idx[ngram]
                     tf = self.get_tf(count, local_max_count, local_sum)
-                    m[doc_idx, idx] = tf*idf
+                    m[doc_idx, idx] = tf * idf
                 doc_idx += 1
         else:
-            pool = Pool(jobs-1)
-            for urls, pages in self.iterate_corpus_in_batches(corpus_file, urls_file, batch_size):
-                url_list.extend(urls)
+            pool = Pool(jobs - 1)
+            for pages in self.iterate_corpus_in_batches(corpus_file, batch_size):
                 pool.apply_async(self.process_documents, args=(doc_idx, pages,), callback=cb, error_callback=err_cb)
-                doc_idx += len(urls)
+                doc_idx += len(pages)
             pool.close()
             pool.join()
         # end = time.time()
         # sys.stderr.write("tfidf took {0:.5f}\n".format(end-start))
 
         m = csr_matrix(m, dtype=float32)
-        return url_list, m
+        return m
 
 
 class CosineDistanceScorer(object):
@@ -357,10 +331,9 @@ class CosineDistanceScorer(object):
         # return nothing. file does not exist
         return None
 
-    def score(self, source_filepath, target_filepath, source_url, target_url):
+    def score(self, source_filepath, target_filepath):
         source_filepath = self.munge_file_path(source_filepath)
         target_filepath = self.munge_file_path(target_filepath)
-        urls = [[], []]
 
         with open_xz_or_gzip_or_plain(source_filepath) as source_text_file, open_xz_or_gzip_or_plain(target_filepath) as target_text_file:
             # start = time.time()
@@ -369,21 +342,17 @@ class CosineDistanceScorer(object):
             #    "IDF estimation took {0:.5f} seconds\n".format(time.time() - start))
 
         # start = time.time()
-        # Calculate tf and obtain tf-idf with urls
-        with open_xz_or_gzip_or_plain(source_filepath) as source_text_file, \
-                open_xz_or_gzip_or_plain(source_url) as source_url_file:
-            urls[0], source_matrix = self.vector_extractor.extract(source_text_file,
-                                                                   source_url_file,
-                                                                   self.vector_extractor.ndocs_sl,
-                                                                   jobs=self.jobs,
-                                                                   batch_size=self.batch_size)
-        with open_xz_or_gzip_or_plain(target_filepath) as target_text_file, \
-                open_xz_or_gzip_or_plain(target_url) as target_url_file:
-            urls[1], target_matrix = self.vector_extractor.extract(target_text_file,
-                                                                   target_url_file,
-                                                                   self.vector_extractor.ndocs_tl,
-                                                                   jobs=self.jobs,
-                                                                   batch_size=self.batch_size)
+        # Calculate tf and obtain tf-idf
+        with open_xz_or_gzip_or_plain(source_filepath) as source_text_file:
+            source_matrix = self.vector_extractor.extract(source_text_file,
+                                                          self.vector_extractor.ndocs_sl,
+                                                          jobs=self.jobs,
+                                                          batch_size=self.batch_size)
+        with open_xz_or_gzip_or_plain(target_filepath) as target_text_file:
+            target_matrix = self.vector_extractor.extract(target_text_file,
+                                                          self.vector_extractor.ndocs_tl,
+                                                          jobs=self.jobs,
+                                                          batch_size=self.batch_size)
         # sys.stderr.write(
         #    "Matrix extraction took {0:.5f} seconds\n".format(time.time() - start))
         # sys.stderr.write(str(source_matrix)+"\n"+str(target_matrix)+"\n")
@@ -397,4 +366,4 @@ class CosineDistanceScorer(object):
 
         # sys.stderr.write(
         #    "Scoring took {0:.5f} seconds\n".format(time.time() - start))
-        return urls, d
+        return d

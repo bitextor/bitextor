@@ -58,6 +58,6 @@ if __name__ == "__main__":
             print(f'{counter}\t{extracted_line}')
 
         if n_lines == 0:
-            print(f'{counter}\t')  # maintain the number of documents of the original file
+            print(f'{counter}\t ')  # maintain the number of documents of the original file
 
     sent_reader.close()
