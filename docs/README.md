@@ -90,7 +90,7 @@ sudo make install
 sudo ldconfig
 
 pip3 install Cython # Install Cython dependency for cld3
-pip3 install git+https://github.com/iamthebot/cld3 # Install cld3 Python fork
+pip3 install install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
 ```
 
 ### Submodules compilation
