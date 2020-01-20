@@ -469,11 +469,15 @@ rp = urllib.robotparser.RobotFileParser()
 if '//' not in options.URL:
     options.URL = '%s%s' % ('http://', options.URL)
 robots = requests.get(options.URL+"/robots.txt").text.split("\n")
-for line in robots:
-    if "Crawl-delay" in line:
-        crawldelay = int(line.split(':')[1].strip())
-        if options.delay is None or crawldelay > int(options.delay):
-            options.delay = str(crawldelay)
+try:
+    for line in robots:
+        if "Crawl-delay" in line:
+            crawldelay = int(line.split(':')[1].strip())
+            if options.delay is None or crawldelay > int(options.delay):
+                options.delay = str(crawldelay)
+except CertificateError:
+    sys.stderr.write("Certificate error: ")
+    sys.stderr.write(str(sys.exc_info()[0]) + "\n")
 
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
 
