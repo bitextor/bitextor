@@ -15,9 +15,11 @@
 If you want to easily install Bitextor, just use Docker commands:
 
 ```bash
-docker pull paracrawl/bitextor
+docker pull paracrawl/bitextor # download bitextor docker image
 
-docker run -it paracrawl/bitextor
+docker run -it --name bitextor paracrawl/bitextor # create a new container 'bitextor' and open an interactive terminal
+
+docker start bitextor && docker exec -it bitextor bash # run an interactive terminal on an existing 'bitextor' container
 ```
 
 If you have `snap` package manager in your system, just install Docker using:
