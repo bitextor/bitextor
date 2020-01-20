@@ -472,9 +472,12 @@ robots = requests.get(options.URL+"/robots.txt").text.split("\n")
 try:
     for line in robots:
         if "Crawl-delay" in line:
-            crawldelay = int(line.split(':')[1].strip())
-            if options.delay is None or crawldelay > int(options.delay):
-                options.delay = str(crawldelay)
+            try:
+                crawldelay = int(line.split(':')[1].strip())
+                if options.delay is None or crawldelay > int(options.delay):
+                    options.delay = str(crawldelay)
+            except ValueError:
+                continue
 except CertificateError:
     sys.stderr.write("Certificate error: ")
     sys.stderr.write(str(sys.exc_info()[0]) + "\n")

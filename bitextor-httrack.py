@@ -81,9 +81,12 @@ if __name__ == "__main__":
         robots = requests.get(args.url+"/robots.txt").text.split("\n")
         for line in robots:
             if "Crawl-delay" in line:
-                crawldelay = int(line.split(':')[1].strip())
-                if args.wait is None or crawldelay > int(args.wait):
-                    args.wait = str(crawldelay)
+                try:
+                    crawldelay = int(line.split(':')[1].strip())
+                    if args.wait is None or crawldelay > int(args.wait):
+                        args.wait = str(crawldelay)
+                except ValueError:
+                    continue
     except CertificateError:
         sys.stderr.write("Certificate error: ")
         sys.stderr.write(str(sys.exc_info()[0]) + "\n")
