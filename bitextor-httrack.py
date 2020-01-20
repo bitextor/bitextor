@@ -87,7 +87,7 @@ if __name__ == "__main__":
                         args.wait = str(crawldelay)
                 except ValueError:
                     continue
-    except CertificateError:
+    except requests.exceptions.SSLError:
         sys.stderr.write("Certificate error: ")
         sys.stderr.write(str(sys.exc_info()[0]) + "\n")
     run(args.url, args.outPath, args.timeLimit, args.pageLimit, args.agent, args.wait)

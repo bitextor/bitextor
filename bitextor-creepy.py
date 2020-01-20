@@ -478,7 +478,7 @@ try:
                     options.delay = str(crawldelay)
             except ValueError:
                 continue
-except CertificateError:
+except requests.exceptions.SSLError:
     sys.stderr.write("Certificate error: ")
     sys.stderr.write(str(sys.exc_info()[0]) + "\n")
 
