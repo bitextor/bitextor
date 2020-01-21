@@ -479,11 +479,9 @@ try:
                     options.delay = str(crawldelay)
             except ValueError:
                 continue
-except requests.exceptions.SSLError:
-    sys.stderr.write("Certificate error: ")
+except:
+    sys.stderr.write("WARNING: Error downloading robots.txt: ")
     sys.stderr.write(str(sys.exc_info()[0]) + "\n")
-except urllib3.exceptions.MaxRetryError:
-    sys.stderr.write("Max retries exceeded with robots.txt\n")
 
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
 

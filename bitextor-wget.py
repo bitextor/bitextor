@@ -122,11 +122,9 @@ if __name__ == "__main__":
                         args.wait = str(crawldelay)
                 except ValueError:
                     continue
-    except requests.exceptions.SSLError:
-        sys.stderr.write("Certificate error: ")
+    except:
+        sys.stderr.write("WARNING: Error downloading robots.txt: ")
         sys.stderr.write(str(sys.exc_info()[0]) + "\n")
-    except urllib3.exceptions.MaxRetryError:
-        sys.stderr.write("Max retries exceeded with robots.txt\n")
     run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)
 
     print("Finished!")
