@@ -39,6 +39,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+import urllib3
 import requests
 from posixpath import join, dirname, normpath
 from ssl import CertificateError
@@ -481,6 +482,8 @@ try:
 except requests.exceptions.SSLError:
     sys.stderr.write("Certificate error: ")
     sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+except urllib3.exceptions.MaxRetryError:
+    sys.stderr.write("Max retries exceeded with robots.txt\n")
 
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
 
