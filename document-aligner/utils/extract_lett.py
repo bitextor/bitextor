@@ -24,10 +24,6 @@ if __name__ == "__main__":
     parser.add_argument("--sentences_file", dest="sent_file", default='-',
                         help='File containing the sentence splitted plain text extracted from the HTML documents '
                              'in a WARC file, encoded in base64')
-    parser.add_argument("--prune", dest="prune_threshold", type=int, default=80,
-                        help="Prune sentences longer than n (words/characters)", required=False)
-    parser.add_argument("--prune_type", dest="prune_type", choices={"words", "chars"},
-                        default="words", help="Prune sentences either by words or characters", required=False)
     args = parser.parse_args()
 
     counter = 0
@@ -41,19 +37,11 @@ if __name__ == "__main__":
         counter = counter + 1
         text = base64.b64decode(line.strip()).decode("utf-8")
         n_lines = 0
+
         for extracted_line in text.split("\n"):
             extracted_line = extracted_line.strip()
-
             if not extracted_line:
                 continue
-
-            # prune long sentences
-            if args.prune_type == "chars":
-                if len(extracted_line) > args.prune_threshold:
-                    continue
-            elif args.prune_type == "words":
-                if len(extracted_line.split()) > args.prune_threshold:
-                    continue
             n_lines = n_lines + 1
             print(f'{counter}\t{extracted_line}')
 

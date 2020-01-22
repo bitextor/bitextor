@@ -95,7 +95,6 @@ def validate_args(config):
             'profiling': {'type': 'boolean'},
             'giawarc': {'type': 'boolean'},
             'preprocessLangs': {'type': 'string'},
-            'targetLangs': {'type': 'string'},
             'ftfy': {'type': 'boolean'},
             'cleanHTML': {'type': 'boolean'},
             'langId': {'type': 'string'},
@@ -119,6 +118,8 @@ def validate_args(config):
            'sentenceSplitters': {'required': True, 'type': 'dict'},
            'wordTokenizers': {'required': True, 'type': 'dict'},
            'morphologicalAnalysers': {'type': 'dict'},
+           'pruneThreshold': {'type': 'integer'},
+           'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
 
            'crawlerUserAgent': {'type': 'string'},
            'crawlSizeLimit': {'type': 'string'},
@@ -269,13 +270,6 @@ else:
     PPROCLANGSOPT = "--langs " + LANG1 + "," + LANG2
     PPROCLANGS = [LANG1, LANG2]
 
-if "targetLangs" in config and config["targetLangs"]:
-    TARGETLANGSOPT = "--langs " + config['targetLangs']
-    TARGETLANGS = config['targetLangs'].split(',')
-else:
-    TARGETLANGSOPT = "--langs " + LANG2
-    TARGETLANGS = [LANG2]
-
 if "ftfy" in config and not config["ftfy"]:
     FTFY = ""
 else:
@@ -395,6 +389,14 @@ if "morphologicalAnalysers" in config:
 else:
     MORPHTOKS = ""
     MORPHTOK1, MORPHTOK2 = "", ""
+
+PRUNE_THRESHOLD = "--prune 80"
+if "pruneThreshold" in config:
+    PRUNE_THRESHOLD = "--prune " + str(config["pruneThreshold"])
+
+PRUNE_TYPE = "--prune-type words"
+if "pruneType" in config:
+    PRUNE_TYPE = "--prune-type " + config["pruneType"]
 
 ############ OPTIONS FOR THE NATIVE BITEXTOR CRAWLER ############
 
@@ -1300,7 +1302,7 @@ rule tokenize:
         tok='{dir}/{lang}/plain_tokenized.xz',
         sent='{dir}/{lang}/plain_sentences.xz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok};'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
@@ -1363,7 +1365,7 @@ rule structuredistance2urldistance:
         '{transient}/{{target}}/{{num}}.urldistance.xz'.format(transient=transient)
     priority: 8
     shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/features/bitextor-urlsdistance.py --html1 {input[1]} --html2 {input[2]} --url1 {input[3]} --url2 {input[4]} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} |{PROFILING} {BITEXTOR}/features/bitextor-urlsdistance.py --html1 {input[1]} --html2 {input[2]} --url1 {input[3]} --url2 {input[4]} | xz -T 0 > {output}'
 
 rule urldistance2mutuallylinked:
     input:
@@ -1420,18 +1422,18 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        '{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
+        '{data}/preprocess/{{target}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(data=data, pproc=PPROC)
     output:
-        '{dir}/docalign/{lang}.extracted.xz'
+        '{transient}/{{target}}/docalign/{{lang}}.extracted.xz'.format(transient=transient)
     params:
-        docalign_folder='{dir}/docalign'
+        docalign_folder='{transient}/{{target}}/docalign'.format(transient=transient)
     shell:
         'mkdir -p {params.docalign_folder};'
-        'xzcat -T 0 {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --prune_type "words" --prune 80 | xz -T 0 -c > {output}'
+        'xzcat -T 0 {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py | xz -T 0 -c > {output}'
 
 rule docalign_translate_nmt:
     input:
-        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        source="{transient}/{{domain}}/docalign/{l1}.extracted.xz".format(transient=transient, l1=LANG1),
         target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
         configFile = "{transient}/config.json".format(transient=transient),
         report = "{transient}/nmt-dir/evaluation/report".format(transient=transient)
@@ -1439,7 +1441,7 @@ rule docalign_translate_nmt:
         "{transient}/{{domain}}/docalign/{l1}.nmt.extracted.translated.xz".format(transient=transient, l1=LANG1)
     priority: 40
     shell:
-        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 1 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
@@ -1450,7 +1452,7 @@ rule docalign_translate_nmt:
 
 rule docalign_translate_smt:
     input:
-        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        source="{transient}/{{domain}}/docalign/{l1}.extracted.xz".format(transient=transient, l1=LANG1),
         target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
         report = "{transient}/smt-dir/steps/1/REPORTING_report.1.DONE".format(transient=transient)
     output:
@@ -1458,7 +1460,7 @@ rule docalign_translate_smt:
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
     shell:
-        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
@@ -1469,12 +1471,12 @@ rule docalign_translate_smt:
 
 rule docalign_custom_translate:
     input:
-        source="{data}/preprocess/{{domain}}/docalign/{l1}.extracted.xz".format(data=data, l1=LANG1),
+        source="{transient}/{{domain}}/docalign/{l1}.extracted.xz".format(transient=transient, l1=LANG1),
         target="{data}/preprocess/{{domain}}/{pproc}/bitextorlang/{l2}/plain_sentences.xz".format(data=data, pproc=PPROC, l2=LANG2),
     output:
         "{transient}/{{domain}}/docalign/{l1}.customMT.extracted.translated.xz".format(transient=transient, l1=LANG1)
     shell:
-        # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
+        # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'

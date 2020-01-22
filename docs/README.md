@@ -338,7 +338,6 @@ parser: "modest"
 onlyPreprocessing: false
 
 preprocessLangs: "en,es,fr"
-targetLangs: "en,fr"
 
 langId: cld2
 
@@ -354,7 +353,6 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax) or an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` is enabled, every language will be processed
-* `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `ftfy`: ftfy is a tool that solves encoding errors. By default it is enabled. Include `ftfy: false` in your configuration file to disable this step
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text

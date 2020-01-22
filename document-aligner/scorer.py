@@ -91,9 +91,12 @@ class DocumentVectorExtractor(object):
         self.min_term_count = min_count
         self.max_term_count = max_count
         self.ef = extraction_mapper
-        self.ndocs = 0
-        self.ndocs_sl = 0
-        self.ndocs_tl = 0
+        self.total_ndocs = 0
+        self.total_ndocs_sl = 0
+        self.total_ndocs_tl = 0
+        self.nonempty_ndocs = 0
+        self.nonempty_ndocs_sl = 0
+        self.nonempty_ndocs_tl = 0
         self.term2idf = {}
         self.term2idx = {}
         self.ignored_terms = set()
@@ -122,30 +125,34 @@ class DocumentVectorExtractor(object):
     # (source and target together, given that target is translated into source language) (AKA, idf)
     def estimate_idf(self, source_corpus, target_corpus, jobs=1, batch_size=10000):
         counts = Counter()
-        self.ndocs = 0
-        self.ndocs_sl = 0
-        self.ndocs_tl = 0
 
         def count_ngrams(corpus):
             # start = time.time()
+            total = 0
+            nonempty = 0
             if jobs == 1:
                 for page in corpus:
-                    self.ndocs += 1
-                    counts.update(set(self.ef.extract_single(page)))
+                    total += 1
+                    if page.strip():
+                        nonempty += 1
+                        counts.update(set(self.ef.extract_single(page)))
             else:
                 pool = Pool(jobs - 1)
                 for pages in self.iterate_corpus_in_batches(corpus, batch_size):
-                    self.ndocs += len(pages)
+                    total += len(pages)
+                    pages = filter(pages)  # removes empty pages
+                    nonempty += len(pages)
                     pool.apply_async(self.ef.extract_single_in_batches, args=(pages,), callback=counts.update)
                 pool.close()
                 pool.join()
+            return total, nonempty
             # end = time.time()
             # sys.stderr.write("completed estimate_idf in {0:.5f}\n".format(end - start))
 
-        count_ngrams(source_corpus)
-        self.ndocs_sl = self.ndocs
-        count_ngrams(target_corpus)
-        self.ndocs_tl = self.ndocs - self.ndocs_sl
+        self.total_ndocs_sl, self.nonempty_ndocs_sl = count_ngrams(source_corpus)
+        self.total_ndocs_tl, self.nonempty_ndocs_tl = count_ngrams(target_corpus)
+        self.total_ndocs = self.total_ndocs_sl + self.total_ndocs_tl
+        self.nonempty_ndocs = self.nonempty_ndocs_sl + self.nonempty_ndocs_tl
         self.term2idf = {}
         self.term2idx = {}
         self.ignored_terms = set()
@@ -163,19 +170,18 @@ class DocumentVectorExtractor(object):
             if self.idf_smooth == 0:
                 idf = 1
             elif self.idf_smooth == 1:
-                idf = math.log(self.ndocs / docs_with_term)
+                idf = math.log(self.nonempty_ndocs / docs_with_term)
             elif self.idf_smooth == 2:
-                idf = math.log(self.ndocs / (1 + docs_with_term))
+                idf = math.log(self.nonempty_ndocs / (1 + docs_with_term))
             elif self.idf_smooth == 3:
                 idf = math.log(self.max_count / (1 + docs_with_term))
             elif self.idf_smooth == 4:
-                if self.ndocs > docs_with_term:
-                    idf = math.log(
-                        (self.ndocs - docs_with_term) / docs_with_term)
+                if self.nonempty_ndocs > docs_with_term:
+                    idf = math.log((self.nonempty_ndocs - docs_with_term) / docs_with_term)
                 else:
                     idf = 0
             elif self.idf_smooth == 5:
-                idf = math.log(self.ndocs / (docs_with_term + 1))
+                idf = math.log(self.nonempty_ndocs / (docs_with_term + 1))
 
             self.term2idf[term] = idf
             self.term2idx[term] = len(self.term2idx)
@@ -345,12 +351,12 @@ class CosineDistanceScorer(object):
         # Calculate tf and obtain tf-idf
         with open_xz_or_gzip_or_plain(source_filepath) as source_text_file:
             source_matrix = self.vector_extractor.extract(source_text_file,
-                                                          self.vector_extractor.ndocs_sl,
+                                                          self.vector_extractor.total_ndocs_sl,
                                                           jobs=self.jobs,
                                                           batch_size=self.batch_size)
         with open_xz_or_gzip_or_plain(target_filepath) as target_text_file:
             target_matrix = self.vector_extractor.extract(target_text_file,
-                                                          self.vector_extractor.ndocs_tl,
+                                                          self.vector_extractor.total_ndocs_tl,
                                                           jobs=self.jobs,
                                                           batch_size=self.batch_size)
         # sys.stderr.write(
