@@ -150,15 +150,16 @@ print(" <body>")
 
 idcounter = -1
 prev_hash = ""
-prev_fieldsdict = {}
+prev_fieldsdict = dict()
 urls1 = set()
 urls2 = set()
+columns = options.columns.split(',')
+fieldsdict = dict()
+    
 for line in reader:
     idcounter += 1
     fields = line.split("\t")
     fields[-1] = fields[-1].strip()
-    columns = options.columns.split(',')
-    fieldsdict = dict()
     line_hash = ""
     for field, column in zip(fields, columns):
         fieldsdict[column] = field
@@ -197,7 +198,8 @@ for line in reader:
 
 if options.dedup:
     idcounter += 1
-    printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
+    if fieldsdict != {}:
+        printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
     text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
 print(" </body>")
 print("</tmx>")

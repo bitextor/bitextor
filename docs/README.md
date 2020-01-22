@@ -15,9 +15,11 @@
 If you want to easily install Bitextor, just use Docker commands:
 
 ```bash
-docker pull paracrawl/bitextor
+docker pull paracrawl/bitextor # download bitextor docker image
 
-docker run -it paracrawl/bitextor
+docker run -it --name bitextor paracrawl/bitextor # create a new container 'bitextor' and open an interactive terminal
+
+docker start bitextor && docker exec -it bitextor bash # run an interactive terminal on an existing 'bitextor' container
 ```
 
 If you have `snap` package manager in your system, just install Docker using:
@@ -63,7 +65,7 @@ pip3 install -r bifixer/requirements.txt
 
 * **heritrix3:** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>. 
 After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
-This dependency is also not mandatory.
+This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
@@ -80,9 +82,9 @@ go get github.com/paracrawl/giawarc/...
 # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
 # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
 sudo apt-get install autoconf automake libtool curl make g++ unzip
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.9.1/protobuf-all-3.9.1.tar.gz
-tar -zxvf protobuf-all-3.9.1.tar.gz
-cd protobuf-3.9.1
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protobuf-all-3.11.2.tar.gz
+tar -zxvf protobuf-all-3.11.2.tar.gz
+cd protobuf-3.11.2
 ./configure
 make
 make check
@@ -90,7 +92,7 @@ sudo make install
 sudo ldconfig
 
 pip3 install Cython # Install Cython dependency for cld3
-pip3 install git+https://github.com/iamthebot/cld3 # Install cld3 Python fork
+pip3 install install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
 ```
 
 ### Submodules compilation
@@ -110,18 +112,18 @@ sudo pip3 install tensorflow==1.5.0
 
 In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
-Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install version 1.66 manually by running the following commands:
+Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
 
 ```bash
 sudo apt-get remove libboost-all-dev
 sudo apt-get autoremove
-wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-tar xvf boost_1_71_0.tar.gz
-cd boost_1_71_0/
+wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz
+tar xvf boost_1_72_0.tar.gz
+cd boost_1_72_0/
 ./bootstrap.sh
-./b2 -j16 --layout=system install || echo FAILURE
+./b2 -j4 --layout=system install || echo FAILURE
 cd ..
-rm -rf boost_1_71_0*
+rm -rf boost_1_72_0*
 ```
 
 ## Run

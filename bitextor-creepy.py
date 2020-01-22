@@ -39,6 +39,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+import urllib3
 import requests
 from posixpath import join, dirname, normpath
 from ssl import CertificateError
@@ -469,11 +470,18 @@ rp = urllib.robotparser.RobotFileParser()
 if '//' not in options.URL:
     options.URL = '%s%s' % ('http://', options.URL)
 robots = requests.get(options.URL+"/robots.txt").text.split("\n")
-for line in robots:
-    if "Crawl-delay" in line:
-        crawldelay = int(line.split(':')[1].strip())
-        if options.delay is None or crawldelay > int(options.delay):
-            options.delay = str(crawldelay)
+try:
+    for line in robots:
+        if "Crawl-delay" in line:
+            try:
+                crawldelay = int(line.split(':')[1].strip())
+                if options.delay is None or crawldelay > int(options.delay):
+                    options.delay = str(crawldelay)
+            except ValueError:
+                continue
+except:
+    sys.stderr.write("WARNING: Error downloading robots.txt: ")
+    sys.stderr.write(str(sys.exc_info()[0]) + "\n")
 
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
 
