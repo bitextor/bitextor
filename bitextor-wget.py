@@ -61,7 +61,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     if check_wget_compression("wget --help | grep 'no-warc-compression'"):
         warcoption += " --no-warc-compression"
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
+    cmd += "wget --mirror {WAIT} {FILETYPES} -q -o /dev/null {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
                                                                                                  URL=url,
                                                                                                  DOWNLOAD_PATH=outPath,
