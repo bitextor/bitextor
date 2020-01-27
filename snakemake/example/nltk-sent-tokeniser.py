@@ -16,11 +16,16 @@
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
-from nltk import tokenize
+from nltk.data import load
 
-lang = sys.argv[1]
+language = sys.argv[1]
+tokenizer = None
+try:
+        tokenizer = load('tokenizers/punkt/{0}.pickle'.format(language))
+except:
+        tokenizer = load('tokenizers/punkt/{0}.pickle'.format("english"))
+
 for line in sys.stdin:
-    try:
-        print("\n".join(tokenize.sent_tokenize(line,lang)))
-    except:
-        print("\n".join(tokenize.sent_tokenize(line,"english")))
+    for sentence in tokenizer.tokenize(line):
+        for endlinesentence in sentence.split('\n'):
+            print(endlinesentence)
