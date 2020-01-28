@@ -82,12 +82,14 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
         with open(warcfilebasename + ".warc", 'rb') as f_in:
             with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
                 writer = WARCWriter(f_out, gzip=True)
-                for record in ArchiveIterator(f_in):
-                    if record.http_headers:
-                        if record.http_headers.get_header('Transfer-Encoding') == "chunked":
-                            continue
-                    writer.write_record(record)
-                # try except here
+                try:
+                    for record in ArchiveIterator(f_in):
+                        if record.http_headers:
+                            if record.http_headers.get_header('Transfer-Encoding') == "chunked":
+                                continue
+                        writer.write_record(record)
+                except:
+                    pass
 
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
 
