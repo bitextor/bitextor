@@ -61,7 +61,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     if check_wget_compression("wget --help | grep 'no-warc-compression'"):
         warcoption += " --no-warc-compression"
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
+    cmd += "wget --mirror {WAIT} {FILETYPES} -q -o /dev/null {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
                                                                                                  URL=url,
                                                                                                  DOWNLOAD_PATH=outPath,
@@ -74,14 +74,22 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
             with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
                 writer = WARCWriter(f_out, gzip=True)
                 for record in ArchiveIterator(f_in):
+                    if record.http_headers:
+                        if record.http_headers.get_header('Transfer-Encoding') == "chunked":
+                            continue
                     writer.write_record(record)
     except subprocess.CalledProcessError as grepexc:
         with open(warcfilebasename + ".warc", 'rb') as f_in:
             with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
                 writer = WARCWriter(f_out, gzip=True)
-                for record in ArchiveIterator(f_in):
-                    writer.write_record(record)
-                # try except here
+                try:
+                    for record in ArchiveIterator(f_in):
+                        if record.http_headers:
+                            if record.http_headers.get_header('Transfer-Encoding') == "chunked":
+                                continue
+                        writer.write_record(record)
+                except:
+                    pass
 
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
 

@@ -1278,7 +1278,7 @@ rule warc2preprocess:
         'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'
         'mkdir -p {params.folder}/$lang;'
         'touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url {params.folder}/$lang/normalized_html {params.folder}/$lang/deboilerplate_html ;'
-        'gzip {params.folder}/$lang/*;'
+        'gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}};'
         'fi ; done'
 
 # tokenize every bitextorlang/{lang}/plain_text.gz to obtain bitextorlang/{lang}/plain_tokenized.gz
@@ -1451,7 +1451,7 @@ rule docalign_translate_nmt:
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
         '   touch empty && xz empty && mv empty.xz {output};'
         'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{{domain}}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
+        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
         'fi'
 
