@@ -34,11 +34,16 @@ def open_xz_or_gzip_or_plain(file_path, mode='rt'):
         yield f
 
     except Exception:
-        raise Exception("Error occured while loading a file!")
+        raise Exception("Error occurred while loading a file!")
 
     finally:
         if f:
             f.close()
+
+
+@contextmanager
+def dummy_open():
+    yield None
 
 
 def build_mappings(file_path_from, file_path_to, column=None, dem='\t'):

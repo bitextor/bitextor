@@ -19,8 +19,6 @@
 import argparse
 import sys
 import os
-import lzma
-import gzip
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
@@ -45,23 +43,17 @@ if __name__ == "__main__":
     lang2_docs = set()
     lang2_read_docs = {}
 
-    if args.indices[:-3] == '.xz':
-        reader = lzma.open(args.indices, 'rt')
-    elif args.indices[:-3] == '.gz':
-        reader = gzip.open(args.indices, 'rt')
-    else:
-        reader = open(args.indices, 'r')
-
-    for line in reader:
-        fields = line.split('\t')
-        lang2_docs.add(int(fields[args.column2]))
-
-    reader.seek(0)
-
-    with open_xz_or_gzip_or_plain(args.tokenized1) as tok_reader1, \
+    with open_xz_or_gzip_or_plain(args.indices, 'rt') as reader, \
+            open_xz_or_gzip_or_plain(args.tokenized1) as tok_reader1, \
             open_xz_or_gzip_or_plain(args.tokenized2) as tok_reader2, \
             open_xz_or_gzip_or_plain(args.text1) as text_reader1, \
             open_xz_or_gzip_or_plain(args.text2) as text_reader2:
+
+        for line in reader:
+            fields = line.split('\t')
+            lang2_docs.add(int(fields[args.column2]))
+
+        reader.seek(0)
 
         doc1_current_line = 1
         doc2_current_line = 1
