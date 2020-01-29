@@ -1425,18 +1425,18 @@ rule aligndocumentsBitextor:
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
 # unless lang.extracted.tokenized.xz is required, execute docalign_extracted_rule (ambiguity workaround)
-ruleorder: docalign_extracted > docalign_extracted_and_tokenized
-
-rule docalign_extracted:
-    input:
-        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
-    output:
-        '{dir}/docalign/{lang}.extracted.xz'
-    params:
-        docalign_folder='{dir}/docalign'
-    shell:
-        'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
+#ruleorder: docalign_extracted > docalign_extracted_and_tokenized
+#
+#rule docalign_extracted:
+#    input:
+#        text='{{dir}}/{pproc}/bitextorlang/{{lang}}/plain_sentences.xz'.format(pproc=PPROC)
+#    output:
+#        '{dir}/docalign/{lang}.extracted.xz'
+#    params:
+#        docalign_folder='{dir}/docalign'
+#    shell:
+#        'mkdir -p {params.docalign_folder};'
+#        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
 
 rule docalign_extracted_and_tokenized:
     input:
