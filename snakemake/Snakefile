@@ -1464,7 +1464,7 @@ rule docalign_translate_nmt:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
@@ -1483,7 +1483,7 @@ rule docalign_translate_smt:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
@@ -1500,7 +1500,7 @@ rule docalign_custom_translate:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
