@@ -243,10 +243,13 @@ morphologicalAnalysers: {
   'lang1': 'path/to/morph-analyser1',
   'lang2': 'path/to/morph-analyser2'
 }
+
+reverseOutputPair: true
 ```
 
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es).
 
 ### Variables defining data sources
 
