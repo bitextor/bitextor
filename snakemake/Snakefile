@@ -261,6 +261,13 @@ if "reverseOutputPair" in config and config["reverseOutputPair"]:
 else:
     REVERSEOUTPUT = False
 
+if REVERSEOUTPUT:
+    LANG1REVERSE=LANG2
+    LANG2REVERSE=LANG1
+else:
+    LANG1REVERSE=LANG1
+    LANG2REVERSE=LANG2
+
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc-xzlang"
     FILES=["mime.xz", "url.xz"]
@@ -1020,11 +1027,11 @@ else:
         #Optional TMX: if option enabled, TMX is generated
         if "tmx" in config and config["tmx"]:
             if "storeRawCorpus" in config and config["storeRawCorpus"]:
-                OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+                OUTPUT.append("{dir}/{l1}-{l2}.raw.xz".format(dir=permanent, l1=LANG1REVERSE, l2=LANG2REVERSE))
             if "deduped" in config and config["deduped"]:
-                OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+                OUTPUT.append("{dir}/{l1}-{l2}.deduped.tmx.xz".format(dir=permanent, l1=LANG1REVERSE, l2=LANG2REVERSE))
             else:
-                OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1, l2=LANG2))
+                OUTPUT.append("{dir}/{l1}-{l2}.not-deduped.tmx.xz".format(dir=permanent, l1=LANG1REVERSE, l2=LANG2REVERSE))
 
 rule all:
     input:
@@ -1644,13 +1651,6 @@ rule segalign_indices2url:
                     writer.write('{}\t{}\t{}\t{}\t{}\n'.format(lang2_dict[int(fields[1])], lang1_dict[int(fields[0])], fields[3], fields[2], "\t".join(fields[4:])))
                 else:
                     writer.write('{}\t{}\t{}\n'.format(lang1_dict[int(fields[0])], lang2_dict[int(fields[1])], "\t".join(fields[2:])))
-
-if REVERSEOUTPUT:
-    LANG1REVERSE=LANG2
-    LANG2REVERSE=LANG1
-else:
-    LANG1REVERSE=LANG1
-    LANG2REVERSE=LANG2
 
 rule deferred_documents:
     input:
