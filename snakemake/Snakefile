@@ -1193,7 +1193,7 @@ rule heritrix_download:
     priority: 10
     shell:
         'echo hostname=$HOSTNAME; '
-        'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" != "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
+        'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
         'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
         'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
         'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
@@ -1410,18 +1410,18 @@ rule aligndocumentsBitextor:
 ################# MT-BASED DOCUMENT ALIGNMENT #################
 
 # unless lang.extracted.tokenized.xz is required, execute docalign_extracted_rule (ambiguity workaround)
-ruleorder: docalign_extracted > docalign_extracted_and_tokenized
-
-rule docalign_extracted:
-    input:
-        text='{{dir}}/{pproc}/{{lang}}/plain_sentences.gz'.format(pproc=PPROC)
-    output:
-        '{dir}/docalign/{lang}.extracted.xz'
-    params:
-        docalign_folder='{dir}/docalign'
-    shell:
-        'mkdir -p {params.docalign_folder};'
-        '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
+# ruleorder: docalign_extracted > docalign_extracted_and_tokenized
+# 
+# rule docalign_extracted:
+#     input:
+#         text='{{dir}}/{pproc}/{{lang}}/plain_sentences.gz'.format(pproc=PPROC)
+#     output:
+#         '{dir}/docalign/{lang}.extracted.xz'
+#     params:
+#         docalign_folder='{dir}/docalign'
+#     shell:
+#         'mkdir -p {params.docalign_folder};'
+#         '{PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py --sentences_file {input.text} --prune_type "words" --prune 80 --extracted_output {output};'
 
 rule docalign_extracted_and_tokenized:
     input:
@@ -1449,7 +1449,7 @@ rule docalign_translate_nmt:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input} and {output} should have the same number of lines"; exit 2; fi ;'
@@ -1468,7 +1468,7 @@ rule docalign_translate_smt:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
@@ -1485,7 +1485,7 @@ rule docalign_custom_translate:
         # if l1.extracted.xz or l2.extracted.xz are empty, skip translation (output empty file instead)
         'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(xzcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
         '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch empty && xz empty && mv empty.xz {output};'
+        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
         'else'
         '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
         '   if [ "$(xzcat -T 0 {input.source} | wc -l)" -ne "$(xzcat -T 0 {output} | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
@@ -1661,7 +1661,7 @@ rule bifixer:
     output:
         "{prefix}.bifixer.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} python3 bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
 
 rule bicleaner:
     input:
@@ -1675,7 +1675,7 @@ rule bicleaner:
         'if [ "$slang" == "{LANG1}" ]; then '
         '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
         'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
+        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
         'fi;'
         'paste <(xzcat -T 0 {input.segclean}) $scores | xz -T 0 > {output};'
         'rm $scores;'
