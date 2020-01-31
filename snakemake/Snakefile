@@ -143,6 +143,7 @@ def validate_args(config):
 
            'bicleaner': {'type': 'string'},
            'bicleanerThreshold': {'type': 'float'},
+           'reverseOutputPair': {'type': 'boolean'},
            'elrc': {'type': 'boolean'},
            'bifixer': {'type': 'boolean'},
            'bifixerOptions': {'type': 'string'},
@@ -254,6 +255,11 @@ transient=config["transientDir"]
 data=config["dataDir"]
 
 PROFILING=""
+
+if "reverseOutputPair" in config and config["reverseOutputPair"]:
+    REVERSEOUTPUT = True
+else:
+    REVERSEOUTPUT = False
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc-xzlang"
@@ -1634,7 +1640,17 @@ rule segalign_indices2url:
         with lzma.open(input.segalign, "rt") as reader, lzma.open(output.segalign, "wt") as writer:
             for line in reader:
                 fields = line.strip().split('\t')
-                writer.write('{}\t{}\t{}\n'.format(lang1_dict[int(fields[0])], lang2_dict[int(fields[1])], "\t".join(fields[2:])))
+                if REVERSEOUTPUT:
+                    writer.write('{}\t{}\t{}\t{}\t{}\n'.format(lang2_dict[int(fields[1])], lang1_dict[int(fields[0])], fields[3], fields[2], "\t".join(fields[4:])))
+                else:
+                    writer.write('{}\t{}\t{}\n'.format(lang1_dict[int(fields[0])], lang2_dict[int(fields[1])], "\t".join(fields[2:])))
+
+if REVERSEOUTPUT:
+    LANG1REVERSE=LANG2
+    LANG2REVERSE=LANG1
+else:
+    LANG1REVERSE=LANG1
+    LANG2REVERSE=LANG2
 
 rule deferred_documents:
     input:
@@ -1649,12 +1665,12 @@ rule deferred_documents:
 rule deferred_segments:
     input:
         "{transient}/{{target}}/{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER, transient=transient),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG1=LANG1),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG2=LANG2),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz".format(data=data, pproc=PPROC,LANG2=LANG2),
-        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG2=LANG2)
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/url.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG1}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/url.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/bitextorlang/{LANG2}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE)
     output:
         "{transient}/{{target}}/{segaligner}.deferred.segalign.xz".format(transient=transient,segaligner=SEGMENTALIGNER)
     shell:
@@ -1676,7 +1692,7 @@ rule bifixer:
     output:
         "{prefix}.bifixer.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1REVERSE} {LANG2REVERSE} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
 
 rule bicleaner:
     input:
@@ -1687,7 +1703,7 @@ rule bicleaner:
     shell:
         'scores=$(mktemp "{TMPDIR}/bicleaner.scores.XXXXXX");'
         'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
-        'if [ "$slang" == "{LANG1}" ]; then '
+        'if [ "$slang" == "{LANG1REVERSE}" ]; then '
         '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
         'else '
         '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q --threshold {BICLEANER_THRESHOLD} - - {BICLEANER_CONFIG} > $scores; '
@@ -1741,7 +1757,7 @@ rule tmx:
     output:
         "{permanentdir}/{{l1}}-{{l2}}.not-deduped.tmx.xz".format(permanentdir=permanent)
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1REVERSE} --lang2 {LANG2REVERSE} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
     input:
@@ -1750,15 +1766,15 @@ rule deduped_tmx:
         tmx="{permanentdir}/{{l1}}-{{l2}}.deduped.tmx.xz".format(permanentdir=permanent),
         txt="{permanentdir}/{{l1}}-{{l2}}.deduped.txt.xz".format(permanentdir=permanent)
     shell:
-        "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} -f {output.txt} | xz -T 0 > {output.tmx}"
+        "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1REVERSE} --lang2 {LANG2REVERSE} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} -f {output.txt} | xz -T 0 > {output.tmx}"
 
 rule mt_parallel_data:
     input:
-         "{permanentdir}/{l1}-{l2}.sent.xz".format(permanentdir=permanent, l1=LANG1, l2=LANG2)
+         "{permanentdir}/{l1}-{l2}.sent.xz".format(permanentdir=permanent, l1=LANG1REVERSE, l2=LANG2REVERSE)
     output:
-         l1="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG1)
+         l1="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG1REVERSE)
          ,
-         l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2)
+         l2="{permanentdir}/crawl.{lang}".format(permanentdir=permanent, lang=LANG2REVERSE)
     shell:
          "xzcat -T 0 -f {input} | cut -f 3,4 | LC_ALL=C sort -T {TMPDIR} --compress-program=gzip | uniq > corpus; "
          "cut -f 1 corpus > {output.l1} && cut -f 2 corpus > {output.l2}; "
