@@ -1555,7 +1555,7 @@ rule alignsegments_bleualign:
     output:
         "{dir}/bleualign.segalign.xz"
     shell:
-        "{PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --documents {input} --bleu-threshold {BLEU_THRESHOLD} | xz -T 0 -c > {output}"
+        "xzcat {input} | {PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_THRESHOLD} | xz -T 0 -c > {output}"
 
 ################# HUNALIGN RULES #################
 

@@ -114,8 +114,8 @@ oparser = argparse.ArgumentParser(
     description="Tool that reads the output of bitextor-align-documents and aligns the segments of the aligned "
                 "documents")
 oparser.add_argument('aligned_docs', metavar='FILE', nargs='?',
-                     help='File containing the set of aliged documents provided by the script '
-                          'bitextor-align-documents (if undefined, the script reads from the standard input)',
+                     help='File containing the set of aliged documents encoded as base64. Format is: '
+                          '\'url1 <tab> url2 <tab> sentences1 <tab> sentences2 <tab> tokenized1 <tab> tokenzied2\'',
                      default=None)
 oparser.add_argument("--hunalign-dir",
                      help="Path to the installation of hunalign (for example: '/usr/local/bin'. If this option is not "
