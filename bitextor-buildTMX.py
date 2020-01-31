@@ -175,7 +175,7 @@ for line in reader:
         urls1.add(fieldsdict['url1'])
         urls2.add(fieldsdict['url2'])
         prev_hash = line_hash
-        prev_fieldsdict = fieldsdict
+        prev_fieldsdict = dict(fieldsdict)
     elif not options.dedup:
         urls1.add(fieldsdict['url1'])
         urls2.add(fieldsdict['url2'])
@@ -194,7 +194,7 @@ for line in reader:
         urls1.add(fieldsdict['url1'])
         urls2.add(fieldsdict['url2'])
         prev_hash = line_hash
-        prev_fieldsdict = fieldsdict
+        prev_fieldsdict = dict(fieldsdict)
 
 
 if options.dedup:
