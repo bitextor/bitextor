@@ -121,7 +121,7 @@ if __name__ == "__main__":
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
     try:
-        robots = requests.get(args.url + "/robots.txt").text.split("\n")
+        robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
         for line in robots:
             if "Crawl-delay" in line:
                 try:

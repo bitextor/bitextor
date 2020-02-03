@@ -40,7 +40,7 @@ from xml.sax.saxutils import escape
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain, dummy_open
 
-def printseg(lang, columns, urls, seg, fieldsdict, mint, deferred=None, checksum=None, no_delete_seg=False):
+def printseg(lang, columns, urls, seg, fields_dict, mint, deferred=None, checksum=None, no_delete_seg=False):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
     if "url1" in columns:
@@ -55,42 +55,42 @@ def printseg(lang, columns, urls, seg, fieldsdict, mint, deferred=None, checksum
         print("     <seg>" + escape(seg) + "</seg>")
     else:
         print("     <seg></seg>")
-    if "numTokensSL" in fieldsdict and fieldsdict["numTokensSL"] != "" and int(fieldsdict["numTokensSL"]) < int(mint):
+    if "numTokensSL" in fields_dict and fields_dict["numTokensSL"] != "" and int(fields_dict["numTokensSL"]) < int(mint):
         info_tag.append("very short segments, shorter than " + str(options.mint))
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
     print("    </tuv>")
 
 
-def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fieldsdict, mint, no_delete_seg):
+def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fields_dict, mint, no_delete_seg):
     print("   <tu tuid=\"" + str(idcounter) + "\" datatype=\"Text\">")
     infoTag = []
-    if 'hunalign' in fieldsdict and fieldsdict['hunalign'] != "":
-        print("    <prop type=\"score-aligner\">" + fieldsdict['hunalign'] + "</prop>")
-    if 'bicleaner' in fieldsdict and fieldsdict['bicleaner'] != "":
-        print("    <prop type=\"score-bicleaner\">" + fieldsdict['bicleaner'] + "</prop>")
+    if 'hunalign' in fields_dict and fields_dict['hunalign'] != "":
+        print("    <prop type=\"score-aligner\">" + fields_dict['hunalign'] + "</prop>")
+    if 'bicleaner' in fields_dict and fields_dict['bicleaner'] != "":
+        print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner'] + "</prop>")
     # Output info data ILSP-FC specification
-    if re.sub("[^0-9]", "", fieldsdict["seg1"]) != re.sub("[^0-9]", "", fieldsdict["seg2"]):
+    if re.sub("[^0-9]", "", fields_dict["seg1"]) != re.sub("[^0-9]", "", fields_dict["seg2"]):
         infoTag.append("different numbers in TUVs")
     print("    <prop type=\"type\">1:1</prop>")
-    if re.sub(r'\W+', '', fieldsdict["seg1"]) == re.sub(r'\W+', '', fieldsdict["seg2"]):
+    if re.sub(r'\W+', '', fields_dict["seg1"]) == re.sub(r'\W+', '', fields_dict["seg2"]):
         infoTag.append("equal TUVs")
     if len(infoTag) > 0:
         print("    <prop type=\"info\">" + "|".join(infoTag) + "</prop>")
 
-    if 'deferredseg1' not in fieldsdict or fieldsdict['deferredseg1'] == "":
-        fieldsdict['deferredseg1'] = None
-    if 'deferredseg2' not in fieldsdict or fieldsdict['deferredseg2'] == "":
-        fieldsdict['deferredseg2'] = None
-    if 'checksum1' not in fieldsdict:
-        fieldsdict['checksum1'] = None
-    if 'checksum2' not in fieldsdict:
-        fieldsdict['checksum2'] = None
+    if 'deferredseg1' not in fields_dict or fields_dict['deferredseg1'] == "":
+        fields_dict['deferredseg1'] = None
+    if 'deferredseg2' not in fields_dict or fields_dict['deferredseg2'] == "":
+        fields_dict['deferredseg2'] = None
+    if 'checksum1' not in fields_dict:
+        fields_dict['checksum1'] = None
+    if 'checksum2' not in fields_dict:
+        fields_dict['checksum2'] = None
 
-    printseg(lang1, columns, urls1, fieldsdict['seg1'], fieldsdict, mint, fieldsdict['deferredseg1'],
-             fieldsdict['checksum1'], no_delete_seg)
-    printseg(lang2, columns, urls2, fieldsdict['seg2'], fieldsdict, mint, fieldsdict['deferredseg2'],
-             fieldsdict['checksum2'], no_delete_seg)
+    printseg(lang1, columns, urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['deferredseg1'],
+             fields_dict['checksum1'], no_delete_seg)
+    printseg(lang2, columns, urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['deferredseg2'],
+             fields_dict['checksum2'], no_delete_seg)
 
     print("   </tu>")
 
@@ -142,7 +142,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     print(" </header>")
     print(" <body>")
 
-    idcounter = -1
+    idcounter = 0 
     prev_hash = ""
     prev_fieldsdict = dict()
     urls1 = set()
@@ -151,7 +151,6 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     fieldsdict = dict()
 
     for line in reader:
-        idcounter += 1
         fields = line.split("\t")
         fields[-1] = fields[-1].strip()
         line_hash = ""
@@ -170,15 +169,17 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
             prev_hash = line_hash
-            prev_fieldsdict = fieldsdict
+            prev_fieldsdict = dict(fieldsdict)
         elif not options.dedup:
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
-            printtu(idcounter+1, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
+            idcounter += 1
+            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
                     options.no_delete_seg)
             urls1 = set()
             urls2 = set()
         else:
+            idcounter += 1
             printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
             if text_writer:
                 text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
@@ -187,7 +188,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
             prev_hash = line_hash
-            prev_fieldsdict = fieldsdict
+            prev_fieldsdict = dict(fieldsdict)
 
     if options.dedup:
         idcounter += 1
