@@ -1651,10 +1651,10 @@ rule deferred_segments:
     input:
         "{transient}/{{target}}/{segaligner}.segalign.xz".format(segaligner=SEGMENTALIGNER, transient=transient),
         "{data}/preprocess/{{target}}/{pproc}/{LANG1}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
-        "{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG1}/url.gz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
         "{data}/preprocess/{{target}}/{pproc}/{LANG1}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG1=LANG1REVERSE),
         "{data}/preprocess/{{target}}/{pproc}/{LANG2}/html5lib_plain_text.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE),
-        "{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE),
+        "{data}/preprocess/{{target}}/{pproc}/{LANG2}/url.gz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE),
         "{data}/preprocess/{{target}}/{pproc}/{LANG2}/deferred_documents.xz".format(data=data, pproc=PPROC,LANG2=LANG2REVERSE)
     output:
         "{transient}/{{target}}/{segaligner}.deferred.segalign.xz".format(transient=transient,segaligner=SEGMENTALIGNER)
