@@ -34,9 +34,11 @@ import argparse
 import time
 import locale
 import re
-import lzma
+import os
 from xml.sax.saxutils import escape
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
+from utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 def printseg(lang, columns, urls, seg, fields_dict, mint, deferred=None, checksum=None, no_delete_seg=False):
     info_tag = []
@@ -92,6 +94,7 @@ def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fields_dict, mint, n
 
     print("   </tu>")
 
+
 oparser = argparse.ArgumentParser(
     description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX "
                 "translation memory.")
@@ -121,87 +124,77 @@ oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls
 
 options = oparser.parse_args()
 
-if options.clean_alignments is not None:
-    reader = open(options.clean_alignments, "r")
-else:
-    reader = sys.stdin
+with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_alignments else sys.stdin as reader,\
+        open_xz_or_gzip_or_plain(options.text_file_deduped, 'wt') if options.text_file_deduped and options.dedup else dummy_open() as text_writer:
 
-text_writer = None
-if options.text_file_deduped and options.dedup:
-    if options.text_file_deduped[-3:] == ".xz":
-        text_writer = lzma.open(options.text_file_deduped, "wt")
-    else:
-        text_writer = open(options.text_file_deduped, "w")
+    print("<?xml version=\"1.0\"?>")
+    print("<tmx version=\"1.4\">")
+    print(" <header")
+    print("   adminlang=\"" + locale.setlocale(locale.LC_ALL, '').split(".")[0].split("_")[0] + "\"")
+    print("   srclang=\"" + options.lang1 + "\"")
+    print("   o-tmf=\"PlainText\"")
+    print("   creationtool=\"bitextor\"")
+    print("   creationtoolversion=\"4.0\"")
+    print("   datatype=\"PlainText\"")
+    print("   segtype=\"sentence\"")
+    print("   creationdate=\"" + time.strftime("%Y%m%dT%H%M%S") + "\"")
+    print("   o-encoding=\"utf-8\">")
+    print(" </header>")
+    print(" <body>")
 
-print("<?xml version=\"1.0\"?>")
-print("<tmx version=\"1.4\">")
-print(" <header")
-print("   adminlang=\"" + locale.setlocale(locale.LC_ALL, '').split(".")[0].split("_")[0] + "\"")
-print("   srclang=\"" + options.lang1 + "\"")
-print("   o-tmf=\"PlainText\"")
-print("   creationtool=\"bitextor\"")
-print("   creationtoolversion=\"4.0\"")
-print("   datatype=\"PlainText\"")
-print("   segtype=\"sentence\"")
-print("   creationdate=\"" + time.strftime("%Y%m%dT%H%M%S") + "\"")
-print("   o-encoding=\"utf-8\">")
-print(" </header>")
-print(" <body>")
+    idcounter = 0 
+    prev_hash = ""
+    prev_fieldsdict = dict()
+    urls1 = set()
+    urls2 = set()
+    columns = options.columns.split(',')
+    fieldsdict = dict()
 
-idcounter = 0 
-prev_hash = ""
-prev_fieldsdict = dict()
-urls1 = set()
-urls2 = set()
-columns = options.columns.split(',')
-fieldsdict = dict()
-    
-for line in reader:
-    fields = line.split("\t")
-    fields[-1] = fields[-1].strip()
-    line_hash = ""
-    for field, column in zip(fields, columns):
-        fieldsdict[column] = field
+    for line in reader:
+        fields = line.split("\t")
+        fields[-1] = fields[-1].strip()
+        line_hash = ""
+        for field, column in zip(fields, columns):
+            fieldsdict[column] = field
+
+        if options.dedup:
+            for part in options.dedup.split(','):
+                line_hash = line_hash + "\t" + fieldsdict[part]
+        if 'seg1' not in fieldsdict:
+            fieldsdict['seg1'] = ""
+        if 'seg2' not in fieldsdict:
+            fieldsdict['seg2'] = ""
+
+        if (prev_hash == line_hash or prev_hash == "") and options.dedup:
+            urls1.add(fieldsdict['url1'])
+            urls2.add(fieldsdict['url2'])
+            prev_hash = line_hash
+            prev_fieldsdict = dict(fieldsdict)
+        elif not options.dedup:
+            urls1.add(fieldsdict['url1'])
+            urls2.add(fieldsdict['url2'])
+            idcounter += 1
+            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
+                    options.no_delete_seg)
+            urls1 = set()
+            urls2 = set()
+        else:
+            idcounter += 1
+            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
+            if text_writer:
+                text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
+            urls1 = set()
+            urls2 = set()
+            urls1.add(fieldsdict['url1'])
+            urls2.add(fieldsdict['url2'])
+            prev_hash = line_hash
+            prev_fieldsdict = dict(fieldsdict)
 
     if options.dedup:
-        for part in options.dedup.split(','):
-            line_hash = line_hash + "\t" + fieldsdict[part]
-    if 'seg1' not in fieldsdict:
-        fieldsdict['seg1'] = ""
-    if 'seg2' not in fieldsdict:
-        fieldsdict['seg2'] = ""
-
-    if (prev_hash == line_hash or prev_hash == "") and options.dedup:
-        urls1.add(fieldsdict['url1'])
-        urls2.add(fieldsdict['url2'])
-        prev_hash = line_hash
-        prev_fieldsdict = dict(fieldsdict)
-    elif not options.dedup:
-        urls1.add(fieldsdict['url1'])
-        urls2.add(fieldsdict['url2'])
         idcounter += 1
-        printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
-                options.no_delete_seg)
-        urls1 = set()
-        urls2 = set()
-    else:
-        idcounter += 1
-        printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
+        if fieldsdict != {}:
+            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
         if text_writer:
-            text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
-        urls1 = set()
-        urls2 = set()
-        urls1.add(fieldsdict['url1'])
-        urls2.add(fieldsdict['url2'])
-        prev_hash = line_hash
-        prev_fieldsdict = dict(fieldsdict)
-
-
-if options.dedup:
-    idcounter += 1
-    if fieldsdict != {}:
-        printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
-    text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
-print(" </body>")
-print("</tmx>")
-reader.close()
+            text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
+    print(" </body>")
+    print("</tmx>")

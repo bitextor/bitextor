@@ -16,7 +16,11 @@
 
 import argparse
 import base64
-import lzma
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
+from common import open_xz_or_gzip_or_plain
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -40,17 +44,17 @@ if __name__ == "__main__":
     counter = 0
 
     if args.tok_file:
-        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.tok_file, "rt") as tok_reader, \
-                lzma.open(args.out_extracted, "wt") as sent_writer, lzma.open(args.out_tokenized, "wt") as tok_writer:
+        with open_xz_or_gzip_or_plain(args.sent_file) as sent_reader, open_xz_or_gzip_or_plain(args.tok_file) as tok_reader, \
+                open_xz_or_gzip_or_plain(args.out_extracted, "wt") as sent_writer, open_xz_or_gzip_or_plain(args.out_tokenized, "wt") as tok_writer:
             for sent_doc in sent_reader:
                 counter = counter + 1
                 tok_doc = next(tok_reader, None)
                 sent_text = base64.b64decode(sent_doc.strip()).decode("utf-8")
                 tok_text = base64.b64decode(tok_doc.strip()).decode("utf-8")
 
-                for line in list(zip(sent_text.split("\n"), tok_text.split("\n"))):
-                    sent_line = line[0].strip()
-                    tok_line = line[1].strip()
+                for sent_line, tok_line in zip(sent_text.split("\n"), tok_text.split("\n")):
+                    sent_line = sent_line.strip()
+                    tok_line = tok_line.strip()
 
                     if not sent_line or not tok_line:
                         continue
@@ -63,14 +67,14 @@ if __name__ == "__main__":
                         if len(sent_line.split()) > args.prune_threshold:
                             continue
 
-                    sent_writer.write("{}\t{}\n".format(str(counter), sent_line))
-                    tok_writer.write("{}\t{}\n".format(str(counter), tok_line))
+                    sent_writer.write(f'{counter}\t{sent_line}\n')
+                    tok_writer.write(f'{counter}\t{tok_line}\n')
 
     else:
-        with lzma.open(args.sent_file, "rt") as sent_reader, lzma.open(args.out_extracted, "wt") as sent_writer:
-            for line in sent_reader:
+        with open_xz_or_gzip_or_plain(args.sent_file) as sent_reader, open_xz_or_gzip_or_plain(args.out_extracted, "wt") as sent_writer:
+            for sent_doc in sent_reader:
                 counter = counter + 1
-                text = base64.b64decode(line.strip()).decode("utf-8")
+                text = base64.b64decode(sent_doc.strip()).decode("utf-8")
 
                 for extracted_line in text.split("\n"):
                     extracted_line = extracted_line.strip()
@@ -85,4 +89,5 @@ if __name__ == "__main__":
                     elif args.prune_type == "words":
                         if len(extracted_line.split()) > args.prune_threshold:
                             continue
-                    sent_writer.write("{}\t{}\n".format(str(counter), extracted_line))
+
+                    sent_writer.write(f'{counter}\t{extracted_line}\n')

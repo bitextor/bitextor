@@ -22,29 +22,28 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def open_xz_or_gzip_or_plain(file_path):
-    def decode_text(file_handler):
-        for line in file_handler:
-            yield line.decode('utf-8')
-
+def open_xz_or_gzip_or_plain(file_path, mode='rt'):
     f = None
     try:
         if file_path[-3:] == ".gz":
-            f = gzip.open(file_path, 'rb')
-            yield decode_text(f)
+            f = gzip.open(file_path, mode)
         elif file_path[-3:] == ".xz":
-            f = lzma.open(file_path, 'rb')
-            yield decode_text(f)
+            f = lzma.open(file_path, mode)
         else:
-            f = open(file_path, 'r')
-            yield f
+            f = open(file_path, mode)
+        yield f
 
     except Exception:
-        raise Exception("Error occured while loading a file!")
+        raise Exception("Error occurred while loading a file!")
 
     finally:
         if f:
             f.close()
+
+
+@contextmanager
+def dummy_open():
+    yield None
 
 
 def build_mappings(file_path_from, file_path_to, column=None, dem='\t'):
