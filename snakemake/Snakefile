@@ -1645,7 +1645,7 @@ rule deferred_documents:
         "{data}/preprocess/{{target}}/{pproc}/{{lang}}/html5lib_plain_text.xz".format(data=data, pproc=PPROC),
         "{data}/preprocess/{{target}}/{pproc}/{{lang}}/deferred_documents.xz".format(data=data, pproc=PPROC)
     shell:
-        'paste <(zcat {input[0]}) <(zcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
+        'touch {output[0]}.touch; xz {output[0]}.touch; mv {output[0]}.touch.xz {output[0]}; touch {output[1]}.touch; xz {output[1]}.touch; mv {output[1]}.touch.xz {output[1]}; paste <(zcat {input[0]}) <(zcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
 
 rule deferred_segments:
     input:

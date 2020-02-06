@@ -224,7 +224,7 @@ wordTokenizers: {
 
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
-  'default': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en'
+  'default': '/home/user/bitextor/snakemake/example/nltk-sent-tokeniser.py english'
 }
 ```
 
