@@ -59,6 +59,7 @@ def run_aligner(filename_s, filename_t, dic, hunaligndir):
         yield line_o
     return
 
+
 def align(file1, file2, file1orig, file2orig, dic):
     filereader1 = open(file1orig, "r")
     filereader2 = open(file2orig, "r")

@@ -18,17 +18,18 @@
 import argparse
 import subprocess
 import sys
-import os
 import requests
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
+
 
 def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
     sys.stderr.flush()
 
     subprocess.check_call(cmd, shell=True)
+
 
 def check_wget_compression(cmd):
     try:
@@ -37,10 +38,11 @@ def check_wget_compression(cmd):
     except:
         return False
 
-def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
+
+def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
     cmd = ""
-    if timeLimit:
-        cmd += "timeout {} ".format(timeLimit)
+    if time_limit:
+        cmd += "timeout {} ".format(time_limit)
     waitoption = ""
     if wait is not None:
         waitoption = "--wait " + wait
@@ -57,14 +59,13 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     if warcfilename is not None:
         warcoption = "--warc-file \"" + warcfilebasename + "\""
 
-
     if check_wget_compression("wget --help | grep 'no-warc-compression'"):
         warcoption += " --no-warc-compression"
 
     cmd += "wget --mirror {WAIT} {FILETYPES} -q -o /dev/null {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
                                                                                                  URL=url,
-                                                                                                 DOWNLOAD_PATH=outPath,
+                                                                                                 DOWNLOAD_PATH=out_path,
                                                                                                  AGENT=agentoption,
                                                                                                  WARC=warcoption)
     # print("cmd", cmd)
@@ -94,6 +95,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
 
 
     system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

@@ -63,10 +63,10 @@ def pdfextract_shell(data):
     return [converter_stdout]
 
 
-def pdfextract(data, extractor):
-    extractor.setData(data)
+def pdfextract(data, pdfextractor):
+    pdfextractor.setData(data)
     try:
-        return [bytes(extractor.getHTML(), 'utf8')]
+        return [bytes(pdfextractor.getHTML(), 'utf8')]
     except:
         return [b""]
 
@@ -129,6 +129,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logg
 f = None
 fo = None
 po = None
+extractor = None
 
 if options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
@@ -191,7 +192,7 @@ for record in f:
             continue
 
     url = url.lower()
-    url = url.replace('\t',' ')
+    url = url.replace('\t', ' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
 
@@ -224,7 +225,7 @@ for record in f:
         if options.pdfpass:
             new_record = po.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(payload), http_headers=http_headers)
             po.write_record(new_record)
-            continue ### do not process further!
+            continue  # do not process further!
         if options.pdfextract:
             payloads = pdfextract(payload, extractor)
         else:
@@ -279,4 +280,3 @@ for record in f:
             http_headers.replace_header('Content-Type', 'text/html')
         new_record = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(clean_tree), http_headers=http_headers)
         fo.write_record(new_record)
-

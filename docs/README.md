@@ -247,13 +247,16 @@ morphologicalAnalysers: {
 }
 
 reverseOutputPair: true
+
+profiling: true
 ```
 
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
-* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
-* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es).
+* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment
+* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es)
+* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step
 
-### Variables defining data sources
+### Data Sources
 
 The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
 
@@ -287,12 +290,12 @@ hosts: ["www.elisabethtea.com", "vade-antea.fr"]
 WARCFiles: ["/home/user/warc1.warc.gz", "/home/user/warc2.warc.gz"]
 ```
 
-### Variables for crawling configuration
+### Crawling
 
-Three crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Four crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [HTTrack](https://www.httrack.com/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 
 ```yaml
-crawler: httrack
+crawler: wget
 
 crawlTimeLimit: 30s
 
@@ -300,15 +303,18 @@ crawlSizeLimit: 1G
 crawlTld: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
+
+onlyConcat: false
 ```
 
-* `crawler`: set which crawler is used (`wget`,`creepy` or `httrack`)
+* `crawler`: set which crawler is used (`heritrix`, `wget`,`creepy` or `httrack`)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour
 * `crawlSizeLimit`: **creepy-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K)
 * `crawlTld`: **creepy-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org*
 * `crawlerNumThreads`: **creepy-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
 * `crawlerConnectionTimeout`: **creepy-specific option** that allows to specify the connection timeout to a web server
+* `onlyConcat`: stop Bitextor after the crawling step and group WARC files by domain
 
 If you want to also crawl PDFs (only `wget` support for now), use these settings:
 
@@ -328,13 +334,11 @@ heritrixUser: "admin:admin"
 
 Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and resume from the latest. If crawl takes longer than the crawl time limit, it will automatically create a checkpoint for a future incremental crawl.
 
-### Preprocessing variables
+### Preprocessing
 
 After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
 
 ```yaml
-maxSizeWARC: 1000
-
 giawarc: false
 
 boilerpipeCleaning: true
@@ -352,10 +356,9 @@ cleanHTML: false
 plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 ```
 
-* `maxSizeWARC`: when a website is crawled, all the documents downloaded are stored into a WARC file; this option allows to specify the maximum size of a WARC file, so when it is reached the WARC file is split into *n* files containing, as much, the maximum value set. This allows to run pre-processing in parallel for each of the WARC files obtained. Smaller values of this option implies a higher number of WARC files that can be pre-processed in parallel which, depending on the resources available, may result in a faster running of Bitextor
 * `giawarc`: this options allows preprocessing WARC files using a program written in Go. If disabled, default preprocessor implemented in this repository will be used
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax) or an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` is enabled, every language will be processed
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
@@ -363,7 +366,7 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
 * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors
 
-### Variables for document alignment
+### Document alignment
 
 Two strategies are implemented in Bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data.
 
@@ -377,7 +380,7 @@ The variable `documentAligner` can take three different values, each of them tak
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment
 
-#### Variables for document alignment using bilingual lexica
+#### Using bilingual lexica
 
 ```yaml
 dic: /home/user/en-fr.dic
@@ -399,7 +402,7 @@ If you are running out of memory in the `mkcls` rule, maybe you should activate 
 mkcls: true
 ```
 
-#### Variables for document alignment using external MT
+#### Using external MT
 
 ```yaml
 alignerCmd: "example/dummy-translate.sh"
@@ -411,7 +414,7 @@ docAlignWorkers: 2
 * `docAlignThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.0 by default
 * `docAlignWorkers`: number of parallel processes that will be run during document alignment; the default is 1 (no parallelization), and recommended values are between 1 and 4 
 
-#### Variables for document alignment using a home-brew neural MT system
+#### Using a home-brew neural MT system
 
 If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having a GPU available. The following are mandatory variables in order to build the NMT system:
 
@@ -442,7 +445,7 @@ marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "-
 * `gpuId`: id of the GPU to be used for training and testing
 * `marianArgs`: additional arguments for Marian training
 
-### Options for segment alignment
+### Segment alignment
 
 After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
 
@@ -455,7 +458,7 @@ hunalignThreshold: 0.0
 * `bleualign`: if this option is set, bleualign is used instead of hunalign as the tool for segment alignment. This option will only work is `documentAligner` is set either to `externalMT` or `NMT`. This option false by default
 * `bleuAlignThreshold` and `hunalignThreshold`: score threshold for filtering pairs of sentences with a score too low. `bleuAlignThreshold` should be set to a value in [0,1], while `hunalignThreshold` can take any float value. Both are set to 0.0 by default
 
-### Variables for parallel data filtering
+### Parallel data filtering
 
 Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score (learn more about Bicleaner [here](https://github.com/bitextor/bicleaner)). The options required to make it work are:
 
@@ -479,7 +482,7 @@ bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 
 It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
 
-### Other post-processing variables
+### Post-processing
 
 Some other options can be configured to specify the output format of our corpus:
 

@@ -30,15 +30,16 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 
 
-def get_lang_or_default(dict, lang):
-    if not dict:
+def get_lang_or_default(dictionary, language):
+    if not dictionary:
         return None
-    if lang in dict:
-        return dict[lang]
-    elif "default" in dict:
-        return dict["default"]
+    if language in dictionary:
+        return dictionary[language]
+    elif "default" in dictionary:
+        return dictionary["default"]
     else:
         return None
+
 
 def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser):
     if not sent_tokeniser:
@@ -58,7 +59,7 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
             tokenized_filtered.append(sent)
     if not word_tokeniser:
-        b64text = base64.b64encode(tokenized_filtered.lower().encode("utf-8"))
+        b64text = base64.b64encode("\n".join(tokenized_filtered).lower().encode("utf-8"))
         return b64text.decode()
 
     tokenized_text = ""

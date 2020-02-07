@@ -110,6 +110,7 @@ def open_xz_or_gzip(path, mode):
     else:
         return open(path, mode)
 
+
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
                 "normalization, deduplication, MIME and language identification, and boilerplate removing. The result"
@@ -174,7 +175,7 @@ if languages:
     if options.l2 is not None:
         languages.append(options.l2)
 
-previous_crawl_hashes=set()
+previous_crawl_hashes = set()
 
 if not os.path.exists(options.outDir):
     os.makedirs(options.outDir)
@@ -184,6 +185,7 @@ if options.inputHash:
         for line in fh:
             previous_crawl_hashes.add(int(line.strip()))
 
+plainTextHashFile = None
 if options.outputHash:
     plainTextHashFile = open_xz_or_gzip(options.outputHash, "w")
 
@@ -380,4 +382,3 @@ if not options.xzlang:
             files_dict[lang]["deboilFile"].close()
 if options.outputHash:
     plainTextHashFile.close()
-

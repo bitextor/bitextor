@@ -40,10 +40,11 @@ from xml.sax.saxutils import escape
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain, dummy_open
 
-def printseg(lang, columns, urls, seg, fields_dict, mint, deferred=None, checksum=None, no_delete_seg=False):
+
+def printseg(lang, seg_columns, urls, seg, fields_dict, mint, deferred=None, checksum=None, no_delete_seg=False):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
-    if "url1" in columns:
+    if "url1" in seg_columns:
         for url in urls:
             print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
     if deferred:
@@ -62,21 +63,21 @@ def printseg(lang, columns, urls, seg, fields_dict, mint, deferred=None, checksu
     print("    </tuv>")
 
 
-def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fields_dict, mint, no_delete_seg):
-    print("   <tu tuid=\"" + str(idcounter) + "\" datatype=\"Text\">")
-    infoTag = []
+def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_dict, mint, no_delete_seg):
+    print("   <tu tuid=\"" + str(tu_idcounter) + "\" datatype=\"Text\">")
+    info_tag = []
     if 'hunalign' in fields_dict and fields_dict['hunalign'] != "":
         print("    <prop type=\"score-aligner\">" + fields_dict['hunalign'] + "</prop>")
     if 'bicleaner' in fields_dict and fields_dict['bicleaner'] != "":
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner'] + "</prop>")
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["seg1"]) != re.sub("[^0-9]", "", fields_dict["seg2"]):
-        infoTag.append("different numbers in TUVs")
+        info_tag.append("different numbers in TUVs")
     print("    <prop type=\"type\">1:1</prop>")
     if re.sub(r'\W+', '', fields_dict["seg1"]) == re.sub(r'\W+', '', fields_dict["seg2"]):
-        infoTag.append("equal TUVs")
-    if len(infoTag) > 0:
-        print("    <prop type=\"info\">" + "|".join(infoTag) + "</prop>")
+        info_tag.append("equal TUVs")
+    if len(info_tag) > 0:
+        print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
 
     if 'deferredseg1' not in fields_dict or fields_dict['deferredseg1'] == "":
         fields_dict['deferredseg1'] = None
@@ -87,9 +88,9 @@ def printtu(idcounter, lang1, lang2, columns, urls1, urls2, fields_dict, mint, n
     if 'checksum2' not in fields_dict:
         fields_dict['checksum2'] = None
 
-    printseg(lang1, columns, urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['deferredseg1'],
+    printseg(lang1, tu_columns, tu_urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['deferredseg1'],
              fields_dict['checksum1'], no_delete_seg)
-    printseg(lang2, columns, urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['deferredseg2'],
+    printseg(lang2, tu_columns, tu_urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['deferredseg2'],
              fields_dict['checksum2'], no_delete_seg)
 
     print("   </tu>")
@@ -142,7 +143,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     print(" </header>")
     print(" <body>")
 
-    idcounter = 0 
+    idcounter = 0
     prev_hash = ""
     prev_fieldsdict = dict()
     urls1 = set()
