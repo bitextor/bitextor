@@ -78,16 +78,13 @@ if __name__ == "__main__":
     # sys.stderr.write("batch_size: {0}\n".format(args.batch_size))
 
     if os.stat(args.lang1).st_size == 0 or os.stat(args.lang2).st_size == 0:
-        sys.stderr.write(
-            "WARNING: No document alignments feasible: " + str(os.stat("file").st_size) +
-            " documents in foreign language and " + str(os.stat("file").st_size) +
-            " documents in source language.\n")
+        sys.stderr.write(f'WARNING: No document alignments feasible: {args.lang1} or {args.lang2} is empty')
         open(args.output_matches, 'a').close()
     elif (args.lang1[-3:] == ".xz" and os.stat(args.lang1).st_size == 32) or (args.lang2[-3:] == ".xz" and os.stat(args.lang2).st_size == 32):
-        sys.stderr.write(
-            "WARNING: No document alignments feasible: " + str(os.stat(args.lang1).st_size) +
-            " documents in foreign language and " + str(os.stat(args.lang2).st_size) +
-            " documents in source language.\n")
+        sys.stderr.write(f'WARNING: No document alignments feasible: {args.lang1} or {args.lang2} is empty')
+        open(args.output_matches, 'a').close()
+    elif (args.lang1[-3:] == ".gz" and os.stat(args.lang1).st_size == 26) or (args.lang2[-3:] == ".gz" and os.stat(args.lang2).st_size == 26):
+        sys.stderr.write(f'WARNING: No document alignments feasible: {args.lang1} or {args.lang2} is empty')
         open(args.output_matches, 'a').close()
 
     else:

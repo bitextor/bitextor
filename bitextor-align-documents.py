@@ -29,8 +29,11 @@
 
 import sys
 import argparse
+import os
 from operator import itemgetter
-import lzma
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
+from utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) "
                                               "file (either from a file or from the standard input) and produces a "
@@ -51,7 +54,7 @@ oparser.add_argument("-n", "--num_candidates", help="Amount of alignment candida
 oparser.add_argument("-r", "--ridx", help="If this option is defined, the final ridx file used for aligning the "
                                           "documents will be saved in the path specified (when two ridx files are "
                                           "provided, the ridx obtained when merging both files will be used)",
-                     dest="oridx", type=argparse.FileType('w'), default=None)
+                     dest="oridx", default=None)
 oparser.add_argument("-i", "--iterations", help="Number of iterations to keep looking for paired documents (only "
                                                 "works without the non-symmetric option, if both options, then uses 1 "
                                                 "iteration). Can also do undetermined iterations until all possible "
@@ -62,28 +65,6 @@ oparser.add_argument("-s", "--nonsymmetric", help="Write document alignments eve
                      dest="nonsymmetric", action="store_true")
 
 options = oparser.parse_args()
-reader = None
-reader1 = None
-reader2 = None
-combine = False
-if options.ridx2 is None:
-    if options.ridx1 is None:
-        reader = sys.stdin
-    else:
-        if options.ridx1[-3:] == ".xz":
-            reader = lzma.open(options.ridx1, "rt")
-        else:
-            reader = open(options.ridx1, "r")
-else:
-    combine = True
-    if options.ridx1[-3:] == ".xz":
-        reader1 = lzma.open(options.ridx1, "rt")
-    else:
-        reader1 = open(options.ridx1, "r")
-    if options.ridx2[-3:] == ".xz":
-        reader2 = lzma.open(options.ridx2, "rt")
-    else:
-        reader2 = open(options.ridx2, "r")
 
 indices = {}
 indicesProb = {}
@@ -91,145 +72,143 @@ documents = set(range(1, options.ndoc1 + options.ndoc2 + 1))
 documentsFile2 = set()
 file2_start_counter = options.ndoc1
 
-if not combine:
+if options.ridx2 is None:
     # Reading the .ridx file with the preliminary alignment
-    for i in reader:
-        fields = i.split("\t")
-        if len(fields) >= 2:
-            if options.oridx is not None:
-                options.oridx.write(i)
-            try:
-                indices[int(fields[0])] = int(fields[1].strip().split(":")[0])
-            except:
-                pass
-    reader.close()
-    if options.oridx is not None:
-        options.oridx.close()
+    with open_xz_or_gzip_or_plain(options.ridx1) if options.ridx1 else sys.stdin as reader, \
+            open_xz_or_gzip_or_plain(options.oridx, 'wt') if options.oridx else dummy_open() as oridx_writer:
+        for i in reader:
+            fields = i.split("\t")
+            if len(fields) >= 2:
+                if oridx_writer:
+                    oridx_writer.write(i)
+                try:
+                    indices[int(fields[0])] = int(fields[1].strip().split(":")[0])
+                except:
+                    pass
 else:
-    iterations = ""
-    if options.nonsymmetric:
-        iterations = "1"
-    else:
-        iterations = options.iterations
+    with open_xz_or_gzip_or_plain(options.ridx1, 'rt') as reader1, \
+            open_xz_or_gzip_or_plain(options.ridx2, 'rt') as reader2, \
+            open_xz_or_gzip_or_plain(options.oridx, 'wt') if options.oridx else dummy_open() as oridx_writer:
 
-    converge = False
-    if iterations == "converge":
-        iterations = "1"
-        if not options.nonsymmetric:
-            converge = True
-
-    iterationList = list(range(0, int(iterations)))
-    pairedDocs = set()
-    # In each iteration we read the whole file of document relationships and candidates,
-    # but we ignore already paired documents
-    for iteration in iterationList:
-        reader2.seek(0)
-        reader1.seek(0)
-        if converge:
-            # We create an infinite loop adding 1 item to the iteration list
-            # if we want to stop when the algorithm converges
-            iterationList.append(iteration + 1)
-
-        # We store both directions of document relationships for printing purposes
-        best_ridx2_inv = {}
-        best_ridx2 = {}
-        candidateDocuments = []
-
-        # Reading the .ridx file with the preliminary alignment in one of the directions
-        for line_ridx2 in reader2:
-            fields = line_ridx2.strip().split("\t")
-            if len(fields) >= 2:
-                num_candidates = min(len(fields) - 1, options.candidate_num)
-                candidateIterations = list(range(1, num_candidates + 1))
-                for candidate_idx in candidateIterations:
-                    field_n = fields[candidate_idx].split(":")
-                    if len(field_n) == 2 and int(fields[0]) not in pairedDocs and int(field_n[0]) not in pairedDocs:
-                        # Avoid pairing docs already paired in previous iterations of the algorithm,
-                        # in case you specified the parameter
-                        if int(field_n[0]) not in best_ridx2_inv:
-                            best_ridx2_inv[int(field_n[0])] = {}
-                            documentsFile2.add(int(fields[0]))
-                        best_ridx2_inv[int(field_n[0])][int(fields[0])] = field_n[1]
-                        if int(fields[0]) not in best_ridx2:
-                            best_ridx2[int(fields[0])] = {}
-                        best_ridx2[int(fields[0])][int(field_n[0])] = field_n[1]
-                    elif int(field_n[0]) in pairedDocs and num_candidates < (len(fields) - 1):
-                        # If the documents are already paired, we just ignored the read candidate
-                        # and do another iteration
-                        num_candidates = num_candidates + 1
-                        candidateIterations.append(num_candidates - 1)
-
-        # Reading the .ridx file with the preliminary alignment in the other direction
-        # and combining this information with the previous one
-        pairedDocsLine = set()
-        for line_ridx1 in reader1:
-            new_candidate_list = {}
-            fields = line_ridx1.strip().split("\t")
-            if len(fields) >= 2:
-                num_candidates = min(len(fields) - 1, options.candidate_num)
-                candidateIterations = list(range(1, num_candidates + 1))
-                for candidate_idx in candidateIterations:
-                    field_n = fields[candidate_idx].split(":")
-                    if len(field_n) == 2 and int(field_n[0]) not in pairedDocs and int(fields[0]) not in pairedDocs:
-                        # Same check for already paired documents in several iterations
-                        documentsFile2.add(int(field_n[0]))
-                        if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
-                            average = (float(best_ridx2_inv[int(fields[0])][int(field_n[0])]) + float(field_n[
-                                                                                                          1])) / 2  #
-                            # TODO: we should implement also the product of the score/probability as an option/parameter
-                            new_candidate_list[field_n[0]] = average
-                        if options.nonsymmetric:
-                            if field_n[0] not in new_candidate_list:
-                                new_candidate_list[field_n[0]] = float(field_n[1])
-                    elif int(field_n[0]) in pairedDocs and num_candidates < (
-                            len(fields) - 1):  # Same check to keep iterating and ignoring already paired documents
-                        num_candidates = num_candidates + 1
-                        candidateIterations.append(num_candidates - 1)
-
-            if len(new_candidate_list) >= 1:
-                candidateDocuments.append(len(new_candidate_list))
-                sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
-                if int(fields[0]) not in indicesProb or indicesProb[int(fields[0])] < int(sorted_candidates[0][1]):
-                    # We store the final indices and their scores, in case of any symmetric relationship overlap
-                    indices[int(fields[0])] = int(sorted_candidates[0][0])
-                    indicesProb[int(fields[0])] = float(sorted_candidates[0][1])
-                pairedDocsLine.add(int(fields[0]))
-                pairedDocsLine.add(int(sorted_candidates[0][0]))
-                if options.oridx is not None:
-                    elements = ["{0}:{1}".format(candidate_tuple[0], candidate_tuple[1]) for candidate_tuple in
-                                sorted_candidates]
-                    options.oridx.write("{0}\t{1}\n".format(fields[0], "\t".join(elements)))
-
-        pairedDocs.update(pairedDocsLine)
-
+        iterations = ""
         if options.nonsymmetric:
-            for document in sorted(list(documents - pairedDocs)):
-                # We now print the relationships of the first read relationships file with unpaired documents
-                if int(document) in best_ridx2 and len(best_ridx2[int(document)]) >= 1:
-                    new_candidate_list = best_ridx2[int(document)]
+            iterations = "1"
+        else:
+            iterations = options.iterations
+
+        converge = False
+        if iterations == "converge":
+            iterations = "1"
+            if not options.nonsymmetric:
+                converge = True
+
+        iterationList = list(range(0, int(iterations)))
+        pairedDocs = set()
+        # In each iteration we read the whole file of document relationships and candidates,
+        # but we ignore already paired documents
+        for iteration in iterationList:
+            reader2.seek(0)
+            reader1.seek(0)
+            if converge:
+                # We create an infinite loop adding 1 item to the iteration list
+                # if we want to stop when the algorithm converges
+                iterationList.append(iteration + 1)
+
+            # We store both directions of document relationships for printing purposes
+            best_ridx2_inv = {}
+            best_ridx2 = {}
+            candidateDocuments = []
+
+            # Reading the .ridx file with the preliminary alignment in one of the directions
+            for line_ridx2 in reader2:
+                fields = line_ridx2.strip().split("\t")
+                if len(fields) >= 2:
+                    num_candidates = min(len(fields) - 1, options.candidate_num)
+                    candidateIterations = list(range(1, num_candidates + 1))
+                    for candidate_idx in candidateIterations:
+                        field_n = fields[candidate_idx].split(":")
+                        if len(field_n) == 2 and int(fields[0]) not in pairedDocs and int(field_n[0]) not in pairedDocs:
+                            # Avoid pairing docs already paired in previous iterations of the algorithm,
+                            # in case you specified the parameter
+                            if int(field_n[0]) not in best_ridx2_inv:
+                                best_ridx2_inv[int(field_n[0])] = {}
+                                documentsFile2.add(int(fields[0]))
+                            best_ridx2_inv[int(field_n[0])][int(fields[0])] = field_n[1]
+                            if int(fields[0]) not in best_ridx2:
+                                best_ridx2[int(fields[0])] = {}
+                            best_ridx2[int(fields[0])][int(field_n[0])] = field_n[1]
+                        elif int(field_n[0]) in pairedDocs and num_candidates < (len(fields) - 1):
+                            # If the documents are already paired, we just ignored the read candidate
+                            # and do another iteration
+                            num_candidates = num_candidates + 1
+                            candidateIterations.append(num_candidates - 1)
+
+            # Reading the .ridx file with the preliminary alignment in the other direction
+            # and combining this information with the previous one
+            pairedDocsLine = set()
+            for line_ridx1 in reader1:
+                new_candidate_list = {}
+                fields = line_ridx1.strip().split("\t")
+                if len(fields) >= 2:
+                    num_candidates = min(len(fields) - 1, options.candidate_num)
+                    candidateIterations = list(range(1, num_candidates + 1))
+                    for candidate_idx in candidateIterations:
+                        field_n = fields[candidate_idx].split(":")
+                        if len(field_n) == 2 and int(field_n[0]) not in pairedDocs and int(fields[0]) not in pairedDocs:
+                            # Same check for already paired documents in several iterations
+                            documentsFile2.add(int(field_n[0]))
+                            if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
+                                average = (float(best_ridx2_inv[int(fields[0])][int(field_n[0])]) + float(field_n[
+                                                                                                              1])) / 2  #
+                                # TODO: we should implement also the product of the score/probability as an option/parameter
+                                new_candidate_list[field_n[0]] = average
+                            if options.nonsymmetric:
+                                if field_n[0] not in new_candidate_list:
+                                    new_candidate_list[field_n[0]] = float(field_n[1])
+                        elif int(field_n[0]) in pairedDocs and num_candidates < (
+                                len(fields) - 1):  # Same check to keep iterating and ignoring already paired documents
+                            num_candidates = num_candidates + 1
+                            candidateIterations.append(num_candidates - 1)
+
+                if len(new_candidate_list) >= 1:
                     candidateDocuments.append(len(new_candidate_list))
                     sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
-                    if int(document) not in indicesProb or indicesProb[int(document)] < int(sorted_candidates[0][1]):
-                        indices[int(document)] = int(sorted_candidates[0][0])
-                        indicesProb[int(document)] = float(sorted_candidates[0][1])
-                    pairedDocs.add(int(document))
-                    pairedDocs.add(int(sorted_candidates[0][0]))
-                    if options.oridx is not None:
+                    if int(fields[0]) not in indicesProb or indicesProb[int(fields[0])] < int(sorted_candidates[0][1]):
+                        # We store the final indices and their scores, in case of any symmetric relationship overlap
+                        indices[int(fields[0])] = int(sorted_candidates[0][0])
+                        indicesProb[int(fields[0])] = float(sorted_candidates[0][1])
+                    pairedDocsLine.add(int(fields[0]))
+                    pairedDocsLine.add(int(sorted_candidates[0][0]))
+                    if oridx_writer:
                         elements = ["{0}:{1}".format(candidate_tuple[0], candidate_tuple[1]) for candidate_tuple in
                                     sorted_candidates]
-                        for element in elements:
-                            score = element.split(':')[1]
-                            document2 = element.split(':')[0]
-                            options.oridx.write("{0}\t{1}:{2}\n".format(document2, document, score))
-        # End of the iterations if the result did not change from the previous iteration
-        # (exit point of the endless loop)
-        if len(candidateDocuments) == 0:
-            break
-    # Close files
-    reader2.close()
-    reader1.close()
-    if options.oridx is not None:
-        options.oridx.close()
+                        oridx_writer.write("{0}\t{1}\n".format(fields[0], "\t".join(elements)))
+
+            pairedDocs.update(pairedDocsLine)
+
+            if options.nonsymmetric:
+                for document in sorted(list(documents - pairedDocs)):
+                    # We now print the relationships of the first read relationships file with unpaired documents
+                    if int(document) in best_ridx2 and len(best_ridx2[int(document)]) >= 1:
+                        new_candidate_list = best_ridx2[int(document)]
+                        candidateDocuments.append(len(new_candidate_list))
+                        sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
+                        if int(document) not in indicesProb or indicesProb[int(document)] < int(sorted_candidates[0][1]):
+                            indices[int(document)] = int(sorted_candidates[0][0])
+                            indicesProb[int(document)] = float(sorted_candidates[0][1])
+                        pairedDocs.add(int(document))
+                        pairedDocs.add(int(sorted_candidates[0][0]))
+                        if oridx_writer:
+                            elements = ["{0}:{1}".format(candidate_tuple[0], candidate_tuple[1]) for candidate_tuple in
+                                        sorted_candidates]
+                            for element in elements:
+                                score = element.split(':')[1]
+                                document2 = element.split(':')[0]
+                                oridx_writer.write("{0}\t{1}:{2}\n".format(document2, document, score))
+            # End of the iterations if the result did not change from the previous iteration
+            # (exit point of the endless loop)
+            if len(candidateDocuments) == 0:
+                break
 
 for k in indices:
     if indices[k] in documents:

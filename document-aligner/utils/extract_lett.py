@@ -16,8 +16,11 @@
 
 import argparse
 import base64
-import lzma
-from sys import stdin
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../utils")
+from common import open_xz_or_gzip_or_plain
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -28,24 +31,21 @@ if __name__ == "__main__":
 
     counter = 0
 
-    if not args.sent_file or args.sent_file == '-':
-        sent_reader = stdin
-    else:
-        sent_reader = lzma.open(args.sent_file, "rt")
+    if not args.sent_file:
+        args.sent_file = '-'
 
-    for line in sent_reader:
-        counter = counter + 1
-        text = base64.b64decode(line.strip()).decode("utf-8")
-        n_lines = 0
+    with open_xz_or_gzip_or_plain(args.sent_file) if args.sent_file != '-' else sys.stdin as sent_reader:
+        for line in sent_reader:
+            counter = counter + 1
+            text = base64.b64decode(line.strip()).decode("utf-8")
+            n_lines = 0
 
-        for extracted_line in text.split("\n"):
-            extracted_line = extracted_line.strip()
-            if not extracted_line:
-                continue
-            n_lines = n_lines + 1
-            print(f'{counter}\t{extracted_line}')
+            for extracted_line in text.split("\n"):
+                extracted_line = extracted_line.strip()
+                if not extracted_line:
+                    continue
+                n_lines = n_lines + 1
+                print(f'{counter}\t{extracted_line}')
 
-        if n_lines == 0:
-            print(f'{counter}\t ')  # maintain the number of documents of the original file
-
-    sent_reader.close()
+            if n_lines == 0:
+                print(f'{counter}\t ')  # maintain the number of documents of the original file

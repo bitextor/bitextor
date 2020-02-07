@@ -140,7 +140,7 @@ class DocumentVectorExtractor(object):
                 pool = Pool(jobs - 1)
                 for pages in self.iterate_corpus_in_batches(corpus, batch_size):
                     total += len(pages)
-                    pages = filter(pages)  # removes empty pages
+                    pages = [p for p in pages if len(p.strip()) > 0]  # removes empty pages
                     nonempty += len(pages)
                     pool.apply_async(self.ef.extract_single_in_batches, args=(pages,), callback=counts.update)
                 pool.close()

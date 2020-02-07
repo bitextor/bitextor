@@ -17,8 +17,23 @@
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
+import sys
+import os
+import gzip
 import lzma
-from sys import stdin
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
+from utils.common import open_xz_or_gzip_or_plain
+
+
+def open_xz_or_gzip(filename, mode='rt'):
+    if filename[-3:] == '.xz':
+        return lzma.open(filename, mode)
+    elif filename[-3:] == '.gz':
+        return gzip.open(filename, mode)
+    else:
+        return open(filename, mode)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Provide pair of document indices (line numbers)'
@@ -26,7 +41,8 @@ if __name__ == "__main__":
                                                  ' documents in line based format. '
                                                  'Output format will be: '
                                                  'INDEX1<tab>[COLUMNS1...]<tab>[INDEX2]<tab>[COLUMNS2...]')
-    parser.add_argument('--indices', dest='indices', default='-', help='pairs of document indices, sorted by first column')
+    parser.add_argument('--indices', dest='indices', default='-',
+                        help='pairs of document indices, sorted by first column')
     parser.add_argument('--columns1', dest='lang1_column_filename', nargs='+', required=True)
     parser.add_argument('--columns2', dest='lang2_column_filename', nargs='+', required=True)
 
@@ -36,20 +52,17 @@ if __name__ == "__main__":
     lang2_read_docs = {}
     indices = list()
 
-    if not args.indices or args.indices == '-':
-        reader = stdin
-    else:
-        reader = lzma.open(args.indices, 'rt')
+    if not args.indices:
+        args.indices = '-'
 
-    for line in reader:
-        fields = line.split('\t')
-        lang2_docs.add(int(fields[1]))
-        indices.append((int(fields[0]), int(fields[1])))
+    with open_xz_or_gzip_or_plain(args.indices) if args.indices != '-' else sys.stdin as reader:
+        for line in reader:
+            fields = line.strip().split('\t')
+            lang2_docs.add(int(fields[1]))
+            indices.append((int(fields[0]), int(fields[1])))
 
-    reader.close()
-
-    readers1 = [lzma.open(filename, 'rt') for filename in args.lang1_column_filename]
-    readers2 = [lzma.open(filename, 'rt') for filename in args.lang2_column_filename]
+    readers1 = [open_xz_or_gzip(filename, 'rt') for filename in args.lang1_column_filename]
+    readers2 = [open_xz_or_gzip(filename, 'rt') for filename in args.lang2_column_filename]
 
     doc1_current_line = 1
     doc2_current_line = 1

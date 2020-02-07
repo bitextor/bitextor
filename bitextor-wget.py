@@ -22,7 +22,7 @@ import os
 import requests
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
-
+from warcio.statusandheaders import StatusAndHeaders
 
 def system_check(cmd):
     sys.stderr.write("Executing:" + cmd + "\n")
@@ -61,7 +61,7 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     if check_wget_compression("wget --help | grep 'no-warc-compression'"):
         warcoption += " --no-warc-compression"
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
+    cmd += "wget --mirror {WAIT} {FILETYPES} -q -o /dev/null {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
                                                                                                  FILETYPES=filetypesoption,
                                                                                                  URL=url,
                                                                                                  DOWNLOAD_PATH=outPath,
@@ -70,20 +70,28 @@ def run(url, outPath, timeLimit, agent, filetypes, warcfilename, wait):
     # print("cmd", cmd)
     try:
         system_check(cmd)
-        with open(warcfilebasename + ".warc", 'rb') as f_in:
-            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
-                writer = WARCWriter(f_out, gzip=True)
-                for record in ArchiveIterator(f_in):
-                    writer.write_record(record)
     except subprocess.CalledProcessError as grepexc:
-        with open(warcfilebasename + ".warc", 'rb') as f_in:
-            with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
-                writer = WARCWriter(f_out, gzip=True)
-                for record in ArchiveIterator(f_in):
-                    writer.write_record(record)
-                # try except here
-
         sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
+
+    with open(warcfilebasename + ".warc", 'rb') as f_in:
+        with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
+            writer = WARCWriter(f_out, gzip=True)
+            try:
+                for record in ArchiveIterator(f_in):
+                    if record.http_headers:
+                        if record.http_headers.get_header('Transfer-Encoding') == "chunked":
+                            continue
+                        try:
+                            record.http_headers.to_ascii_bytes()
+                        except UnicodeEncodeError:
+                            # if header is non ascii, create a new header, with status code only
+                            # content length and content type will be filled before writing
+                            record.http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
+
+                    writer.write_record(record)
+            except:
+                pass
+
 
     system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
 
@@ -113,7 +121,7 @@ if __name__ == "__main__":
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
     try:
-        robots = requests.get(args.url + "/robots.txt").text.split("\n")
+        robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
         for line in robots:
             if "Crawl-delay" in line:
                 try:

@@ -18,8 +18,13 @@ exit_program()
   >&2 echo "                          to different nodes."
   >&2 echo "  -c <CLUSTERCOMMAND>     Command used to submit jobs to the cluster (for example"
   >&2 echo "                          qsub in PBS or sbatch in SLURM."
-  >&2 echo "  -g <CLUSTERCONFIG>      Config file for the clsuter. This allows to set specific"
+  >&2 echo "  -g <CLUSTERCONFIG>      Config file for the cluster. This allows to set specific"
   >&2 echo "                          options for some rules in snakemake."
+  >&2 echo "  -k                      Go on with independent jobs if a job fails."
+  >&2 echo "  -n                      Ignore temp() declarations. This is useful when"
+  >&2 echo "                          running only a part of the workflow, since temp()"
+  >&2 echo "                          would lead to deletion of probably needed files by"
+  >&2 echo "                          other parts of the workflow."
   exit 1
 }
 
@@ -34,11 +39,19 @@ if [[ $(command -v snakemake | wc -l) -eq 0 ]]; then
   exit 1
 fi
 
-ARGS=$(getopt -o hs:j:c:g: -- "$@")
+ARGS=$(getopt -o hkns:j:c:g: -- "$@")
 eval set -- "${ARGS}"
 for i
 do
   case "$i" in
+    -k )
+      shift
+      KEEPGOING="-k"
+      ;;
+    -n )
+      shift
+      NOTEMP="-nt"
+      ;;
     -s )
       shift
       SNAKEFILE="$1"
@@ -74,4 +87,4 @@ if [[ "$SNAKEFILE" == "" ]]; then
   exit 1
 fi
 
-snakemake --snakefile "$(dirname "$0")/snakemake/Snakefile" --configfile "${SNAKEFILE}" -j "${NUMJOBS}" ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname "$0")"
+snakemake --snakefile "$(dirname "$0")/snakemake/Snakefile" ${KEEPGOING} --configfile "${SNAKEFILE}" -j "${NUMJOBS}" ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname "$0")"

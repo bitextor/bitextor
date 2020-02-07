@@ -148,7 +148,7 @@ bitextor.sh -s myconfig.yaml -j 4
 If Bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used:
 
 ```bash
-bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>]
+bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>] [-k] [-n]
 ```
 
 where
@@ -156,6 +156,8 @@ where
 * `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
 * `<CLUSTERCONFIG>` is a JSON configuration file that specifies the specific requirements for each job in the cluster (for example, this file specifies if a job requires a certain amount of RAM memory, or access to one or more GPUs, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
+* `-k` option is for going on with independent jobs if a Bitextor rule/job fails.
+* `-n` option will ignore temp() folder/files declarations. This is useful when running only a part of the workflow, since temp() would lead to deletion of probably needed files by other parts of the workflow.
 
 ### Running Bitextor on a cluster
 
@@ -224,7 +226,7 @@ wordTokenizers: {
 
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
-  'default': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en'
+  'default': '/home/user/bitextor/snakemake/example/nltk-sent-tokeniser.py english'
 }
 ```
 
@@ -243,10 +245,13 @@ morphologicalAnalysers: {
   'lang1': 'path/to/morph-analyser1',
   'lang2': 'path/to/morph-analyser2'
 }
+
+reverseOutputPair: true
 ```
 
 * `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
 * `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es).
 
 ### Variables defining data sources
 
@@ -459,7 +464,7 @@ bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
 
-* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available [here](https://github.com/bitextor/bitextor-data/releases/tag/bicleaner-v1.0). They are ready to be downloaded and decompressed
+* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
 If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:

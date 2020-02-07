@@ -20,7 +20,6 @@ import os
 import argparse
 import base64
 import string
-import lzma
 from external_processor import ExternalTextProcessor
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
@@ -73,7 +72,9 @@ oparser.add_argument("--prune-type", dest="prune_type", choices={"words", "chars
 
 options = oparser.parse_args()
 
-with open_xz_or_gzip_or_plain(options.text) as reader, lzma.open(options.sent_output, "w") as sent_writer, lzma.open(options.tok_output, "w") as tok_writer:
+with open_xz_or_gzip_or_plain(options.text) as reader, \
+        open_xz_or_gzip_or_plain(options.sent_output, "w") as sent_writer, \
+        open_xz_or_gzip_or_plain(options.tok_output, "w") as tok_writer:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
         sentences = split_sentences(content, options.splitter, options.prune_type, options.prune_threshold)
