@@ -17,6 +17,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
+import argparse
+import http.client
 #
 # This file has been created building on the crawler.py script
 # in the Creepy project, by Wei-Ning Huang (AZ) <aitjcize@gmail.com>
@@ -26,8 +28,6 @@
 # and a nubmer of optional parameters (use option -h for more details).
 # The output is a WARC file
 import io
-import argparse
-import http.client
 import logging
 import pickle
 import random
@@ -39,15 +39,16 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
-import urllib3
-import requests
 from posixpath import join, dirname, normpath
 from ssl import CertificateError
 from threading import Thread, Lock
 from urllib.parse import quote
-from warcio.warcwriter import WARCWriter
-from warcio.statusandheaders import StatusAndHeaders
+
 import mmh3
+import requests
+from warcio.statusandheaders import StatusAndHeaders
+from warcio.warcwriter import WARCWriter
+
 
 # SET THE SEED FOR REPRODUCIBILITY TESTS
 # SEED=4
@@ -484,6 +485,7 @@ except:
     sys.stderr.write(str(sys.exc_info()[0]) + "\n")
 
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
+
 
 class MyCrawler(Crawler):
     def process_document(self, doc):

@@ -69,10 +69,10 @@ def fill_index(file, lang1, lang2, index1, index2):
 #
 # Loading bilingual lexicon (.dic)
 #
-def load_dictionaries(dictionary, lang1, lang2, dic):
+def load_dictionaries(dictionary_path, lang1, lang2, dictionary):
     col_dic1 = -1
     col_dic2 = -1
-    file = open(dictionary, "r")
+    file = open(dictionary_path, "r")
     fields = file.readline().strip().split("\t")
     ind = 0
     for j in fields:
@@ -84,21 +84,21 @@ def load_dictionaries(dictionary, lang1, lang2, dic):
     for i in file:
         fields = i.strip().split("\t")
         if len(fields) == 2:
-            dic[fields[col_dic2]].append(fields[col_dic1])
+            dictionary[fields[col_dic2]].append(fields[col_dic1])
     file.close()
 
 
 #
 # Function that provides the set of translated words in a segments using a bilingual lexicon
 #
-def translate_words(index, dic, dictp, translatedindex):
+def translate_words(index, dictionary, dictp, translatedindex):
     for i in index:
         translatedindex[i] = set([])
         counter = 0
         for word in index[i]:
-            if word in dic:
+            if word in dictionary:
                 counter += 1
-                translatedindex[i].update(dic[word])
+                translatedindex[i].update(dictionary[word])
         dictp[i] = counter
 
 
@@ -106,7 +106,7 @@ def translate_words(index, dic, dictp, translatedindex):
 # The initial lexicon is extended by adding all those words that appear exactly the same in
 # both sides (they are likely to be proper nouns, codes, dates, etc. that do not need to be translated).
 #
-def feed_dict_with_identical_words(index1, index2, dic):
+def feed_dict_with_identical_words(index1, index2, dictionary):
     words_lang1 = set()
     for key, words in list(index1.items()):
         words_lang1 = words_lang1.union(words)
@@ -116,7 +116,7 @@ def feed_dict_with_identical_words(index1, index2, dic):
         words_lang2 = words_lang2.union(words)
 
     for w in words_lang1.intersection(words_lang2):
-        dic[w].append(w)
+        dictionary[w].append(w)
 
 
 oparser = argparse.ArgumentParser(
@@ -149,6 +149,8 @@ lista_words = []
 found = {}
 dict_words = {}
 translated_index_text2 = {}
+lett_documents = {}
+ihost = None
 
 # Loading bilingual lexicon
 load_dictionaries(options.dictionary, options.lang1, options.lang2, dic)
@@ -168,50 +170,49 @@ feed_dict_with_identical_words(index_text1, index_text2, dic)
 translate_words(index_text2, dic, dict_words, translated_index_text2)
 
 if options.lett is not None:
-    documents = {}
-    read_lett(options.lett, documents)
+    read_lett(options.lett, lett_documents)
 
-for i in index_text1:
+for document_index1 in index_text1:
     if options.lett is not None:
-        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', documents[i])
+        rx = re.match('(https?://)([^/]+)([^\?]*)(\?.*)?', lett_documents[document_index1])
         ihost = rx.group(2)
 
     similar = {}
-    for j in index_text2:
+    for document_index2 in index_text2:
         validpair = True
         if options.lett is not None:
-            rx = re.match('(https?://)([^/]+)([^?]*)(\?.*)?', documents[j])
+            rx = re.match('(https?://)([^/]+)([^?]*)(\?.*)?', lett_documents[document_index2])
             jhost = rx.group(2)
             if jhost != ihost:
                 validpair = False
         if validpair:
-            c3 = index_text1[i].intersection(translated_index_text2[j])
-            if len(c3) > 0 and int(dict_words[j]) > 0:
-                max_vocab = max(len(index_text1[i]), len(index_text2[j]))
-                min_vocab = min(len(index_text1[i]), len(index_text2[j]))
+            c3 = index_text1[document_index1].intersection(translated_index_text2[document_index2])
+            if len(c3) > 0 and int(dict_words[document_index2]) > 0:
+                max_vocab = max(len(index_text1[document_index1]), len(index_text2[document_index2]))
+                min_vocab = min(len(index_text1[document_index1]), len(index_text2[document_index2]))
                 num_intersect_words = len(c3)
-                num_trans_words_text2 = dict_words[j]
-                similar[j] = (float(min_vocab) / float(max_vocab)) * (
+                num_trans_words_text2 = dict_words[document_index2]
+                similar[document_index2] = (float(min_vocab) / float(max_vocab)) * (
                             float(num_intersect_words) / float(num_trans_words_text2))
 
     if len(similar) > 0:
         similar = sorted(list(similar.items()), key=itemgetter(1), reverse=True)
-    found[i] = []
-    for j in similar:
-        found[i].append(str(j[0]) + ":" + str(j[1]))
+    found[document_index1] = []
+    for document_index2 in similar:
+        found[document_index1].append(str(document_index2[0]) + ":" + str(document_index2[1]))
 
 # For each document, we obtain the 10-best candidates with highest score.
-for i in found:
-    if len(found[i]) > 10:
-        counter = 10
+for document_index in found:
+    if len(found[document_index]) > 10:
+        num_best_candidates = 10
     else:
-        counter = len(found[i])
+        num_best_candidates = len(found[document_index])
     first = True
-    candidatestring = str(i) + "\t"
-    for j in range(counter):
+    candidatestring = str(document_index) + "\t"
+    for document_index2 in range(num_best_candidates):
         if first:
-            candidatestring += str(found[i][j])
+            candidatestring += str(found[document_index][document_index2])
             first = False
         else:
-            candidatestring += "\t" + str(found[i][j])
+            candidatestring += "\t" + str(found[document_index][document_index2])
     print(candidatestring)

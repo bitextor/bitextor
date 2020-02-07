@@ -33,14 +33,14 @@ def system_check(cmd):
     subprocess.check_call(cmd, shell=True)
 
 
-def run(url, outPath, timeLimit, pageLimit, agent, wait):
+def run(url, out_path, time_limit, page_limit, agent, wait):
     cmd = "httrack --skeleton -Q -q -%i0 -u2 -a "
 
-    if timeLimit:
-        cmd += " -E{}".format(timeLimit)
+    if time_limit:
+        cmd += " -E{}".format(time_limit)
 
-    if pageLimit:
-        cmd += " -#L{}".format(pageLimit)
+    if page_limit:
+        cmd += " -#L{}".format(page_limit)
 
     if wait:
         cmd += " --connection-per-second={}".format(1/int(wait))
@@ -50,7 +50,7 @@ def run(url, outPath, timeLimit, pageLimit, agent, wait):
 
     domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
 
-    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=outPath, AGENT=agentoption, DOMAIN=domain)
+    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=out_path, AGENT=agentoption, DOMAIN=domain)
     # print("cmd", cmd)
 
     system_check(cmd)
