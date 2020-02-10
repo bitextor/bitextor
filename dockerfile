@@ -28,9 +28,9 @@ RUN cd /opt/bitextor     \
 
 # Installing protobuf and cld3
     RUN apt-get install -y autoconf automake libtool curl make g++ unzip \
-    && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-all-3.11.3.tar.gz \
-    && tar -zxvf protobuf-all-3.11.3.tar.gz \
-    && cd protobuf-3.11.3 \
+    && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.10.1/protobuf-all-3.10.1.tar.gz \
+    && tar -zxvf protobuf-all-3.10.1.tar.gz \
+    && cd protobuf-3.10.1 \
     && ./configure \
     && make \
     && make check \
