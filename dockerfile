@@ -2,7 +2,7 @@
 FROM ubuntu:latest
 
 # Update Software repository
-RUN apt update
+RUN apt clean && apt update && apt upgrade -y && apt full-upgrade -y && apt autoremove -y && apt autoclean -y
 
 # Add required dependencies
 RUN apt-get -y install git httrack cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl wget locales
