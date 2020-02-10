@@ -25,20 +25,6 @@ RUN cd /opt/bitextor     \
     && pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7" \
     && pip3 install -r bifixer/requirements.txt
 
-# Installing giawarc
-RUN wget -O go.tgz https://dl.google.com/go/go1.13.7.linux-amd64.tar.gz \
-    && tar -C /usr/local -xzf go.tgz \
-    && rm go.tgz \
-    && export PATH="/usr/local/go/bin:$PATH" \
-    && go version
-ENV GOPATH /root/go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-RUN go get github.com/paracrawl/giawarc/...
-    
-
-    
 
 # Installing protobuf and cld3
     RUN apt-get install -y autoconf automake libtool curl make g++ unzip \
@@ -52,6 +38,19 @@ RUN go get github.com/paracrawl/giawarc/...
     && ldconfig \
     && pip3 install Cython \
     && pip3 install pycld3
+
+# Installing giawarc
+RUN wget -O go.tgz https://dl.google.com/go/go1.13.7.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go.tgz \
+    && rm go.tgz \
+    && export PATH="/usr/local/go/bin:$PATH" \
+    && go version
+ENV GOPATH /root/go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+RUN go get github.com/paracrawl/giawarc/...
+    
 
 # Installing bitextor
 RUN cd /opt/bitextor     \
