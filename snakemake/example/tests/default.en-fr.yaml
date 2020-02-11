@@ -7,14 +7,14 @@ temp: ~/transient-default-en-fr
 lang1: en
 lang2: fr
 
-wordTokenizers: "{
+wordTokenizers: {
   'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
-  'fr: '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr'
-}"
-sentenceSplitters: "{
+  'fr': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr'
+}
+sentenceSplitters: {
   'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
-  'fr: '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr'
-}"
+  'fr': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr'
+}
 
 dic: ~/permanent/en-fr.dic
 hunalignThreshold: 0
