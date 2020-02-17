@@ -49,7 +49,7 @@ istream &operator>>(istream &stream, Document &document)
 
 ostream &operator<<(ostream &stream, Document const &document)
 {
-	stream << "--- Document ----\n";
+	stream << "--- Document ---\n";
 
 	for (auto const &entry : document.vocab)
 		stream << entry.first << ": " << entry.second << "\n";
