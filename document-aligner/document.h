@@ -6,6 +6,7 @@
 namespace bitextor {
 
 struct Document {
+	std::string url;
 	std::string body;
 	std::map<NGram, size_t> vocab;
 };
