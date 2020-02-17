@@ -88,7 +88,7 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
                             # if header is non ascii, create a new header, with status code only
                             # content length and content type will be filled before writing
                             record.http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
-
+                    record.length = None
                     writer.write_record(record)
             except:
                 pass
