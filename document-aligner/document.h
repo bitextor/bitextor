@@ -1,28 +1,24 @@
 #pragma once
-#include <stdint.h>
-#include <cstdint>
+#include "ngram.h"
+#include <istream>
+#include <map>
 
 namespace bitextor {
 
-struct WordScore {
-  uint32_t hash; // Yes there will be collisions.  Some document pairs might accidentally be suggested.
-  float tfidf;
+struct Document {
+	std::string body;
+	std::map<NGram, size_t> vocab;
 };
 
-inline float DocumentDot(const WordScore *first, const WordScore *first_end, const WordScore *second, const WordScore *second_end) {
-  float ret = 0.0;
-  while (first != first_end && second != second_end) {
-    if (*first < *second) {
-      ++first;
-    } else if (*first > *second) {
-      ++second;
-    } else {
-      ret += first->tfidf * second->tfidf;
-      ++first;
-      ++second;
-    }
-  }
-  return ret;
-}
+struct WordScore {
+	uint64_t hash; // Same as NGram::hash
+	float tfidf;
+};
+
+std::istream &operator>>(std::istream &stream, Document &document);
+
+std::ostream &operator<<(std::ostream &stream, Document const &document);
+
+float DocumentDot(const WordScore *first, const WordScore *first_end, const WordScore *second, const WordScore *second_end);
 
 } // namespace bitextor
