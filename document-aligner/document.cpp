@@ -66,6 +66,10 @@ void calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t
 	while (word_it != word_end && df_it != df_end) {
 		if (word_it->first < df_it->first) {
 			// Word not found in any documents, assume occurrence of one (i.e. this)
+			document.wordvec.push_back(WordScore{
+				.hash = word_it->first.hash,
+				.tfidf = tfidf(word_it->second, document_count, 1)
+			});
 			++word_it;
 		} else if (df_it->first < word_it->first) {
 			// Word not in document
