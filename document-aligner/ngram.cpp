@@ -31,9 +31,6 @@ NGram ingramstream::read_ngram()
 	// Read last token of ngram, put it at end of buffer
 	*this >> _buffer[(_offset + _size - 1) % _size];
 
-	vector<string> tokens;
-	tokens.push_back(_buffer[_offset]);
-
 	// Start reading at start of buffer
 	uint64_t hash(MurmurHashNative(_buffer[_offset].data(), _buffer[_offset].size(), 0));
 
@@ -41,13 +38,12 @@ NGram ingramstream::read_ngram()
 	for (size_t i = 1; i < _size; ++i) {
 		string const &token = _buffer[(_offset + i) % _size];
 		hash = MurmurHashCombine(MurmurHashNative(token.data(), token.size(), 0), hash);
-		tokens.push_back(token);
 	}
 
 	// Increase buffer offset (this is a -> is a test)
 	_offset = (_offset + 1) % _size;
 	
-	return NGram{hash, tokens};
+	return NGram{hash};
 }
 
 ingramstream &operator>>(ingramstream &stream, NGram &word)
@@ -77,7 +73,7 @@ ostream &operator<<(ostream &str, vector<string> const &words)
 
 ostream &operator<<(ostream &str, NGram const &gram) 
 {
-	return str << '{' << gram.hash << ' ' << gram.tokens << '}';
+	return str << '{' << gram.hash << '}';
 }
 
 } // namespace bitextor

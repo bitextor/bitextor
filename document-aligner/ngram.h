@@ -5,11 +5,13 @@
 
 namespace bitextor {
 
+/**
+ * Struct around uint64_t to make it easy to add the original tokens as
+ * a vector and to differentiate between types.
+ */
 struct NGram {
-	uint64_t hash; // TODO: uint32_t
+	uint64_t hash;
 	
-	std::vector<std::string> tokens; // For debugging right now
-
 	inline bool operator<(NGram const &other) const {
 		return hash < other.hash;
 	}
@@ -19,6 +21,11 @@ struct NGram {
 	}
 };
 
+/**
+ * Istream wrapper that reads space separated words into ngrams. Keeps
+ * an internal buffer to do so. Use toghether with >> to read the ngrams
+ * from this stream.
+ */
 class ingramstream : public std::istream {
 public:
 	ingramstream(std::istream &stream, size_t size);

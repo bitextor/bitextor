@@ -9,49 +9,6 @@ using namespace std;
 
 namespace po = boost::program_options;
 
-void calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t> const &df) {
-	auto word_it = document.vocab.begin(),
-	     word_end = document.vocab.end();
-	
-	auto df_it = df.cbegin(),
-	     df_end = df.cend();
-	
-	while (word_it != word_end && df_it != df_end) {
-		if (word_it->first < df_it->first)
-			++word_it;
-		else if (df_it->first < word_it->first)
-			++df_it;
-		else {
-			word_it->second.tfidf = (float) word_it->second.count * (document_count / (1.0f * df_it->second));
-			++word_it;
-			++df_it;
-		}
-	}
-}
-
-float calculate_alignment(Document const &left, Document const &right) {
-	float score = 0;
-	
-	auto lit = left.vocab.cbegin(),
-	     rit = right.vocab.cbegin(),
-	     lend = left.vocab.cend(),
-	     rend = right.vocab.cend();
-	
-	while (lit != lend && rit != rend) {
-		if (lit->first < rit->first)
-			++lit;
-		else if (rit->first < lit->first)
-			++rit;
-		else {
-			score += lit->second.tfidf * rit->second.tfidf;
-			++lit;
-			++rit;
-		}
-	}
-	
-	return score;
-}
-
 int main(int argc, char *argv[]) {
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
@@ -87,6 +44,8 @@ int main(int argc, char *argv[]) {
 		     << opt_desc << endl;
 		return 1;
 	}
+	
+	// Read first set of documents into memory.
 
 	std::vector<Document> documents;
 	
@@ -106,6 +65,8 @@ int main(int argc, char *argv[]) {
 
 	cerr << "Read " << documents.size() << " documents" << endl;
 	
+	// Calculate the document frequency for terms.
+	
 	map<NGram,size_t> df;
 	
 	for (auto const &document : documents)
@@ -114,10 +75,15 @@ int main(int argc, char *argv[]) {
 	
 	cerr << "Aggregated DF" << endl;
 	
+	// Calculate TF/DF over the documents we have in memory
+	
 	for (auto &document : documents)
 		calculate_tfidf(document, documents.size(), df);
 	
 	cerr << "Calculated translated TFIDF scores" << endl;
+	
+	// Start reading the other set of documents we match against
+	// (Note: they are not included in the DF table!)
 	
 	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
 	ifstream en_urls_in(vm["english-urls"].as<std::string>());
@@ -125,6 +91,8 @@ int main(int argc, char *argv[]) {
 	float threshold = vm["threshold"].as<float>();
 	
 	size_t n = 0;
+	
+	size_t hits = 0;
 
 	while (en_tokens_in >> buffer) {
 		if (!(en_urls_in >> buffer.url)) {
@@ -142,10 +110,13 @@ int main(int argc, char *argv[]) {
 			if (score < threshold)
 				continue;
 			
-			cout << score
-				 << '\t' << document.url
-				 << '\t' << buffer.url
-				 << '\n';
+			++hits;
+//			cout << score
+//				 << '\t' << document.url
+//				 << '\t' << buffer.url
+//				 << '\n';
 		}
 	}
+	
+	cout << hits << endl;
 }
