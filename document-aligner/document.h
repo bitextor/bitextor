@@ -5,10 +5,15 @@
 
 namespace bitextor {
 
+struct Statistics {
+	size_t count;
+	float tfidf;
+};
+
 struct Document {
 	std::string url;
 	std::string body;
-	std::map<NGram, size_t> vocab;
+	std::map<NGram, Statistics> vocab;
 };
 
 struct WordScore {

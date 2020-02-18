@@ -41,7 +41,7 @@ istream &operator>>(istream &stream, Document &document)
 	NGram ngram;
 
 	while (ngram_stream >> ngram) {
-		document.vocab[ngram] += 1;
+		document.vocab[ngram].count += 1;
 	}
 
 	return stream;
@@ -52,7 +52,7 @@ ostream &operator<<(ostream &stream, Document const &document)
 	stream << "--- Document ---\n";
 
 	for (auto const &entry : document.vocab)
-		stream << entry.first << ": " << entry.second << "\n";
+		stream << entry.first << ": " << entry.second.count << "\n";
 
 	return stream << "--- end ---";
 }
