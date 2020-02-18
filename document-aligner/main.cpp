@@ -2,9 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include "boost/program_options.hpp"
 
 using namespace bitextor;
 using namespace std;
+
+namespace po = boost::program_options;
 
 void calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t> const &df) {
 	auto word_it = document.vocab.begin(),
@@ -50,15 +53,45 @@ float calculate_alignment(Document const &left, Document const &right) {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		cerr << "Usage: " << argv[0] << " tokens.txt urls.txt [ tokens2.txt urls2.txt ]" << endl;
+	po::positional_options_description arg_desc;
+	arg_desc.add("translated-tokens", 1);
+	arg_desc.add("translated-urls", 1);
+	arg_desc.add("english-tokens", 1);
+	arg_desc.add("english-urls", 1);
+	
+	po::options_description opt_desc("Additional options");
+	opt_desc.add_options()
+		("help", "produce help message")
+		("threshold", po::value<float>()->default_value(0.7), "set score threshold")
+		("translated-tokens", po::value<string>(), "set input filename")
+		("translated-urls", po::value<string>(), "set input filename")
+		("english-tokens", po::value<string>(), "set input filename")
+		("english-urls", po::value<string>(), "set input filename");
+	
+	po::variables_map vm;
+	
+	try {
+		po::store(po::command_line_parser(argc, argv).options(opt_desc).positional(arg_desc).run(), vm);
+		po::notify(vm);
+	} catch (const po::error &exception) {
+		cerr << exception.what() << endl;
+		return 1;
+	}
+		
+	if (vm.count("help")
+		|| !vm.count("translated-tokens") || !vm.count("translated-urls")
+		|| !vm.count("english-tokens") || !vm.count("english-urls"))
+	{
+		cout << "Usage: " << argv[0]
+		     << " TRANSLATED-TOKENS TRANSLATED-URLS ENGLISH-TOKENS ENGLISH-URLS\n\n"
+		     << opt_desc << endl;
 		return 1;
 	}
 
 	std::vector<Document> documents;
 	
-	ifstream tokens_in(argv[1]);
-	ifstream urls_in(argv[2]);
+	ifstream tokens_in(vm["translated-tokens"].as<std::string>());
+	ifstream urls_in(vm["translated-urls"].as<std::string>());
 
 	Document buffer;
 
@@ -86,29 +119,33 @@ int main(int argc, char *argv[]) {
 	
 	cerr << "Calculated translated TFIDF scores" << endl;
 	
-	if (argc >= 5) {
+	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
+	ifstream en_urls_in(vm["english-urls"].as<std::string>());
 	
-		ifstream en_tokens_in(argv[3]);
-		ifstream en_urls_in(argv[4]);
+	float threshold = vm["threshold"].as<float>();
+	
+	size_t n = 0;
+
+	while (en_tokens_in >> buffer) {
+		if (!(en_urls_in >> buffer.url)) {
+			cerr << "Error while reading url for the " << n << "th document" << endl;
+			return 3;
+		}
 		
-		size_t n = 0;
-	
-		while (en_tokens_in >> buffer) {
-			if (!(en_urls_in >> buffer.url)) {
-				cerr << "Error while reading url for the " << n << "th document" << endl;
-				return 3;
-			}
+		++n;
+		
+		calculate_tfidf(buffer, documents.size(), df);
+		
+		for (auto const &document : documents) {
+			float score = calculate_alignment(document, buffer);
 			
-			++n;
+			if (score < threshold)
+				continue;
 			
-			calculate_tfidf(buffer, documents.size(), df);
-			
-			for (auto const &document : documents) {
-				cout << calculate_alignment(document, buffer)
-				     << '\t' << document.url
-				     << '\t' << buffer.url
-				     << '\n';
-			}
+			cout << score
+				 << '\t' << document.url
+				 << '\t' << buffer.url
+				 << '\n';
 		}
 	}
 }
