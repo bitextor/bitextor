@@ -144,8 +144,13 @@ int main(int argc, char *argv[]) {
 	
 	// Calculate TF/DF over the documents we have in memory
 	
-	for (auto &document : documents)
+	for (auto &document : documents) {
+		// Turn the vocab map into a sorted tfidf score list
 		calculate_tfidf(document, documents.size(), df);
+		
+		// Save a bit of memory
+		document.vocab.clear();
+	}
 	
 	cerr << "Calculated translated TFIDF scores" << endl;
 	
@@ -216,7 +221,10 @@ int main(int argc, char *argv[]) {
 			return 4;
 		}
 		
+		// TODO: Move this into consumers as well?
 		calculate_tfidf(buffer, documents.size(), df);
+		
+		buffer.vocab.clear();
 		
 		// Make 100% sure it is not an empty document, empty docs are poisonous!
 		if (buffer.wordvec.empty()) {
