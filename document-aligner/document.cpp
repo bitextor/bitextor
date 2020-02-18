@@ -46,11 +46,16 @@ ostream &operator<<(ostream &stream, Document const &document)
 	return stream << "--- end ---";
 }
 	
+inline float tfidf(size_t tf, size_t dc, size_t df) {
+	// Note: Matches tf_smooth setting 14 (2 for TF and 2 for IDF) of the python implementation
+	return (float) log(tf + 1) * log(dc / (1.0f + df));
+}
+	
 /**
  * Calculate TF/DF based on how often an ngram occurs in this document and how often it occurs at least once
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
- */
+*/
 void calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t> const &df) {
 	auto word_it = document.vocab.cbegin(),
 		 word_end = document.vocab.cend();
@@ -59,15 +64,16 @@ void calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t
 		 df_end = df.cend();
 	
 	while (word_it != word_end && df_it != df_end) {
-		if (word_it->first < df_it->first)
+		if (word_it->first < df_it->first) {
+			// Word not found in any documents, assume occurrence of one (i.e. this)
 			++word_it;
-		else if (df_it->first < word_it->first)
+		} else if (df_it->first < word_it->first) {
+			// Word not in document
 			++df_it;
-		else {
-			// Note: Matches tf_smooth setting 14 (2 for TF and 2 for IDF) of the python implementation
+		} else {
 			document.wordvec.push_back(WordScore{
 				.hash = word_it->first.hash,
-				.tfidf = (float) log(word_it->second + 1) * log(document_count / (1.0f + df_it->second))
+				.tfidf = tfidf(word_it->second, document_count, df_it->second)
 			});
 			++word_it;
 			++df_it;
