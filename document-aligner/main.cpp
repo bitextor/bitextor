@@ -4,13 +4,47 @@
 #include <unordered_map>
 #include <thread>
 #include <memory>
-#include "boost/program_options.hpp"
 #include <mutex>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/program_options.hpp>
 #include "document.h"
 #include "blocking_queue.h"
 
 using namespace bitextor;
 using namespace std;
+
+bool ends_with(string const &str, string const &ext) {
+	return str.length() >= ext.length() && str.compare(str.length() - ext.length(), ext.length(), ext) == 0;
+}
+
+class transparent_ifstream : public boost::iostreams::filtering_streambuf<boost::iostreams::input> {
+public:
+	transparent_ifstream(string const &path) {
+		this->open(path);
+	}
+	
+	void open(string const &path) {
+		if (ends_with(path, ".gz"))
+			this->open_gzipped(path);
+		else
+			this->open_plain(path);
+	}
+	
+	void open_gzipped(string const &path) {
+		_file.open(path, ios_base::in | ios_base::binary);
+		this->push(boost::iostreams::zlib_decompressor());
+		this->push(_file);
+	}
+	
+	void open_plain(string const &path) {
+		_file.open(path, ios_base::in);
+		this->push(_file);
+	}
+private:
+	ifstream _file;
+};
 
 namespace po = boost::program_options;
 
@@ -26,7 +60,7 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
 	     << '\n';
 }
 
-size_t read_df(ifstream &fin, unordered_map<NGram, size_t> &df) {
+size_t read_df(istream &fin, unordered_map<NGram, size_t> &df) {
 	size_t n = 0;
 	
 	while (true) {
@@ -44,7 +78,13 @@ size_t read_df(ifstream &fin, unordered_map<NGram, size_t> &df) {
 	return n;
 }
 
-size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+size_t read_df_from_file(string const &path, unordered_map<NGram, size_t> &df) {
+	transparent_ifstream in_file(path);
+	istream in_stream(&in_file);
+	return read_df(in_stream, df);
+}
+
+size_t read_document_refs(istream &fin_tokens, istream &fin_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
 	size_t n = 0;
 	
 	while (true) {
@@ -63,6 +103,83 @@ size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, unordered_ma
 	}
 	
 	return n;
+}
+
+size_t read_document_refs_from_file(string const &path_tokens, string const &path_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+	transparent_ifstream fin_tokens(path_tokens);
+	transparent_ifstream fin_urls(path_urls);
+	istream in_tokens(&fin_tokens);
+	istream in_urls(&fin_urls);
+	return read_document_refs(in_tokens, in_urls, df, document_cnt, it);
+}
+
+int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, string const &path_tokens, string const &path_urls, float threshold, unsigned int n_threads) {
+	vector<thread> consumers;
+	
+	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
+	
+	transparent_ifstream fin_tokens(path_tokens);
+	istream in_tokens(&fin_tokens);
+	
+	transparent_ifstream fin_urls(path_urls);
+	istream in_urls(&fin_urls);
+	
+	for (unsigned int n = 0; n < n_threads; ++n)
+		consumers.push_back(thread([&queue, &refs, &df, threshold]() {
+			while (true) {
+				unique_ptr<Document> buffer(queue.pop());
+				
+				// Empty doc is poison
+				if (!buffer)
+					break;
+				
+				DocumentRef const &ref = calculate_tfidf(*buffer, refs.size(), df);
+				
+				for (auto const &document_ref : refs) {
+					float score = calculate_alignment(document_ref, ref);
+					
+					if (score >= threshold)
+						print_score(score, document_ref, ref);
+				}
+			}
+		}));
+	
+	auto stop = [&consumers, &queue, n_threads]() {
+		// Send poison to all workers
+		for (size_t n = 0; n < n_threads; ++n)
+			queue.push(nullptr);
+		
+		// Wait for the workers to finish
+		for (auto &consumer : consumers)
+			consumer.join();
+	};
+	
+	for (size_t n = 0; true; ++n) {
+		unique_ptr<Document> buffer(new Document());
+		
+		// If reading failed, we're probably at end of file
+		if (!(in_tokens >> *buffer))
+			break;
+		
+		if (!(in_urls >> buffer->url)) {
+			cerr << "Error while reading url for the " << n << "th document" << endl;
+			stop();
+			return 3;
+		}
+		
+		if (buffer->vocab.empty()) {
+			cerr << "Reading the " << n << "th document resulted in an empty vocab" << endl;
+			stop();
+			return 4;
+		}
+		
+		// Push this document to the alignment score calculators
+		queue.push(std::move(buffer));
+	}
+	
+	stop();
+	
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -106,120 +223,30 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	
-	// Read first set of documents into memory.
-
-	ifstream tokens_in(vm["translated-tokens"].as<std::string>());
-	if (!tokens_in) {
-		cerr << "Could not read " << vm["translated-tokens"].as<std::string>() << endl;
-		return 1;
-	}
-	
-	ifstream urls_in(vm["translated-urls"].as<std::string>());
-	if (!urls_in) {
-		cerr << "Could not read " << vm["translated-urls"].as<std::string>() << endl;
-		return 1;
-	}
-
-	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
-	if (!en_tokens_in) {
-		cerr << "Could not read " << vm["english-tokens"].as<std::string>() << endl;
-		return 1;
-	}
-	
-	ifstream en_urls_in(vm["english-urls"].as<std::string>());
-	if (!en_urls_in) {
-		cerr << "Could not read " << vm["english-urls"].as<std::string>() << endl;
-		return 1;
-	}
-
 	// Calculate the document frequency for terms.
 	// We'll use in_document_cnt later to reserve some space for the documents
 	// we want to keep in memory.
 	unordered_map<NGram,size_t> df;
-	size_t in_document_cnt = read_df(tokens_in, df);
-	size_t en_document_cnt = read_df(en_tokens_in, df);
+	size_t in_document_cnt = read_df_from_file(vm["translated-tokens"].as<std::string>(), df);
+	size_t en_document_cnt = read_df_from_file(vm["english-tokens"].as<std::string>(), df);
 	size_t document_cnt = in_document_cnt + en_document_cnt;
-	
-	// Rewind the input
-	
-	tokens_in.clear();
-	tokens_in.seekg(0);
-	en_tokens_in.clear();
-	en_tokens_in.seekg(0);
 	
 	cerr << "Calculated DF from " << document_cnt << " documents" << endl;
 	
 	// Calculate TF/DF over the documents we have in memory
 	std::vector<DocumentRef> refs(in_document_cnt);
-	read_document_refs(tokens_in, urls_in, df, document_cnt, refs.begin());
+	read_document_refs_from_file(vm["translated-tokens"].as<std::string>(),
+								 vm["translated-urls"].as<std::string>(),
+								 df, document_cnt, refs.begin());
 	
 	cerr << "Read " << refs.size() << " documents into memory" << endl;
 	
 	// Start reading the other set of documents we match against
 	// (Note: they are not included in the DF table!)
 	
-	atomic<size_t> hits(0);
-	
-	vector<thread> consumers;
-	
-	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
-	
-	for (unsigned int n = 0; n < n_threads; ++n)
-		consumers.push_back(thread([&queue, &refs, &df, &hits, threshold]() {
-			while (true) {
-				unique_ptr<Document> buffer(queue.pop());
-				
-				// Empty doc is poison
-				if (!buffer)
-					break;
-				
-				DocumentRef const &ref = calculate_tfidf(*buffer, refs.size(), df);
-				
-				for (auto const &document_ref : refs) {
-					float score = calculate_alignment(document_ref, ref);
-					
-					if (score >= threshold)
-						// print_score(score, document, buffer);
-						++hits;
-				}
-			}
-		}));
-	
-	auto stop = [&consumers, &queue, n_threads]() {
-		// Send poison to all workers
-		for (size_t n = 0; n < n_threads; ++n)
-			queue.push(nullptr);
-		
-		// Wait for the workers to finish
-		for (auto &consumer : consumers)
-			consumer.join();
-	};
-	
-	for (size_t n = 0; true; ++n) {
-		unique_ptr<Document> buffer(new Document());
-		
-		// If reading failed, we're probably at end of file
-		if (!(en_tokens_in >> *buffer))
-			break;
-		
-		if (!(en_urls_in >> buffer->url)) {
-			cerr << "Error while reading url for the " << n << "th document" << endl;
-			stop();
-			return 3;
-		}
-		
-		if (buffer->vocab.empty()) {
-			cerr << "Reading the " << n << "th document resulted in an empty vocab" << endl;
-			stop();
-			return 4;
-		}
-		
-		// Push this document to the alignment score calculators
-		queue.push(std::move(buffer));
-	}
-	
-	stop();
-	
-	// Tada!
-	cout << hits.load() << endl;
+	return score_documents(refs, df,
+						   vm["english-tokens"].as<std::string>(),
+						   vm["english-urls"].as<std::string>(),
+						   threshold,
+						   n_threads);
 }
