@@ -62,7 +62,7 @@ options = oparser.parse_args()
 with open_xz_or_gzip_or_plain(options.text) as reader, open_xz_or_gzip_or_plain(options.sent_output, "w") as sent_writer, open_xz_or_gzip_or_plain(options.tok_output, "w") as tok_writer:
     for line in reader:
         encoded_text = line.strip()
-        sentences, tokenized = extract_encoded_text(encoded_text, options.splitter, options.tokenizer, options.lemmatizer)
+        sentences, tokenized = extract_encoded_text(encoded_text, os.path.expanduser(options.splitter), os.path.expanduser(options.tokenizer), os.path.expanduser(options.lemmatizer))
         if sentences and tokenized:
             sent_writer.write(sentences + b"\n")
             tok_writer.write(tokenized + b"\n")

@@ -7,6 +7,7 @@ bitextor: ~/permanent/bitextor
 temp: ~/transient-mt-en-fr
 permanentDir: ~/permanent/bitextor-output-mt-en-fr
 transientDir: ~/transient-mt-en-fr
+dataDir: ~/permanent/bitextor-output-mt-en-fr
 ##Segment spliters and word tokenizers
 wordTokenizers: {
   'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
@@ -21,7 +22,7 @@ lang1: en
 lang2: fr
 
 # CRAWLING OPTIONS
-crawler: creepy
+crawler: wget
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
 hosts: ["greenpeace.org"]
 #langstat: ~/permanent/langstat/langstats.all.gz

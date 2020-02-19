@@ -1,11 +1,21 @@
 bitextor: ~/permanent/bitextor
 hosts: ["kremlin.ru"]
-httrack: false
+crawler: wget
 permanentDir: ~/permanent/bitextor-output-default-en-ru
 transientDir: ~/transient-default-en-ru
+dataDir: ~/permanent/bitextor-output-default-en-ru
 temp: ~/transient-default-en-ru
 lang1: en
 lang2: ru
+wordTokenizers: {
+  'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
+  'ru': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ru'
+}
+sentenceSplitters: {
+  'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
+  'ru': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l ru'
+}
+
 dic: ~/permanent/en-ru.dic
 hunalignThreshold: 0
 elrc: true

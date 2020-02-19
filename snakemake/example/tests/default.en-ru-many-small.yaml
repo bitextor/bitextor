@@ -1,8 +1,9 @@
 bitextor: ~/permanent/bitextor
 hosts: ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25"]
-httrack: false
+crawler: wget
 permanentDir: ~/permanent/bitextor-output-default-en-ru-many-small
 transientDir: ~/transient-default-en-ru-many-small
+dataDir: ~/permanent/bitextor-output-default-en-ru-many-small
 temp: ~/transient-default-en-ru-many-small
 lang1: en
 lang2: ru

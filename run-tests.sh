@@ -52,38 +52,38 @@ fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/wget.warc.gz ]; then
 	mkdir -p "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org
-	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/creepy.warc.gz
+	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-fr/warc/greenpeace.org/wget.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/wget.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-fr/warc/greenpeace.org/wget.warc.gz
 fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/wget.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-el/warc/primeminister.gr/wget.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/wget.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-el/warc/primeminister.gr/wget.warc.gz
 fi
 
 
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/wget.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/permanent/bitextor-output-default-en-ru/warc/kremlin.ru/wget.warc.gz
 fi
 
-if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/wget.warc.gz ]; then
         mkdir -p "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/permanent/bitextor-output-mt-en-ru/warc/kremlin.ru/wget.warc.gz
 fi
 
 BITEXTOR="$(dirname "$0")"
