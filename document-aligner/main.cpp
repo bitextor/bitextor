@@ -5,6 +5,7 @@
 #include <thread>
 #include <memory>
 #include "boost/program_options.hpp"
+#include <mutex>
 #include "document.h"
 #include "blocking_queue.h"
 
@@ -13,11 +14,13 @@ using namespace std;
 
 namespace po = boost::program_options;
 
+mutex print_lock;
 
-void print_score(float score, Document const &left, Document const &right)
+void print_score(float score, DocumentRef const &left, DocumentRef const &right)
 {
-	// TODO: Don't print concurrently
-	cout << score
+	unique_lock<mutex> lock(print_lock);
+	cout << fixed << setprecision(5)
+	     << score
 	     << '\t' << left.url
 	     << '\t' << right.url
 	     << '\n';
