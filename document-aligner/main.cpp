@@ -12,6 +12,7 @@ using namespace std;
 
 namespace po = boost::program_options;
 
+
 void print_score(float score, Document const &left, Document const &right)
 {
 	// TODO: Don't print concurrently
@@ -19,6 +20,45 @@ void print_score(float score, Document const &left, Document const &right)
 	     << '\t' << left.url
 	     << '\t' << right.url
 	     << '\n';
+}
+
+size_t read_df(ifstream &fin, map<NGram, size_t> &df) {
+	size_t n = 0;
+	
+	while (true) {
+		Document document;
+		
+		if (!(fin >> document))
+			break;
+		
+		for (auto const &entry : document.vocab)
+			df[entry.first] += 1;
+		
+		++n;
+	}
+	
+	return n;
+}
+
+size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+	size_t n = 0;
+	
+	while (true) {
+		Document buffer;
+		
+		if (!(fin_tokens >> buffer))
+			break;
+		
+		if (!(fin_urls >> buffer.url)) { // TODO: Dangerous assumption that there is no space in url
+			cerr << "Error while reading the url for the " << n << "th document" << endl;
+			break;
+		}
+
+		*it++ = calculate_tfidf(buffer, document_cnt, df);
+		++n;
+	}
+	
+	return n;
 }
 
 int main(int argc, char *argv[]) {
@@ -59,58 +99,40 @@ int main(int argc, char *argv[]) {
 	
 	// Read first set of documents into memory.
 
-	std::vector<unique_ptr<Document>> documents;
-	
 	ifstream tokens_in(vm["translated-tokens"].as<std::string>());
 	ifstream urls_in(vm["translated-urls"].as<std::string>());
-
-	while (true) {
-		unique_ptr<Document> buffer(new Document());
-		
-		if (!(tokens_in >> *buffer))
-			break;
-		
-		if (!(urls_in >> buffer->url)) { // TODO: Dangerous assumption that there is no space in url
-			cerr << "Error while reading the url for the " << documents.size() << "th document" << endl;
-			return 2;
-		}
-
-		documents.push_back(std::move(buffer));
 	}
 
-	cerr << "Read " << documents.size() << " documents" << endl;
+	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
 	
+	ifstream en_urls_in(vm["english-urls"].as<std::string>());
+	float threshold = vm["threshold"].as<float>();
+
 	// Calculate the document frequency for terms.
-	
+	// We'll use in_document_cnt later to reserve some space for the documents
+	// we want to keep in memory.
 	map<NGram,size_t> df;
+	size_t in_document_cnt = read_df(tokens_in, df);
+	size_t en_document_cnt = read_df(en_tokens_in, df);
+	size_t document_cnt = in_document_cnt + en_document_cnt;
 	
-	for (auto const &document : documents)
-		for (auto const &entry : document->vocab)
-			df[entry.first] += 1;
+	// Rewind the input
 	
-	cerr << "Aggregated DF" << endl;
+	tokens_in.clear();
+	tokens_in.seekg(0);
+	en_tokens_in.clear();
+	en_tokens_in.seekg(0);
+	
+	cerr << "Calculated DF from " << document_cnt << " documents" << endl;
 	
 	// Calculate TF/DF over the documents we have in memory
+	std::vector<DocumentRef> refs(in_document_cnt);
+	read_document_refs(tokens_in, urls_in, df, document_cnt, refs.begin());
 	
-	for (auto &document : documents) {
-		// Turn the vocab map into a sorted tfidf score list
-		calculate_tfidf(*document, documents.size(), df);
-		
-		// Save a bit of memory
-		document->vocab.clear();
-	}
-	
-	cerr << "Calculated translated TFIDF scores" << endl;
+	cerr << "Read " << refs.size() << " documents into memory" << endl;
 	
 	// Start reading the other set of documents we match against
 	// (Note: they are not included in the DF table!)
-	
-	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
-	ifstream en_urls_in(vm["english-urls"].as<std::string>());
-	
-	float threshold = vm["threshold"].as<float>();
-	
-	size_t n = 0;
 	
 	atomic<size_t> hits(0);
 	
@@ -121,7 +143,7 @@ int main(int argc, char *argv[]) {
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
 	
 	for (size_t n = 0; n < n_threads; ++n)
-		consumers.push_back(thread([&queue, &documents, &hits, threshold]() {
+		consumers.push_back(thread([&queue, &refs, &df, &hits, threshold]() {
 			while (true) {
 				unique_ptr<Document> buffer(queue.pop());
 				
@@ -129,8 +151,10 @@ int main(int argc, char *argv[]) {
 				if (!buffer)
 					break;
 				
-				for (auto const &document : documents) {
-					float score = calculate_alignment(*document, *buffer);
+				DocumentRef const &ref = calculate_tfidf(*buffer, refs.size(), df);
+				
+				for (auto const &document_ref : refs) {
+					float score = calculate_alignment(document_ref, ref);
 					
 					if (score >= threshold)
 						// print_score(score, document, buffer);
@@ -149,9 +173,10 @@ int main(int argc, char *argv[]) {
 			consumer.join();
 	};
 	
-	while (true) {
+	for (size_t n = 0; true; ++n) {
 		unique_ptr<Document> buffer(new Document());
 		
+		// If reading failed, we're probably at end of file
 		if (!(en_tokens_in >> *buffer))
 			break;
 		
@@ -161,24 +186,10 @@ int main(int argc, char *argv[]) {
 			return 3;
 		}
 		
-		++n;
-		
 		if (buffer->vocab.empty()) {
-			cerr << "Document " << n << " resulted in an empty vocab" << endl;
+			cerr << "Reading the " << n << "th document resulted in an empty vocab" << endl;
 			stop();
 			return 4;
-		}
-		
-		// TODO: Move this into consumers as well?
-		calculate_tfidf(*buffer, documents.size(), df);
-		
-		buffer->vocab.clear();
-		
-		// Make 100% sure it is not an empty document, empty docs are poisonous!
-		if (buffer->wordvec.empty()) {
-			cerr << "Document " << n << " resulted in an empty word vec" << endl;
-			stop();
-			return 5;
 		}
 		
 		// Push this document to the alignment score calculators
