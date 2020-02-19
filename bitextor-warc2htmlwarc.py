@@ -131,17 +131,17 @@ fo = None
 po = None
 extractor = None
 
-if options.input[-3:] == ".xz":
+if options.input == sys.stdin or options.input == '-':
+    f = ArchiveIterator(sys.stdin.buffer)
+elif options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
     f = ArchiveIterator(open(options.input, 'rb'))
-elif options.input == sys.stdin:
-    f = ArchiveIterator(options.input.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'rb'))
 
-if options.output == sys.stdout:
-    fo = WARCWriter(options.output.buffer, gzip=True)
+if options.output == sys.stdout or options.output == '-':
+    fo = WARCWriter(sys.stdout.buffer, gzip=True)
 else:
     fo = WARCWriter(open(options.output, 'wb'), gzip=True)
 
@@ -153,8 +153,8 @@ if not options.pdfpass and options.pdfextract:
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
-if options.output == sys.stdout:
-    filename = options.input
+if options.output == sys.stdout or options.output == '-':
+    filename = ""
 else:
     filename = options.output
 

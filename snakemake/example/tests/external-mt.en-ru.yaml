@@ -8,22 +8,21 @@ temp: ~/transient-mt-en-ru
 permanentDir: ~/permanent/bitextor-output-mt-en-ru
 transientDir: ~/transient-mt-en-ru
 ##Segment spliters and word tokenizers
-wordTokenizers: "{
+wordTokenizers: {
   'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
-  'ru: '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ru'
-}"
-sentenceSplitters: "{
+  'ru': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ru'
+}
+sentenceSplitters: {
   'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
-  'ru: '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l ru'
-}"
+  'ru': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l ru'
+}
 ##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 lang1: en
 lang2: ru
 
 
 # CRAWLING OPTIONS
-##HTTrack activation: if it is not activated, Creepy crawler is used
-httrack: false
+crawler: creepy
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
 hosts: ["kremlin.ru"]
 #langstat: ~/permanent/langstat/langstats.all.gz

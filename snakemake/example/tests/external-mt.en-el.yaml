@@ -8,22 +8,20 @@ temp: ~/transient-mt-en-el
 permanentDir: ~/permanent/bitextor-output-mt-en-el
 transientDir: ~/transient-mt-en-el
 ##Segment spliters and word tokenizers
-wordTokenizers: "{
+wordTokenizers: {
   'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
-  'el: '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'
-}"
-sentenceSplitters: "{
+  'el': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'
+}
+sentenceSplitters: {
   'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
-  'el: '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'
-}"
+  'el': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'
+}
 ##Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be lang1 -> lang2
 lang1: en
 lang2: el
 
-
 # CRAWLING OPTIONS
-##HTTrack activation: if it is not activated, Creepy crawler is used
-httrack: false
+crawler: 'creepy'
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
 hosts: ["primeminister.gr"]
 #langstat: ~/permanent/langstat/langstats.all.gz
@@ -51,7 +49,6 @@ dic: ~/permanent/en-el.dic
 #initCorpusTestPrefix: ""
 ##If enabled, boilerpipe is filtered from HTML's
 boilerpipeCleaning: false
-
 
 # DOCUMENT ALIGNMENT
 ##Which document aligner to use:

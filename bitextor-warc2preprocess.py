@@ -126,7 +126,7 @@ oparser.add_argument('--output_hash', dest='outputHash', help='Output path for M
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
-oparser.add_argument('--input', dest='input', help='Input WARC file', default=None)
+oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--xzlang', action="store_true", help='Separate output into different files by language',
                      default=False)
 oparser.add_argument('--langs', dest="langs", default="",
@@ -137,12 +137,12 @@ options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
 
-if options.input[-3:] == ".xz":
+if options.input == sys.stdin or options.input == '-':
+    f = ArchiveIterator(sys.stdin.buffer)
+elif options.input[-3:] == ".xz":
     f = ArchiveIterator(lzma.open(options.input, 'r'))
 elif options.input[-3:] == ".gz":
     f = ArchiveIterator(open(options.input, 'rb'))
-elif options.input == "-":
-    f = ArchiveIterator(sys.stdin.buffer)
 else:
     f = ArchiveIterator(open(options.input, 'r'))
 
