@@ -66,13 +66,7 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
 */
-DocumentRef calculate_tfidf(Document &document, size_t document_count, map<NGram,size_t> const &df) {
-	auto word_it = document.vocab.cbegin(),
-		 word_end = document.vocab.cend();
-	
-	auto df_it = df.cbegin(),
-		 df_end = df.cend();
-	
+DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<NGram,size_t> const &df) {
 	DocumentRef document_ref{
 		.url = document.url
 	};
@@ -81,30 +75,15 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, map<NGram
 	// lets just reserve that space right now!
 	document_ref.wordvec.reserve(document.vocab.size());
 	
-	while (word_it != word_end && df_it != df_end) {
-		if (word_it->first < df_it->first) {
-			// Word not found in any documents, assume occurrence of one (i.e. this)
-			document_ref.wordvec.push_back(WordScore{
-				.hash = word_it->first.hash,
-				.tfidf = tfidf(word_it->second, document_count, 1)
-			});
-			
-			// We read all documents for df in main(), so this if-statement
-			// should never be the case!
-			assert(false);
-			
-			++word_it;
-		} else if (df_it->first < word_it->first) {
-			// Word not in document
-			++df_it;
-		} else {
-			document_ref.wordvec.push_back(WordScore{
-				.hash = word_it->first.hash,
-				.tfidf = tfidf(word_it->second, document_count, df_it->second)
-			});
-			++word_it;
-			++df_it;
-		}
+	for (auto const &entry : document.vocab) {
+		auto it = df.find(entry.first);
+	
+		size_t term_df = it == df.end() ? 1 : it->second;
+		
+		document_ref.wordvec.push_back(WordScore{
+			.hash = entry.first.hash,
+			.tfidf = tfidf(entry.second, document_count, term_df)
+		});
 	}
 	
 	return document_ref;

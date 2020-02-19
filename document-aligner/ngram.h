@@ -41,3 +41,13 @@ ingramstream &operator>>(ingramstream &stream, NGram &word);
 std::ostream &operator<<(std::ostream &str, NGram const &gram);
 
 } // namespace bitextor
+
+namespace std {
+
+template <> struct hash<bitextor::NGram> {
+	inline std::size_t operator()(bitextor::NGram const &k) const {
+		return k.hash;
+	}
+};
+
+} // namespace std

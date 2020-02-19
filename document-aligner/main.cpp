@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <thread>
 #include <memory>
 #include "boost/program_options.hpp"
@@ -22,7 +23,7 @@ void print_score(float score, Document const &left, Document const &right)
 	     << '\n';
 }
 
-size_t read_df(ifstream &fin, map<NGram, size_t> &df) {
+size_t read_df(ifstream &fin, unordered_map<NGram, size_t> &df) {
 	size_t n = 0;
 	
 	while (true) {
@@ -40,7 +41,7 @@ size_t read_df(ifstream &fin, map<NGram, size_t> &df) {
 	return n;
 }
 
-size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
 	size_t n = 0;
 	
 	while (true) {
@@ -131,7 +132,7 @@ int main(int argc, char *argv[]) {
 	// Calculate the document frequency for terms.
 	// We'll use in_document_cnt later to reserve some space for the documents
 	// we want to keep in memory.
-	map<NGram,size_t> df;
+	unordered_map<NGram,size_t> df;
 	size_t in_document_cnt = read_df(tokens_in, df);
 	size_t en_document_cnt = read_df(en_tokens_in, df);
 	size_t document_cnt = in_document_cnt + en_document_cnt;

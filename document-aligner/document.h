@@ -2,6 +2,7 @@
 #include "ngram.h"
 #include <istream>
 #include <map>
+#include <unordered_map>
 
 namespace bitextor {
 
@@ -32,7 +33,7 @@ std::ostream &operator<<(std::ostream &stream, Document const &document);
 
 std::ostream &operator<<(std::ostream &stream, DocumentRef const &ref);
 
-DocumentRef calculate_tfidf(Document &document, size_t document_count, std::map<NGram,size_t> const &df);
+DocumentRef calculate_tfidf(Document &document, size_t document_count, std::unordered_map<NGram,size_t> const &df);
 
 float calculate_alignment(DocumentRef const &left, DocumentRef const &right);
 
