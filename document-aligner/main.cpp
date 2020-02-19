@@ -1,12 +1,11 @@
-#include "document.h"
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <thread>
-#include <queue>
-#include <mutex>
 #include <memory>
 #include "boost/program_options.hpp"
+#include "document.h"
+#include "blocking_queue.h"
 
 using namespace bitextor;
 using namespace std;
@@ -20,61 +19,6 @@ void print_score(float score, Document const &left, Document const &right)
 	     << '\t' << left.url
 	     << '\t' << right.url
 	     << '\n';
-}
-
-template <typename T> class blocking_queue
-{
-public:
-	blocking_queue(size_t capacity);
-	
-	void push(T const &item);
-	void push(T &&item);
-	T pop(); // TODO: explicit move semantics?
-private:
-	size_t _size;
-	queue<T> _buffer;
-	mutex _mutex;
-	condition_variable _added;
-	condition_variable _removed;
-};
-
-template <typename T> blocking_queue<T>::blocking_queue(size_t size) : _size(size) {
-	//
-}
-
-template <typename T> void blocking_queue<T>::push(T &&item) {
-	unique_lock<mutex> mlock(_mutex);
-
-	while (_buffer.size() >= _size)
-		_removed.wait(mlock);
-
-	_buffer.push(std::move(item));
-	mlock.unlock();
-	_added.notify_one();
-}
-
-template <typename T> void blocking_queue<T>::push(T const &item) {
-	unique_lock<mutex> mlock(_mutex);
-	
-	while (_buffer.size() >= _size)
-		_removed.wait(mlock);
-	
-	_buffer.push(item);
-	mlock.unlock();
-	_added.notify_one();
-}
-
-template <typename T> T blocking_queue<T>::pop() {
-	std::unique_lock<std::mutex> mlock(_mutex);
-	
-	while (_buffer.empty())
-		_added.wait(mlock);
-	
-	T value = std::move(_buffer.front());
-	_buffer.pop();
-	mlock.unlock();
-	_removed.notify_one();
-	return value;
 }
 
 int main(int argc, char *argv[]) {
