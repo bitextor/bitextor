@@ -100,12 +100,29 @@ int main(int argc, char *argv[]) {
 	// Read first set of documents into memory.
 
 	ifstream tokens_in(vm["translated-tokens"].as<std::string>());
+	if (!tokens_in) {
+		cerr << "Could not read " << vm["translated-tokens"].as<std::string>() << endl;
+		return 1;
+	}
+	
 	ifstream urls_in(vm["translated-urls"].as<std::string>());
+	if (!urls_in) {
+		cerr << "Could not read " << vm["translated-urls"].as<std::string>() << endl;
+		return 1;
 	}
 
 	ifstream en_tokens_in(vm["english-tokens"].as<std::string>());
+	if (!en_tokens_in) {
+		cerr << "Could not read " << vm["english-tokens"].as<std::string>() << endl;
+		return 1;
+	}
 	
 	ifstream en_urls_in(vm["english-urls"].as<std::string>());
+	if (!en_urls_in) {
+		cerr << "Could not read " << vm["english-urls"].as<std::string>() << endl;
+		return 1;
+	}
+
 	float threshold = vm["threshold"].as<float>();
 
 	// Calculate the document frequency for terms.
