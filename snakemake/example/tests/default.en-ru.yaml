@@ -20,6 +20,6 @@ dic: ~/permanent/en-ru.dic
 hunalignThreshold: 0
 elrc: true
 documentAligner: DIC
-#bicleaner: ~/bicleaner-model/en-ru/training.en-ru.yaml
+#bicleaner: ~/bicleaner-model/en-ru/en-ru.yaml
 tmx: true
 profiling: true

@@ -86,7 +86,7 @@ mgiza: /home/bitextor/permanent/bitextor/mgiza
 
 # POSTPROCESSING
 ##Bicleaner
-#bicleaner: /home/bitextor/bicleaner-model/en-fr/training.en-fr.yaml
+#bicleaner: /home/bitextor/bicleaner-model/en-fr/en-fr.yaml
 bicleanerThreshold: 0.6
 ##Bicleaner model training corpus (note that option initCorpusTrainPrefix also needs to be defined with a different corpus to train probabilistic dictionaries)
 bicleanerCorpusTrainingPrefix: ['/tmp/persistent/RF.en-fr']
