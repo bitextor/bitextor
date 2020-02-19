@@ -14,10 +14,6 @@ struct Document {
 	// Document URL, used as identifier
 	std::string url;
 	
-	// Document body for book keeping/debugging
-	// TODO: Maybe we can do without, same a lot of memory
-	std::string body;
-	
 	// ngram frequency in document
 	std::map<NGram, size_t> vocab;
 	

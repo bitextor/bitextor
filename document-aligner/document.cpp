@@ -19,9 +19,9 @@ istream &operator>>(istream &stream, Document &document)
 	string line;
 	getline(stream, line);
 
-	document.body = base64_decode(line);
+	string body = base64_decode(line);
 
-	istringstream token_stream(document.body);
+	istringstream token_stream(body);
 	ingramstream ngram_stream(token_stream, 3);
 
 	NGram ngram;
@@ -38,7 +38,7 @@ istream &operator>>(istream &stream, Document &document)
  */
 ostream &operator<<(ostream &stream, Document const &document)
 {
-	stream << "--- Document ---\n";
+	stream << "--- Document ---\n" << document.url << "\n";
 
 	for (auto const &entry : document.vocab)
 		stream << entry.first << ": " << entry.second << "\n";
