@@ -62,6 +62,10 @@ size_t read_document_refs(ifstream &fin_tokens, ifstream &fin_urls, map<NGram,si
 }
 
 int main(int argc, char *argv[]) {
+	unsigned int n_threads = thread::hardware_concurrency() - 1;
+	
+	float threshold = 0.7;
+	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
 	arg_desc.add("translated-urls", 1);
@@ -71,7 +75,8 @@ int main(int argc, char *argv[]) {
 	po::options_description opt_desc("Additional options");
 	opt_desc.add_options()
 		("help", "produce help message")
-		("threshold", po::value<float>()->default_value(0.7), "set score threshold")
+		("threads", po::value<unsigned int>(&n_threads), "set number of threads")
+		("threshold", po::value<float>(&threshold), "set score threshold")
 		("translated-tokens", po::value<string>(), "set input filename")
 		("translated-urls", po::value<string>(), "set input filename")
 		("english-tokens", po::value<string>(), "set input filename")
@@ -123,8 +128,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	float threshold = vm["threshold"].as<float>();
-
 	// Calculate the document frequency for terms.
 	// We'll use in_document_cnt later to reserve some space for the documents
 	// we want to keep in memory.
@@ -155,11 +158,9 @@ int main(int argc, char *argv[]) {
 	
 	vector<thread> consumers;
 	
-	size_t n_threads = 4;
-	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
 	
-	for (size_t n = 0; n < n_threads; ++n)
+	for (unsigned int n = 0; n < n_threads; ++n)
 		consumers.push_back(thread([&queue, &refs, &df, &hits, threshold]() {
 			while (true) {
 				unique_ptr<Document> buffer(queue.pop());
