@@ -1,8 +1,9 @@
 bitextor: ~/permanent/bitextor
 hosts: ["greenpeace.org"]
-httrack: false
+crawler: wget
 permanentDir: ~/permanent/bitextor-output-default-en-fr
 transientDir: ~/transient-default-en-fr
+dataDir: ~/permanent/bitextor-output-default-en-fr
 temp: ~/transient-default-en-fr
 lang1: en
 lang2: fr
@@ -20,6 +21,6 @@ dic: ~/permanent/en-fr.dic
 hunalignThreshold: 0
 elrc: true
 documentAligner: DIC
-bicleaner: ~/bicleaner-model/en-fr/training.en-fr.yaml
+bicleaner: ~/bicleaner-model/en-fr/en-fr.yaml
 tmx: true
 profiling: true

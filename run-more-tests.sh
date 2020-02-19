@@ -51,19 +51,19 @@ if [ ! -f "${WORK}"/bicleaner-model/en-fr/training.en-fr.yaml ]; then
 fi
 
 
-if [ ! -f "${WORK}"/data/warc/greenpeace.org/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/data/warc/greenpeace.org/wget.warc.gz ]; then
 	mkdir -p "${WORK}"/data/warc/greenpeace.org
-	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/data/warc/greenpeace.org/creepy.warc.gz
+	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/data/warc/greenpeace.org/wget.warc.gz
 fi
 
-if [ ! -f "${WORK}"/data/warc/kremlin.ru/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/data/warc/kremlin.ru/wget.warc.gz ]; then
         mkdir -p "${WORK}"/data/warc/kremlin.ru
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/data/warc/kremlin.ru/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/data/warc/kremlin.ru/wget.warc.gz
 fi
 
-if [ ! -f "${WORK}"/data/warc/primeminister.gr/creepy.warc.gz ]; then
+if [ ! -f "${WORK}"/data/warc/primeminister.gr/wget.warc.gz ]; then
         mkdir -p "${WORK}"/data/warc/primeminister.gr
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/data/warc/primeminister.gr/creepy.warc.gz
+        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/data/warc/primeminister.gr/wget.warc.gz
 fi
 
 
@@ -78,8 +78,8 @@ snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "$
 wait
 ) &
 
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "${BITEXTOR}/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="${BITEXTOR}" hosts=[""] WARCFiles="['${WORK}/data/warc/primeminister.gr/creepy.warc.gz']" permanentDir="${WORK}"/permanent/bitextor-output-default-en-el dataDir="${WORK}"/permanent/bitextor-output-default-en-el transientDir="${WORK}"/transient-default-en-el temp="${WORK}"/transient-default-en-el dic="${WORK}"/permanent/en-el.dic wordTokenizers="{'en': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en', 'el': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'}" sentenceSplitters="{'en': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l en', 'el': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'}" preprocessLangs="en,el" parser="modest" 2> "${WORK}"/reports/default.en-el.report &
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "${BITEXTOR}/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="${BITEXTOR}" hosts=[""] WARCFiles="['${WORK}/data/warc/primeminister.gr/creepy.warc.gz']" permanentDir="${WORK}"/permanent/bitextor-output-mt-en-el dataDir="${WORK}"/permanent/bitextor-output-mt-en-el transientDir="${WORK}"/transient-mt-en-el temp="${WORK}"/transient-mt-en-el wordTokenizers="{'en': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en', 'el': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'}" sentenceSplitters="{'en': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l en', 'el': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'}" giawarc=True  mosesDir="${WORK}"/permanent/software/mosesdecoder mgiza="${BITEXTOR}"/mgiza docAlignWorkers=2 alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" 2> "${WORK}"/reports/external-mt.en-el.report &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "${BITEXTOR}/snakemake/example/tests/default.en-el.yaml" -j 4 --config bitextor="${BITEXTOR}" hosts=[""] WARCFiles="['${WORK}/data/warc/primeminister.gr/wget.warc.gz']" permanentDir="${WORK}"/permanent/bitextor-output-default-en-el dataDir="${WORK}"/permanent/bitextor-output-default-en-el transientDir="${WORK}"/transient-default-en-el temp="${WORK}"/transient-default-en-el dic="${WORK}"/permanent/en-el.dic wordTokenizers="{'en': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en', 'el': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'}" sentenceSplitters="{'en': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l en', 'el': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'}" preprocessLangs="en,el" parser="modest" 2> "${WORK}"/reports/default.en-el.report &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "${BITEXTOR}/snakemake/example/tests/external-mt.en-el.yaml" -j 4 --config bitextor="${BITEXTOR}" hosts=[""] WARCFiles="['${WORK}/data/warc/primeminister.gr/wget.warc.gz']" permanentDir="${WORK}"/permanent/bitextor-output-mt-en-el dataDir="${WORK}"/permanent/bitextor-output-mt-en-el transientDir="${WORK}"/transient-mt-en-el temp="${WORK}"/transient-mt-en-el wordTokenizers="{'en': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en', 'el': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'}" sentenceSplitters="{'en': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l en', 'el': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'}" giawarc=True  mosesDir="${WORK}"/permanent/software/mosesdecoder mgiza="${BITEXTOR}"/mgiza docAlignWorkers=2 alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" 2> "${WORK}"/reports/external-mt.en-el.report &
 
 (
 snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --configfile "${BITEXTOR}/snakemake/example/tests/only-preprocess-kremlin.yaml" --config bitextor="${BITEXTOR}" lang1='en' lang2='ru' permanentDir="${WORK}"/permanent/bitextor-output-preprocess-kremlin dataDir="${WORK}"/data transientDir="${WORK}"/transient-kremlin wordTokenizers="{'en': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en', 'ru': '${BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ru'}" sentenceSplitters="{'en': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l en', 'ru': '${BITEXTOR}/preprocess/moses/ems/support/split-sentences.perl -q -b -l ru'}" parser="htmltokenizer" -j 4 2> "${WORK}"/reports/preprocess-kremlin.report

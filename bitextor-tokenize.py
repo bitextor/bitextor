@@ -77,7 +77,7 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
         open_xz_or_gzip_or_plain(options.tok_output, "w") as tok_writer:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-        sentences = split_sentences(content, options.splitter, options.prune_type, options.prune_threshold)
-        tokenized = tokenize(sentences, options.tokenizer, options.lemmatizer)
+        sentences = split_sentences(content, os.path.expanduser(options.splitter), options.prune_type, options.prune_threshold)
+        tokenized = tokenize(sentences, os.path.expanduser(options.tokenizer), os.path.expanduser(options.lemmatizer))
         sent_writer.write(base64.b64encode(sentences.encode("utf-8")) + b"\n")
         tok_writer.write(base64.b64encode(tokenized.lower().encode("utf-8")) + b"\n")

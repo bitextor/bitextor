@@ -7,6 +7,7 @@ bitextor: ~/permanent/bitextor
 temp: ~/transient-mt-en-ru-many-small
 permanentDir: ~/permanent/bitextor-output-mt-en-ru-many-small
 transientDir: ~/transient-mt-en-ru-many-small
+dataDir: ~/permanent/bitextor-output-mt-en-ru-many-small
 ##Segment spliters and word tokenizers
 wordTokenizers: {
   'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
@@ -22,7 +23,7 @@ lang2: ru
 
 
 # CRAWLING OPTIONS
-cralwer: creepy
+cralwer: wget
 ##Crawling sources: either a list of domains (without http/https) or a langstat file
 hosts: []
 #langstat: ~/permanent/langstat/langstats.all.gz
@@ -86,7 +87,7 @@ mgiza: ~/permanent/bitextor/mgiza
 
 # POSTPROCESSING
 ##Bicleaner
-#bicleaner: ~/bicleaner-model/en-ru/training.en-ru.yaml
+#bicleaner: ~/bicleaner-model/en-ru/en-ru.yaml
 #bicleanerThreshold: 0.6
 ##Bicleaner model training corpus (note that option initCorpusTrainPrefix also needs to be defined with a different corpus to train probabilistic dictionaries)
 #bicleanerCorpusTrainingPrefix: '/tmp/persistent/RF.en-fr'

@@ -59,7 +59,7 @@ hunalignThreshold: 0
 
 # POSTPROCESSING
 
-bicleaner: ~/bicleaner-model/en-fr/training.en-fr.yaml # Use bicleaner model for parallel data filtering
+bicleaner: ~/bicleaner-model/en-fr/en-fr.yaml # Use bicleaner model for parallel data filtering
 bicleanerThreshold: 0.0
 # bicleanerCorpusTrainingPrefix: ["/home/lpla/EMEA.en-fr"] # If bicleaner model does not exist, this corpus will generate one
 
