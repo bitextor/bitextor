@@ -21,7 +21,7 @@ import argparse
 import base64
 import string
 
-from sentence_splitter import SentenceSplitter
+from sentence_splitter import SentenceSplitter, SentenceSplitterException
 from mosestokenizer import MosesTokenizer
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
@@ -95,15 +95,13 @@ if not splitter:
             splitter = SentenceSplitter(language=options.langcode, non_breaking_prefix_file=options.customnbp)
         else:
             splitter = SentenceSplitter(language=options.langcode)
-    except:
+    except SentenceSplitterException as e:
+        sys.stderr.write(str(e)+"\n")
         splitter = SentenceSplitter(language='en')
 
 tokenizer = options.tokenizer
 if not tokenizer:
-    try:
-        tokenizer = MosesTokenizer(options.langcode)
-    except:
-        tokenizer = MosesTokenizer('en')
+    tokenizer = MosesTokenizer(options.langcode)
 
 lemmatizer = options.lemmatizer
 

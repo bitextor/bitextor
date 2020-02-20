@@ -124,6 +124,7 @@ def validate_args(config):
             'sentenceSplitters': {'type': 'dict'},
             'wordTokenizers': {'type': 'dict'},
             'morphologicalAnalysers': {'type': 'dict'},
+            'customNBPs': {'type': 'dict'},
 
             'crawlerUserAgent': {'type': 'string'},
             'crawlSizeLimit': {'type': 'string'},
