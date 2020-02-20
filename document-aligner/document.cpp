@@ -20,7 +20,7 @@ istream &operator>>(istream &stream, Document &document)
 	getline(stream, line);
 
 	string body = base64_decode(line);
-
+	
 	istringstream token_stream(body);
 	ingramstream ngram_stream(token_stream, 3);
 
@@ -75,16 +75,28 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 	// lets just reserve that space right now!
 	document_ref.wordvec.reserve(document.vocab.size());
 	
+	float total_tfidf_l2 = 0;
+	
 	for (auto const &entry : document.vocab) {
 		auto it = df.find(entry.first);
 	
 		size_t term_df = it == df.end() ? 1 : it->second;
+	
+		float document_tfidf = tfidf(entry.second, document_count, term_df);
+	
+		total_tfidf_l2 += document_tfidf * document_tfidf;
 		
 		document_ref.wordvec.push_back(WordScore{
 			.hash = entry.first.hash,
-			.tfidf = tfidf(entry.second, document_count, term_df)
+			.tfidf = document_tfidf
 		});
 	}
+	
+	total_tfidf_l2 = sqrt(total_tfidf_l2);
+	
+	// Normalize
+	for (auto &entry : document_ref.wordvec)
+		entry.tfidf /= total_tfidf_l2;
 	
 	return document_ref;
 }
