@@ -47,6 +47,12 @@ def get_lang_or_default_from_dict(scripts_dict, language):
 
     return script
 
+def get_customnbp_or_empty_from_dict(nbp_dict, language):
+    nbp = ""
+    if language in nbp_dict:
+        nbp = nbp_dict[language]
+    return nbp
+
 def system_check(cmd):
     #sys.stderr.write("Executing:" + cmd + " on " + socket.gethostname() + "\n")
     #sys.stderr.flush()
@@ -372,20 +378,18 @@ else:
 WARCDOMAIN="WARCFILES-" + str(mmh3.hash(",".join(WARCFILES), signed=False))
 
 #Tokenisers
-SENTTOKS = config["sentenceSplitters"]
-SENTTOK1 = get_lang_or_default_from_dict(config["sentenceSplitters"], LANG1)
-SENTTOK2 = get_lang_or_default_from_dict(config["sentenceSplitters"], LANG2)
-if not SENTTOK1 or not SENTTOK2:
-    sys.stderr.write("Sentence splitters for LANG1 and LANG2 are mandatory\n")
-    exit(1)
+if "sentenceSplitters" in config:
+    SENTTOKS = config["sentenceSplitters"]
+else:
+    SENTTOKS = ""
 
-WORDTOKS = config["wordTokenizers"]
-WORDTOK1 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG1)
-WORDTOK2 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG2)
-
-if not WORDTOK1 or not WORDTOK2:
-    sys.stderr.write("Word tokenizers for LANG1 and LANG2 are mandatory\n")
-    exit(1)
+if "wordTokenizers" in config:
+    WORDTOKS = config["wordTokenizers"]
+    WORDTOK1 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG1)
+    WORDTOK2 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG2)
+else:
+    WORDTOKS = ""
+    WORDTOK1, WORDTOK2 = BITEXTOR+'preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG1, BITEXTOR+'preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG2
 
 if "morphologicalAnalysers" in config:
     MORPHTOKS = config["morphologicalAnalysers"]
@@ -394,6 +398,12 @@ if "morphologicalAnalysers" in config:
 else:
     MORPHTOKS = ""
     MORPHTOK1, MORPHTOK2 = "", ""
+
+if "customNBPs" in config:
+    CUSTOMNBPS = config["customNBPs"]
+else:
+    CUSTOMNBPS = ""
+
 
 PRUNE_THRESHOLD = "--prune 80"
 if "pruneThreshold" in config:
@@ -1288,12 +1298,13 @@ rule tokenize:
     params:
         splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
         tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
-        lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang)
+        lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang),
+        customnbp=lambda wildcards: get_customnbp_or_empty_from_dict(CUSTOMNBPS, wildcards.lang)
     output:
         tok='{dir}/{lang}/plain_tokenized.gz',
         sent='{dir}/{lang}/plain_sentences.gz'
     shell:
-        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE};'
+        '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE};'
 
 #================================== DICTIONARY-BASED DOCUMENT ALIGNMENT ==================================#
 rule lettr2idx:
