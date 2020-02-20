@@ -5,46 +5,13 @@
 #include <thread>
 #include <memory>
 #include <mutex>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
 #include <boost/program_options.hpp>
 #include "document.h"
+#include "transparent_ifstream.h"
 #include "blocking_queue.h"
 
 using namespace bitextor;
 using namespace std;
-
-bool ends_with(string const &str, string const &ext) {
-	return str.length() >= ext.length() && str.compare(str.length() - ext.length(), ext.length(), ext) == 0;
-}
-
-class transparent_ifstream : public boost::iostreams::filtering_streambuf<boost::iostreams::input> {
-public:
-	transparent_ifstream(string const &path) {
-		this->open(path);
-	}
-	
-	void open(string const &path) {
-		if (ends_with(path, ".gz"))
-			this->open_gzipped(path);
-		else
-			this->open_plain(path);
-	}
-	
-	void open_gzipped(string const &path) {
-		_file.open(path, ios_base::in | ios_base::binary);
-		this->push(boost::iostreams::zlib_decompressor());
-		this->push(_file);
-	}
-	
-	void open_plain(string const &path) {
-		_file.open(path, ios_base::in);
-		this->push(_file);
-	}
-private:
-	ifstream _file;
-};
 
 namespace po = boost::program_options;
 
@@ -79,9 +46,8 @@ size_t read_df(istream &fin, unordered_map<NGram, size_t> &df) {
 }
 
 size_t read_df_from_file(string const &path, unordered_map<NGram, size_t> &df) {
-	transparent_ifstream in_file(path);
-	istream in_stream(&in_file);
-	return read_df(in_stream, df);
+	transparent_istream in_file(path);
+	return read_df(in_file, df);
 }
 
 size_t read_document_refs(istream &fin_tokens, istream &fin_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
@@ -106,10 +72,8 @@ size_t read_document_refs(istream &fin_tokens, istream &fin_urls, unordered_map<
 }
 
 size_t read_document_refs_from_file(string const &path_tokens, string const &path_urls, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
-	transparent_ifstream fin_tokens(path_tokens);
-	transparent_ifstream fin_urls(path_urls);
-	istream in_tokens(&fin_tokens);
-	istream in_urls(&fin_urls);
+	transparent_istream in_tokens(path_tokens);
+	transparent_istream in_urls(path_urls);
 	return read_document_refs(in_tokens, in_urls, df, document_cnt, it);
 }
 
@@ -118,11 +82,9 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
 	
-	transparent_ifstream fin_tokens(path_tokens);
-	istream in_tokens(&fin_tokens);
+	transparent_istream in_tokens(path_tokens);
 	
-	transparent_ifstream fin_urls(path_urls);
-	istream in_urls(&fin_urls);
+	transparent_istream in_urls(path_urls);
 	
 	for (unsigned int n = 0; n < n_threads; ++n)
 		consumers.push_back(thread([&queue, &refs, &df, threshold]() {
