@@ -31,7 +31,7 @@ from utils.common import ExternalTextProcessor
 
 def split_sentences(text, sent_tokeniser, prune_type="words", prune_threshold=0):
     if isinstance(sent_tokeniser, str):
-        proc_sent = ExternalTextProcessor(sent_tokeniser.split())
+        proc_sent = ExternalTextProcessor(os.path.expanduser(sent_tokeniser).split())
         segments = proc_sent.process(content).strip().split("\n")
     else:
         segments = sent_tokeniser.split(content)
@@ -54,17 +54,17 @@ def split_sentences(text, sent_tokeniser, prune_type="words", prune_threshold=0)
 
 def tokenize(text, word_tokeniser, morph_analyser):
     if isinstance(word_tokeniser, str):
-        proc_word = ExternalTextProcessor(word_tokeniser.split())
+        proc_word = ExternalTextProcessor(os.path.expanduser(word_tokeniser).split())
         tokenized_text = proc_word.process(text)
     else:
         sentences = text.split('\n')
         tokenized_text = []
         for sentence in sentences:
-            tokenized_text.append(word_tokeniser(sentence))
-        tokenized_text = "\n".join(tokenized_text)
+            tokenized_text += word_tokeniser(sentence) + ["\n"]
+        tokenized_text = " ".join(tokenized_text).replace('\n ', '\n').strip()
 
     if morph_analyser:
-        proc_morph = ExternalTextProcessor(morph_analyser.split())
+        proc_morph = ExternalTextProcessor(os.path.expanduser(morph_analyser).split())
         tokenized_text = proc_morph.process(tokenized_text)
 
     return tokenized_text
@@ -89,17 +89,17 @@ oparser.add_argument("--prune-type", dest="prune_type", choices={"words", "chars
 options = oparser.parse_args()
 
 splitter = options.splitter
-if splitter:
+if not splitter:
     try:
         if options.customnbp:
-            splitter = SentenceSplitter(language=options.langcode, non_breaking_prefix_file=options.customnbp))
+            splitter = SentenceSplitter(language=options.langcode, non_breaking_prefix_file=options.customnbp)
         else:
             splitter = SentenceSplitter(language=options.langcode)
     except:
         splitter = SentenceSplitter(language='en')
 
 tokenizer = options.tokenizer
-if tokenizer:
+if not tokenizer:
     try:
         tokenizer = MosesTokenizer(options.langcode)
     except:
@@ -112,7 +112,7 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
         open_xz_or_gzip_or_plain(options.tok_output, "w") as tok_writer:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-        sentences = split_sentences(content, os.path.expanduser(splitter), options.prune_type, options.prune_threshold)
-        tokenized = tokenize(sentences, os.path.expanduser(tokenizer), os.path.expanduseri(lemmatizer))
+        sentences = split_sentences(content, splitter, options.prune_type, options.prune_threshold)
+        tokenized = tokenize(sentences, tokenizer, lemmatizer)
         sent_writer.write(base64.b64encode(sentences.encode("utf-8")) + b"\n")
         tok_writer.write(base64.b64encode(tokenized.lower().encode("utf-8")) + b"\n")

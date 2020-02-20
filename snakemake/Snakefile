@@ -121,8 +121,8 @@ def validate_args(config):
             'dic': {'type': 'string'},
             'LANG2Detokenizer': {'type': 'string'},
 
-            'sentenceSplitters': {'required': True, 'type': 'dict'},
-            'wordTokenizers': {'required': True, 'type': 'dict'},
+            'sentenceSplitters': {'type': 'dict'},
+            'wordTokenizers': {'type': 'dict'},
             'morphologicalAnalysers': {'type': 'dict'},
 
             'crawlerUserAgent': {'type': 'string'},
