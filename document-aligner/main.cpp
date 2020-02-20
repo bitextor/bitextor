@@ -129,11 +129,9 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 			return 3;
 		}
 		
-		if (buffer->vocab.empty()) {
-			cerr << "Reading the " << n << "th document resulted in an empty vocab" << endl;
-			stop();
-			return 4;
-		}
+// 		However the rest of the code shouldn't have any issues with that. Alignment would just be 0
+//		if (buffer->vocab.empty())
+//			cerr << "Warning: reading the " << n << "th document resulted in an empty vocab" << endl;
 		
 		// Push this document to the alignment score calculators
 		queue.push(std::move(buffer));
@@ -147,7 +145,7 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 int main(int argc, char *argv[]) {
 	unsigned int n_threads = thread::hardware_concurrency() - 1;
 	
-	float threshold = 0.7;
+	float threshold = 0.1;
 	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
