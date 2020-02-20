@@ -7,7 +7,7 @@
 #include <mutex>
 #include <boost/program_options.hpp>
 #include "document.h"
-#include "transparent_ifstream.h"
+#include "transparent_fstream.h"
 #include "blocking_queue.h"
 
 using namespace bitextor;
