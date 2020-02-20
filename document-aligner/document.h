@@ -12,19 +12,23 @@ struct WordScore {
 };
 
 struct Document {
-	// Document URL, used as identifier
-	std::string url;
+	// Document offset, used as identifier
+	size_t id;
 	
 	// ngram frequency in document
 	std::map<NGram, size_t> vocab;
 };
 
 struct DocumentRef {
-	// Document URL, used as identifier
-	std::string url;
+	// Document offset, used as identifier
+	size_t id;
 	
 	// ngram scores as a sorted array for quick sparse dot product
 	std::vector<WordScore> wordvec;
+	
+	inline DocumentRef() {};
+	
+	inline DocumentRef(Document const &document) : id(document.id) {}
 };
 
 std::istream &operator>>(std::istream &stream, Document &document);

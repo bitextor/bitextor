@@ -38,7 +38,7 @@ istream &operator>>(istream &stream, Document &document)
  */
 ostream &operator<<(ostream &stream, Document const &document)
 {
-	stream << "--- Document ---\n" << document.url << "\n";
+	stream << "--- Document ---\n" << document.id << "\n";
 
 	for (auto const &entry : document.vocab)
 		stream << entry.first << ": " << entry.second << "\n";
@@ -48,7 +48,7 @@ ostream &operator<<(ostream &stream, Document const &document)
 	
 ostream &operator<<(ostream &stream, DocumentRef const &document)
 {
-	stream << "--- Document Ref ---\n" << document.url << "\n";
+	stream << "--- Document Ref ---\n" << document.id << "\n";
 
 	for (auto const &entry : document.wordvec)
 		stream << entry.hash << ": " << entry.tfidf << "\n";
@@ -67,9 +67,7 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * counted. All other terms are ignored.
 */
 DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<NGram,size_t> const &df) {
-	DocumentRef document_ref{
-		.url = document.url
-	};
+	DocumentRef document_ref(document);
 	
 	// With the following method we know that each word will get a score so
 	// lets just reserve that space right now!
@@ -78,12 +76,16 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 	float total_tfidf_l2 = 0;
 	
 	for (auto const &entry : document.vocab) {
+		// How often does the term occur in the whole dataset?
 		auto it = df.find(entry.first);
 	
+		// If we can't find it (e.g. because we didn't really read the whole
+		// dataset) we just assume one: just this document.
 		size_t term_df = it == df.end() ? 1 : it->second;
 	
 		float document_tfidf = tfidf(entry.second, document_count, term_df);
-	
+		
+		// Keep track of the squared sum of all values for L2 normalisation
 		total_tfidf_l2 += document_tfidf * document_tfidf;
 		
 		document_ref.wordvec.push_back(WordScore{
@@ -92,9 +94,9 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 		});
 	}
 	
-	total_tfidf_l2 = sqrt(total_tfidf_l2);
-	
 	// Normalize
+	
+	total_tfidf_l2 = sqrt(total_tfidf_l2);
 	for (auto &entry : document_ref.wordvec)
 		entry.tfidf /= total_tfidf_l2;
 	
