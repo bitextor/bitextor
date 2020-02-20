@@ -20,6 +20,7 @@ pycld2==0.41
 python-dateutil==2.8.1
 cchardet==2.1.5
 git+https://github.com/slaveofcode/boilerpipe3.git
+git+https://github.com/berkmancenter/mediacloud-sentence-splitter.git
 cerberus==1.3.2
 alcazar==0.5.1
 python-magic==0.4.15
