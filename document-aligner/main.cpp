@@ -27,6 +27,12 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
 	     << '\n';
 }
 
+/**
+ * Count the number of documents a term occurs in. Optinally it will only assess one in N documents (where
+ * N is the skip_rate) but note that the document count it returns is for all documents, including the ones it
+ * skipped. Because we are dividing by this number for TF/IDF it increments counts with skip_rate instead of
+ * 1. So at the end of the day you can just do df / document_count to get the IDF.
+ */
 size_t read_df(istream &fin, unordered_map<NGram, size_t> &df, size_t skip_rate = 1) {
 	
 	// TODO: Can I make this thing multithreaded? Producer/consumer, but the
@@ -36,15 +42,17 @@ size_t read_df(istream &fin, unordered_map<NGram, size_t> &df, size_t skip_rate 
 	// Number of documents actually read;
 	size_t document_cnt = 0;
 	
-	for (size_t i = 0; true; ++i) {
+	while (true) {
 		Document document;
 		
 		// If this is not a lucky line, skip over it and jump to next loop.
-		if (i % skip_rate) {
-			if (fin.ignore(numeric_limits<std::streamsize>::max(), '\n'))
-				continue;
-			else
-				break; // or break if we're at end-of-file now.
+		if (document_cnt % skip_rate) {
+			// If we couldn't skip forward, we're at end of file
+			if (!fin.ignore(numeric_limits<std::streamsize>::max(), '\n'))
+				break;
+			
+			++document_cnt;
+			continue;
 		}
 		
 		// If we can't read the next document, we must be at end of file.
@@ -53,7 +61,7 @@ size_t read_df(istream &fin, unordered_map<NGram, size_t> &df, size_t skip_rate 
 		
 		// Update global term counts based on which terms we saw in the doc
 		for (auto const &entry : document.vocab)
-			df[entry.first] += 1;
+			df[entry.first] += skip_rate;
 		
 		++document_cnt;
 	}
@@ -187,7 +195,7 @@ int main(int argc, char *argv[]) {
 	
 	size_t document_cnt = in_document_cnt + en_document_cnt;
 	
-	cerr << "Calculated DF from " << document_cnt << " documents" << endl;
+	cerr << "Calculated DF from " << document_cnt / df_sample_rate << " documents" << endl;
 	
 	// Calculate TF/DF over the documents we have in memory
 	std::vector<DocumentRef> refs(in_document_cnt);
