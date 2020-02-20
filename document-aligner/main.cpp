@@ -27,22 +27,38 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
 	     << '\n';
 }
 
-size_t read_df(istream &fin, unordered_map<NGram, size_t> &df) {
-	size_t n = 0;
+size_t read_df(istream &fin, unordered_map<NGram, size_t> &df, size_t skip_rate = 1) {
 	
-	while (true) {
+	// TODO: Can I make this thing multithreaded? Producer/consumer, but the
+	// updating of the df map can't be concurrent, so the only profit would
+	// be the base64-decode + ngram generation.
+	
+	// Number of documents actually read;
+	size_t document_cnt = 0;
+	
+	for (size_t i = 0; true; ++i) {
 		Document document;
 		
+		// If this is not a lucky line, skip over it and jump to next loop.
+		if (i % skip_rate) {
+			if (fin.ignore(numeric_limits<std::streamsize>::max(), '\n'))
+				continue;
+			else
+				break; // or break if we're at end-of-file now.
+		}
+		
+		// If we can't read the next document, we must be at end of file.
 		if (!(fin >> document))
 			break;
 		
+		// Update global term counts based on which terms we saw in the doc
 		for (auto const &entry : document.vocab)
 			df[entry.first] += 1;
 		
-		++n;
+		++document_cnt;
 	}
 	
-	return n;
+	return document_cnt;
 }
 
 size_t read_document_refs(istream &fin_tokens, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
@@ -120,6 +136,8 @@ int main(int argc, char *argv[]) {
 	
 	float threshold = 0.1;
 	
+	size_t df_sample_rate = 1;
+	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
 	arg_desc.add("english-tokens", 1);
@@ -127,6 +145,7 @@ int main(int argc, char *argv[]) {
 	po::options_description opt_desc("Additional options");
 	opt_desc.add_options()
 		("help", "produce help message")
+		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document")
 		("threads", po::value<unsigned int>(&n_threads), "set number of threads")
 		("threshold", po::value<float>(&threshold), "set score threshold")
 		("translated-tokens", po::value<string>(), "set input filename")
@@ -158,12 +177,12 @@ int main(int argc, char *argv[]) {
 	
 	{
 		transparent_istream in_tokens(vm["translated-tokens"].as<std::string>());
-		in_document_cnt = read_df(in_tokens, df);
+		in_document_cnt = read_df(in_tokens, df, df_sample_rate);
 	}
 	
 	{
 		transparent_istream en_tokens(vm["english-tokens"].as<std::string>());
-		en_document_cnt = read_df(en_tokens, df);
+		en_document_cnt = read_df(en_tokens, df, df_sample_rate);
 	}
 	
 	size_t document_cnt = in_document_cnt + en_document_cnt;
