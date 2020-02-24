@@ -87,13 +87,13 @@ size_t read_document_refs(istream &fin_tokens, unordered_map<NGram,size_t> df, s
 	return n;
 }
 
-int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, istream &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
+int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, size_t document_cnt, istream &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
 	vector<thread> consumers;
 	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 64);
 	
 	for (unsigned int n = 0; n < n_threads; ++n)
-		consumers.push_back(thread([&queue, &refs, &df, threshold]() {
+		consumers.push_back(thread([&queue, &refs, document_cnt, &df, threshold]() {
 			while (true) {
 				unique_ptr<Document> buffer(queue.pop());
 				
@@ -101,7 +101,7 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 				if (!buffer)
 					break;
 				
-				DocumentRef const &ref = calculate_tfidf(*buffer, refs.size(), df);
+				DocumentRef const &ref = calculate_tfidf(*buffer, document_cnt, df);
 				
 				for (auto const &document_ref : refs) {
 					float score = calculate_alignment(document_ref, ref);
@@ -222,5 +222,5 @@ int main(int argc, char *argv[]) {
 	// (Note: they are not included in the DF table!)
 	
 	transparent_istream en_tokens(vm["english-tokens"].as<std::string>());
-	return score_documents(refs, df, en_tokens, threshold, n_threads, verbose);
+	return score_documents(refs, df, document_cnt, en_tokens, threshold, n_threads, verbose);
 }
