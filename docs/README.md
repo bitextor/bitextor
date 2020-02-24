@@ -103,7 +103,7 @@ To compile all Bitextor submodules you will first need to run the script `config
 
 #### Some known installation issues
 
-In some machines equipped with an AMD CPU you may experience some troubles with tensorflow 1.8.0 (the version specified in `requirements.txt`). In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
+In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
 
 ```bash
 sudo pip3 uninstall tensorflow

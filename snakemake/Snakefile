@@ -1504,12 +1504,10 @@ rule docalign_tokenize_translated:
     output:
         "{{dir}}/docalign/{l1}.{{mttype}}.extracted.translated.tokenized.xz".format(l1=LANG1)
     shell:
-        'read -r -a WORDTOK <<< "{WORDTOK2}"; '
         'if [ -z "{MORPHTOK2}" ]; '
-        'then paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
+        'then paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} {WORDTOK2} | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
         'else '
-        'read -r -a MORPHTOK <<< "{MORPHTOK2}";'
-        'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} "${{WORDTOK[@]}}" | {PROFILING} "${{MORPHTOK[@]}}" | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
+        'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} {WORDTOK2} | {PROFILING} {MORPHTOK2} | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
         'fi'
 
 rule docalign_matches:

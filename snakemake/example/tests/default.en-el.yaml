@@ -1,15 +1,25 @@
 bitextor: ~/permanent/bitextor
 hosts: ["primeminister.gr"]
-httrack: false
+crawler: wget
 permanentDir: ~/permanent/bitextor-output-default-en-el
 transientDir: ~/transient-default-en-el
+dataDir: ~/permanent/bitextor-output-default-en-el
 temp: ~/transient-default-en-el
 lang1: en
 lang2: el
+wordTokenizers: {
+  'en': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en',
+  'el': '~/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l el'
+}
+sentenceSplitters: {
+  'en': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l en',
+  'el': '~/permanent/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l el'
+}
+
 dic: ~/permanent/en-el.dic
 hunalignThreshold: 0
 elrc: true
 documentAligner: DIC
-#bicleaner: ~/bicleaner-model/en-el/training.en-el.yaml
+#bicleaner: ~/bicleaner-model/en-el/en-el.yaml
 tmx: true
 profiling: true
