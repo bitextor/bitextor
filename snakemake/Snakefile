@@ -125,6 +125,8 @@ def validate_args(config):
             'wordTokenizers': {'type': 'dict'},
             'morphologicalAnalysers': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
+            'pruneThreshold': {'type': 'integer'},
+            'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
 
             'crawlerUserAgent': {'type': 'string'},
             'crawlSizeLimit': {'type': 'string'},
