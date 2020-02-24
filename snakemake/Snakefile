@@ -118,6 +118,8 @@ def validate_args(config):
             'sentenceSplitters': {'required': True, 'type': 'dict'},
             'wordTokenizers': {'required': True, 'type': 'dict'},
             'morphologicalAnalysers': {'type': 'dict'},
+            'pruneThreshold': {'type': 'integer'},
+            'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
 
             'crawlerUserAgent': {'type': 'string'},
             'crawlSizeLimit': {'type': 'string'},
