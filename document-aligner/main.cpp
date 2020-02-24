@@ -87,10 +87,10 @@ size_t read_document_refs(istream &fin_tokens, unordered_map<NGram,size_t> df, s
 	return n;
 }
 
-int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, istream &in_tokens, float threshold, unsigned int n_threads) {
+int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, istream &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
 	vector<thread> consumers;
 	
-	blocking_queue<unique_ptr<Document>> queue(n_threads * 4);
+	blocking_queue<unique_ptr<Document>> queue(n_threads * 64);
 	
 	for (unsigned int n = 0; n < n_threads; ++n)
 		consumers.push_back(thread([&queue, &refs, &df, threshold]() {
@@ -137,6 +137,11 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 	
 	stop();
 	
+	if (verbose)
+		cerr << "Queue performance:\n"
+		     << "  underflow: " << queue.performance().underflow << '\n'
+		     << "  overflow: " << queue.performance().overflow << endl;
+	
 	return 0;
 }
 
@@ -146,6 +151,8 @@ int main(int argc, char *argv[]) {
 	float threshold = 0.1;
 	
 	size_t df_sample_rate = 1;
+	
+	bool verbose = false;
 	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
@@ -158,7 +165,8 @@ int main(int argc, char *argv[]) {
 		("threads", po::value<unsigned int>(&n_threads), "set number of threads")
 		("threshold", po::value<float>(&threshold), "set score threshold")
 		("translated-tokens", po::value<string>(), "set input filename")
-		("english-tokens", po::value<string>(), "set input filename");
+		("english-tokens", po::value<string>(), "set input filename")
+		("verbose", po::value<bool>(&verbose), "show additional output");
 	
 	po::variables_map vm;
 	
@@ -196,7 +204,8 @@ int main(int argc, char *argv[]) {
 	
 	size_t document_cnt = in_document_cnt + en_document_cnt;
 	
-	cerr << "Calculated DF from " << document_cnt / df_sample_rate << " documents" << endl;
+	if (verbose)
+		cerr << "Calculated DF from " << document_cnt / df_sample_rate << " documents" << endl;
 	
 	// Calculate TF/DF over the documents we have in memory
 	std::vector<DocumentRef> refs(in_document_cnt);
@@ -206,11 +215,12 @@ int main(int argc, char *argv[]) {
 		read_document_refs(in_tokens, df, document_cnt, refs.begin());
 	}
 	
-	cerr << "Read " << refs.size() << " documents into memory" << endl;
+	if (verbose)
+		cerr << "Read " << refs.size() << " documents into memory" << endl;
 	
 	// Start reading the other set of documents we match against
 	// (Note: they are not included in the DF table!)
 	
 	transparent_istream en_tokens(vm["english-tokens"].as<std::string>());
-	return score_documents(refs, df, en_tokens, threshold, n_threads);
+	return score_documents(refs, df, en_tokens, threshold, n_threads, verbose);
 }
