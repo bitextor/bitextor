@@ -111,10 +111,10 @@ def epub2html(data):
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs basic preprocessing, which includes: HTML"
                 "normalization, deduplication. The result is a WARC file.")
-oparser.add_argument("--verbose", action="store_true", default=False,
+oparser.add_argument('-v', "--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
-oparser.add_argument('--output', dest='output', help='Output WARC file', default=sys.stdout)
-oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
+oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', default=sys.stdout)
+oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
 oparser.add_argument('--pdfpass', dest='pdfpass', help='Pass PDFs verbatime to file', default=None)
@@ -122,6 +122,8 @@ oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you 
                     default=False)
 oparser.add_argument('--cleanhtml', action='store_true', help='Clean HTML to remove javascript, css and head tags',
                      default=False)
+oparser.add_argument('--disable-output-gzip', dest='disable_output_gzip', action='store_true', help='Disable compression of output WARC')
+oparser.add_argument('--disable-pdfs-gzip', dest='disable_pdfs_gzip', action='store_true', help='Disable compression of PDFs WARC (if --pdfpass is enabled)')
 options = oparser.parse_args()
 
 logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
@@ -143,10 +145,10 @@ else:
 if options.output == sys.stdout or options.output == '-':
     fo = WARCWriter(sys.stdout.buffer, gzip=True)
 else:
-    fo = WARCWriter(open(options.output, 'wb'), gzip=True)
+    fo = WARCWriter(open(options.output, 'wb'), gzip=not options.disable_output_gzip)
 
 if options.pdfpass is not None:
-    po = WARCWriter(open(options.pdfpass, 'wb'), gzip=True)
+    po = WARCWriter(open(options.pdfpass, 'wb'), gzip=not options.disable_pdfs_gzip)
 
 if not options.pdfpass and options.pdfextract:
     extractor = ExtrP()
