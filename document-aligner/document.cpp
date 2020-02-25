@@ -14,13 +14,11 @@ namespace bitextor {
  * Reads a single line of base64 encoded document into a Document.
  * TODO: Uses hard coded ngram size of 3 at the moment.
  */
-istream &operator>>(istream &stream, Document &document)
+void ReadDocument(const StringPiece &encoded, Document &document)
 {
-	string line;
-	getline(stream, line);
-
-	string body = base64_decode(line);
-	
+	// TODO: change API to make string reuse easier.
+	std::string body;
+	base64_decode(encoded, body);
 	istringstream token_stream(body);
 	ingramstream ngram_stream(token_stream, 3);
 
@@ -29,8 +27,6 @@ istream &operator>>(istream &stream, Document &document)
 	while (ngram_stream >> ngram) {
 		document.vocab[ngram] += 1;
 	}
-
-	return stream;
 }
 
 /**
