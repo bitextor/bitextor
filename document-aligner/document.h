@@ -1,5 +1,6 @@
 #pragma once
 #include "ngram.h"
+#include "util/string_piece.hh"
 #include <istream>
 #include <map>
 #include <unordered_map>
@@ -31,7 +32,8 @@ struct DocumentRef {
 	inline DocumentRef(Document const &document) : id(document.id) {}
 };
 
-std::istream &operator>>(std::istream &stream, Document &document);
+// Assumes base64 encoded still.
+void ReadDocument(const StringPiece &encoded, Document &to);
 
 std::ostream &operator<<(std::ostream &stream, Document const &document);
 

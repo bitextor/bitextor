@@ -8,8 +8,8 @@
 #include <mutex>
 #include <boost/program_options.hpp>
 #include "document.h"
-#include "transparent_fstream.h"
 #include "blocking_queue.h"
+#include "util/file_piece.hh"
 
 using namespace bitextor;
 using namespace std;
@@ -34,50 +34,33 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
  * skipped. Because we are dividing by this number for TF/IDF it increments counts with skip_rate instead of
  * 1. So at the end of the day you can just do df / document_count to get the IDF.
  */
-size_t read_df(istream &fin, unordered_map<NGram, size_t> &df, size_t skip_rate = 1) {
+size_t read_df(util::FilePiece &fin, unordered_map<NGram, size_t> &df, size_t skip_rate = 1) {
 	
 	// TODO: Can I make this thing multithreaded? Producer/consumer, but the
 	// updating of the df map can't be concurrent, so the only profit would
 	// be the base64-decode + ngram generation.
-	
-	// Number of documents actually read;
-	size_t document_cnt = 0;
-	
-	while (true) {
-		Document document;
-		
-		// If this is not a lucky line, skip over it and jump to next loop.
-		if (document_cnt % skip_rate) {
-			// If we couldn't skip forward, we're at end of file
-			if (!fin.ignore(numeric_limits<std::streamsize>::max(), '\n'))
-				break;
-			
-			++document_cnt;
+
+	// Number of documents actually read.
+	size_t document_count = 0;
+	for (StringPiece line : fin) {
+		if (document_count++ % skip_rate) {
 			continue;
 		}
-		
-		// If we can't read the next document, we must be at end of file.
-		if (!(fin >> document))
-			break;
-		
-		// Update global term counts based on which terms we saw in the doc
+		Document document;
+		// TODO we shouldn't have a map here.  A hash table would be better.
+		ReadDocument(line, document);
 		for (auto const &entry : document.vocab)
 			df[entry.first] += skip_rate;
-		
-		++document_cnt;
 	}
-	
-	return document_cnt;
+	return document_count;
 }
 
-size_t read_document_refs(istream &fin_tokens, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
 	size_t n = 0;
 	
-	while (true) {
+	for (StringPiece line : fin_tokens) {
 		Document buffer;
-		
-		if (!(fin_tokens >> buffer))
-			break;
+		ReadDocument(line, buffer);
 		
 		buffer.id = ++n;
 
@@ -87,7 +70,7 @@ size_t read_document_refs(istream &fin_tokens, unordered_map<NGram,size_t> df, s
 	return n;
 }
 
-int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, size_t document_cnt, istream &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
+int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, size_t document_cnt, util::FilePiece &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
 	vector<thread> consumers;
 	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 64);
@@ -124,17 +107,18 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t
 	
 	for (size_t n = 1; true; ++n) {
 		unique_ptr<Document> buffer(new Document());
-		
-		// If reading failed, we're probably at end of file
-		if (!(in_tokens >> *buffer))
+
+		StringPiece line;
+		if (!in_tokens.ReadLineOrEOF(line))
 			break;
-		
+		ReadDocument(line, *buffer);
+
 		buffer->id = n;
-		
+
 		// Push this document to the alignment score calculators
 		queue.push(std::move(buffer));
 	}
-	
+
 	stop();
 	
 	if (verbose)
@@ -191,36 +175,36 @@ int main(int argc, char *argv[]) {
 	unordered_map<NGram,size_t> df;
 	
 	size_t in_document_cnt, en_document_cnt;
-	
+
 	{
-		transparent_istream in_tokens(vm["translated-tokens"].as<std::string>());
+		util::FilePiece in_tokens(vm["translated-tokens"].as<std::string>().c_str());
 		in_document_cnt = read_df(in_tokens, df, df_sample_rate);
 	}
-	
+
 	{
-		transparent_istream en_tokens(vm["english-tokens"].as<std::string>());
+		util::FilePiece en_tokens(vm["english-tokens"].as<std::string>().c_str());
 		en_document_cnt = read_df(en_tokens, df, df_sample_rate);
 	}
-	
+
 	size_t document_cnt = in_document_cnt + en_document_cnt;
-	
+
 	if (verbose)
 		cerr << "Calculated DF from " << document_cnt / df_sample_rate << " documents" << endl;
-	
+
 	// Calculate TF/DF over the documents we have in memory
 	std::vector<DocumentRef> refs(in_document_cnt);
-	
+
 	{
-		transparent_istream in_tokens(vm["translated-tokens"].as<std::string>());
+		util::FilePiece in_tokens(vm["translated-tokens"].as<std::string>().c_str());
 		read_document_refs(in_tokens, df, document_cnt, refs.begin());
 	}
-	
+
 	if (verbose)
 		cerr << "Read " << refs.size() << " documents into memory" << endl;
-	
+
 	// Start reading the other set of documents we match against
 	// (Note: they are not included in the DF table!)
-	
-	transparent_istream en_tokens(vm["english-tokens"].as<std::string>());
+
+	util::FilePiece en_tokens(vm["english-tokens"].as<std::string>().c_str());
 	return score_documents(refs, df, document_cnt, en_tokens, threshold, n_threads, verbose);
 }
