@@ -392,7 +392,7 @@ if "wordTokenizers" in config:
     WORDTOK2 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG2)
 else:
     WORDTOKS = ""
-    WORDTOK1, WORDTOK2 = BITEXTOR+'preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG1, BITEXTOR+'preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG2
+    WORDTOK1, WORDTOK2 = BITEXTOR+'/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG1, BITEXTOR+'/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG2
 
 if "morphologicalAnalysers" in config:
     MORPHTOKS = config["morphologicalAnalysers"]
