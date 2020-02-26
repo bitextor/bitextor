@@ -84,13 +84,13 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, siz
 				if (!buffer)
 					break;
 				
-				DocumentRef const &ref = calculate_tfidf(*buffer, document_cnt, df);
+				DocumentRef const &buffer_ref = calculate_tfidf(*buffer, document_cnt, df);
 				
 				for (auto const &document_ref : refs) {
-					float score = calculate_alignment(document_ref, ref);
+					float score = calculate_alignment(document_ref, buffer_ref);
 					
 					if (score >= threshold)
-						print_score(score, document_ref, ref);
+						print_score(score, document_ref, buffer_ref);
 				}
 			}
 		}));
