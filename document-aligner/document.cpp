@@ -82,6 +82,13 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 		});
 	}
 	
+	// Sort wordvec, which is assumed by calculate_alignment
+	sort(document_ref.wordvec.begin(),
+		 document_ref.wordvec.end(),
+		 [] (WordScore const &lft, WordScore const &rgt) {
+		return lft.hash < rgt.hash;
+	});
+	
 	// Normalize
 	
 	total_tfidf_l2 = sqrt(total_tfidf_l2);
@@ -108,6 +115,7 @@ float calculate_alignment(DocumentRef const &left, DocumentRef const &right) {
 		else if (rit->hash < lit->hash)
 			++rit;
 		else {
+			assert(lit->hash == rit->hash);
 			score += lit->tfidf * rit->tfidf;
 			++lit;
 			++rit;

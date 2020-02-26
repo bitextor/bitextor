@@ -1,7 +1,6 @@
 #pragma once
 #include "util/string_piece.hh"
 #include <istream>
-#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -17,7 +16,7 @@ struct Document {
 	size_t id;
 	
 	// ngram frequency in document
-	std::map<uint64_t, size_t> vocab;
+	std::unordered_map<uint64_t, size_t> vocab;
 };
 
 struct DocumentRef {
