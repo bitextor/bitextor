@@ -55,7 +55,8 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
 */
 DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<uint64_t, size_t> const &df) {
 	DocumentRef document_ref{
-		.id = document.id
+		.id = document.id,
+		.wordvec = {}
 	};
 	
 	// With the following method we know that each word will get a score so
