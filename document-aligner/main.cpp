@@ -43,11 +43,10 @@ size_t read_df(util::FilePiece &fin, unordered_map<uint64_t, size_t> &df, size_t
 	// Number of documents actually read.
 	size_t document_count = 0;
 	for (StringPiece line : fin) {
-		if (document_count++ % skip_rate) {
+		if (document_count++ % skip_rate)
 			continue;
-		}
+
 		Document document;
-		// TODO we shouldn't have a map here.  A hash table would be better.
 		ReadDocument(line, document, ngram_size);
 		for (auto const &entry : document.vocab)
 			df[entry.first] += skip_rate;
@@ -88,9 +87,12 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, siz
 				
 				for (auto const &document_ref : refs) {
 					float score = calculate_alignment(document_ref, buffer_ref);
-					
-					if (score >= threshold)
-						print_score(score, document_ref, buffer_ref);
+
+					// Document not a match? Skip to the next.
+					if (score < threshold)
+						continue;
+
+					print_score(score, document_ref, buffer_ref);
 				}
 			}
 		}));
@@ -119,6 +121,7 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, siz
 		queue.push(std::move(buffer));
 	}
 
+	// Tell all workers there is nothing left and wait for them to stop.
 	stop();
 	
 	if (verbose)
@@ -194,7 +197,7 @@ int main(int argc, char *argv[]) {
 	if (verbose)
 		cerr << "Calculated DF from " << document_cnt / df_sample_rate << " documents" << endl;
 
-	// Calculate TF/DF over the documents we have in memory
+	// Read translated documents & calculate TF/DF over the documents we have in memory
 	std::vector<DocumentRef> refs(in_document_cnt);
 
 	{
@@ -206,8 +209,6 @@ int main(int argc, char *argv[]) {
 		cerr << "Read " << refs.size() << " documents into memory" << endl;
 
 	// Start reading the other set of documents we match against
-	// (Note: they are not included in the DF table!)
-
 	util::FilePiece en_tokens(vm["english-tokens"].as<std::string>().c_str());
 	return score_documents(refs, df, document_cnt, ngram_size, en_tokens, threshold, n_threads, verbose);
 }
