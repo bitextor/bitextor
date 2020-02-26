@@ -551,9 +551,9 @@ if "bifixer" in config and config["bifixer"]:
   BICLEANER_SORT=""
   DEDUP='--dedup "bifixerhash"'
   if DEFERREDFIELDS != "":
-      CACHEOPTIONS='-k 10,11'
+      CACHEOPTIONS='-k 10'
   else:
-      CACHEOPTIONS='-k 6,7'
+      CACHEOPTIONS='-k 6'
 else:
   BIFIXER="segclean"
   BIFIXERFIELD=""
@@ -1669,7 +1669,7 @@ rule bifixer:
     output:
         "{prefix}.bifixer.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1REVERSE} {LANG2REVERSE} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1 -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
+        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1REVERSE} {LANG2REVERSE} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k2 -T {TMPDIR} --compress-program=gzip | cut -f 3- | xz -T 0 > {output}"
 
 rule bicleaner:
     input:
