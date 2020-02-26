@@ -5,7 +5,6 @@
 #include <iostream>
 #include <cmath>
 
-
 using namespace std;
 
 namespace bitextor {
@@ -16,17 +15,10 @@ namespace bitextor {
  */
 void ReadDocument(const StringPiece &encoded, Document &document)
 {
-	// TODO: change API to make string reuse easier.
 	std::string body;
 	base64_decode(encoded, body);
-	istringstream token_stream(body);
-	ingramstream ngram_stream(token_stream, 3);
-
-	NGram ngram;
-
-	while (ngram_stream >> ngram) {
-		document.vocab[ngram] += 1;
-	}
+	for (NGramIter ngram_it(body, 3); ngram_it; ++ngram_it)
+		document.vocab[*ngram_it] += 1;
 }
 
 /**
@@ -62,7 +54,7 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
 */
-DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<NGram,size_t> const &df) {
+DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<uint64_t, size_t> const &df) {
 	DocumentRef document_ref(document);
 	
 	// With the following method we know that each word will get a score so
@@ -85,7 +77,7 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 		total_tfidf_l2 += document_tfidf * document_tfidf;
 		
 		document_ref.wordvec.push_back(WordScore{
-			.hash = entry.first.hash,
+			.hash = entry.first,
 			.tfidf = document_tfidf
 		});
 	}

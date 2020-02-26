@@ -34,7 +34,7 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
  * skipped. Because we are dividing by this number for TF/IDF it increments counts with skip_rate instead of
  * 1. So at the end of the day you can just do df / document_count to get the IDF.
  */
-size_t read_df(util::FilePiece &fin, unordered_map<NGram, size_t> &df, size_t skip_rate = 1) {
+size_t read_df(util::FilePiece &fin, unordered_map<uint64_t, size_t> &df, size_t skip_rate = 1) {
 	
 	// TODO: Can I make this thing multithreaded? Producer/consumer, but the
 	// updating of the df map can't be concurrent, so the only profit would
@@ -55,7 +55,7 @@ size_t read_df(util::FilePiece &fin, unordered_map<NGram, size_t> &df, size_t sk
 	return document_count;
 }
 
-size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<NGram,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<uint64_t,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
 	size_t n = 0;
 	
 	for (StringPiece line : fin_tokens) {
@@ -70,7 +70,7 @@ size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<NGram,size_
 	return n;
 }
 
-int score_documents(vector<DocumentRef> const &refs, unordered_map<NGram, size_t> const &df, size_t document_cnt, util::FilePiece &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
+int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, size_t> const &df, size_t document_cnt, util::FilePiece &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
 	vector<thread> consumers;
 	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 64);
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 	// Calculate the document frequency for terms.
 	// We'll use in_document_cnt later to reserve some space for the documents
 	// we want to keep in memory.
-	unordered_map<NGram,size_t> df;
+	unordered_map<uint64_t,size_t> df;
 	
 	size_t in_document_cnt, en_document_cnt;
 

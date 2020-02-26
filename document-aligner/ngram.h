@@ -1,53 +1,45 @@
 #pragma once
 #include <vector>
-#include <istream>
-#include <ostream>
+#include <boost/iterator/iterator_facade.hpp>
+#include <util/tokenize_piece.hh>
 
 namespace bitextor {
 
-/**
- * Struct around uint64_t to make it easy to add the original tokens as
- * a vector and to differentiate between types.
- */
-struct NGram {
-	uint64_t hash;
-	
-	inline bool operator<(NGram const &other) const {
-		return hash < other.hash;
-	}
-
-	inline bool operator==(NGram const &other) const {
-		return hash == other.hash;
-	}
-};
-
-/**
- * Istream wrapper that reads space separated words into ngrams. Keeps
- * an internal buffer to do so. Use toghether with >> to read the ngrams
- * from this stream.
- */
-class ingramstream : public std::istream {
+class NGramIter : public boost::iterator_facade<NGramIter, const uint64_t, boost::forward_traversal_tag> {
 public:
-	ingramstream(std::istream &stream, size_t size);
-	NGram read_ngram();
+	NGramIter();
+	NGramIter(StringPiece const &source, size_t ngram_size);
+	
+	inline bool operator!() const {
+		return end_;
+	}
+
+	inline operator bool() const {
+		return !end_;
+	}
+
 private:
-	size_t _size;
-	size_t _offset;
-	std::vector<std::string> _buffer;
+	friend class boost::iterator_core_access;
+
+	util::TokenIter<util::AnyCharacter, true> token_it_;
+
+	size_t ngram_size_;
+	size_t pos_;
+	bool end_;
+	std::vector<uint64_t> buffer_;
+	uint64_t ngram_hash_;
+
+	void init();
+	void increment();
+
+	inline bool equal(NGramIter const &other) const {
+		return token_it_ == other.token_it_ && end_ == other.end_;
+	}
+
+	inline const uint64_t &dereference() const {
+		UTIL_THROW_IF(end_, util::OutOfTokens, "We already reached end");
+		return ngram_hash_;
+	}
 };
-
-ingramstream &operator>>(ingramstream &stream, NGram &word);
-
-std::ostream &operator<<(std::ostream &str, NGram const &gram);
 
 } // namespace bitextor
-
-namespace std {
-
-template <> struct hash<bitextor::NGram> {
-	inline std::size_t operator()(bitextor::NGram const &k) const {
-		return k.hash;
-	}
-};
-
-} // namespace std

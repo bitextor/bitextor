@@ -1,79 +1,46 @@
 #include "ngram.h"
 #include "murmur_hash.h"
-#include <vector>
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
 namespace bitextor {
 
-ingramstream::ingramstream(istream &stream, size_t size)
-:
-	istream(stream.rdbuf()),
-	_size(size),
-	_offset(0),
-	_buffer()
-{
+NGramIter::NGramIter() {
 	//
 }
 
-NGram ingramstream::read_ngram()
-{
-	// First call: our buffer is still empty. Fill it up right till the
-	// last word. Reading the last word is standard behaviour so outside
-	// this condition.
-	if (_buffer.empty()) {
-		_buffer.resize(_size);
+NGramIter::NGramIter(StringPiece const &source, size_t ngram_size)
+: token_it_(source, " \n"),
+  ngram_size_(ngram_size),
+  pos_(0),
+  end_(false),
+  buffer_(ngram_size) {
+	init();
+}
 
-		for (size_t i = 0; i < _size - 1; ++i)
-			*this >> _buffer[i];
+void NGramIter::init() {
+	for (pos_ = 0; pos_ < ngram_size_ - 1; ++pos_, ++token_it_)
+		buffer_[pos_] = MurmurHashNative(token_it_->data(), token_it_->size(), 0);
+}
+
+void NGramIter::increment() {
+	if (!token_it_) {
+		end_ = true;
+		return;
 	}
-
-	// Read last token of ngram, put it at end of buffer
-	*this >> _buffer[(_offset + _size - 1) % _size];
-
-	// Start reading at start of buffer
-	uint64_t hash(MurmurHashNative(_buffer[_offset].data(), _buffer[_offset].size(), 0));
-
-	// Continue with the rest of the buffer (using start as seed)
-	for (size_t i = 1; i < _size; ++i) {
-		string const &token = _buffer[(_offset + i) % _size];
-		hash = MurmurHashCombine(MurmurHashNative(token.data(), token.size(), 0), hash);
-	}
-
-	// Increase buffer offset (this is a -> is a test)
-	_offset = (_offset + 1) % _size;
 	
-	return NGram{hash};
-}
-
-ingramstream &operator>>(ingramstream &stream, NGram &word)
-{
-	word = stream.read_ngram();
-	return stream;
-}
-
-ostream &operator<<(ostream &str, vector<string> const &words)
-{
-	str << '[';
-
-	auto it = words.cbegin();
-
-	if (it != words.cend()) {
-		str << *it;
-		++it;
-	}
-
-	while (it != words.cend()) {
-		str << ',' << *it;
-		++it;
-	}
-
-	return str << ']';
-}
-
-ostream &operator<<(ostream &str, NGram const &gram) 
-{
-	return str << '{' << gram.hash << '}';
+	// Read next word & store hash
+	buffer_[pos_ % ngram_size_] = MurmurHashNative(token_it_->data(), token_it_->size(), 0);
+	
+	// Create hash from combining past N word hashes
+	ngram_hash_ = 0;
+	for (long offset = ngram_size_ - 1; offset >= 0; --offset)
+		ngram_hash_ = MurmurHashCombine(buffer_[(pos_ - offset) % ngram_size_], ngram_hash_);
+	
+	++pos_;
+	++token_it_;
 }
 
 } // namespace bitextor

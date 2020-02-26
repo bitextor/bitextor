@@ -1,9 +1,9 @@
 #pragma once
-#include "ngram.h"
 #include "util/string_piece.hh"
 #include <istream>
 #include <map>
 #include <unordered_map>
+#include <vector>
 
 namespace bitextor {
 
@@ -17,7 +17,7 @@ struct Document {
 	size_t id;
 	
 	// ngram frequency in document
-	std::map<NGram, size_t> vocab;
+	std::map<uint64_t, size_t> vocab;
 };
 
 struct DocumentRef {
@@ -39,7 +39,7 @@ std::ostream &operator<<(std::ostream &stream, Document const &document);
 
 std::ostream &operator<<(std::ostream &stream, DocumentRef const &ref);
 
-DocumentRef calculate_tfidf(Document &document, size_t document_count, std::unordered_map<NGram,size_t> const &df);
+DocumentRef calculate_tfidf(Document &document, size_t document_count, std::unordered_map<uint64_t, size_t> const &df);
 
 float calculate_alignment(DocumentRef const &left, DocumentRef const &right);
 
