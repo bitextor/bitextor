@@ -25,10 +25,6 @@ struct DocumentRef {
 	
 	// ngram scores as a sorted array for quick sparse dot product
 	std::vector<WordScore> wordvec;
-	
-	inline DocumentRef() {};
-	
-	inline DocumentRef(Document const &document) : id(document.id) {}
 };
 
 // Assumes base64 encoded still.
