@@ -21,8 +21,12 @@ NGramIter::NGramIter(StringPiece const &source, size_t ngram_size)
 }
 
 void NGramIter::init() {
-	for (pos_ = 0; pos_ < ngram_size_ - 1; ++pos_, ++token_it_)
+	for (pos_ = 0; pos_ < ngram_size_ - 1 && token_it_; ++pos_, ++token_it_)
 		buffer_[pos_] = MurmurHashNative(token_it_->data(), token_it_->size(), 0);
+	
+	// Some documents are just too short
+	if (!token_it_)
+		end_ = true;
 }
 
 void NGramIter::increment() {
