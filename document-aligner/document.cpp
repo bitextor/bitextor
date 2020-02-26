@@ -117,7 +117,6 @@ float calculate_alignment(DocumentRef const &left, DocumentRef const &right) {
 		else if (rit->hash < lit->hash)
 			++rit;
 		else {
-			assert(lit->hash == rit->hash);
 			score += lit->tfidf * rit->tfidf;
 			++lit;
 			++rit;
