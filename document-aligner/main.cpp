@@ -34,7 +34,7 @@ void print_score(float score, DocumentRef const &left, DocumentRef const &right)
  * skipped. Because we are dividing by this number for TF/IDF it increments counts with skip_rate instead of
  * 1. So at the end of the day you can just do df / document_count to get the IDF.
  */
-size_t read_df(util::FilePiece &fin, unordered_map<uint64_t, size_t> &df, size_t skip_rate = 1) {
+size_t read_df(util::FilePiece &fin, unordered_map<uint64_t, size_t> &df, size_t ngram_size, size_t skip_rate = 1) {
 	
 	// TODO: Can I make this thing multithreaded? Producer/consumer, but the
 	// updating of the df map can't be concurrent, so the only profit would
@@ -48,19 +48,19 @@ size_t read_df(util::FilePiece &fin, unordered_map<uint64_t, size_t> &df, size_t
 		}
 		Document document;
 		// TODO we shouldn't have a map here.  A hash table would be better.
-		ReadDocument(line, document);
+		ReadDocument(line, document, ngram_size);
 		for (auto const &entry : document.vocab)
 			df[entry.first] += skip_rate;
 	}
 	return document_count;
 }
 
-size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<uint64_t,size_t> df, size_t document_cnt, vector<DocumentRef>::iterator it) {
+size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<uint64_t,size_t> df, size_t document_cnt, size_t ngram_size, vector<DocumentRef>::iterator it) {
 	size_t n = 0;
 	
 	for (StringPiece line : fin_tokens) {
 		Document buffer;
-		ReadDocument(line, buffer);
+		ReadDocument(line, buffer, ngram_size);
 		
 		buffer.id = ++n;
 
@@ -70,7 +70,7 @@ size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<uint64_t,si
 	return n;
 }
 
-int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, size_t> const &df, size_t document_cnt, util::FilePiece &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
+int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, size_t> const &df, size_t document_cnt, size_t ngram_size, util::FilePiece &in_tokens, float threshold, unsigned int n_threads, bool verbose = false) {
 	vector<thread> consumers;
 	
 	blocking_queue<unique_ptr<Document>> queue(n_threads * 64);
@@ -111,7 +111,7 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, siz
 		StringPiece line;
 		if (!in_tokens.ReadLineOrEOF(line))
 			break;
-		ReadDocument(line, *buffer);
+		ReadDocument(line, *buffer, ngram_size);
 
 		buffer->id = n;
 
@@ -136,6 +136,8 @@ int main(int argc, char *argv[]) {
 	
 	size_t df_sample_rate = 1;
 	
+	size_t ngram_size = 2;
+	
 	bool verbose = false;
 	
 	po::positional_options_description arg_desc;
@@ -148,6 +150,7 @@ int main(int argc, char *argv[]) {
 		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document")
 		("threads", po::value<unsigned int>(&n_threads), "set number of threads")
 		("threshold", po::value<float>(&threshold), "set score threshold")
+	    ("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
 		("translated-tokens", po::value<string>(), "set input filename")
 		("english-tokens", po::value<string>(), "set input filename")
 		("verbose", po::value<bool>(&verbose), "show additional output");
@@ -178,12 +181,12 @@ int main(int argc, char *argv[]) {
 
 	{
 		util::FilePiece in_tokens(vm["translated-tokens"].as<std::string>().c_str());
-		in_document_cnt = read_df(in_tokens, df, df_sample_rate);
+		in_document_cnt = read_df(in_tokens, df, ngram_size, df_sample_rate);
 	}
 
 	{
 		util::FilePiece en_tokens(vm["english-tokens"].as<std::string>().c_str());
-		en_document_cnt = read_df(en_tokens, df, df_sample_rate);
+		en_document_cnt = read_df(en_tokens, df, ngram_size, df_sample_rate);
 	}
 
 	size_t document_cnt = in_document_cnt + en_document_cnt;
@@ -196,7 +199,7 @@ int main(int argc, char *argv[]) {
 
 	{
 		util::FilePiece in_tokens(vm["translated-tokens"].as<std::string>().c_str());
-		read_document_refs(in_tokens, df, document_cnt, refs.begin());
+		read_document_refs(in_tokens, df, document_cnt, ngram_size, refs.begin());
 	}
 
 	if (verbose)
@@ -206,5 +209,5 @@ int main(int argc, char *argv[]) {
 	// (Note: they are not included in the DF table!)
 
 	util::FilePiece en_tokens(vm["english-tokens"].as<std::string>().c_str());
-	return score_documents(refs, df, document_cnt, en_tokens, threshold, n_threads, verbose);
+	return score_documents(refs, df, document_cnt, ngram_size, en_tokens, threshold, n_threads, verbose);
 }

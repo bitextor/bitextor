@@ -28,7 +28,7 @@ struct DocumentRef {
 };
 
 // Assumes base64 encoded still.
-void ReadDocument(const StringPiece &encoded, Document &to);
+void ReadDocument(const StringPiece &encoded, Document &to, size_t ngram_size);
 
 std::ostream &operator<<(std::ostream &stream, Document const &document);
 
