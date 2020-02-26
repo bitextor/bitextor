@@ -147,13 +147,13 @@ int main(int argc, char *argv[]) {
 	po::options_description opt_desc("Additional options");
 	opt_desc.add_options()
 		("help", "produce help message")
-		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document")
-		("threads", po::value<unsigned int>(&n_threads), "set number of threads")
-		("threshold", po::value<float>(&threshold), "set score threshold")
+		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document (default: 1)")
 	    ("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
+		("jobs,j", po::value<unsigned int>(&n_threads), "set number of threads (default: all)")
+		("threshold", po::value<float>(&threshold), "set score threshold (default: 0.1)")
 		("translated-tokens", po::value<string>(), "set input filename")
 		("english-tokens", po::value<string>(), "set input filename")
-		("verbose", po::value<bool>(&verbose), "show additional output");
+		("verbose,v", po::value<bool>(&verbose), "show additional output (default: nope)");
 	
 	po::variables_map vm;
 	
