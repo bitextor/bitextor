@@ -34,7 +34,7 @@ std::ostream &operator<<(std::ostream &stream, Document const &document);
 
 std::ostream &operator<<(std::ostream &stream, DocumentRef const &ref);
 
-DocumentRef calculate_tfidf(Document &document, size_t document_count, std::unordered_map<uint64_t, size_t> const &df);
+void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, std::unordered_map<uint64_t, size_t> const &df);
 
 float calculate_alignment(DocumentRef const &left, DocumentRef const &right);
 

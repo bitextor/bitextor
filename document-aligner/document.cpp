@@ -53,14 +53,10 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
 */
-DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered_map<uint64_t, size_t> const &df) {
-	DocumentRef document_ref{
-		.id = document.id,
-		.wordvec = {}
-	};
-	
-	// With the following method we know that each word will get a score so
-	// lets just reserve that space right now!
+void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, unordered_map<uint64_t, size_t> const &df) {
+	document_ref.id = document.id;
+
+	document_ref.wordvec.clear();
 	document_ref.wordvec.reserve(document.vocab.size());
 	
 	float total_tfidf_l2 = 0;
@@ -96,8 +92,6 @@ DocumentRef calculate_tfidf(Document &document, size_t document_count, unordered
 	total_tfidf_l2 = sqrt(total_tfidf_l2);
 	for (auto &entry : document_ref.wordvec)
 		entry.tfidf /= total_tfidf_l2;
-	
-	return document_ref;
 }
 
 /**

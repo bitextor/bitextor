@@ -58,12 +58,12 @@ size_t read_document_refs(util::FilePiece &fin_tokens, unordered_map<uint64_t,si
 	size_t n = 0;
 	
 	for (StringPiece line : fin_tokens) {
-		Document buffer;
+		Document buffer{
+			.id = ++n,
+			.vocab = {}
+		};
 		ReadDocument(line, buffer, ngram_size);
-		
-		buffer.id = ++n;
-
-		*it++ = calculate_tfidf(buffer, document_cnt, df);
+		calculate_tfidf(buffer, *it++, document_cnt, df);
 	}
 	
 	return n;
@@ -83,7 +83,12 @@ int score_documents(vector<DocumentRef> const &refs, unordered_map<uint64_t, siz
 				if (!buffer)
 					break;
 				
-				DocumentRef const &buffer_ref = calculate_tfidf(*buffer, document_cnt, df);
+				DocumentRef buffer_ref{
+					.id = buffer->id,
+					.wordvec = {}
+				};
+
+				calculate_tfidf(*buffer, buffer_ref, document_cnt, df);
 				
 				for (auto const &document_ref : refs) {
 					float score = calculate_alignment(document_ref, buffer_ref);
