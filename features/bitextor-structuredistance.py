@@ -99,7 +99,7 @@ def extract_structure_representations(f, docs, fileid):
                         docs[fileid] = "".join(translated_taglist)
                     else:
                         docs[fileid] = " "
-            except html.parser.HTMLParseError:
+            except:
                 pass
             finally:
                 fileid += 1
