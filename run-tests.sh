@@ -44,7 +44,7 @@ if [ ! -f "${WORK}"/permanent/en-el.dic ]; then
         wget https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0/en-el.dic -P "${WORK}"/permanent
 fi
 
-if [ ! -f "${WORK}"/bicleaner-model/en-fr/training.en-fr.yaml ]; then
+if [ ! -f "${WORK}"/bicleaner-model/en-fr/en-fr.yaml ]; then
 	mkdir "${WORK}"/bicleaner-model
 	wget https://github.com/bitextor/bicleaner-data/releases/latest/download/en-fr.tar.gz -P "${WORK}"/bicleaner-model
 	tar zxvf "${WORK}"/bicleaner-model/en-fr.tar.gz -C "${WORK}"/bicleaner-model
