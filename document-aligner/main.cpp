@@ -94,14 +94,6 @@ int main(int argc, char *argv[]) {
 	
 	size_t ngram_size = 2;
 
-	unsigned int n_sample_threads = min(n_threads, 4u);
-
-	unsigned int n_load_threads = min(n_threads, 8u);
-
-	unsigned int n_read_threads = min(n_threads, 2u);
-
-	unsigned int n_score_threads = min(n_threads, max(n_threads - n_read_threads, 1u));
-	
 	bool verbose = false;
 	
 	po::positional_options_description arg_desc;
@@ -112,7 +104,7 @@ int main(int argc, char *argv[]) {
 	opt_desc.add_options()
 		("help", "produce help message")
 		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document (default: 1)")
-	    ("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
+		("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
 		("jobs,j", po::value<unsigned int>(&n_threads), "set number of threads (default: all)")
 		("threshold", po::value<float>(&threshold), "set score threshold (default: 0.1)")
 		("translated-tokens", po::value<string>(), "set input filename")
@@ -135,6 +127,14 @@ int main(int argc, char *argv[]) {
 		     << opt_desc << endl;
 		return 1;
 	}
+
+	unsigned int n_sample_threads = min(n_threads, 4u);
+
+	unsigned int n_load_threads = n_threads;
+
+	unsigned int n_read_threads = min(n_threads, max(n_threads / 4u, 1u));
+
+	unsigned int n_score_threads = min(n_threads, max(n_threads - n_read_threads, 1u));
 	
 	// Calculate the document frequency for terms. Starts a couple of threads
 	// that parse documents and keep a local hash table for counting. At the
@@ -155,15 +155,18 @@ int main(int argc, char *argv[]) {
 					break;
 
 				Document document;
-				ReadDocument(StringPiece(line->str), document, ngram_size);
+				ReadDocument(line->str, document, ngram_size);
 				for (auto const &entry : document.vocab)
-					local_df[entry.first] += df_sample_rate;
+					local_df[entry.first] += 1; // Count once every document
 			}
 
-			// Merge the local DF into the global one.
-			unique_lock<mutex> lock(df_mutex);
-			for (auto const &entry : local_df)
-				df[entry.first] += entry.second;
+			// Merge the local DF into the global one. Multiply by df_sample_rate
+			// to compensate for reading only nth part of the whole collection.
+			{
+				unique_lock<mutex> lock(df_mutex);
+				for (auto const &entry : local_df)
+					df[entry.first] += entry.second * df_sample_rate;
+			}
 		}));
 
 		// We'll use in_document_cnt later to reserve some space for the documents
@@ -187,7 +190,7 @@ int main(int argc, char *argv[]) {
 	std::vector<DocumentRef> refs(in_document_cnt);
 
 	{
-		blocking_queue<unique_ptr<Line>> queue(n_load_threads * 16);
+		blocking_queue<unique_ptr<Line>> queue(n_load_threads * 128);
 		vector<thread> workers(start(n_load_threads, [&queue, &refs, &df, &document_cnt, &ngram_size]() {
 			while (true) {
 				unique_ptr<Line> line(queue.pop());
@@ -219,9 +222,9 @@ int main(int argc, char *argv[]) {
 
 	// Start reading the other set of documents we match against and do the matching.
 	{
-		blocking_queue<unique_ptr<Line>> read_queue(n_read_threads * 16);
+		blocking_queue<unique_ptr<Line>> read_queue(n_read_threads * 128);
 
-		blocking_queue<unique_ptr<DocumentRef>> score_queue(n_score_threads * 64);
+		blocking_queue<unique_ptr<DocumentRef>> score_queue(n_score_threads * 256);
 
 		vector<thread> read_workers(start(n_read_threads, [&read_queue, &score_queue, &document_cnt, &df, &ngram_size]() {
 			while (true) {
