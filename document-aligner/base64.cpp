@@ -24,7 +24,7 @@ size_t count_padding(const StringPiece &in)
 {
 	const char *data = in.data();
 
-	for (size_t i = 1; i <= in.size(); ++i)
+	for (int32_t i = 1; i <= in.size(); ++i)
 		if (data[in.size() - i] != '=')
 			return i - 1;
 
