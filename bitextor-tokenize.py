@@ -53,7 +53,7 @@ oparser = argparse.ArgumentParser(
 oparser.add_argument('--text', dest='text', help='Plain text file', required=True)
 oparser.add_argument('--sentence-splitter', dest='splitter', required=True, help="Sentence splitter commands")
 oparser.add_argument('--word-tokenizer', dest='tokenizer', required=True, help="Word tokenisation command")
-oparser.add_argument('--morph-analyser', dest='lemmatizer', help="Morphological analyser command")
+oparser.add_argument('--morph-analyser', dest='lemmatizer', default="", help="Morphological analyser command")
 oparser.add_argument('--sentences-output', default="plain_sentences.xz", dest='sent_output', help="Path of the output file that will contain sentence splitted text")
 oparser.add_argument('--tokenized-output', default="plain_tokenized.xz", dest='tok_output', help="Path of the output file that will contain sentence splitted and tokenized text")
 
