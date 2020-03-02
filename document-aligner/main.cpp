@@ -128,11 +128,11 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	unsigned int n_sample_threads = min(n_threads, 4u);
+	unsigned int n_sample_threads = n_threads;
 
 	unsigned int n_load_threads = n_threads;
 
-	unsigned int n_read_threads = min(n_threads, max(n_threads / 4u, 1u));
+	unsigned int n_read_threads = min(n_threads, min(max(n_threads / 4u, 1u), 4u)); // really no use to have more than 4 threads decode
 
 	unsigned int n_score_threads = min(n_threads, max(n_threads - n_read_threads, 1u));
 	
