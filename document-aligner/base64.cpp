@@ -20,11 +20,23 @@ int const INV_TABLE[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
 };
 
+size_t count_padding(const StringPiece &in)
+{
+	const char *data = in.data();
+
+	for (size_t i = 1; i <= in.size(); ++i)
+		if (data[in.size() - i] != '=')
+			return i - 1;
+
+	return in.size();
+}
+
 } // namespace
 
 void base64_encode(const StringPiece &in, std::string &out)
 {
 	out.clear();
+	out.reserve(4 * ((in.size() + 2) / 3));
 
 	int val = 0, valb = -6;
 
@@ -48,9 +60,8 @@ void base64_decode(const StringPiece &in, std::string &out)
 {
 	out.clear();
 
-	// Reserve worst case scenario memory (can be a few bytes smaller/accurate,
-	// but need to count padding so meh)
-	out.reserve(ceil(in.size() / 3) * 4);
+	// Reserve worst case scenario memory
+	out.reserve(in.size() * 3 / 4 - count_padding(in));
 
 	int val = 0, valb = -8;
 	for (const unsigned char *c = reinterpret_cast<const unsigned char*>(in.data()); c != reinterpret_cast<const unsigned char*>(in.data()) + in.size(); ++c) {
@@ -58,7 +69,7 @@ void base64_decode(const StringPiece &in, std::string &out)
 		if (*c == '=')
 			break;
 		
-		UTIL_THROW_IF(INV_TABLE[*c] == -1, util::Exception, "Cannot interpret character '" << *c << "' as part of base64");
+		UTIL_THROW_IF(*c > 127 || INV_TABLE[*c] == -1, util::Exception, "Cannot interpret character '" << *c << "' as part of base64");
 		
 		val = (val << 6) + INV_TABLE[*c];
 		valb += 6;
