@@ -148,6 +148,7 @@ def validate_args(config):
             'bifixer': {'type': 'boolean'},
             'bifixerOptions': {'type': 'string'},
             'deferredCrawling': {'type': 'boolean'},
+            'bicleanerCacheWithSents': {'type': 'boolean'},
 
             'deduped': {'type': 'boolean'},
             'hosts': {'type': 'list'},
@@ -558,6 +559,9 @@ else:
   BIFIXER="segclean"
   BIFIXERFIELD=""
   CACHEOPTIONS='-k 3,4'
+
+if "bicleanerCacheWithSents" in config and config["bicleanerCacheWithSents"]:
+  CACHEOPTIONS="-k 3,4"
 
 if "bifixerOptions" in config:
     BIFIXEROPTIONS=config["bifixerOptions"]
