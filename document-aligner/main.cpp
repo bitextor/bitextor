@@ -286,12 +286,24 @@ int main(int argc, char *argv[])
 		if (best_only) {
 			top_scores.resize(in_document_cnt);
 			mark_score = [&top_scores, &mark_score_mutex] (float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
+				// Is there already a better scoring document? That one wins.
 				if (score <= top_scores[in_ref.id - 1].first)
 					return;
 
+				// Is there an equally well scoring document, but does if have a lower id? That one still wins.
+				if (score == top_scores[in_ref.id - 1].first && top_scores[in_ref.id - 1].second < en_ref.id)
+					return;
+
 				unique_lock<mutex> lock(mark_score_mutex);
-				if (score > top_scores[in_ref.id - 1].first) // check again, might have changed since we acquired lock
+				// Lock acquired, but check again, things might have changed in the mean time.
+
+				// If we're better, overwrite in every case.
+				if (score > top_scores[in_ref.id - 1].first)
 					top_scores[in_ref.id - 1] = pair<float, size_t>(score, en_ref.id);
+
+				// If we're equally good, only overwrite if we have a lower document id
+				else if (score == top_scores[in_ref.id - 1].first && en_ref.id < top_scores[in_ref.id - 1].second)
+					top_scores[in_ref.id - 1].second = en_ref.id;
 			};
 		} else {
 			mark_score = [&mark_score_mutex](float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
