@@ -51,15 +51,12 @@ ostream &operator<<(ostream &out, queue_performance const &performance) {
 	           << "   overflow: " << performance.overflow << '\n';
 }
 
-mutex print_lock;
-
-void print_score(float score, DocumentRef const &left, DocumentRef const &right)
+void print_score(float score, size_t left_id, size_t right_id)
 {
-	unique_lock<mutex> lock(print_lock);
 	cout << fixed << setprecision(5)
 	     << score
-	     << '\t' << left.id
-	     << '\t' << right.id
+	     << '\t' << left_id
+	     << '\t' << right_id
 	     << '\n';
 }
 
@@ -100,6 +97,8 @@ int main(int argc, char *argv[])
 	size_t max_ngram_cnt = 1000;
 
 	bool verbose = false;
+
+	bool best_only = true;
 	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
@@ -114,6 +113,7 @@ int main(int argc, char *argv[])
 		("threshold", po::value<float>(&threshold), "set score threshold (default: 0.1)")
 		("min_count", po::value<size_t>(&min_ngram_cnt), "minimal number of documents an ngram can appear in to be included in DF (default: 2)")
 		("max_count", po::value<size_t>(&max_ngram_cnt), "maximum number of documents for ngram to to appear in (default: 1000)")
+		("best", po::value<bool>(&best_only), "only output the best match for each document (default: on)")
 		("translated-tokens", po::value<string>(), "set input filename")
 		("english-tokens", po::value<string>(), "set input filename")
 		("verbose,v", po::value<bool>(&verbose), "show additional output (default: nope)");
@@ -273,7 +273,34 @@ int main(int argc, char *argv[])
 			}
 		}));
 
-		vector<thread> score_workers(start(n_score_threads, [&score_queue, &refs, &threshold]() {
+		// Function used to report the score. Implementation depends on whether
+		// we are doing best_only or not. Mutex is necessary for both cases,
+		// either for writing to top_scores or for printing to stdout.
+		function<void (float, DocumentRef const &, DocumentRef const &)> mark_score;
+		mutex mark_score_mutex;
+
+		// Top scores vector is only filled in best_only case. Otherwise we just
+		// write directly to stdout.
+		vector<pair<float,size_t>> top_scores;
+
+		if (best_only) {
+			top_scores.resize(in_document_cnt);
+			mark_score = [&top_scores, &mark_score_mutex] (float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
+				if (score <= top_scores[in_ref.id - 1].first)
+					return;
+
+				unique_lock<mutex> lock(mark_score_mutex);
+				if (score > top_scores[in_ref.id - 1].first) // check again, might have changed since we acquired lock
+					top_scores[in_ref.id - 1] = pair<float, size_t>(score, en_ref.id);
+			};
+		} else {
+			mark_score = [&mark_score_mutex](float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
+				unique_lock<mutex> lock(mark_score_mutex);
+				print_score(score, in_ref.id, en_ref.id);
+			};
+		}
+
+		vector<thread> score_workers(start(n_score_threads, [&score_queue, &refs, &threshold, &mark_score]() {
 			while (true) {
 				unique_ptr<DocumentRef> doc_ref(score_queue.pop());
 
@@ -287,7 +314,7 @@ int main(int argc, char *argv[])
 					if (score < threshold)
 						continue;
 
-					print_score(score, ref, *doc_ref);
+					mark_score(score, ref, *doc_ref);
 				}
 			}
 		}));
@@ -297,6 +324,12 @@ int main(int argc, char *argv[])
 		// Tell all workers there is nothing left and wait for them to stop.
 		stop(read_queue, read_workers);
 		stop(score_queue, score_workers);
+
+		if (best_only) {
+			for (size_t i = 0; i < top_scores.size(); ++i)
+				if (top_scores[i].first >= threshold) // top-scores has entries for all
+					print_score(top_scores[i].first, i + 1, top_scores[i].second);
+		}
 
 		if (verbose)
 			cerr << "Read queue performance (Note: blocks when score queue fills up):\n" << read_queue.performance()
