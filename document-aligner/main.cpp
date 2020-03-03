@@ -85,7 +85,8 @@ size_t queue_lines(std::string const &path, blocking_queue<unique_ptr<Line>> &qu
 	return queue_lines(fin, queue, skip_rate);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 	unsigned int n_threads = max(1u, thread::hardware_concurrency() - 1);
 	
 	float threshold = 0.1;
@@ -93,6 +94,10 @@ int main(int argc, char *argv[]) {
 	size_t df_sample_rate = 1;
 	
 	size_t ngram_size = 2;
+
+	size_t min_ngram_cnt = 2;
+
+	size_t max_ngram_cnt = 1000;
 
 	bool verbose = false;
 	
@@ -107,6 +112,8 @@ int main(int argc, char *argv[]) {
 		("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
 		("jobs,j", po::value<unsigned int>(&n_threads), "set number of threads (default: all)")
 		("threshold", po::value<float>(&threshold), "set score threshold (default: 0.1)")
+		("min_count", po::value<size_t>(&min_ngram_cnt), "minimal number of documents an ngram can appear in to be included in DF (default: 2)")
+		("max_count", po::value<size_t>(&max_ngram_cnt), "maximum number of documents for ngram to to appear in (default: 1000)")
 		("translated-tokens", po::value<string>(), "set input filename")
 		("english-tokens", po::value<string>(), "set input filename")
 		("verbose,v", po::value<bool>(&verbose), "show additional output (default: nope)");
@@ -184,6 +191,28 @@ int main(int argc, char *argv[]) {
 
 		if (verbose)
 			cerr << "DF queue performance:\n" << queue.performance();
+	}
+
+	// Prune the DF table, similar to what the Python implementation does. Note
+	// that these counts are linked to sample-rate already, so if you have a
+	// sample rate of higher than 1, your min_ngram_count should also be a
+	// multiple of sample rate + 1.
+	{
+		unordered_map<uint64_t, size_t> pruned_df;
+		for (auto const &entry : df) {
+			if (entry.second < min_ngram_cnt)
+				continue;
+
+			if (entry.second > max_ngram_cnt)
+				continue;
+
+			pruned_df[entry.first] = entry.second;
+		}
+
+		if (verbose)
+			cerr << "Pruned " << df.size() - pruned_df.size() << " (" << 100.0 - 100.0 * pruned_df.size() / df.size() << "%) entries from DF" << endl;
+
+		swap(df, pruned_df);
 	}
 
 	// Read translated documents & pre-calculate TF/DF for each of these documents

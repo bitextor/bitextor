@@ -64,6 +64,10 @@ void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t
 	for (auto const &entry : document.vocab) {
 		// How often does the term occur in the whole dataset?
 		auto it = df.find(entry.first);
+
+		// Match Python implementation behaviour
+		if (it == df.end())
+			continue;
 	
 		// If we can't find it (e.g. because we didn't really read the whole
 		// dataset) we just assume one: just this document.
