@@ -103,11 +103,11 @@ To compile all Bitextor submodules you will first need to run the script `config
 
 #### Some known installation issues
 
-In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed, please, replace the current version with version 1.5:
+In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed (or Illegal Instruction error when importing it), please, replace the current version with version 1.5:
 
 ```bash
 sudo pip3 uninstall tensorflow
-sudo pip3 install tensorflow==1.5.0
+sudo pip3 install tensorflow==1.5.0 keras==2.5.0
 ```
 
 In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
