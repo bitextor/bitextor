@@ -110,7 +110,23 @@ def open_xz_or_gzip(path, mode):
     else:
         return open(path, mode)
 
-
+def open_output_files(options, lang, files_dict):
+   if not options.xzlang and lang not in files_dict:
+        if not os.path.exists(options.outDir + "/" + lang):
+            os.makedirs(options.outDir + "/" + lang)
+        urlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/url." + options.compression, "w")
+        encodingFile = open_xz_or_gzip(options.outDir + "/" + lang + "/encoding." + options.compression, "w")
+        mimeFile = open_xz_or_gzip(options.outDir + "/" + lang + "/mime." + options.compression, "w")
+        normHtmlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/normalized_html." + options.compression, "w")
+        plainTextFile = open_xz_or_gzip(options.outDir + "/" + lang + "/plain_text." + options.compression, "w")
+        if options.boilerpipe:
+            deboilFile = open_xz_or_gzip(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression, "w")
+            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
+        else:
+            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression) and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression):
+                os.symlink("normalized_html." + options.compression, options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression)
+            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
+ 
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
                 "normalization, deduplication, MIME and language identification, and boilerplate removing. The result"
@@ -192,6 +208,7 @@ if options.outputHash:
 files_dict = dict()
 
 for record in f:
+    plaintext = ""
     # Initial checks
     if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
@@ -230,35 +247,16 @@ for record in f:
     logging.info(url + ": detecting language")
     lang = ""
 
-    if options.langid == "cld3":
-        lang = guess_lang_from_data3(cld3model, text)
-    else:
+    if options.langid == "cld2":
         lang = guess_lang_from_data2(text)
+        if (len(languages) > 0 and lang not in languages) or (lang in banned):
+            logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
+            continue
+        if lang == "un":
+            logging.info("Language of document " + url + " could not be identified")
+            continue
+        open_output_files(options, lang, files_dict)
 
-    if (len(languages) > 0 and lang not in languages) or (lang in banned):
-        logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
-        continue
-
-    if lang == "un":
-        logging.info("Language of document " + url + " could not be identified")
-        continue 
-
-    if not options.xzlang and lang not in files_dict:
-        if not os.path.exists(options.outDir + "/" + lang):
-            os.makedirs(options.outDir + "/" + lang)
-        urlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/url." + options.compression, "w")
-        encodingFile = open_xz_or_gzip(options.outDir + "/" + lang + "/encoding." + options.compression, "w")
-        mimeFile = open_xz_or_gzip(options.outDir + "/" + lang + "/mime." + options.compression, "w")
-        normHtmlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/normalized_html." + options.compression, "w")
-        plainTextFile = open_xz_or_gzip(options.outDir + "/" + lang + "/plain_text." + options.compression, "w")
-        if options.boilerpipe:
-            deboilFile = open_xz_or_gzip(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression, "w")
-            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
-        else:
-            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression) and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression):
-                os.symlink("normalized_html." + options.compression, options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression)
-            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
-    
     # If enabled, remove boilerplate HTML
     if options.boilerpipe:
         logging.info(url + ": deboiling html")
@@ -324,6 +322,19 @@ for record in f:
         plaintext = parser.get_text()
 
     plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"^\s+$", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' ')))))).strip()
+    if options.langid == "cld3":
+        if plaintext:
+            lang = guess_lang_from_data3(cld3model, plaintext)
+            if (len(languages) > 0 and lang not in languages) or (lang in banned):
+                logging.info("Language of document " + url + ": " + lang + ". Not among searched languages.")
+                continue
+            if lang == "un":
+                logging.info("Language of document " + url + " could not be identified")
+                continue
+            open_output_files(options, lang, files_dict)
+        else:
+            continue
+
     plaintext_hash = mmh3.hash(plaintext, signed=False)
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
