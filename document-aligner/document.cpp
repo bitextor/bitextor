@@ -45,7 +45,7 @@ ostream &operator<<(ostream &stream, DocumentRef const &document)
 	
 inline float tfidf(size_t tf, size_t dc, size_t df) {
 	// Note: Matches tf_smooth setting 14 (2 for TF and 2 for IDF) of the python implementation
-	return (float) log(tf + 1) * log(dc / (1.0f + df));
+	return logf(tf + 1) * logf(dc / (1.0f + df));
 }
 	
 /**
