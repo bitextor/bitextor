@@ -39,7 +39,7 @@ def split_sentences(text, sent_tokeniser, prune_type="words", prune_threshold=0)
     segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
     
     if len(segments) != 0:
-        segmented_text = "\n".join(segments) + "\n"
+        segmented_text = "\n".join(segments)
     else:
         segmented_text = ""
     return segmented_text
