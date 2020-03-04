@@ -323,7 +323,7 @@ for record in f:
         parser.feed(text)
         plaintext = parser.get_text()
 
-    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"^\s+$", "\n", re.sub(r" +", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' ')))))).strip()
+    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"[ \t\v\f]+", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' '))))).strip()
     plaintext_hash = mmh3.hash(plaintext, signed=False)
 
     if plaintext_hash in seen_plain_text or plaintext_hash in previous_crawl_hashes:
