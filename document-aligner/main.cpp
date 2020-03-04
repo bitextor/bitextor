@@ -84,7 +84,7 @@ size_t queue_lines(std::string const &path, blocking_queue<unique_ptr<Line>> &qu
 
 int main(int argc, char *argv[])
 {
-	unsigned int n_threads = max(1u, thread::hardware_concurrency() - 1);
+	unsigned int n_threads = thread::hardware_concurrency();
 	
 	float threshold = 0.1;
 	
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
 	unsigned int n_read_threads = min(n_threads, min(max(n_threads / 4u, 1u), 4u)); // really no use to have more than 4 threads decode
 
-	unsigned int n_score_threads = min(n_threads, max(n_threads - n_read_threads, 1u));
+	unsigned int n_score_threads = n_threads;
 	
 	// Calculate the document frequency for terms. Starts a couple of threads
 	// that parse documents and keep a local hash table for counting. At the
