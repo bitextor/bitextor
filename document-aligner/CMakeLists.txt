@@ -72,7 +72,12 @@ endif()
 # find *.h and *.cpp files
 file(GLOB dalign_cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 file(GLOB dalign_cpp_cpp ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+list(REMOVE_ITEM dalign_cpp_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/catdoc.cpp)
 
 # dalign_cpp
 add_executable(dalign main.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
 target_link_libraries(dalign ${Boost_LIBRARIES} preprocess_util)
+
+# Stupid tool to read base64 gzipped files
+add_executable(catdoc catdoc.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
+target_link_libraries(catdoc ${Boost_LIBRARIES} preprocess_util)
