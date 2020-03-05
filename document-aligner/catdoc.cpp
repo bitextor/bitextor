@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <memory>
 
 using namespace bitextor;
 using namespace std;
