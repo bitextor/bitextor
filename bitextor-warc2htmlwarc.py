@@ -22,9 +22,7 @@ import sys
 import argparse
 import cchardet
 import re
-import ftfy
 from lxml.html.clean import Cleaner
-import jpype
 import os
 import importlib
 import logging
@@ -33,7 +31,6 @@ import subprocess
 import zipfile
 import io
 from io import BytesIO
-from pdfextract.extract import Extractor as ExtrP
 
 
 def convert_encoding(data):
@@ -151,6 +148,8 @@ if options.pdfpass is not None:
     po = WARCWriter(open(options.pdfpass, 'wb'), gzip=not options.disable_pdfs_gzip)
 
 if not options.pdfpass and options.pdfextract:
+    import jpype
+    from pdfextract.extract import Extractor as ExtrP
     extractor = ExtrP()
 
 cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
@@ -267,6 +266,7 @@ for record in f:
                 clean_html = text
 
             if options.ftfy:
+                import ftfy
                 tree = ftfy.fix_text(clean_html, fix_entities=False, fix_character_width=False)
             else:
                 tree = clean_html

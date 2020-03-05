@@ -23,7 +23,6 @@ import cchardet
 import magic
 import re
 from bs4 import BeautifulSoup
-import jpype
 import os
 import importlib
 import alcazar.bodytext
@@ -34,16 +33,6 @@ from selectolax.parser import HTMLParser
 from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
 import sys
-
-if not jpype.isJVMStarted():
-    jars = []
-    for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'):
-        for nm in files:
-            if nm[-4:] == ".jar":
-                jars.append(os.path.join(top, nm))
-    jpype.addClassPath(os.pathsep.join(jars))
-    jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
-from boilerpipe.extract import Extractor as ExtrB
 
 
 class SimpleParser(HTMLTokenizer):
@@ -191,6 +180,19 @@ if options.outputHash:
 
 files_dict = dict()
 
+ExtrB = None
+if options.boilerpipe:
+    import jpype
+    if not jpype.isJVMStarted():
+        jars = []
+        for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'):
+            for nm in files:
+                if nm[-4:] == ".jar":
+                    jars.append(os.path.join(top, nm))
+        jpype.addClassPath(os.pathsep.join(jars))
+        jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
+    from boilerpipe.extract import Extractor as ExtrB
+
 for record in f:
     # Initial checks
     if record.rec_type != 'response' and record.rec_type != 'resource':
@@ -322,7 +324,6 @@ for record in f:
         parser = SimpleParser()
         parser.feed(text)
         plaintext = parser.get_text()
-
     plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"[ \t\v\f]+", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' '))))).strip()
     plaintext_hash = mmh3.hash(plaintext, signed=False)
 
