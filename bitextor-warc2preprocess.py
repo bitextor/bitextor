@@ -62,6 +62,8 @@ class SimpleParser(HTMLTokenizer):
     def handle_endtag(self, tag):
         if tag in self.endNL:
             self.parsed = self.parsed + "\n"
+        else:
+            self.parsed = self.parsed + " "
 
     def handle_startendtag(self, tag, attrs):
         if tag in self.selfNL:
