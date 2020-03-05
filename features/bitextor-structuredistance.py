@@ -76,7 +76,8 @@ def extract_structure_representations(f, docs, fileid):
                 if e != "":
                     p.feed(e)
                     raspa = "".join(p.output)
-                    if raspa.split('_')[1][-2:] == "ml" and all(ord(char) < 128 for char in
+                    raspa_split = raspa.split('_')
+                    if len(raspa_split) > 1 and raspa_split[1][-2:] == "ml" and all(ord(char) < 128 for char in
                                                                 raspa):  # Delete entries without *ml in the first
                         # tag to avoid things different than HTML or XML as JPGS or PDF, for example. To compute the
                         # edit distance at the level of characters, HTML tags must be encoded as characters and not
