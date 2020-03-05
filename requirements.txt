@@ -26,7 +26,7 @@ alcazar==0.5.1
 python-magic==0.4.15
 mosestokenizer==1.1.0
 regex==2019.11.1
-requests==2.22.0
+requests==2.23.0
 urllib3==1.25.7
 selectolax==0.2.3
 python-pdfextract==1.0.1.2
