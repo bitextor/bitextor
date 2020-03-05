@@ -24,7 +24,7 @@ compile-truecaser:
 	cd preprocess && cmake . && make -j4
 
 compile-bleualign:
-	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release . && make
+	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release -DPREPROCESS_PATH=preprocess/ . && make
 
 compile-clustercat:
 	cd clustercat && make 
