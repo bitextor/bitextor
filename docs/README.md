@@ -94,9 +94,9 @@ In both WARC HTML processors we support cld2 language detector by default, but a
 # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
 # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
 sudo apt-get install autoconf automake libtool curl make g++ unzip
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.10.1/protobuf-all-3.10.1.tar.gz
-tar -zxvf protobuf-all-3.10.1.tar.gz
-cd protobuf-3.10.1
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
+tar -zxvf protobuf-all-3.11.4.tar.gz
+cd protobuf-3.11.4
 ./configure
 make
 make check
