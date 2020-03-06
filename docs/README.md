@@ -52,20 +52,28 @@ Some additional Python libraries are required. They can be installed automatical
 ```bash
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt
-pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
-pip3 install -r bifixer/requirements.txt
+pip3 install -r bicleaner/requirements.txt # Install bicleaner dependencies (comment if you don't expect to use it)
+pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7" # Install kenlm for bicleaner (comment if you don't expect to use bicleaner)
+pip3 install -r bifixer/requirements.txt # Install bifixer dependencies (comment if you don't expect to use it)
 ```
 
-(if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
+If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
 
 ### Optional dependencies
+
+#### Crawlers
+
+Apart from `creepy` and `wget` have support for:
 
 * **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`. This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
 
 * **heritrix3:** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>. 
 After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
 This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
+
+#### WARC HTML processor
+
+We include `bitextor-warc2preprocess.py` as the default WARC HTML content processor, but an alternative written in Go is also supported:
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
@@ -75,6 +83,10 @@ sudo snap install go
 # build and place the necessary programs in $HOME/go/bin
 go get github.com/paracrawl/giawarc/...
 ```
+
+#### Language detector
+
+In both WARC HTML processors we support cld2 language detector by default, but also cld3, although it needs a previous installation:
 
 * **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
 
@@ -219,27 +231,30 @@ transientDir: /home/user/transient
 lang1: en
 lang2: fr
 
+```
+
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled).
+* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline.
+* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`.
+
+There are some additional options that are rather basic but not mandatory as they take default values if they are not defined:
+
+```yaml
+temp: /home/user/transient
+
 wordTokenizers: {
-  'fr': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr',
-  'default': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en'
+  'fr': '/home/user/bitextor/mytokenizer -l fr',
+  'default': '/home/user/bitextor/moses/tokenizer/my-modified-tokenizer.perl -q -b -a -l en'
 }
 
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
   'default': '/home/user/bitextor/snakemake/example/nltk-sent-tokeniser.py english'
 }
-```
 
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
-* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline
-* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`
-* `wordTokenizers`: scripts for word-tokenization. You must specify scripts at least for `lang1` and `lang2` (one of them can be specified as `default`). These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above
-* `sentenceSplitters`: scripts for sentence splitting. Again, scripts for `lang1` and `lang2` are mandatory. All the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above, but it could have some unwanted behaviour given that we don't escape the input the way that Moses does.
-
-There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
-
-```yaml
-temp: /home/user/transient
+customNBPs: {
+  'fr': '/home/user/bitextor/myfrenchnbp.txt'
+}
 
 morphologicalAnalysers: {
   'lang1': 'path/to/morph-analyser1',
@@ -251,10 +266,13 @@ reverseOutputPair: true
 profiling: true
 ```
 
-* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
-* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment
-* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es)
-* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step
+* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`.
+* `wordTokenizers`: scripts for word-tokenization. If not defined, [Moses `tokenizer.perl`](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) through an efficient Python wrapper is used (which is recommended unless a language is not supported). These scripts must read from the standard input and write to the standard output.
+* `sentenceSplitters`: scripts for sentence splitting. If not defined, a Python port of [Moses `split-sentences.perl`](https://pypi.org/project/sentence-splitter/) will be used (which is recommended, even without language support, see `customNBPs` option). All the scripts must read from the standard input and write to the standard output.
+* `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter (Moses Python port). See their format by checking the [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes).
+* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es).
+* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 
 ### Data Sources
 
@@ -347,7 +365,6 @@ parser: "modest"
 onlyPreprocessing: false
 
 preprocessLangs: "en,es,fr"
-targetLangs: "en,fr"
 
 langId: cld2
 
@@ -362,7 +379,6 @@ plainTextHashes: path/to/previous/permanent/bitextor-output/plain_text_hashes.xz
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['alcazar'](https://github.com/saintamh/alcazar/), ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
 * `onlyPreprocessing`: stop Bitextor after the preprocessing step. This is useful when you want to run Bitextor on the same set of hosts but with different language pair, as it helps you to avoid repeating some steps in each run. Note that this steps includes tokenization, so you should provide sentence splitters, word tokenizers and, optionally, morphological analysers for each language that you want to process
 * `preprocessLangs`: a comma-separated list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` is enabled, every language will be processed
-* `targetLangs`: if you plan to use MT-based document alignment (explained below), you might want to specify the target languages for translation (when running bitextor normally `lang2` is the target language). Leaving this variable empty means that every language will be treated as a possible target language and the corresponding preprocessing in this case will done for every language. Both this and the previous option can be used to avoid doing some preprocessing and storing the corresponding files, so their usage is entirely optional
 * `langId`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `ftfy`: ftfy is a tool that solves encoding errors. By default it is enabled. Include `ftfy: false` in your configuration file to disable this step
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text

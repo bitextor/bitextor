@@ -21,16 +21,15 @@
 
 # 2. RIDX files are read and most promising document pairs are aligned.
 
-# 3. The output of the script is a tab-separated file where each line contains the URLs of both files and their
-# content (in plain text) encoded in base64
+# 3. The output of the script is a tab-separated file where each line contains the URLs of both files
 # 
 # Output format:
 #   file_lang1	file_lang2	plaintext_encoded_base64_lang1	plaintext_encoded_base64_lang2
 #
 
-import os
 import sys
 import argparse
+import os
 from operator import itemgetter
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")

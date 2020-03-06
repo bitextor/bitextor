@@ -60,10 +60,8 @@ def match(score_matrix_csr, threshold):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--lang2', help='path to the extracted text', required=True)
-    parser.add_argument(
-        '--lang1', help='path to the translated foreign text', required=True)
+    parser.add_argument('--lang1', help='path to the tokenized translated foreign text, with one base64 document per line', required=True)
+    parser.add_argument('--lang2', help='path to the tokenized lang2 text, with one base64 document per line', required=True)
     parser.add_argument('--min_count', type=int, default=2)
     parser.add_argument('--ngram_size', type=int, default=2)
     parser.add_argument('--tfidfsmooth', type=int, default=14)
@@ -85,7 +83,7 @@ if __name__ == "__main__":
     elif (args.lang1[-3:] == ".xz" and os.stat(args.lang1).st_size == 32) or (args.lang2[-3:] == ".xz" and os.stat(args.lang2).st_size == 32):
         sys.stderr.write(f'WARNING: No document alignments feasible: {args.lang1} or {args.lang2} is empty')
         open(args.output_matches, 'a').close()
-    elif (args.lang1[-3:] == ".gz" and os.stat(args.lang1).st_size == 26) or (args.lang2[-3:] == ".gz" and os.stat(args.lang2.st_size == 26)):
+    elif (args.lang1[-3:] == ".gz" and os.stat(args.lang1).st_size == 26) or (args.lang2[-3:] == ".gz" and os.stat(args.lang2).st_size == 26):
         sys.stderr.write(f'WARNING: No document alignments feasible: {args.lang1} or {args.lang2} is empty')
         open(args.output_matches, 'a').close()
 
@@ -98,7 +96,7 @@ if __name__ == "__main__":
                                       batch_size=args.batch_size,
                                       jobs=args.jobs)
 
-        urls, m_csr = scorer.score(args.lang2, args.lang1)
+        m_csr = scorer.score(args.lang2, args.lang1)
         # sys.stderr.write(str(m_csr)+"\n")
         if m_csr is None:
             sys.stderr.write("WARNING: Documents do not contain any useful information to be used in alignment.\n")
@@ -108,6 +106,6 @@ if __name__ == "__main__":
 
             with open(args.output_matches, 'w') as f:
                 for idx, match in enumerate(matches):
-                    turl = urls[0][matches[idx][0]]
-                    surl = urls[1][matches[idx][1]]
+                    turl = matches[idx][0]+1
+                    surl = matches[idx][1]+1
                     f.write("{0:.5f}\t{1}\t{2}\n".format(match_costs[idx], surl, turl))
