@@ -219,27 +219,30 @@ transientDir: /home/user/transient
 lang1: en
 lang2: fr
 
+```
+
+* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled).
+* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline.
+* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`.
+
+There are some additional options that are rather basic but not mandatory as they take default values if they are not defined:
+
+```yaml
+temp: /home/user/transient
+
 wordTokenizers: {
-  'fr': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l fr',
-  'default': '/home/user/bitextor/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l en'
+  'fr': '/home/user/bitextor/mytokenizer -l fr',
+  'default': '/home/user/bitextor/moses/tokenizer/my-modified-tokenizer.perl -q -b -a -l en'
 }
 
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
   'default': '/home/user/bitextor/snakemake/example/nltk-sent-tokeniser.py english'
 }
-```
 
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled)
-* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline
-* `lang1` and `lang2`: Languages for which parallel data is crawled; note that if MT is used in the pipeline (either for alignment or evaluation) the translation direction used will be `lang1` -> `lang2`
-* `wordTokenizers`: scripts for word-tokenization. You must specify scripts at least for `lang1` and `lang2` (one of them can be specified as `default`). These scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) tokenizer is included in this repository and can be used like in the example above
-* `sentenceSplitters`: scripts for sentence splitting. Again, scripts for `lang1` and `lang2` are mandatory. All the scripts must read from the standard input and write to the standard output. The [Moses](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/ems/support/split-sentences.perl) sentence splitter is included in this repository and can be used like in the example above, but it could have some unwanted behaviour given that we don't escape the input the way that Moses does.
-
-There are some additional options that are rather basic but not mandatory as they take default values if they are not defined
-
-```yaml
-temp: /home/user/transient
+customNBPs: {
+  'fr': '/home/user/bitextor/myfrenchnbp.txt'
+}
 
 morphologicalAnalysers: {
   'lang1': 'path/to/morph-analyser1',
@@ -251,10 +254,13 @@ reverseOutputPair: true
 profiling: true
 ```
 
-* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`
-* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment
-* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es)
-* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step
+* `temp`: temporary directory where some files that will be only needed for a single job will be stored; if it is not defined it is set to the same directory as `transientDir`.
+* `wordTokenizers`: scripts for word-tokenization. If not defined, [Moses `tokenizer.perl`](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) through an efficient Python wrapper is used (which is recommended unless a language is not supported). These scripts must read from the standard input and write to the standard output.
+* `sentenceSplitters`: scripts for sentence splitting. If not defined, a Python port of [Moses `split-sentences.perl`](https://pypi.org/project/sentence-splitter/) will be used (which is recommended, even without language support, see `customNBPs` option). All the scripts must read from the standard input and write to the standard output.
+* `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter (Moses Python port). See their format by checking the [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes).
+* `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages, or all of them if `default` script is also provided. If specified, this analyser will be used for document alignment, as well as hunalign segment alignment.
+* `reverseOutputPair`: changes pair direction in the output files from sentence alignment to the final Bitextor output. Is it useful if you want to align with a MT-based document aligner in the direction lang1->lang2 (e.g. lang1:es, lang2:en) but want output files in the opposite direction (en-es).
+* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 
 ### Data Sources
 
