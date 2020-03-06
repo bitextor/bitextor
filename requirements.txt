@@ -18,6 +18,7 @@ lxml==4.4.1
 html5lib==1.0.1
 regex==2019.11.1
 numpy==1.18.1
+setuptools==45.2.0
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
 -r requirements/requirements-mt-aligner.txt
