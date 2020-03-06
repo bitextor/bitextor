@@ -52,20 +52,28 @@ Some additional Python libraries are required. They can be installed automatical
 ```bash
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt
-pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
-pip3 install -r bifixer/requirements.txt
+pip3 install -r bicleaner/requirements.txt # Install bicleaner dependencies (comment if you don't expect to use it)
+pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7" # Install kenlm for bicleaner (comment if you don't expect to use bicleaner)
+pip3 install -r bifixer/requirements.txt # Install bifixer dependencies (comment if you don't expect to use it)
 ```
 
-(if you have issues with `datrie` in Conda, use `conda install datrie` and try again)
+If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
 
 ### Optional dependencies
+
+#### Crawlers
+
+Apart from `creepy` and `wget` have support for:
 
 * **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`. This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
 
 * **heritrix3:** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>. 
 After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
 This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
+
+#### WARC HTML processor
+
+We include `bitextor-warc2preprocess.py` as the default WARC HTML content processor, but an alternative written in Go is also supported:
 
 * **Giawarc:** As mentioned above, another optional dependency is giawarc. To use this option, Go has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap. Furthermore, the Go preprocessor itself has to be installed.
 
@@ -75,6 +83,10 @@ sudo snap install go
 # build and place the necessary programs in $HOME/go/bin
 go get github.com/paracrawl/giawarc/...
 ```
+
+#### Language detector
+
+In both WARC HTML processors we support cld2 language detector by default, but also cld3, although it needs a previous installation:
 
 * **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
 
