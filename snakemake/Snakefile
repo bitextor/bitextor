@@ -96,7 +96,7 @@ def validate_args(config):
             'temp': {'type': 'string'},
             'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
-            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'htmltokenizer', 'simple']},
+            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple']},
             'onlyConcat': {'type': 'boolean'},
             'onlyPreprocessing': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},
@@ -1291,7 +1291,7 @@ rule warc2preprocess:
     threads: 2
     shell:
         'mkdir -p {params.folder};'
-        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}; '
+        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} --disable-output-gzip | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}; '
         'for lang in {PPROCLANGS}; do '
         'if [ ! -f {params.folder}/$lang/plain_text.gz ]; '
         'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'

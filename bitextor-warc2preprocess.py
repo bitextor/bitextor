@@ -126,7 +126,7 @@ oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
-oparser.add_argument("--parser", dest="parser", default="bs4",
+oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'alcazar', 'simple'},
                      help="Use 'HTML tokenizer', 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
