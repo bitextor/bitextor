@@ -104,8 +104,8 @@ int main(int argc, char *argv[])
 	arg_desc.add("translated-tokens", 1);
 	arg_desc.add("english-tokens", 1);
 	
-	po::options_description opt_desc("Additional options");
-	opt_desc.add_options()
+	po::options_description generic_desc("Additional options");
+	generic_desc.add_options()
 		("help", "produce help message")
 		("df-sample-rate", po::value<size_t>(&df_sample_rate), "set sample rate to every n-th document (default: 1)")
 		("ngram_size,n", po::value<size_t>(&ngram_size), "ngram size (default: 2)")
@@ -114,10 +114,16 @@ int main(int argc, char *argv[])
 		("min_count", po::value<size_t>(&min_ngram_cnt), "minimal number of documents an ngram can appear in to be included in DF (default: 2)")
 		("max_count", po::value<size_t>(&max_ngram_cnt), "maximum number of documents for ngram to to appear in (default: 1000)")
 		("best", po::value<bool>(&best_only), "only output the best match for each document (default: on)")
-		("translated-tokens", po::value<string>(), "set input filename")
-		("english-tokens", po::value<string>(), "set input filename")
-		("verbose,v", po::value<bool>(&verbose), "show additional output (default: nope)");
+		("verbose,v", po::bool_switch(&verbose), "show additional output");
 	
+	po::options_description hidden_desc("Hidden options");
+	hidden_desc.add_options()
+		("translated-tokens", po::value<string>(), "set input filename")
+		("english-tokens", po::value<string>(), "set input filename");
+
+	po::options_description opt_desc;
+	opt_desc.add(generic_desc).add(hidden_desc);
+
 	po::variables_map vm;
 	
 	try {
@@ -131,7 +137,7 @@ int main(int argc, char *argv[])
 	if (vm.count("help") || !vm.count("translated-tokens") || !vm.count("english-tokens")) {
 		cout << "Usage: " << argv[0]
 		     << " TRANSLATED-TOKENS ENGLISH-TOKENS\n\n"
-		     << opt_desc << endl;
+		     << generic_desc << endl;
 		return 1;
 	}
 
