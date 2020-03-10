@@ -902,7 +902,7 @@ init_concat_logic_link(domainKey2Hosts)
 if len(WARCFILES) != 0:
     #If WARC files are provided (through --WARCFiles option), add path to WARC file(s) to the domain WARCDOMAIN
     domainKey2Hosts = add_warc_files(domainKey2Hosts, WARCFILES)
-    #If only one WARC is provided, creates a symbolic link to it 
+    #If only one WARC is provided, creates a symbolic link to it
     init_warc_files_concat_logic(WARCFILES)
 
 # print("domainKey2Hosts", domainKey2Hosts)
@@ -1266,15 +1266,19 @@ rule giawarc:
     priority: 8
     threads: 2
     shell:
-        'mkdir -p {params.folder};'
-        '{PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bilang -o {params.folder} -l {LANGID} --output_hash {output.hash} {PLAINTEXTHASHES} <({BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} );'
-        'for lang in {PPROCLANGS}; do '
-        'if [ ! -f {params.folder}/$lang/plain_text.gz ] ; '
-        'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'
-        'mkdir -p {params.folder}/$lang;'
-        'touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url ;'
-        'gzip {params.folder}/$lang/*;'
-        'fi; done'
+        '''
+        mkdir -p {params.folder}
+        {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} |
+        {PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bilang -o {params.folder} -l {LANGID} --output_hash {output.hash} {PLAINTEXTHASHES} -
+        for lang in {PPROCLANGS}; do
+          if [ ! -f {params.folder}/$lang/plain_text.gz ]
+            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead"
+            mkdir -p {params.folder}/$lang
+            touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url
+            gzip {params.folder}/$lang/*
+          fi
+        done
+	'''
 
 # Preprocssing using bitextor-warc2preprocess with 'bitextorlang' format with GZip compression
 # Writes output in {data}/preprocess/{domain}/w2p
@@ -1290,15 +1294,19 @@ rule warc2preprocess:
     priority: 8
     threads: 2
     shell:
-        'mkdir -p {params.folder};'
-        '{PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} --disable-output-gzip | {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}; '
-        'for lang in {PPROCLANGS}; do '
-        'if [ ! -f {params.folder}/$lang/plain_text.gz ]; '
-        'then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead";'
-        'mkdir -p {params.folder}/$lang;'
-        'touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url {params.folder}/$lang/normalized_html {params.folder}/$lang/deboilerplate_html ;'
-        'gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}};'
-        'fi ; done'
+        '''
+        mkdir -p {params.folder}
+        {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} --input {input} {usepdfextract} --disable-output-gzip |
+        {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}
+        for lang in {PPROCLANGS}; do
+          if [ ! -f {params.folder}/$lang/plain_text.gz ]
+            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead"
+            mkdir -p {params.folder}/$lang
+            touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url {params.folder}/$lang/normalized_html {params.folder}/$lang/deboilerplate_html
+            gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+          fi
+        done
+        '''
 
 # tokenize every bitextorlang/{lang}/plain_text.gz to obtain bitextorlang/{lang}/plain_tokenized.gz
 rule tokenize:
@@ -1451,13 +1459,21 @@ rule docalign_translate_nmt:
     priority: 40
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
-        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 1 | wc -c) -eq 0 ]; then '
-        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
-        'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
-        'fi'
+        '''
+        if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 1 | wc -c) -eq 0 ]; then
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
+        else
+           xzcat -T 0 {input.source} | cut -f2 |
+           {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir |
+           paste <(xzcat -T 0 {input.source} | cut -f1) - |
+           xz -c -T 0 > {output}
+           if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then
+             >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"
+             exit 2
+           fi
+        fi
+        '''
 
 rule docalign_translate_smt:
     input:
@@ -1470,13 +1486,21 @@ rule docalign_translate_smt:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
-        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
-        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
-        'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir}) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
-        'fi'
+        '''
+        if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
+        else
+           xzcat -T 0 {input.source} | cut -f2 |
+           {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/translate-smt.sh {LANG1} {MOSESDIR} {params.smtDir} |
+           paste <(xzcat -T 0 {input.source} | cut -f1) - |
+           xz -c -T 0 > {output}
+           if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then
+             >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"
+             exit 2
+           fi
+        fi
+        '''
 
 rule docalign_custom_translate:
     input:
@@ -1486,13 +1510,21 @@ rule docalign_custom_translate:
         "{transient}/{{domain}}/docalign/{l1}.customMT.extracted.translated.xz".format(transient=transient, l1=LANG1)
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
-        'if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then '
-        '   >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found";'
-        '   touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output};'
-        'else'
-        '   paste <(xzcat -T 0 {input.source} | cut -f1) <(xzcat -T 0 {input.source} | cut -f2 | {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND}) | xz -c -T 0 > {output}; '
-        '   if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2| wc -l)" ]; then >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"; exit 2; fi ;'
-        'fi'
+        '''
+        if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
+        else
+           xzcat -T 0 {input.source} | cut -f2 |
+           {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {MT_COMMAND} |
+           paste <(xzcat -T 0 {input.source} | cut -f1) - |
+           xz -c -T 0 > {output}
+           if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2| wc -l)" ]; then
+             >&2 echo "TRANSLATION ERROR (command {MT_COMMAND}): {input.source} and {output} should have the same number of lines"
+             exit 2
+             fi
+        fi
+        '''
 
 rule translated2base64:
     input:
@@ -1508,11 +1540,19 @@ rule docalign_tokenize_translated:
     output:
         "{{dir}}/docalign/{l1}.{{mttype}}.extracted.translated.tokenized.xz".format(l1=LANG1)
     shell:
-        'if [ -z "{MORPHTOK2}" ]; '
-        'then paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} {WORDTOK2} | awk \'{{print tolower($0)}}\') | xz -T 0 > {output};'
-        'else '
-        'paste <(xzcat -T 0 {input.translated} | cut -f 1) <(xzcat -T 0 {input.translated} | cut -f 2 | {PROFILING} {WORDTOK2} | {PROFILING} {MORPHTOK2} | awk \'{{print tolower($0)}}\') | xz -T 0 > {output} ;'
-        'fi'
+        '''
+        if [ -z "{MORPHTOK2}" ]; then
+          xzcat -T 0 {input.translated} | cut -f 2 |
+          {PROFILING} {WORDTOK2} | awk \'{{print tolower($0)}}\' |
+          paste <(xzcat -T 0 {input.translated} | cut -f 1) - |
+          xz -T 0 > {output}
+        else
+          xzcat -T 0 {input.translated} | cut -f 2 |
+          {PROFILING} {WORDTOK2} | {PROFILING} {MORPHTOK2} | awk \'{{print tolower($0)}}\' |
+          paste <(xzcat -T 0 {input.translated} | cut -f 1) - |
+          xz -T 0 > {output}
+        fi
+        '''
 
 rule translatedtokenized2base64:
     input:
@@ -1660,7 +1700,13 @@ rule bifixer:
     output:
         "{prefix}.bifixer.xz"
     shell:
-        "xzcat -T 0 -f {input} | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1REVERSE} {LANG2REVERSE} {BIFIXEROPTIONS} | awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' | LC_ALL=C sort -t '	' -k1,1 -k2,2nr -T {TMPDIR} --compress-program=gzip -n -r | cut -f 3- | xz -T 0 > {output}"
+        '''
+        xzcat -T 0 -f {input} |
+        {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1REVERSE} {LANG2REVERSE} {BIFIXEROPTIONS} |
+        awk '{{ print $(NF-1)\"\t\"$NF\"\t\"$0 }}' |
+        LC_ALL=C sort -t $'\t' -k1,1 -k2,2nr -T {TMPDIR} --compress-program=gzip -n -r |
+        cut -f 3- | xz -T 0 > {output}
+        '''
 
 rule bicleaner:
     input:
@@ -1669,15 +1715,21 @@ rule bicleaner:
     output:
         "{prefix}.bicleaner.scores.xz"
     shell:
-        'scores=$(mktemp "{TMPDIR}/bicleaner.scores.XXXXXX");'
-        'slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2); '
-        'if [ "$slang" == "{LANG1REVERSE}" ]; then '
-        '  xzcat -T 0 -f {input.segclean} | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {BICLEANER_CONFIG} > $scores; '
-        'else '
-        '  xzcat -T 0 -f {input.segclean} | awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' | {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {BICLEANER_CONFIG} > $scores; '
-        'fi;'
-        'paste <(xzcat -T 0 {input.segclean}) $scores | xz -T 0 > {output};'
-        'rm $scores;'
+        '''
+        slang=$(egrep "source_lang" {BICLEANER_CONFIG} | cut -d " " -f 2)
+        if [ "$slang" == "{LANG1REVERSE}" ]; then
+          xzcat -T 0 -f {input.segclean} |
+          {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {BICLEANER_CONFIG} |
+          paste <(xzcat -T 0 {input.segclean}) - |
+          xz -T 0 > {output}
+        else
+          xzcat -T 0 -f {input.segclean} |
+          awk \' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}}\' |
+          {PROFILING} {BITEXTOR}/preprocess/bin/cache {CACHEOPTIONS} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {BICLEANER_CONFIG} |
+          paste <(xzcat -T 0 {input.segclean}) - |
+          xz -T 0 > {output}
+        fi
+        '''
 
 rule bicleanerfilter:
     input:
