@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 	{
 		mutex df_mutex;
 		blocking_queue<unique_ptr<Line>> queue(n_sample_threads * 128);
-		vector<thread> workers(start(4, [&queue, &df, &df_mutex, &ngram_size, &df_sample_rate]() {
+		vector<thread> workers(start(n_sample_threads, [&queue, &df, &df_mutex, &ngram_size, &df_sample_rate]() {
 			unordered_map<uint64_t, size_t> local_df;
 
 			while (true) {
