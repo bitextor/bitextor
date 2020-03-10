@@ -17,7 +17,6 @@ endif()
 # We need boost
 find_package(Boost 1.41.0 REQUIRED COMPONENTS
   program_options
-  iostreams
 )
 
 # Define where include files live
