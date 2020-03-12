@@ -578,10 +578,7 @@ if "bicleaner" in config:
 else:
   RAWOPTION="segclean"
   BICLEANEROPTION=""
-  if BIFIXER:
-    BICLEANER="bifixer"
-  else:
-    BICLEANER="segclean"
+  BICLEANER=BIFIXER
   BICLEANER_CONFIG=""
 
 if "bicleanerThreshold" in config:
