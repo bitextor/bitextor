@@ -1,1 +1,1 @@
-python-pdfextract==1.0.1.2
+python-pdfextract==3.0.0

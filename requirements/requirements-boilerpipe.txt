@@ -1,2 +1,2 @@
 git+https://github.com/slaveofcode/boilerpipe3.git
-jpype1==0.7.0
+jpype1==0.7.2
