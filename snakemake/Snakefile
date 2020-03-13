@@ -17,7 +17,6 @@ from toolwrapper import ToolWrapper
 from func_timeout import func_timeout, FunctionTimedOut
 from cerberus import Validator
 
-
 ###########################################################
 # UTILS
 
@@ -86,7 +85,6 @@ def open_gzip_or_plain(file_path):
     finally:
         if f:
             f.close()
-
 
 def validate_args(config):
     schema = {
@@ -407,7 +405,6 @@ if "customNBPs" in config:
     CUSTOMNBPS = config["customNBPs"]
 else:
     CUSTOMNBPS = ""
-
 
 PRUNE_THRESHOLD = "--prune 80"
 if "pruneThreshold" in config:
@@ -903,7 +900,6 @@ if len(WARCFILES) != 0:
 
 # print("domainKey2Hosts", domainKey2Hosts)
 
-
 # every shell command will run sync
 shell.prefix("sync; set -euo pipefail; ")
 #shell.prefix("set -euo pipefail; ")
@@ -994,7 +990,6 @@ def create_moses_ems_config(workDir, mosesDir, mgiza, trainPrefixes, devPrefix, 
         lines.insert(line + 1, f"raw-stem = {path}")
 
         line += 2
-
 
     with open(f"{workDir}/steps/1/config.1", "w") as file:
         file.write("\n".join(lines))
@@ -1112,7 +1107,6 @@ rule train_smt_all_create_config:
 
 #================================== NMT ======================================#
 
-
 rule train_nmt_with_crawl_data:
     input:
         l1=f"{permanent}/crawl.{LANG1}"
@@ -1160,7 +1154,6 @@ rule create_config:
     run:
         with open(output.config, "wt") as configFile:
             configFile.write(str(config))
-
 
 #================================== CRAWLING ======================================#
 rule creepy_download:
@@ -1222,7 +1215,6 @@ rule heritrix_download:
         'while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ] ; do echo "Waiting 5 seconds..." ; sleep 5 ; RUNTIME=$((RUNTIME+5)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ] ; then echo "Crawling time limit reached" ; curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
         'echo "Job {wildcards.target} finished!"; '
         'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
-
 
 def get_domain_hosts(wildcards):
     output=[]
@@ -1531,10 +1523,8 @@ rule translated2base64:
         "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule docalign_tokenize_translated:
-    input:
-        translated=f"{{dir}}/docalign/{LANG1}.{{mttype}}.extracted.translated.xz"
-    output:
-        f"{{dir}}/docalign/{LANG1}.{{mttype}}.extracted.translated.tokenized.xz"
+    input: translated="{prefix}.extracted.translated.xz"
+    output: "{prefix}.extracted.translated.tokenized.xz"
     shell:
         '''
         if [ -z "{MORPHTOK2}" ]; then
@@ -1551,10 +1541,8 @@ rule docalign_tokenize_translated:
         '''
 
 rule translatedtokenized2base64:
-    input:
-        "{dir}/{prefix}.extracted.translated.tokenized.xz"
-    output:
-        "{dir}/{prefix}.translated_tokenized.xz"
+    input: rules.docalign_tokenize_translated.output
+    output: "{prefix}.translated_tokenized.xz"
     shell:
         "xzcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
@@ -1573,16 +1561,16 @@ rule docalign_matches:
 
 rule matches2bleualign:
     input:
-        indices=f'{transient}/{{target}}/{LANG1}-{LANG2}.{{docalignext}}.matches',
+        indices=f'{transient}/{{target}}/{LANG1}-{LANG2}.{DOCALIGNEXT}.matches',
         plain1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz',
         plain2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz',
         url1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
         url2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
-        translated1=f'{transient}/{{target}}/docalign/{LANG1}.{{docalignext}}.translated_sentences.xz',
-    output: f'{transient}/{{target}}/bleualign.docalign.{{docalignext}}.xz'
+        translated1=f'{transient}/{{target}}/docalign/{LANG1}.{DOCALIGNEXT}.translated_sentences.xz',
+    output: f'{transient}/{{target}}/bleualign.docalign.{DOCALIGNEXT}.xz'
     params:
-        c1=lambda wildcards: 1 if wildcards.docalignext == 'bitextor' else 2,
-        c2=lambda wildcards: 2 if wildcards.docalignext == 'bitextor' else 3
+        c1=lambda: 1 if DOCALIGNEXT == 'bitextor' else 2,
+        c2=lambda: 2 if DOCALIGNEXT == 'bitextor' else 3
     shell:
         '''
         cut -f {params.c1},{params.c2} {input.indices} |
@@ -1593,10 +1581,8 @@ rule matches2bleualign:
         '''
 
 rule alignsegments_bleualign:
-    input:
-        f"{{dir}}/bleualign.docalign.{DOCALIGNEXT}.xz"
-    output:
-        "{dir}/bleualign.segalign.xz"
+    input: rules.matches2bleualign.output
+    output: f"{transient}/{{target}}/bleualign.segalign.xz"
     shell:
         "xzcat {input} | {PROFILING} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_THRESHOLD} | xz -T 0 -c > {output}"
 
@@ -1604,17 +1590,17 @@ rule alignsegments_bleualign:
 
 rule matches2hunalign:
     input:
-        indices=f'{transient}/{{target}}/{LANG1}-{LANG2}.{{docalignext}}.matches',
+        indices=f'{transient}/{{target}}/{LANG1}-{LANG2}.{DOCALIGNEXT}.matches',
         plain1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz',
         plain2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz',
         url1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
         url2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
         tok1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_tokenized.gz',
         tok2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz',
-    output: f'{transient}/{{target}}/hunalign.docalign.{{docalignext}}.xz'
+    output: f'{transient}/{{target}}/hunalign.docalign.{DOCALIGNEXT}.xz'
     params:
-        c1=lambda wildcards: 1 if wildcards.docalignext == 'bitextor' else 2,
-        c2=lambda wildcards: 2 if wildcards.docalignext == 'bitextor' else 3
+        c1=lambda: 1 if DOCALIGNEXT == 'bitextor' else 2,
+        c2=lambda: 2 if DOCALIGNEXT == 'bitextor' else 3
     shell:
         '''
         cut -f {params.c1},{params.c2} {input.indices} |
@@ -1625,10 +1611,8 @@ rule matches2hunalign:
         '''
 
 rule hunaligndic:
-    input:
-        expand("{dic}", dic=DIC)
-    output:
-        f'{transient}/hunalign_dic'
+    input: f'{DIC}'
+    output: f'{transient}/hunalign_dic'
     run:
         with open(output[0], "wt") as outw:
             with open(input[0], "rt") as inr:
@@ -1647,8 +1631,8 @@ rule hunaligndic:
 
 rule alignsegments_hunalign:
     input:
-        f'{transient}/hunalign_dic',
-        f"{transient}/{{target}}/hunalign.docalign.{DOCALIGNEXT}.xz"
+        rules.hunaligndic.output,
+        rules.matches2hunalign.output,
     output:
         f'{transient}/{{target}}/hunalign.segalign.xz'
     shell:
@@ -1682,19 +1666,17 @@ rule deferred_segments:
 
 rule cleansegments:
     input:
-        f"{{dir}}/{SEGMENTALIGNER}{DEFERREDSENTENCES}.segalign.xz"
+        f"{{prefix}}{DEFERREDSENTENCES}.segalign.xz"
     output:
-        f"{{dir}}/{SEGMENTALIGNER}.segclean.xz"
+        f"{{prefix}}.segclean.xz"
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-cleantextalign.py -q {MINQUALITY} -m {MAXLINES} -s | xz -T 0 > {output}'
 
 #================================== POST PROCESSING ==================================#
 
 rule bifixer:
-    input:
-        "{prefix}.segclean.xz"
-    output:
-        "{prefix}.bifixer.xz"
+    input: rules.cleansegments.output
+    output: "{prefix}.bifixer.xz"
     shell:
         '''
         xzcat -T 0 -f {input} |
@@ -1728,26 +1710,21 @@ rule bicleaner:
         '''
 
 rule bicleanerfilter:
-    input:
-        "{prefix}.bicleaner.scores.xz"
-    output:
-        "{prefix}.bicleaner.xz"
+    input: rules.bicleaner.output
+    output: "{prefix}.bicleaner.xz"
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} | xz -T 0 > {output}'
 
 rule elrc:
-    input:
-        f"{{prefix}}.{BICLEANER}.xz"
-    output:
-        "{prefix}.elrc.xz"
+    input: f"{{prefix}}.{BICLEANER}.xz"
+    output: "{prefix}.elrc.xz"
     shell:
         'xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-elrc-filtering.py -c "url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}" -s | xz -T 0 > {output}'
 
 rule raw:
     input:
-        expand("{dir}/{webdomain}/{aligner}.{rawopt}.xz", dir=config["transientDir"], webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, rawopt=RAWOPTION)
-    output:
-        f"{permanent}/{{l1}}-{{l2}}.raw.xz"
+        expand("{dir}/{webdomain}/{aligner}.{rawopt}.xz", dir=transient, webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, rawopt=RAWOPTION)
+    output: f"{permanent}/{{l1}}-{{l2}}.raw.xz"
     run:
         #Original command ("xzcat -T 0 {input} | xz -T 0 > {output}") replaced to be able to deal with any number of inputs
         with open(output[0],'wb') as wfd:
@@ -1758,8 +1735,7 @@ rule raw:
 rule sents:
     input:
         expand("{dir}/{webdomain}/{aligner}.{ext}.xz", dir=transient, webdomain=domainKey2Hosts.keys(), aligner=SEGMENTALIGNER, ext={ELRCSCORES})
-    output:
-        f"{permanent}/{{l1}}-{{l2}}.sent.xz"
+    output: f"{permanent}/{{l1}}-{{l2}}.sent.xz"
     run:
         #Original command ("xzcat -T 0 {input} | xz -T 0 > {output}") replaced to be able to deal with any number of inputs
         with open(output[0],'wb') as wfd:
@@ -1768,16 +1744,13 @@ rule sents:
                     shutil.copyfileobj(fd, wfd, 1024*1024*10)
 
 rule tmx:
-    input:
-        f"{permanent}/{{l1}}-{{l2}}.sent.xz"
-    output:
-        f"{permanent}/{{l1}}-{{l2}}.not-deduped.tmx.xz"
+    input: rules.sents.output
+    output: f"{permanent}/{{l1}}-{{l2}}.not-deduped.tmx.xz"
     shell:
         "xzcat -T 0 -f {input} | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1REVERSE} --lang2 {LANG2REVERSE} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} | xz -T 0 > {output}"
 
 rule deduped_tmx:
-    input:
-        f"{permanent}/{{l1}}-{{l2}}.sent.xz"
+    input: rules.sents.output
     output:
         tmx=f"{permanent}/{{l1}}-{{l2}}.deduped.tmx.xz",
         txt=f"{permanent}/{{l1}}-{{l2}}.deduped.txt.xz"
@@ -1785,8 +1758,7 @@ rule deduped_tmx:
         "xzcat -T 0 -f {input} | {BICLEANER_SORT} {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1REVERSE} --lang2 {LANG2REVERSE} -c url1,url2,seg1,seg2,hunalign{DEFERREDFIELDS}{BIFIXERFIELD}{BICLEANEROPTION}{ELRCFIELDS} {DEDUP} -f {output.txt} | xz -T 0 > {output.tmx}"
 
 rule mt_parallel_data:
-    input:
-         f"{permanent}/{LANG1REVERSE}-{LANG2REVERSE}.sent.xz"
+    input: rules.sents.output
     output:
          l1=f"{permanent}/crawl.{LANG1REVERSE}",
          l2=f"{permanent}/crawl.{LANG2REVERSE}"
@@ -1931,7 +1903,6 @@ rule mgiza:
     shell:
         "{PROFILING} {BITEXTOR}/mgiza/mgizapp/bin/mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null"
 
-
 rule snt2cooc:
     input:
         vcb1="{prefix}.{l1}.vcb",
@@ -2027,7 +1998,7 @@ rule bicleaner_train_model:
         e2f=f"{DIC}.lex.e2f.gz",
         f2e=f"{DIC}.lex.f2e.gz"
     output:
-        f"{BICLEANER_CONFIG}" 
+        f"{BICLEANER_CONFIG}"
 
     shell:
         "training=$(mktemp {TMPDIR}/train.XXXXXXXX); "
