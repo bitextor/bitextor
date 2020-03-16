@@ -277,10 +277,10 @@ else:
 
 if "giawarc" in config and config["giawarc"]:
     PPROC = "giawarc"
-    FILES=["mime.gz", "url.gz"]
+    FILES=["mime.gz", "url.gz", "plain_text.gz"]
 else:
     PPROC = "w2p"
-    FILES=["deboilerplate_html.gz", "normalized_html.gz", "mime.gz", "url.gz"]
+    FILES=["deboilerplate_html.gz", "normalized_html.gz", "mime.gz", "url.gz", "plain_text.gz"]
 
 if "preprocessLangs" in config and config["preprocessLangs"]:
     PPROCLANGSOPT = "--langs " + config['preprocessLangs']
@@ -1038,10 +1038,8 @@ rule all:
 
 rule train_smt_with_crawl_data:
     input:
-        l1=f"{permanent}/crawl.{LANG1}"
-        ,
-        l2=f"{permanent}/crawl.{LANG2}"
-        ,
+        l1=f"{permanent}/crawl.{LANG1}",
+        l2=f"{permanent}/crawl.{LANG2}",
         emsConfig = f"{transient}/smt-dir-crawl/steps/1/config.1"
 
     output:
@@ -1243,14 +1241,12 @@ rule concat_subdomains:
 # Preprocessing using giawarc with 'bitextorlang' format using GZip compression
 # Writes output in {data}/preprocess/{domain}/giawarc
 rule giawarc:
-    input:
-        f'{data}/preprocess/{{domain}}/concat.warc.gz'
+    input: rules.concat_subdomains.output
     output:
-        plain=temp(expand('{data}/preprocess/{{domain}}/giawarc/{lang}/plain_text.gz', data=data, lang=PPROCLANGS)),
-        files=expand("{data}/preprocess/{{domain}}/giawarc/{lang}/{file}", data=data, lang=PPROCLANGS, file=FILES),
-        hash=f'{data}/preprocess/{{domain}}/giawarc/plain_text_hashes.xz'
+        files=expand("{data}/preprocess/{{target}}/giawarc/{lang}/{file}", data=data, lang=PPROCLANGS, file=FILES),
+        hash=f'{data}/preprocess/{{target}}/giawarc/plain_text_hashes.xz'
     params:
-        folder=f"{data}/preprocess/{{domain}}/giawarc"
+        folder=f"{data}/preprocess/{{target}}/giawarc"
     priority: 8
     threads: 2
     shell:
@@ -1260,7 +1256,7 @@ rule giawarc:
         {PROFILING} nice ionice -c 3 ~/go/bin/giawarc -f bilang -o {params.folder} -l {LANGID} --output_hash {output.hash} {PLAINTEXTHASHES} -
         for lang in {PPROCLANGS}; do
           if [ ! -f {params.folder}/$lang/plain_text.gz ]
-            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead"
+            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
             mkdir -p {params.folder}/$lang
             touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url
             gzip {params.folder}/$lang/*
@@ -1271,14 +1267,12 @@ rule giawarc:
 # Preprocssing using bitextor-warc2preprocess with 'bitextorlang' format with GZip compression
 # Writes output in {data}/preprocess/{domain}/w2p
 rule warc2preprocess:
-    input:
-        f'{data}/preprocess/{{domain}}/concat.warc.gz'
+    input: rules.concat_subdomains.output
     output:
-        hash=f'{data}/preprocess/{{domain}}/w2p/plain_text_hashes.xz',
-        plain=temp(expand('{data}/preprocess/{{domain}}/w2p/{lang}/plain_text.gz', data=data, lang=PPROCLANGS)),
-        files=expand('{data}/preprocess/{{domain}}/w2p/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
+        hash=f'{data}/preprocess/{{target}}/w2p/plain_text_hashes.xz',
+        files=expand('{data}/preprocess/{{target}}/w2p/{lang}/{file}', data=data, lang=PPROCLANGS, file=FILES)
     params:
-        folder=f'{data}/preprocess/{{domain}}/w2p'
+        folder=f'{data}/preprocess/{{target}}/w2p'
     priority: 8
     threads: 2
     shell:
@@ -1288,7 +1282,7 @@ rule warc2preprocess:
         {PROFILING} nice ionice -c 3 {BITEXTOR}/bitextor-warc2preprocess.py --input - {PPROCLANGSOPT} --lang1 {LANG1} --lang2 {LANG2} --compression gz {boilerpipeCleaning} --langid {LANGID} --output-dir {params.folder} --output_hash {output.hash} {PLAINTEXTHASHES} {PARSER}
         for lang in {PPROCLANGS}; do
           if [ ! -f {params.folder}/$lang/plain_text.gz ]
-            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.domain}. Creating empty files instead"
+            then >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
             mkdir -p {params.folder}/$lang
             touch {params.folder}/$lang/plain_text {params.folder}/$lang/mime {params.folder}/$lang/url {params.folder}/$lang/normalized_html {params.folder}/$lang/deboilerplate_html
             gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
@@ -1298,15 +1292,15 @@ rule warc2preprocess:
 
 # tokenize every bitextorlang/{lang}/plain_text.gz to obtain bitextorlang/{lang}/plain_tokenized.gz
 rule tokenize:
-    input: '{dir}/{lang}/plain_text.gz'
+    input: f'{data}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_text.gz'
     params:
         splitter=lambda wildcards: get_lang_or_default_from_dict(SENTTOKS, wildcards.lang),
         tokenizer=lambda wildcards: get_lang_or_default_from_dict(WORDTOKS, wildcards.lang),
         lemmatizer=lambda wildcards: get_lang_or_default_from_dict(MORPHTOKS, wildcards.lang),
         customnbp=lambda wildcards: get_customnbp_or_empty_from_dict(CUSTOMNBPS, wildcards.lang)
     output:
-        tok='{dir}/{lang}/plain_tokenized.gz',
-        sent='{dir}/{lang}/plain_sentences.gz'
+        tok=f'{data}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_tokenized.gz',
+        sent=f'{data}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_sentences.gz'
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE};'
 
@@ -1314,33 +1308,27 @@ rule tokenize:
 rule lettr2idx:
     input:
         text1=f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_tokenized.gz',
-        text2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz',
+        text2=f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
     output:
         f'{transient}/{{target}}/idx.xz'
     shell:
         '{PROFILING} {BITEXTOR}/bitextor-buildidx.py  --lang1 {LANG1} --lang2 {LANG2} -m 15 --text1 {input.text1} --text2 {input.text2} | xz -T 0 > {output}'
 
-rule idx2ridx_l1tol2:
+rule idx2ridx:
     input:
-        '{dir}/idx.xz',
-        expand("{dic}", dic=DIC)
-    output:
-        '{dir}/1.ridx.xz'
-    shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {input[1]} --lang1 {LANG1} --lang2 {LANG2} | xz -T 0 > {output}'
-
-rule idx2ridx_l2tol1:
-    input:
-        '{dir}/idx.xz',
+        rules.lettr2idx.output,
         f'{DIC}'
     output:
-        '{dir}/2.ridx.xz'
+        f'{transient}/{{target}}/{{num}}.ridx.xz'
+    params:
+        lang1=lambda wildcards: LANG1 if wildcards.num == 1 else LANG2,
+        lang2=lambda wildcards: LANG2 if wildcards.num == 1 else LANG1
     shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {input[1]} --lang1 {LANG2} --lang2 {LANG1} | xz -T 0 > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-idx2ridx.py -d {input[1]} --lang1 {params.lang1} --lang2 {params.lang2} | xz -T 0 > {output}'
 
 rule ridx2imagesetoverlap:
     input:
-        f'{transient}/{{target}}/{{num}}.ridx.xz',
+        rules.idx2ridx.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/deboilerplate_html.gz'
     output:
@@ -1350,7 +1338,7 @@ rule ridx2imagesetoverlap:
 
 rule imagesetoverlap2structuredistance:
     input:
-        f'{transient}/{{target}}/{{num}}.imgoverlap.xz',
+        rules.ridx2imagesetoverlap.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/deboilerplate_html.gz'
     output:
@@ -1360,7 +1348,7 @@ rule imagesetoverlap2structuredistance:
 
 rule structuredistance2urldistance:
     input:
-        f'{transient}/{{target}}/{{num}}.structuredistance.xz',
+        rules.imagesetoverlap2structuredistance.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
@@ -1374,7 +1362,7 @@ rule structuredistance2urldistance:
 
 rule urldistance2mutuallylinked:
     input:
-        f'{transient}/{{target}}/{{num}}.urldistance.xz',
+        rules.structuredistance2urldistance.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
@@ -1386,7 +1374,7 @@ rule urldistance2mutuallylinked:
 
 rule mutuallylinked2urlscomparison:
     input:
-        f'{transient}/{{target}}/{{num}}.mutuallylinked.xz',
+        rules.urldistance2mutuallylinked.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz'
     output:
@@ -1396,7 +1384,7 @@ rule mutuallylinked2urlscomparison:
 
 rule urlscomparison2urlsoverlap:
     input:
-        f'{transient}/{{target}}/{{num}}.urlscomparison.xz',
+        rules.mutuallylinked2urlscomparison.output,
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/deboilerplate_html.gz',
         f'{data}/preprocess/{{target}}/{PPROC}/{LANG2}/deboilerplate_html.gz'
     output:
@@ -1406,9 +1394,9 @@ rule urlscomparison2urlsoverlap:
 
 rule urlsoverlap2rank:
     input:
-        '{dir}/{num}.urlsoverlap.xz'
+        rules.urlscomparison2urlsoverlap.output,
     output:
-        '{dir}/{num}.rank.xz'
+        f'{transient}/{{target}}/{{num}}.rank.xz'
     shell:
         'xzcat -T 0 -f {input[0]} | {PROFILING} {BITEXTOR}/bitextor-rank.py -m {BITEXTOR}/model/keras.model -w {BITEXTOR}/model/keras.weights | xz -T 0 > {output}'
 
@@ -1427,9 +1415,9 @@ rule aligndocumentsBitextor:
 
 rule docalign_extracted:
     input:
-        f'{data}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_sentences.gz'
+        f'{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz'
     output:
-        f'{transient}/{{target}}/docalign/{{lang}}.extracted.xz'
+        f'{transient}/{{target}}/docalign/{LANG1}.extracted.xz'
     params:
         docalign_folder=f'{transient}/{{target}}/docalign'
     shell:
@@ -1438,22 +1426,22 @@ rule docalign_extracted:
 
 rule docalign_translate_nmt:
     input:
-        source=f"{transient}/{{domain}}/docalign/{LANG1}.extracted.xz",
-        target=f"{data}/preprocess/{{domain}}/{PPROC}/{LANG2}/plain_sentences.gz",
+        source=f"{data}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz",
+        target=f"{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz",
         configFile = f"{transient}/config.json",
         report = f"{transient}/nmt-dir/evaluation/report"
     output:
-        f"{transient}/{{domain}}/docalign/{LANG1}.nmt.extracted.translated.xz"
+        f"{transient}/{{target}}/dogalign/{LANG1}.nmt.extracted.translated.xz"
     priority: 40
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         '''
         if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 1 | wc -c) -eq 0 ]; then
-           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.target}, as {LANG1} or {LANG2} not found"
            touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
         else
            xzcat -T 0 {input.source} | cut -f2 |
-           {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.domain}/docalign {permanent}/nmt-dir |
+           {PROFILING} {BITEXTOR}/preprocess/bin/cache {PARALLEL_TRANS_CMD} {BITEXTOR}/snakemake/nmt/translate.sh {input.configFile} {transient}/{wildcards.target}/docalign {permanent}/nmt-dir |
            paste <(xzcat -T 0 {input.source} | cut -f1) - |
            xz -c -T 0 > {output}
            if [ "$(xzcat -T 0 {input.source} | cut -f 2 | wc -l)" -ne "$(xzcat -T 0 {output} | cut -f 2 | wc -l)" ]; then
@@ -1465,18 +1453,18 @@ rule docalign_translate_nmt:
 
 rule docalign_translate_smt:
     input:
-        source=f"{transient}/{{domain}}/docalign/{LANG1}.extracted.xz",
-        target=f"{data}/preprocess/{{domain}}/{PPROC}/{LANG2}/plain_sentences.gz",
+        source=f"{transient}/{{target}}/docalign/{LANG1}.extracted.xz",
+        target=f"{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz",
         report = f"{transient}/smt-dir/steps/1/REPORTING_report.1.DONE"
     output:
-        f"{transient}/{{domain}}/docalign/{LANG1}.smt.extracted.translated.xz"
+        f"{transient}/{{target}}/docalign/{LANG1}.smt.extracted.translated.xz"
     params:
         smtDir = "{0}/smt-dir".format(config["transientDir"])
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         '''
         if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then
-           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.target}, as {LANG1} or {LANG2} not found"
            touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
         else
            xzcat -T 0 {input.source} | cut -f2 |
@@ -1492,15 +1480,15 @@ rule docalign_translate_smt:
 
 rule docalign_custom_translate:
     input:
-        source=f"{transient}/{{domain}}/docalign/{LANG1}.extracted.xz",
-        target=f"{data}/preprocess/{{domain}}/{PPROC}/{LANG2}/plain_sentences.gz",
+        source=f"{transient}/{{target}}/docalign/{LANG1}.extracted.xz",
+        target=f"{data}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz",
     output:
-        f"{transient}/{{domain}}/docalign/{LANG1}.customMT.extracted.translated.xz"
+        f"{transient}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz"
     shell:
         # if  l1 content or l2 content are empty, skip translation (output empty file instead)
         '''
         if [ $(xzcat {input.source} | head -n 5 | wc -c) -eq 0 ] || [ $(zcat {input.target} | head -n 5 | wc -c) -eq 0 ]; then
-           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.domain}, as {LANG1} or {LANG2} not found"
+           >&2 echo "EARLY STOPPING: Discontinuing domain {wildcards.target}, as {LANG1} or {LANG2} not found"
            touch {output}.empty && xz {output}.empty && mv {output}.empty.xz {output}
         else
            xzcat -T 0 {input.source} | cut -f2 |
