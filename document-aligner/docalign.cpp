@@ -9,9 +9,10 @@
 #include <vector>
 #include <cmath>
 #include <boost/program_options.hpp>
-#include "document.h"
-#include "blocking_queue.h"
 #include "util/file_piece.hh"
+#include "src/document.h"
+#include "src/blocking_queue.h"
+
 
 using namespace bitextor;
 using namespace std;

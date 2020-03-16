@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.12)
 
 # Define a single cmake project
 project(document-aligner)
@@ -19,6 +19,10 @@ find_package(Boost 1.41.0 REQUIRED COMPONENTS
   program_options
 )
 
+find_package(ICU REQUIRED COMPONENTS
+  i18n uc data io
+)
+
 # Define where include files live
 include_directories(
   ${PROJECT_SOURCE_DIR}
@@ -35,14 +39,14 @@ else()
 endif()
 
 # find *.h and *.cpp files
-file(GLOB dalign_cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-file(GLOB dalign_cpp_cpp ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-list(REMOVE_ITEM dalign_cpp_cpp ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp ${CMAKE_CURRENT_SOURCE_DIR}/catdoc.cpp)
+file(GLOB dalign_cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
+file(GLOB dalign_cpp_cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
-# dalign_cpp
-add_executable(dalign main.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
-target_link_libraries(dalign ${Boost_LIBRARIES} preprocess_util)
+# Tool to score alignment between two sets of documents in the same language.
+add_executable(docalign docalign.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
+target_link_libraries(docalign ${Boost_LIBRARIES} preprocess_util)
 
-# Stupid tool to read base64 gzipped files
-add_executable(catdoc catdoc.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
-target_link_libraries(catdoc ${Boost_LIBRARIES} preprocess_util)
+# Tool to (left) join documents from two sets into a single TSV stream
+# Similar to coreutils join, but using line indices and works on gzipped files
+add_executable(docjoin docjoin.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
+target_link_libraries(docjoin preprocess_util)
