@@ -187,8 +187,8 @@ int main(int argc, char *argv[])
 		// we want to keep in memory. (Also this line is the whole reason the
 		// worker management + reading isn't wrapped in a single function: I
 		// want to re-use the same workers for two files.)
-		in_document_cnt = queue_lines(vm["translated-tokens"].as<std::string>(), queue, df_sample_rate);
 		en_document_cnt = queue_lines(vm["english-tokens"].as<std::string>(), queue, df_sample_rate);
+		in_document_cnt = queue_lines(vm["translated-tokens"].as<std::string>(), queue, df_sample_rate);
 		document_cnt = in_document_cnt + en_document_cnt;
 
 		stop(queue, workers);
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 			while (true) {
 				unique_ptr<Line> line(read_queue.pop());
 
-				// Empty doc is poison
+				// Empty pointer is poison
 				if (!line)
 					break;
 
