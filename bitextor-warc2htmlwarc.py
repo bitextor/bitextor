@@ -167,7 +167,6 @@ for record in f:
         continue
     if not record.rec_headers.get_header('WARC-Target-URI'):
         url = None
-        print(record.rec_headers)
     elif record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
