@@ -5,6 +5,8 @@
 
 namespace bitextor {
 
+typedef uint64_t NGram;
+
 class NGramIter : public boost::iterator_facade<NGramIter, const uint64_t, boost::forward_traversal_tag> {
 public:
 	NGramIter();
@@ -27,7 +29,7 @@ private:
 	size_t pos_;
 	bool end_;
 	std::vector<uint64_t> buffer_;
-	uint64_t ngram_hash_;
+	NGram ngram_hash_;
 
 	void init();
 	void increment();
@@ -36,7 +38,7 @@ private:
 		return token_it_ == other.token_it_ && end_ == other.end_;
 	}
 
-	inline const uint64_t &dereference() const {
+	inline const NGram &dereference() const {
 		UTIL_THROW_IF(end_, util::OutOfTokens, "We already reached end");
 		return ngram_hash_;
 	}
