@@ -57,5 +57,5 @@ target_link_libraries(docjoin preprocess_util)
 
 add_executable(ngram_test tests/ngram_test.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
 target_link_libraries(ngram_test ${Boost_LIBRARIES} preprocess_util)
-
 add_test(NAME ngram_test COMMAND ngram_test)
+

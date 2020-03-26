@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE example
+#define BOOST_TEST_MODULE ngram_iter
 #include <vector>
 #include <iostream>
 #include <boost/test/unit_test.hpp>
@@ -18,7 +18,7 @@ NGram make_ngram(vector<string> const &words)
 	return hash;
 }
 
-BOOST_AUTO_TEST_CASE(test_ngram_it_1)
+BOOST_AUTO_TEST_CASE(test_trigram)
 {
 	string document = "Hello this is a test";
 	
@@ -33,4 +33,30 @@ BOOST_AUTO_TEST_CASE(test_ngram_it_1)
 	};
 
 	BOOST_TEST(ngrams == expected, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(test_equal_length)
+{
+	string document = "Hello this is a test";
+	
+	vector<NGram> ngrams;
+	for (NGramIter iter(StringPiece(document.data(), document.size()), 5); iter; ++iter)
+		ngrams.push_back(*iter);
+
+	vector<NGram> expected{
+		make_ngram({"Hello", "this", "is", "a", "test"})
+	};
+
+	BOOST_TEST(ngrams == expected, boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(test_not_enough_tokens)
+{
+	string document = "Not enough";
+	
+	vector<NGram> ngrams;
+	for (NGramIter iter(StringPiece(document.data(), document.size()), 5); iter; ++iter)
+		ngrams.push_back(*iter);
+
+	BOOST_TEST(ngrams.size() == 0);
 }
