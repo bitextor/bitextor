@@ -53,7 +53,7 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
 */
-void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, unordered_map<uint64_t, size_t> const &df) {
+void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, unordered_map<NGram, size_t> const &df) {
 	document_ref.id = document.id;
 
 	document_ref.wordvec.clear();

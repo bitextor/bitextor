@@ -27,6 +27,8 @@ void NGramIter::init() {
 	// Some documents are just too short
 	if (!token_it_)
 		end_ = true;
+
+	increment();
 }
 
 void NGramIter::increment() {

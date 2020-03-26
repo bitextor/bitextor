@@ -153,14 +153,14 @@ int main(int argc, char *argv[])
 	// Calculate the document frequency for terms. Starts a couple of threads
 	// that parse documents and keep a local hash table for counting. At the
 	// end these tables are merged into df.
-	unordered_map<uint64_t,size_t> df;
+	unordered_map<NGram,size_t> df;
 	size_t in_document_cnt, en_document_cnt, document_cnt;
 
 	{
 		mutex df_mutex;
 		blocking_queue<unique_ptr<Line>> queue(n_sample_threads * 128);
 		vector<thread> workers(start(n_sample_threads, [&queue, &df, &df_mutex, &ngram_size, &df_sample_rate]() {
-			unordered_map<uint64_t, size_t> local_df;
+			unordered_map<NGram, size_t> local_df;
 
 			while (true) {
 				unique_ptr<Line> line(queue.pop());
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 	// sample rate of higher than 1, your min_ngram_count should also be a
 	// multiple of sample rate + 1.
 	{
-		unordered_map<uint64_t, size_t> pruned_df;
+		unordered_map<NGram, size_t> pruned_df;
 		for (auto const &entry : df) {
 			if (entry.second < min_ngram_cnt)
 				continue;
