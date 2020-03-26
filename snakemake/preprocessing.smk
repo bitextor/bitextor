@@ -35,14 +35,15 @@ def validate_args(config):
 
 ##############################################
 def get_lang_or_default(scripts_dict, language):
-	script = ""
+	cmd = ""
 	if language in scripts_dict:
-		script = scripts_dict[language]
-	elif "default" in scripts_dict[language]
+		cmd = scripts_dict[language]
+	elif "default" in scripts_dict:
+		cmd = scripts_dict["default"]
 
-	return script
+	return cmd
 
-def get_customnbp(nbp_dict, laguage):
+def get_customnbp(nbp_dict, language):
 	nbp = ""
 	if language in nbp_dict:
 		nbp = nbp_dict[language]
@@ -84,10 +85,10 @@ BOILERPIPE = ""
 PDFEXTRACT = ""
 
 # sentence splitting and tokenisation
-SENTTOKS = ""
-CUSTOMNBPS = ""
-WORKDTOKS = ""
-MORPHTOKS = ""
+SENTTOKS = {} 
+CUSTOMNBPS = {}
+WORDTOKS = {}
+MORPHTOKS = {}
 PRUNE_THRESHOLD = "--prune 80"
 PRUNE_TYPE = "--prune-type words"
 
@@ -96,12 +97,12 @@ if "sentenceSplitters" in config:
 if "customNBPs" in config:
 	CUSTOMNBPS = config["customNBPs"] 
 if "wordTokenizers" in config:
-	WORKTOKS = config["wordTokenizers"]
+	WORDTOKS = config["workTokenizers"]
 if "morphologicalAnalysers" in config:
 	MORPHTOKS = config["morphologicalAnalysers"]
 if "pruneThreshold" in config:
 	PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
-if "pruneType" and config:
+if "pruneType" in config:
 	PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 
 
@@ -118,6 +119,8 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 if "PDFextract" in config and config["PDFextract"]:
 	PDFEXTRACT = "--pdfextract"
 parent_folder_2_warc = get_parent_folder_2_warcs(WARCS)
+
+##################################################################
 
 rule preprocess_all:
 	input: expand("{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}", datadir=DATADIR, domain=parent_folder_2_warc, pproc=PPROC, lang=LANGS, pproc_file=FILES+["plain_tokenized.gz", "plain_sentences.gz"])
@@ -163,11 +166,11 @@ rule tokenise:
 	params:
 		splitter = lambda wildcards: get_lang_or_default(SENTTOKS, wildcards.lang),
 		customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
-		tokeniser = lambda wildcards: get_lang_or_default(WORKTOKS, wildcards.lang),
-		lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, wildcards.lang)
+		tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, wildcards.lang),
+		lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, wildcards.lang),
 	output:
-		tok = f'{DATADIR}/preprocess/{{target}}/{PRPOC}/{{lang}}/plain_tokenized.gz'
+		tok = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_tokenized.gz',
 		sent = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_sentences.gz'
 	shell: '''
-		{BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokenizer}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.cutomnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE}
+		{BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE}
 		'''

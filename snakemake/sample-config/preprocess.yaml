@@ -1,5 +1,4 @@
 bitextor: "/home/elsa/bitextor"
 dataDir: "/home/elsa/permanent/data"
-warcs: ["/home/elsa/permanent/data/preprocess/greenpeace/www.greenpeace.org.warc.gz"]
 preprocessor: "warc2preprocess"
 langs: ["fr", "en"]
