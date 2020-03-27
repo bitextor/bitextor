@@ -1,3 +1,7 @@
+include: "utils.smk"
+
+validate_args(config)
+
 include: "crawling.smk"
 
 # by manually manipulating the config it is possible to connect different workflows

@@ -1,67 +1,3 @@
-from cerberus import Validator
-
-def validate_args(config):
-	schema = {
-			# main options
-			'bitextor': {'required': True, 'type': 'string'},
-			'warcs': {'required': True, 'type': 'list'},
-			'dataDir': {'required': True, 'type': 'string'},
-			'langs': {'required': True, 'type': 'list'},
-			# preprocessing
-			'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
-			'giawarc_executable': {'type': 'string', 'dependencies': {'preprocessor': 'giawarc'}},
-			'cleanHTML': {'type': 'boolean'},
-			'ftfy': {'type': 'boolean'},
-			'PDFextract': {'type': 'boolean'},
-			'langID': {'type': 'string', 'allowed': ['cld2', 'cld3']},
-			'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple'], 'dependencies': {'preprocessor': ['warc2preprocess', '']}},
-			'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': ['warc2preprocess', '']}},
-			# tokenization
-			'sentenceSplitters': {'type': 'dict'},
-			'customNBPs': {'type': 'dict'},
-			'workTokenizers': {'type': 'dict'},
-			'norphologicalAnalysers': {'type': 'dict'},
-			'pruneThreshold': {'type': 'integer'},
-			'pruneType': {'type': 'string', 'allowed': ['words', 'chars']}
-			}
-
-	v = Validator(schema)
-	v.allow_unknown = True
-	b = v.validate(config)
-
-	if not b:
-		print("Validation error. Stopping.", v.errors, file=sys.stderr)
-		exit()
-
-##############################################
-def get_lang_or_default(scripts_dict, language):
-	cmd = ""
-	if language in scripts_dict:
-		cmd = scripts_dict[language]
-	elif "default" in scripts_dict:
-		cmd = scripts_dict["default"]
-
-	return cmd
-
-def get_customnbp(nbp_dict, language):
-	nbp = ""
-	if language in nbp_dict:
-		nbp = nbp_dict[language]
-	
-	return nbp
-
-# process together the WARCs that are in the same folder
-def get_parent_folder_2_warcs(warcs):
-	f2w = {}
-	for warc in warcs:
-		folder = (warc.split('/')[-2])
-		if folder not in f2w:
-			f2w[folder] = []
-		f2w[folder].append(warc)
-	return f2w
-#############################################
-validate_args(config)
-
 # required options
 BITEXTOR = config["bitextor"]
 DATADIR = config["dataDir"]
@@ -118,7 +54,7 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 	BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
 	PDFEXTRACT = "--pdfextract"
-parent_folder_2_warc = get_parent_folder_2_warcs(WARCS)
+parent_folder_2_warc = parent_folder_2_warcs(WARCS)
 
 ##################################################################
 
