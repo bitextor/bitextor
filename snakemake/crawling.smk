@@ -1,18 +1,3 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils")) 
-from utils.common import open_xz_or_gzip_or_plain
-
-BITEXTOR = config["bitextor"]
-
-DATADIR = config["dataDir"]
-
-if "tempDir" in config:
-	TMPDIR = config["tempDir"]
-else:
-	TMPDIR = "/tmp"
-
 CRAWLTARGET = config["crawler"]
 
 TLD_CRAWL = ""
@@ -72,21 +57,9 @@ if "heritrixUrl" in config:
 if "heritrixUser" in config:
 	HERITRIXUSER = config["heritrixUser"]
 
-
-hosts = set()
-
-if "hosts" in config:
-	hosts = hosts.union(config["hosts"])
-
-if "hostsFile" in config:
-	with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
-		for line in f:
-			hosts.add(line.strip())
-
-domain_key2hosts = create_domain_key_2_host_map(hosts)
 ###################################################################################
 OUTPUT = []
-for tld, hosts in domain_key2hosts.items():
+for tld, hosts in DOMAIN_2_HOSTS.items():
 	for host in hosts:
 		OUTPUT.append(f'{DATADIR}/preprocess/{tld}/{host}.warc.gz')
 

@@ -54,15 +54,14 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 	BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
 	PDFEXTRACT = "--pdfextract"
-parent_folder_2_warc = parent_folder_2_warcs(WARCS)
 
 ##################################################################
 
 rule preprocess_all:
-	input: expand("{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}", datadir=DATADIR, domain=parent_folder_2_warc, pproc=PPROC, lang=LANGS, pproc_file=FILES+["plain_tokenized.gz", "plain_sentences.gz"])
+	input: expand("{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}", datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=FILES+["plain_tokenized.gz", "plain_sentences.gz"])
 
 rule warc2preprocess:
-	input: lambda wildcards: parent_folder_2_warc[wildcards.target]
+	input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
 	output: expand("{datadir}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", datadir=DATADIR, lang=LANGS, pproc_file=FILES)
 	threads: 2
 	params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
@@ -80,7 +79,7 @@ rule warc2preprocess:
 	'''
 
 rule giawarc:
-	input: lambda wildcards: parent_folder_2_warc[wildcards.target]
+	input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
 	output: expand("{datadir}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", datadir=DATADIR, lang=LANGS, pproc_file=FILES)
 	params: folder=f'{DATADIR}/preprocess/{{target}}/giawarc'
 	threads: 2

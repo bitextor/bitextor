@@ -52,7 +52,12 @@ def validate_args(config):
 			'bitextor': {'required': True, 'type': 'string'},
 			# output folders
 			'dataDir': {'type': 'string', 'required': True},
+			'permanentDir': {'type': 'string', 'required': True},
+			'transientDir': {'type': 'string', 'required': True},
 			'tempDir': {'type': 'string'},
+			# execute until X:
+			'onlyCrawling': {'type': 'boolean'},
+			'onlyPreprocess': {'type', 'boolean'},
 			# data definition
 			# TODO: check that of these is specified?
 			'hosts': {'type': 'list'},
@@ -75,7 +80,7 @@ def validate_args(config):
 			'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			# preprocessing
-			'langs': {'required': True, 'type': 'list'}, # TODO: when lang1 and lang2 are added, this should not be required
+			'langs': {'type': 'list'},
 			'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
 			'giawarc_executable': {'type': 'string', 'dependencies': {'preprocessor': 'giawarc'}}, # TODO: check that is exists, and is executable
 			'cleanHTML': {'type': 'boolean'},
@@ -90,11 +95,29 @@ def validate_args(config):
 			'workTokenizers': {'type': 'dict'},
 			'norphologicalAnalysers': {'type': 'dict'},
 			'pruneThreshold': {'type': 'integer'},
-			'pruneType': {'type': 'string', 'allowed': ['words', 'chars']}
+			'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
+			# document alignment
+			'lang1': {'type': 'string'},
+			'lang2': {'type': 'string'},
+			'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
+			'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
+			'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
+			'dic': {'type': 'string', 'check_with': os.path.isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign
 			}
 
 	if 'crawler' in config and config['crawler'] == 'heritrix':
 		schema['heritrixPath']['required'] = True
+	if 'documentAligner' in config and config['documentAligner'] == 'DIC':
+		schema['dic']['required'] = True
+	if 'onlyPreprocess' not in config or not config['onlyPreprocess']:
+		schema['lang1']['required'] = True
+		schema['lang2']['required'] = True
+	elif 'lang1' not in confing or 'lang2' not in config:
+		# if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
+		schema['langs']['required'] = True
+	if 'onlyCrawl' not in config or not config['onlyCrawl']:
+		schema['lang1']['required'] = True
+		schema['lang2']['required'] = True
 
 	v = Validator(schema)
 	b = v.validate(config)
