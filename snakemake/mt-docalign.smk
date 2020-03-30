@@ -1,3 +1,8 @@
+WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
+MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
+if WORDTOK2 == "":
+	get_default_tokeniser(BITEXTOR, LANG2)
+
 rule mt_docalign_all:
 	input: expand("{transient}/{target}/{lang1}-{lang2}.matches", transient=TRANSIENT, target=TARGETS, lang1=LANG1, lang2=LANG2)
 
@@ -12,7 +17,7 @@ rule sentences2extracted:
 
 rule custom_translate:
 	input: 
-		source = rules.sentences2extracted.output
+		source = rules.sentences2extracted.output,
 		target = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz'
 	output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz')
 	shell: '''
@@ -23,7 +28,7 @@ rule custom_translate:
 		'''
 
 rule tokenize_translated:
-	input: rules.custom_translated.output
+	input: rules.custom_translate.output
 	output: temp("{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
 	shell: '''
 		if [-z "{MORPHTOK2}" ]; then
@@ -39,7 +44,7 @@ rule tokenize_translated:
 		'''
 
 rule translated2base64:
-	input: rules.custom_translated.output
+	input: rules.custom_translate.output
 	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.translated_sentences.xz'
 	shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
@@ -50,7 +55,7 @@ rule translated_tokenized2base64:
 
 rule mt_matches:
 	input: 
-		l1=rules.tokenized_translated.output,
+		l1=rules.tokenize_translated.output,
 		l2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
 	output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.customMT.matches'
 	shell:

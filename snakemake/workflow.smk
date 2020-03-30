@@ -10,7 +10,7 @@ from utils.common import open_xz_or_gzip_or_plain
 
 #################################################################
 # BASIC PARAMETERS
-# parameters that are specific to each snakefile are specified there
+# parameters that are exclusive to each snakefile are specified there
 BITEXTOR = config["bitextor"]
 DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
@@ -20,14 +20,29 @@ if "tempDir" in config:
 	TMPDIR = config["tempDir"]
 
 PPROC = "w2p"
-if "preprocessor" in config and config["preprocessor"] = "giawarc":
+if "preprocessor" in config and config["preprocessor"] == "giawarc":
 	PPROC = "giawarc"
+
+SENTTOKS = {} 
+CUSTOMNBPS = {}
+WORDTOKS = {}
+MORPHTOKS = {}
+
+if "sentenceSplitters" in config:
+	SENTTOKS = config["sentenceSplitters"]
+if "customNBPs" in config:
+	CUSTOMNBPS = config["customNBPs"] 
+if "wordTokenizers" in config:
+	WORDTOKS = config["workTokenizers"]
+if "morphologicalAnalysers" in config:
+	MORPHTOKS = config["morphologicalAnalysers"]
 
 LANGS = set()
 LANG1 = ""
 LANG2 = ""
+
 if "langs" in config:
-	LANGS = config["langs"]
+	LANGS = set(config["langs"])
 if "lang1" in config:
 	LANG1 = config["lang1"]
 	LANGS.add(LANG1)
@@ -46,16 +61,17 @@ if "onlyPreprocess" in config and config["onlyPreprocess"]:
 HOSTS = set()
 
 if "hosts" in config:
-	hosts = hosts.union(config["hosts"])
+	HOSTS = HOSTS.union(config["hosts"])
 
 if "hostsFile" in config:
 	with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
 		for line in f:
 			hosts.add(line.strip())
 
-DOMAIN_2_HOSTS = create_domain_key_2_hosts_map(hosts)
+DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
 # by manually manipulating the config it is possible to connect different workflows
+include: "crawling.smk"
 if "warcs" not in config:
 	config["warcs"] = []
 config["warcs"].extend(rules.crawling_all.input)
@@ -64,7 +80,6 @@ TARGET_2_WARCS = parent_folder_2_warcs(config["warcs"])
 TARGETS = TARGET_2_WARCS.keys()
 #################################################################
 OUTPUT = []
-include: "crawling.smk"
 if ONLY_CRAWL:
 	OUTPUT = rules.crawling_all.output
 elif ONLY_PREPROCESS:

@@ -29,6 +29,9 @@ def parent_folder_2_warcs(warcs):
 	return f2w
 
 
+def get_default_tokeniser(bitextor, language):
+	return f'{bitextor}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {language}'
+
 def get_lang_or_default(scripts_dict, language):
 	cmd = ""
 	if language in scripts_dict:
@@ -57,7 +60,7 @@ def validate_args(config):
 			'tempDir': {'type': 'string'},
 			# execute until X:
 			'onlyCrawling': {'type': 'boolean'},
-			'onlyPreprocess': {'type', 'boolean'},
+			'onlyPreprocess': {'type': 'boolean'},
 			# data definition
 			# TODO: check that one of these is specified?
 			'hosts': {'type': 'list'},
@@ -80,7 +83,7 @@ def validate_args(config):
 			'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			# preprocessing
-			'langs': {'type': 'set'},
+			'langs': {'type': 'list'},
 			'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
 			'giawarc_executable': {'type': 'string', 'dependencies': {'preprocessor': 'giawarc'}}, # TODO: check that is exists, and is executable
 			'cleanHTML': {'type': 'boolean'},
@@ -112,9 +115,8 @@ def validate_args(config):
 	if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
 		schema['lang1']['required'] = True
 		schema['lang2']['required'] = True
-		# TODO: also check that sentence splitters / word tokenizers / morph analysers are provided for lang1 and lang2
 
-	elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in confing or 'lang2' not in config):
+	elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
 		# if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
 		schema['langs']['required'] = True
 

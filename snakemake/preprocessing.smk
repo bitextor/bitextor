@@ -20,26 +20,13 @@ BOILERPIPE = ""
 PDFEXTRACT = ""
 
 # sentence splitting and tokenisation
-SENTTOKS = {} 
-CUSTOMNBPS = {}
-WORDTOKS = {}
-MORPHTOKS = {}
 PRUNE_THRESHOLD = "--prune 80"
 PRUNE_TYPE = "--prune-type words"
 
-if "sentenceSplitters" in config:
-	SENTTOKS = config["sentenceSplitters"]
-if "customNBPs" in config:
-	CUSTOMNBPS = config["customNBPs"] 
-if "wordTokenizers" in config:
-	WORDTOKS = config["workTokenizers"]
-if "morphologicalAnalysers" in config:
-	MORPHTOKS = config["morphologicalAnalysers"]
 if "pruneThreshold" in config:
 	PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
 if "pruneType" in config:
 	PRUNE_TYPE = f"--prune-type {config['pruneType']}"
-
 
 if "cleanHTML" in config and config["cleanHTML"]:
 	CLEANHTML = "--cleanhtml"

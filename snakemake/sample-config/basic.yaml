@@ -1,0 +1,16 @@
+# basic variables
+bitextor: /home/elsa/bitextor
+dataDir: /home/elsa/permanent/data
+permanentDir: /home/elsa/permanent
+transientDir: /home/elsa/transient
+tempDir: /home/elsa/transient
+
+# crawling
+hosts: ["www.greenpeace.org"]
+crawler: "wget"
+crawlTimeLimit: "600" # 10min
+
+# preprocessing
+preprocessor: "warc2preprocess"
+lang1: 'fr'
+lang2: 'en'
