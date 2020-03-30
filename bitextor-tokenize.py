@@ -36,6 +36,9 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         if sum([1 for m in sent if m in string.punctuation + string.digits]) < len(sent) // 2:
             tokenized_filtered += sent + "\n"
 
+    if tokenized_filtered == "":
+        tokenized_filtered = "\n"
+
     proc_word = ExternalTextProcessor(word_tokeniser.split())
     tokenized_text = proc_word.process(tokenized_filtered)
 
