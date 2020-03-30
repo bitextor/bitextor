@@ -1,7 +1,6 @@
 # required options
 BITEXTOR = config["bitextor"]
 DATADIR = config["dataDir"]
-LANGS = config["langs"]
 WARCS = config["warcs"]
 
 # preprocessing

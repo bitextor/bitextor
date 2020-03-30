@@ -59,7 +59,7 @@ def validate_args(config):
 			'onlyCrawling': {'type': 'boolean'},
 			'onlyPreprocess': {'type', 'boolean'},
 			# data definition
-			# TODO: check that of these is specified?
+			# TODO: check that one of these is specified?
 			'hosts': {'type': 'list'},
 			'hostsFile': {'type': 'string', 'check_with': os.path.isfile},
 			'warcs': {'type': 'list'},
@@ -80,7 +80,7 @@ def validate_args(config):
 			'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
 			# preprocessing
-			'langs': {'type': 'list'},
+			'langs': {'type': 'set'},
 			'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
 			'giawarc_executable': {'type': 'string', 'dependencies': {'preprocessor': 'giawarc'}}, # TODO: check that is exists, and is executable
 			'cleanHTML': {'type': 'boolean'},
@@ -109,15 +109,14 @@ def validate_args(config):
 		schema['heritrixPath']['required'] = True
 	if 'documentAligner' in config and config['documentAligner'] == 'DIC':
 		schema['dic']['required'] = True
-	if 'onlyPreprocess' not in config or not config['onlyPreprocess']:
+	if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
 		schema['lang1']['required'] = True
 		schema['lang2']['required'] = True
-	elif 'lang1' not in confing or 'lang2' not in config:
+		# TODO: also check that sentence splitters / word tokenizers / morph analysers are provided for lang1 and lang2
+
+	elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in confing or 'lang2' not in config):
 		# if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
 		schema['langs']['required'] = True
-	if 'onlyCrawl' not in config or not config['onlyCrawl']:
-		schema['lang1']['required'] = True
-		schema['lang2']['required'] = True
 
 	v = Validator(schema)
 	b = v.validate(config)

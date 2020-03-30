@@ -3,7 +3,7 @@ rule mt_docalign_all:
 
 rule sentences2extracted:
 	input: f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz'
-	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.extracted.xz'
+	output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.extracted.xz')
 	params: docalign_folder = f'{TRANSIENT}/{{target}}/docalign'
 	shell: '''
 		mkdir -p {params.docalign_folder}
@@ -14,7 +14,7 @@ rule custom_translate:
 	input: 
 		source = rules.sentences2extracted.output
 		target = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz'
-	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz'
+	output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz')
 	shell: '''
 		xzcat -T 0 -f {input.source} | cut -f 2 |
 		{BITEXTOR}/preprocess/bin/cache {MT_COMMAND} |
@@ -24,7 +24,7 @@ rule custom_translate:
 
 rule tokenize_translated:
 	input: rules.custom_translated.output
-	output: "{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized"
+	output: temp("{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
 	shell: '''
 		if [-z "{MORPHTOK2}" ]; then
 			xzcat -T 0 -f {input} | cut -f 2 |

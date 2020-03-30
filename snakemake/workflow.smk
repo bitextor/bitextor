@@ -8,7 +8,9 @@ validate_args(config)
 sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
 from utils.common import open_xz_or_gzip_or_plain
 
-### BASIC PARAMETERS ###
+#################################################################
+# BASIC PARAMETERS
+# parameters that are specific to each snakefile are specified there
 BITEXTOR = config["bitextor"]
 DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
@@ -16,11 +18,31 @@ PERMANENT = config["permanentDir"]
 TMPDIR = config["transientDir"]
 if "tempDir" in config:
 	TMPDIR = config["tempDir"]
-### BASIC PREPROCESSING VARIABLES ###
+
 PPROC = "w2p"
 if "preprocessor" in config and config["preprocessor"] = "giawarc":
 	PPROC = "giawarc"
-### DEFINE DATASOURCES ###
+
+LANGS = set()
+LANG1 = ""
+LANG2 = ""
+if "langs" in config:
+	LANGS = config["langs"]
+if "lang1" in config:
+	LANG1 = config["lang1"]
+	LANGS.add(LANG1)
+if "lang2" in config:
+	LANG2 = config["lang2"]
+	LANGS.add(LANG2)
+
+ONLY_PREPROCESS = False
+ONLY_CRAWL = False
+if "onlyCrawl" in config and config["onlyCrawl"]:
+	ONLY_CRAWL = True
+if "onlyPreprocess" in config and config["onlyPreprocess"]:
+	ONLY_PREPROCESS = True
+#################################################################
+# DEFINE DATASOURCES
 HOSTS = set()
 
 if "hosts" in config:
@@ -32,7 +54,6 @@ if "hostsFile" in config:
 			hosts.add(line.strip())
 
 DOMAIN_2_HOSTS = create_domain_key_2_hosts_map(hosts)
-include: "crawling.smk"
 
 # by manually manipulating the config it is possible to connect different workflows
 if "warcs" not in config:
@@ -41,8 +62,17 @@ config["warcs"].extend(rules.crawling_all.input)
 
 TARGET_2_WARCS = parent_folder_2_warcs(config["warcs"])
 TARGETS = TARGET_2_WARCS.keys()
-
-include: "preprocessing.smk"
+#################################################################
+OUTPUT = []
+include: "crawling.smk"
+if ONLY_CRAWL:
+	OUTPUT = rules.crawling_all.output
+elif ONLY_PREPROCESS:
+	include: "preprocessing.smk"
+	OUTPUT = rules.preprocess_all.output
+else:
+	include: "mt-docalign.smk"
+	OUTPUT = rules.mt_docalign_all.output
 
 rule all:
-	input: rules.preprocess_all.input
+	input: OUTPUT
