@@ -6,8 +6,9 @@ project(document-aligner)
 enable_testing()
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast")
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -g ")
+set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wextra -g")
 
 # Compile all executables into bin/
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -55,7 +56,10 @@ target_link_libraries(docalign ${Boost_LIBRARIES} preprocess_util)
 add_executable(docjoin docjoin.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
 target_link_libraries(docjoin preprocess_util)
 
-add_executable(ngram_test tests/ngram_test.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
-target_link_libraries(ngram_test ${Boost_LIBRARIES} preprocess_util)
-add_test(NAME ngram_test COMMAND ngram_test)
+if (BUILD_TESTING)
+  add_executable(ngram_test tests/ngram_test.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
+  target_compile_definitions(ngram_test PRIVATE "BOOST_TEST_DYN_LINK=1")
+  target_link_libraries(ngram_test ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} preprocess_util)
+  add_test(NAME ngram_test COMMAND ngram_test)
+endif (BUILD_TESTING)
 
