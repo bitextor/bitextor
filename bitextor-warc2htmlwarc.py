@@ -165,11 +165,13 @@ for record in f:
     # Initial checks
     if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
-    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
+    if not record.rec_headers.get_header('WARC-Target-URI'):
+        url = None
+    elif record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
         url = record.rec_headers.get_header('WARC-Target-URI')
-    if url == "unknown":
+    if url == "unknown" or not url:
         logging.info("Skipping page with unknown URL")
         continue
     if "text/dns" in record.rec_headers.get_header('Content-Type'):

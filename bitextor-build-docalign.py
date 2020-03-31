@@ -66,7 +66,8 @@ if __name__ == "__main__":
 
     doc1_current_line = 1
     doc2_current_line = 1
-    doc2_last_written = 0
+    data1 = []
+    data2 = []
 
     tab = "\t"
 
@@ -74,25 +75,18 @@ if __name__ == "__main__":
         while doc1_current_line <= doc1:
             data1 = [next(reader, None).strip() for reader in readers1]
             doc1_current_line = doc1_current_line + 1
-
-        while doc2_last_written != doc2:
-            if doc2_current_line <= doc2:
+        if doc2_current_line <= doc2:
+            while doc2_current_line <= doc2:
                 data2 = [next(reader, None).strip() for reader in readers2]
-
                 if doc2_current_line == doc2:
                     print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
-                    doc2_last_written = doc2
                 elif doc2_current_line in lang2_docs:
                     lang2_read_docs[doc2_current_line] = data2
-                    lang2_docs.remove(doc2_current_line)
-
                 doc2_current_line = doc2_current_line + 1
-
-            if doc2 in lang2_read_docs:
-                data2 = lang2_read_docs[doc2]
-                print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
-                del lang2_read_docs[doc2]
-                doc2_last_written = doc2
+        elif doc2_current_line > doc2:
+            data2 = lang2_read_docs[doc2]
+            print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
+            del lang2_read_docs[doc2] # so far document aligner doesn't produce repeated indices, so deleting entries is safe
 
     for r in readers1:
         r.close()
