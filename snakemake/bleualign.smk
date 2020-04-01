@@ -3,7 +3,7 @@ if "sentenceAlignerThreshold" in config:
 	BLEU_THRESHOLD=config["sentenceAlignerThreshold"]
 
 rule bleualign_all:
-	input: expand("{transient}/{target}/bleualign.xz", transient=TRANSIENT, target=TARGETS)
+	input: expand("{transient}/{target}/segalign.xz", transient=TRANSIENT, target=TARGETS)
 
 rule bleualign:
 	input:
@@ -14,7 +14,7 @@ rule bleualign:
 		url2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
 		translated1=f'{TRANSIENT}/{{target}}/docalign/{LANG1}.translated_sentences.xz'
 	output:
-		f'{TRANSIENT}/{{target}}/bleualign.xz'
+		f'{TRANSIENT}/{{target}}/segalign.xz'
 	threads: 2
 	shell: '''
 		cut -f 2,3 {input.indices} | # assuming indices come from mt-docalign
