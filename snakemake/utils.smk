@@ -100,12 +100,18 @@ def validate_args(config):
 			'pruneThreshold': {'type': 'integer'},
 			'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
 			# document alignment
+
 			'lang1': {'type': 'string'},
 			'lang2': {'type': 'string'},
 			'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
+			# mt
 			'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
 			'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
+			# dictionary
 			'dic': {'type': 'string', 'check_with': os.path.isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign
+			# sentence alignment
+			'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign']},
+			'sentenceAlignerThreshold': {'type': 'float'},
 			}
 
 	if 'crawler' in config and config['crawler'] == 'heritrix':
@@ -119,6 +125,9 @@ def validate_args(config):
 	elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
 		# if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
 		schema['langs']['required'] = True
+	
+	if 'sentenceAligner' in config and config['sentenceAligner'] == 'bleualign':
+		schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
 
 	v = Validator(schema)
 	b = v.validate(config)

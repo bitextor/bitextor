@@ -1,4 +1,0 @@
-bitextor: "/home/elsa/bitextor"
-dataDir: "/home/elsa/permanent/data"
-preprocessor: "warc2preprocess"
-langs: ["fr", "en"]

@@ -88,7 +88,8 @@ elif ONLY_PREPROCESS:
 else:
 	include: "preprocessing.smk"
 	include: "mt-docalign.smk"
-	OUTPUT = rules.mt_docalign_all.input
+	include: "bleualign.smk"
+	OUTPUT = rules.bleualign_all.input
 
 rule all:
 	input: OUTPUT

@@ -1,6 +1,0 @@
-bitextor: "/home/elsa/bitextor"
-hosts: ["www.greenpeace.org"]
-dataDir: "/home/elsa/permanent/data"
-tempDir: "/home/elsa/transient/transient-crawling"
-crawler: "wget"
-crawlTimeLimit: "600" # 10min

@@ -50,12 +50,12 @@ rule tokenize_translated:
 
 rule translated2base64:
 	input: rules.custom_translate.output
-	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.translated_sentences.xz'
+	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.translated_sentences.xz'
 	shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule translated_tokenized2base64:
 	input: rules.tokenize_translated.output
-	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.translated_tokenized.xz'
+	output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.translated_tokenized.xz'
 	shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule mt_matches:
