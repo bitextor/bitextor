@@ -81,13 +81,14 @@ TARGETS = TARGET_2_WARCS.keys()
 #################################################################
 OUTPUT = []
 if ONLY_CRAWL:
-	OUTPUT = rules.crawling_all.output
+	OUTPUT = rules.crawling_all.input
 elif ONLY_PREPROCESS:
 	include: "preprocessing.smk"
-	OUTPUT = rules.preprocess_all.output
+	OUTPUT = rules.preprocess_all.input
 else:
+	include: "preprocessing.smk"
 	include: "mt-docalign.smk"
-	OUTPUT = rules.mt_docalign_all.output
+	OUTPUT = rules.mt_docalign_all.input
 
 rule all:
 	input: OUTPUT

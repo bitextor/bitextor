@@ -14,3 +14,7 @@ crawlTimeLimit: "600" # 10min
 preprocessor: "warc2preprocess"
 lang1: 'fr'
 lang2: 'en'
+
+# align
+documentAligner: "externalMT"
+alignerCmd: "cat -" 

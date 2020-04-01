@@ -1,3 +1,8 @@
+MT_COMMAND = config['alignerCmd']
+DOC_THRESHOLD = 0.1
+if "documentAlignerThreshold" in config:
+	DOC_THRESHOLD = config["documentAlignerThreshold"]
+
 WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
 MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 if WORDTOK2 == "":
@@ -29,7 +34,7 @@ rule custom_translate:
 
 rule tokenize_translated:
 	input: rules.custom_translate.output
-	output: temp("{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
+	output: temp(f"{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
 	shell: '''
 		if [-z "{MORPHTOK2}" ]; then
 			xzcat -T 0 -f {input} | cut -f 2 |
@@ -57,6 +62,6 @@ rule mt_matches:
 	input: 
 		l1=rules.tokenize_translated.output,
 		l2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
-	output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.customMT.matches'
+	output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.matches'
 	shell:
 		"python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output-matches {output} --threshold {DOC_THRESHOLD}"
