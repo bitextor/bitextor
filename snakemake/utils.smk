@@ -100,24 +100,34 @@ def validate_args(config):
 			'pruneThreshold': {'type': 'integer'},
 			'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
 			# document alignment
-
 			'lang1': {'type': 'string'},
 			'lang2': {'type': 'string'},
 			'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
 			# mt
 			'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
+			# TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
 			'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
 			# dictionary
-			'dic': {'type': 'string', 'check_with': os.path.isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign
+			'dic': {'type': 'string', 'check_with': os.path.isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
 			# sentence alignment
 			'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign']},
 			'sentenceAlignerThreshold': {'type': 'float'},
+			# post processing
+			'deferred': {'type': 'boolean'},
+			'bifixer': {'type': 'boolean'},
+			'aggresiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
+			'bicleaner': {'type': 'string', 'check_with': os.path.isfile}, # TODO: check that model exists, use training subworkflow if not
+			'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
+			'elrc': {'type': 'boolean'},
+			'tmx': {'type': 'boolean'},
+			'deduped': {'type': 'boolean'}
 			}
 
 	if 'crawler' in config and config['crawler'] == 'heritrix':
 		schema['heritrixPath']['required'] = True
-	if 'documentAligner' in config and config['documentAligner'] == 'DIC':
+	if 'documentAligner' not in config or config['documentAligner'] == 'DIC':
 		schema['dic']['required'] = True
+		schema['documentAligner']['dependencies'] = {'preprocessor': ['warc2preprcess', '']},
 	if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
 		schema['lang1']['required'] = True
 		schema['lang2']['required'] = True
