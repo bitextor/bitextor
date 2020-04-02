@@ -115,7 +115,7 @@ def validate_args(config):
 			# post processing
 			'deferred': {'type': 'boolean'},
 			'bifixer': {'type': 'boolean'},
-			'aggresiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
+			'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
 			'bicleaner': {'type': 'string', 'check_with': os.path.isfile}, # TODO: check that model exists, use training subworkflow if not
 			'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
 			'elrc': {'type': 'boolean'},
