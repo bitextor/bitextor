@@ -66,7 +66,7 @@ if "hosts" in config:
 if "hostsFile" in config:
 	with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
 		for line in f:
-			hosts.add(line.strip())
+			HOSTS.add(line.strip())
 
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 

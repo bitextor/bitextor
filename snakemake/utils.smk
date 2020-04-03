@@ -49,6 +49,10 @@ def get_customnbp(nbp_dict, language):
 	return nbp
 
 
+def isfile(field, value, error):
+	if not os.path.isfile(value):
+		error(field, f'{value} does not exist')
+
 def validate_args(config):
 	schema = {
 			# required parameters
@@ -63,12 +67,12 @@ def validate_args(config):
 			'onlyPreprocess': {'type': 'boolean'},
 			# data definition
 			# TODO: check that one of these is specified?
-			'hosts': {'type': 'list'},
-			'hostsFile': {'type': 'string', 'check_with': os.path.isfile},
+			'hosts': {'type': 'list', 'dependencies': 'crawler'},
+			'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
 			'warcs': {'type': 'list'},
 			# crawling
-			'crawler': {'required': True, 'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack"]},
-			'crawlTimeLimit': {'type': 'string'},
+			'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack"]},
+			'crawlTimeLimit': {'type': 'string', 'dependencies': 'crawler'},
 			'crawlerUserAgent': {'type': 'string', 'dependencies': {'cralwer' : ['creepy', 'wget', 'httrack']}},
 			'crawlWait': {'type': 'string', 'dependencies': {'crawler': ['creepy', 'wget', 'httrack']}},
 			'crawlPageLimit': {'type': 'string', 'dependencies': {'crawler' : 'httrack'}},
@@ -108,7 +112,7 @@ def validate_args(config):
 			# TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
 			'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
 			# dictionary
-			'dic': {'type': 'string', 'check_with': os.path.isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
+			'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
 			# sentence alignment
 			'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign']},
 			'sentenceAlignerThreshold': {'type': 'float'},
@@ -116,7 +120,7 @@ def validate_args(config):
 			'deferred': {'type': 'boolean'},
 			'bifixer': {'type': 'boolean'},
 			'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
-			'bicleaner': {'type': 'string', 'check_with': os.path.isfile}, # TODO: check that model exists, use training subworkflow if not
+			'bicleaner': {'type': 'string', 'check_with': isfile}, # TODO: check that model exists, use training subworkflow if not
 			'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
 			'elrc': {'type': 'boolean'},
 			'tmx': {'type': 'boolean'},
@@ -135,7 +139,7 @@ def validate_args(config):
 	elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
 		# if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
 		schema['langs']['required'] = True
-	
+
 	if 'sentenceAligner' in config and config['sentenceAligner'] == 'bleualign':
 		schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
 

@@ -21,15 +21,16 @@ rule sentences2extracted:
 		'''
 
 rule custom_translate:
-	input: 
+	input:
 		source = rules.sentences2extracted.output,
 		target = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz'
 	output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz')
 	shell: '''
-		xzcat -T 0 -f {input.source} | cut -f 2 |
-		{BITEXTOR}/preprocess/bin/cache {MT_COMMAND} |
-		paste <(xzcat -T 0 -f {input.source} | cut -f 1) - |
-		xz -c -T 0 -f > {output}
+		xzcat -T 0 -f {input.source} \
+			| cut -f 2 \
+			| {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
+			| paste <(xzcat -T 0 -f {input.source} | cut -f 1) - \
+			| xz -c -T 0 -f > {output}
 		'''
 
 rule tokenize_translated:
@@ -37,15 +38,21 @@ rule tokenize_translated:
 	output: temp(f"{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
 	shell: '''
 		if [-z "{MORPHTOK2}" ]; then
-			xzcat -T 0 -f {input} | cut -f 2 |
-			{WORDTOK2} | awk '{{print tolower($0)}}' |
-			paste <(xzcat -T 0 -f {input} | cut -f 1) - |
-			xz -T 0 -c -f > {output}
+			xzcat -T 0 -f {input} \
+				| cut -f 2 \
+				| {WORDTOK2} \
+				| awk '{{print tolower($0)}}' \
+				| paste <(xzcat -T 0 -f {input} | cut -f 1) - \
+				| xz -T 0 -c -f > {output}
 		else
-			xzcat -T 0 -f {input} | cut -f 2 |
-			{WORDTOK2} | {MORPHTOK2} | awk '{{print tolower($0)}}' |
-			paste <(xzcat -T 0 -f {input} | cut -f 1) - |
-			xz -T 0 -f > {output}
+			xzcat -T 0 -f {input} \
+				| cut -f 2 \
+				| {WORDTOK2} \
+				| {MORPHTOK2} \
+				| awk '{{print tolower($0)}}' \
+				| paste <(xzcat -T 0 -f {input} \
+				| cut -f 1) - \
+				| xz -T 0 -f > {output}
 		'''
 
 rule translated2base64:
@@ -59,7 +66,7 @@ rule translated_tokenized2base64:
 	shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
 
 rule mt_matches:
-	input: 
+	input:
 		l1=rules.tokenize_translated.output,
 		l2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
 	output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.matches'

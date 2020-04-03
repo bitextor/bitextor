@@ -85,14 +85,14 @@ rule bicleaner:
 		slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
 		if [ "$slang" == "{LANG1}" ]; then
 			$CAT {input.bifixer} \
-				| {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {params.model} \
+				| {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
 				| paste <(cat {input.bifixer}) - \
 				| python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
 				> {output}
 		else
 			$CAT {input.bifixer} \
 				| awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-				| {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {params.model} \
+				| {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
 				| paste <(cat {input.bifixer}) - \
 				| python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
 				> {output}
