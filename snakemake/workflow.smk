@@ -89,7 +89,8 @@ else:
 	include: "preprocessing.smk"
 	include: "mt-docalign.smk"
 	include: "bleualign.smk"
-	OUTPUT = rules.bleualign_all.input
+	include: "cleaning.smk"
+	OUTPUT = rules.cleaning_all.input
 
 rule all:
 	input: OUTPUT

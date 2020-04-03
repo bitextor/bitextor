@@ -127,7 +127,7 @@ def validate_args(config):
 		schema['heritrixPath']['required'] = True
 	if 'documentAligner' not in config or config['documentAligner'] == 'DIC':
 		schema['dic']['required'] = True
-		schema['documentAligner']['dependencies'] = {'preprocessor': ['warc2preprcess', '']},
+		schema['documentAligner']['dependencies'] = frozenset({'preprocessor': ['warc2preprcess', '']}),
 	if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
 		schema['lang1']['required'] = True
 		schema['lang2']['required'] = True
@@ -137,7 +137,7 @@ def validate_args(config):
 		schema['langs']['required'] = True
 	
 	if 'sentenceAligner' in config and config['sentenceAligner'] == 'bleualign':
-		schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
+		schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
 
 	v = Validator(schema)
 	b = v.validate(config)

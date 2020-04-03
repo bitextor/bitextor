@@ -12,9 +12,10 @@ ELRC = False
 ELRC_FIELDS = []
 TMX = False
 DEDUPED = False
-FILES = ["sent", "raw"]
+# TODO: add rawCorpus option to generate lang1-lang2.raw.xz ((what is it supposed to be?))
+FILES = ["sent"]
 
-if 'deferredCrawling' in crawling and crawling['deferredCrawling']:
+if 'deferredCrawling' in config and config['deferredCrawling']:
 	DEFERRED = True
 	DEFERRED_FIELDS = ['deferredseg1','checksum1','deferredseg2','checksum2']
 if 'bifixer' in config and config['bifixer']:
@@ -58,7 +59,7 @@ BEFORE_ELRC_FIELDS = ','.join(BEFORE_ELRC_FIELDS)
 TMX_FIELDS = ','.join(TMX_FIELDS)
 
 rule cleaning_all:
-	input: expand("{permanent}/{target}/{lang1}-{lang2}.{file}.xz", permanent=PERMANENT, target=TARGETS, file=FILES) 
+	input: expand("{permanent}/{lang1}-{lang2}.{file}.xz", permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, file=FILES) 
 
 # TODO: add deferred
 rule bifixer:
@@ -115,7 +116,7 @@ rule elrc:
 sents_input = rules.elrc.output
 if not ELRC:
 	sents_input = rules.elrc.input
-sents_input_filename = sents_input.split('/')[-1] # 'segaligz.xz'/'bifixer'/'bicleaner'/'elrc'
+sents_input_filename = sents_input[0].split('/')[-1] # 'segaligz.xz'/'bifixer'/'bicleaner'/'elrc'
 
 rule sents:
 	input: expand("{transient}/{target}/{filename}", transient=TRANSIENT, target=TARGETS, filename=sents_input_filename)
