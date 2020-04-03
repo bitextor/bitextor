@@ -60,19 +60,24 @@ rule bifixer:
 			> {output}
 		'''
 
+bicleaner_input = rules.bifixer.output
+if not BIFIXER:
+	bicleaner_input = rules.bifixer.input
+
 rule bicleaner:
-	input: bifixer=rules.bifixer.output, model=BICLEANER_MODEL
+	input: bifixer=bicleaner_input, model=BICLEANER_MODEL
 	output: temp(f'{TRANSIENT}/{{target}}/bicleaner')
 	shell: '''
+		CAT=cat; if [[ {input.bifixer} == *.xz ]]; then CAT=xzcat; fi
 		slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
 		if [ "$slang" == "{LANG1}" ]; then
-	 		cat {input.bifixer} \
+	 		$CAT {input.bifixer} \
 				| {BITEXTOR}/preprocess/bin/cache -k {BIFIXER_HASH_COLUMN} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {params.model} \
 				| paste <(cat {input.bifixer}) - \
 				| python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
 				> {output}
 		else
-			cat {input.bifixer} \
+			$CAT {input.bifixer} \
 				| awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
 				| {BITEXTOR}/preprocess/bin/cache -k {BIFIXER_HASH_COLUMN} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {params.model} \
 				| paste <(cat {input.bifixer}) - \
@@ -81,16 +86,29 @@ rule bicleaner:
 		fi
 		'''
 
+elrc_input = rules.bicleaner.output
+if not BICLEANER:
+	elrc_input = rules.bicleaner.input
+
 rule elrc:
 		input: elrc_input
 		output: temp(f'{TRANSIENT}/{{target}}/elrc')
 		shell: '''
-			if [ "{ELRC} == cat {input} \
+			CAT=cat; if [[ {input} == *.xz ]]; then CAT=xzcat; fi
+			$CAT {input} \
 				| {BITEXTOR}/bitextor/elrc/filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
 				| xz -T 0 > {output}
 			'''
 
+sents_input = rules.elrc.output
+if not ELRC:
+		sents_input = rules.elrc.input
+sents_input_filename = sents_input.split('/')[-1] # 'segaligz.xz'/'bifixer'/'bicleaner'/'elrc'
+
 rule sents:
-		input: expand("{transient}/{target}/elrc", transient=TRANSIENT, target=TARGETS)
+		input: expand("{transient}/{target}/{filename}", transient=TRANSIENT, target=TARGETS, filename=sents_input_filename)
 		output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.xz'
-		shell: 'cat {input} | xz -T 0 -c > {output}'
+		shell: '''
+			CAT=cat; if [[ {input[0]} == *.xz ]]; then CAT=xzcat; fi
+			$CAT {input} | xz -T 0 -c > {output}
+			'''
