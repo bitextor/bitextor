@@ -24,6 +24,12 @@ struct Line {
 	size_t n;
 };
 
+struct DocumentPair {
+	float score;
+	size_t in_idx;
+	size_t en_idx;
+};
+
 /**
  * Utility to start N threads executing fun. Returns a vector with those thread objects.
  */
@@ -99,7 +105,7 @@ int main(int argc, char *argv[])
 
 	bool verbose = false;
 
-	bool best_only = true;
+	bool print_all = false;
 	
 	po::positional_options_description arg_desc;
 	arg_desc.add("translated-tokens", 1);
@@ -114,7 +120,7 @@ int main(int argc, char *argv[])
 		("threshold", po::value<float>(&threshold), "set score threshold (default: 0.1)")
 		("min_count", po::value<size_t>(&min_ngram_cnt), "minimal number of documents an ngram can appear in to be included in DF (default: 2)")
 		("max_count", po::value<size_t>(&max_ngram_cnt), "maximum number of documents for ngram to to appear in (default: 1000)")
-		("best", po::value<bool>(&best_only), "only output the best match for each document (default: on)")
+		("all", po::bool_switch(&print_all), "print all scores, not only the best pairs")
 		("verbose,v", po::bool_switch(&verbose), "show additional output");
 	
 	po::options_description hidden_desc("Hidden options");
@@ -281,36 +287,18 @@ int main(int argc, char *argv[])
 		}));
 
 		// Function used to report the score. Implementation depends on whether
-		// we are doing best_only or not. Mutex is necessary for both cases,
+		// we are doing print_all or not. Mutex is necessary for both cases,
 		// either for writing to top_scores or for printing to stdout.
 		function<void (float, DocumentRef const &, DocumentRef const &)> mark_score;
 		mutex mark_score_mutex;
 
-		// Top scores vector is only filled in best_only case. Otherwise we just
-		// write directly to stdout.
-		vector<pair<float,size_t>> top_scores;
+		// Scores for all pairs (that meet the threshold). Only used with 
+		vector<DocumentPair> scored_pairs;
 
-		if (best_only) {
-			top_scores.resize(in_document_cnt);
-			mark_score = [&top_scores, &mark_score_mutex] (float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
-				// Is there already a better scoring document? That one wins.
-				if (score <= top_scores[in_ref.id - 1].first)
-					return;
-
-				// Is there an equally well scoring document, but does if have a lower id? That one still wins.
-				if (score == top_scores[in_ref.id - 1].first && top_scores[in_ref.id - 1].second < en_ref.id)
-					return;
-
+		if (!print_all) {
+			mark_score = [&scored_pairs, &mark_score_mutex] (float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
 				unique_lock<mutex> lock(mark_score_mutex);
-				// Lock acquired, but check again, things might have changed in the mean time.
-
-				// If we're better, overwrite in every case.
-				if (score > top_scores[in_ref.id - 1].first)
-					top_scores[in_ref.id - 1] = pair<float, size_t>(score, en_ref.id);
-
-				// If we're equally good, only overwrite if we have a lower document id
-				else if (score == top_scores[in_ref.id - 1].first && en_ref.id < top_scores[in_ref.id - 1].second)
-					top_scores[in_ref.id - 1].second = en_ref.id;
+				scored_pairs.push_back({score, in_ref.id, en_ref.id});
 			};
 		} else {
 			mark_score = [&mark_score_mutex](float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
@@ -344,10 +332,42 @@ int main(int argc, char *argv[])
 		stop(read_queue, read_workers);
 		stop(score_queue, score_workers);
 
-		if (best_only) {
-			for (size_t i = 0; i < top_scores.size(); ++i)
-				if (top_scores[i].first >= threshold) // top-scores has entries for all
-					print_score(top_scores[i].first, i + 1, top_scores[i].second);
+		if (!print_all) {
+			// Sort scores, best on top. Also sort on other properties to make
+			// it a consistent order, c.f. not depending on the processing order.
+			sort(scored_pairs.begin(), scored_pairs.end(), [](DocumentPair const &a, DocumentPair const &b) {
+				if (a.score != b.score)
+					return a.score > b.score;
+
+				if (a.in_idx != b.in_idx)
+					return a.in_idx > b.in_idx;
+
+				return a.en_idx > b.en_idx;
+			});
+
+			// Keep track of which documents have already been assigned
+			vector<bool> in_seen(in_document_cnt);
+			vector<bool> en_seen(en_document_cnt);
+
+			// Also keep a quick tally on whether we've printed scores for
+			// every document, so we don't keep searching while in_seen or
+			// en_seen is completely filled.
+			size_t cnt = 0;
+			size_t document_cnt = min(in_document_cnt, en_document_cnt);
+
+			// For each pair (with score, sorted from good to bad)
+			for (DocumentPair const &pair : scored_pairs) {
+				// If either of the documents has already been printed, skip it.
+				if (in_seen[pair.in_idx - 1] || en_seen[pair.en_idx - 1])
+					continue;
+
+				print_score(pair.score, pair.in_idx, pair.en_idx);
+				in_seen[pair.in_idx - 1] = true;
+				en_seen[pair.en_idx - 1] = true;
+
+				if (++cnt == document_cnt)
+					break;
+			}
 		}
 
 		if (verbose)
