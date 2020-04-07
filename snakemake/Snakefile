@@ -1566,7 +1566,7 @@ rule docalign_matches:
     output:
         "{transient}/{{target}}/{l1}-{l2}.{{mttype}}.matches".format(transient=transient, l1=LANG1,l2=LANG2)
     shell:
-        "{PROFILING} python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL}"
+        "{PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} {DOCALIGNPARALLEL} > {output}"
 
 #================================== SEGMENT ALIGNMENT ==================================#
 

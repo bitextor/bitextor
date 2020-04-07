@@ -25,6 +25,12 @@ config.log
 config.status
 config.sub
 configure
+document-aligner/CMakeCache.txt
+document-aligner/CMakeFiles/
+document-aligner/bin/
+document-aligner/cmake_install.cmake
+document-aligner/preprocess-bin/
+document-aligner/CTestTestfile.cmake
 install-sh
 missing
 model/Makefile
