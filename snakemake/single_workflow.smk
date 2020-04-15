@@ -276,7 +276,9 @@ elif ONLY_PREPROCESS:
     # OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
-    OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
+    # OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise.fr_en')
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise.en')
 
 shell.prefix("set -euo pipefail;")
 rule all:
@@ -404,7 +406,7 @@ checkpoint shard:
     output: f'{DATADIR}/preprocess/02.batches.{{lang}}' # list of batches created for lang
     params:
         n = 2,
-        b = 128,
+        b = 512,
         o = f'{DATADIR}/preprocess/shards/{{lang}}'
     shell: '''
         IFS=" " read -a input <<< "{input}"
@@ -414,9 +416,9 @@ checkpoint shard:
         '''
 
 # obtain list of batches for lang
-def get_batches(wildcards):
+def get_batches(lang):
     batches = []
-    with checkpoints.shard.get(**wildcards).output[0].open() as f:
+    with checkpoints.shard.get(lang=lang).output[0].open() as f:
         for line in f:
             batches.append(line.strip())
     return batches
@@ -436,70 +438,73 @@ rule split:
         '''
 
 rule aggregate_split:
-    input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards)]
+    input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards.lang)]
     output: f'{DATADIR}/preprocess/03.split.{{lang}}'
-    shell: "echo "{input}" | tr ' ' '\n' > {output}"
+    shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 #################################################################
 ### DOCALIGN ####################################################
 # MT ############################################################
-rule sentences2extracted:
-    input: f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz'
-    output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.extracted.xz')
-    params: docalign_folder = f'{TRANSIENT}/{{target}}/docalign'
-    shell: '''
-        mkdir -p {params.docalign_folder}
-        zcat {input} | {BITEXTOR}/document-aligner/utils/extract_lett.py | xz -T 0 -c > {output}
-        '''
-
 rule custom_translate:
     input:
-        source = rules.sentences2extracted.output,
-        target = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz'
-    output: temp(f'{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.xz')
+        source=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/sentences.gz'
+        # target=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}/sentences.gz
+    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/sentences_{LANG2}.gz' # TODO: put this in transient?
     shell: '''
-        xzcat -T 0 -f {input.source} \
-            | cut -f 2 \
-            | {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
-            | paste <(xzcat -T 0 -f {input.source} | cut -f 1) - \
-            | xz -c -T 0 -f > {output}
+        zcat {input.source} \
+            | ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
+            | gzip -c > {output}
+        n_before=$(zcat {input.source} | wc -l)
+        n_after=$(zcat {output} | wc -l)
+        echo "Check count $n_before -> $n_after for {LANG1}/{wildcards.shard}/{wildcards.batch}"
+        '''
+        # TODO: exit if counts are different?
+
+rule aggregate_translate:
+    input: lambda wildcards: [f'{batch}/sentences_{LANG2}.gz' for batch in get_batches(LANG2)]
+    output: f'{TRANSIENT}/04.translate.{LANG2}'
+    shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
+
+rule tokenise_translated:
+    input: rules.custom_translate.output
+    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/tokenised_{LANG2}.gz' # TODO: put this in transient?
+        # temp(f"{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
+    params:
+        tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, LANG2),
+        lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, LANG2)
+    shell: '''
+        {BITEXTOR}/bitextor-tokenize.py --text {input} \
+                --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
+                --langcode {LANG2} \
+                | gzip -c > {output}
         '''
 
-rule tokenize_translated:
-    input: rules.custom_translate.output
-    output: temp(f"{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
+rule tokenise_source:
+    input: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}}/sentences.gz'
+    output: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}}/tokenised.gz'
+    params:
+        tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, LANG2),
+        lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, LANG2)
     shell: '''
-        if [ -z "{MORPHTOK2}" ]; then
-            xzcat -T 0 -f {input} \
-                | cut -f 2 \
-                | {WORDTOK2} \
-                | awk '{{print tolower($0)}}' \
-                | paste <(xzcat -T 0 -f {input} | cut -f 1) - \
-                | xz -T 0 -c -f > {output}
-        else
-            xzcat -T 0 -f {input} \
-                | cut -f 2 \
-                | {WORDTOK2} \
-                | {MORPHTOK2} \
-                | awk '{{print tolower($0)}}' \
-                | paste <(xzcat -T 0 -f {input} \
-                | cut -f 1) - \
-                | xz -T 0 -f > {output}
+        {BITEXTOR}/bitextor-tokenize.py --text {input} \
+                --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
+                --langcode {LANG2} \
+                | gzip -c > {output}
         '''
 
-rule translated2base64:
-    input: rules.custom_translate.output
-    output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.translated_sentences.xz'
-    shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
+rule aggregate_tokenise_translated:
+    input: lambda wildcards: [f'{batch}/tokenised_{LANG2}.gz' for batch in get_batches(LANG1)]
+    output: f'{TRANSIENT}/05.tokenise.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-rule translated_tokenized2base64:
-    input: rules.tokenize_translated.output
-    output: f'{TRANSIENT}/{{target}}/docalign/{LANG1}.translated_tokenized.xz'
-    shell: "xzcat -T 0 -f {input} | {BITEXTOR}/document-aligner/utils/extracted2base64.py | xz -T 0 -c > {output}"
+rule aggregate_tokenise_target:
+    input: lambda wildcards: [f'{batch}/tokenised.gz' for batch in get_batches(LANG2)]
+    output: f'{TRANSIENT}/05.tokenise.{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 rule mt_matches:
     input:
-        l1=rules.tokenize_translated.output,
+        l1=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_tokenized.gz',
         l2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
     output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.matches'
     shell: "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output-matches {output} --threshold {DOC_THRESHOLD}"
@@ -515,7 +520,7 @@ rule bleualign:
         plain2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz',
         url1=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
         url2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
-        translated1=rules.translated2base64.output
+        # translated1=rules.translated2base64.output
     output:
         f'{TRANSIENT}/{{target}}/segalign.xz'
     threads: 2

@@ -57,6 +57,7 @@ oparser.add_argument('--langcode', dest='langcode', default="en", help="Language
 options = oparser.parse_args()
 
 tokenizer = options.tokenizer
+tokenizer_func = None
 
 # no custom tokenizer is provided, use moses (internally uses tool wrapper)
 if not tokenizer:
@@ -71,8 +72,8 @@ lemmatizer = options.lemmatizer
 if lemmatizer:
     lemmatizer = ExternalTextProcessor(os.path.expanduser(lemmatizer).split())
 
-with open_xz_or_gzip_or_plain(options.text) as reader, \
+with open_xz_or_gzip_or_plain(options.text) as reader:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-        tokenized = tokenize(content, tokenizer, lemmatizer).lower()
-        print(base64.b64encode(tokenized.encode("utf-8")))
+        tokenized = tokenizer_func(content, tokenizer, lemmatizer).lower()
+        print(base64.b64encode(tokenized.encode("utf-8")).decode("utf-8"))

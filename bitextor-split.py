@@ -27,8 +27,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 from utils.common import ExternalTextProcessor
 
-def split_external(text, externalSplitter, prune_type="words", prune_threshold=0):
-    segment = externalSplitter.process(content).strip().split("\n")
+def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
+    segment = external_splitter.process(content).strip().split("\n")
     # prune long sentences
     if prune_threshold and prune_type == "words":
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
@@ -43,8 +43,8 @@ def split_external(text, externalSplitter, prune_type="words", prune_threshold=0
         segmented_text = ""
     return segmented_text
 
-def split_moses(text, mosesSplitter, prune_type="words", prune_threshold=0):
-    segments = sent_tokeniser.split(content)
+def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
+    segments = moses_splitter.split(content)
 
     # prune long sentences
     if prune_threshold and prune_type == "words":
@@ -75,9 +75,10 @@ oparser.add_argument("--prune-type", dest="prune_type", choices={"words", "chars
 options = oparser.parse_args()
 
 splitter = options.splitter
+splitter_func = None
 # no sentence splitter command provided, use moses:
 if not splitter:
-    spliiter_func = split_moses  
+    splitter_func = split_moses  
     try:
         if options.customnbp:
             splitter = SentenceSplitter(language=options.langcode, non_breaking_prefix_file=options.customnbp)
@@ -89,11 +90,11 @@ if not splitter:
 
 # use custom sentence splitter via ExternalTextProcessor (inefficient):
 else:
-    spliter_func = split_external
+    splitter_func = split_external
     splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
-with open_xz_or_gzip_or_plain(options.text) as reader, \
+with open_xz_or_gzip_or_plain(options.text) as reader:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-        sentences = split_func(content, splitter, options.prune_type, options.prune_threshold)
-        print(base64.b64encode(sentences.encode("utf-8")))
+        sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
+        print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
