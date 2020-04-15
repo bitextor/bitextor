@@ -274,11 +274,11 @@ if ONLY_CRAWL:
             OUTPUT.append('{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
 elif ONLY_PREPROCESS:
     # OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
-    OUTPUT = expand('{datadir}/preprocess/02.{lang}', datadir=DATADIR, lang=LANGS)
+    OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
 
-
+shell.prefix("set -euo pipefail;")
 rule all:
     input: OUTPUT
 
@@ -401,7 +401,7 @@ rule giawarc:
 checkpoint shard:
     # use url.gz as input to avoid having directories as input
     input: expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
-    output: f'{DATADIR}/preprocess/01.{{lang}}' # list of batches created for lang
+    output: f'{DATADIR}/preprocess/02.batches.{{lang}}' # list of batches created for lang
     params:
         n = 2,
         b = 128,
@@ -413,7 +413,7 @@ checkpoint shard:
         ls -d {params.o}/*/* > {output}
         '''
 
-# obtain list of batches
+# obtain list of batches for lang
 def get_batches(wildcards):
     batches = []
     with checkpoints.shard.get(**wildcards).output[0].open() as f:
@@ -421,26 +421,24 @@ def get_batches(wildcards):
             batches.append(line.strip())
     return batches
 
-rule tokenise:
+rule split:
     input: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
     params:
         splitter = lambda wildcards: get_lang_or_default(SENTTOKS, wildcards.lang),
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
-        tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, wildcards.lang),
-        lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, wildcards.lang),
-    output:
-        tok = f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_tokenized.gz',
-        sent = f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_sentences.gz'
+    output: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     shell: '''
-        {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE}
+        {BITEXTOR}/bitextor-split.py --text {input} \
+                --sentence-splitter "{params.splitter}" \
+                --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
+                {PRUNE_THRESHOLD} {PRUNE_TYPE} \
+                | gzip -c > {output}
         '''
 
-rule aggregate_tokenise:
-    input: lambda wildcards: [f'{batch}/plain_sentences.gz' for batch in get_batches(wildcards)]
-    output: f'{DATADIR}/preprocess/02.{{lang}}'
-    shell: '''
-        echo "{input}" | tr ' ' '\n' > {output}
-    '''
+rule aggregate_split:
+    input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards)]
+    output: f'{DATADIR}/preprocess/03.split.{{lang}}'
+    shell: "echo "{input}" | tr ' ' '\n' > {output}"
 
 #################################################################
 ### DOCALIGN ####################################################
