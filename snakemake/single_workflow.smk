@@ -249,7 +249,7 @@ HOSTS = set()
 WARCS = set()
 
 if "warcs" in config:
-    WARCS.union(config["warcs"])
+    WARCS = WARCS.union(config["warcs"])
 
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
@@ -273,7 +273,8 @@ if ONLY_CRAWL:
         for host in hosts:
             OUTPUT.append('{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
 elif ONLY_PREPROCESS:
-    OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
+    # OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
+    OUTPUT = expand('{datadir}/preprocess/02.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
 
@@ -360,23 +361,23 @@ for pproc_file in PPROC_FILES:
     for lang in LANGS:
         pproc_output[f"{lang}_{name}"] = f"{DATADIR}/preprocess/{{target}}/{PPROC}/{lang}/{pproc_file}"
 
-rule warc2preprocess:
-    input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
-    output: **pproc_output
-    threads: 2
-    params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
-    shell: '''
-        mkdir -p {params.folder}
-        cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {PARSER} --output-dir {params.folder}
-        for lang in {LANGS}; do
-            if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
-                mkdir -p {params.folder}/$lang
-                touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-            fi
-        done
-    '''
+# rule warc2preprocess:
+#     input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
+#     output: **pproc_output
+#     threads: 2
+#     params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
+#     shell: '''
+#         mkdir -p {params.folder}
+#         cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {PARSER} --output-dir {params.folder}
+#         for lang in {LANGS}; do
+#             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
+#                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+#                 mkdir -p {params.folder}/$lang
+#                 touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+#                 gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+#             fi
+#         done
+#     '''
 
 rule giawarc:
     input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
@@ -396,39 +397,51 @@ rule giawarc:
         done
     '''
 
-# rule shard:
-#     # use url.gz as input to avoid having directories as input
-#     input: expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
-#     output: expand("{datadir}/preprocess/shards/{{lang}}/{shards}/{batch}/{pproc_file}", datadir=DATADIR, shard=SHARDS, batch=BATCHES, pproc_file=PPROC_FILES)
-#     # TODO: defined SHARDS and BATCHES as function of params.n and params.b
-#     # definig SHARDS is easy, but what to do with BATCHES?
-#     params:
-#         n = 8,
-#         b = 1024,
-#         o = f'{DATADIR}/preprocess/shards/{wildcards.lang}'
-#     shell: '''
-#         IFS=" " read -a input <<< "{input}"
-#         giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
-#         '''
+# DAG will be re-evaluated after completing shard rule (because number of batches is dynamic and unknown)
+checkpoint shard:
+    # use url.gz as input to avoid having directories as input
+    input: expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
+    output: f'{DATADIR}/preprocess/01.{{lang}}' # list of batches created for lang
+    params:
+        n = 2,
+        b = 128,
+        o = f'{DATADIR}/preprocess/shards/{{lang}}'
+    shell: '''
+        IFS=" " read -a input <<< "{input}"
+        ulimit -n 2048
+        giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
+        ls -d {params.o}/*/* > {output}
+        '''
 
-# pproc_rule = rules.warc2preprocess
-# if PPROC == "giawarc":
-#     pproc_rule = rules.giawarc
+# obtain list of batches
+def get_batches(wildcards):
+    batches = []
+    with checkpoints.shard.get(**wildcards).output[0].open() as f:
+        for line in f:
+            batches.append(line.strip())
+    return batches
 
 rule tokenise:
-    input: f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_text.gz'
-    # input: lambda wildcards: pproc_rule.output[f"{wildcards.lang}_plain_text"]
+    input: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
     params:
         splitter = lambda wildcards: get_lang_or_default(SENTTOKS, wildcards.lang),
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, wildcards.lang),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, wildcards.lang),
     output:
-        tok = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_tokenized.gz',
-        sent = f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/plain_sentences.gz'
+        tok = f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_tokenized.gz',
+        sent = f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_sentences.gz'
     shell: '''
         {BITEXTOR}/bitextor-tokenize.py --text {input} --sentence-splitter "{params.splitter}" --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" --sentences-output {output.sent} --tokenized-output {output.tok} {PRUNE_THRESHOLD} {PRUNE_TYPE}
         '''
+
+rule aggregate_tokenise:
+    input: lambda wildcards: [f'{batch}/plain_sentences.gz' for batch in get_batches(wildcards)]
+    output: f'{DATADIR}/preprocess/02.{{lang}}'
+    shell: '''
+        echo "{input}" | tr ' ' '\n' > {output}
+    '''
+
 #################################################################
 ### DOCALIGN ####################################################
 # MT ############################################################
