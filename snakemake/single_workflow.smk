@@ -503,14 +503,13 @@ rule aggregate_tokenise_target:
     output: f'{TRANSIENT}/05.tokenise.{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-# TODO: subsitute python docalign by c++
 rule mt_matches:
     input:
         l1=rules.tokenise_translated.output,
         l2=rules.tokenise_target.output
     output: f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{{shard}}.{{src_batch}}_{{trg_batch}}'
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}.matches'
-    shell: "mkdir -p {params.folder}; python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} > {output}"
 
 # TODO: allow organizing jobs in groups, so that each docalign may work in parallel 
 def get_docalign_inputs(src_lang, trg_lang):
