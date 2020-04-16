@@ -26,6 +26,8 @@ compile-truecaser:
 compile-bleualign:
 	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release -DPREPROCESS_PATH=preprocess/ . && make
 
+compile-document-aligner:
+	cd document-aligner && cmake DBUILD_TESTING=OFF . && make
 compile-clustercat:
 	cd clustercat && make 
 
@@ -35,6 +37,7 @@ install-smttools:
 	touch $(prefix)/bin/__init__.py
 	cp -R preprocess/moses $(prefix)/share/moses
 	cp preprocess/bin/truecase $(prefix)/bin/.
+	cp document-aligner/bin/* $(prefix)/bin/.
 
 install-standoff:
 	cp standoff/deferred-document.py $(prefix)/bin/deferred-document
@@ -50,7 +53,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign install-standoff
 
-bitextor: compile-clustercat compile-bleualign compile-smttools compile-hunalign compile-truecaser
+bitextor: compile-clustercat compile-bleualign compile-smttools compile-document-aligner compile-hunalign compile-truecaser
 
 nltk_data:
 	python3 install_nltk_data.py
