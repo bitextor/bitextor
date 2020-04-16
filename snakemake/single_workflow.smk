@@ -111,6 +111,14 @@ if "preprocessor" in config and config["preprocessor"] == "giawarc":
     PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
     if "giawarc_executable" in config:
         GIAWARC = config["giawarc_executable"]
+
+SHARDS = 8
+BATCHES = 100
+if "shards" in config:
+    SHARDS = config["shards"]
+if "batches" in config:
+    BATCHES = config["batches"]
+
 CLEANHTML = ""
 FTFY = ""
 LANGID = "cld2"
@@ -164,11 +172,6 @@ MT_COMMAND = config['alignerCmd']
 DOC_THRESHOLD = 0.1
 if "documentAlignerThreshold" in config:
     DOC_THRESHOLD = config["documentAlignerThreshold"]
-
-WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
-MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
-if WORDTOK2 == "":
-    get_default_tokeniser(BITEXTOR, LANG2)
 # dic
 # TODO
 #################################################################
@@ -277,8 +280,7 @@ elif ONLY_PREPROCESS:
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     # OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise.fr_en')
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise.en')
+    OUTPUT.append(f'{TRANSIENT}/06.docalign.fr_en')
 
 shell.prefix("set -euo pipefail;")
 rule all:
@@ -405,8 +407,8 @@ checkpoint shard:
     input: expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
     output: f'{DATADIR}/preprocess/02.batches.{{lang}}' # list of batches created for lang
     params:
-        n = 2,
-        b = 512,
+        n = SHARDS,
+        b = BATCHES,
         o = f'{DATADIR}/preprocess/shards/{{lang}}'
     shell: '''
         IFS=" " read -a input <<< "{input}"
@@ -504,10 +506,25 @@ rule aggregate_tokenise_target:
 
 rule mt_matches:
     input:
-        l1=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_tokenized.gz',
-        l2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_tokenized.gz'
-    output: f'{TRANSIENT}/{{target}}/{LANG1}-{LANG2}.matches'
-    shell: "python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output-matches {output} --threshold {DOC_THRESHOLD}"
+        l1=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/tokenised_{LANG2}.gz',
+        l2=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/tokenised.gz'
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{{shard}}.{{src_batch}}_{{trg_batch}}'
+    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}.matches'
+    shell: "mkdir -p {params.folder}; python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
+
+def get_docalign_inputs(src_lang, trg_lang):
+    src_batches = get_batches(src_lang)
+    trg_batches = get_batches(trg_lang)
+    # each input -> (shard, (src_batch, trg_batch))
+    inputs = get_mt_docalign_inputs(src_batches, trg_batches)
+    matches = [f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{shard}.{src_batch}_{trg_batch}' for (shard, (src_batch, trg_batch)) in inputs]
+    return matches
+
+rule aggregate_matches:
+    input: lambda wildcards: get_docalign_inputs(LANG1, LANG2)
+    output: f'{TRANSIENT}/06.docalign.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+
 # DIC ###########################################################
 # TODO
 #################################################################

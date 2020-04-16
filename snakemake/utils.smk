@@ -1,6 +1,7 @@
 import tldextract
 import sys
 import os
+from itertools import product
 from cerberus import Validator
 
 
@@ -29,9 +30,6 @@ def parent_folder_2_warcs(warcs):
     return f2w
 
 
-def get_default_tokeniser(bitextor, language):
-    return f'{bitextor}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {language}'
-
 def get_lang_or_default(scripts_dict, language):
     cmd = ""
     if language in scripts_dict:
@@ -45,13 +43,20 @@ def get_customnbp(nbp_dict, language):
     nbp = ""
     if language in nbp_dict:
         nbp = nbp_dict[language]
-    
     return nbp
+
+
+def get_mt_docalign_inputs(src_batches, trg_batches):
+    # product( [[shard, batch], [shard, batch], ...], [[shard, batch], [shard, batch], ...] )
+    iterator = product( [batch.split('/')[-2:] for batch in src_batches], [batch.split('/')[-2:] for batch in trg_batches] )
+    # each item -> (shard, (src_batch, trg_batch))
+    return [(src_shard, (src_batch, trg_batch)) for ((src_shard, src_batch), (trg_shard, trg_batch)) in iterator if src_shard == trg_shard]
 
 
 def isfile(field, value, error):
     if not os.path.isfile(value):
         error(field, f'{value} does not exist')
+
 
 def validate_args(config):
     schema = {
@@ -89,7 +94,8 @@ def validate_args(config):
             # preprocessing
             'langs': {'type': 'list'},
             'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
-            'giawarc_executable': {'type': 'string', 'dependencies': {'preprocessor': 'giawarc'}}, # TODO: check that is exists, and is executable
+            'shards': {'type': 'integer'},
+            'batches': {'type': 'integer'},
             'cleanHTML': {'type': 'boolean'},
             'ftfy': {'type': 'boolean'},
             'PDFextract': {'type': 'boolean'},
