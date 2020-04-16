@@ -114,8 +114,8 @@ def validate_args(config):
             'lang2': {'type': 'string'},
             'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
             # mt
-            'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
-            # TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
+            'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}}, # TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
+            'documentAlignerWorkers': {'type': 'integer'}, # 0 meaning all
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
             'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not

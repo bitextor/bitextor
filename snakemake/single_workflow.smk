@@ -170,6 +170,14 @@ if 'documentAligner' in config:
 # mt
 MT_COMMAND = config['alignerCmd']
 DOC_THRESHOLD = 0.1
+DOCALIGN_THREADS = 1 
+DOCALIGN_THREADS_OPT = ""
+if "documentAlignerWorkers" in config:
+    DOCALIGN_THREADS = config['documentAlignerWorkers']
+if DOCALIGN_THREADS == 0:
+    DOCALIGN_THREADS_OPT = "" # default for c++ docalign is use all threads
+else:
+    DOCALIGN_THREADS_OPT = f'-j {DOCALIGN_THREADS}'
 if "documentAlignerThreshold" in config:
     DOC_THRESHOLD = config["documentAlignerThreshold"]
 # dic
@@ -509,7 +517,8 @@ rule mt_matches:
         l2=rules.tokenise_target.output
     output: f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{{shard}}.{{src_batch}}_{{trg_batch}}'
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}.matches'
-    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} > {output}"
+    threads: DOCALIGN_THREADS
+    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} {DOCALIGN_THREADS_OPT} > {output}"
 
 # TODO: allow organizing jobs in groups, so that each docalign may work in parallel 
 def get_docalign_inputs(src_lang, trg_lang):
