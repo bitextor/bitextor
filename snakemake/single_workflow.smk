@@ -449,16 +449,15 @@ rule aggregate_split:
 # MT ############################################################
 rule custom_translate:
     input:
-        source=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/sentences.gz'
-        # target=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}/sentences.gz
-    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/sentences_{LANG2}.gz' # TODO: put this in transient?
+        source=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/sentences.gz'
+    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/sentences_{LANG2}.gz' # TODO: put this in transient?
     shell: '''
         zcat {input.source} \
             | ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
             | gzip -c > {output}
         n_before=$(zcat {input.source} | wc -l)
         n_after=$(zcat {output} | wc -l)
-        echo "Check count $n_before -> $n_after for {LANG1}/{wildcards.shard}/{wildcards.batch}"
+        echo "Check count $n_before -> $n_after for {LANG1}/{wildcards.shard}/{wildcards.src_batch}"
         '''
         # TODO: exit if counts are different?
 
@@ -469,7 +468,7 @@ rule aggregate_translate:
 
 rule tokenise_translated:
     input: rules.custom_translate.output
-    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{batch}}/tokenised_{LANG2}.gz' # TODO: put this in transient?
+    output: f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/tokenised_{LANG2}.gz' # TODO: put this in transient?
         # temp(f"{TRANSIENT}/{{target}}/docalign/{LANG1}.customMT.extracted.translated.tokenized")
     params:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, LANG2),
@@ -481,9 +480,9 @@ rule tokenise_translated:
                 | gzip -c > {output}
         '''
 
-rule tokenise_source:
-    input: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}}/sentences.gz'
-    output: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{batch}}/tokenised.gz'
+rule tokenise_target:
+    input: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/sentences.gz'
+    output: f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/tokenised.gz'
     params:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, LANG2),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, LANG2)
@@ -504,14 +503,16 @@ rule aggregate_tokenise_target:
     output: f'{TRANSIENT}/05.tokenise.{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
+# TODO: subsitute python docalign by c++
 rule mt_matches:
     input:
-        l1=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/tokenised_{LANG2}.gz',
-        l2=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/tokenised.gz'
+        l1=rules.tokenise_translated.output,
+        l2=rules.tokenise_target.output
     output: f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{{shard}}.{{src_batch}}_{{trg_batch}}'
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}.matches'
     shell: "mkdir -p {params.folder}; python3 {BITEXTOR}/document-aligner/compute_matches.py --lang1 {input.l1} --lang2 {input.l2} --output_matches {output} --threshold {DOC_THRESHOLD}"
 
+# TODO: allow organizing jobs in groups, so that each docalign may work in parallel 
 def get_docalign_inputs(src_lang, trg_lang):
     src_batches = get_batches(src_lang)
     trg_batches = get_batches(trg_lang)
