@@ -58,6 +58,16 @@ def isfile(field, value, error):
         error(field, f'{value} does not exist')
 
 
+def ispositive(field, value, error):
+    if value <= 0:
+        error(field, f'{value} should be greater than zero')
+
+
+def ispositiveorzero(field, value, error):
+    if value < 0:
+        error(field, f'{value} should be greater than or equal to zero')    
+
+
 def validate_args(config):
     schema = {
             # required parameters
@@ -94,8 +104,8 @@ def validate_args(config):
             # preprocessing
             'langs': {'type': 'list'},
             'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
-            'shards': {'type': 'integer'},
-            'batches': {'type': 'integer'},
+            'shards': {'type': 'integer', 'check_with': ispositiveorzero},
+            'batches': {'type': 'integer', 'check_with': ispositive},
             'cleanHTML': {'type': 'boolean'},
             'ftfy': {'type': 'boolean'},
             'PDFextract': {'type': 'boolean'},
@@ -107,7 +117,7 @@ def validate_args(config):
             'customNBPs': {'type': 'dict'},
             'workTokenizers': {'type': 'dict'},
             'norphologicalAnalysers': {'type': 'dict'},
-            'pruneThreshold': {'type': 'integer'},
+            'pruneThreshold': {'type': 'integer', 'check_with': ispositive},
             'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
             # document alignment
             'lang1': {'type': 'string'},
@@ -115,12 +125,13 @@ def validate_args(config):
             'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
             # mt
             'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}}, # TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
-            'documentAlignerWorkers': {'type': 'integer'}, # 0 meaning all
+            'documentAlignerWorkers': {'type': 'integer', 'check_with': ispositive}, # positive integer (using 'all' doesn't make sense in snakemake)
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
             'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
             # sentence alignment
             'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign']},
+            'sentenceAlignerWorkers': {'type': 'integer', 'check_with': ispositive},
             'sentenceAlignerThreshold': {'type': 'float'},
             # post processing
             'deferred': {'type': 'boolean'},

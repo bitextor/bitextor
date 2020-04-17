@@ -171,13 +171,8 @@ if 'documentAligner' in config:
 MT_COMMAND = config['alignerCmd']
 DOC_THRESHOLD = 0.1
 DOCALIGN_THREADS = 1 
-DOCALIGN_THREADS_OPT = ""
 if "documentAlignerWorkers" in config:
     DOCALIGN_THREADS = config['documentAlignerWorkers']
-if DOCALIGN_THREADS == 0:
-    DOCALIGN_THREADS_OPT = "" # default for c++ docalign is use all threads
-else:
-    DOCALIGN_THREADS_OPT = f'-j {DOCALIGN_THREADS}'
 if "documentAlignerThreshold" in config:
     DOC_THRESHOLD = config["documentAlignerThreshold"]
 # dic
@@ -187,6 +182,9 @@ if "documentAlignerThreshold" in config:
 SEGALIGN = 'hunalign'
 if "segmentAligner" in config:
     SEGALIGN = config["hunalign"]
+SEGALIGN_THREADS = 1
+if "sentenceAlignerWorkers" in config:
+    SEGALIGN_THREADS = config["sentenceAlignerWorkers"]
 # bleualign
 BLEU_TRESHOLD = 0.1
 if "sentenceAlignerThreshold" in config:
@@ -288,7 +286,7 @@ elif ONLY_PREPROCESS:
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     # OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
-    OUTPUT.append(f'{TRANSIENT}/06.docalign.fr_en')
+    OUTPUT.append(f'{TRANSIENT}/06.1.segalign.fr_en')
 
 shell.prefix("set -euo pipefail;")
 rule all:
@@ -444,7 +442,7 @@ rule split:
                 --sentence-splitter "{params.splitter}" \
                 --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
-                | gzip -c > {output}
+            | gzip -c > {output}
         '''
 
 rule aggregate_split:
@@ -454,6 +452,17 @@ rule aggregate_split:
 
 #################################################################
 ### DOCALIGN ####################################################
+def get_align_inputs(src_lang, trg_lang):
+    src_batches = get_batches(src_lang)
+    trg_batches = get_batches(trg_lang)
+    # each input -> (shard, (src_batch, trg_batch))
+    inputs = get_mt_docalign_inputs(src_batches, trg_batches)
+    return inputs
+
+rule aggregate_matches:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/matches/{src_batch}_{trg_batch}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{TRANSIENT}/06.0.docalign.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # MT ############################################################
 rule custom_translate:
     input:
@@ -485,7 +494,7 @@ rule tokenise_translated:
         {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {LANG2} \
-                | gzip -c > {output}
+            | gzip -c > {output}
         '''
 
 rule tokenise_target:
@@ -498,7 +507,7 @@ rule tokenise_target:
         {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {LANG2} \
-                | gzip -c > {output}
+            | gzip -c > {output}
         '''
 
 rule aggregate_tokenise_translated:
@@ -515,48 +524,44 @@ rule mt_matches:
     input:
         l1=rules.tokenise_translated.output,
         l2=rules.tokenise_target.output
-    output: f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{{shard}}.{{src_batch}}_{{trg_batch}}'
-    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}.matches'
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/matches/{{src_batch}}_{{trg_batch}}'
+    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/matches'
     threads: DOCALIGN_THREADS
-    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} {DOCALIGN_THREADS_OPT} > {output}"
-
-# TODO: allow organizing jobs in groups, so that each docalign may work in parallel 
-def get_docalign_inputs(src_lang, trg_lang):
-    src_batches = get_batches(src_lang)
-    trg_batches = get_batches(trg_lang)
-    # each input -> (shard, (src_batch, trg_batch))
-    inputs = get_mt_docalign_inputs(src_batches, trg_batches)
-    matches = [f'{TRANSIENT}/{LANG1}_{LANG2}.matches/{shard}.{src_batch}_{trg_batch}' for (shard, (src_batch, trg_batch)) in inputs]
-    return matches
-
-rule aggregate_matches:
-    input: lambda wildcards: get_docalign_inputs(LANG1, LANG2)
-    output: f'{TRANSIENT}/06.docalign.{LANG1}_{LANG2}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
-
+    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {DOCALIGN_THREADS} > {output}"
 # DIC ###########################################################
 # TODO
 #################################################################
 ### SEGALIGN ####################################################
+rule aggregate_segalign:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/segalign/{src_batch}_{trg_batch}.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{TRANSIENT}/06.1.segalign.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # BLEUALIGN #####################################################
 rule bleualign:
     input:
         indices=rules.mt_matches.output,
-        plain1=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/plain_sentences.gz',
-        plain2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/plain_sentences.gz',
-        url1=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
-        url2=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
-        # translated1=rules.translated2base64.output
+        plain1=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/sentences.gz',
+        plain2=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/sentences.gz',
+        url1=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/url.gz',
+        url2=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/url.gz',
+        translated1=rules.custom_translate.output
+    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/segalign'
     output:
-        f'{TRANSIENT}/{{target}}/segalign.xz'
-    threads: 2
+        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/segalign/{{src_batch}}_{{trg_batch}}.gz'
+    threads: max(SEGALIGN_THREADS, 2) 
     shell: '''
-        cut -f 2,3 {input.indices} | # assuming indices come from mt-docalign
-        LC_ALL=C sort -nk1 | 
-        python3 {BITEXTOR}/bitextor-build-docalign.py --columns1 {input.url1} {input.plain1} {input.translated1} --columns2 {input.url2} {input.plain2} |
-        awk -F '\t' '{{print $2,$6,$3,$7,$4}} OFS='\t' |
-        {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threhsold {BLEU_TRESHOLD} |
-        xz -T 0 -c > {output}
+        mkdir -p {params.folder}
+        parallel_cmd=""
+        if [ {SEGALIGN_THREADS} -gt 1 ]; then
+            parallel_cmd="parallel --gnu --halt 2 --pipe --j {SEGALIGN_THREADS} --line-buffer"
+        fi
+        cat {input.indices} \
+            | {BITEXTOR}/document-aligner/bin/docjoin \
+                -l {input.url1} -r {input.url2} \
+                -l {input.plain1} -r {input.plain2} \
+                -l {input.translated1} \
+            | ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_TRESHOLD} \
+            | gzip -c > {output}
         '''
 # HUNALIGN ######################################################
 # TODO
