@@ -286,7 +286,7 @@ elif ONLY_PREPROCESS:
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     # OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
-    OUTPUT.append(f'{TRANSIENT}/06.1.segalign.fr_en')
+    OUTPUT.append(f'{PERMANENT}/{LANG1}-{LANG2}.sents.gz')
 
 shell.prefix("set -euo pipefail;")
 rule all:
@@ -611,7 +611,7 @@ rule bleualign:
 
 rule bifixer:
     input: rules.bleualign.output
-    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_01.bifixer')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_01.bifixer')
     shell: '''
         zcat {input} \
             | python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
@@ -625,20 +625,20 @@ if not BIFIXER:
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_02.bicleaner')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_02.bicleaner')
     threads: 2
     shell: '''
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
+                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
+                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 > {output}
         fi
@@ -650,7 +650,7 @@ if not BICLEANER:
 
 rule filter:
     input: filter_input
-    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.filtered')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.filtered')
     threads: 2
     shell: '''
         CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
@@ -693,7 +693,7 @@ rule raw:
 
 rule sents:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{sents_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
+    output: f'{PERMANENT}/{LANG1}-{LANG2}.sents.gz'
     shell: '''
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output}
