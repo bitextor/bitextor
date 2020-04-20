@@ -207,8 +207,8 @@ ELRC = False
 ELRC_FIELDS = []
 TMX = False
 DEDUPED = False
-# TODO: add rawCorpus option to generate lang1-lang2.raw.xz ((what is it supposed to be?))
-OUTPUT_FILES = ["sent"]
+# TODO: add rawCorpus option to generate lang1-lang2.raw.gz
+OUTPUT_FILES = ["sent", "raw"]
 
 if 'deferredCrawling' in config and config['deferredCrawling']:
     DEFERRED = True
@@ -460,8 +460,8 @@ def get_align_inputs(src_lang, trg_lang):
     return inputs
 
 rule aggregate_matches:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/matches/{src_batch}_{trg_batch}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
-    output: f'{TRANSIENT}/06.0.docalign.{LANG1}_{LANG2}'
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.06_01.matches' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{TRANSIENT}/06_01.docalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # MT ############################################################
 rule custom_translate:
@@ -524,8 +524,8 @@ rule mt_matches:
     input:
         l1=rules.tokenise_translated.output,
         l2=rules.tokenise_target.output
-    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/matches/{{src_batch}}_{{trg_batch}}'
-    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/matches'
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.06_01.matches'
+    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}'
     threads: DOCALIGN_THREADS
     shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {DOCALIGN_THREADS} > {output}"
 # DIC ###########################################################
@@ -533,8 +533,8 @@ rule mt_matches:
 #################################################################
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/segalign/{src_batch}_{trg_batch}.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
-    output: f'{TRANSIENT}/06.1.segalign.{LANG1}_{LANG2}'
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # BLEUALIGN #####################################################
 rule bleualign:
@@ -545,9 +545,9 @@ rule bleualign:
         url1=f'{DATADIR}/preprocess/shards/{LANG1}/{{shard}}/{{src_batch}}/url.gz',
         url2=f'{DATADIR}/preprocess/shards/{LANG2}/{{shard}}/{{trg_batch}}/url.gz',
         translated1=rules.custom_translate.output
-    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/segalign'
+    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}'
     output:
-        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/segalign/{{src_batch}}_{{trg_batch}}.gz'
+        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.06_02.segalign.gz'
     threads: max(SEGALIGN_THREADS, 2) 
     shell: '''
         mkdir -p {params.folder}
@@ -567,50 +567,53 @@ rule bleualign:
 # TODO
 #################################################################
 ### FILTERING AND CLEANING ######################################
-rule deferred_documents:
-    input:
-        html=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/normalized_html.gz',
-        url=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/url.gz'
-    output:
-        text=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/html5lib_plain_text.xz',
-        deferred=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/deferred_documents.xz'
-    shell: '''
-        touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
-        touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
-        paste <(zcat {input.html}) <(zcat {input.url}) \
-            | python3 {BITEXTOR}/standoff/deferred-documents.py \
-            | awk '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
-        '''
 
-deferred_input = rules.bleualign.output
+# TODO: deferred_documents does not work with giawarc: html of the original document not saved
+# rule deferred_documents:
+#     input:
+#         html=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/normalized_html.gz',
+#         url=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/url.gz'
+#     output:
+#         text=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/html5lib_plain_text.xz',
+#         deferred=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/deferred_documents.xz'
+#     shell: '''
+#         touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
+#         touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
+#         paste <(zcat {input.html}) <(zcat {input.url}) \
+#             | python3 {BITEXTOR}/standoff/deferred-documents.py \
+#             | awk '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
+#         '''
+
+# deferred_input = rules.bleualign.output
 # if SEGALIGN == "hunalign":
 #     deferred_input = rules.hunalign.output
 
-rule deferred_segments:
-    input:
-        deferred_input,
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/html5lib_plain_text.xz',
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/deferred_documents.xz',
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/html5lib_plain_text.xz',
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
-        f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/deferred_documents.xz'
-    output: temp(f'{TRANSIENT}/{{target}}/deferred')
-    shell: '''
-        xzcat -T 0 -f {input[0]} \
-            | python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
-            > {output}
-        '''
+# rule deferred_segments:
+#     input:
+#         deferred_input,
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/html5lib_plain_text.xz',
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/deferred_documents.xz',
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/html5lib_plain_text.xz',
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
+#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/deferred_documents.xz'
+#     output: temp(f'{TRANSIENT}/{{target}}/deferred')
+#     shell: '''
+#         xzcat -T 0 -f {input[0]} \
+#             | python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
+#             > {output}
+#         '''
 
-bifixer_input = rules.deferred_segments.output
-if not DEFERRED:
-    bifixer_input = rules.deferred_segments.input[0]
+# bifixer_input = rules.deferred_segments.output
+# if not DEFERRED:
+#     bifixer_input = rules.deferred_segments.input[0]
+# bifixer_input = deferred_input
 
 rule bifixer:
-    input: f'{TRANSIENT}/{{target}}/segalign.xz'
-    output: temp(f'{TRANSIENT}/{{target}}/bifixer')
+    input: rules.bleualign.output
+    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_01.bifixer')
     shell: '''
-        xzcat -T 0 -f {input} \
+        zcat {input} \
             | python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             | LC_ALL=C sort -t $'\t' -k{BIFIXER_HASH_COLUMN} -k{BIFIXER_SCORE_COLUMN}nr -T {TMPDIR} --compress-program=gzip -n -r \
             > {output}
@@ -622,23 +625,21 @@ if not BIFIXER:
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: temp(f'{TRANSIENT}/{{target}}/bicleaner')
+    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_02.bicleaner')
     threads: 2
     shell: '''
-        CAT=cat; if [[ {input.bifixer} == *.xz ]]; then CAT=xzcat; fi
+        CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
                 | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
-                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
                 > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
                 | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score-only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
-                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
                 > {output}
         fi
         '''
@@ -649,18 +650,42 @@ if not BICLEANER:
 
 rule elrc:
     input: elrc_input
-    output: temp(f'{TRANSIENT}/{{target}}/elrc')
+    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.elrc')
+    threads: 2
     shell: '''
-        CAT=cat; if [[ {input} == *.xz ]]; then CAT=xzcat; fi
-        $CAT {input} \
-            | {BITEXTOR}/bitextor/elrc/filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
-            | xz -T 0 > {output}
+        CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
+        if [[ {input} == *.bicleaner ]] ; then
+            $CAT {input} \
+                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
+                | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
+                > {output}
+        else
+            $CAT {input} \
+                | {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
+                > {output}
+        fi
         '''
+
+raw_input = rules.bicleaner.output
+if not BICLEANER:
+    raw_input = rules.bicleaner.input
+raw_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
 sents_input = rules.elrc.output
 if not ELRC:
     sents_input = rules.elrc.input
-sents_input_filename = sents_input[0].split('/')[-1] # 'segaligz.xz'/'bifixer'/'bicleaner'/'elrc'
+sents_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.elrc
+
+rule raw:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{TRANSIENT}/{LANG1}-{LANG2}.raw.gz'
+    shell: ''' 
+        if [[ {input[0]} == *.gz ]]; then
+            cat {input} > {output}
+        else
+            cat {input} | gzip -c {output}
+        fi
+        '''
 
 rule sents:
     input: expand("{transient}/{target}/{filename}", transient=TRANSIENT, target=TARGETS, filename=sents_input_filename)
