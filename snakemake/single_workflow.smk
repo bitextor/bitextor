@@ -644,22 +644,26 @@ rule bicleaner:
         fi
         '''
 
-elrc_input = rules.bicleaner.output
+filter_input = rules.bicleaner.output
 if not BICLEANER:
-    elrc_input = rules.bicleaner.input
+    filter_input = rules.bicleaner.input
 
-rule elrc:
-    input: elrc_input
-    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.elrc')
+rule filter:
+    input: filter_input
+    output: temp(f'{TRANSIENT}/{LANG1}-{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.filtered')
     threads: 2
     shell: '''
         CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
-        if [[ {input} == *.bicleaner ]] ; then
+        if [[ {BICLEANER} -eq "True" ]] && [[ {ELRC} -eq "True" ]]; then
             $CAT {input} \
                 | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
                 | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
                 > {output}
-        else
+        elif [[ {BICLEANER} -eq "True" ]] && [[ {ELRC} -eq "False" ]]; then
+            $CAT {input} \
+                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
+                > {output}
+        elif [[ {BICLEANER} -eq "False" ]] && [[ {ELRC} -eq "True" ]]; then
             $CAT {input} \
                 | {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
                 > {output}
@@ -671,10 +675,10 @@ if not BICLEANER:
     raw_input = rules.bicleaner.input
 raw_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
-sents_input = rules.elrc.output
-if not ELRC:
-    sents_input = rules.elrc.input
-sents_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.elrc
+sents_input = rules.filter.output
+if not ELRC and not BICLEANER:
+    sents_input = rules.filter.input
+sents_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.filtered
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
@@ -683,16 +687,19 @@ rule raw:
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output}
         else
-            cat {input} | gzip -c {output}
+            cat {input} | gzip -c > {output}
         fi
         '''
 
 rule sents:
-    input: expand("{transient}/{target}/{filename}", transient=TRANSIENT, target=TARGETS, filename=sents_input_filename)
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.xz'
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{sents_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
     shell: '''
-        CAT=cat; if [[ {input[0]} == *.xz ]]; then CAT=xzcat; fi
-        $CAT {input} | xz -T 0 -c > {output}
+        if [[ {input[0]} == *.gz ]]; then
+            cat {input} > {output}
+        else 
+            cat {input} | gzip -c > {output}
+        fi
         '''
 
 rule tmx:
