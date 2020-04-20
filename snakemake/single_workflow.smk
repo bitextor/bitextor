@@ -682,13 +682,22 @@ sents_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.g
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
-    output: f'{TRANSIENT}/{LANG1}-{LANG2}.raw.gz'
+    output: 
+        corpus=f'{PERMANENT}/{LANG1}-{LANG2}.raw.gz',
+        stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.raw'
     shell: ''' 
         if [[ {input[0]} == *.gz ]]; then
-            cat {input} > {output}
+            cat {input} > {output.corpus}
         else
-            cat {input} | gzip -c > {output}
+            cat {input} | gzip -c > {output.corpus}
         fi
+        echo "{LANG1}-{LANG2} raw" > {output.stats}
+        echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
+        WC1=$(zcat ${output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
+        WC2=$(zcat ${output.corpus} | cut -f 4 | wc -w)
+        echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
+        echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
+        echo "{LANG2} words: $WC2" >> {output.stats}
         '''
 
 rule sents:
