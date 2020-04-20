@@ -442,7 +442,7 @@ rule split:
                 --sentence-splitter "{params.splitter}" \
                 --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
-            | gzip -c > {output}
+            | pigz -c > {output}
         '''
 
 rule aggregate_split:
@@ -471,7 +471,7 @@ rule custom_translate:
     shell: '''
         zcat {input.source} \
             | ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
-            | gzip -c > {output}
+            | pigz -c > {output}
         n_before=$(zcat {input.source} | wc -l)
         n_after=$(zcat {output} | wc -l)
         echo "Check count $n_before -> $n_after for {LANG1}/{wildcards.shard}/{wildcards.src_batch}"
@@ -494,7 +494,7 @@ rule tokenise_translated:
         {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {LANG2} \
-            | gzip -c > {output}
+            | pigz -c > {output}
         '''
 
 rule tokenise_target:
@@ -507,7 +507,7 @@ rule tokenise_target:
         {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {LANG2} \
-            | gzip -c > {output}
+            | pigz -c > {output}
         '''
 
 rule aggregate_tokenise_translated:
@@ -561,7 +561,7 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
             | ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_TRESHOLD} \
-            | gzip -c > {output}
+            | pigz -c > {output}
         '''
 # HUNALIGN ######################################################
 # TODO
@@ -689,7 +689,7 @@ rule raw:
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output.corpus}
         else
-            cat {input} | gzip -c > {output.corpus}
+            cat {input} | pigz -c > {output.corpus}
         fi
         echo "{LANG1}-{LANG2} raw" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
@@ -707,7 +707,7 @@ rule sents:
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output}
         else 
-            cat {input} | gzip -c > {output}
+            cat {input} | pigz -c > {output}
         fi
         '''
 
