@@ -237,18 +237,12 @@ if 'deduped' in config and config['deduped']:
 BEFORE_ELRC_FIELDS = FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
 TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
 
-BIFIXER_HASH_COLUMN = ''
-BIFIXER_SCORE_COLUMN = ''
-BICLEANER_CACHE_DEDUP = "3,4"
-BICLEANER_SORT = f"LC_ALL=C sort -t $'\t' -k3,4 -T {TMPDIR} --compress-program=gzip |"
-DEDUP = 'seg1,seg2'
+FILTER_SORT_FIELDS="-k3,4"
+TMX_DEDUP_FIELDS = 'seg1,seg2'
 if 'bifixerhash' in BEFORE_ELRC_FIELDS:
     i = BEFORE_ELRC_FIELDS.index('bifixerhash')
-    BIFIXER_HASH_COLUMN = f'{i},{i}'
-    BIFIXER_SCORE_COLUMN = f'{i+1},{i+1}'
-    BICLEANER_CACHE_DEDUP = f'{i}'
-    BICLEANER_SORT = ""
-    DEDUP = 'bifixerhash'
+    FILTER_SORT_FIELDS = f'-k{i},{i} -k{i+1},{i+1}nr'
+    TMX_DEDUP_FIELDS = 'bifixerhash'
 
 BEFORE_ELRC_FIELDS = ','.join(BEFORE_ELRC_FIELDS)
 TMX_FIELDS = ','.join(TMX_FIELDS)
@@ -614,7 +608,6 @@ rule bifixer:
     shell: '''
         zcat {input} \
             | python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
-            | LC_ALL=C sort -t $'\t' -k{BIFIXER_HASH_COLUMN} -k{BIFIXER_SCORE_COLUMN}nr -T {TMPDIR} --compress-program=gzip -n -r \
             > {output}
         '''
 
@@ -631,13 +624,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {BITEXTOR}/preprocess/bin/cache -k {BICLEANER_CACHE_DEDUP} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 > {output}
         fi
@@ -650,34 +643,20 @@ if not BICLEANER:
 rule filter:
     input: filter_input
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.filtered')
-    threads: 2
-    shell: '''
-        CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
-        if [[ {BICLEANER} -eq "True" ]] && [[ {ELRC} -eq "True" ]]; then
-            $CAT {input} \
-                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
-                | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
-                > {output}
-        elif [[ {BICLEANER} -eq "True" ]] && [[ {ELRC} -eq "False" ]]; then
-            $CAT {input} \
-                | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} \
-                > {output}
-        elif [[ {BICLEANER} -eq "False" ]] && [[ {ELRC} -eq "True" ]]; then
-            $CAT {input} \
-                | {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s \
-                > {output}
-        fi
-        '''
+    threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
+    run:
+        cat_cmd = "cat"
+        if input[-2:] == ".gz":
+            cat_cmd = "zcat"
+        cmd = f''' {cat_cmd} {input} '''
+        if BICLEANER:
+            cmd += f''' | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
+        if ELRC:
+            cmd += f''' | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
+        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} '''
+        cmd += f''' > {output} '''
 
-raw_input = rules.bicleaner.output
-if not BICLEANER:
-    raw_input = rules.bicleaner.input
-raw_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
-
-filtered_input = rules.filter.output
-if not ELRC and not BICLEANER:
-    filtered_input = rules.filter.input
-filtered_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.filtered
+raw_input_filename = '.'.join(filter_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
@@ -700,14 +679,11 @@ rule raw:
         '''
 
 rule sents:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{filtered_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
     output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
     shell: '''
-        if [[ {input[0]} == *.gz ]]; then
-            cat {input} > {output}
-        else 
-            cat {input} | pigz -c > {output}
-        fi
+        LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --compress-program=gzip -T {TMPDIR} --merge {input} \
+            | pigz -c > {output}
         '''
 
 rule tmx:
