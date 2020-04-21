@@ -655,6 +655,7 @@ rule filter:
             cmd += f''' | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
         cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} '''
         cmd += f''' > {output} '''
+        shell(cmd)
 
 raw_input_filename = '.'.join(filter_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
@@ -691,7 +692,7 @@ rule tmx:
     output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
     shell: '''
         zcat {input} \
-            | python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c {TMX_FIELDS} \
+            | python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         '''
 
@@ -702,6 +703,6 @@ rule deduped_tmx:
         txt=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz'
     shell: '''
         zcat {input} \
-            | {BICLEANER_SORT} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c {TMX_FIELDS} --dedup "{DEDUP}" -f {output.txt} \
+            | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         '''
