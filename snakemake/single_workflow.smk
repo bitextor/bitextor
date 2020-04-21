@@ -285,8 +285,7 @@ elif ONLY_PREPROCESS:
     # OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
-    # OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.xz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
-    OUTPUT.append(f'{PERMANENT}/{LANG1}-{LANG2}.sents.gz')
+    OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
 
 shell.prefix("set -euo pipefail;")
 rule all:
@@ -675,10 +674,10 @@ if not BICLEANER:
     raw_input = rules.bicleaner.input
 raw_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
-sents_input = rules.filter.output
+filtered_input = rules.filter.output
 if not ELRC and not BICLEANER:
-    sents_input = rules.filter.input
-sents_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.filtered
+    filtered_input = rules.filter.input
+filtered_input_filename = '.'.join(raw_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner / 07_03.filtered
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
@@ -693,16 +692,16 @@ rule raw:
         fi
         echo "{LANG1}-{LANG2} raw" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
-        WC1=$(zcat ${output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat ${output.corpus} | cut -f 4 | wc -w)
+        WC1=$(zcat {output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | cut -f 4 | wc -w)
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
         '''
 
 rule sents:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{sents_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.sents.gz'
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{filtered_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
     shell: '''
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output}
@@ -713,20 +712,20 @@ rule sents:
 
 rule tmx:
     input: rules.sents.output
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.xz'
+    output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
     shell: '''
-        xzcat -T 0 -f {input} \
+        zcat {input} \
             | python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c {TMX_FIELDS} \
-            | xz -T 0 -c > {output}
+            | pigz -c > {output}
         '''
 
 rule deduped_tmx:
     input: rules.sents.output
     output:
-        tmx=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.xz',
-        txt=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.xz'
+        tmx=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz',
+        txt=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz'
     shell: '''
-        xzcat -T 0 -f {input} \
+        zcat {input} \
             | {BICLEANER_SORT} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c {TMX_FIELDS} --dedup "{DEDUP}" -f {output.txt} \
-            | xz -T 0 -c > {output.tmx}
+            | pigz -c > {output.tmx}
         '''
