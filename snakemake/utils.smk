@@ -124,8 +124,9 @@ def validate_args(config):
             'lang2': {'type': 'string'},
             'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
             # mt
-            'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}}, # TODO: add parameter for choosing translation direction (instead of 'reverseOutputPair' parameter)
-            'documentAlignerWorkers': {'type': 'integer', 'check_with': ispositive}, # positive integer (using 'all' doesn't make sense in snakemake)
+            'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
+            'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
+            'documentAlignerWorkers': {'type': 'integer', 'check_with': ispositive, 'dependencies': {'documentAligner': 'externalMT'}}, # positive integer (using 'all' doesn't make sense in snakemake)
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
             'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
@@ -146,9 +147,7 @@ def validate_args(config):
 
     if 'crawler' in config and config['crawler'] == 'heritrix':
         schema['heritrixPath']['required'] = True
-    if 'documentAligner' not in config or config['documentAligner'] == 'DIC':
-        schema['dic']['required'] = True
-        schema['documentAligner']['dependencies'] = frozenset({'preprocessor': ['warc2preprcess', '']}),
+    
     if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
         schema['lang1']['required'] = True
         schema['lang2']['required'] = True
@@ -156,6 +155,13 @@ def validate_args(config):
     elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
         # if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
         schema['langs']['required'] = True
+    
+    if 'documentAligner' not in config or config['documentAligner'] == 'DIC':
+        schema['dic']['required'] = True
+        schema['documentAligner']['dependencies'] = frozenset({'preprocessor': ['warc2preprcess', '']}),
+    elif config['documentAligner'] == 'externalMt':
+        schema['alignerCmd']['required'] = True
+        schema['translationDirection']['allowed'] = [f'{schema["lang1"]}2{schema["lang2"]}', f'{schema["lang2"]}2{schema["lang1"]}']
 
     if 'sentenceAligner' in config and config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
