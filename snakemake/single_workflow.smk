@@ -617,7 +617,7 @@ if not BIFIXER:
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.07_02.bicleaner')
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.07_02.bicleaner.gz'
     threads: 2
     shell: '''
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
@@ -626,13 +626,13 @@ rule bicleaner:
             $CAT {input.bifixer} \
                 | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
-                > {output}
+                | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
                 | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
-                > {output}
+                | pigz -c > {output}
         fi
         '''
 
@@ -657,7 +657,7 @@ rule filter:
         cmd += f''' > {output} '''
         shell(cmd)
 
-raw_input_filename = '.'.join(filter_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
+raw_input_filename = '.'.join(filter_input[0].split('/')[-1].split('.')[1:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner.gz
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{LANG1}{src_batch}_{LANG2}{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
