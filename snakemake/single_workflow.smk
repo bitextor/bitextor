@@ -453,7 +453,7 @@ def get_align_inputs(src_lang, trg_lang):
     return inputs
 
 rule aggregate_matches:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.06_01.matches' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{LANG1}{src_batch}_{LANG2}{trg_batch}.06_01.matches' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
     output: f'{TRANSIENT}/06_01.docalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # MT ############################################################
@@ -517,7 +517,7 @@ rule mt_matches:
     input:
         l1=rules.tokenise_translated.output,
         l2=rules.tokenise_target.output
-    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.06_01.matches'
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.06_01.matches'
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}'
     threads: DOCALIGN_THREADS
     shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {DOCALIGN_THREADS} > {output}"
@@ -526,7 +526,7 @@ rule mt_matches:
 #################################################################
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{LANG1}{src_batch}_{LANG2}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
     output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # BLEUALIGN #####################################################
@@ -540,7 +540,7 @@ rule bleualign:
         translated1=rules.custom_translate.output
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}'
     output:
-        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.06_02.segalign.gz'
+        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.06_02.segalign.gz'
     threads: max(SEGALIGN_THREADS, 2) 
     shell: '''
         mkdir -p {params.folder}
@@ -604,7 +604,7 @@ rule bleualign:
 
 rule bifixer:
     input: rules.bleualign.output
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_01.bifixer')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.07_01.bifixer')
     shell: '''
         zcat {input} \
             | python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
@@ -617,7 +617,7 @@ if not BIFIXER:
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_02.bicleaner')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.07_02.bicleaner')
     threads: 2
     shell: '''
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
@@ -642,7 +642,7 @@ if not BICLEANER:
 
 rule filter:
     input: filter_input
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{{src_batch}}_{{trg_batch}}.07_03.filtered')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{LANG1}{{src_batch}}_{LANG2}{{trg_batch}}.07_03.filtered')
     threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
     run:
         cat_cmd = "cat"
@@ -660,7 +660,7 @@ rule filter:
 raw_input_filename = '.'.join(filter_input[0].split('.')[-2:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner
 
 rule raw:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{LANG1}{src_batch}_{LANG2}{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
     output: 
         corpus=f'{PERMANENT}/{LANG1}-{LANG2}.raw.gz',
         stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.raw'
@@ -680,7 +680,7 @@ rule raw:
         '''
 
 rule sents:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{src_batch}_{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{LANG1}{src_batch}_{LANG2}{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(LANG1, LANG2)]
     output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
     shell: '''
         LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --compress-program=gzip -T {TMPDIR} --merge {input} \
