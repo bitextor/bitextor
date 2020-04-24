@@ -1,20 +1,42 @@
 # basic variables
-bitextor: /home/elsa/bitextor
-dataDir: /home/elsa/permanent/data
-permanentDir: /home/elsa/permanent
-transientDir: /home/elsa/transient
-tempDir: /home/elsa/transient
+bitextor: ~/bitextor
+dataDir: ~/permanent/data
+permanentDir: ~/permanent
+transientDir: ~/transient
+tempDir: ~/transient
 
 # crawling
-hosts: ["www.greenpeace.org"]
+hostsFile: ~/hosts.gz
 crawler: "wget"
 crawlTimeLimit: "600" # 10min
 
+# warcs
+warcs: [~/1.warc.gz, ~/2.warc.gz]
+
 # preprocessing
-preprocessor: "warc2preprocess"
-lang1: 'fr'
-lang2: 'en'
+preprocessor: "giawarc"
+shards: 8
+batches: 1024
+ftfy: false
+cleamHTML: false
+
+lang1: 'en'
+lang2: 'fr'
 
 # align
 documentAligner: "externalMT"
-alignerCmd: "cat -" 
+documentAlignerThreshold: 0.1
+alignerCmd: "bash ~/bitextor/snakemake/example/dummy-translate.sh"
+translationDirection: fr2en
+
+sentenceAligner: 'bleualign'
+sentenceAlignerThreshold: 0.1
+
+# cleaning
+bifixer: true
+aggresiveDedup: true
+bicleaner: ~/permanent/bicleaner-model/en-fr/en-fr.yaml
+bicleanerThreshold: 0.5
+elrc: true
+tmx: true
+deduped: true

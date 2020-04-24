@@ -54,7 +54,7 @@ def get_mt_docalign_inputs(src_batches, trg_batches):
 
 
 def isfile(field, value, error):
-    if not os.path.isfile(value):
+    if not os.path.isfile(os.path.expanduser(value)):
         error(field, f'{value} does not exist')
 
 
@@ -172,3 +172,6 @@ def validate_args(config):
     if not b:
         print("Validation error. Stopping.", v.errors, file=sys.stderr)
         exit()
+
+    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()}) 
+    config.update({k: [os.path.expanduser(i) for i in v] if v is list else v for k, v in config.items()})
