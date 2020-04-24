@@ -1,4 +1,4 @@
-snakemake==5.10.0
+snakemake==5.15.0
 warcio==1.7.2
 ftfy==5.7
 tldextract==2.2.2
