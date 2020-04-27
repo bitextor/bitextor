@@ -38,6 +38,9 @@ if "onlyCrawl" in config and config["onlyCrawl"]:
 if "onlyPreprocess" in config and config["onlyPreprocess"]:
     ONLY_PREPROCESS = True
 
+PROFILING = ""
+if "profiling" in config and config["profiling"]:
+    PROFILING = "/usr/bin/time -v"
 #################################################################
 # CRAWLING
 CRAWLTARGET = ""
@@ -268,6 +271,11 @@ if "hostsFile" in config:
         for line in f:
             HOSTS.add(line.strip())
 
+if "warcsFile" in config:
+    with open_xz_or_gzip_or_plain(config["warcsFile"]) as f:
+        for line in f:
+            WARCS.add(line.strip())
+
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 # group together the WARCS that are in the same folder (process them individually, or all together?)
 TARGET_2_WARCS = parent_folder_2_warcs(WARCS)
@@ -298,7 +306,7 @@ rule creepy_download:
     output: f'{DATADIR}/warc/{{target}}/creepy.warc.gz'
     shell: '''
         mkdir -p {params.folder} {TMPDIR}
-        python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
+        {PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
         '''
 
 rule httrack_download:
@@ -308,7 +316,7 @@ rule httrack_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX)
-        {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
+        {PROFILING} {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
         {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME > {output}
         rm -rf $DIRNAME
         '''
@@ -320,7 +328,7 @@ rule wget_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-        {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
+        {PROFILING} {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
         rm -rf $DIRNAME
         '''
 
@@ -395,7 +403,7 @@ rule giawarc:
     threads: 2
     shell: '''
         mkdir -p {params.folder}
-        cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} | ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
+        cat {input} | {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} | {PROFILING} ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
         for lang in {LANGS}; do
             if [ ! {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -418,7 +426,7 @@ checkpoint shard:
     shell: '''
         IFS=" " read -a input <<< "{input}"
         ulimit -n 2048
-        giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
+        {PROFILING} giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
         ls -d {params.o}/*/* > {output}
         '''
 
@@ -437,7 +445,7 @@ rule split:
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
     output: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     shell: '''
-        {BITEXTOR}/bitextor-split.py --text {input} \
+        {PROFILING} {BITEXTOR}/bitextor-split.py --text {input} \
                 --sentence-splitter "{params.splitter}" \
                 --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
@@ -469,7 +477,7 @@ rule custom_translate:
     output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
     shell: '''
         zcat {input.source} \
-            | ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
+            | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
             | pigz -c > {output}
         n_before=$(zcat {input.source} | wc -l)
         n_after=$(zcat {output} | wc -l)
@@ -489,7 +497,7 @@ rule tokenise_translated:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -502,7 +510,7 @@ rule tokenise_target:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -525,7 +533,7 @@ rule mt_matches:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches'
     params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}'
     threads: DOCALIGN_THREADS
-    shell: "mkdir -p {params.folder}; {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {DOCALIGN_THREADS} > {output}"
+    shell: "mkdir -p {params.folder}; {PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {DOCALIGN_THREADS} > {output}"
 # DIC ###########################################################
 # TODO
 #################################################################
@@ -559,7 +567,7 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_TRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_TRESHOLD} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' ) \
             | pigz -c > {output}
         '''
@@ -614,7 +622,7 @@ rule bifixer:
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_01.bifixer')
     shell: '''
         zcat {input} \
-            | python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
+            | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             > {output}
         '''
 
@@ -631,13 +639,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         fi
@@ -657,9 +665,9 @@ rule filter:
             cat_cmd = "zcat"
         cmd = f''' {cat_cmd} {input} '''
         if BICLEANER:
-            cmd += f''' | python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
+            cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
         if ELRC:
-            cmd += f''' | python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
+            cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
         cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} '''
         cmd += f''' > {output} '''
         shell(cmd)
@@ -699,7 +707,7 @@ rule tmx:
     output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
     shell: '''
         zcat {input} \
-            | python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         '''
 
@@ -710,6 +718,6 @@ rule deduped_tmx:
         txt=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz'
     shell: '''
         zcat {input} \
-            | {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         '''

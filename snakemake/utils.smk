@@ -77,6 +77,8 @@ def validate_args(config):
             'permanentDir': {'type': 'string', 'required': True},
             'transientDir': {'type': 'string', 'required': True},
             'tempDir': {'type': 'string'},
+            # profiling
+            'profiling': {'type': 'boolean'},
             # execute until X:
             'onlyCrawling': {'type': 'boolean'},
             'onlyPreprocess': {'type': 'boolean'},
@@ -85,6 +87,7 @@ def validate_args(config):
             'hosts': {'type': 'list', 'dependencies': 'crawler'},
             'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
             'warcs': {'type': 'list'},
+            'warcsFile': {'type': 'string', 'check_with': isfile},
             # crawling
             'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack"]},
             'crawlTimeLimit': {'type': 'string', 'dependencies': 'crawler'},
