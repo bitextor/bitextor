@@ -277,8 +277,8 @@ if "warcsFile" in config:
             WARCS.add(line.strip())
 
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
-# group together the WARCS that are in the same folder (process them individually, or all together?)
-TARGET_2_WARCS = parent_folder_2_warcs(WARCS)
+# process WARCs individually
+TARGET_2_WARCS = {f'{k}': v for k,v in enumerate(WARCS)}
 # group crawled hosts by domains
 TARGET_2_WARCS.update(dict([(domain, [f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz' for host in hosts]) for (domain, hosts) in DOMAIN_2_HOSTS.items()]))
 TARGETS = TARGET_2_WARCS.keys()
