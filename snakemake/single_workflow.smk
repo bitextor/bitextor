@@ -207,7 +207,7 @@ DEFERRED = False
 DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
-AGGRESSIVE_DEDUP = ""
+AGGRESSIVE_DEDUP = "--aggressive_dedup"
 BICLEANER = False
 BICLEANER_MODEL = ""
 BICLEANER_FIELDS = []
@@ -225,8 +225,8 @@ if 'deferredCrawling' in config and config['deferredCrawling']:
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
     BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
-if 'aggressiveDedup' in config and config['aggressiveDedup']:
-    AGGRESSIVE_DEDUP = '--aggressive_dedup'
+if 'aggressiveDedup' in config and not config['aggressiveDedup']:
+    AGGRESSIVE_DEDUP = ''
 if 'bicleaner' in config:
     BICLEANER = True
     BICLEANER_MODEL = config['bicleaner']
@@ -372,33 +372,34 @@ rule heritrix_download:
     '''
 #################################################################
 ### PREPROCESS ##################################################
-pproc_output = {}
-for pproc_file in PPROC_FILES:
-    name = pproc_file.split('.')[0]
-    for lang in LANGS:
-        pproc_output[f"{lang}_{name}"] = f"{DATADIR}/preprocess/{{target}}/{PPROC}/{lang}/{pproc_file}"
 
-# rule warc2preprocess:
-#     input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
-#     output: **pproc_output
-#     threads: 2
-#     params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
-#     shell: '''
-#         mkdir -p {params.folder}
-#         cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {PARSER} --output-dir {params.folder}
-#         for lang in {LANGS}; do
-#             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
-#                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
-#                 mkdir -p {params.folder}/$lang
-#                 touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-#                 gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-#             fi
-#         done
-#     '''
+# pproc_output = {}
+# for pproc_file in PPROC_FILES:
+#     name = pproc_file.split('.')[0]
+#     for lang in LANGS:
+#         pproc_output[f"{lang}_{name}"] = f"{DATADIR}/preprocess/{{target}}/{PPROC}/{lang}/{pproc_file}"
+
+rule warc2preprocess:
+    input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
+    output: expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
+    threads: 2
+    params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
+    shell: '''
+        mkdir -p {params.folder}
+        cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {PARSER} --output-dir {params.folder}
+        for lang in {LANGS}; do
+            if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                mkdir -p {params.folder}/$lang
+                touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+                gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+            fi
+        done
+    '''
 
 rule giawarc:
     input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
-    output: **pproc_output
+    output: expand("{data}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
     params: folder=f'{DATADIR}/preprocess/{{target}}/giawarc'
     threads: 2
     shell: '''
