@@ -142,7 +142,7 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT = "--pdfextract"
 
-SENTTOKS = {} 
+SENTTOKS = {}
 CUSTOMNBPS = {}
 WORDTOKS = {}
 MORPHTOKS = {}
@@ -150,7 +150,7 @@ MORPHTOKS = {}
 if "sentenceSplitters" in config:
     SENTTOKS = config["sentenceSplitters"]
 if "customNBPs" in config:
-    CUSTOMNBPS = config["customNBPs"] 
+    CUSTOMNBPS = config["customNBPs"]
 if "wordTokenizers" in config:
     WORDTOKS = config["workTokenizers"]
 if "morphologicalAnalysers" in config:
@@ -179,7 +179,7 @@ if "translationDirection" in config and config["translationDirection"] == f'{LAN
     TRG_LANG = LANG1
 
 DOC_THRESHOLD = 0.1
-DOCALIGN_THREADS = 1 
+DOCALIGN_THREADS = 1
 if "documentAlignerWorkers" in config:
     DOCALIGN_THREADS = config['documentAlignerWorkers']
 if "documentAlignerThreshold" in config:
@@ -338,7 +338,7 @@ rule heritrix_download:
     shell: '''
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
-        if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ] 
+        if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ]
             then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER}
         fi
         curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
@@ -358,7 +358,7 @@ rule heritrix_download:
             RUNTIME=$((RUNTIME+5))
             if [ "{CRAWLTIMELIMIT}" != "" ]
             then
-                if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ] 
+                if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ]
                 then
                     echo "Crawling time limit reached"
                     curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
@@ -404,7 +404,7 @@ rule giawarc:
     threads: 2
     shell: '''
         mkdir -p {params.folder}
-        cat {input} | {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} | {PROFILING} ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
+        cat {input} | {PROFILING} ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
         for lang in {LANGS}; do
             if [ ! {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -556,7 +556,7 @@ rule bleualign:
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz'
-    threads: max(SEGALIGN_THREADS, 2) 
+    threads: max(SEGALIGN_THREADS, 2)
     shell: '''
         mkdir -p {params.folder}
         parallel_cmd=""
@@ -677,10 +677,10 @@ raw_input_filename = '.'.join(filter_input[0].split('/')[-1].split('.')[1:]) # 0
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: 
+    output:
         corpus=f'{PERMANENT}/{LANG1}-{LANG2}.raw.gz',
         stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.raw'
-    shell: ''' 
+    shell: '''
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output.corpus}
         else
