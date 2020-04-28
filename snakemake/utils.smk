@@ -76,12 +76,12 @@ def validate_args(config):
             'dataDir': {'type': 'string', 'required': True},
             'permanentDir': {'type': 'string', 'required': True},
             'transientDir': {'type': 'string', 'required': True},
-            'tempDir': {'type': 'string'},
+            'tempDir': {'type': 'string', 'default_setter': lambda doc: doc["transientDir"]},
             # profiling
-            'profiling': {'type': 'boolean'},
+            'profiling': {'type': 'boolean', 'default': False},
             # execute until X:
-            'onlyCrawling': {'type': 'boolean'},
-            'onlyPreprocess': {'type': 'boolean'},
+            'onlyCrawl': {'type': 'boolean', 'default': False},
+            'onlyPreprocess': {'type': 'boolean', 'default': False},
             # data definition
             # TODO: check that one of these is specified?
             'hosts': {'type': 'list', 'dependencies': 'crawler'},
@@ -106,26 +106,26 @@ def validate_args(config):
             'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             # preprocessing
             'langs': {'type': 'list'},
-            'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc']},
-            'shards': {'type': 'integer', 'check_with': ispositiveorzero},
-            'batches': {'type': 'integer', 'check_with': ispositive},
-            'cleanHTML': {'type': 'boolean'},
-            'ftfy': {'type': 'boolean'},
-            'PDFextract': {'type': 'boolean'},
-            'langID': {'type': 'string', 'allowed': ['cld2', 'cld3']},
-            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple'], 'dependencies': {'preprocessor': ['warc2preprocess', '']}},
-            'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': ['warc2preprocess', '']}},
+            'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc'], 'default': 'giawarc'},
+            'shards': {'type': 'integer', 'check_with': ispositiveorzero, 'default': 8},
+            'batches': {'type': 'integer', 'check_with': ispositive, 'default': 1024},
+            'cleanHTML': {'type': 'boolean', 'default': False},
+            'ftfy': {'type': 'boolean', 'default': False},
+            'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
+            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             # tokenization
             'sentenceSplitters': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
             'workTokenizers': {'type': 'dict'},
             'norphologicalAnalysers': {'type': 'dict'},
-            'pruneThreshold': {'type': 'integer', 'check_with': ispositive},
-            'pruneType': {'type': 'string', 'allowed': ['words', 'chars']},
+            'pruneThreshold': {'type': 'integer', 'check_with': ispositiveorzero, 'default': 0},
+            'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},
             # document alignment
             'lang1': {'type': 'string'},
             'lang2': {'type': 'string'},
-            'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT']},
+            'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT'], 'default': 'externalMT'},
             # mt
             'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
             'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
@@ -134,12 +134,12 @@ def validate_args(config):
             # dictionary
             'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
             # sentence alignment
-            'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign']},
+            'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
             'sentenceAlignerWorkers': {'type': 'integer', 'check_with': ispositive},
             'sentenceAlignerThreshold': {'type': 'float'},
             # post processing
-            'deferred': {'type': 'boolean'},
-            'bifixer': {'type': 'boolean'},
+            'deferred': {'type': 'boolean', 'default': False},
+            'bifixer': {'type': 'boolean', 'default': True},
             'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
             'bicleaner': {'type': 'string', 'check_with': isfile}, # TODO: check that model exists, use training subworkflow if not
             'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
@@ -159,14 +159,14 @@ def validate_args(config):
         # if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
         schema['langs']['required'] = True
     
-    if 'documentAligner' not in config or config['documentAligner'] == 'DIC':
-        schema['dic']['required'] = True
-        schema['documentAligner']['dependencies'] = frozenset({'preprocessor': ['warc2preprcess', '']}),
-    elif config['documentAligner'] == 'externalMt':
+    if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
-        schema['translationDirection']['allowed'] = [f'{schema["lang1"]}2{schema["lang2"]}', f'{schema["lang2"]}2{schema["lang1"]}']
+        schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
+    elif config['documentAligner'] == 'DIC':
+        schema['dic']['required'] = True
+        schema['documentAligner']['dependencies'] = frozenset({'preprocessor': 'warc2preprcess'})
 
-    if 'sentenceAligner' in config and config['sentenceAligner'] == 'bleualign':
+    if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
 
     v = Validator(schema)
@@ -178,3 +178,5 @@ def validate_args(config):
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()}) 
     config.update({k: [os.path.expanduser(i) for i in v] if v is list else v for k, v in config.items()})
+
+    return v.normalized(config)

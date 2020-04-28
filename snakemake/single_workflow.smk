@@ -3,7 +3,7 @@ import sys
 
 include: "utils.smk"
 
-validate_args(config)
+config = validate_args(config)
 
 sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
 from utils.common import open_xz_or_gzip_or_plain
@@ -14,9 +14,7 @@ BITEXTOR = config["bitextor"]
 DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
-TMPDIR = config["transientDir"]
-if "tempDir" in config:
-    TMPDIR = config["tempDir"]
+TMPDIR = config["tempDir"]
 
 LANGS = set()
 LANG1 = ""
@@ -31,12 +29,8 @@ if "lang2" in config:
     LANG2 = config["lang2"]
     LANGS.add(LANG2)
 
-ONLY_PREPROCESS = False
-ONLY_CRAWL = False
-if "onlyCrawl" in config and config["onlyCrawl"]:
-    ONLY_CRAWL = True
-if "onlyPreprocess" in config and config["onlyPreprocess"]:
-    ONLY_PREPROCESS = True
+ONLY_PREPROCESS = config["onlyCrawl"]
+ONLY_CRAWL = config["onlyPreprocess"]
 
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
@@ -61,80 +55,58 @@ HERITRIXUSER = "admin:admin"
 
 if "crawler" in config:
     CRAWLTARGET = config["crawler"]
-
 if "crawl-tld" in config and config["crawl-tld"]:
     TLD_CRAWL = "-D"
-
 if "crawlerUserAgent" in config:
     USERAGENT = f'-a "{config["crawlerUserAgent"]}"'
-
 if "crawlSizeLimit" in config:
     CRAWLSIZELIMIT = f'-s {config["crawlSizeLimit"]}'
-
 if "crawlTimeLimit" in config:
     if CRAWLTARGET == "heritrix":
         CRAWLTIMELIMIT = config["crawlTimeLimit"]
     else:
         CRAWLTIMELIMIT = f'-t {config["crawlTimeLimit"]}'
-
 if "crawlWait" in config:
     CRAWLWAIT = f'--wait {config["crawlWait"]}'
-
 if "crawlFileTypes" in config:
     CRAWLFILETYPES = f'-f {config["crawlFileTypes"]}'
-
 if "crawlerNumThreads" in config:
     CRAWLJOBS = f'-j {config["crawlerNumThreads"]}'
-
 if "crawlerConnectionTimeout" in config:
     CRAWLTIMEOUT = f'-o {config["crawlerConnectionTimeout"]}'
-
 if "dumpCurrentCrawl" in config:
     CRAWLDUMPARGS = f'-d {config["dumpCurrentCrawl"]}'
-
 if "resumePreviousCrawl" in config:
     CONTINUECRAWL = f'-l {config["resumePreviousCrawl"]}'
-
 if "heritrixPath" in config:
     HERITRIXPATH = config["heritrixPath"]
-
 if "heritrixUrl" in config:
     HERITRIXURL = config["heritrixUrl"]
-
 if "heritrixUser" in config:
     HERITRIXUSER = config["heritrixUser"]
 
 #################################################################
 # PREPROCESS
 PPROC = "w2p"
-GIAWARC = "~/go/bin/giawarc"
 PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
-if "preprocessor" in config and config["preprocessor"] == "giawarc":
+if config["preprocessor"] == "giawarc":
     PPROC = "giawarc"
     PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
-    if "giawarc_executable" in config:
-        GIAWARC = config["giawarc_executable"]
 
-SHARDS = 8
-BATCHES = 100
-if "shards" in config:
-    SHARDS = config["shards"]
-if "batches" in config:
-    BATCHES = config["batches"]
+SHARDS = config["shards"]
+BATCHES = config["batches"]
 
 CLEANHTML = ""
 FTFY = ""
-LANGID = "cld2"
+LANGID = config["langID"]
 PARSER = ""
 BOILERPIPE = ""
 PDFEXTRACT = ""
 
-if "cleanHTML" in config and config["cleanHTML"]:
+if config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
-if "ftfy" in config and config["ftfy"]:
+if config["ftfy"]:
     FTFY = "--ftfy"
-if "langID" in config:
-    LANGID = config['langID']
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
 if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
@@ -142,34 +114,18 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT = "--pdfextract"
 
-SENTTOKS = {}
-CUSTOMNBPS = {}
-WORDTOKS = {}
-MORPHTOKS = {}
-
-if "sentenceSplitters" in config:
-    SENTTOKS = config["sentenceSplitters"]
-if "customNBPs" in config:
-    CUSTOMNBPS = config["customNBPs"]
-if "wordTokenizers" in config:
-    WORDTOKS = config["workTokenizers"]
-if "morphologicalAnalysers" in config:
-    MORPHTOKS = config["morphologicalAnalysers"]
-
 # sentence splitting and tokenisation
-PRUNE_THRESHOLD = "--prune 80"
-PRUNE_TYPE = "--prune-type words"
+SENTTOKS = {} if not "sentenceSplitters" in config else config["sentenceSplitters"]
+CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
+WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
+MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
 
-if "pruneThreshold" in config:
-    PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
-if "pruneType" in config:
-    PRUNE_TYPE = f"--prune-type {config['pruneType']}"
+PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
+PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 
 #################################################################
 # DOCALIGN
-DOCALIGN = 'dic'
-if 'documentAligner' in config:
-    DOCALIGN = config["documentAligner"]
+DOCALIGN = config["documentAligner"]
 # mt
 MT_COMMAND = config['alignerCmd']
 SRC_LANG = LANG1
@@ -188,9 +144,7 @@ if "documentAlignerThreshold" in config:
 # TODO
 #################################################################
 # SEGALIGN
-SEGALIGN = 'hunalign'
-if "segmentAligner" in config:
-    SEGALIGN = config["hunalign"]
+SEGALIGN = config["sentenceAligner"]
 SEGALIGN_THREADS = 1
 if "sentenceAlignerWorkers" in config:
     SEGALIGN_THREADS = config["sentenceAlignerWorkers"]
