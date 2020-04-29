@@ -32,7 +32,7 @@ sentenceAlignerThreshold: 0.1
 
 # cleaning
 bifixer: true
-aggresiveDedup: true
+aggressiveDedup: true
 bicleaner: ~/permanent/bicleaner-model/en-fr/en-fr.yaml
 bicleanerThreshold: 0.5
 elrc: true
