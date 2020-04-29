@@ -608,7 +608,7 @@ rule bicleaner:
 
 filter_input = rules.bicleaner.output
 if not BICLEANER:
-    filter_input = rules.bicleaner.input
+    filter_input = rules.bicleaner.input.bifixer
 
 rule filter:
     input: filter_input
