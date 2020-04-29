@@ -9,6 +9,15 @@ exit_program()
   exit 1
 }
 
+download_warc()
+{
+    warc=$1
+    remote=$2
+    if [ ! -f "${warc}" ]; then
+        wget -q "${remote}" -O "${warc}"
+    fi
+}
+
 WORK=${HOME}
 
 while getopts "hw:" i; do
@@ -34,20 +43,11 @@ if [ ! -f "${WORK}"/bicleaner-model/en-fr/en-fr.yaml ]; then
 	tar zxvf "${WORK}"/bicleaner-model/en-fr.tar.gz -C "${WORK}"/bicleaner-model
 fi
 
-if [ ! -f "${WORK}"/data/warc/greenpeace.warc.gz ]; then
-	mkdir -p "${WORK}"/data/warc
-	wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz -O "${WORK}"/data/warc/greenpeace.warc.gz
-fi
-
-if [ ! -f "${WORK}"/data/warc/primeminister.warc.gz ]; then
-        mkdir -p "${WORK}"/data/warc
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz -O "${WORK}"/data/warc/primeminister.warc.gz
-fi
-
-if [ ! -f "${WORK}"/data/warc/kremlin.warc.gz ]; then
-        mkdir -p "${WORK}"/data/warc
-        wget -qO- https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz -O "${WORK}"/data/warc/kremlin.warc.gz
-fi
+mkdir -p "${WORK}/data/warc"
+download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
+download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz &
+download_warc "${WORK}/data/warc/kremlin.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz &
+wait
 
 BITEXTOR="$(dirname "$0")"
 mkdir -p "${WORK}"/reports
