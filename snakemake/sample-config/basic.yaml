@@ -11,14 +11,12 @@ crawler: "wget"
 crawlTimeLimit: "600" # 10min
 
 # warcs
-warcs: [/home/user/1.warc.gz, /home/user/2.warc.gz]
+warcsFile: ~/warcs.gz
 
 # preprocessing
 preprocessor: "giawarc"
 shards: 8
 batches: 1024
-ftfy: false
-cleamHTML: false
 
 lang1: 'en'
 lang2: 'fr'
