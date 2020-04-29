@@ -216,10 +216,13 @@ Bitextor uses a configuration file to define the variables required by the pipel
 
 Current pipeline constists of the following steps:
 * Crawling
-* Preprocessing + sharding
+* Preprocessing
+* Sharding
 * Sentence splitting
-* Tokenisation
-* Alignment: document alignment + segment alignment
+* Translation
+* Tokenisation (source and translated target)
+* Document alignment
+* Segment alignment
 * Cleaning and filtering
 
 Following is a description of configuration related to each step, as well as basic variables.
@@ -428,7 +431,7 @@ documentAlignerWorkers: 2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
 * `documentAlignerWorkers`: number of parallel processes that will be run during document alignment; the default is 1 (no parallelization)
 
-<!--
+<!---
 #### Using a home-brew neural MT system
 
 If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having a GPU available. The following are mandatory variables in order to build the NMT system:
@@ -459,20 +462,22 @@ marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "-
 * `LANG2Detokenizer`: path to a detokenization script that reads from the standard input and writes to the standard output
 * `gpuId`: id of the GPU to be used for training and testing
 * `marianArgs`: additional arguments for Marian training
--->
+--->
 
 ### Segment alignment
 
-<!-- After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`. -->
+<!--- After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`. --->
 After document aignment, the next step in the pipeline in segment alignment. Current version includes Bleualign as segment aligner.
 
 ```yaml
-segmentAligner: true
-segmentAlignerThreshold: 0.1
+sentenceAligner: true
+sentenceAlignerThreshold: 0.1
+sentenceAlignerWorkers: 1
 ```
 
-* `segmentAligner`: segment aligner tool, currently only `bleualign` is supported
-* `segmetAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. For `bleualign` should be set to a value in [0,1], while `hunalign` can take any float value. Both are set to 0.0 by default
+* `sentenceAligner`: segment aligner tool, currently only `bleualign` is supported
+* `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. For `bleualign` should be set to a value in [0,1], while `hunalign` can take any float value. Both are set to 0.0 by default
+* `sentenceAlignerWorkers`: number of parallel workers that will run each segment alignment step, default is 1
 
 ### Parallel data filtering
 
@@ -486,7 +491,7 @@ bicleanerThreshold: 0.6
 * `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
-<!-- If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
+<!--- If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
 
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
@@ -498,7 +503,7 @@ bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 
 It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
 
--->
+--->
 
 ### Post-processing
 
