@@ -381,7 +381,7 @@ checkpoint shard:
     shell: '''
         IFS=" " read -a input <<< "{input}"
         ulimit -n 2048
-        {PROFILING} giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
+        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
         ls -d {params.o}/*/* > {output}
         '''
 
