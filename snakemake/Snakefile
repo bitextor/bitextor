@@ -360,7 +360,7 @@ rule giawarc:
         mkdir -p {params.folder}
         cat {input} | {PROFILING} ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
         for lang in {LANGS}; do
-            if [ ! {params.folder}/$lang/plain_text.gz ]; then
+            if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{plain_text,mime,url}}
