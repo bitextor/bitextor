@@ -173,7 +173,7 @@ DEDUPED = False
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 
-if 'deferredCrawling' in config and config['deferredCrawling']:
+if 'deferred' in config and config['deferred']:
     DEFERRED = True
     DEFERRED_FIELDS = ['deferredseg1','checksum1','deferredseg2','checksum2']
 if 'bifixer' in config and config['bifixer']:
@@ -377,11 +377,12 @@ checkpoint shard:
     params:
         n = SHARDS,
         b = BATCHES,
-        o = f'{DATADIR}/preprocess/shards/{{lang}}'
+        o = f'{DATADIR}/preprocess/shards/{{lang}}',
+        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         IFS=" " read -a input <<< "{input}"
         ulimit -n 2048
-        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
+        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} ${{input[@]%/*}}
         ls -d {params.o}/*/* > {output}
         '''
 
@@ -532,48 +533,47 @@ rule bleualign:
 ### FILTERING AND CLEANING ######################################
 
 # TODO: deferred_documents does not work with giawarc: html of the original document not saved
-# rule deferred_documents:
-#     input:
-#         html=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/normalized_html.gz',
-#         url=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/url.gz'
-#     output:
-#         text=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/html5lib_plain_text.xz',
-#         deferred=f'{DATADIR}/preprocess/{{target}}/{PPROC}/{{lang}}/deferred_documents.xz'
-#     shell: '''
-#         touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
-#         touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
-#         paste <(zcat {input.html}) <(zcat {input.url}) \
-#             | python3 {BITEXTOR}/standoff/deferred-documents.py \
-#             | awk '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
-#         '''
+rule deferred_documents:
+    input:
+        html=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/normalized_html.gz',
+        url=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/url.gz'
+    output:
+        text=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/html5lib_plain_text.xz',
+        deferred=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/deferred_documents.xz'
+    shell: '''
+        touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
+        touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
+        paste <(zcat {input.html}) <(zcat {input.url}) \
+            | python3 {BITEXTOR}/standoff/deferred-document.py \
+            | awk '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
+        '''
 
-# deferred_input = rules.bleualign.output
+deferred_input = rules.bleualign.output
 # if SEGALIGN == "hunalign":
 #     deferred_input = rules.hunalign.output
 
-# rule deferred_segments:
-#     input:
-#         deferred_input,
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/html5lib_plain_text.xz',
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/url.gz',
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG1}/deferred_documents.xz',
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/html5lib_plain_text.xz',
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/url.gz',
-#         f'{DATADIR}/preprocess/{{target}}/{PPROC}/{LANG2}/deferred_documents.xz'
-#     output: temp(f'{TRANSIENT}/{{target}}/deferred')
-#     shell: '''
-#         xzcat -T 0 -f {input[0]} \
-#             | python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
-#             > {output}
-#         '''
+rule deferred_segments:
+    input:
+        deferred_input,
+        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
+        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deferred_documents.xz',
+        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
+        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deferred_documents.xz'
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_00.deferred')
+    shell: '''
+        xzcat -T 0 -f {input[0]} \
+            | python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
+            > {output}
+        '''
 
-# bifixer_input = rules.deferred_segments.output
-# if not DEFERRED:
-#     bifixer_input = rules.deferred_segments.input[0]
-# bifixer_input = deferred_input
+bifixer_input = rules.deferred_segments.output
+if not DEFERRED:
+    bifixer_input = deferred_input
 
 rule bifixer:
-    input: rules.bleualign.output
+    input: bifixer_input
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_01.bifixer')
     shell: '''
         zcat {input} \
