@@ -379,9 +379,8 @@ checkpoint shard:
         b = BATCHES,
         o = f'{DATADIR}/preprocess/shards/{{lang}}'
     shell: '''
-        IFS=" " read -a input <<< "{input}"
         ulimit -n 2048
-        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} ${{input[@]%/*}}
+        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
         ls -d {params.o}/*/* > {output}
         '''
 
