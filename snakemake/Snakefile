@@ -437,6 +437,7 @@ rule custom_translate:
     input:
         source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
     output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
+    threads: 2 
     shell: '''
         zcat {input.source} \
             | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
