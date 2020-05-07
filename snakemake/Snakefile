@@ -249,6 +249,10 @@ elif ONLY_PREPROCESS:
 else:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
 
+    # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
+    OUTPUT.append(f'{DATADIR}/preprocess/02.batches.{LANG1}')
+    OUTPUT.append(f'{DATADIR}/preprocess/02.batches.{LANG2}')
+
 shell.prefix("set -euo pipefail;")
 rule all:
     input: OUTPUT
