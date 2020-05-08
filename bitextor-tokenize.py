@@ -32,8 +32,10 @@ def tokenize_moses(text, word_tokeniser, morph_analyser):
     sentences = text.split('\n')
     tokenized_text = []
     for sentence in sentences:
-        tokenized_text += word_tokeniser(sentence) + ["\n"]
-    tokenized_text = " ".join(tokenized_text).replace('\n ', '\n').strip()
+        tokenized_text.append(" ".join(word_tokeniser(sentence)).strip())
+
+    # don't do + "\n" because tokenized text ends with '' item
+    tokenized_text = "\n".join(tokenized_text)
 
     if morph_analyser:
         tokenized_text = proc_morph.process(tokenized_text)
@@ -42,13 +44,13 @@ def tokenize_moses(text, word_tokeniser, morph_analyser):
 
 def tokenize_external(text, word_tokeniser, morph_analyser):
     tokenized_text = word_tokeniser.process(text)
-    
+
     if morph_analyser:
         tokenized_text = morph_analyser.process(tokenized_text)
-    
+
     return tokenized_text
 
-oparser = argparse.ArgumentParser(description="Tool that tokenizes (sentences, tokens and morphemes) plain text")
+oparser = argparse.ArgumentParser(description="Tool that tokenizes plain text")
 oparser.add_argument('--text', dest='text', help='Plain text file', required=True)
 oparser.add_argument('--word-tokenizer', dest='tokenizer', default=None, help="Word tokenisation command line. If not provided, Moses tokenizer.perl will be used")
 oparser.add_argument('--morph-analyser', dest='lemmatizer', default="", help="Morphological analyser command line")
