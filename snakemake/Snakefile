@@ -248,6 +248,10 @@ elif ONLY_PREPROCESS:
     OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 else:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
+    # these have to be added, because tokenisation rules are the last rules that are don't need both shards
+    # otherwise snakemake waites for both shards be completed to continue
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise.{SRC_LANG}_{TRG_LANG}')
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise.{TRG_LANG}')
 
     # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
     OUTPUT.append(f'{DATADIR}/preprocess/02.batches.{LANG1}')
@@ -384,9 +388,8 @@ checkpoint shard:
         o = f'{DATADIR}/preprocess/shards/{{lang}}',
         f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
-        IFS=" " read -a input <<< "{input}"
         ulimit -n 2048
-        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} ${{input[@]%/*}}
+        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
         ls -d {params.o}/*/* > {output}
         '''
 
@@ -435,6 +438,7 @@ rule custom_translate:
     input:
         source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
     output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
+    threads: 2 
     shell: '''
         zcat {input.source} \
             | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
@@ -446,8 +450,8 @@ rule custom_translate:
         # TODO: exit if counts are different?
 
 rule aggregate_translate:
-    input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(TRG_LANG)]
-    output: f'{TRANSIENT}/04.translate.{TRG_LANG}'
+    input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
+    output: f'{TRANSIENT}/04.translate.{SRC_LANG}'
     shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 rule tokenise_translated:
