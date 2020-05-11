@@ -55,12 +55,12 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
     
     if len(segments) != 0:
-        segmented_text = "\n".join(segments)
+        segmented_text = "\n".join(segments) + "\n"
     else:
         segmented_text = ""
     return segmented_text
 
-oparser = argparse.ArgumentParser(description="Tool that tokenizes (sentences, tokens and morphemes) plain text")
+oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")
 oparser.add_argument('--text', dest='text', help='Plain text file', required=True)
 oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. If not provided, Moses split_sentences Python port will be used.")
 oparser.add_argument('--langcode', dest='langcode', default="en", help="Language code for default sentence splitter and tokenizer")

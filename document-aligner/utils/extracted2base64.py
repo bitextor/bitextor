@@ -42,14 +42,14 @@ if __name__ == "__main__":
         else:
             url, text = line_split
         if url == prevurl:
-            prevtext = prevtext + "\n" + text
+            prevtext = prevtext + text + "\n"
         elif prevurl == "":
             prevurl = url
-            prevtext = text
+            prevtext = text + "\n"
         elif url != prevurl:
             print(f'{base64.b64encode(prevtext.encode()).decode()}')
             prevurl = url
-            prevtext = text
+            prevtext = text + "\n"
     print(f'{base64.b64encode(prevtext.encode()).decode()}')
 
     sent_reader.close()
