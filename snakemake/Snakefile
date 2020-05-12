@@ -654,7 +654,7 @@ rule filter:
             cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
         if ELRC:
             cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
-        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} '''
+        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
         cmd += f''' > {output} '''
         shell(cmd)
 
