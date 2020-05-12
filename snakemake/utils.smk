@@ -115,10 +115,11 @@ def validate_args(config):
             'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
             'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             # tokenization
             'sentenceSplitters': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
-            'workTokenizers': {'type': 'dict'},
+            'wordTokenizers': {'type': 'dict'},
             'norphologicalAnalysers': {'type': 'dict'},
             'pruneThreshold': {'type': 'integer', 'check_with': ispositiveorzero, 'default': 0},
             'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},

@@ -33,6 +33,41 @@ from selectolax.parser import HTMLParser
 from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
 import sys
+import html5lib
+from lxml import etree
+
+def remove_control_characters(html):
+    # type: (t.Text) -> t.Text
+    """
+    Strip invalid XML characters that `lxml` cannot parse.
+    """
+    # See: https://github.com/html5lib/html5lib-python/issues/96
+    #
+    # The XML 1.0 spec defines the valid character range as:
+    # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+    #
+    # We can instead match the invalid characters by inverting that range into:
+    # InvalidChar ::= #xb | #xc | #xFFFE | #xFFFF | [#x0-#x8] | [#xe-#x1F] | [#xD800-#xDFFF]
+    #
+    # Sources:
+    # https://www.w3.org/TR/REC-xml/#charsets,
+    # https://lsimons.wordpress.com/2011/03/17/stripping-illegal-characters-out-of-xml-in-python/
+    def strip_illegal_xml_characters(s, default, base=10):
+        # Compare the "invalid XML character range" numerically
+        n = int(s, base)
+        if n in (0xb, 0xc, 0xFFFE, 0xFFFF) or 0x0 <= n <= 0x8 or 0xe <= n <= 0x1F or 0xD800 <= n <= 0xDFFF:
+            return ""
+        return default
+
+    # We encode all non-ascii characters to XML char-refs, so for example "💖" becomes: "&#x1F496;"
+    # Otherwise we'd remove emojis by mistake on narrow-unicode builds of Python
+    html = html.decode('utf8').encode("ascii", "xmlcharrefreplace").decode("utf-8")
+    html = re.sub(r"&#(\d+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0)), html)
+    html = re.sub(r"&#[xX]([0-9a-fA-F]+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0), base=16), html)
+    html = ILLEGAL_XML_CHARS_RE.sub("", html)
+    return html
+# A regex matching the "invalid XML character range"
+ILLEGAL_XML_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]")
 
 
 class SimpleParser(HTMLTokenizer):
@@ -128,6 +163,7 @@ oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
 oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'alcazar', 'simple'},
                      help="Use 'HTML tokenizer', 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
+oparser.add_argument("--html5lib", action="store_true", default=False, help="Process HTML tree with html5lib")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
 oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
@@ -234,8 +270,15 @@ for record in f:
 
     payload = record.content_stream().read()
 
+
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(payload)
+
+    #Fix HTML issues with html5lib if activated through parameters
+    if options.html5lib:
+        document = html5lib.parse(remove_control_characters(bytes(text,'utf8')), treebuilder="lxml", namespaceHTMLElements=False)
+        text = etree.tostring(document, encoding="utf8").decode('utf8')
+
     logging.info("Processing document: " + url)
     if orig_encoding is None:
         logging.info("Encoding of document " + url + " could not be identified")
