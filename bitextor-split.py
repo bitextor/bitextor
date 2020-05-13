@@ -61,7 +61,7 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     return segmented_text
 
 oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")
-oparser.add_argument('--text', dest='text', help='Plain text file', required=True)
+oparser.add_argument('--text', dest='text', help='Plain text file', default="-")
 oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. If not provided, Moses split_sentences Python port will be used.")
 oparser.add_argument('--langcode', dest='langcode', default="en", help="Language code for default sentence splitter and tokenizer")
 oparser.add_argument('--customnbp', dest='customnbp', help="Path for custom non breaking prefixes used by Moses Sentence Splitter Python port")
@@ -93,7 +93,7 @@ else:
     splitter_func = split_external
     splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
-with open_xz_or_gzip_or_plain(options.text) as reader:
+with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
         content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
         sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)

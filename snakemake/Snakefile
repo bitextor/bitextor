@@ -407,7 +407,8 @@ rule split:
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
     output: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-split.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-split.py \
                 --sentence-splitter "{params.splitter}" \
                 --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
@@ -483,7 +484,8 @@ rule tokenise_translated:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-tokenize.py \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -496,7 +498,8 @@ rule tokenise_target:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-tokenize.py \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
