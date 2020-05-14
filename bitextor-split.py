@@ -37,10 +37,7 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
      
     segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
 
-    if len(segments) != 0:
-        segmented_text = "\n".join(segments)
-    else:
-        segmented_text = ""
+    segmented_text = "\n".join(segments) + "\n"
     return segmented_text
 
 def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
@@ -54,10 +51,7 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
 
     segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
     
-    if len(segments) != 0:
-        segmented_text = "\n".join(segments) + "\n"
-    else:
-        segmented_text = ""
+    segmented_text = "\n".join(segments) + "\n"
     return segmented_text
 
 oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")

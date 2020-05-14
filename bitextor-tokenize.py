@@ -40,6 +40,9 @@ def tokenize_moses(text, word_tokeniser, morph_analyser):
     if morph_analyser:
         tokenized_text = proc_morph.process(tokenized_text)
 
+    if tokenized_text == "":
+        tokenized_text = "\n"
+
     return tokenized_text
 
 def tokenize_external(text, word_tokeniser, morph_analyser):
@@ -47,6 +50,9 @@ def tokenize_external(text, word_tokeniser, morph_analyser):
 
     if morph_analyser:
         tokenized_text = morph_analyser.process(tokenized_text)
+
+    if tokenized_text == "":
+        tokenized_text = "\n"
 
     return tokenized_text
 
