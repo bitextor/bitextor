@@ -19,26 +19,24 @@ download_warc()
 }
 
 WORK=${HOME}
+FORCE=""
+THREADS=1
 
-while getopts "hw:" i; do
+while getopts "hf:w:j:" i; do
     case "$i" in
-        h)
-            exit_program "$(basename "$0")"
-            break
-            ;;
-        w)
-            WORK=$OPTARG
-            break
-            ;;
-        *)
-            exit_program "$(basename "$0")"
-            break
+        h) exit_program "$(basename "$0")" ; break ;;
+        w) WORK=${OPTARG};;
+        f) FORCE="--${OPTARG}";;
+        j) THREADS="${OPTARG}";;
+        # *) exit_program "$(basename "$0")" ; break ;;
     esac
 done
 shift $((OPTIND-1))
 
+mkdir -p ${WORK}
+
 if [ ! -f "${WORK}"/bicleaner-model/en-fr/en-fr.yaml ]; then
-	mkdir "${WORK}"/bicleaner-model
+	mkdir -p "${WORK}"/bicleaner-model
 	wget https://github.com/bitextor/bicleaner-data/releases/latest/download/en-fr.tar.gz -P "${WORK}"/bicleaner-model
 	tar zxvf "${WORK}"/bicleaner-model/en-fr.tar.gz -C "${WORK}"/bicleaner-model
 fi
@@ -52,7 +50,7 @@ wait
 BITEXTOR="$(dirname "$0")"
 mkdir -p "${WORK}"/reports
 
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-fr" dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="giawarc" shards=1 batches=100 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" bicleaner="${WORK}/bicleaner-model/en-fr/en-fr.yaml" -j 4 &> "${WORK}/reports/en-fr.report" & 
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-el" dataDir="${WORK}/data/data-en-el" transientDir="${WORK}/transient-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="giawarc" shards=1 batches=100 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" -j 4 &> "${WORK}/reports/en-el.report" & 
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-el" dataDir="${WORK}/data/data-en-ru" transientDir="${WORK}/transient-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=100 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" -j 4 &> "${WORK}/reports/en-ru.report" & 
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-fr" dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" bicleaner="${WORK}/bicleaner-model/en-fr/en-fr.yaml" -j ${THREADS} &> "${WORK}/reports/en-fr.report" &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-el" dataDir="${WORK}/data/data-en-el" transientDir="${WORK}/transient-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" -j ${THREADS} &> "${WORK}/reports/en-el.report" &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" permanentDir="${WORK}/permanent/bitextor-output-en-ru" dataDir="${WORK}/data/data-en-ru" transientDir="${WORK}/transient-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" -j ${THREADS} &> "${WORK}/reports/en-ru.report" &
 wait

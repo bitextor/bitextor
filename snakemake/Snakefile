@@ -412,7 +412,8 @@ rule split:
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
     output: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-split.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-split.py \
                 --sentence-splitter "{params.splitter}" \
                 --langcode "{wildcards.lang}" --customnbp "{params.customnbp}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
@@ -439,42 +440,42 @@ rule aggregate_matches:
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # MT ############################################################
 
-# rule custom_translate:
-#     input:
-#         source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
-#     output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
-#     threads: 2 
-#     shell: '''
-#         zcat {input.source} \
-#             | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
-#             | pigz -c > {output}
-#         n_before=$(zcat {input.source} | base64 -d | wc -l)
-#         n_after=$(zcat {output} | base64 -d | wc -l)
-#         echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
-#         '''
-#         # TODO: exit if counts are different?
-#         # TODO: add early stopping
-
-rule custom_translate_extracted:
-    input: source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+rule custom_translate:
+    input:
+        source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
     output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
-    params: extracted=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.extracted'
-    threads: 2
+    threads: 2 
     shell: '''
-        zcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py > {params.extracted}
-        n_before=$(wc -l < {params.extracted})
-        cut -f 2 {params.extracted} \
-            | {PROFILING} {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
-            | paste <(cut -f 1 {params.extracted}) - \
-            | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py \
+        zcat {input.source} \
+            | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
             | pigz -c > {output}
+        n_before=$(zcat {input.source} | base64 -d | wc -l)
         n_after=$(zcat {output} | base64 -d | wc -l)
         echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
-        rm {params.extracted}
         '''
+        # TODO: exit if counts are different?
+        # TODO: add early stopping
+
+#rule custom_translate_extracted:
+#    input: source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+#    output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
+#    params: extracted=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.extracted'
+#    threads: 2
+#    shell: '''
+#        zcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py > {params.extracted}
+#        n_before=$(wc -l < {params.extracted})
+#        cut -f 2 {params.extracted} \
+#            | {PROFILING} {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
+#            | paste <(cut -f 1 {params.extracted}) - \
+#            | {PROFILING} {BITEXTOR}/document-aligner/utils/extracted2base64.py \
+#            | pigz -c > {output}
+#        n_after=$(zcat {output} | base64 -d | wc -l)
+#        echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
+#        rm {params.extracted}
+#        '''
 
 # temporary, for testing
-translation_output = rules.custom_translate_extracted.output
+translation_output = rules.custom_translate.output
 
 rule aggregate_translate:
     input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
@@ -488,7 +489,8 @@ rule tokenise_translated:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-tokenize.py \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -501,7 +503,8 @@ rule tokenise_target:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
     shell: '''
-        {PROFILING} {BITEXTOR}/bitextor-tokenize.py --text {input} \
+        zcat {input} \
+            | {PROFILING} {BITEXTOR}/bitextor-tokenize.py \
                 --word-tokenizer "{params.tokeniser}" --morph-analyser "{params.lemmatizer}" \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -658,7 +661,7 @@ rule filter:
             cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
         if ELRC:
             cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
-        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} '''
+        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
         cmd += f''' > {output} '''
         shell(cmd)
 
