@@ -37,7 +37,7 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
      
     segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
 
-    segmented_text = "\n".join(segments)
+    segmented_text = "\n".join(segments) + "\n"
     return segmented_text
 
 def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
