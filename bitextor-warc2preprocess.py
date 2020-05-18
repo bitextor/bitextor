@@ -161,8 +161,8 @@ oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
-oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'alcazar', 'simple'},
-                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
+oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'alcazar', 'lxml', 'simple'},
+                     help="Use 'HTML tokenizer', 'modest', 'bs4', 'lxml' (using html5lib tree) or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument("--html5lib", action="store_true", default=False, help="Process HTML tree with html5lib")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
@@ -275,7 +275,7 @@ for record in f:
     orig_encoding, text = convert_encoding(payload)
 
     #Fix HTML issues with html5lib if activated through parameters
-    if options.html5lib:
+    if options.html5lib or options.parser == "lxml":
         document = html5lib.parse(remove_control_characters(bytes(text,'utf8')), treebuilder="lxml", namespaceHTMLElements=False)
         text = etree.tostring(document, encoding="utf8").decode('utf8')
 
@@ -360,6 +360,12 @@ for record in f:
             logging.info("Body is empty. Ignoring this document")
             continue
         plaintext = tree.body.text(separator='\n')
+    
+    # or get text by moving through the lxml tree
+    elif options.parser == "lxml":
+        from standoff import deferred_document
+        logging.info(url + ": Getting text with lxml")
+        standoff_document, plaintext = deferred_document.getDocumentStandoff(html5lib.parse(text,treebuilder="lxml",namespaceHTMLElements=False))
 
     # or use an HTML tokenizer
     else:
