@@ -113,7 +113,7 @@ def validate_args(config):
             'ftfy': {'type': 'boolean', 'default': False},
             'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
-            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             # tokenization
