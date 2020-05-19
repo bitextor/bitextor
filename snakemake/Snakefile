@@ -614,7 +614,8 @@ rule bifixer:
     input: bifixer_input
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_01.bifixer')
     shell: '''
-        zcat {input} \
+        CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
+        $CAT {input} \
             | {PROFILING} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             > {output}
         '''
