@@ -583,7 +583,7 @@ rule deferred_documents:
         touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
         paste <(zcat {input.html}) <(zcat {input.url}) \
             | python3 {BITEXTOR}/standoff/deferred_document.py \
-            | awk '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
+            | awk -F $'\t' '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
         '''
 
 deferred_input = rules.bleualign.output
