@@ -80,8 +80,8 @@ def validate_args(config):
             # profiling
             'profiling': {'type': 'boolean', 'default': False},
             # execute until X:
-            'onlyCrawl': {'type': 'boolean', 'default': False},
-            'onlyPreprocess': {'type': 'boolean', 'default': False},
+            # TODO: only allow deferred bifixer and bicleaner is they are activated
+            'until': {'type': 'string', 'allowed': ['crawl', 'preprocess', 'shard', 'split', 'translate', 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'deferred', 'bifixer', 'bicleaner', 'filter']},
             # data definition
             # TODO: check that one of these is specified?
             'hosts': {'type': 'list', 'dependencies': 'crawler'},

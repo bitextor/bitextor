@@ -29,9 +29,6 @@ if "lang2" in config:
     LANG2 = config["lang2"]
     LANGS.add(LANG2)
 
-ONLY_PREPROCESS = config["onlyPreprocess"]
-ONLY_CRAWL = config["onlyCrawl"]
-
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
     PROFILING = "/usr/bin/time -v"
@@ -238,25 +235,41 @@ TARGET_2_WARCS.update(dict([(domain, [f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc
 TARGETS = TARGET_2_WARCS.keys()
 #################################################################
 OUTPUT = []
+UNTIL = config['until'] if 'until' in config else ''
+if 'until' not in config:
+    OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
+    # this has to be added, because tokenisation rules are the last rules that are don't need both shards
+    # otherwise snakemake waites for both shards be completed to continue
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise_{TRG_LANG}')
+    OUTPUT.append(f'{TRANSIENT}/05.tokenise_{SRC_LANG}2{TRG_LANG}')
 
-if ONLY_CRAWL:
+    # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
+    OUTPUT.append(f'{DATADIR}/preprocess/shards/02.batches.{LANG1}')
+    OUTPUT.append(f'{DATADIR}/preprocess/shards/02.batches.{LANG2}')
+elif UNTIL == 'crawl':
     for domain, hosts in DOMAIN_2_HOSTS:
         for host in hosts:
             OUTPUT.append('{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
-elif ONLY_PREPROCESS:
-    # OUTPUT = expand('{datadir}/preprocess/{domain}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, domain=TARGET_2_WARCS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES+["plain_tokenized.gz", "plain_sentences.gz"])
-    OUTPUT = expand('{datadir}/preprocess/03.split.{lang}', datadir=DATADIR, lang=LANGS)
-else:
-    OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
-    # these have to be added, because tokenisation rules are the last rules that are don't need both shards
-    # otherwise snakemake waites for both shards be completed to continue
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise.{SRC_LANG}_{TRG_LANG}')
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise.{TRG_LANG}')
-
-    # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
-    OUTPUT.append(f'{DATADIR}/preprocess/02.batches.{LANG1}')
-    OUTPUT.append(f'{DATADIR}/preprocess/02.batches.{LANG2}')
-
+elif UNTIL == 'preprocess':
+    OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, langs=LANGS, pproc_file=PPROC_FILES)
+elif UNTIL == 'shard':
+    OUTPUT = expand('{datadir}/preprocess/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
+elif UNTIL == 'split':
+    OUTPUT = expand('{datadir}/preprocess/shards/03.split.{lang}', datadir=DATADIR, lang=LANGS)
+elif UNTIL == 'translate':
+    OUTPUT = f'{TRANSIENT}/04.translate.{SRC_LANG}2{TRG_LANG}'
+elif UNTIL == 'tokenise_trg':
+    # TODO: decide where to put '0X_step' files (output of aggregate rules)
+    OUTPUT = f'{TRANSIENT}/05.tokenise.{TRG_LANG}'
+elif UNTIL == 'tokenise_src':
+    OUTPUT = f'{TRANSIENT}/05.tokenise.{SRC_LANG}2{TRG_LANG}'
+elif UNTIL == 'docalign':
+    OUTPUT = f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}'
+elif UNTIL == 'segalign':
+    OUTPUT = f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
+# TODO: add bifixer and bicleaner steps
+elif UNTIL == 'filter':
+    OUTPUT = f'{TRANSIENT}/06_03.segalign.{LANG1}_{LANG2}'
 shell.prefix("set -euo pipefail;")
 rule all:
     input: OUTPUT
@@ -363,7 +376,6 @@ rule giawarc:
     input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
     output: expand("{data}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
     params: folder=f'{DATADIR}/preprocess/{{target}}/giawarc'
-    threads: 2
     shell: '''
         mkdir -p {params.folder}
         cat {input} | {PROFILING} ~/go/bin/giawarc -f bilang -l {LANGID} -o {params.folder} -
@@ -417,7 +429,7 @@ rule split:
 
 rule aggregate_split:
     input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards.lang)]
-    output: f'{DATADIR}/preprocess/03.split.{{lang}}'
+    output: f'{DATADIR}/preprocess/shards/03.split.{{lang}}'
     shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 #################################################################
@@ -474,7 +486,7 @@ translation_output = rules.custom_translate.output
 
 rule aggregate_translate:
     input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{TRANSIENT}/04.translate.{SRC_LANG}'
+    output: f'{TRANSIENT}/04.translate.{SRC_LANG}2{TRG_LANG}'
     shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 rule tokenise_translated:
@@ -505,14 +517,14 @@ rule tokenise_target:
             | pigz -c > {output}
         '''
 
-rule aggregate_tokenise_translated:
-    input: lambda wildcards: [f'{batch}/tokenised_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{TRANSIENT}/05.tokenise.{SRC_LANG}_{TRG_LANG}'
+rule aggregate_tokenise_target:
+    input: lambda wildcards: [f'{batch}/tokeniesd.gz' for batch in get_batches(TRG_LANG)]
+    output: f'{TRANSIENT}/05.tokenise.{TRG_LANG}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-rule aggregate_tokenise_target:
-    input: lambda wildcards: [f'{batch}/tokenised.gz' for batch in get_batches(TRG_LANG)]
-    output: f'{TRANSIENT}/05.tokenise.{TRG_LANG}'
+rule aggregate_tokenise_source:
+    input: lambda wildcards: [f'{batch}/tokenised_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
+    output: f'{TRANSIENT}/05.tokenise.{SRC_LANG}2{TRG_LANG}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 rule mt_matches:
@@ -528,8 +540,8 @@ rule mt_matches:
 #################################################################
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: f'{TRANSIENT}/06_02.segalign.{SRC_LANG}_{TRG_LANG}'
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # BLEUALIGN #####################################################
 rule bleualign:
@@ -660,6 +672,11 @@ rule filter:
         cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
         cmd += f''' > {output} '''
         shell(cmd)
+
+rule aggregate_filter:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    output: f'{TRANSIENT}/07_03.filter.{SRC_LANG}_{TRG_LANG}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 raw_input_filename = '.'.join(filter_input[0].split('/')[-1].split('.')[1:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner.gz
 
