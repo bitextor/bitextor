@@ -240,12 +240,12 @@ if 'until' not in config:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
     # this has to be added, because tokenisation rules are the last rules that are don't need both shards
     # otherwise snakemake waites for both shards be completed to continue
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise_{TRG_LANG}')
-    OUTPUT.append(f'{TRANSIENT}/05.tokenise_{SRC_LANG}2{TRG_LANG}')
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise_{TRG_LANG}')
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise_{SRC_LANG}2{TRG_LANG}')
 
     # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
-    OUTPUT.append(f'{DATADIR}/preprocess/shards/02.batches.{LANG1}')
-    OUTPUT.append(f'{DATADIR}/preprocess/shards/02.batches.{LANG2}')
+    OUTPUT.append(f'{DATADIR}/shards/02.batches.{LANG1}')
+    OUTPUT.append(f'{DATADIR}/shards/02.batches.{LANG2}')
 elif UNTIL == 'crawl':
     for domain, hosts in DOMAIN_2_HOSTS:
         for host in hosts:
@@ -253,16 +253,16 @@ elif UNTIL == 'crawl':
 elif UNTIL == 'preprocess':
     OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, langs=LANGS, pproc_file=PPROC_FILES)
 elif UNTIL == 'shard':
-    OUTPUT = expand('{datadir}/preprocess/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
+    OUTPUT = expand('{datadir}/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
 elif UNTIL == 'split':
-    OUTPUT = expand('{datadir}/preprocess/shards/03.split.{lang}', datadir=DATADIR, lang=LANGS)
+    OUTPUT = expand('{datadir}/shards/03.split.{lang}', datadir=DATADIR, lang=LANGS)
 elif UNTIL == 'translate':
-    OUTPUT = f'{TRANSIENT}/04.translate.{SRC_LANG}2{TRG_LANG}'
+    OUTPUT = f'{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}'
 elif UNTIL == 'tokenise_trg':
     # TODO: decide where to put '0X_step' files (output of aggregate rules)
-    OUTPUT = f'{TRANSIENT}/05.tokenise.{TRG_LANG}'
+    OUTPUT = f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
 elif UNTIL == 'tokenise_src':
-    OUTPUT = f'{TRANSIENT}/05.tokenise.{SRC_LANG}2{TRG_LANG}'
+    OUTPUT = f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}'
 elif UNTIL == 'docalign':
     OUTPUT = f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}'
 elif UNTIL == 'segalign':
@@ -393,13 +393,14 @@ rule giawarc:
 checkpoint shard:
     # use url.gz as input to avoid having directories as input
     input: expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
-    output: f'{DATADIR}/preprocess/02.batches.{{lang}}' # list of batches created for lang
+    output: f'{DATADIR}/shards/02.batches.{{lang}}' # list of batches created for lang
     params:
         n = SHARDS,
         b = BATCHES,
-        o = f'{DATADIR}/preprocess/shards/{{lang}}'
+        o = f'{DATADIR}/shards/{{lang}}'
     shell: '''
         ulimit -n 2048
+        mkdir -p {params.o}
         {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
         ls -d {params.o}/*/* > {output}
         '''
@@ -413,11 +414,11 @@ def get_batches(lang):
     return batches
 
 rule split:
-    input: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
+    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
     params:
         splitter = lambda wildcards: get_lang_or_default(SENTTOKS, wildcards.lang),
         customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
-    output: f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
+    output: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     shell: '''
         zcat {input} \
             | {PROFILING} {BITEXTOR}/bitextor-split.py \
@@ -429,7 +430,7 @@ rule split:
 
 rule aggregate_split:
     input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards.lang)]
-    output: f'{DATADIR}/preprocess/shards/03.split.{{lang}}'
+    output: f'{DATADIR}/shards/03.split.{{lang}}'
     shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 #################################################################
@@ -449,8 +450,8 @@ rule aggregate_matches:
 
 rule custom_translate:
     input:
-        source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
-    output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
+        source=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
     threads: 2 
     shell: '''
         zcat {input.source} \
@@ -464,9 +465,9 @@ rule custom_translate:
         # TODO: add early stopping
 
 #rule custom_translate_extracted:
-#    input: source=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
-#    output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
-#    params: extracted=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.extracted'
+#    input: source=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+#    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
+#    params: extracted=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.extracted'
 #    threads: 2
 #    shell: '''
 #        zcat {input} | {PROFILING} {BITEXTOR}/document-aligner/utils/extract_lett.py > {params.extracted}
@@ -486,12 +487,12 @@ translation_output = rules.custom_translate.output
 
 rule aggregate_translate:
     input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{TRANSIENT}/04.translate.{SRC_LANG}2{TRG_LANG}'
+    output: f'{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}'
     shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
 
 rule tokenise_translated:
     input: translation_output
-    output: f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz'
+    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz'
     params:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
@@ -504,8 +505,8 @@ rule tokenise_translated:
         '''
 
 rule tokenise_target:
-    input: f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz'
-    output: f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz'
+    input: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz'
+    output: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz'
     params:
         tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
         lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
@@ -518,13 +519,13 @@ rule tokenise_target:
         '''
 
 rule aggregate_tokenise_target:
-    input: lambda wildcards: [f'{batch}/tokeniesd.gz' for batch in get_batches(TRG_LANG)]
-    output: f'{TRANSIENT}/05.tokenise.{TRG_LANG}'
+    input: lambda wildcards: [f'{batch}/tokenised.gz' for batch in get_batches(TRG_LANG)]
+    output: f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 rule aggregate_tokenise_source:
     input: lambda wildcards: [f'{batch}/tokenised_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{TRANSIENT}/05.tokenise.{SRC_LANG}2{TRG_LANG}'
+    output: f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 rule mt_matches:
@@ -547,10 +548,10 @@ rule aggregate_segalign:
 rule bleualign:
     input:
         indices=rules.mt_matches.output,
-        plain1=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz',
-        plain2=f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz',
-        url1=f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
-        url2=f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
+        plain1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz',
+        plain2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz',
+        url1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
+        url2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
         translated1=translation_output
     params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}'
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
