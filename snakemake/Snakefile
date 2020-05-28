@@ -267,7 +267,10 @@ elif UNTIL == 'docalign':
     OUTPUT = f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}'
 elif UNTIL == 'segalign':
     OUTPUT = f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
-# TODO: add bifixer and bicleaner steps
+elif UNTIL == 'bifixer':
+    OUTPUT = f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}'
+elif UNTIL == 'bicleaner':
+    OUTPUT = f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
 elif UNTIL == 'filter':
     OUTPUT = f'{TRANSIENT}/06_03.segalign.{LANG1}_{LANG2}'
 shell.prefix("set -euo pipefail;")
@@ -628,6 +631,11 @@ rule bifixer:
             > {output}
         '''
 
+rule aggregate_bifixer:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_01.bifixer' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    output: f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+
 bicleaner_input = rules.bifixer.output
 if not BIFIXER:
     bicleaner_input = rules.bifixer.input
@@ -653,6 +661,11 @@ rule bicleaner:
         fi
         '''
 
+rule aggregate_bicleaner:
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_02.bicleaner.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    output: f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
+    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+
 filter_input = rules.bicleaner.output
 if not BICLEANER:
     filter_input = rules.bicleaner.input.bifixer
@@ -676,7 +689,7 @@ rule filter:
 
 rule aggregate_filter:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: f'{TRANSIENT}/07_03.filter.{SRC_LANG}_{TRG_LANG}'
+    output: f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 raw_input_filename = '.'.join(filter_input[0].split('/')[-1].split('.')[1:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner.gz
