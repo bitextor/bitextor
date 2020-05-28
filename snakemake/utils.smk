@@ -177,6 +177,9 @@ def validate_args(config):
     if 'bicleaner' in config:
         schema['until']['allowed'].append('bicleaner')
 
+    if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
+        sys.stderr.write("WARNING: you target consists of temporary files. Make sure to use --notemp parameter to preserve your output\n")
+
     v = Validator(schema)
     b = v.validate(config)
 
