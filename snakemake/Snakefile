@@ -272,7 +272,7 @@ elif UNTIL == 'bifixer':
 elif UNTIL == 'bicleaner':
     OUTPUT = f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
 elif UNTIL == 'filter':
-    OUTPUT = f'{TRANSIENT}/06_03.segalign.{LANG1}_{LANG2}'
+    OUTPUT = f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
 shell.prefix("set -euo pipefail;")
 rule all:
     input: OUTPUT
