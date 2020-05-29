@@ -240,8 +240,8 @@ if 'until' not in config:
     OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
     # this has to be added, because tokenisation rules are the last rules that are don't need both shards
     # otherwise snakemake waites for both shards be completed to continue
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise_{TRG_LANG}')
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise_{SRC_LANG}2{TRG_LANG}')
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
 
     # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
     OUTPUT.append(f'{DATADIR}/shards/02.batches.{LANG1}')
