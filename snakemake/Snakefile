@@ -242,10 +242,6 @@ if 'until' not in config:
     # otherwise snakemake waites for both shards be completed to continue
     OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
     OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
-
-    # without these for some reason shards rules are done sequentially (snakemake doesn't recognize that is needs both shards output for rule all)
-    OUTPUT.append(f'{DATADIR}/shards/02.batches.{LANG1}')
-    OUTPUT.append(f'{DATADIR}/shards/02.batches.{LANG2}')
 elif UNTIL == 'crawl':
     for domain, hosts in DOMAIN_2_HOSTS:
         for host in hosts:
@@ -263,16 +259,19 @@ elif UNTIL == 'tokenise_trg':
     OUTPUT = f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
 elif UNTIL == 'tokenise_src':
     OUTPUT = f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}'
-elif UNTIL == 'docalign':
-    OUTPUT = f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}'
-elif UNTIL == 'segalign':
-    OUTPUT = f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
-elif UNTIL == 'bifixer':
-    OUTPUT = f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}'
-elif UNTIL == 'bicleaner':
-    OUTPUT = f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
-elif UNTIL == 'filter':
-    OUTPUT = f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
+else:
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
+    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
+    if UNTIL == 'docalign':
+        OUTPUT.append(f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}')
+    elif UNTIL == 'segalign':
+        OUTPUT.append(f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}')
+    elif UNTIL == 'bifixer':
+        OUTPUT.append(f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}')
+    elif UNTIL == 'bicleaner':
+        OUTPUT.append(f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}')
+    elif UNTIL == 'filter':
+        OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
 shell.prefix("set -euo pipefail;")
 rule all:
     input: OUTPUT
