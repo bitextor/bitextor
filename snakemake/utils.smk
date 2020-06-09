@@ -80,8 +80,7 @@ def validate_args(config):
             # profiling
             'profiling': {'type': 'boolean', 'default': False},
             # execute until X:
-            'onlyCrawl': {'type': 'boolean', 'default': False},
-            'onlyPreprocess': {'type': 'boolean', 'default': False},
+            'until': {'type': 'string', 'allowed': ['crawl', 'preprocess', 'shard', 'split', 'translate', 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'filter']},
             # data definition
             # TODO: check that one of these is specified?
             'hosts': {'type': 'list', 'dependencies': 'crawler'},
@@ -169,6 +168,18 @@ def validate_args(config):
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
+
+    if "deferred" in config:
+        schema['until']['allowed'].append('deferred')
+
+    if 'bifixer' in config:
+        schema['until']['allowed'].append('bifixer')
+
+    if 'bicleaner' in config:
+        schema['until']['allowed'].append('bicleaner')
+
+    if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
+        sys.stderr.write("WARNING: you target consists of temporary files. Make sure to use --notemp parameter to preserve your output\n")
 
     v = Validator(schema)
     b = v.validate(config)
