@@ -58,16 +58,6 @@ def isfile(field, value, error):
         error(field, f'{value} does not exist')
 
 
-def ispositive(field, value, error):
-    if value <= 0:
-        error(field, f'{value} should be greater than zero')
-
-
-def ispositiveorzero(field, value, error):
-    if value < 0:
-        error(field, f'{value} should be greater than or equal to zero')    
-
-
 def validate_args(config):
     schema = {
             # required parameters
@@ -81,6 +71,7 @@ def validate_args(config):
             'profiling': {'type': 'boolean', 'default': False},
             # execute until X:
             'until': {'type': 'string', 'allowed': ['crawl', 'preprocess', 'shard', 'split', 'translate', 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'filter']},
+            'parallelWorkers': {'type': 'dict', 'allowed': ['split', 'translate', 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'sents'], 'valuesrules': {'type': 'integer', 'min': 1}},
             # data definition
             # TODO: check that one of these is specified?
             'hosts': {'type': 'list', 'dependencies': 'crawler'},
@@ -106,8 +97,8 @@ def validate_args(config):
             # preprocessing
             'langs': {'type': 'list'},
             'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc'], 'default': 'giawarc'},
-            'shards': {'type': 'integer', 'check_with': ispositiveorzero, 'default': 8},
-            'batches': {'type': 'integer', 'check_with': ispositive, 'default': 1024},
+            'shards': {'type': 'integer', 'min': 0, 'default': 8},
+            'batches': {'type': 'integer', 'min': 1, 'default': 1024},
             'cleanHTML': {'type': 'boolean', 'default': False},
             'ftfy': {'type': 'boolean', 'default': False},
             'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
@@ -119,7 +110,7 @@ def validate_args(config):
             'customNBPs': {'type': 'dict'},
             'workTokenizers': {'type': 'dict'},
             'norphologicalAnalysers': {'type': 'dict'},
-            'pruneThreshold': {'type': 'integer', 'check_with': ispositiveorzero, 'default': 0},
+            'pruneThreshold': {'type': 'integer', 'min': 0, 'default': 0},
             'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},
             # document alignment
             'lang1': {'type': 'string'},
@@ -128,13 +119,11 @@ def validate_args(config):
             # mt
             'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
             'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
-            'documentAlignerWorkers': {'type': 'integer', 'check_with': ispositive, 'dependencies': {'documentAligner': 'externalMT'}}, # positive integer (using 'all' doesn't make sense in snakemake)
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
             'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
             # sentence alignment
             'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
-            'sentenceAlignerWorkers': {'type': 'integer', 'check_with': ispositive},
             'sentenceAlignerThreshold': {'type': 'float'},
             # post processing
             'deferred': {'type': 'boolean', 'default': False},
@@ -170,12 +159,15 @@ def validate_args(config):
 
     if "deferred" in config:
         schema['until']['allowed'].append('deferred')
+        schema['parallelWorkers']['allowed'].append('deferred')
 
     if 'bifixer' in config:
         schema['until']['allowed'].append('bifixer')
+        schema['parallelWorkers']['allowed'].append('bifixer')
 
     if 'bicleaner' in config:
         schema['until']['allowed'].append('bicleaner')
+        schema['parallelWorkers']['allowed'].append('bicleaner')
 
     if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
         sys.stderr.write("WARNING: you target consists of temporary files. Make sure to use --notemp parameter to preserve your output\n")
