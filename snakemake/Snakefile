@@ -480,7 +480,7 @@ rule custom_translate:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
         fi
         zcat {input.source} \
-            | {PROFILING} ${{parallel_cmd}} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache {MT_COMMAND} \
+            | {PROFILING} ~/go/bin/b64filter {BITEXTOR}/preprocess/bin/cache ${{parallel_cmd}} {MT_COMMAND} \
             | pigz -c > {output}
         n_before=$(zcat {input.source} | base64 -d | wc -l)
         n_after=$(zcat {output} | base64 -d | wc -l)
