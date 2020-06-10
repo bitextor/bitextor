@@ -1,0 +1,35 @@
+__default__:
+    job-name: "{rule}"
+    error: "/home/%u/slurm-logs/{rule}.%j.err"
+    output: "/home/%u/slurm-logs/{rule}.%j.out"
+    nodes: 1
+    cpus-per-task: "{threads}"
+    time: "4:00:00"
+
+shard:
+    job-name: "{rule}_{wildcards.lang}"
+    mem: "10G"
+    error: "/home/%u/slurm-logs/{rule}_{wildcards.lang}.%j.err"
+    output: "/home/%u/slurm-logs/{rule}_{wildcards.lang}.%j.out"
+    time: "36:00:00"
+
+mt_matches:
+    mem: "10G"
+    time: "8:00:00"
+
+bleualign:
+    mem: "10G"
+    time: "8:00:00"
+
+bicleaner:
+    time: "12:00:00"
+
+sents:
+    time: "36:00:00"
+
+tmx:
+    time: "36:00:00"
+
+deduped_tmx:
+    time: "36:00:00"
+
