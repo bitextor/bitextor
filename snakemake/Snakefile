@@ -403,7 +403,7 @@ checkpoint shard:
     params:
         n = SHARDS,
         b = BATCHES,
-        o = f'{DATADIR}/shards/{{lang}}'
+        o = f'{DATADIR}/shards/{{lang}}',
         f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         ulimit -n 2048
