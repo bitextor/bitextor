@@ -602,7 +602,7 @@ checkpoint split_segalign:
     input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output:
         batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches',
-        folder=temp(directory(f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign')) # the point of this is to delete duplicate segalign files after bifixer is done
+        # folder=temp(directory(f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign')) # the point of this is to delete duplicate segalign files after bifixer is done
     params:
         size=BATCHES, # use same parameter as for shards
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign'
@@ -624,7 +624,7 @@ def get_postproc_batches():
 rule bifixer:
     input:
         segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign/{{batch}}',
-        folder=rules.split_segalign.output.folder
+        # folder=rules.split_segalign.output.folder
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
     threads: THREADS['bifixer']
     shell: '''
