@@ -605,11 +605,11 @@ rule bleualign:
 # TODO: deferred_documents does not work with giawarc: html of the original document not saved
 rule deferred_documents:
     input:
-        html=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/normalized_html.gz',
-        url=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/url.gz'
+        html=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/normalized_html.gz',
+        url=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/url.gz'
     output:
-        text=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/html5lib_plain_text.xz',
-        deferred=f'{DATADIR}/preprocess/shards/{{lang}}/{{shard}}/{{batch}}/deferred_documents.xz'
+        text=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/html5lib_plain_text.xz',
+        deferred=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/deferred_documents.xz'
     shell: '''
         touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
         touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
@@ -625,13 +625,13 @@ deferred_input = rules.bleualign.output
 rule deferred_segments:
     input:
         deferred_input,
-        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/html5lib_plain_text.xz',
-        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
-        f'{DATADIR}/preprocess/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deferred_documents.xz',
-        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/html5lib_plain_text.xz',
-        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
-        f'{DATADIR}/preprocess/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deferred_documents.xz'
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_00.deferred')
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deferred_documents.xz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deferred_documents.xz'
+    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_00.deferred')
     shell: '''
         zcat {input[0]} \
             | python3 {BITEXTOR}/standoff/deferred_sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
