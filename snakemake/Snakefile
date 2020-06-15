@@ -566,7 +566,7 @@ rule mt_matches:
 #################################################################
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 # BLEUALIGN #####################################################
@@ -578,10 +578,10 @@ rule bleualign:
         url1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
         url2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
         translated1=translation_output
-    params: folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}', workers=THREADS['segalign']
+    params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}', workers=THREADS['segalign']
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
-        f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz'
+        f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz'
     threads: max(THREADS['segalign'], 2)
     shell: '''
         mkdir -p {params.folder}
@@ -595,7 +595,6 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_TRESHOLD} \
-            | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' ) \
             | pigz -c > {output}
         '''
 # HUNALIGN ######################################################
@@ -639,37 +638,66 @@ rule deferred_segments:
             > {output}
         '''
 
-bifixer_input = rules.deferred_segments.output
-if not DEFERRED:
-    bifixer_input = deferred_input
+split_input_filename = '06_02.segalign'
+split_input_extension = '.gz'
+if DEFERRED:
+    split_input_filename = '07_00.deferred'
+    split_input_extension = ''
+
+# split segalign results into balanced chunks
+checkpoint split_segalign:
+    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    output:
+        batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches',
+        # folder=temp(directory(f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign')) # the point of this is to delete duplicate segalign files after bifixer is done
+    params:
+        size=BATCHES, # use same parameter as for shards
+        folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
+    shell: '''
+        mkdir -p {params.folder}
+        CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
+        $CAT {input} \
+            | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
+            | split -C {params.size}m --numeric-suffixes - {params.folder}/
+        ls {params.folder}/* > {output.batches}
+        '''
+
+def get_postproc_batches():
+    batches = []
+    with checkpoints.split_segalign.get().output.batches.open() as f:
+        for line in f:
+            batches.append(line.strip().split('/')[-1]) # obtain just the number of the chunks
+    return batches
 
 rule bifixer:
-    input: bifixer_input
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_01.bifixer')
+    input:
+        segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}',
+        # folder=rules.split_segalign.output.folder
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
     threads: THREADS['bifixer']
     shell: '''
-        CAT=cat; if [[ {input} == *.gz ]]; then CAT=zcat; fi
+        CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        $CAT {input} \
+        $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             > {output}
         '''
 
 rule aggregate_bifixer:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_01.bifixer' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}' for batch in get_postproc_batches()]
     output: f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
 bicleaner_input = rules.bifixer.output
 if not BIFIXER:
-    bicleaner_input = rules.bifixer.input
+    bicleaner_input = rules.bifixer.input.segalign
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_02.bicleaner.gz'
+    output: f'{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz'
     params: THREADS['bicleaner']
     threads: max(2, THREADS['bicleaner'])
     shell: '''
@@ -694,7 +722,7 @@ rule bicleaner:
         '''
 
 rule aggregate_bicleaner:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_02.bicleaner.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{batch}.gz' for batch in get_postproc_batches()]
     output: f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
@@ -704,7 +732,7 @@ if not BICLEANER:
 
 rule filter:
     input: filter_input
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_03.filtered')
+    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}')
     threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
     run:
         cat_cmd = "cat"
@@ -720,14 +748,15 @@ rule filter:
         shell(cmd)
 
 rule aggregate_filter:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}' for batch in get_postproc_batches()]
     output: f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-raw_input_filename = '.'.join(filter_input[0].split('/')[-1].split('.')[1:]) # 06_02.segalign.gz / 07_01.bifixer / 07_02.bicleaner.gz
+raw_input_filename = filter_input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
+extension = ".gz" if raw_input_filename == "07_02.bicleaner" else ""
 
 rule raw:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{raw_input_filename}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}' for batch in get_postproc_batches()]
     output:
         corpus=f'{PERMANENT}/{LANG1}-{LANG2}.raw.gz',
         stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.raw'
@@ -747,7 +776,7 @@ rule raw:
         '''
 
 rule sents:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.07_03.filtered' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}' for batch in get_postproc_batches()]
     output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
     threads: THREADS['sents']
     shell: '''
