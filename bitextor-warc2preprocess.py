@@ -71,20 +71,19 @@ ILLEGAL_XML_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFF
 
 
 class SimpleParser(HTMLTokenizer):
-    startNL = ["ul", "ol", "dl", "tr"]
-    endNL = ["p", "div", "li", "dd", "dt", "th", "td", "h1", "h2", "h3", "h4", "h5", "h6"]
-    selfNL = ["br"]
+    startendNL = ["ul", "ol", "dl", "tr", "p", "div", "li", "dd", "dt", "th", "td", "h1", "h2", "h3", "h4", "h5", "h6", "article", "aside", "blockquote", "details", "summary", "figcaption", "footer", "form", "header", "legend", "main", "nav", "pre", "section"]
+    selfNL = ["br", "hr"]
     noText = ["script", "noscript", "style"]
     lastTok = ""
     parsed = ""
 
     def handle_starttag(self, tag, attrs):
-        if tag in self.startNL:
+        if tag in self.startendNL or tag in self.selfNL:
             self.parsed = self.parsed + "\n"
         self.lastTok = tag
 
     def handle_endtag(self, tag):
-        if tag in self.endNL:
+        if tag in self.startendNL:
             self.parsed = self.parsed + "\n"
         else:
             self.parsed = self.parsed + " "
@@ -371,8 +370,12 @@ for record in f:
     else:
         logging.info(url + ": Getting text with HTML tokenizer")
         parser = SimpleParser()
-        parser.feed(text)
-        plaintext = parser.get_text()
+        try:
+            parser.feed(text)
+            plaintext = parser.get_text()
+        except:
+            logging.info("Tree structure issues in HTML/XML. Ignoring this document")
+            continue
     plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"[ \t\v\f]+", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' '))))).strip()
     if options.langid == "cld3":
         if plaintext:
