@@ -427,8 +427,8 @@ rule split:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        splitter=""; if [ {params.splitter} -ne "" ]; then splitter='--sentence-splitter "{params.splitter}"'; fi
-        customnbp=""; if [ {params.customnbp} -ne "" ]; then customnbp='--customnbp "{params.customnbp}"'; fi
+        splitter=""; if [ "{params.splitter}" != "" ]; then splitter='--sentence-splitter "{params.splitter}"'; fi
+        customnbp=""; if [ "{params.customnbp}" != "" ]; then customnbp='--customnbp "{params.customnbp}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-split.py \
                 $splitter $customnbp \
@@ -508,8 +508,8 @@ rule tokenise_translated:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        wordtok=""; if [ {params.tokeniser} -ne "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
-        morphtok=""; if [ {params.lemmatizer} -ne ""]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
+        wordtok=""; if [ "{params.tokeniser}" != "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
+        morphtok=""; if [ "{params.lemmatizer}" != "" ]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
                 $wordtok $morphtok \
@@ -529,8 +529,8 @@ rule tokenise_target:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        wordtok=""; if [ {params.tokeniser} -ne "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
-        morphtok=""; if [ {params.lemmatizer} -ne ""]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
+        wordtok=""; if [ "{params.tokeniser}" != "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
+        morphtok=""; if [ "{params.lemmatizer}" != "" ]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
                 $wordtok $morphtok \
