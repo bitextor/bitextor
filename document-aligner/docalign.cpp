@@ -30,6 +30,11 @@ struct DocumentPair {
 	size_t en_idx;
 };
 
+struct DocumentNGramScore {
+	size_t doc_id;
+	float tfidf;
+};
+
 /**
  * Utility to start N threads executing fun. Returns a vector with those thread objects.
  */
@@ -229,11 +234,15 @@ int main(int argc, char *argv[])
 	}
 
 	// Read translated documents & pre-calculate TF/DF for each of these documents
-	std::vector<DocumentRef> refs(in_document_cnt);
-
+	unordered_map<NGram, vector<DocumentNGramScore>> ref_index;
+	
 	{
+		mutex ref_index_mutex;
+
 		blocking_queue<unique_ptr<Line>> queue(n_load_threads * 128);
-		vector<thread> workers(start(n_load_threads, [&queue, &refs, &df, &document_cnt, &ngram_size]() {
+		vector<thread> workers(start(n_load_threads, [&queue, &ref_index, &ref_index_mutex, &df, &document_cnt, &ngram_size]() {
+			unordered_map<NGram, vector<DocumentNGramScore>> local_ref_index;
+
 			while (true) {
 				unique_ptr<Line> line(queue.pop());
 
@@ -247,16 +256,40 @@ int main(int argc, char *argv[])
 				// vector and the vector has been initialized with enough lines
 				// so there should be no concurrency issue.
 				// DF is accessed read-only. N starts counting at 1.
-				calculate_tfidf(doc, refs[line->n - 1], document_cnt, df);
+				DocumentRef ref;
+				calculate_tfidf(doc, ref, document_cnt, df);
+
+				for (auto const &entry : ref.wordvec) {
+					local_ref_index[entry.hash].push_back(DocumentNGramScore{
+						.doc_id = line->n,
+						.tfidf = entry.tfidf
+					});
+				}
+			}
+
+			{
+				// Merge the local index we built into the global one
+				unique_lock<mutex> lock(ref_index_mutex);
+				for (auto &entry : local_ref_index) {
+					auto &dest = ref_index[entry.first];
+
+					// Minor optimisation: copy the fewest elements possible
+					if (dest.size() < entry.second.size())
+						swap(dest, entry.second);
+
+					dest.reserve(dest.size() + entry.second.size());
+					
+					move(entry.second.begin(), entry.second.end(), back_inserter(dest));
+				}
 			}
 		}));
 
-		queue_lines(vm["translated-tokens"].as<std::string>(), queue);
+		size_t refs_cnt = queue_lines(vm["translated-tokens"].as<std::string>(), queue);
 
 		stop(queue, workers);
 
 		if (verbose)
-			cerr << "Read " << refs.size() << " documents into memory" << endl;
+			cerr << "Read " << refs_cnt << " documents into memory" << endl;
 
 		if (verbose)
 			cerr << "Load queue performance:\n" << queue.performance();
@@ -289,40 +322,47 @@ int main(int argc, char *argv[])
 		// Function used to report the score. Implementation depends on whether
 		// we are doing print_all or not. Mutex is necessary for both cases,
 		// either for writing to top_scores or for printing to stdout.
-		function<void (float, DocumentRef const &, DocumentRef const &)> mark_score;
+		function<void (float, size_t in_ref, size_t en_ref)> mark_score;
 		mutex mark_score_mutex;
 
 		// Scores for all pairs (that meet the threshold). Only used with 
 		vector<DocumentPair> scored_pairs;
 
 		if (!print_all) {
-			mark_score = [&scored_pairs, &mark_score_mutex] (float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
+			mark_score = [&scored_pairs, &mark_score_mutex] (float score, size_t in_ref, size_t en_ref) {
 				unique_lock<mutex> lock(mark_score_mutex);
-				scored_pairs.push_back({score, in_ref.id, en_ref.id});
+				scored_pairs.push_back({score, in_ref, en_ref});
 			};
 		} else {
-			mark_score = [&mark_score_mutex](float score, DocumentRef const &in_ref, DocumentRef const &en_ref) {
+			mark_score = [&mark_score_mutex](float score, size_t in_ref, size_t en_ref) {
 				unique_lock<mutex> lock(mark_score_mutex);
-				print_score(score, in_ref.id, en_ref.id);
+				print_score(score, in_ref, en_ref);
 			};
 		}
 
-		vector<thread> score_workers(start(n_score_threads, [&score_queue, &refs, &threshold, &mark_score]() {
+		vector<thread> score_workers(start(n_score_threads, [&score_queue, &ref_index, &threshold, &mark_score]() {
 			while (true) {
 				unique_ptr<DocumentRef> doc_ref(score_queue.pop());
 
 				if (!doc_ref)
 					break;
 
-				for (auto const &ref : refs) {
-					float score = calculate_alignment(ref, *doc_ref);
-
-					// Document not a match? Skip to the next.
-					if (score < threshold)
+				unordered_map<size_t, float> ref_scores;
+				
+				for (auto const &word_score : doc_ref->wordvec) {
+					// Search ngram hash (uint64_t) in ref_index
+					auto it = ref_index.find(word_score.hash);
+					
+					if (it == ref_index.end())
 						continue;
-
-					mark_score(score, ref, *doc_ref);
+					
+					for (auto const &ref_score : it->second)
+						ref_scores[ref_score.doc_id] += word_score.tfidf * ref_score.tfidf;
 				}
+
+				for (auto const &ref : ref_scores)
+					if (ref.second >= threshold)
+						mark_score(ref.second, ref.first, doc_ref->id);
 			}
 		}));
 
