@@ -180,6 +180,8 @@ for record in f:
     if url == "unknown" or not url:
         logging.info("Skipping page with unknown URL")
         continue
+    if record.rec_headers.get_header('Content-Type') is None:
+        continue
     if "text/dns" in record.rec_headers.get_header('Content-Type'):
         continue
     pageSize = int(record.rec_headers.get_header('Content-Length'))
