@@ -87,7 +87,10 @@ def office2html(data):
     xmls = []
     for xml in office_file.namelist():
         if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
-            xmls.append(office_file.read(xml))
+            try:
+                xmls.append(office_file.read(xml))
+            except Exception as ex:
+                continue
     return xmls
 
 
@@ -101,7 +104,10 @@ def epub2html(data):
     xmls = []
     for xml in epub_file.namelist():
         if "ml" == xml[-2:]:
-            xmls.append(epub_file.read(xml))
+            try:
+                xmls.append(epub_file.read(xml))
+            except Exception as ex:
+                continue
     return xmls
 
 
