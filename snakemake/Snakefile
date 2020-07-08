@@ -575,8 +575,7 @@ rule bleualign:
         translated1=translation_output
     params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}', workers=THREADS['segalign']
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
-    output:
-        f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz'
+    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz')
     threads: max(THREADS['segalign'], 2)
     shell: '''
         mkdir -p {params.folder}
@@ -600,8 +599,7 @@ rule bleualign:
 # split segalign results into balanced chunks
 checkpoint split_segalign:
     input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output:
-        batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches',
+    output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
     params:
         size=BATCHES, # use same parameter as for shards
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign'
@@ -609,8 +607,8 @@ checkpoint split_segalign:
         mkdir -p {params.folder}
         zcat {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | split -C {params.size}m --numeric-suffixes - {params.folder}/
-        ls {params.folder}/* > {output.batches}
+            | split -C {params.size}m --numeric-suffixes --additional-suffix .gz --filter 'gzip -c > $FILE' - "{params.folder}/"
+        ls {params.folder}/* | tr -d '.gz$' > {output.batches}
         '''
 
 def get_postproc_batches():
@@ -633,7 +631,6 @@ rule bifixer:
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             > {output}
-        rm {input.segalign} # since you can't remove these files with temp()
         '''
 
 rule aggregate_bifixer:
