@@ -22,7 +22,6 @@ import sys
 import argparse
 import cchardet
 import re
-from lxml.html.clean import Cleaner
 import os
 import importlib
 import logging
@@ -35,18 +34,14 @@ from io import BytesIO
 
 def convert_encoding(data):
     encoding = cchardet.detect(data)['encoding']
-    if encoding is None:
-        encoding = "utf-8"
-    if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
-        # the error is caught here
-        for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
-            try:
-                return enc, data.decode(enc)
-            except:
-                pass
+    decoded = ''
+    for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']: # if detected encoding fails (or is None), try some common encodings
+        try:
+            decoded = data.decode(encoding)
+            return enc, decoded
+        except:
+            pass
     return None, ''
-
 
 def pdf2html(data):
     pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -158,7 +153,10 @@ if not options.pdfpass and options.pdfextract:
     from pdfextract.extract import Extractor as ExtrP
     extractor = ExtrP()
 
-cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
+cleaner = None
+if options.cleanhtml:
+    from lxml.html.clean import Cleaner
+    cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
 if options.output == sys.stdout or options.output == '-':
     filename = ""
@@ -253,9 +251,12 @@ for record in f:
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
     for payload in payloads:
+        if not payload:
+            continue
+
+        logging.info("Processing document: " + url)
         # We convert into UTF8 first of all
         orig_encoding, text = convert_encoding(payload)
-        logging.info("Processing document: " + url)
 
         if orig_encoding is None:
             logging.info("Encoding of document " + url + " could not be identified")
