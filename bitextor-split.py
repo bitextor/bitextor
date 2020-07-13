@@ -27,6 +27,19 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 from utils.common import ExternalTextProcessor
 
+# True -> keep sentence
+# False -> throw away
+def filter_trash(sentence):
+    digits_and_punctuation = string.punctuation + string.digits
+    n = 0
+    for c in sentence:
+        if c == "\x00":
+            return False
+        if c in digits_and_punctuation:
+            n = n + 1
+    return n < len(sentence) // 2
+
+
 def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
     segment = external_splitter.process(content).strip().split("\n")
     # prune long sentences
@@ -35,7 +48,7 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
      
-    segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
+    segments = [s for s in segments if filter_trash(s)]
 
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
@@ -49,7 +62,7 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
 
-    segments = [s for s in segments if sum([1 for char in s if char in (string.punctuation + string.digits)]) < len(s) // 2]
+    segments = [s for s in segments if filter_trash(s)]
     
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
