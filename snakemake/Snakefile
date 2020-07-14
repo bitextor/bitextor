@@ -199,6 +199,7 @@ FILTER_SORT_FIELDS="-k3,4"
 TMX_DEDUP_FIELDS = 'seg1,seg2'
 if 'bifixerhash' in BEFORE_ELRC_FIELDS:
     i = BEFORE_ELRC_FIELDS.index('bifixerhash')
+    i = i + 1 # sort counts from 1, not 0
     FILTER_SORT_FIELDS = f'-k{i},{i} -k{i+1},{i+1}nr'
     TMX_DEDUP_FIELDS = 'bifixerhash'
 
@@ -367,7 +368,7 @@ rule warc2preprocess:
     params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
     shell: '''
         mkdir -p {params.folder}
-        cat {input} | {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
+        cat {input} | {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -580,8 +581,7 @@ rule bleualign:
         translated1=translation_output
     params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}', workers=THREADS['segalign']
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
-    output:
-        f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz'
+    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz')
     threads: max(THREADS['segalign'], 2)
     shell: '''
         mkdir -p {params.folder}
@@ -647,9 +647,7 @@ if DEFERRED:
 # split segalign results into balanced chunks
 checkpoint split_segalign:
     input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output:
-        batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches',
-        # folder=temp(directory(f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign')) # the point of this is to delete duplicate segalign files after bifixer is done
+    output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
     params:
         size=BATCHES, # use same parameter as for shards
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
@@ -658,8 +656,8 @@ checkpoint split_segalign:
         CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | split -C {params.size}m --numeric-suffixes - {params.folder}/
-        ls {params.folder}/* > {output.batches}
+            | split -C {params.size}m --numeric-suffixes --additional-suffix .gz --filter 'gzip -c > $FILE' - "{params.folder}/"
+        ls {params.folder}/* | tr -d '.gz$' > {output.batches}
         '''
 
 def get_postproc_batches():
@@ -670,9 +668,7 @@ def get_postproc_batches():
     return batches
 
 rule bifixer:
-    input:
-        segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}',
-        # folder=rules.split_segalign.output.folder
+    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz',
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
     threads: THREADS['bifixer']
     shell: '''
@@ -709,13 +705,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         fi
