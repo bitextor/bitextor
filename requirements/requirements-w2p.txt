@@ -1,6 +1,6 @@
-beautifulsoup4==4.8.2
+beautifulsoup4==4.9.1
 pycld2==0.41
-alcazar==0.5.4
-python-magic==0.4.15
-selectolax==0.2.3
-Cython==0.29.15
+alcazar==0.7.3
+python-magic==0.4.18
+selectolax==0.2.4
+Cython==0.29.21
