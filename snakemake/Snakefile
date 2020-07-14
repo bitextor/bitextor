@@ -195,6 +195,7 @@ FILTER_SORT_FIELDS="-k3,4"
 TMX_DEDUP_FIELDS = 'seg1,seg2'
 if 'bifixerhash' in BEFORE_ELRC_FIELDS:
     i = BEFORE_ELRC_FIELDS.index('bifixerhash')
+    i = i + 1 # sort counts from 1, not 0
     FILTER_SORT_FIELDS = f'-k{i},{i} -k{i+1},{i+1}nr'
     TMX_DEDUP_FIELDS = 'bifixerhash'
 
@@ -619,7 +620,7 @@ def get_postproc_batches():
     return batches
 
 rule bifixer:
-    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign/{{batch}}',
+    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign/{{batch}}.gz',
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
     threads: THREADS['bifixer']
     shell: '''
@@ -656,13 +657,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/preprocess/bin/cache -k 3,4 python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <(cat {input.bifixer}) - \
                 | pigz -c > {output}
         fi
