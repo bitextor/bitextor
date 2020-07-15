@@ -40,11 +40,11 @@ install-smttools:
 	cp document-aligner/bin/* $(prefix)/bin/.
 
 install-standoff:
-	cp standoff/deferred-document.py $(prefix)/bin/deferred-document
-	cp standoff/deferred-sentences.py $(prefix)/bin/deferred-sentences
-	cp standoff/reconstructor-deferred-sentences.py $(prefix)/bin/reconstructor-deferred-sentences
+	cp standoff/deferred_document.py $(prefix)/bin/deferred_document
+	cp standoff/deferred_sentences.py $(prefix)/bin/deferred_sentences
+	cp standoff/reconstructor_deferred_sentences.py $(prefix)/bin/reconstructor_deferred_sentences
 	cp standoff/wagnerfischer.py $(prefix)/bin/.
-	chmod a+x $(prefix)/bin/deferred-document $(prefix)/bin/deferred-sentences $(prefix)/bin/reconstructor-deferred-sentences
+	chmod a+x $(prefix)/bin/deferred_document $(prefix)/bin/deferred_sentences $(prefix)/bin/reconstructor_deferred_sentences
 
 install-hunalign:
 	cp hunalign/src/hunalign/hunalign $(prefix)/bin/.
