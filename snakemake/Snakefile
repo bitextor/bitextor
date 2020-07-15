@@ -1665,7 +1665,7 @@ rule deferred_documents:
         "{data}/preprocess/{{target}}/{pproc}/{{lang}}/html5lib_plain_text.xz".format(data=data, pproc=PPROC),
         "{data}/preprocess/{{target}}/{pproc}/{{lang}}/deferred_documents.xz".format(data=data, pproc=PPROC)
     shell:
-        'touch {output[0]}.touch; xz {output[0]}.touch; mv {output[0]}.touch.xz {output[0]}; touch {output[1]}.touch; xz {output[1]}.touch; mv {output[1]}.touch.xz {output[1]}; paste <(zcat {input[0]}) <(zcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred-document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
+        'touch {output[0]}.touch; xz {output[0]}.touch; mv {output[0]}.touch.xz {output[0]}; touch {output[1]}.touch; xz {output[1]}.touch; mv {output[1]}.touch.xz {output[1]}; paste <(zcat {input[0]}) <(zcat {input[1]}) | {PROFILING} python3 {BITEXTOR}/standoff/deferred_document.py | awk \'{{ print $1 | "xz > {output[0]}"; print $3 | "xz > {output[1]}" }}\''
 
 rule deferred_segments:
     input:
@@ -1679,7 +1679,7 @@ rule deferred_segments:
     output:
         "{transient}/{{target}}/{segaligner}.deferred.segalign.xz".format(transient=transient,segaligner=SEGMENTALIGNER)
     shell:
-        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred-sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) > {output}'
+        'xzcat -T 0 -f {input[0]} | {PROFILING} python3 {BITEXTOR}/standoff/deferred_sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) > {output}'
 
 rule cleansegments:
     input:
