@@ -41,7 +41,7 @@ CRAWLSIZELIMIT = ""
 CRAWLTIMELIMIT = ""
 CRAWLWAIT = ""
 CRAWLPAGELIMIT = ""
-CRAWLFILETYPES = ""
+CRAWLFILETYPES = "-f html,pdf"
 CRAWLJOBS = "-j 2"
 CRAWLTIMEOUT = ""
 CRAWLDUMPARGS = ""
@@ -99,6 +99,7 @@ LANGID = config["langID"]
 PARSER = ""
 BOILERPIPE = ""
 PDFEXTRACT = ""
+HTML5LIB = ""
 
 if config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
@@ -110,6 +111,8 @@ if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
     BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT = "--pdfextract"
+if "html5lib" in config and config["html5lib"]:
+    HTML5LIB = "--html5lib"
 
 # sentence splitting and tokenisation
 SENTTOKS = {} if not "sentenceSplitters" in config else config["sentenceSplitters"]
@@ -164,9 +167,10 @@ DEDUPED = False
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 
-if 'deferredCrawling' in config and config['deferredCrawling']:
+if 'deferred' in config and config['deferred']:
     DEFERRED = True
     DEFERRED_FIELDS = ['deferredseg1','checksum1','deferredseg2','checksum2']
+    PARSER = "--parser 'lxml'"
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
     BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
@@ -364,7 +368,7 @@ rule warc2preprocess:
     params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
     shell: '''
         mkdir -p {params.folder}
-        cat {input} | {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {PARSER} --output-dir {params.folder}
+        cat {input} | {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -400,11 +404,12 @@ checkpoint shard:
     params:
         n = SHARDS,
         b = BATCHES,
-        o = f'{DATADIR}/shards/{{lang}}'
+        o = f'{DATADIR}/shards/{{lang}}',
+        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         ulimit -n 2048
         mkdir -p {params.o}
-        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
+        {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
         ls -d {params.o}/*/* > {output}
         '''
 
@@ -597,16 +602,59 @@ rule bleualign:
 #################################################################
 ### FILTERING AND CLEANING ######################################
 
+# TODO: deferred_documents does not work with giawarc: html of the original document not saved
+rule deferred_documents:
+    input:
+        html=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/normalized_html.gz',
+        url=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/url.gz'
+    output:
+        text=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/html5lib_plain_text.xz',
+        deferred=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/deferred_documents.xz'
+    shell: '''
+        touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
+        touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
+        paste <(zcat {input.html}) <(zcat {input.url}) \
+            | python3 {BITEXTOR}/standoff/deferred_document.py \
+            | awk -F $'\t' '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
+        '''
+
+deferred_input = rules.bleualign.output
+# if SEGALIGN == "hunalign":
+#     deferred_input = rules.hunalign.output
+
+rule deferred_segments:
+    input:
+        deferred_input,
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
+        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deferred_documents.xz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/html5lib_plain_text.xz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
+        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deferred_documents.xz'
+    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_00.deferred')
+    shell: '''
+        zcat {input[0]} \
+            | python3 {BITEXTOR}/standoff/deferred_sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
+            > {output}
+        '''
+
+split_input_filename = '06_02.segalign'
+split_input_extension = '.gz'
+if DEFERRED:
+    split_input_filename = '07_00.deferred'
+    split_input_extension = ''
+
 # split segalign results into balanced chunks
 checkpoint split_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
+    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
     params:
         size=BATCHES, # use same parameter as for shards
-        folder=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign'
+        folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
     shell: '''
         mkdir -p {params.folder}
-        zcat {input} \
+        CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
+        $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
             | split -C {params.size}m --numeric-suffixes --additional-suffix .gz --filter 'gzip -c > $FILE' - "{params.folder}/"
         ls {params.folder}/* | tr -d '.gz$' > {output.batches}
@@ -620,15 +668,15 @@ def get_postproc_batches():
     return batches
 
 rule bifixer:
-    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/06_02.segalign/{{batch}}.gz',
+    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz',
     output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
     threads: THREADS['bifixer']
     shell: '''
+        CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
             > {output}
