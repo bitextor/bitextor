@@ -490,7 +490,12 @@ rule custom_translate:
             | pigz -c > {output}
         n_before=$(zcat {input.source} | base64 -d | wc -l)
         n_after=$(zcat {output} | base64 -d | wc -l)
-        echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
+        # echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
+        if [ $n_before -ne $n_after ]
+        then
+            >&2 echo "Lines count differ: source $n_before, target $n_after"
+            exit 1
+        fi
         '''
         # TODO: exit if counts are different?
         # TODO: add early stopping
