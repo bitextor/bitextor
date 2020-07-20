@@ -128,7 +128,7 @@ def validate_args(config):
             'sentenceAlignerThreshold': {'type': 'float'},
             # post processing
             'deferred': {'type': 'boolean', 'default': False},
-            'bifixer': {'type': 'boolean', 'default': True},
+            'bifixer': {'type': 'boolean', 'default': False},
             'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
             'bicleaner': {'type': 'string', 'check_with': isfile}, # TODO: check that model exists, use training subworkflow if not
             'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},

@@ -755,8 +755,10 @@ rule aggregate_filter:
     output: f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-raw_input_filename = filter_input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
-extension = ".gz" if raw_input_filename == "07_02.bicleaner" else ""
+raw_input_filename = rules.filter.input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
+extension = ""
+if raw_input_filename == "07_02.bicleaner" or raw_input_filename == "06_02.segalign":
+    extension = ".gz"
 
 rule raw:
     input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}' for batch in get_postproc_batches()]
