@@ -661,8 +661,8 @@ checkpoint split_segalign:
         CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | split -C {params.size}m --numeric-suffixes --additional-suffix .gz --filter 'gzip -c > $FILE' - "{params.folder}/"
-        ls {params.folder}/* | tr -d '.gz$' > {output.batches}
+            | split -C {params.size}m --numeric-suffixes --filter 'gzip --stdout > $FILE.gz' - "{params.folder}/"
+        ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
         '''
 
 def get_postproc_batches():
