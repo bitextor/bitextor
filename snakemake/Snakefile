@@ -658,7 +658,7 @@ checkpoint split_segalign:
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
     shell: '''
         mkdir -p {params.folder}
-        rm {params.folder}/* # remove anything that might be left after a previous run
+        rm -f {params.folder}/* # remove anything that might be left after a previous run
         CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
