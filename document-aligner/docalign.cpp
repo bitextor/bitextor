@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 				if (!line)
 					break;
 
-				Document doc{.id = line->n, .vocab = {}};
+				Document doc{.id = line->n};
 				ReadDocument(line->str, doc, ngram_size);
 
 				// Note that each worker writes to a different line in the refs
