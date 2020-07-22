@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 
 	unsigned int n_load_threads = n_threads;
 
-	unsigned int n_read_threads = min(n_threads, min(max(n_threads / 4u, 1u), 4u)); // really no use to have more than 4 threads decode
+	unsigned int n_read_threads = n_threads;
 
 	unsigned int n_score_threads = n_threads;
 	
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 
 	// Start reading the other set of documents we match against and do the matching.
 	{
-		blocking_queue<unique_ptr<Line>> read_queue(n_read_threads * 128);
+		blocking_queue<unique_ptr<Line>> read_queue(n_read_threads * 1024);
 
 		blocking_queue<unique_ptr<DocumentRef>> score_queue(n_score_threads * 256);
 
