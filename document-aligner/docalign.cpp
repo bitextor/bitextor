@@ -35,6 +35,8 @@ struct DocumentNGramScore {
 	float tfidf;
 };
 
+constexpr size_t BATCH_SIZE = 512;
+
 /**
  * Utility to start N threads executing fun. Returns a vector with those thread objects.
  */
@@ -299,23 +301,32 @@ int main(int argc, char *argv[])
 	{
 		blocking_queue<unique_ptr<Line>> read_queue(n_read_threads * 1024);
 
-		blocking_queue<unique_ptr<DocumentRef>> score_queue(n_score_threads * 256);
+		blocking_queue<unique_ptr<vector<DocumentRef>>> score_queue(n_score_threads * 1024);
 
 		vector<thread> read_workers(start(n_read_threads, [&read_queue, &score_queue, &document_cnt, &df, &ngram_size]() {
-			while (true) {
-				unique_ptr<Line> line(read_queue.pop());
+			bool good = true;
 
-				// Empty pointer is poison
-				if (!line)
-					break;
+			while (good) {
+				unique_ptr<vector<DocumentRef>> ref_batch(new vector<DocumentRef>());
+				ref_batch->reserve(BATCH_SIZE);
+			
+				for (size_t i = 0; i < BATCH_SIZE; ++i) {
+					unique_ptr<Line> line(read_queue.pop());
 
-				Document doc{.id = line->n, .vocab = {}};
-				ReadDocument(line->str, doc, ngram_size);
+					// Empty pointer is poison
+					if (!line) {
+						good = false;
+						break;
+					}
 
-				unique_ptr<DocumentRef> ref(new DocumentRef);
-				calculate_tfidf(doc, *ref, document_cnt, df);
+					Document doc{.id = line->n, .vocab = {}};
+					ReadDocument(line->str, doc, ngram_size);
 
-				score_queue.push(move(ref));
+					ref_batch->emplace_back();
+					calculate_tfidf(doc, ref_batch->back(), document_cnt, df);
+				}
+
+				score_queue.push(move(ref_batch));
 			}
 		}));
 
@@ -342,27 +353,29 @@ int main(int argc, char *argv[])
 
 		vector<thread> score_workers(start(n_score_threads, [&score_queue, &ref_index, &threshold, &mark_score]() {
 			while (true) {
-				unique_ptr<DocumentRef> doc_ref(score_queue.pop());
+				unique_ptr<vector<DocumentRef>> doc_ref_batch(score_queue.pop());
 
-				if (!doc_ref)
+				if (!doc_ref_batch)
 					break;
 
-				unordered_map<size_t, float> ref_scores;
-				
-				for (auto const &word_score : doc_ref->wordvec) {
-					// Search ngram hash (uint64_t) in ref_index
-					auto it = ref_index.find(word_score.hash);
+				for (auto &doc_ref : *doc_ref_batch) {
+					unordered_map<size_t, float> ref_scores;
 					
-					if (it == ref_index.end())
-						continue;
-					
-					for (auto const &ref_score : it->second)
-						ref_scores[ref_score.doc_id] += word_score.tfidf * ref_score.tfidf;
-				}
+					for (auto const &word_score : doc_ref.wordvec) {
+						// Search ngram hash (uint64_t) in ref_index
+						auto it = ref_index.find(word_score.hash);
+						
+						if (it == ref_index.end())
+							continue;
+						
+						for (auto const &ref_score : it->second)
+							ref_scores[ref_score.doc_id] += word_score.tfidf * ref_score.tfidf;
+					}
 
-				for (auto const &ref : ref_scores)
-					if (ref.second >= threshold)
-						mark_score(ref.second, ref.first, doc_ref->id);
+					for (auto const &ref : ref_scores)
+						if (ref.second >= threshold)
+							mark_score(ref.second, ref.first, doc_ref.id);
+				}
 			}
 		}));
 
