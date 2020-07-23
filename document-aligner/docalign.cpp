@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 					break;
 
 				for (Line const &line : *line_batch) {
-					Document doc{.id = line.n};
+					Document doc{.id = line.n, .vocab = {}};
 					ReadDocument(line.str, doc, ngram_size);
 
 					// Note that each worker writes to a different line in the refs
@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
 				ref_batch->reserve(line_batch->size());
 			
 				for (Line const &line : *line_batch) {
-					Document doc{.id = line.n};
+					Document doc{.id = line.n, .vocab = {}};
 					ReadDocument(line.str, doc, ngram_size);
 
 					ref_batch->emplace_back();
