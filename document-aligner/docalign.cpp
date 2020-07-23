@@ -76,28 +76,6 @@ void print_score(float score, size_t left_id, size_t right_id)
 	     << '\n';
 }
 
-size_t queue_lines(util::FilePiece &fin, blocking_queue<unique_ptr<Line>> &queue, size_t skip_rate = 1)
-{
-	size_t document_count = 0;
-	for (StringPiece line : fin) {
-		if (document_count++ % skip_rate)
-			continue;
-
-		queue.push(unique_ptr<Line>(new Line{
-			.str = string(line.data(), line.size()),
-			.n = document_count
-		}));
-	}
-
-	return document_count;
-}
-
-size_t queue_lines(std::string const &path, blocking_queue<unique_ptr<Line>> &queue, size_t skip_rate = 1)
-{
-	util::FilePiece fin(path.c_str());
-	return queue_lines(fin, queue, skip_rate);
-}
-
 size_t queue_lines(util::FilePiece &fin, blocking_queue<unique_ptr<vector<Line>>> &queue, size_t skip_rate = 1)
 {
 	size_t document_count = 0;
