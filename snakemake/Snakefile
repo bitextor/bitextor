@@ -248,9 +248,9 @@ if 'until' not in config:
     OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
     OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
 elif UNTIL == 'crawl':
-    for domain, hosts in DOMAIN_2_HOSTS:
+    for domain, hosts in DOMAIN_2_HOSTS.items():
         for host in hosts:
-            OUTPUT.append('{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
+            OUTPUT.append(f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
 elif UNTIL == 'preprocess':
     OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, langs=LANGS, pproc_file=PPROC_FILES)
 elif UNTIL == 'shard':
