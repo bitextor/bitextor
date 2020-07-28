@@ -409,6 +409,7 @@ checkpoint shard:
     shell: '''
         ulimit -n 2048
         mkdir -p {params.o}
+        rm -rf {params.o}/* # remove anything that might be left after a previous run
         {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
         ls -d {params.o}/*/* > {output}
         '''
@@ -451,17 +452,6 @@ rule aggregate_split:
 #################################################################
 ### DOCALIGN ####################################################
 def get_align_inputs(src_lang, trg_lang):
-    # src_batches = []
-    # trg_batches = []
-    # checkpoint1 = checkpoints.shard.get(lang=trg_lang)
-    # checkpoint2 = checkpoints.shard.get(lang=src_lang)
-    # with checkpoint1.output[0].open() as src_f, \
-    #         checkpoint2.output[0].open() as trg_f:
-    #     for line in src_f:
-    #         src_batches.append(line.strip())
-    #     for line in trg_f:
-    #         trg_batches.append(line.strip())
-
     src_batches = get_batches(src_lang)
     trg_batches = get_batches(trg_lang)
     # each input -> (shard, (src_batch, trg_batch))
@@ -497,7 +487,6 @@ rule custom_translate:
             exit 1
         fi
         '''
-        # TODO: exit if counts are different?
         # TODO: add early stopping
 
 translation_output = rules.custom_translate.output
