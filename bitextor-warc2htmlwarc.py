@@ -49,12 +49,6 @@ def pdf2html(data):
     return [converter_stdout.replace(b"&#160;", b" ")]
 
 
-def pdfextract_shell(data):
-    pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile > /dev/null ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    converter_stdout, error = pconverter.communicate(input=data)
-    return [converter_stdout]
-
-
 def pdfextract(data, pdfextractor):
     pdfextractor.setData(data)
     try:
