@@ -702,13 +702,13 @@ rule bicleaner:
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
                 | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
-                | paste <(cat {input.bifixer}) - \
+                | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
                 | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
-                | paste <(cat {input.bifixer}) - \
+                | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
         '''
