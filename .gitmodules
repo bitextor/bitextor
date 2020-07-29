@@ -20,7 +20,7 @@
 	ignore = dirty
 [submodule "standoff"]
 	path = standoff
-	url = https://github.com/lpla/standoff
+	url = https://github.com/bitextor/standoff
 	ignore = dirty
 [submodule "pdf-extract"]
 	path = pdf-extract
