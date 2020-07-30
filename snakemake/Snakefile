@@ -651,9 +651,8 @@ checkpoint split_segalign:
         CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | split -C {params.size}m --numeric-suffixes - "{params.folder}/"
-        ls {params.folder}/* > {output.batches}
-        pigz -f {params.folder}/*
+            | split -C {params.size}m --numeric-suffixes --filter 'pigz -c > $FILE.gz' - "{params.folder}/"
+        ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
         '''
 
 def get_postproc_batches():
@@ -746,7 +745,7 @@ rule aggregate_filter:
 
 raw_input_filename = rules.filter.input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 extension = ""
-if raw_input_filename == "07_02.bicleaner" or raw_input_filename == "06_02.segalign":
+if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "07_00.deferred"]:
     extension = ".gz"
 
 rule raw:
