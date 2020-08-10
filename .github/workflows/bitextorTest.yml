@@ -31,9 +31,11 @@ jobs:
 
     - name: Install optional dependencies
       run: |
-        sudo apt install httrack
-        sudo snap install go
-        go get github.com/paracrawl/giawarc/...
+        sudo apt-get install httrack
+        
+    - uses: actions/checkout@master
+    - uses: actions/setup-go@v1        
+    - run: go get github.com/paracrawl/giawarc/...
 
     - name: Install language detector
       run: |
