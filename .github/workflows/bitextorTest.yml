@@ -10,8 +10,13 @@ jobs:
     steps:
 
     - name: Install dependencies
-      run: sudo apt-get install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl
-    
+      run: sudo apt-get install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev liblzma-dev time poppler-utils curl
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+                
     - uses: actions/checkout@v2
     - name: Checkout submodules
       run: git submodule update --init --force --recursive
