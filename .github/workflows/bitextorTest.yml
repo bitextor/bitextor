@@ -10,7 +10,7 @@ jobs:
     steps:
 
     - name: Install required linux packages
-      run: sudo apt-get install cmake libboost-all-dev poppler-utils httrack
+      run: sudo apt-get install cmake poppler-utils httrack
 
     - name: Set up Python3
       uses: actions/setup-python@v2
@@ -19,6 +19,7 @@ jobs:
         
     - name: Install Python dev tools        
       run: |
+        pip3 install --upgrade pip
         sudo apt-get install python3-venv python3-setuptools
         pip3 install Cython
 
