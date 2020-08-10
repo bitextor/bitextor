@@ -11,7 +11,7 @@ jobs:
     steps:
 
     - name: Install required linux packages
-      run: sudo apt-get install cmake poppler-utils httrack libboost-dev-all
+      run: sudo apt-get install cmake poppler-utils httrack libboost-all-dev
 
     - name: Set up Python3
       uses: actions/setup-python@v2
