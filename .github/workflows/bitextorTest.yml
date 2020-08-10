@@ -10,7 +10,16 @@ jobs:
     steps:
 
     - name: Install dependencies
-      run: sudo apt-get install cmake automake pkg-config python3 python3-venv python3-pip python3-setuptools libboost-all-dev liblzma-dev time poppler-utils curl
+      run: sudo apt-get install cmake automake pkg-config libboost-all-dev liblzma-dev time poppler-utils curl wget install autoconf automake libtool curl make g++ unzip httrack
+
+    - name: Set up Python3
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+      run: |
+        sudo apt-get install python3-venv python3-pip python3-setuptools
+        pip3 install --upgrade pip
+        pip3 install Cython      
 
     - name: Set up JDK
       uses: actions/setup-java@v1
@@ -18,39 +27,34 @@ jobs:
         java-version: 8
                 
     - uses: actions/checkout@v2
+    
     - name: Checkout submodules
       run: git submodule update --init --force --recursive
 
     - name: Install additional python libraries
-      run: |
-        pip3 install --upgrade pip
+      run: |        
         pip3 install -r requirements.txt
         pip3 install -r bicleaner/requirements.txt
         pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
         pip3 install -r bifixer/requirements.txt
 
-    - name: Install optional dependencies
+    - name: Download protobuf
       run: |
-        sudo apt-get install httrack
-        
-    - uses: actions/checkout@master
-    - uses: actions/setup-go@v1        
-    - run: go get github.com/paracrawl/giawarc/...
-
-    - name: Install language detector
-      run: |
-        sudo apt-get install autoconf automake libtool curl make g++ unzip
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
         tar -zxvf protobuf-all-3.11.4.tar.gz
-        cd protobuf-3.11.4
+     
+    - name: Installing protobuf   
+      working-directory: ./protobuf-3.11.4
+      run: |
         ./configure
         make
         make check
         sudo make install
-        sudo ldconfig
-        cd ..
-        pip3 insntall Cython
+        sudo ldconfig        
         pip3 install pycld3
+            
+    - uses: actions/setup-go@v1        
+    - run: go get github.com/paracrawl/giawarc/...        
         
     - name: Submodules compilation
       run: ./autogen.sh && make
