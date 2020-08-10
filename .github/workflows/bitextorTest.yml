@@ -3,6 +3,7 @@ name: Deploy and execute Bitextor
 on: [push]
 
 jobs:
+
   build:
 
     runs-on: ubuntu-latest
@@ -10,7 +11,7 @@ jobs:
     steps:
 
     - name: Install required linux packages
-      run: sudo apt-get install cmake poppler-utils httrack
+      run: sudo apt-get install cmake poppler-utils httrack libboost-dev-all
 
     - name: Set up Python3
       uses: actions/setup-python@v2
