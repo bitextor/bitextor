@@ -1,0 +1,52 @@
+name: Deploy and execute Bitextor
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Install dependencies
+      run: sudo apt-get install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl
+    
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      run: git submodule update --init --force --recursive
+
+    - name: Install additional python libraries
+      run: |
+        pip3 install --upgrade pip
+        pip3 install -r requirements.txt
+        pip3 install -r bicleaner/requirements.txt
+        pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
+        pip3 install -r bifixer/requirements.txt
+
+    - name: Install optional dependencies
+      run: |
+        sudo apt install httrack
+        sudo snap install go
+        go get github.com/paracrawl/giawarc/...
+
+    - name: Install language detector
+      run: |
+        sudo apt-get install autoconf automake libtool curl make g++ unzip
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
+        tar -zxvf protobuf-all-3.11.4.tar.gz
+        cd protobuf-3.11.4
+        ./configure
+        make
+        make check
+        sudo make install
+        sudo ldconfig
+        cd ..
+        pip3 insntall Cython
+        pip3 install pycld3
+        
+    - name: Submodules compilation
+      run: ./autogen.sh && make
+        
+    - name: Run Bitextor
+      run: bitextor.sh
