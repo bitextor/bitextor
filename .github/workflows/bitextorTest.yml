@@ -9,31 +9,31 @@ jobs:
 
     steps:
 
-    - name: Install dependencies
-      run: sudo apt-get install cmake automake pkg-config libboost-all-dev liblzma-dev time poppler-utils curl wget autoconf automake libtool curl make g++ unzip httrack
+    - name: Install required linux packages
+      run: sudo apt-get install cmake libboost-all-dev poppler-utils httrack
 
     - name: Set up Python3
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.x
         
-    - name: Set up Python dev tools        
+    - name: Install Python dev tools        
       run: |
-        sudo apt-get install python3-venv python3-pip python3-setuptools
-        pip3 install --upgrade pip
-        pip3 install Cython      
+        sudo apt-get install python3-venv python3-setuptools
+        pip3 install Cython
 
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
         java-version: 8
                 
-    - uses: actions/checkout@v2
+    - name: Checkout bitextor
+      uses: actions/checkout@v2
     
     - name: Checkout submodules
       run: git submodule update --init --force --recursive
 
-    - name: Install additional python libraries
+    - name: Install additional python requirements
       run: |        
         pip3 install -r requirements.txt
         pip3 install -r bicleaner/requirements.txt
@@ -45,7 +45,7 @@ jobs:
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
         tar -zxvf protobuf-all-3.11.4.tar.gz
      
-    - name: Installing protobuf   
+    - name: Install protobuf   
       working-directory: ./protobuf-3.11.4
       run: |
         ./configure
@@ -55,13 +55,13 @@ jobs:
         sudo ldconfig        
         pip3 install pycld3
             
-    - uses: actions/setup-go@v2
+    - name: Setup golang
+      uses: actions/setup-go@v2
       with:
-        go-version: 1.14.7        
-    - run: go get github.com/paracrawl/giawarc/...        
+        go-version: 1.14.6
         
-    - name: Submodules compilation
-      run: ./autogen.sh && make
+    - name: Install giawarc            
+      run: go get github.com/paracrawl/giawarc/...        
         
-    - name: Run Bitextor
-      run: bitextor.sh
+    - name: Compiling bitextor and submodules
+      run: ./autogen.sh && make       
