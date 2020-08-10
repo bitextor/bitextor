@@ -16,6 +16,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+        
+    - name: Set up Python dev tools        
       run: |
         sudo apt-get install python3-venv python3-pip python3-setuptools
         pip3 install --upgrade pip
