@@ -10,7 +10,7 @@ jobs:
     steps:
 
     - name: Install dependencies
-      run: sudo apt-get install cmake automake pkg-config libboost-all-dev liblzma-dev time poppler-utils curl wget install autoconf automake libtool curl make g++ unzip httrack
+      run: sudo apt-get install cmake automake pkg-config libboost-all-dev liblzma-dev time poppler-utils curl wget autoconf automake libtool curl make g++ unzip httrack
 
     - name: Set up Python3
       uses: actions/setup-python@v2
