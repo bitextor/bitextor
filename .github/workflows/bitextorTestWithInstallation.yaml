@@ -1,4 +1,5 @@
 name: Deploy and execute Bitextor
+on: [push]
 jobs:
    build:
       runs-on: ubuntu-latest
@@ -48,5 +49,14 @@ jobs:
          run: go get github.com/paracrawl/giawarc/...
       -  name: Compiling bitextor and submodules
          run: ./autogen.sh && make      
-      -  name: Run Bitextor
-         run: ./bitextor.sh
+      -  name: Test
+         run: |
+            mkdir -p $HOME/permanent
+            wget https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0/en-fr.dic -P $HOME/permanent
+            mkdir -p $HOME/bicleaner-model
+            wget https://github.com/bitextor/bicleaner-data/releases/latest/download/en-fr.tar.gz -P $HOME/bicleaner-model
+            env:
+               BITEXTOR: $GITHUB_WORKSPACE
+            mkdir -p $HOME/reports
+            snakemake --snakefile $BITEXTOR/snakemake/Snakefile --notemp --configfile $BITEXTOR/snakemake/example/tests/default.en-fr.yaml --config bitextor=$BITEXTOR permanentDir=$HOME/permanent/bitextor-output-default-en-fr dataDir=$HOME/permanent/bitextor-output-default-en-fr transientDir=$HOME/transient-default-en-fr temp=$HOME/transient-default-en-fr dic=$HOME/permanent/en-fr.dic bicleaner=$HOME/bicleaner-model/en-fr/en-fr.yaml pruneThreshold=0 -j 4 2> $HOME/reports/default.en-fr.report
+         
