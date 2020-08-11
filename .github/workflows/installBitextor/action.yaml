@@ -1,6 +1,5 @@
 name: Install Bitextor
 description: setup ubuntu packages, bitextor dependencies, and compile everything
-inputs: null
 runs:
    using: composite
    steps:
