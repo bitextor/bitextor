@@ -5,7 +5,7 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v2
+         - uses: actions/checkout@actions
          - name: Install Bitextor
            uses: ./.github/actions/installBitextor@actions
          - name: Run Bitextor
