@@ -19,8 +19,6 @@ runs:
       uses: actions/setup-java@v1
       with:
          java-version: 8
-   -  name: Checkout bitextor
-      uses: actions/checkout@v2
    -  name: Checkout submodules
       run: git submodule update --init --force --recursive
    -  name: Install additional python requirements

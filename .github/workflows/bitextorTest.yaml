@@ -5,8 +5,10 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v2
-         - name: Install Bitextor
-           uses: ./.github/actions/installBitextor
-         - name: Run Bitextor
-           run: ./bitextor.sh
+      -  uses: actions/checkout@v2
+         with:
+            ref: actions
+      -  name: Install Bitextor
+         uses: ./.github/actions/installBitextor
+      -  name: Run Bitextor
+         run: ./bitextor.sh
