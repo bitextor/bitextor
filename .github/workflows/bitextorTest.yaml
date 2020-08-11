@@ -7,8 +7,7 @@ jobs:
       -  name: Setup Docker
          run: |
             docker pull paracrawl/bitextor
-            docker run --name bitextor paracrawl/bitextor
-            docker start bitextor
+            docker run -dit --name bitextor paracrawl/bitextor
          
       -  name: Test Bitextor
          run: |
