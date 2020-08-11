@@ -4,47 +4,48 @@ inputs: null
 runs:
    using: composite
    steps:
-   -  name: Install required linux packages
-      run: sudo apt-get install cmake poppler-utils httrack libboost-all-dev
-   -  name: Set up Python3
-      uses: actions/setup-python@v2
-      with:
-         python-version: 3.x
-   -  name: Install Python dev tools
-      run: |
-         pip3 install --upgrade pip
-         sudo apt-get install python3-venv python3-setuptools
-         pip3 install Cython
-   -  name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-         java-version: 8
-   -  name: Checkout submodules
-      run: git submodule update --init --force --recursive
-   -  name: Install additional python requirements
-      run: |
-         pip3 install -r requirements.txt
-         pip3 install -r bicleaner/requirements.txt
-         pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
-         pip3 install -r bifixer/requirements.txt
-   -  name: Download protobuf
-      run: |
-         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-         tar -zxvf protobuf-all-3.11.4.tar.gz
-   -  name: Install protobuf
-      working-directory: ./protobuf-3.11.4
-      run: |
-         ./configure
-         make
-         make check
-         sudo make install
-         sudo ldconfig
-         pip3 install pycld3
-   -  name: Setup golang
-      uses: actions/setup-go@v2
-      with:
-         go-version: 1.14.6
-   -  name: Install giawarc
-      run: go get github.com/paracrawl/giawarc/...
-   -  name: Compiling bitextor and submodules
-      run: ./autogen.sh && makee
+      working-directory: $GITHUB_ACTION_PATH
+      -  name: Install required linux packages
+         run: sudo apt-get install cmake poppler-utils httrack libboost-all-dev
+      -  name: Set up Python3
+         uses: actions/setup-python@v2
+         with:
+            python-version: 3.x
+      -  name: Install Python dev tools
+         run: |
+            pip3 install --upgrade pip
+            sudo apt-get install python3-venv python3-setuptools
+            pip3 install Cython
+      -  name: Set up JDK
+         uses: actions/setup-java@v1
+         with:
+            java-version: 8
+      -  name: Checkout submodules
+         run: git submodule update --init --force --recursive
+      -  name: Install additional python requirements
+         run: |
+            pip3 install -r requirements.txt
+            pip3 install -r bicleaner/requirements.txt
+            pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
+            pip3 install -r bifixer/requirements.txt
+      -  name: Download protobuf
+         run: |
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
+            tar -zxvf protobuf-all-3.11.4.tar.gz
+      -  name: Install protobuf
+         working-directory: ./protobuf-3.11.4
+         run: |
+            ./configure
+            make
+            make check
+            sudo make install
+            sudo ldconfig
+            pip3 install pycld3
+      -  name: Setup golang
+         uses: actions/setup-go@v2
+         with:
+            go-version: 1.14.6
+      -  name: Install giawarc
+         run: go get github.com/paracrawl/giawarc/...
+      -  name: Compiling bitextor and submodules
+         run: ./autogen.sh && makeee
