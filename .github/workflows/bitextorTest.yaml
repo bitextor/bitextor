@@ -7,6 +7,6 @@ jobs:
       steps:
       -  uses: actions/checkout@v2   
       -  name: Install Bitextor
-         uses: actions/installBitextor
+         uses: ./.github/actions/installBitextor
       -  name: Run Bitextor
          run: ./bitextor.sh
