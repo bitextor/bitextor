@@ -6,6 +6,6 @@ jobs:
       runs-on: ubuntu-latest
       steps:
          - name: Install Bitextor
-           uses: ./.github/actions/installBitextor@actions
+           uses: actions/installBitextor@actions
          - name: Run Bitextor
            run: ./bitextor.sh
