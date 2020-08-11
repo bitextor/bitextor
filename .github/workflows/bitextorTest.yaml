@@ -5,9 +5,8 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-      -  uses: actions/checkout@v2
-      -  run: echo running on branch ${GITHUB_REF##*/}   
+      -  uses: actions/checkout@v2   
       -  name: Install Bitextor
-         uses: ./.github/actions/installBitextor
+         uses: actions/installBitextor
       -  name: Run Bitextor
          run: ./bitextor.sh
