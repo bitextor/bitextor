@@ -2,6 +2,7 @@ name: Install Bitextor
 description: setup ubuntu packages, bitextor dependencies, and compile everything
 inputs: null
 runs:
+   using: composite
    steps:
    -  name: Install required linux packages
       run: sudo apt-get install cmake poppler-utils httrack libboost-all-dev
