@@ -1,12 +1,15 @@
 name: Deploy and execute Bitextor
-on:
-- push
+on: [push]
 jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-      -  uses: actions/checkout@v2   
-      -  name: Install Bitextor
-         uses: ./.github/actions/installBitextor
-      -  name: Run Bitextor
-         run: ./bitextor.sh
+      -  name: Setup Docker
+         run: |
+            docker pull paracrawl/bitextor
+            docker run -it --name bitextor paracrawl/bitextor
+            docker start bitextor
+         
+      -  name: Test Bitextor
+         run: |
+            docker exec /opt/bitextor/run-tests.sh bash
