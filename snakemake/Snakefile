@@ -651,7 +651,7 @@ checkpoint split_segalign:
         CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | split -C {params.size}m --numeric-suffixes --filter 'pigz -c > $FILE.gz' - "{params.folder}/"
+            | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
         ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
         '''
 
