@@ -430,7 +430,6 @@ documentAlignerWorkers: 2
 * `alignerCmd`: command to call the external MT script
 * `translationDirection`: the direction of the translation system, default is lang1->lang2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
-* `documentAlignerWorkers`: number of parallel processes that will be run during document alignment; the default is 1 (no parallelization)
 
 <!---
 #### Using a home-brew neural MT system
@@ -478,7 +477,6 @@ sentenceAlignerWorkers: 1
 
 * `sentenceAligner`: segment aligner tool, currently only `bleualign` is supported
 * `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. For `bleualign` should be set to a value in [0,1], while `hunalign` can take any float value. Both are set to 0.0 by default
-* `sentenceAlignerWorkers`: number of parallel workers that will run each segment alignment step, default is 1
 
 ### Parallel data filtering
 
