@@ -1,5 +1,8 @@
 name: Deploy and execute Bitextor
-on: [push]
+on:
+   push:
+      branches:
+      - master
 jobs:
    build:
       runs-on: ubuntu-latest
@@ -11,6 +14,7 @@ jobs:
 
       - name: Compile
         run: |
+            docker exec -w /opt/bitextor bitextor git pull
             docker exec -w /opt/bitextor bitextor ./autogen.sh
             docker exec -w /opt/bitextor bitextor make
             docker exec -w /opt/bitextor bitextor make install
