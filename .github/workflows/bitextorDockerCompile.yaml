@@ -15,6 +15,6 @@ jobs:
             docker exec -w /opt/bitextor bitextor make
             docker exec -w /opt/bitextor bitextor make install
          
-      -  name: Test Bitextor
-         run: |
-            docker exec -w /opt/bitextor bitextor ./run-tests.sh
+#      -  name: Test Bitextor
+#         run: |
+#            docker exec -w /opt/bitextor bitextor ./run-tests.sh
