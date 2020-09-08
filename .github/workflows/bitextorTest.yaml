@@ -1,13 +1,20 @@
 name: Deploy and execute Bitextor
+on: [push]
 jobs:
    build:
       runs-on: ubuntu-latest
       steps:
       -  name: Setup Docker
          run: |
-            docker pull paracrawl/bitextor
-            docker run -dit --name bitextor paracrawl/bitextor
+            docker pull amirkamran/pc-without-compilation:1.0
+            docker run -dit --name bitextor amirkamran/pc-without-compilation:1.0
+
+      - name: Compile
+        run: |
+            docker exec -w /opt/bitextor bitextor ./autogen.sh
+            docker exec -w /opt/bitextor bitextor make
+            docker exec -w /opt/bitextor bitextor make install
          
       -  name: Test Bitextor
          run: |
-            docker exec bitextor /opt/bitextor/run-tests.sh
+            docker exec -w /opt/bitextor bitextor ./run-tests.sh
