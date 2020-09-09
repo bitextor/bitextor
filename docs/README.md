@@ -46,13 +46,12 @@ If you are using an apt-like package manager you can run the following command l
 sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl pigz
 ```
 
-Additionally, [giawarc](https://github.com/paracrawl/giawarc) and [giashard](https://github.com/paracrawl/giashard) are used WARC files preprocessing. [b64filter](https://github.com/paracrawl/b64filter) is another Go tool that is used to invoke external translation tool on each line of text. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
+Additionally, [giawarc](https://github.com/paracrawl/giawarc) and [giashard](https://github.com/paracrawl/giashard) are used WARC files preprocessing. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
 ```bash
 sudo snap install go # or download from http://golang.org/dl
 # build and place the necessary tools in $HOME/go/bin
 go get github.com/paracrawl/giawarc/...
 go get github.com/paracrawl/giashard/...
-go get github.com/paracrawl/b64filter/...
 ```
 
 Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
