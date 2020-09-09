@@ -27,7 +27,7 @@ compile-bleualign:
 	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release -DPREPROCESS_PATH=preprocess/ . && make
 
 compile-document-aligner:
-	cd document-aligner && cmake DBUILD_TESTING=OFF . && make
+	cd document-aligner && cmake -DBUILD_TESTING=OFF . && make
 compile-clustercat:
 	cd clustercat && make 
 
