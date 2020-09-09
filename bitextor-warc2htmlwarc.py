@@ -109,6 +109,9 @@ oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', d
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
+oparser.add_argument('--pe_configfile', dest='configFile', help='PDFExtract configuration file for language model paths', default="")
+oparser.add_argument('--sentence_join_path', dest='sentenceJoinPath', help='sentence-join.py path', default="")
+oparser.add_argument('--kenlm_path', dest='kenlmPath', help='kenlm binary folder path', default="")
 oparser.add_argument('--pdfpass', dest='pdfpass', help='Pass PDFs verbatim to file', default=None)
 oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you to fix possible encoding problems',
                     default=False)
@@ -145,7 +148,7 @@ if options.pdfpass is not None:
 if not options.pdfpass and options.pdfextract:
     import jpype
     from pdfextract.extract import Extractor as ExtrP
-    extractor = ExtrP()
+    extractor = ExtrP(configFile=options.configFile, sentenceJoinPath=options.sentenceJoinPath, kenlmPath=options.kenlmPath)
 
 cleaner = None
 if options.cleanhtml:
