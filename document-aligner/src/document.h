@@ -31,12 +31,6 @@ struct DocumentRef {
 // Assumes base64 encoded still.
 void ReadDocument(const StringPiece &encoded, Document &to, size_t ngram_size);
 
-std::ostream &operator<<(std::ostream &stream, Document const &document);
-
-std::ostream &operator<<(std::ostream &stream, DocumentRef const &ref);
-
 void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, std::unordered_map<NGram, size_t> const &df);
-
-float calculate_alignment(DocumentRef const &left, DocumentRef const &right);
 
 } // namespace bitextor
