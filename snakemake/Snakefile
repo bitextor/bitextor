@@ -795,4 +795,11 @@ rule deduped_tmx:
         zcat {input} \
             | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
+        echo "{LANG1}-{LANG2} .txt" >> {PERMANENT}/{LANG1}-{LANG2}.stats.raw
+        echo "File size: $(du -h {output.txt} | cut -f 1)" >> {PERMANENT}/{LANG1}-{LANG2}.stats.raw
+        WC1=$(zcat {output.txt} | cut -f 3 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.txt} | cut -f 4 | wc -w)
+        echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {PERMANENT}/{LANG1}-{LANG2}.stats.raw
+        echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {PERMANENT}/{LANG1}-{LANG2}.stats.raw
+        echo "{LANG2} words: $WC2" >> {PERMANENT}/{LANG1}-{LANG2}.stats.raw
         '''
