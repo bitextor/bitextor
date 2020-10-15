@@ -119,7 +119,7 @@ In some machines equipped with an AMD CPU you may experience some troubles with 
 
 ```bash
 sudo pip3 uninstall tensorflow
-sudo pip3 install tensorflow==1.5.0 keras==2.5.0
+sudo pip3 install tensorflow==1.5.0 keras==2.2.5
 ```
 
 In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
