@@ -34,9 +34,16 @@ max_size = int(options.size) * 1024 * 1024
 file_n = 0
 current_size = max_size
 
+if output_file is not None:
+    output_file.close()
+if options.gzip:
+    output_file = gzip.open(f'{options.output}{file_n}.gz', 'tw')
+else:
+    output_file = open(f'{options.output}{file_n}', 'w')
+
 for line in stdin:
     fields = line.strip().split('\t')
-    if current_size >= max_size:
+    if current_size >= max_size and file_n > 0:
         if output_file is not None:
             output_file.close()
         if options.gzip:
