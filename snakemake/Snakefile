@@ -1231,7 +1231,7 @@ rule heritrix_download:
 
             # Execute heritrix
             shell('echo hostname=$HOSTNAME; '
-                  'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
+                  'if [ "$(ps aux | grep -i Heritrix | grep -v grep | grep -v heritrix\.warc\.gz)" == "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
                   'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
                   'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
                   'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
