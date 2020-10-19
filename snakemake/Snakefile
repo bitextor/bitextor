@@ -1206,23 +1206,50 @@ rule heritrix_download:
     params:
         url="http://{target}"
     priority: 10
-    shell:
-        'echo hostname=$HOSTNAME; '
-        'if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
-        'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
-        'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
-        'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
-        'cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml; '
-        'curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml; '
-        'curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
-        'curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
-        'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
-        'echo "Waiting for the warc.gz to be finished"; '
-        'RUNTIME=0; '
-        'sleep 15;'
-        'while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ] ; do echo "Waiting 5 seconds..." ; sleep 5 ; RUNTIME=$((RUNTIME+5)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ] ; then echo "Crawling time limit reached" ; curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
-        'echo "Job {wildcards.target} finished!"; '
-        'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; '
+    run:
+        # Check the connection
+        url = params.url
+        connection_error = False
+        connection = None
+
+        for check in range(2):
+            try:
+                connection = requests.get(url, timeout=15)
+            except requests.exceptions.ConnectTimeout:
+                if check:
+                    connection_error = True
+                else:
+                    url = "https" + url[4:]
+            except:
+                if check:
+                    connection_error = True
+                    sys.stderr.write("WARNING: error connecting: ")
+                    sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+        if not connection_error:
+            params.url = url
+
+            # Execute heritrix
+            shell('echo hostname=$HOSTNAME; '
+                  'if [ "$(ps aux | grep -i Heritrix | grep -v grep | grep -v heritrix\.warc\.gz)" == "" ] ; then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER} ; fi ; '
+                  'curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+                  'curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine; '
+                  'DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX"); '
+                  'cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml; '
+                  'curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml; '
+                  'curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+                  'curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+                  'sleep 2; curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; '
+                  'echo "Waiting for the warc.gz to be finished"; '
+                  'RUNTIME=0; '
+                  'sleep 15;'
+                  'while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ] ; do echo "Waiting 5 seconds..." ; sleep 5 ; RUNTIME=$((RUNTIME+5)) ; if [ "{CRAWLTIMELIMIT}" != "" ] ; then if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ] ; then echo "Crawling time limit reached" ; curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}; fi ; fi; done; '
+                  'echo "Job {wildcards.target} finished!"; '
+                  'cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}; ')
+        else:
+            # Create empty warc file
+            with open(output[0], 'wb') as f_out:
+                f_out.close()
 
 
 def get_domain_hosts(wildcards):
