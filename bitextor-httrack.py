@@ -48,13 +48,12 @@ def run(url, out_path, time_limit, page_limit, agent, wait):
     if agent is not None:
         agentoption = "-F \""+agent+"\""
 
-    domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
+    #domain = tldextract.extract(url).domain+"."+tldextract.extract(url).suffix
 
-    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=out_path, AGENT=agentoption, DOMAIN=domain)
+    cmd += " {URL} --robots=3 --sockets=2 --keep-alive --urlhack -I0 --timeout=30 --host-control=3 --retries=3 -m -O {DOWNLOAD_PATH} {AGENT}  ".format(URL=url, DOWNLOAD_PATH=out_path, AGENT=agentoption)
     # print("cmd", cmd)
 
     system_check(cmd)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -75,21 +74,44 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Starting...")
+
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
-    try:
-        robots = requests.get(args.url+"/robots.txt").text.split("\n")
-        for line in robots:
-            if "Crawl-delay" in line:
-                try:
-                    crawldelay = int(line.split(':')[1].strip())
-                    if args.wait is None or crawldelay > int(args.wait):
-                        args.wait = str(crawldelay)
-                except ValueError:
-                    continue
-    except:
-        sys.stderr.write("WARNING: Error downloading robots.txt: ")
-        sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+    url = args.url
+    connection_error = False
+
+    for check in range(2):
+        try:
+            connection = requests.get(url, timeout=15)
+        except requests.exceptions.ConnectTimeout:
+            if check:
+                connection_error = True
+            else:
+                url = "https" + url[4:]
+        except:
+            if check:
+                connection_error = True
+                sys.stderr.write("WARNING: error connecting: ")
+                sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+    if not connection_error:
+        args.url = url
+
+        try:
+            robots = requests.get(args.url+"/robots.txt").text.split("\n")
+            for line in robots:
+                if "Crawl-delay" in line:
+                    try:
+                        crawldelay = int(line.split(':')[1].strip())
+                        if args.wait is None or crawldelay > int(args.wait):
+                            args.wait = str(crawldelay)
+                    except ValueError:
+                        pass
+        except:
+            sys.stderr.write("WARNING: Error downloading robots.txt: ")
+            sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
     run(args.url, args.outPath, args.timeLimit, args.pageLimit, args.agent, args.wait)
 
     print("Finished!")
