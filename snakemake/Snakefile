@@ -10,6 +10,7 @@ import os.path
 import shutil
 import subprocess
 import mmh3
+import requests
 from tqdm import tqdm
 from contextlib import contextmanager
 from pathlib import Path
