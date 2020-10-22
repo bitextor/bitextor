@@ -437,56 +437,6 @@ class Crawler(object):
         self.concurrency -= 1
         self.concurrency_lock.release()
 
-
-oparser = argparse.ArgumentParser(
-    description="Script that crawls a website and prints the downloaded documents"
-                "in standard output using WARC format.")
-oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
-oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False,
-                     default=None)
-oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit",
-                     required=False, default=None)
-oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs",
-                     required=False, default=8, type=int)
-oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8,
-                     type=int)
-oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False,
-                     default=None)
-oparser.add_argument("-T", "--wait", help="Time delay between requests in seconds; by default it is set to 2s", dest="delay",
-                     required=False, default=2, type=int)
-oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load",
-                     required=False, default=None)
-oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett",
-                     required=False, default=None)
-oparser.add_argument("-a", help="User agent to be added to the headers of the requests", dest="agent",
-                     required=False, default=None)
-oparser.add_argument("-D",
-                     help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL "
-                          "provided.",
-                     dest="crawltld", action='store_true')
-oparser.add_argument("-v", help="Verbose mode.", dest="verbose", action='store_true')
-options = oparser.parse_args()
-
-rp = urllib.robotparser.RobotFileParser()
-if '//' not in options.URL:
-    options.URL = '%s%s' % ('http://', options.URL)
-robots = requests.get(options.URL+"/robots.txt").text.split("\n")
-try:
-    for line in robots:
-        if "Crawl-delay" in line:
-            try:
-                crawldelay = int(line.split(':')[1].strip())
-                if options.delay is None or crawldelay > int(options.delay):
-                    options.delay = str(crawldelay)
-            except ValueError:
-                continue
-except:
-    sys.stderr.write("WARNING: Error downloading robots.txt: ")
-    sys.stderr.write(str(sys.exc_info()[0]) + "\n")
-
-writer = WARCWriter(sys.stdout.buffer, gzip=True)
-
-
 class MyCrawler(Crawler):
     def process_document(self, doc):
         if doc.status == 200:
@@ -534,76 +484,148 @@ class MyCrawler(Crawler):
         self.concurrency_lock.release()
         # exit(143) #128 + 15(SIGTERM).
 
+oparser = argparse.ArgumentParser(
+    description="Script that crawls a website and prints the downloaded documents"
+                "in standard output using WARC format.")
+oparser.add_argument("URL", metavar="FILE", nargs="?", help="URL of the website to be downloaded", default=None)
+oparser.add_argument("-t", help="Time limit after which crawling will be stopped", dest="timelimit", required=False,
+                    default=None)
+oparser.add_argument("-s", help="Total size limit; once it is reached the crawling will be stopped", dest="sizelimit",
+                    required=False, default=None)
+oparser.add_argument("-j", help="Number of crawling jobs that can be run in parallel (threads)", dest="jobs",
+                    required=False, default=8, type=int)
+oparser.add_argument("-o", help="Timeout limit for a connexion in seconds", dest="timeout", required=False, default=8,
+                    type=int)
+oparser.add_argument("-d", help="Dump crawling status if program is stopped by SIGTERM", dest="dump", required=False,
+                    default=None)
+oparser.add_argument("-T", "--wait", help="Time delay between requests in seconds; by default it is set to 2s", dest="delay",
+                    required=False, default=2, type=int)
+oparser.add_argument("-l", help="Continue an interrupted crawling. Load crawling status from this file", dest="load",
+                    required=False, default=None)
+oparser.add_argument("-e", help="Continue an interrupted crawling. Load ETT from this file", dest="resumeett",
+                    required=False, default=None)
+oparser.add_argument("-a", help="User agent to be added to the headers of the requests", dest="agent",
+                    required=False, default=None)
+oparser.add_argument("-D",
+                    help="This option allows to run Bitextor on a mode that crawls a TLD starting from the URL "
+                        "provided.",
+                    dest="crawltld", action='store_true')
+oparser.add_argument("-v", help="Verbose mode.", dest="verbose", action='store_true')
+options = oparser.parse_args()
 
-if not options.URL.startswith("http"):
-    if options.URL.find("://") != -1:
-        sys.stderr.write("Error: '" + options.URL.split("://")[
-            0] + "' is not a valid protocol; you should use either 'http' or 'https'\n")
-        sys.exit(-1)
+rp = urllib.robotparser.RobotFileParser()
+
+if '//' not in options.URL:
+    options.URL = '%s%s' % ('http://', options.URL)
+
+url = options.URL
+connection_error = False
+
+for check in range(2):
+    try:
+        connection = requests.get(url, timeout=15)
+    except requests.exceptions.ConnectTimeout:
+        if check:
+            connection_error = True
+        else:
+            url = "https" + url[4:]
+    except:
+        if check:
+            connection_error = True
+            sys.stderr.write("WARNING: error connecting: ")
+            sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+if not connection_error:
+    options.URL = url
+
+    try:
+        robots = requests.get(options.URL+"/robots.txt").text.split("\n")
+        for line in robots:
+            if "Crawl-delay" in line:
+                try:
+                    crawldelay = int(line.split(':')[1].strip())
+                    if options.delay is None or crawldelay > int(options.delay):
+                        options.delay = str(crawldelay)
+                except ValueError:
+                    continue
+    except:
+        sys.stderr.write("WARNING: Error downloading robots.txt: ")
+        sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+    writer = WARCWriter(sys.stdout.buffer, gzip=True)
+
+    if not options.URL.startswith("http"):
+        if options.URL.find("://") != -1:
+            sys.stderr.write("Error: '" + options.URL.split("://")[
+                0] + "' is not a valid protocol; you should use either 'http' or 'https'\n")
+            sys.exit(-1)
+        else:
+            sys.stderr.write("No protocol provided in URL -- assuming http\n")
+            options.URL = "http://" + options.URL
+
+    crawler = MyCrawler()
+    crawler.verbose = options.verbose
+    crawler.set_concurrency_level(options.jobs)
+    crawler.delay = options.delay
+    crawler.useragent = options.agent
+    if options.crawltld:
+        crawler.set_follow_mode(Crawler.F_TLD)
     else:
-        sys.stderr.write("No protocol provided in URL -- assuming http\n")
-        options.URL = "http://" + options.URL
+        crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
+    crawler.set_timeout(20)
+    if options.sizelimit is not None:
+        unit = options.sizelimit[-1]
+        if unit == 'G':
+            crawler.sizelimit = float(options.sizelimit[:-1]) * 1000
+        elif unit == 'M':
+            crawler.sizelimit = float(options.sizelimit[:-1])
+        elif unit == 'K':
+            crawler.sizelimit = float(options.sizelimit[:-1]) / 1000.0
+        else:
+            sys.stderr.write(
+                "The value of option -s (download size limit) has to be a number and a unit ('G' for gigabytes, "
+                "'M' for megabytes, or 'K' for kilobytes), for example: 10M or 150K\n")
+            sys.exit(-1)
 
-crawler = MyCrawler()
-crawler.verbose = options.verbose
-crawler.set_concurrency_level(options.jobs)
-crawler.delay = options.delay
-crawler.useragent = options.agent
-if options.crawltld:
-    crawler.set_follow_mode(Crawler.F_TLD)
+    if options.timelimit is not None:
+        unit = options.timelimit[-1]
+        if unit == 'd':
+            crawler.timelimit = float(options.timelimit[:-1]) * 86400 
+        elif unit == 'h':
+            crawler.timelimit = float(options.timelimit[:-1]) * 3600
+        elif unit == 'm':
+            crawler.timelimit = float(options.timelimit[:-1]) * 60
+        elif unit == 's':
+            crawler.timelimit = float(options.timelimit[:-1])
+        else:
+            sys.stderr.write(
+                "The value of option -t (download time limit) has to be a number and a unit ('s' for second, "
+                "'m' for minutes, or 'h' for hours), for example: 15m or 3h\n")
+            sys.exit(-1)
+
+    if options.dump is not None:
+        crawler.dumpfile = options.dump
+
+    if options.load is not None:
+        sys.stderr.write("Restoring crawling from " + options.load + "\n")
+        crawler.load_status(pickle.load(open(options.load, 'rb')))
+    if options.resumeett is not None:
+        for line in open(options.resumeett):
+            print(line.rstrip("\n"))
+
+    # crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
+    signal.signal(signal.SIGTERM, crawler.termsighandler)
+    crawler.init_crawling(options.URL)
+    if options.crawltld:
+        while len(list(crawler.outerdomaintargets.keys())) > 0:
+            sys.stderr.write("Remaining " + str(len(list(crawler.outerdomaintargets.keys()))) + " websites to to crawl\n")
+            crawler.keep_crawling()
+
+    if crawler.interrupt:
+        if crawler.sizelimit is not None and crawler.crawlsize > crawler.sizelimit:
+            sys.stderr.write("Crawling size limit reached: stopping crawl\n")
+        elif crawler.timelimit is not None and time.time() - crawler.crawlstarts > crawler.timelimit:
+            sys.stderr.write("Crawling time limit reached: stopping crawl\n")
 else:
-    crawler.set_follow_mode(Crawler.F_SAME_DOMAIN)
-crawler.set_timeout(20)
-if options.sizelimit is not None:
-    unit = options.sizelimit[-1]
-    if unit == 'G':
-        crawler.sizelimit = float(options.sizelimit[:-1]) * 1000
-    elif unit == 'M':
-        crawler.sizelimit = float(options.sizelimit[:-1])
-    elif unit == 'K':
-        crawler.sizelimit = float(options.sizelimit[:-1]) / 1000.0
-    else:
-        sys.stderr.write(
-            "The value of option -s (download size limit) has to be a number and a unit ('G' for gigabytes, "
-            "'M' for megabytes, or 'K' for kilobytes), for example: 10M or 150K\n")
-        sys.exit(-1)
-
-if options.timelimit is not None:
-    unit = options.timelimit[-1]
-    if unit == 'd':
-        crawler.timelimit = float(options.timelimit[:-1]) * 86400 
-    elif unit == 'h':
-        crawler.timelimit = float(options.timelimit[:-1]) * 3600
-    elif unit == 'm':
-        crawler.timelimit = float(options.timelimit[:-1]) * 60
-    elif unit == 's':
-        crawler.timelimit = float(options.timelimit[:-1])
-    else:
-        sys.stderr.write(
-            "The value of option -t (download time limit) has to be a number and a unit ('s' for second, "
-            "'m' for minutes, or 'h' for hours), for example: 15m or 3h\n")
-        sys.exit(-1)
-
-if options.dump is not None:
-    crawler.dumpfile = options.dump
-
-if options.load is not None:
-    sys.stderr.write("Restoring crawling from " + options.load + "\n")
-    crawler.load_status(pickle.load(open(options.load, 'rb')))
-if options.resumeett is not None:
-    for line in open(options.resumeett):
-        print(line.rstrip("\n"))
-
-# crawler.add_url_filter('\.(jpg|jpeg|gif|png|js|css|swf)$')
-signal.signal(signal.SIGTERM, crawler.termsighandler)
-crawler.init_crawling(options.URL)
-if options.crawltld:
-    while len(list(crawler.outerdomaintargets.keys())) > 0:
-        sys.stderr.write("Remaining " + str(len(list(crawler.outerdomaintargets.keys()))) + " websites to to crawl\n")
-        crawler.keep_crawling()
-
-if crawler.interrupt:
-    if crawler.sizelimit is not None and crawler.crawlsize > crawler.sizelimit:
-        sys.stderr.write("Crawling size limit reached: stopping crawl\n")
-    elif crawler.timelimit is not None and time.time() - crawler.crawlstarts > crawler.timelimit:
-        sys.stderr.write("Crawling time limit reached: stopping crawl\n")
+    # Do not print anything to stdout
+    pass

@@ -1,5 +1,8 @@
 name: Deploy and execute Bitextor
-on: push
+on:
+   push:
+      branches-ignore: 
+         - '**'
 jobs:
    build:
       runs-on: ubuntu-latest
