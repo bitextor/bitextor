@@ -38,7 +38,7 @@ def tokenize_moses(text, word_tokeniser, morph_analyser):
     tokenized_text = "\n".join(tokenized_text)
 
     if morph_analyser:
-        tokenized_text = proc_morph.process(tokenized_text)
+        tokenized_text = morph_analyser.process(tokenized_text)
 
     if tokenized_text == "":
         tokenized_text = "\n"

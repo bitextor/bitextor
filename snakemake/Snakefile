@@ -136,6 +136,7 @@ PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
 # mt
+# TODO KeyError if documentAligner: DIC and alignerCmd not defined
 MT_COMMAND = config['alignerCmd']
 SRC_LANG = LANG1
 TRG_LANG = LANG2
@@ -442,15 +443,68 @@ checkpoint shard:
     params:
         n = SHARDS,
         b = BATCHES,
+        o_no_lang = f'{DATADIR}/shards',
         o = f'{DATADIR}/shards/{{lang}}',
-        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
+        f = ','.join([f.strip(".gz") for f in PPROC_FILES]),
+        empty_shard_folder = "EMPTY",
+        empty_shard_batch_folder = "EMPTY/1"
     shell: '''
         ulimit -n 2048
         mkdir -p {params.o}
         rm -rf {params.o}/* # remove anything that might be left after a previous run
         {PROFILING} ~/go/bin/giashard -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
+
+        nofiles=$(ls -l {params.o} | wc -l)
+        if [ "$nofiles" == "1" ]; then
+            # No files generated
+            >&2 echo "WARNING: any file generated after running giashard. Creating empty files instead"
+
+            # Fake shards
+            mkdir -p {params.o}/{params.empty_shard_batch_folder}
+
+            touch {params.o}/{params.empty_shard_batch_folder}/empty
+            touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
+            gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
+
+            mylang="{SRC_LANG}"
+            notmylang="{TRG_LANG}"
+
+            if [ "{wildcards.lang}" == "{TRG_LANG}" ]; then
+                mylang="{TRG_LANG}"
+                notmylang="{SRC_LANG}"
+            fi
+
+            create_all=1
+
+            while [ ! -f "{DATADIR}/shards/02.batches.$notmylang" ]; do
+                if [ -f "{params.o_no_lang}/$notmylang/{params.empty_shard_batch_folder}/empty" ]; then
+                    # Avoid deadlock (if both langs do not generate shards and reach this point at the same time)
+                    create_all=0
+                    break
+                else
+                    sleep 1
+                fi
+            done
+
+            if [ -f "{params.o_no_lang}/$notmylang/{params.empty_shard_batch_folder}/empty" ]; then
+                # In case that did not enter in the while loop, this condition might still be true
+                create_all=0
+            fi
+
+            if [ "$create_all" == "1" ]; then
+                rm -rf {params.o}/{params.empty_shard_folder}
+
+                # Create the same shards that have been created in the other lang (only 1 batch)
+                ls -d {params.o_no_lang}/$notmylang/* | xargs -I[] basename [] | xargs -I[] mkdir -p {params.o_no_lang}/$mylang/[]/1
+                ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,url,normalized_html}}
+                ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,url,normalized_html}}
+            fi
+        fi
+
         ls -d {params.o}/*/* > {output}
         '''
+
+
 
 # obtain list of batches for lang
 def get_batches(lang):
@@ -460,11 +514,17 @@ def get_batches(lang):
             batches.append(line.strip())
     return batches
 
+def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
+    if replace_only_if_true and string or not replace_only_if_true:
+        return replace_format.replace(replace_token, string)
+
+    return string
+
 rule split:
     input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
     params:
-        splitter = lambda wildcards: get_lang_or_default(SENTTOKS, wildcards.lang),
-        customnbp = lambda wildcards: get_customnbp(CUSTOMNBPS, wildcards.lang),
+        splitter = lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), "--sentence-splitter \"{}\""),
+        customnbp = lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), "--customnbp \"{}\"")
     output: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
     threads: THREADS['split']
     shell: '''
@@ -472,11 +532,9 @@ rule split:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        splitter=""; if [ "{params.splitter}" != "" ]; then splitter='--sentence-splitter "{params.splitter}"'; fi
-        customnbp=""; if [ "{params.customnbp}" != "" ]; then customnbp='--customnbp "{params.customnbp}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-split.py \
-                $splitter $customnbp \
+                {params.splitter} {params.customnbp} \
                 --langcode "{wildcards.lang}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
             | pigz -c > {output}
@@ -538,19 +596,17 @@ rule tokenise_translated:
     input: translation_output
     output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz'
     params:
-        tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
-        lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
+        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
+        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
     threads: THREADS['tokenise_src']
     shell: '''
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        wordtok=""; if [ "{params.tokeniser}" != "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
-        morphtok=""; if [ "{params.lemmatizer}" != "" ]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
-                $wordtok $morphtok \
+                {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
         '''
@@ -559,19 +615,17 @@ rule tokenise_target:
     input: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz'
     output: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz'
     params:
-        tokeniser = lambda wildcards: get_lang_or_default(WORDTOKS, TRG_LANG),
-        lemmatizer = lambda wildcards: get_lang_or_default(MORPHTOKS, TRG_LANG)
+        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
+        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
     threads: THREADS['tokenise_trg']
     shell: '''
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        wordtok=""; if [ "{params.tokeniser}" != "" ]; then wordtok='--word-tokenizer "{params.tokeniser}"'; fi
-        morphtok=""; if [ "{params.lemmatizer}" != "" ]; then morphtok='--morph-analyser "{params.lemmatizer}"'; fi
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
-                $wordtok $morphtok \
+                {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
         '''
