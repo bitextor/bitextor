@@ -107,6 +107,7 @@ oparser.add_argument('-v', "--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', default=sys.stdout)
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
+oparser.add_argument('--only-broader', dest='onlybroader', help="Only outputs broader document format records", default=False)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
 oparser.add_argument('--pe_configfile', dest='configFile', help='PDFExtract configuration file for language model paths', default="")
@@ -243,7 +244,10 @@ for record in f:
     elif url[-5:] == ".epub":
         payloads = epub2html(payload)
     else:
-        payloads = [payload]
+        if options.onlybroader:
+            payloads = []
+        else:
+            payloads = [payload]
 
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
