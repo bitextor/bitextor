@@ -490,7 +490,7 @@ bicleanerCacheWithSents: true
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 * `bicleanerCacheWithSents` (false by default): if both `bifixer` and `bicleanerCacheWithSents` options are set to 'true', `bicleaner` score will be run only computed first occurrence of a duplicated sentence by looking at the actual source and target sentence content, so the duplicates will copy the result. If `bicleanerCacheWithSents` is unset, duplicated sentences are considered by looking at the `bifixer` hash, which include ['near-duplicated' sentences](https://github.com/bitextor/bifixer#what-can-bifixer-do-to-your-parallel-corpora), and only the one with highest `bifixer` score is given to `bicleaner`. The latter is faster, as less `bicleaner` calls are produced, but could result in inconsistent scores when comparing `bicleaner` scores with other runs or domains.
 
-If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
+If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` (do not use this option if you have a dictionary to provide through the `dic` config option and you want to use the one you have) and/or `bicleanerCorpusTrainingPrefix`:
 
 ```yaml
 initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']

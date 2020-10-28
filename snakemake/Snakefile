@@ -236,6 +236,9 @@ def validate_args(config):
         if not os.path.isfile(config["bicleaner"]):
             schema['bicleanerCorpusTrainingPrefix']['required']=True
 
+            if "dic" in config and "initCorpusTrainPrefix" in config and config["initCorpusTrainPrefix"] and os.path.isfile(config["dic"]):
+                sys.stderr.write("WARNING: dictionary {dic} exists and it will be replaced after bicleaner training (initCorpusTrainPrefix is defined)\n".format(dic=config["dic"]))
+
     if "linkedHosts" in config:
         schema['linkedHostsAction']['required']=True
 
