@@ -2,12 +2,14 @@ import os
 import sys
 import requests
 
-include: "utils.smk"
-
-config = validate_args(config)
+#include: "utils.smk"
 
 sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
+from utils.args import validate_args
 from utils.common import open_xz_or_gzip_or_plain
+from utils.non_generic import *
+
+config = validate_args(config)
 
 #################################################################
 # BASIC PARAMETERS
@@ -16,6 +18,9 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
+CONFIGFILE = workflow.overwrite_configfiles
+WORKDIR = os.getcwd()
+SNAKEMAKEDIR = os.path.dirname(workflow.snakefile)
 
 LANGS = set()
 LANG1 = ""
@@ -33,6 +38,16 @@ if "lang2" in config:
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
     PROFILING = "/usr/bin/time -v"
+if CONFIGFILE is None or (isinstance(CONFIGFILE, list) and len(CONFIGFILE) == 0):
+    CONFIGFILE = workflow.configfiles
+if CONFIGFILE is None or (isinstance(CONFIGFILE, list) and len(CONFIGFILE) == 0):
+    sys.stderr.write("WARNING: could not retrieve the config file path. Some functionalities might not be available\n")
+    CONFIGFILE = None
+elif isinstance(CONFIGFILE, list):
+    if len(CONFIGFILE) > 1:
+        sys.stderr.write(f"WARNING: multiple elements found in config file path. Using the first element")
+    CONFIGFILE = CONFIGFILE[0]
+
 #################################################################
 # CRAWLING
 CRAWLTARGET = ""
@@ -129,6 +144,15 @@ CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
 WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
 MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
 
+# Concrete tokenizers and morph. tokenizers
+if WORDTOKS:
+    WORDTOK1 = get_lang_or_default(WORDTOKS, LANG1)
+    WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
+else:
+    WORDTOK1, WORDTOK2 = f"{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+MORPHTOK1 = get_lang_or_default(MORPHTOKS, LANG1)
+MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
+
 PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
 PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 
@@ -136,8 +160,10 @@ PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
 # mt
-# TODO KeyError if documentAligner: DIC and alignerCmd not defined
-MT_COMMAND = config['alignerCmd']
+if DOCALIGN == "externalMT":
+    MT_COMMAND = config['alignerCmd']
+else:
+    MT_COMMAND = None
 SRC_LANG = LANG1
 TRG_LANG = LANG2
 if "translationDirection" in config and config["translationDirection"] == f'{LANG2}2{LANG1}':
@@ -147,8 +173,21 @@ if "translationDirection" in config and config["translationDirection"] == f'{LAN
 DOC_THRESHOLD = 0.1
 if "documentAlignerThreshold" in config:
     DOC_THRESHOLD = config["documentAlignerThreshold"]
+
+#################################################################
 # dic
 # TODO
+
+DIC=None
+DIC_TRAINING=None
+
+if "dic" in config:
+    DIC = config["dic"]
+    DIC_TRAINING = DIC
+
+    if os.path.isfile(DIC) and ('bicleanerCorpusTrainingPrefix' in config and 'initCorpusTrainingPrefix' in config):
+        DIC_TRAINING += ".generated"
+
 #################################################################
 # SEGALIGN
 SEGALIGN = config["sentenceAligner"]
@@ -174,6 +213,7 @@ ELRC = False
 ELRC_FIELDS = []
 TMX = False
 DEDUPED = False
+BIROAMER = False
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 
@@ -199,8 +239,16 @@ if 'tmx' in config and config['tmx']:
     TMX = True
     OUTPUT_FILES.append('not-deduped.tmx')
 if 'deduped' in config and config['deduped']:
+    DEDUPED = True
     OUTPUT_FILES.append('deduped.tmx')
     OUTPUT_FILES.append('deduped.txt')
+if 'biroamer' in config and config['biroamer']:
+    BIROAMER = True
+
+    if 'deduped.tmx' in OUTPUT_FILES:
+        OUTPUT_FILES.append('deduped-roamed.tmx')
+    else:
+        OUTPUT_FILES.append('not-deduped-roamed.tmx')
 
 BEFORE_ELRC_FIELDS = FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
 TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
@@ -288,8 +336,16 @@ else:
     elif UNTIL == 'filter':
         OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
 shell.prefix("set -euo pipefail;")
+
+#################################################################
+### FINAL OUTPUTS ###############################################
 rule all:
     input: OUTPUT
+
+#################################################################
+### INCLUDE #####################################################
+include: "include/dic-generation/Snakefile"
+include: "include/dic-docsegalign/Snakefile"
 
 #################################################################
 ### CRAWLING ####################################################
@@ -463,8 +519,13 @@ checkpoint shard:
             mkdir -p {params.o}/{params.empty_shard_batch_folder}
 
             touch {params.o}/{params.empty_shard_batch_folder}/empty
-            touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
-            gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
+            if [[ "{PPROC}" == "giawarc" ]]; then
+                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
+                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
+            else
+                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+            fi
 
             mylang="{SRC_LANG}"
             notmylang="{TRG_LANG}"
@@ -496,8 +557,13 @@ checkpoint shard:
 
                 # Create the same shards that have been created in the other lang (only 1 batch)
                 ls -d {params.o_no_lang}/$notmylang/* | xargs -I[] basename [] | xargs -I[] mkdir -p {params.o_no_lang}/$mylang/[]/1
-                ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,url,normalized_html}}
-                ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,url,normalized_html}}
+                if [[ "{PPROC}" == "giawarc" ]]; then
+                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,url,normalized_html}}
+                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,url,normalized_html}}
+                else
+                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+                fi
             fi
         fi
 
@@ -585,7 +651,10 @@ rule custom_translate:
         '''
         # TODO: add early stopping
 
-translation_output = rules.custom_translate.output
+if MT_COMMAND is None:
+    translation_output = f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+else:
+    translation_output = rules.custom_translate.output
 
 rule aggregate_translate:
     input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
@@ -630,6 +699,25 @@ rule tokenise_target:
             | pigz -c > {output}
         '''
 
+rule tokenise_source:
+    input: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz'
+    params:
+        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
+        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
+    threads: THREADS['tokenise_src']
+    shell: '''
+        parallel_cmd=""
+        if [ {threads} -gt 1 ]; then
+            parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
+        fi
+        zcat {input} \
+            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
+                {params.tokeniser} {params.lemmatizer} \
+                --langcode {SRC_LANG} \
+            | pigz -c > {output}
+        '''
+
 rule aggregate_tokenise_target:
     input: lambda wildcards: [f'{batch}/tokenised.gz' for batch in get_batches(TRG_LANG)]
     output: f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
@@ -647,7 +735,10 @@ rule mt_matches:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches'
     params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}'
     threads: THREADS['docalign']
-    shell: "mkdir -p {params.folder}; {PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}"
+    shell: '''
+        mkdir -p {params.folder}
+        {PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
+        '''
 # DIC ###########################################################
 # TODO
 #################################################################
@@ -665,7 +756,9 @@ rule bleualign:
         url1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
         url2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
         translated1=translation_output
-    params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}', workers=THREADS['segalign']
+    params:
+        folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}',
+        workers=THREADS['segalign']
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz')
     threads: max(THREADS['segalign'], 2)
@@ -724,8 +817,15 @@ rule deferred_segments:
             > {output}
         '''
 
-split_input_filename = '06_02.segalign'
-split_input_extension = '.gz'
+if DOCALIGN == "externalMT":
+    split_input_filename = '06_02.segalign'
+    split_input_extension = '.gz'
+elif DOCALIGN == "DIC":
+    split_input_filename = 'hunalign.06_02.segalign'
+    split_input_extension = '.xz'
+else:
+    sys.stderr.write(f"WARNING: unknown document aligner (document aligner: {DOCALIGN})\n")
+
 if DEFERRED:
     split_input_filename = '07_00.deferred'
     split_input_extension = ''
@@ -740,7 +840,12 @@ checkpoint split_segalign:
     shell: '''
         mkdir -p {params.folder}
         rm -f {params.folder}/* # remove anything that might be left after a previous run
-        CAT=cat; if [[ {input[0]} == *.gz ]]; then CAT=zcat; fi
+        CAT=cat
+        if [[ {input[0]} == *.gz ]]; then
+            CAT=zcat
+        elif [[ {input[0]} == *.xz ]]; then
+            CAT=xzcat
+        fi
         $CAT {input} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
             | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
@@ -781,6 +886,37 @@ rule aggregate_bifixer:
 bicleaner_input = rules.bifixer.output
 if not BIFIXER:
     bicleaner_input = rules.bifixer.input.segalign
+
+if "bicleanerCorpusTrainingPrefix" in config:
+    bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
+else:
+    bicleanerTrainPrefixes=None
+
+rule bicleaner_train_model:
+    input:
+        corpusl1=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG1),
+        corpusl2=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG2),
+        e2f=f"{DIC_TRAINING}.lex.e2f.gz",
+        f2e=f"{DIC_TRAINING}.lex.f2e.gz",
+        vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
+        vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+        dic=f"{DIC_TRAINING}",  # If DIC != DIC_TRAINING, DIC_TRAINING will be generated but not used because of this input
+                                # This input makes the dictionary to be generated (without it, statistical info would be generated but not the dic)
+    output:
+        model=BICLEANER_MODEL
+
+    shell: '''
+        training=$(mktemp {TMPDIR}/train.XXXXXXXX)
+        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
+        DIR=$(dirname {BICLEANER_MODEL})
+        echo $DIR
+        lines=$(cat $training | wc -l)
+        trainlines=$(echo \"$lines*4/10\" | bc)
+        testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
+        # Parameters for good/bad examples have been removed -> now the whole file is being used (https://github.com/bitextor/bicleaner/commit/cdd1bc03928701884cd42ffac4b602220ec3e732)
+        {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+        rm $training
+        '''
 
 rule bicleaner:
     input: bifixer=bicleaner_input, model=BICLEANER_MODEL
@@ -899,4 +1035,40 @@ rule deduped_tmx:
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
+        '''
+
+rule roam_tmx:
+    input:
+        tmx=rules.tmx.output if not DEDUPED else rules.deduped_tmx.output.tmx,
+        txt=rules.sents.output if not DEDUPED else rules.deduped_tmx.output.txt
+    output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped-roamed.tmx.gz' if not DEDUPED else f'{PERMANENT}/{LANG1}-{LANG2}.deduped-roamed.tmx.gz'
+    params:
+        tokenizer_l1 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), "-t \"{}\""),
+        tokenizer_l2 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), "-T \"{}\""),
+        mix_files = '/dev/null' if not 'biroamerMixFiles' in config or len(config['biroamerMixFiles']) == 0 else ' '.join(config['biroamerMixFiles']),
+        alignment_corpus = "" if "biroamerImproveAlignmentCorpus" not in config else f"-a {config['biroamerImproveAlignmentCorpus']}",
+        omit = "" if not config['biroamerOmitRandomSentences'] else "-o",
+    shell: '''
+        mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
+        cat {params.mix_files} > $mix_files
+        nolines=$(cat $mix_files | wc -l)
+
+        if [[ "$nolines" != "0" ]]; then
+            mix_files="-m $mix_files"
+        else
+            mix_files=""
+        fi
+
+        nolines_txt=$(cat {input.txt} | wc -l)
+        total_nolines=$(echo $nolines + $nolines_txt | bc)
+
+        if [[ "$total_nolines" -lt "100000" ]] && [[ "{params.alignment_corpus}" == "" ]]; then
+            >&2 echo "WARNING: biroamer suggests, at least, 100k lines in order to have a good alignment (current nolines: $total_nolines)."\
+                     "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
+        fi
+
+        zcat {input.tmx} \
+            | {PROFILING} {BITEXTOR}/biroamer/biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
+                {params.omit} {params.alignment_corpus} $mix_files {LANG1} {LANG2} 2> /dev/null \
+            | pigz -c > {output}
         '''
