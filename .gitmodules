@@ -34,6 +34,3 @@
 	path = bleualign-cpp
 	url = https://github.com/bitextor/bleualign-cpp
 	ignore = dirty
-[submodule "biroamer"]
-	path = biroamer
-	url = https://github.com/bitextor/biroamer
