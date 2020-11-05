@@ -38,7 +38,6 @@ def check_wget_compression(cmd):
     except:
         return False
 
-
 def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
     cmd = ""
     if time_limit:
@@ -98,7 +97,6 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
                 print(e, file=sys.stderr)
                 pass
 
-
     system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
 
 
@@ -125,21 +123,50 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Starting...")
+
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
-    try:
-        robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
-        for line in robots:
-            if "Crawl-delay" in line:
-                try:
-                    crawldelay = int(line.split(':')[1].strip())
-                    if args.wait is None or crawldelay > int(args.wait):
-                        args.wait = str(crawldelay)
-                except ValueError:
-                    continue
-    except:
-        sys.stderr.write("WARNING: Error downloading robots.txt: ")
-        sys.stderr.write(str(sys.exc_info()[0]) + "\n")
-    run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)
+
+    url = args.url
+    connection_error = False
+
+    for check in range(2):
+        try:
+            connection = requests.get(url, timeout=15)
+        except requests.exceptions.ConnectTimeout:
+            if check:
+                connection_error = True
+            else:
+                url = "https" + url[4:]
+        except:
+            if check:
+                connection_error = True
+                sys.stderr.write("WARNING: error connecting: ")
+                sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+    if not connection_error:
+        args.url = url
+
+        try:
+            robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
+            for line in robots:
+                if "Crawl-delay" in line:
+                    try:
+                        crawldelay = int(line.split(':')[1].strip())
+                        if args.wait is None or crawldelay > int(args.wait):
+                            args.wait = str(crawldelay)
+                    except ValueError:
+                        pass
+        except:
+            sys.stderr.write("WARNING: Error downloading robots.txt: ")
+            sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+
+        run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)
+    else:
+        # Create empty warc
+        warc_file_basename = args.warcfilename[0:args.warcfilename.find(".warc.gz")]
+        
+        with open(warc_file_basename + ".warc.gz", 'w') as f_out:
+            f_out.close()
 
     print("Finished!")

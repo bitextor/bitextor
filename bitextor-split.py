@@ -41,7 +41,7 @@ def filter_trash(sentence):
 
 
 def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
-    segment = external_splitter.process(content).strip().split("\n")
+    segments = external_splitter.process(content).strip().split("\n")
     # prune long sentences
     if prune_threshold and prune_type == "words":
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
@@ -98,7 +98,7 @@ if not splitter:
 # use custom sentence splitter via ExternalTextProcessor (inefficient):
 else:
     splitter_func = split_external
-    splitter = ExternalTextProcessor(os.path.expanduser(splitter))
+    splitter = ExternalTextProcessor(os.path.expanduser(splitter).split())
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
