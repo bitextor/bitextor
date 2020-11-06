@@ -1,62 +1,30 @@
-import tldextract
+#  This file is part of Bitextor.
+#
+#  Bitextor is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Bitextor is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
+
 import sys
 import os
-from itertools import product
+
 from cerberus import Validator
 
-
-def create_domain_key_2_host_map(hosts):
-    key2hosts = {}
-    for host in hosts:
-        # don't merge blog sites
-        if host.find(".blogspot.") >= 0 or host.find(".wordpress.") >= 0:
-            key = host
-        else:
-            key = tldextract.extract(host).domain
-
-        if key not in key2hosts:
-            key2hosts[key] = []
-        key2hosts[key].append(host)
-    return key2hosts
-
-
-def parent_folder_2_warcs(warcs):
-    f2w = {}
-    for warc in warcs:
-        folder = warc.split('/')[-2]
-        if folder not in f2w:
-            f2w[folder] = []
-        f2w[folder].append(warc)
-    return f2w
-
-
-def get_lang_or_default(scripts_dict, language):
-    cmd = ""
-    if language in scripts_dict:
-        cmd = scripts_dict[language]
-    elif "default" in scripts_dict:
-        cmd = scripts_dict["default"]
-    return cmd
-
-
-def get_customnbp(nbp_dict, language):
-    nbp = ""
-    if language in nbp_dict:
-        nbp = nbp_dict[language]
-    return nbp
-
-
-def get_mt_docalign_inputs(src_batches, trg_batches):
-    # product( [[shard, batch], [shard, batch], ...], [[shard, batch], [shard, batch], ...] )
-    iterator = product( [batch.split('/')[-2:] for batch in src_batches], [batch.split('/')[-2:] for batch in trg_batches] )
-    # each item -> (shard, (src_batch, trg_batch))
-    return [(src_shard, (src_batch, trg_batch)) for ((src_shard, src_batch), (trg_shard, trg_batch)) in iterator if src_shard == trg_shard]
-
-
 def isfile(field, value, error):
-    if not os.path.isfile(os.path.expanduser(value)):
+    if isinstance(value, list):
+        for element in value:
+            if not os.path.isfile(os.path.expanduser(element)):
+                error(field, f'{element} does not exist')
+    elif not os.path.isfile(os.path.expanduser(value)):
         error(field, f'{value} does not exist')
-
 
 def validate_args(config):
     schema = {
@@ -76,7 +44,7 @@ def validate_args(config):
             # TODO: check that one of these is specified?
             'hosts': {'type': 'list', 'dependencies': 'crawler'},
             'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
-            'warcs': {'type': 'list'},
+            'warcs': {'type': 'list', 'check_with': isfile},
             'warcsFile': {'type': 'string', 'check_with': isfile},
             # crawling
             'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack"]},
@@ -125,7 +93,9 @@ def validate_args(config):
             'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
-            'dic': {'type': 'string', 'check_with': isfile}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
+            'dic': {'type': 'string'}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
+            'initCorpusTrainingPrefix': {'type': 'list'},
+            'mkcls': {'type': 'boolean'},
             # sentence alignment
             'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
             'sentenceAlignerThreshold': {'type': 'float'},
@@ -133,11 +103,16 @@ def validate_args(config):
             'deferred': {'type': 'boolean', 'default': False},
             'bifixer': {'type': 'boolean', 'default': False},
             'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}}, # mark near duplicates as duplicates
-            'bicleaner': {'type': 'string', 'check_with': isfile}, # TODO: check that model exists, use training subworkflow if not
+            'bicleaner': {'type': 'string'},
             'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
+            'bicleanerCorpusTrainingPrefix': {'type': 'list'},
             'elrc': {'type': 'boolean'},
             'tmx': {'type': 'boolean'},
-            'deduped': {'type': 'boolean'}
+            'deduped': {'type': 'boolean'},
+            'biroamer': {'type': 'boolean', 'default': False},
+            'biroamerOmitRandomSentences': {'type': 'boolean', 'default': False, 'dependencies': {'biroamer': True}},
+            'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
+            'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
             }
 
     if 'crawler' in config and config['crawler'] == 'heritrix':
@@ -154,12 +129,16 @@ def validate_args(config):
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
         schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
-    elif config['documentAligner'] == 'DIC':
+    elif "documentAligner" in config and config['documentAligner'] == 'DIC':
         schema['dic']['required'] = True
-        schema['documentAligner']['dependencies'] = frozenset({'preprocessor': 'warc2preprcess'})
+        schema['documentAligner']['dependencies'] = {'preprocessor': 'warc2preprocess'}
+
+        if "dic" in config and not os.path.isfile(config["dic"]):
+            schema['initCorpusTrainingPrefix']['required']=True
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
-        schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
+        #schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'}) # dependencies are not working because of the frozenset
+        schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
 
     if "deferred" in config:
         schema['until']['allowed'].append('deferred')
@@ -172,9 +151,33 @@ def validate_args(config):
     if 'bicleaner' in config:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
+        
+        if not os.path.isfile(config['bicleaner']):
+            schema['bicleanerCorpusTrainingPrefix']['required']=True
+            schema['initCorpusTrainingPrefix']['required']=True
+            schema['dic']['required'] = True
+
+    if 'dic' in config and not os.path.isfile(config['dic']):
+        # if 'dic' in config and does not exist, we need to generate a new dictionary
+        schema['initCorpusTrainingPrefix']['required']=True
+
+    if 'initCorpusTrainingPrefix' in config:
+        schema['dic']['required'] = True
 
     if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
         sys.stderr.write("WARNING: your target consists of temporary files. Make sure to use --notemp parameter to preserve your output\n")
+
+    if 'biroamer' in config and config['biroamer']:
+        if ('tmx' not in config or not config['tmx']) and ('deduped' not in config or not config['deduped']):
+            sys.stderr.write("ERROR: if you want to use biroamer, you need either 'tmx' or 'deduped' config option set to 'true' (if both, deduped will be used)\n")
+
+            if 'deduped' not in config:
+                # tmx not in config or tmx in config but false
+                schema['biroamer']['dependencies'] = {'tmx': True}
+            else:
+                # deduped in config but false and (tmx not in config or tmx in config and false)
+                # debuped as default value in both situations
+                schema['biroamer']['dependencies'] = {'deduped': True}
 
     v = Validator(schema)
     b = v.validate(config)

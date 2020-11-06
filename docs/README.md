@@ -384,30 +384,30 @@ lang1: es
 lang2: en
 ```
 
-<!-- Two strategies are implemented in Bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in `lang1` and the translations  of documents in `lang2`. Bitextor allows to build (if necessary) both the bilingual lexica and the MT system from parallel data. -->
-
-In current version, only one strategy for document alignment is included, which uses an external machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in one of the languages, and the translation of the documents of the other language.
+Two strategies are implemented in Bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses an external machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in one of the languages, and the translation of the documents of the other language.
 
 ```yaml
 documentAligner: externalMT
 ```
 
-<!-- The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy:
+The variable `documentAligner` can take two different values, each of them taking a different document-alignment strategy:
+
+<!-- The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy: -->
 
 * `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true`
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
-* `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment -->
+<!-- * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment -->
 
-<!-- #### Using bilingual lexica
+#### Using bilingual lexica
 
 ```yaml
 dic: /home/user/en-fr.dic
 ```
 
-Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainPrefix` using `mgiza` tools:
+Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainingPrefix` using `mgiza` tools:
 
 ```yaml
-initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 
 This variable must contain one or more **corpus prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
@@ -419,7 +419,6 @@ If you are running out of memory in the `mkcls` rule, maybe you should activate 
 ```yaml
 mkcls: true
 ```
--->
 
 #### Using external MT
 
@@ -440,7 +439,7 @@ documentAlignerWorkers: 2
 If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having a GPU available. The following are mandatory variables in order to build the NMT system:
 
 ```yaml
-initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 initCorpusDevPrefix: ['/home/user/Europarl.en-fr.dev']
 initCorpusTestPrefix: ['/home/user/Europarl.en-fr.test']
 
@@ -457,7 +456,7 @@ gpuId: 0
 marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "--maxi-batch 1000", "--overwrite", "--keep-best", "--valid-metrics perplexity", "--valid-log valid.log", "--log train.log", "--dropout-rnn 0.2", "--dropout-src 0.2", "--dropout-trg 0.2 ", "--cost-type ce-mean-words", "--layer-normalization", "--exponential-smoothing", "--tied-embeddings", "--valid-metrics bleu"]
 ```
 
-* `initCorpusTrainPrefix`, `initCorpusDevPrefix`,  and `initCorpusTestPrefix`: training data prefixes, development data prefixes and test data prefixes. See section *Variables for document alignment using bilingual lexica* for a description of such prefixes
+* `initCorpusTrainingPrefix`, `initCorpusDevPrefix`,  and `initCorpusTestPrefix`: training data prefixes, development data prefixes and test data prefixes. See section *Variables for document alignment using bilingual lexica* for a description of such prefixes
 * `marianDir`: path to the directory containing the installation of the NMT tool [Marian](https://github.com/marian-nmt/marian-dev)
 * `mosesDir`: path to the directory containing the MT tool [Moses](https://github.com/moses-smt/mosesdecoder); note that only data pre-processing scripts are used from Moses and, therefore, it is not necessary to compile the project to use it to train and NMT system
 * `subwordNmtDir`: path to the directory containing the installation of the tool [subword-nmt](https://github.com/rsennrich/subword-nmt)
@@ -469,16 +468,15 @@ marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "-
 
 ### Segment alignment
 
-<!--- After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`. --->
-After document aignment, the next step in the pipeline in segment alignment. Current version includes Bleualign as segment aligner.
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
 
 ```yaml
-sentenceAligner: true
+sentenceAligner: bleualign
 sentenceAlignerThreshold: 0.1
 sentenceAlignerWorkers: 1
 ```
 
-* `sentenceAligner`: segment aligner tool, currently only `bleualign` is supported
+* `sentenceAligner`: segment aligner tool which is going to be used. Default is `bleualign`, but `hunalign` can be used in order to achieve a dictionary-based alignment.
 * `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. For `bleualign` should be set to a value in [0,1], while `hunalign` can take any float value. Both are set to 0.0 by default
 
 ### Parallel data filtering
@@ -493,19 +491,17 @@ bicleanerThreshold: 0.6
 * `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed
 * `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
 
-<!--- If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainPrefix` and `bicleanerCorpusTrainingPrefix`:
+If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
 
 ```yaml
-initCorpusTrainPrefix: ['/home/user/Europarl.en-fr.train']
+initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 
-* `initCorpusTrainPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the Bicleaner model
+* `initCorpusTrainingPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the Bicleaner model. This option affects and is affected by `dic` config option, which in case that provided `dic` does not exist, a new one will be generated; in case that provided `dic` does exist, should not be replaced (it does might!) but a new one would be generated and stored in "`dic`.generated". If `sentenceAligner: hunalign` is being used and this situation happens, the provided and existant `dic` will be used in the main pipeline while the new dictionary will only be used in order to train the Bicleaner model
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 
 It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
-
---->
 
 ### Post-processing
 
@@ -513,13 +509,9 @@ Some other options can be configured to specify the output format of our corpus:
 
 ```yaml
 bifixer: true
-
 elrc: true
-
 tmx: true
-
 deduped: false
-
 deferred: false
 ```
 
@@ -530,6 +522,22 @@ deferred: false
 * `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a [standoff annotation](https://github.com/bitextor/standoff)
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
+
+#### ROAM (Random, Omit, Anonymize and Mix) the resulted TMX
+
+In order to ROAM the resulted TMX (either normal or deduped), you can use some options to configure the result:
+
+```yaml
+biroamer: true
+biroamerOmitRandomSentences: true
+biroamerMixFiles: ["/home/user/file-tp-mix1", "/home/user/file-to-mix2"]
+biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
+```
+
+* `biroamer`: through this option we enable the ROAM feature. In order to ROAM the resulted TMX, [Biroamer](https://github.com/bitextor/biroamer) is used. If this option is set to 'true', `tmx: true` or `deduped: true` will be necessary.
+* `biroamerOmitRandomSentences`: in order to omit random sentences, this option can be used. The quantity of sentences removed are close to 10% of the original TMX.
+* `biroamerMixFiles`: when is necessary to add external sentences to improve anonymization, this option accepts a list of files which will add the stored sentences. The files are expected to be in morse format, and those files will be concatenated.
+* `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection. The corpus file is exteced to be in morse format.
 
 ## Pipeline description
 
