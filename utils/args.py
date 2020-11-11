@@ -110,7 +110,7 @@ def validate_args(config):
             'tmx': {'type': 'boolean'},
             'deduped': {'type': 'boolean'},
             'biroamer': {'type': 'boolean', 'default': False},
-            'biroamerOmitRandomSentences': {'type': 'boolean', 'default': False, 'dependencies': {'biroamer': True}},
+            'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
             'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
             'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
             }

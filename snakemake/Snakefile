@@ -1048,7 +1048,7 @@ rule roam_tmx:
         tokenizer_l2 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), "-T \"{}\""),
         mix_files = '/dev/null' if not 'biroamerMixFiles' in config or len(config['biroamerMixFiles']) == 0 else ' '.join(config['biroamerMixFiles']),
         alignment_corpus = "" if "biroamerImproveAlignmentCorpus" not in config else f"-a {config['biroamerImproveAlignmentCorpus']}",
-        omit = "" if not config['biroamerOmitRandomSentences'] else "-o",
+        omit = "" if "biroamerOmitRandomSentences" not in config or not config['biroamerOmitRandomSentences'] else "-o",
     shell: '''
         mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
         cat {params.mix_files} > $mix_files

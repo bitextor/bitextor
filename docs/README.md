@@ -525,6 +525,24 @@ NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Mose
 
 #### ROAM (Random, Omit, Anonymize and Mix) the resulted TMX
 
+##### Dependencies
+
+[Biroamer](https://github.com/bitextor/biroamer) has dependencies. If you want to be able to execute it, you will need to install the following dependencies (using an apt-like dependencies manager):
+
+```bash
+sudo apt install libgoogle-perftools-dev libsparsehash-dev
+```
+
+Once you have installed the general dependencies, python dependencies need to be installed as well:
+
+```bash
+pip3 install -r biroamer/requirements.txt
+```
+
+In the case that the described steps do not work as expected, check out [biroamer's site](https://github.com/bitextor/biroamer).
+
+##### Configuration
+
 In order to ROAM the resulted TMX (either normal or deduped), you can use some options to configure the result:
 
 ```yaml
