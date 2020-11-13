@@ -174,9 +174,11 @@ DOC_THRESHOLD = 0.1
 if "documentAlignerThreshold" in config:
     DOC_THRESHOLD = config["documentAlignerThreshold"]
 
+# dic-based docalign
+# snakemake/include/dic-docsegalign
 #################################################################
 # dic
-# TODO
+# snakemake/include/dic-generation
 
 DIC=None
 DIC_TRAINING=None
@@ -192,11 +194,11 @@ if "dic" in config:
 # SEGALIGN
 SEGALIGN = config["sentenceAligner"]
 # bleualign
-BLEU_THRESHOLD = 0.1
+SEGALIGN_THRESHOLD = 0.0
 if "sentenceAlignerThreshold" in config:
-    BLEU_THRESHOLD=config["sentenceAlignerThreshold"]
+    SEGALIGN_THRESHOLD=config["sentenceAlignerThreshold"]
 # hunalign
-# TODO
+# snakemake/include/dic-docsegalign
 #################################################################
 # CLEANING
 FIELDS = ['url1','url2','seg1','seg2','aligner']
@@ -652,7 +654,7 @@ rule custom_translate:
         # TODO: add early stopping
 
 if MT_COMMAND is None:
-    translation_output = f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+    translation_output = f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
 else:
     translation_output = rules.custom_translate.output
 
@@ -739,14 +741,13 @@ rule mt_matches:
         mkdir -p {params.folder}
         {PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         '''
-# DIC ###########################################################
-# TODO
-#################################################################
+
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
     input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
     shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+
 # BLEUALIGN #####################################################
 rule bleualign:
     input:
@@ -773,12 +774,10 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {BLEU_THRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         '''
-# HUNALIGN ######################################################
-# TODO
-#################################################################
+
 ### FILTERING AND CLEANING ######################################
 
 # TODO: deferred_documents does not work with giawarc: html of the original document not saved

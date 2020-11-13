@@ -476,8 +476,8 @@ sentenceAlignerThreshold: 0.1
 sentenceAlignerWorkers: 1
 ```
 
-* `sentenceAligner`: segment aligner tool which is going to be used. Default is `bleualign`, but `hunalign` can be used in order to achieve a dictionary-based alignment.
-* `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. For `bleualign` should be set to a value in [0,1], while `hunalign` can take any float value. Both are set to 0.0 by default
+* `sentenceAligner`: segment aligner tool which is going to be used. Default is `bleualign`, but `hunalign` can be used in order to achieve a dictionary-based alignment. If `bleualign` is used, `documentAligner: externalMT` is mandatory, but in the case of `hunalign`, both `externalMT` and `DIC` are allowed as document aligner.
+* `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. The value should be set to a value in [0,1] (both `bleualign` and `hunalign`). The default value is 0.0.
 
 ### Parallel data filtering
 

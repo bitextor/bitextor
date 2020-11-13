@@ -87,13 +87,13 @@ def validate_args(config):
             # document alignment
             'lang1': {'type': 'string'},
             'lang2': {'type': 'string'},
-            'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT'], 'default': 'externalMT'},
+            'documentAligner': {'type': 'string', 'allowed': ['DIC', 'externalMT'], 'default': 'externalMT', 'dependencies': {}},
             # mt
             'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
             'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
             'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
             # dictionary
-            'dic': {'type': 'string'}, # TODO: depends on documentAligner=DIC, or sentenceAligner=hunalign, TODO: check if dictionary exists, use training subworkflow if not
+            'dic': {'type': 'string', 'dependencies': {}},
             'initCorpusTrainingPrefix': {'type': 'list'},
             'mkcls': {'type': 'boolean'},
             # sentence alignment
@@ -129,12 +129,12 @@ def validate_args(config):
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
         schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
-    elif "documentAligner" in config and config['documentAligner'] == 'DIC':
-        schema['dic']['required'] = True
-        schema['documentAligner']['dependencies'] = {'preprocessor': 'warc2preprocess'}
 
-        if "dic" in config and not os.path.isfile(config["dic"]):
-            schema['initCorpusTrainingPrefix']['required']=True
+        if "sentenceAligner" in config and config["sentenceAligner"] == "hunalign":
+            schema['dic']['required'] = True
+    elif config['documentAligner'] == 'DIC':
+        schema['dic']['required'] = True
+        schema['documentAligner']['dependencies']['preprocessor'] = 'warc2preprocess'
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
         #schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'}) # dependencies are not working because of the frozenset

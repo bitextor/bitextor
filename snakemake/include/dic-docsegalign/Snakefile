@@ -141,22 +141,24 @@ rule dic_docsegalign_aligndocumentsBitextor:
 ### SEGALIGN ####################################################
 # HUNALIGN ######################################################
 
+docalign_str = "" # Default: externalMT as docalign
+
+if DOCALIGN == "DIC":
+    docalign_str = "bitextor."
+
 rule dic_docsegalign_matches2hunalign:
     input:
-        indices=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bitextor.06_01.matches',
+        indices=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{docalign_str}06_01.matches',
         plain1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz',
         plain2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz',
         url_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
         url_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
         tok1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz',
         tok2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz',
-    output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.docalign.bitextor.06_02.matches.xz',
+    output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.docalign.{docalign_str}06_02.matches.xz',
     params:
-        #c1=lambda wildcards: 1 if wildcards.docalignext == 'bitextor' else 2,
-        #c2=lambda wildcards: 2 if wildcards.docalignext == 'bitextor' else 3
-        # TODO are there other doc. aligners which should work with hugnalign?
-        c1=1,
-        c2=2
+        c1=1 if DOCALIGN == "DIC" else 2,
+        c2=2 if DOCALIGN == "DIC" else 3
     shell: '''
         cut -f {params.c1},{params.c2} {input.indices} \
             | LC_ALL=C sort -nk1 \
@@ -192,6 +194,7 @@ rule dic_docsegalign_alignsegments_hunalign:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.xz'
     shell: '''
         xzcat -T 0 {input.hunalign_matches} \
-            | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input.hunaligndic} -t {TMPDIR} --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" \
+            | {PROFILING} {BITEXTOR}/bitextor-align-segments.py -d {input.hunaligndic} -t {TMPDIR} \
+                --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | xz -T 0 > {output}
         '''
