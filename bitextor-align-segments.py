@@ -40,19 +40,19 @@ import subprocess
 from tempfile import NamedTemporaryFile
 
 
-def run_aligner(filename_s, filename_t, dic, hunaligndir):
+def run_aligner(filename_s, filename_t, dic, hunaligndir, thresh="0"):
     # option -ppthresh=10?
     if dic is None or dic == "":
         if hunaligndir is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "/dev/null", filename_s,
-                        filename_t]
+            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "-thresh=" + thresh, "/dev/null",
+                        filename_s, filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", "-realign", "/dev/null", filename_s, filename_t]
+            hunalign = [hunaligndir + "/hunalign", "-realign", "-thresh=" + thresh, "/dev/null", filename_s, filename_t]
     else:
         if hunaligndir is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", dic, filename_s, filename_t]
+            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-thresh=" + thresh, dic, filename_s, filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", dic, filename_s, filename_t]
+            hunalign = [hunaligndir + "/hunalign", "-thresh=" + thresh, dic, filename_s, filename_t]
 
     p = subprocess.Popen(hunalign, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     for line_o in p.stdout:
@@ -63,8 +63,16 @@ def run_aligner(filename_s, filename_t, dic, hunaligndir):
 def align(file1, file2, file1orig, file2orig, dic):
     filereader1 = open(file1orig, "r")
     filereader2 = open(file2orig, "r")
+    thresh = options.hunalignthresh
 
-    hunalign_output = run_aligner(file1, file2, dic, options.hunaligndir)
+    if thresh is None:
+        thresh = 0
+    else:
+        thresh = min(max(int(float(thresh) * 100.0), 0), 100)
+
+    thresh = str(thresh)
+
+    hunalign_output = run_aligner(file1, file2, dic, options.hunaligndir, thresh)
     try:
         prev_hun = next(hunalign_output).strip()
         prev_fields = prev_hun.split(b"\t")
@@ -128,6 +136,10 @@ oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scor
 oparser.add_argument("-t", "--tmp-dir",
                      help="Temporary directory to be used for internal temporary files (/tmp by default)",
                      dest="tmpdir", required=False, default="/tmp")
+oparser.add_argument("--hunalign-threshold",
+                     help="Threshold which will be applied to Hunalign. All the aligned segments with score lower than "
+                          "this value will not be in the result. Allowed values are between 0.0 and 1.0.",
+                     dest="hunalignthresh", required=False, default=None)
 
 options = oparser.parse_args()
 
