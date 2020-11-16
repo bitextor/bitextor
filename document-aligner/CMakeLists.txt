@@ -31,7 +31,7 @@ find_package(ICU REQUIRED COMPONENTS
 include_directories(
   ${PROJECT_SOURCE_DIR}
   ${Boost_INCLUDE_DIRS}
-  ${ICU_INCLUDE_DIR}
+  ${ICU_INCLUDE_DIRS}
 )
 
 if (PREPROCESS_PATH)
