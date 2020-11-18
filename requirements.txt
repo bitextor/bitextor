@@ -17,7 +17,7 @@ mosestokenizer==1.1.0
 lxml==4.5.2
 html5lib==1.1
 regex==2020.7.14
-numpy==1.18.5
+numpy==1.19.2
 setuptools==49.2.0
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
