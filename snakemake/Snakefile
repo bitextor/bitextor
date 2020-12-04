@@ -202,7 +202,7 @@ if "sentenceAlignerThreshold" in config:
 #################################################################
 # CLEANING
 FIELDS = ['url1','url2','seg1','seg2','aligner']
-DEFERRED = False
+DEFERRED = ""
 DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
@@ -220,9 +220,8 @@ BIROAMER = False
 OUTPUT_FILES = ["sent", "raw"]
 
 if 'deferred' in config and config['deferred']:
-    DEFERRED = True
-    DEFERRED_FIELDS = ['deferredseg1','checksum1','deferredseg2','checksum2']
-    PARSER = "--parser 'lxml'"
+    DEFERRED = "--print-sent-hash"
+    DEFERRED_FIELDS = ['checksum1','checksum2']
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
     BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
@@ -294,7 +293,7 @@ TARGET_2_WARCS.update(dict([(domain, [f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc
 TARGETS = TARGET_2_WARCS.keys()
 #################################################################
 ### WORKFLOW EXECUTION ##########################################
-THREADS = {'split': 1, 'translate': 1, 'tokenise_src': 1, 'tokenise_trg': 1, 'docalign': 1, 'segalign': 1, 'deferred': 1, 'bifixer': 1, 'bicleaner': 1, 'sents': 1}
+THREADS = {'split': 1, 'translate': 1, 'tokenise_src': 1, 'tokenise_trg': 1, 'docalign': 1, 'segalign': 1, 'bifixer': 1, 'bicleaner': 1, 'sents': 1}
 if 'parallelWorkers' in config:
     for k in config['parallelWorkers']:
         THREADS[k] = config['parallelWorkers'][k]
@@ -774,61 +773,18 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp --bleu-threshold {SEGALIGN_THRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp {DEFERRED} --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         '''
 
 ### FILTERING AND CLEANING ######################################
 
-# TODO: deferred_documents does not work with giawarc: html of the original document not saved
-rule deferred_documents:
-    input:
-        html=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/normalized_html.gz',
-        url=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/url.gz'
-    output:
-        text=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/html5lib_plain_text.xz',
-        deferred=f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/deferred_documents.xz'
-    shell: '''
-        touch {output.text}.touch && xz {output.text}.touch && mv {output.text}.touch.xz {output.text}
-        touch {output.deferred}.touch && xz {output.deferred}.touch && mv {output.deferred}.touch.xz {output.deferred}
-        paste <(zcat {input.html}) <(zcat {input.url}) \
-            | python3 {BITEXTOR}/standoff/deferred_document.py \
-            | awk -F $'\t' '{{ print $1 | "xz > {output.text}"; print $3 | "xz > {output.deferred}" }}'
-        '''
-
-# Default: bleualign
-deferred_input = rules.bleualign.output
+split_input_filename = '06_02.segalign'
+split_input_extension = '.gz'
 
 if SEGALIGN == "hunalign":
-    deferred_input = rules.dic_docsegalign_alignsegments_hunalign.output
-
-rule deferred_segments:
-    input:
-        deferred_input,
-        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/html5lib_plain_text.xz',
-        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
-        f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deferred_documents.xz',
-        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/html5lib_plain_text.xz',
-        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
-        f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deferred_documents.xz'
-    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.07_00.deferred')
-    shell: '''
-        zcat {input[0]} \
-            | python3 {BITEXTOR}/standoff/deferred_sentences.py <(paste <(xzcat {input[1]} {input[4]}) <(zcat {input[2]} {input[5]}) <(xzcat {input[3]} {input[6]})) \
-            > {output}
-        '''
-
-if DEFERRED:
-    split_input_filename = '07_00.deferred'
-    split_input_extension = ''
-else:
-    # Default: bleualign
-    split_input_filename = '06_02.segalign'
-    split_input_extension = '.gz'
-
-    if SEGALIGN == "hunalign":
-        split_input_filename = 'hunalign.06_02.segalign'
-        split_input_extension = '.xz'
+    split_input_filename = 'hunalign.06_02.segalign'
+    split_input_extension = '.xz'
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
@@ -977,7 +933,7 @@ rule aggregate_filter:
 
 raw_input_filename = rules.filter.input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 extension = ""
-if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "07_00.deferred", "hunalign.06_02.segalign"]:
+if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.segalign"]:
     extension = ".gz"
 
 rule raw:

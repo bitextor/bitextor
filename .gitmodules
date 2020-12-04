@@ -18,10 +18,6 @@
 	path = preprocess
 	url = https://github.com/kpu/preprocess
 	ignore = dirty
-[submodule "standoff"]
-	path = standoff
-	url = https://github.com/bitextor/standoff
-	ignore = dirty
 [submodule "pdf-extract"]
 	path = pdf-extract
 	url = https://github.com/bitextor/pdf-extract
