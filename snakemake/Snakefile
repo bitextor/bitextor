@@ -496,91 +496,6 @@ rule heritrix_download:
             with open(output[0], 'wb') as f_out:
                 f_out.close()
 
-# Version working as the rest of the crawlers but [WARNING:] not updated and not fully integrated as the current version
-#rule linguacrawl_download:
-#    params:
-#        url="http://{target}",
-#        folder=f"{DATADIR}/warc/{{target}}",
-#        yaml_file=f"{TMPDIR}/linguacrawl.{{target}}.yaml",
-#    output: f'{DATADIR}/warc/{{target}}/linguacrawl.warc.gz'
-#    run:
-#        shell('''
-#                mkdir -p {params.folder} {TMPDIR}
-#                echo hostname=$HOSTNAME
-#                DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-#                touch {params.yaml_file}
-#                cat < /dev/null > {params.yaml_file}
-#            ''')
-#
-#        yaml_content = ""
-#        useragent = USERAGENT
-#        langs = "','".join(LANGS)
-#
-#        if not useragent:
-#            useragent = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
-#
-#        # Mandatory
-#        yaml_content += f"user_agent: '{useragent}'\n"
-#        yaml_content += f"langs_of_interest: ['{langs}']\n"
-#        yaml_content += f"output_dir: '{params.folder}'\n"
-#        # Optional (the argument parser will not complain, but the crawler will crash in some cases)
-#        yaml_content += f"crawl_delay: {CRAWLWAIT}\n" if CRAWLWAIT else ""
-#        yaml_content += f"max_time_per_site: {CRAWLTIMELIMIT}\n" if CRAWLTIMELIMIT else ""
-#        yaml_content += f"max_size_per_site: {CRAWLSIZELIMIT}\n" if CRAWLSIZELIMIT else ""
-#        yaml_content += f"connection_timeout: {CRAWLTIMEOUT}\n" if CRAWLTIMEOUT else "connection_timeout: 10\n"
-#        yaml_content += f"max_jobs: {CRAWLJOBS}\n" if CRAWLJOBS else ""
-#        yaml_content += f"resume_crawling: True\n" if CONTINUECRAWL else ""
-#        yaml_content += f"seed_urls: ['{params.url}']\n"
-#        #yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
-#        yaml_content += f"prefix_filter: ['mailto:']\n"
-#        yaml_content += f"verbose: True\n" if CRAWLDUMPARGS else "verbose: False\n"
-#        yaml_content += f"accepted_content: '{CRAWLFILETYPES}'\n"
-#        yaml_content += f"max_folder_tree_depth: 20\n"
-#        yaml_content += f"max_attempts: 3\n"
-#        yaml_content += f"scout_steps: 200\n"
-#        yaml_content += f"min_langs_in_site: 2\n"
-#        yaml_content += f"url_blacklist: ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']\n"
-#        
-#        if LANG1 or LANG2:
-#            yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
-#            yaml_content += f"min_percent_mandatory_lang: 10\n"
-#        
-#        tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
-#        tld = "','".join(tld)
-#
-#        yaml_content += f"accepted_tlds: ['{tld}']\n"
-#
-#        fdescriptor = open(params.yaml_file, "w")
-#        fdescriptor.write(yaml_content)
-#        fdescriptor.flush()
-#        fdescriptor.close()
-#
-#        sys.stderr.write(f"Configuration file stored: {params.yaml_file}\n")
-#
-#        shell("{PROFILING} linguacrawl {params.yaml_file}")
-#
-#        # Concat warcs
-#        all_files = subprocess.Popen(('ls', params.folder), stdout=subprocess.PIPE)
-#        warcs = subprocess.check_output(('grep', '[.]warc[.]gz$'), stdin=all_files.stdout)
-#        all_files.wait()
-#        ### Filter empty strings and append path to warc
-#        warcs = list(map(lambda warc: f"{params.folder}/{warc}", filter(lambda warc: len(warc) != 0, warcs.decode("utf-8").split("\n"))))
-#
-#        #for warc in warcs:
-#        #    if not os.path.isfile(f"{params.folder}/{warc}"):
-#        #        sys.stderr.write(f"WARNING: file {warc} was expected to exist but it does not (removing)")
-#        #        warcs.remove(warc)
-#
-#        warcs = " ".join(warcs)
-#
-#        if len(warcs) == 0:
-#            sys.stderr.write(f"WARNING: no file was downloaded with linguacrawl for {params.url}")
-#            shell(f"gzip {output}")
-#        elif len(warcs) == 1:
-#            shell(f"ln -sf {params.folder}/{warcs[0]} {output}")
-#        else:
-#            shell(f"cat {warcs} > {output}")
-
 # Is needed a checkpoint because we do not know the resulted warcs since we let the user decide if he wants to
 #  either join all the warcs (it loses important information like the source of the warcs) or not
 # Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
@@ -792,7 +707,6 @@ rule giawarc:
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{plain_text,mime,url}}
-                echo http://fake_url_due_to_empty_results.com/ > {params.folder}/$lang/url
                 gzip {params.folder}/$lang/{{plain_text,mime,url}}
             fi
         done
@@ -908,121 +822,12 @@ checkpoint shard:
         ls -d {params.o}/*/* > {output}
         '''
 
-# Fake shard in order to avoid problems with other rules after giashard (one fake shard will match in both languages, guaranteeing, at least, one match)
-# This guarantees that the pipeline will not break because sharding did not generete common shards
-# Only one language should reach this rule (if both, it is necessary that the execution is run when sharding has finished), 
-#  and that language should be the last that finished the sharding (if so, we do not lose parallelization)
-# We need a checkpoint in order to update the DAG when the new faked shard has been created (if not, it will not be detected since this rule is executed
-#  in parallel and rules after shard checkpoint should be running while this not because is waiting to both languages to finish the shards)
-checkpoint fake_shard_if_needed:
-    input: #expand('{datadir}/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
-        f'{DATADIR}/shards/02.batches.{{lang}}'
-    output: f'{TMPDIR}/fake_shard.{{lang}}.finished'
-    params:
-        only_shard_file1=f'{TMPDIR}/fake_shard_file1.{{lang}}',
-        only_shard_file2=f'{TMPDIR}/fake_shard_file2.{{lang}}'
-    shell: '''
-        if [ ! -f "{DATADIR}/shards/02.batches.{LANG1}" ] || [ ! -f "{DATADIR}/shards/02.batches.{LANG2}" ]; then
-            # We want to be sure that, if even this checkpoint is executed before the conditions, we can handle the situation and avoid the pipeline to break
-            echo "WARNING: shard cannot be faked yet (this warning should not mean any problem and is just a flow control message)"
-            touch {output}
-            exit 0
-        fi
-
-        match=0
-        input1={input}
-
-        if [ "{LANG1}" == "{wildcards.lang}" ]; then
-            input2="{DATADIR}/shards/02.batches.{LANG2}"
-        else
-            input2="{DATADIR}/shards/02.batches.{LANG1}"
-        fi
-
-        if [ "$(cat $input1 | wc -l)" == "0" ]; then
-            input1=$input2
-            input2={input}
-        fi
-
-        # Get only the common suffix (shard and batch)
-        cat $input1 | grep -Eo "/[0-9]+/[0-9]+$" > {params.only_shard_file1}
-        cat $input2 | grep -Eo "/[0-9]+/[0-9]+$" > {params.only_shard_file2}
-
-        for shard1 in `cat {params.only_shard_file1}`; do
-            if cat {params.only_shard_file2} | grep -q $shard1; then
-                match=1
-                break
-            fi
-        done
-
-        if [ "$match" == "0" ]; then
-            # Common work for both langs, what means that if both languages reach this point, does not matter
-            #  because we are copying files (forcing) and removing the content of the new files
-            if [ "$(cat {DATADIR}/shards/02.batches.{LANG1} | wc -l)" != "0" ]; then
-                first_shard=$(cat {DATADIR}/shards/02.batches.{LANG1} | head -n 1)
-                target=${{first_shard/\/{LANG1}\//\/{LANG2}\/}}
-            elif [ "$(cat {DATADIR}/shards/02.batches.{LANG2} | wc -l)" != "0" ]; then
-                first_shard=$(cat {DATADIR}/shards/02.batches.{LANG2} | head -n 1)
-                target=${{first_shard/\/{LANG2}\//\/{LANG1}\/}}
-            else
-                echo "WARNING: there is not any shard"
-                touch {output}
-                exit 0
-            fi
-
-            mkdir -p "$target"
-            cp -rf "$first_shard" "$target"
-
-            # We need to erase the content in order to avoid false positives
-            for f in `ls $first_shard`; do
-                gzip < /dev/null > "$target/$f"
-            done
-
-            echo "Fake shard created: $target"
-            echo $first_shard >> {output}
-            echo $target >> {output}
-        fi
-
-        touch {output}
-        '''
-
-first_lang_shard_finished = False
-second_lang_shard_finished = False
-fake_shard_executed = False
-
-def get_faked_batches(lang):
-    batches = []
-    with checkpoints.fake_shard_if_needed.get(lang=lang).output[0].open() as f:
-        for line in f:
-            if f"/{lang}/" in line:
-                batches.append(line.strip())
-
-    return batches
-
 # obtain list of batches for lang
 def get_batches(lang):
     batches = []
     with checkpoints.shard.get(lang=lang).output[0].open() as f:
         for line in f:
             batches.append(line.strip())
-
-    global first_lang_shard_finished
-    global second_lang_shard_finished
-    global fake_shard_executed
-
-    if (first_lang_shard_finished or second_lang_shard_finished):
-        batches += get_faked_batches(lang)
-        fake_shard_executed = True
-
-    if lang == LANG1:
-        first_lang_shard_finished = True
-    if lang == LANG2:
-        second_lang_shard_finished = True
-
-    if (first_lang_shard_finished and second_lang_shard_finished and not fake_shard_executed):
-        # Both shards finished at the same moment or almost equal (very unlikely)
-        batches += get_faked_batches(lang)
-        fake_shard_executed = True
-
     return batches
 
 def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
@@ -1273,27 +1078,9 @@ else:
         split_input_filename = 'hunalign.06_02.segalign'
         split_input_extension = '.xz'
 
-def get_split_segalign_input(wildcards):
-    # We do not know which language has finished last the sharing -> try both
-    fake_shard_output = None
-    try:
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG1).output[0]
-    except snakemake.exceptions.IncompleteCheckpointException:
-        pass
-    try:
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG2).output[0]
-    except snakemake.exceptions.IncompleteCheckpointException:
-        pass
-
-    if fake_shard_output is None:
-        # If not finished, force exception, but might have finished and just used LANG1 (very unlikely, but not negative)
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG1).output[0]
-
-    return [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-
 # split segalign results into balanced chunks
 checkpoint split_segalign:
-    input: get_split_segalign_input
+    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
     params:
         size=BATCHES, # use same parameter as for shards

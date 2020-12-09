@@ -35,6 +35,7 @@ requirements:
     - unzip
     - libtool
     - wget
+    - protobuf=3.14
   run:
     - pip=20.2.4=py_0
     - python=3.8.5=h7579374_1
@@ -48,6 +49,7 @@ requirements:
     - pigz
     - icu
     - wget
+    - protobuf=3.14
 
 about:
   home: https://github.com/bitextor/bitextor/

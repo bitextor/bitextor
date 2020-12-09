@@ -20,49 +20,41 @@ pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt
 pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
 pip3 install -r bifixer/requirements.txt
+### CLD3
+pip3 install Cython
+pip3 install pycld3
 ### Biroamer
 pip3 install -r biroamer/requirements.txt
 ### Biroamer model
 python -m spacy download en_core_web_sm
 
-# CLD3
-echo -e " - \e[4mInstalling CLD3...\e[0m"
+# Heritrix 3
+echo -e " - \e[4mInstalling Heritrix3...\e[0m"
 cd ..
-tmp_dir="$(mktemp -d -t cld3-XXXXXXXXXX)"
+tmp_dir="$(mktemp -d -t heritrix3-XXXXXXXXXX)"
 cwd="$PWD"
 cd "$tmp_dir"
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-tar -zxvf protobuf-all-3.11.4.tar.gz
-mv "protobuf-3.11.4" "$cwd/"
-cd "$cwd/protobuf-3.11.4"
-mkdir "$cwd/protobuf"
-./configure --prefix="$cwd/protobuf"
-make
-make check
-make install || echo -e " - \e[31m\e[4mcld3-install: something wrong happened with 'make install'...\e[0m"
-LD_LIBRARY_PATH="$cwd/protobuf/lib" ldconfig -C "$cwd/ld.so.cache" || \
-(
-  echo -e " - \e[31m\e[4mcld3-install: something wrong happened with 'ldconfig'...\e[0m";
-  echo -e " - \e[4mcld3-install: problem at '$cwd/protobuf-3.11.4' (you can try to fix it manually)...\e[0m";
-  echo -e " - \e[4mcld3-install: sleep 10800: use 'ps aux | grep sleep' and 'kill -s sigint \$pid' in order to continue...\e[0m";
-  sleep 10800;
-)
-pip3 install Cython
-pip3 install pycld3
+wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNA$
+unzip heritrix-3.4.0-SNAPSHOT-dist.zip
+mv "heritrix-3.4.0-SNAPSHOT" "$cwd/"
+cd "$cwd/heritrix-3.4.0-SNAPSHOT"
+# ...
 cd ..
 cd bitextor
 
-# Heritrix 3
-# Once installed and 'conda activate BITEXTOR_ENV': ln -s $CONDA_PREFIX/bitextor/heritrix-3.4.0-SNAPSHOT/ /opt/heritrix3
-#echo -e " - \e[4mInstalling Heritrix3...\e[0m"
-#tmp_dir="$(mktemp -d -t heritrix3-XXXXXXXXXX)"
-#cwd="$PWD"
-#cd "$tmp_dir"
-#wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
-#unzip heritrix-3.4.0-SNAPSHOT-dist.zip
-#mv "heritrix-3.4.0-SNAPSHOT" "$cwd/"
-#cd "$cwd/heritrix-3.4.0-SNAPSHOT"
-#cd ..
+# linguacrawl
+echo -e " - \e[4mInstalling linguacrawl...\e[0m"
+cd ..
+tmp_dir="$(mktemp -d -t linguacrawl-XXXXXXXXXX)"
+cwd="$PWD"
+cd "$tmp_dir"
+git clone https://github.com/transducens/linguacrawl.git
+mv "linguacrawl" "$cwd/"
+cd "$cwd/linguacrawl"
+pip3 install -r requirements.txt || echo " - \e[4mcheck-gen: linguacrawl requeriments failed...\e[0m"
+pip3 install . || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
+cd ..
+cd bitextor
 
 echo -e " - \e[4mChecking and generating files...\e[0m"
 # Execute autogen.sh and try to fix known installation issues if any
@@ -101,7 +93,7 @@ find . -type d -or -type l | grep /CMakeFiles$ | xargs -I{} rm -rf {}
 # Copy src (not usual in builds, but we need src because we are using bash and python scripts)
 cp -r "$SRC_DIR/bitextor" "$PREFIX"
 cp -r "$SRC_DIR/gopath" "$PREFIX"
-cp -r "$SRC_DIR/protobuf" "$PREFIX"
+cp -r "$SRC_DIR/heritrix-3.4.0-SNAPSHOT" "$PREFIX"
 
 # Soft link (is necessary that is relative, not absolute)
 cd "$PREFIX/bin"
@@ -115,7 +107,7 @@ cd "$PREFIX/bin"
 ### Other soft links
 ln -s ../gopath/bin/giawarc ./giawarc || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'giawarc'...\e[0m" # Warning: bitextor will look for giarwarc at ~/go/bin
 ln -s ../gopath/bin/giashard ./giashard || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'giashard'...\e[0m" # Warning: bitextor will look for giashard at ~/go/bin
-ln -s ../protobuf/bin/protoc ./protoc || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'protoc'...\e[0m"
+ln -s "$PREFIX/heritrix-3.4.0-SNAPSHOT" "$PREFIX/heritrix3" || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'heritrix3' (directory)...\e[0m"
 
 ### Create an script manually and store it in order to wrap the true call
 script="/bin/sh\n\n\$(dirname \"\$0\")/../bitextor/bitextor.sh \"\$@\""
