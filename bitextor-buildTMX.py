@@ -41,18 +41,16 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 
-def printseg(lang, seg_columns, urls, seg, fields_dict, mint, deferred=None, checksum=None, no_delete_seg=False):
+def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
     if "url1" in seg_columns:
         for url in urls:
             print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
-    if deferred:
-        print("     <prop type=\"deferred-seg\">" + deferred + "</prop>")
     if checksum:
         print("     <prop type=\"checksum-seg\">" + checksum + "</prop>")
 
-    if no_delete_seg or deferred is None:
+    if no_delete_seg or checksum is None:
         print("     <seg>" + escape(seg) + "</seg>")
     else:
         print("     <seg></seg>")
@@ -79,19 +77,13 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
 
-    if 'deferredseg1' not in fields_dict or fields_dict['deferredseg1'] == "":
-        fields_dict['deferredseg1'] = None
-    if 'deferredseg2' not in fields_dict or fields_dict['deferredseg2'] == "":
-        fields_dict['deferredseg2'] = None
     if 'checksum1' not in fields_dict:
         fields_dict['checksum1'] = None
     if 'checksum2' not in fields_dict:
         fields_dict['checksum2'] = None
 
-    printseg(lang1, tu_columns, tu_urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['deferredseg1'],
-             fields_dict['checksum1'], no_delete_seg)
-    printseg(lang2, tu_columns, tu_urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['deferredseg2'],
-             fields_dict['checksum2'], no_delete_seg)
+    printseg(lang1, tu_columns, tu_urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['checksum1'], no_delete_seg)
+    printseg(lang2, tu_columns, tu_urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['checksum2'], no_delete_seg)
 
     print("   </tu>")
 
@@ -114,10 +106,10 @@ oparser.add_argument("-m", "--max-length", help="Maximum length ratio between tw
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other "
-                          "options:hunalign,bifixerhash,bifixerscore,bicleaner,lengthratio,numTokensSL,numTokensTL,deferredseg1,"
-                          "deferredseg2,checksum1,checksum2",
+                          "options:hunalign,bifixerhash,bifixerscore,bicleaner,lengthratio,numTokensSL,numTokensTL,"
+                          "checksum1,checksum2",
                      default="url1,url2,seg1,seg2")
-oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if deferred annotation is given",
+oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if standoff annotation checksum is given",
                      dest="no_delete_seg", action='store_true')
 oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
                      dest="text_file_deduped")
