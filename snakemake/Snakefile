@@ -571,120 +571,12 @@ checkpoint shard:
         ls -d {params.o}/*/* > {output}
         '''
 
-# Fake shard in order to avoid problems with other rules after giashard (one fake shard will match in both languages, guaranteeing, at least, one match)
-# This guarantees that the pipeline will not break because sharding did not generete common shards
-# Only one language should reach this rule (if both, it is necessary that the execution is run when sharding has finished), 
-#  and that language should be the last that finished the sharding (if so, we do not lose parallelization)
-# We need a checkpoint in order to update the DAG when the new faked shard has been created (if not, it will not be detected since this rule is executed
-#  in parallel and rules after shard checkpoint should be running while this not because is waiting to both languages to finish the shards)
-checkpoint fake_shard_if_needed:
-    input: #expand('{datadir}/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
-        f'{DATADIR}/shards/02.batches.{{lang}}'
-    output: f'{TMPDIR}/fake_shard.{{lang}}.finished'
-    params:
-        only_shard_file1=f'{TMPDIR}/fake_shard_file1.{{lang}}',
-        only_shard_file2=f'{TMPDIR}/fake_shard_file2.{{lang}}'
-    shell: '''
-        if [ ! -f "{DATADIR}/shards/02.batches.{LANG1}" ] || [ ! -f "{DATADIR}/shards/02.batches.{LANG2}" ]; then
-            # We want to be sure that, if even this checkpoint is executed before the conditions, we can handle the situation and avoid the pipeline to break
-            touch {output}
-            exit 0
-        fi
-
-        match=0
-        input1={input}
-
-        if [ "{LANG1}" == "{wildcards.lang}" ]; then
-            input2="{DATADIR}/shards/02.batches.{LANG2}"
-        else
-            input2="{DATADIR}/shards/02.batches.{LANG1}"
-        fi
-
-        if [ "$(cat $input1 | wc -l)" == "0" ]; then
-            input1=$input2
-            input2={input}
-        fi
-
-        # Get only the common suffix (shard and batch)
-        cat $input1 | grep -Eo "/[0-9]+/[0-9]+$" > {params.only_shard_file1}
-        cat $input2 | grep -Eo "/[0-9]+/[0-9]+$" > {params.only_shard_file2}
-
-        for shard1 in `cat {params.only_shard_file1}`; do
-            if cat {params.only_shard_file2} | grep -q $shard1; then
-                match=1
-                break
-            fi
-        done
-
-        if [ "$match" == "0" ]; then
-            # Common work for both langs, what means that if both languages reach this point, does not matter
-            #  because we are copying files (forcing) and removing the content of the new files
-            if [ "$(cat {DATADIR}/shards/02.batches.{LANG1} | wc -l)" != "0" ]; then
-                first_shard=$(cat {DATADIR}/shards/02.batches.{LANG1} | head -n 1)
-                target=${{first_shard/\/{LANG1}\//\/{LANG2}\/}}
-            elif [ "$(cat {DATADIR}/shards/02.batches.{LANG2} | wc -l)" != "0" ]; then
-                first_shard=$(cat {DATADIR}/shards/02.batches.{LANG2} | head -n 1)
-                target=${{first_shard/\/{LANG2}\//\/{LANG1}\/}}
-            else
-                echo "WARNING: there is not any shard"
-                touch {output}
-                exit 0
-            fi
-
-            mkdir -p "$target"
-            cp -rf "$first_shard" "$target"
-
-            # We need to erase the content in order to avoid false positives
-            for f in `ls $first_shard`; do
-                gzip < /dev/null > "$target/$f"
-            done
-
-            echo "Fake shard created: $target"
-            echo $first_shard >> {output}
-            echo $target >> {output}
-        fi
-
-        touch {output}
-        '''
-
-first_lang_shard_finished = False
-second_lang_shard_finished = False
-fake_shard_executed = False
-
-def get_faked_batches(lang):
-    batches = []
-    with checkpoints.fake_shard_if_needed.get(lang=lang).output[0].open() as f:
-        for line in f:
-            if f"/{lang}/" in line:
-                batches.append(line.strip())
-
-    return batches
-
 # obtain list of batches for lang
 def get_batches(lang):
     batches = []
     with checkpoints.shard.get(lang=lang).output[0].open() as f:
         for line in f:
             batches.append(line.strip())
-
-    global first_lang_shard_finished
-    global second_lang_shard_finished
-    global fake_shard_executed
-
-    if (first_lang_shard_finished or second_lang_shard_finished):
-        batches += get_faked_batches(lang)
-        fake_shard_executed = True
-
-    if lang == LANG1:
-        first_lang_shard_finished = True
-    if lang == LANG2:
-        second_lang_shard_finished = True
-
-    if (first_lang_shard_finished and second_lang_shard_finished and not fake_shard_executed):
-        # Both shards finished at the same moment or almost equal (very unlikely)
-        batches += get_faked_batches(lang)
-        fake_shard_executed = True
-
     return batches
 
 def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
@@ -892,49 +784,44 @@ if SEGALIGN == "hunalign":
     split_input_filename = 'hunalign.06_02.segalign'
     split_input_extension = '.xz'
 
-def get_split_segalign_input(wildcards):
-    # We do not know which language has finished last the sharing -> try both
-    fake_shard_output = None
-    try:
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG1).output[0]
-    except snakemake.exceptions.IncompleteCheckpointException:
-        pass
-    try:
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG2).output[0]
-    except snakemake.exceptions.IncompleteCheckpointException:
-        pass
-
-    if fake_shard_output is None:
-        # If not finished, force exception, but might have finished and just used LANG1 (very unlikely, but not negative)
-        fake_shard_output = checkpoints.fake_shard_if_needed.get(lang=LANG1).output[0]
-
-    return [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-
 # split segalign results into balanced chunks
 checkpoint split_segalign:
-    input: get_split_segalign_input
+    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
     output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
     params:
         size=BATCHES, # use same parameter as for shards
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
-    shell: '''
-        mkdir -p {params.folder}
-        rm -f {params.folder}/* # remove anything that might be left after a previous run
-        CAT=cat
-        if [[ {input[0]} == *.gz ]]; then
-            CAT=zcat
-        elif [[ {input[0]} == *.xz ]]; then
-            CAT=xzcat
-        fi
-        $CAT {input} \
-            | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
-        if [ -z "$(ls -A {params.folder})" ]; then
-            cat < /dev/null > {output.batches}
-        else
-            ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
-        fi
-        '''
+    run:
+        # We need to make this check in order to avoid the pipeline to break in the case that no input was received (e.g. no common shards)
+        # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
+        #  running the script, so it fails even before we are able to check if the input is empty in bash script
+        if len(input) == 0:
+            shell(f'''
+                >&2 echo "INFO: no data to work with. Stopping execution"
+                touch {output}
+                # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
+                # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
+                ps axo pid,pgid,comm | grep snakemake$ | grep \ {os.getpgid(os.getpid())}\ | awk '{{{{print $1}}}}' | xargs -I[] kill -TERM []
+                ''')
+        else:
+            shell('''
+                mkdir -p {params.folder}
+                rm -f {params.folder}/* # remove anything that might be left after a previous run
+                CAT=cat
+                if [[ {input[0]} == *.gz ]]; then
+                    CAT=zcat
+                elif [[ {input[0]} == *.xz ]]; then
+                    CAT=xzcat
+                fi
+                $CAT {input} \
+                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
+                    | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                if [ -z "$(ls -A {params.folder})" ]; then
+                    cat < /dev/null > {output.batches}
+                else
+                    ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
+                fi
+                ''')
 
 def get_postproc_batches():
     batches = []
