@@ -1,0 +1,60 @@
+{% set name = "bitextor" %}
+{% set version = "7" %}
+
+package:
+  name: "{{ name }}"
+  version: "{{ version }}"
+
+source:
+  git_url: https://github.com/bitextor/bitextor/
+  #git_depth: 1
+  git_branch: master
+  #git_branch: snake_performance # It might need to get rid of git_depth
+  folder: "bitextor"
+
+
+build:
+  skip: True  # [not linux64]
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  string: {{ GIT_BUILD_STR }}
+  preserve_egg_dir: True  # Some packages need this directory in order to work fine
+
+requirements:
+  build:
+    - git
+    - make=4.2.1
+    - cmake=3.16.3
+    - automake=1.16.1
+    - pkg-config=0.29.1
+    - gcc_linux-64=9.3.0
+    - gxx_linux-64=9.3.0
+    #- go
+    - go-cgo
+    - libboost=1.71=h97c9712_0
+    - pip=20.2.4=py_0
+    - python=3.8.5=h7579374_1
+    - icu
+    - unzip
+    - libtool
+    - wget
+    - protobuf=3.14
+  run:
+    - pip=20.2.4=py_0
+    - python=3.8.5=h7579374_1
+    - libboost=1.71=h97c9712_0
+    - java-1.7.0-openjdk-cos6-x86_64
+    - xz
+    - time
+    - poppler
+    - poppler-data
+    - curl
+    - pigz
+    - icu
+    - wget
+    - protobuf=3.14
+
+about:
+  home: https://github.com/bitextor/bitextor/
+  license: GPL3
+  license_family: GPL3
+  summary: Bitextor generates translation memories from multilingual websites
