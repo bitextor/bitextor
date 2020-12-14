@@ -1041,24 +1041,37 @@ checkpoint split_segalign:
     params:
         size=BATCHES, # use same parameter as for shards
         folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
-    shell: '''
-        mkdir -p {params.folder}
-        rm -f {params.folder}/* # remove anything that might be left after a previous run
-        CAT=cat
-        if [[ {input[0]} == *.gz ]]; then
-            CAT=zcat
-        elif [[ {input[0]} == *.xz ]]; then
-            CAT=xzcat
-        fi
-        $CAT {input} \
-            | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-            | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
-        if [ -z "$(ls -A {params.folder})" ]; then
-            cat < /dev/null > {output.batches}
-        else
-            ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
-        fi
-        '''
+    run:
+        # We need to make this check in order to avoid the pipeline to break in the case that no input was received (e.g. no common shards)
+        # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
+        #  running the script, so it fails even before we are able to check if the input is empty in bash script
+        if len(input) == 0:
+            shell(f'''
+                >&2 echo "INFO: no data to work with. Stopping execution"
+                touch {output}
+                # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
+                # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
+                ps axo pid,pgid,comm | grep snakemake$ | grep \ {os.getpgid(os.getpid())}\ | awk '{{{{print $1}}}}' | xargs -I[] kill -TERM []
+                ''')
+        else:
+            shell('''
+                mkdir -p {params.folder}
+                rm -f {params.folder}/* # remove anything that might be left after a previous run
+                CAT=cat
+                if [[ {input[0]} == *.gz ]]; then
+                    CAT=zcat
+                elif [[ {input[0]} == *.xz ]]; then
+                    CAT=xzcat
+                fi
+                $CAT {input} \
+                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
+                    | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                if [ -z "$(ls -A {params.folder})" ]; then
+                    cat < /dev/null > {output.batches}
+                else
+                    ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
+                fi
+                ''')
 
 def get_postproc_batches():
     batches = []
