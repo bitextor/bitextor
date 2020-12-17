@@ -38,6 +38,7 @@ requirements:
     - libtool
     - wget
     - protobuf=3.14
+    - libmagic
   run:
     - pip=20.2.4=py_0
     - python=3.8.5=h7579374_1
@@ -52,6 +53,7 @@ requirements:
     - icu
     - wget
     - protobuf=3.14
+    - libmagic
 
 about:
   home: https://github.com/bitextor/bitextor/
