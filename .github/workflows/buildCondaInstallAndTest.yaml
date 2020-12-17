@@ -1,8 +1,8 @@
 name: Build and execute Bitextor tests
-on: [push, pull_request]
+on: [push]
 jobs:
-   build_and_testing:
-      name: Build and testing
+   conda_build_and_testing:
+      name: Build with conda and testing
       runs-on: ubuntu-latest
       steps:
       -  name: Set distrib release version if not set
