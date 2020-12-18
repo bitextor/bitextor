@@ -105,6 +105,32 @@ pip3 install Cython # Install Cython dependency for cld3
 pip3 install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
 ```
 
+#### ROAM (Random, Omit, Anonymize and Mix) the resulted TMX with Biroamer
+
+[Biroamer](https://github.com/bitextor/biroamer) has dependencies. If you want to be able to execute it, you will need to install the following dependencies (using an apt-like dependencies manager) required by `fast_align`:
+
+```bash
+sudo apt install libgoogle-perftools-dev libsparsehash-dev
+```
+
+And build it:
+```bash
+cd fast_align
+mkdir build
+cd build
+cmake ..
+make -j
+```
+
+Once you have installed the dependencies and built `fast-align`, python dependencies need to be installed as well:
+
+```bash
+pip3 install -r biroamer/requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+In the case that the described steps do not work as expected, check out [biroamer's site](https://github.com/bitextor/biroamer).
+
 ### Submodules compilation
 
 To compile all Bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the GitHub repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
@@ -566,25 +592,7 @@ deferred: false
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 
-#### ROAM (Random, Omit, Anonymize and Mix) the resulted TMX
-
-##### Dependencies
-
-[Biroamer](https://github.com/bitextor/biroamer) has dependencies. If you want to be able to execute it, you will need to install the following dependencies (using an apt-like dependencies manager):
-
-```bash
-sudo apt install libgoogle-perftools-dev libsparsehash-dev
-```
-
-Once you have installed the general dependencies, python dependencies need to be installed as well:
-
-```bash
-pip3 install -r biroamer/requirements.txt
-```
-
-In the case that the described steps do not work as expected, check out [biroamer's site](https://github.com/bitextor/biroamer).
-
-##### Configuration
+#### Biroamer
 
 In order to ROAM the resulted TMX (either normal or deduped), you can use some options to configure the result:
 
