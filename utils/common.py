@@ -123,7 +123,7 @@ def get_all_ppids(pid, append_pid=False):
     return result
 
 def snake_no_more_race_get_pgid():
-    command = f"ps axo pid,pgid,comm | grep snakemake$ | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}'"
+    command = f"ps axo pid,pgid,comm | grep -E \"snakemake$|python\" | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}'"
     pgid = subprocess.getoutput(f"{command} | grep {os.getpid()}")
 
     if len(pgid) == 0:
@@ -146,7 +146,7 @@ def snake_no_more_race_get(file_path):
         pgid = snake_no_more_race_get_pgid()
 
         if len(pgid) == 0:
-            sys.stderr.write("WARNING: could not get the PGID. Using 4321 as default value")
+            sys.stderr.write("WARNING: could not get the PGID. Using 4321 as default value\n")
             pgid = "4321"
 
         if file_pgid == pgid:
@@ -164,7 +164,7 @@ def snake_no_more_race_set(file_path, value):
         pgid = snake_no_more_race_get_pgid()
 
         if len(pgid) == 0:
-            sys.stderr.write("WARNING: could not get the PGID. Using 1234 as default value")
+            sys.stderr.write("WARNING: could not get the PGID. Using 1234 as default value\n")
             pgid = "1234"
 
         f.write(f"{pgid}\n")
