@@ -87,3 +87,31 @@ jobs:
          run: |
             chmod 775 ./run-tests-mt.sh
             ./run-tests-mt.sh -w "$BITEXTOR" -j 4
+      -  name: Print log of tests which failed
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            if [[ -f "${WORK}/data/fails.log" ]]; then
+               while read line; do
+                  eval "array=($line)"
+                  status=${array[0]}
+                  notest=${array[1]}
+                  exit_code=${array[2]}
+
+                  str="# Test $notest (exit code / desc.: $exit_code) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
+                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
+                  else
+                     echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
+                  fi
+                  echo ""
+               done < "${WORK}/data/fails.log"
+            else
+               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               exit 1
+            fi

@@ -123,7 +123,7 @@ def get_all_ppids(pid, append_pid=False):
     return result
 
 def snake_no_more_race_get_pgid():
-    command = f"ps axo pid,pgid,comm | grep snakemake$ | grep \ {os.getpgid(os.getpid())}\ | awk '{{print $1}}'"
+    command = f"ps axo pid,pgid,comm | grep snakemake$ | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}'"
     pgid = subprocess.getoutput(f"{command} | grep {os.getpid()}")
 
     if len(pgid) == 0:

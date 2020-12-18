@@ -24,7 +24,7 @@ download_bicleaner_model()
     output=$2
     if [ ! -f "${output}/${langs}.tar.gz" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
-        tar xzvf "${output}/${langs}.tar.gz" -C "${output}"
+        tar xzf "${output}/${langs}.tar.gz" -C "${output}"
     fi
 }
 
@@ -91,68 +91,73 @@ wait
 # Preprocess
 ### Europarl parallel corpus clipped
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.xz" ]; then
-cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" && \
-    xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" &
+    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" && \
+        xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" &
 fi
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.xz" ]; then
-cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" && \
-    xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" &
+    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" && \
+        xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" &
 fi
 ### DGT parallel corpus clipped
 if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.xz" ]; then
-cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" && \
-    xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" &
+    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" && \
+        xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" &
 fi
 if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.xz" ]; then
-cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" && \
-    xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" &
+    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" && \
+        xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" &
 fi
 
 wait
 
 # Tests
-# MT
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/mt-en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 1 (status: $status)"; echo "fail (1 with status $status)" >> "$FAILS") &
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/mt-en-el.report" && echo "Ok" || (status="$?"; echo "Failed 2 (status: $status)"; echo "fail (2 with status $status)" >> "$FAILS") &
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" dataDir="${WORK}/data/data-mt-en-ru" transientDir="${WORK}/transient-mt-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/mt-en-ru.report" && echo "Ok" || (status="$?"; echo "Failed 3 (status: $status)"; echo "fail (3 with status $status)" >> "$FAILS") &
+# MT (id >= 10)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-fr.report" && echo "Ok 10" || (status="$?"; echo "Failed 10 $status"; echo "fail 10 $status" >> "$FAILS") &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/11-mt-en-el.report" && echo "Ok 11" || (status="$?"; echo "Failed 11 (status: $status)"; echo "fail 11 $status" >> "$FAILS") &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" dataDir="${WORK}/data/data-mt-en-ru" transientDir="${WORK}/transient-mt-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/12-mt-en-ru.report" && echo "Ok 12" || (status="$?"; echo "Failed 12 (status: $status)"; echo "fail 12 $status" >> "$FAILS") &
 
-# Dictionary-based
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 4 (status: $status)"; echo "fail (4 with status $status)" >> "$FAILS") &
-### Generate dictionary
+# Dictionary-based (id >= 20)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/20-en-fr.report" && echo "Ok 20" || (status="$?"; echo "Failed 20 (status: $status)"; echo "fail 20 $status" >> "$FAILS") &
+
+### Generate dictionary (id >= 30)
 dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
 rm -f "${WORK}/permanent/new-en-fr.dic"
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/gendic-en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 5 (status: $status)"; echo "fail (5 with status $status)" >> "$FAILS") &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/30-gendic-en-fr.report" && echo "Ok 30" || (status="$?"; echo "Failed 30 (status: $status)"; echo "fail 30 $status" >> "$FAILS") &
 
-### Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways)
+### Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
 rm -f "${BICLEANER}/new-en-fr.yaml"
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/genbicleaner-en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 6 (status: $status)"; echo "fail (6 with status $status)" >> "$FAILS") && \
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/40-genbicleaner-en-fr.report" && echo "Ok 40" || (status="$?"; echo "Failed 40 (status: $status)"; echo "fail 40 $status" >> "$FAILS") && \
 dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}') &
 
-### Generate dictionary and bicleaner model
+### Generate dictionary and bicleaner model (id >= 50)
 rm -f "${WORK}/permanent/new-new-en-fr.dic"
 rm -f "${BICLEANER}/new-new-en-fr.yaml"
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/gendicbicleaner-en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 7 (status: $status)"; echo "fail (7 with status $status)" >> "$FAILS") &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/50-gendicbicleaner-en-fr.report" && echo "Ok 50" || (status="$?"; echo "Failed 50 (status: $status)"; echo "fail 50 $status" >> "$FAILS") &
 
-# MT and dictionary-based
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/mtdb-en-fr.report" && echo "Ok" || (status="$?"; echo "Failed 8 (status: $status)"; echo "fail (8 with status $status)" >> "$FAILS") &
+# MT and dictionary-based (id >= 60)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/60-mtdb-en-fr.report" && echo "Ok 60" || (status="$?"; echo "Failed 60 (status: $status)"; echo "fail 60 $status" >> "$FAILS") &
 
-# Other options
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${WORK}/transient-mto1-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/mto1-en-ru.report" && echo "Ok" || (status="$?"; echo "Failed 9 (status: $status)"; echo "fail (9 with status $status)" >> "$FAILS") &
-snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-ru" dataDir="${WORK}/data/data-mto2-en-ru" transientDir="${WORK}/transient-mto2-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/mto2-en-ru.report" && echo "Ok" || (status="$?"; echo "Failed 10 (status: $status)"; echo "fail (10 with status $status)" >> "$FAILS") &
+# Other options (id >= 100)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${WORK}/transient-mto1-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="giawarc" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/100-mto1-en-ru.report" && echo "Ok 100" || (status="$?"; echo "Failed 100 (status: $status)"; echo "fail 100 $status" >> "$FAILS") &
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-ru" dataDir="${WORK}/data/data-mto2-en-ru" transientDir="${WORK}/transient-mto2-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/101-mto2-en-ru.report" && echo "Ok 101" || (status="$?"; echo "Failed 101 (status: $status)"; echo "fail 101 $status" >> "$FAILS") &
 
 wait
 
 # Post checking
 if [[ "$dic_md5sum_after" != "" ]] && [[ "$dic_md5sum_before" != "$dic_md5sum_after" ]]; then
-    echo "Dictionary has been replaced ($dic_md5sum_before -> $dic_md5sum_after), what is not the expected"
-    echo "fail (6.1 with dictionary replaced)" >> "$FAILS"
+    echo "Failed 40.1 (dictionary has been replaced ($dic_md5sum_before -> $dic_md5sum_after), what is not the expected)"
+    echo "fail 40.1 \"dictionary replaced\"" >> "$FAILS"
+else
+    echo "Ok 40.1"
 fi
 
 # Results
 failed=$(cat "$FAILS" | wc -l)
 
-echo "Fails summary:"
-echo "--------------"
+echo "------------------------------------"
+echo "           Fails Summary            "
+echo "------------------------------------"
+echo "status | test-id | exit code / desc."
 cat "$FAILS"
 
 exit "$failed"

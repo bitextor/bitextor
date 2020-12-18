@@ -1,4 +1,4 @@
-name: Build and execute Bitextor tests
+name: Build with conda and execute Bitextor tests in conda env
 on: [push]
 jobs:
    conda_build_and_testing:
