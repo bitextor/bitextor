@@ -26,6 +26,13 @@ def isfile(field, value, error):
     elif not os.path.isfile(os.path.expanduser(value)):
         error(field, f'{value} does not exist')
 
+def isstrlist(field, value, error):
+    if not isinstance(value, list):
+        error(field, f'{value} should be a list')
+    for element in value:
+        if not isinstance(element, str):
+            error(field, f'{element} should be an string')
+
 def validate_args(config):
     schema = {
             # required parameters
@@ -47,18 +54,24 @@ def validate_args(config):
             'warcs': {'type': 'list', 'check_with': isfile},
             'warcsFile': {'type': 'string', 'check_with': isfile},
             # crawling
-            'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack"]},
+            'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "creepy", "httrack", "linguacrawl"]},
             'crawlTimeLimit': {'type': 'string', 'dependencies': 'crawler'},
-            'crawlerUserAgent': {'type': 'string', 'dependencies': {'cralwer' : ['creepy', 'wget', 'httrack']}},
-            'crawlWait': {'type': 'string', 'dependencies': {'crawler': ['creepy', 'wget', 'httrack']}},
+            'crawlerUserAgent': {'type': 'string', 'dependencies': {'cralwer' : ['creepy', 'wget', 'httrack', 'linguacrawl']}},
+            'crawlWait': {'type': 'string', 'dependencies': {'crawler': ['creepy', 'wget', 'httrack', 'linguacrawl']}},
             'crawlPageLimit': {'type': 'string', 'dependencies': {'crawler' : 'httrack'}},
-            'crawlFileTypes': {'type': 'string', 'dependencies': {'crawler' : 'wget'}},
-            'crawl-tld': {'type': 'boolean', 'dependencies': {'crawler' : 'creepy'}},
-            'crawlSizeLimit': {'type': 'string', 'dependencies': {'crawler' : 'creepy'}},
-            'crawlerNumThreads': {'type': 'string', 'dependencies': {'crawler' : 'creepy'}},
-            'crawlerConnectionTimeout': {'type': 'string', 'dependencies': {'crawler' : 'creepy'}},
-            'dumpCurrentCrawl': {'type': 'string', 'dependencies': {'crawler' : 'creepy'}},
-            'resumePreviousCrawl': {'type': 'string', 'dependencies': {'crawler' : 'creepy'}},
+            'crawlFileTypes': {'type': 'string', 'dependencies': {'crawler' : ['wget', 'linguacrawl']}},
+            'crawlTLD': {'type': 'boolean', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
+            'crawlSizeLimit': {'type': 'string', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
+            'crawlCat': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
+            'crawlCatMaxSize': {'type': 'integer', 'dependencies': {'crawlCat': True}},
+            'crawlMaxFolderTreeDepth': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
+            'crawlScoutSteps': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
+            'crawlBlackListURL': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
+            'crawlPrefixFilter': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
+            'crawlerNumThreads': {'type': 'string', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
+            'crawlerConnectionTimeout': {'type': 'string', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
+            'dumpCurrentCrawl': {'type': 'string', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
+            'resumePreviousCrawl': {'type': 'string', 'dependencies': {'crawler' : ['creepy', 'linguacrawl']}},
             'heritrixPath': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
@@ -115,8 +128,14 @@ def validate_args(config):
             'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
             }
 
-    if 'crawler' in config and config['crawler'] == 'heritrix':
-        schema['heritrixPath']['required'] = True
+    if 'crawler' in config:
+        if config['crawler'] == 'heritrix':
+            schema['heritrixPath']['required'] = True
+        elif config['crawler'] == 'linguacrawl':
+            schema['dumpCurrentCrawl']['type'] = 'boolean'
+            schema['crawlTLD']['type'] = 'list'
+            schema['crawlTLD']['check_with'] = isstrlist
+            schema['resumePreviousCrawl']['type'] = 'boolean'
     
     if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
         schema['lang1']['required'] = True
