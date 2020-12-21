@@ -85,8 +85,8 @@ jobs:
          env:
             BITEXTOR: ${{ github.workspace }}
          run: |
-            chmod 775 ./run-tests-mt.sh
-            ./run-tests-mt.sh -w "$BITEXTOR" -j 4
+            chmod 775 ./run-tests.sh
+            ./run-tests.sh -w "$BITEXTOR" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:

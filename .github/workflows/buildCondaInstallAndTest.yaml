@@ -46,5 +46,10 @@ jobs:
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda activate bitextor-installation
-            chmod 775 $CONDA_PREFIX/bitextor/run-tests-mt.sh
-            $CONDA_PREFIX/bitextor/run-tests-mt.sh -w "$BITEXTOR" -j 4
+            if [[ -f "$CONDA_PREFIX/bitextor/run-tests-mt.sh" ]]; then
+                chmod 775 $CONDA_PREFIX/bitextor/run-tests-mt.sh
+                $CONDA_PREFIX/bitextor/run-tests-mt.sh -w "$BITEXTOR" -j 4
+            else
+                chmod 775 $CONDA_PREFIX/bitextor/run-tests.sh
+                $CONDA_PREFIX/bitextor/run-tests.sh -w "$BITEXTOR" -j 4
+            fi

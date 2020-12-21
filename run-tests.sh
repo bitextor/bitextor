@@ -79,12 +79,12 @@ download_dictionary "en-fr" "${WORK}/permanent" &
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then
     # ~2000000 lines
     wget -q https://object.pouta.csc.fi/OPUS-Europarl/v8/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/Europarl" && \
-    unzip "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/Europarl" &
+    unzip -qq "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/Europarl" &
 fi
 if [ ! -f "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" ]; then
     # ~5000000 lines
     wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/DGT" && \
-    unzip "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/DGT" &
+    unzip -qq "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/DGT" &
 fi
 wait
 
@@ -122,17 +122,35 @@ snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --conf
 ### Generate dictionary (id >= 30)
 dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
 rm -f "${WORK}/permanent/new-en-fr.dic"
+if [[ "$CI" == "true" ]]; then
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/30-gendic-en-fr.report" && echo "Ok 30" || (status="$?"; echo "Failed 30 (status: $status)"; echo "fail 30 $status" >> "$FAILS")
+echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))" && rm -rf "${WORK}/transient-gendic-en-fr"
+else
 snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/30-gendic-en-fr.report" && echo "Ok 30" || (status="$?"; echo "Failed 30 (status: $status)"; echo "fail 30 $status" >> "$FAILS") &
+fi
 
 ### Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
 rm -f "${BICLEANER}/new-en-fr.yaml"
+if [[ "$CI" == "true" ]]; then
+# Run sequential instead of parallel in order to avoid get run out of memory (GitHub Actions)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/40-genbicleaner-en-fr.report" && echo "Ok 40" || (status="$?"; echo "Failed 40 (status: $status)"; echo "fail 40 $status" >> "$FAILS") && \
+dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+echo "Removing '${WORK}/transient-genbicleaner-en-fr' ($(du -sh ${WORK}/transient-genbicleaner-en-fr | awk '{print $1}'))" && rm -rf "${WORK}/transient-genbicleaner-en-fr/"
+else
 snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/40-genbicleaner-en-fr.report" && echo "Ok 40" || (status="$?"; echo "Failed 40 (status: $status)"; echo "fail 40 $status" >> "$FAILS") && \
 dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}') &
+fi
 
 ### Generate dictionary and bicleaner model (id >= 50)
 rm -f "${WORK}/permanent/new-new-en-fr.dic"
 rm -f "${BICLEANER}/new-new-en-fr.yaml"
+if [[ "$CI" == "true" ]]; then
+# Run sequential instead of parallel in order to avoid get run out of memory (GitHub Actions)
+snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/50-gendicbicleaner-en-fr.report" && echo "Ok 50" || (status="$?"; echo "Failed 50 (status: $status)"; echo "fail 50 $status" >> "$FAILS")
+echo "Removing '${WORK}/transient-gendicbicleaner-en-fr' ($(du -sh ${WORK}/transient-gendicbicleaner-en-fr | awk '{print $1}'))" && rm -rf "${WORK}/transient-gendicbicleaner-en-fr"
+else
 snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/50-gendicbicleaner-en-fr.report" && echo "Ok 50" || (status="$?"; echo "Failed 50 (status: $status)"; echo "fail 50 $status" >> "$FAILS") &
+fi
 
 # MT and dictionary-based (id >= 60)
 snakemake --snakefile "${BITEXTOR}/snakemake/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/snakemake/example/dummy-translate.sh" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/60-mtdb-en-fr.report" && echo "Ok 60" || (status="$?"; echo "Failed 60 (status: $status)"; echo "fail 60 $status" >> "$FAILS") &
