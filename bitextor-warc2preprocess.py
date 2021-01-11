@@ -25,7 +25,6 @@ import re
 from bs4 import BeautifulSoup
 import os
 import importlib
-import alcazar.bodytext
 import logging
 import lzma
 import gzip
@@ -160,8 +159,8 @@ oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
-oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'alcazar', 'lxml', 'simple'},
-                     help="Use 'HTML tokenizer', 'modest', 'bs4', 'lxml' (using html5lib tree) or 'alcazar' parsers to extract relevant text from HTML. By default 'bs4' is used")
+oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'lxml', 'simple'},
+                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'lxml' (using html5lib tree) parser to extract relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument("--html5lib", action="store_true", default=False, help="Process HTML tree with html5lib")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
@@ -319,17 +318,8 @@ for record in f:
         logging.info("Repeated file:\t" + url)
         continue
 
-    # get text with Alcazar library
-    if options.parser == "alcazar":
-        logging.info(url + ": Getting text with Alcazar")
-        btext = alcazar.bodytext.parse_article(deboiled)
-        if btext.body_text:
-            plaintext = btext.body_text
-        else:
-            plaintext = ""
-
-    # or get text with beautifulsoup
-    elif options.parser == "bs4":
+    # get text with beautifulsoup
+    if options.parser == "bs4":
         logging.info(url + ": Getting text with BeautifulSoup")
         try:
             soup = BeautifulSoup(deboiled, "lxml")
