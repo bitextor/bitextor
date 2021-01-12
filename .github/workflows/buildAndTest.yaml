@@ -4,6 +4,7 @@ jobs:
    build_and_testing:
       name: Build and testing
       runs-on: ubuntu-latest
+      timeout-minutes: 1440
       steps:
       -  name: Set distrib release version if not set
          env:
