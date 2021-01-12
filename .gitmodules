@@ -6,10 +6,6 @@
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
 	ignore = dirty
-[submodule "hunalign"]
-	path = hunalign
-	url = https://github.com/bitextor/hunalign
-	ignore = dirty
 [submodule "bicleaner"]
 	path = bicleaner
 	url = https://github.com/bitextor/bicleaner
@@ -33,3 +29,8 @@
 [submodule "biroamer"]
 	path = biroamer
 	url = https://github.com/bitextor/biroamer.git
+	ignore = dirty
+[submodule "hunalign"]
+	path = hunalign
+	url = https://github.com/danielvarga/hunalign
+	ignore = dirty
