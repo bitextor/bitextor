@@ -30,3 +30,7 @@
 	path = biroamer
 	url = https://github.com/bitextor/biroamer.git
 	ignore = dirty
+[submodule "hunalign"]
+	path = hunalign
+	url = https://github.com/bitextor/hunalign
+	ignore = dirty
