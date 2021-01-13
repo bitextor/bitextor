@@ -34,7 +34,7 @@ cd ..
 tmp_dir="$(mktemp -d -t heritrix3-XXXXXXXXXX)"
 cwd="$PWD"
 cd "$tmp_dir"
-wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNA$
+wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
 unzip heritrix-3.4.0-SNAPSHOT-dist.zip
 mv "heritrix-3.4.0-SNAPSHOT" "$cwd/"
 cd "$cwd/heritrix-3.4.0-SNAPSHOT"
@@ -72,7 +72,7 @@ if [[ "$ok" == "1" ]]; then pip3 uninstall -y tensorflow && pip3 install tensorf
 if [[ "$ok" != "0" ]]; then ./autogen.sh; fi  # Re-execute autogen.sh
 
 echo -e " - \e[4mMake...\e[0m"
-make
+CPATH="$CPATH:$CONDA_PREFIX/include" make
 
 # Make Biroamer
 cwd="$PWD"
