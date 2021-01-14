@@ -60,7 +60,7 @@ def run_aligner(filename_s, filename_t, dic, hunaligndir, thresh="0"):
     return
 
 
-def align(file1, file2, file1orig, file2orig, dic):
+def align(file1, file2, file1orig, file2orig, dic, hashprogram):
     filereader1 = open(file1orig, "r")
     filereader2 = open(file2orig, "r")
     thresh = options.hunalignthresh
@@ -92,26 +92,40 @@ def align(file1, file2, file1orig, file2orig, dic):
         last_position2 = filereader2.tell()
         line1 = filereader1.readline().strip()
         line2 = filereader2.readline().strip()
+        if hashprogram:
+            hash1 = subprocess.run([hashprogram], stdout=subprocess.PIPE, input=line1, encoding='utf8').stdout.rstrip('\n')
+            hash2 = subprocess.run([hashprogram], stdout=subprocess.PIPE, input=line2, encoding='utf8').stdout.rstrip('\n')
+
         prev_fields = prev_hun.split(b"\t")
         hunalign_fields = hun_line.split(b"\t")
 
         if float(prev_fields[2]) == -0.3:
             if int(hunalign_fields[0]) == int(prev_fields[0]):
                 line1 = ""
+                hash1 = ""
                 filereader1.seek(last_position1)
             elif int(hunalign_fields[1]) == int(prev_fields[1]):
                 line2 = ""
+                hash2 = ""
                 filereader2.seek(last_position2)
 
         if int(hunalign_fields[0]) - int(prev_fields[0]) > 1:
             for i in range((int(hunalign_fields[0]) - int(prev_fields[0])) - 1):
-                line1 += " " + filereader1.readline().strip()
+                tmp = filereader1.readline().strip()
+                line1 += " " + tmp
+                if hashprogram:
+                    hash1 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE, input=tmp, encoding='utf8').stdout.rstrip('\n')
 
         if int(hunalign_fields[1]) - int(prev_fields[1]) > 1:
             for i in range((int(hunalign_fields[1]) - int(prev_fields[1])) - 1):
-                line2 += " " + filereader2.readline().strip()
-
-        print("{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8")))
+                tmp = filereader2.readline().strip()
+                line2 += " " + tmp
+                if hashprogram:
+                    hash2 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE, input=tmp, encoding='utf8').stdout.rstrip('\n')
+        if not hashprogram:
+            print("{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8")))
+        else:
+            print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8"), hash1, hash2))
 
         prev_hun = hun_line
 
@@ -140,6 +154,8 @@ oparser.add_argument("--hunalign-threshold",
                      help="Threshold which will be applied to Hunalign. All the aligned segments with score lower than "
                           "this value will not be in the result. Allowed values are between 0.0 and 1.0.",
                      dest="hunalignthresh", required=False, default=None)
+oparser.add_argument("--print-sent-hash", help="provide path for a shasum like program to print Murmurhash hashes of the output sentences", dest="hashprogram",
+                     required=False, default="")
 
 options = oparser.parse_args()
 
@@ -178,7 +194,7 @@ for line in reader_list:
     tmp_file2.close()
     tmp_file2_origtext.close()
 
-    align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, options.dic)
+    align(tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name, options.dic, options.hashprogram)
 
     os.remove(tmp_file1.name)
     os.remove(tmp_file1_origtext.name)
