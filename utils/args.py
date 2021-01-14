@@ -94,7 +94,7 @@ def validate_args(config):
             'sentenceSplitters': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
             'wordTokenizers': {'type': 'dict'},
-            'norphologicalAnalysers': {'type': 'dict'},
+            'morphologicalAnalysers': {'type': 'dict'},
             'pruneThreshold': {'type': 'integer', 'min': 0, 'default': 0},
             'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},
             # document alignment
