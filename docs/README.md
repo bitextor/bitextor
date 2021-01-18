@@ -30,6 +30,31 @@ sudo snap install docker
 
 Bitextor folder is located at `/opt/bitextor`, with all dependencies and compilations fulfilled.
 
+## Conda installation
+
+Same as with Docker, you can easily install Bitextor using a Conda environment with the following command:
+
+```bash
+conda install -c bitextor bitextor
+```
+
+If you want a concrete version, you can look in the [Anaconda Repository](https://anaconda.org/anaconda/repo) or use the following command:
+
+```bash
+conda search -c bitextor bitextor
+```
+
+In order to install Miniconda or Anaconda you can follow the instructions of the [official page](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), but if you want to install Miniconda (Linux x64), you should execute the following (it is an interactive installer, so you will need to follow the steps):
+
+```bash
+https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
+
+Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder.
+
+Currently we only support Linux x64 for Conda environment.
+
 ## Manual installation
 
 ### Dependencies
