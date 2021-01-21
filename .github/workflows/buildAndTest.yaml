@@ -3,12 +3,12 @@ on: [push, pull_request]
 jobs:
    build_and_testing:
       name: Build and testing
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-20.04
       timeout-minutes: 1440
       steps:
       -  name: Set distrib release version if not set
          env:
-            DR_VERSION: 18.04
+            DR_VERSION: 20.04
          run: |
             # Hack to get setup-python to work on act (https://github.com/nektos/act/issues/213)
             if [ ! -f "/etc/lsb-release" ] ; then
