@@ -31,7 +31,7 @@ requirements:
     - libboost=1.71=h97c9712_0
     - pip=20.2.4=py_0
     - python=3.8.5=h7579374_1
-    - icu=68.1
+    - icu
     - unzip
     - libtool
     - wget
@@ -48,7 +48,7 @@ requirements:
     - poppler-data
     - curl
     - pigz
-    - icu=68.1
+    - icu
     - wget
     - protobuf=3.14
     - libmagic
