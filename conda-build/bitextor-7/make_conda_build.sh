@@ -2,8 +2,7 @@
 
 usage()
 {
-  echo "make_conda_build [-e <CONDA_ENV_NAME>] [-r] [-C]"
-  echo "                 [-n]"
+  echo "make_conda_build [-h] [-e <CONDA_ENV_NAME>] [-r]"
   echo ""
   echo "OPTIONS:"
   echo "  -e <CONDA_ENV_NAME>     Name of the conda environment which will be used to build"

@@ -1,0 +1,59 @@
+name: Build with conda and execute Bitextor tests in conda env
+on: [push]
+jobs:
+   conda_build_and_testing:
+      name: Build with conda and testing
+      runs-on: ubuntu-20.04
+      timeout-minutes: 1440
+      steps:
+      -  name: Set distrib release version if not set
+         env:
+            DR_VERSION: 20.04
+         run: |
+            # Hack to get setup-python to work on act (https://github.com/nektos/act/issues/213)
+            if [ ! -f "/etc/lsb-release" ] ; then
+               echo "DISTRIB_RELEASE=$DR_VERSION" > /etc/lsb-release
+            fi
+      -  name: Install required linux packages
+         run: |
+            apt-get --assume-yes update || sudo apt-get --assume-yes update || true
+            # Docker default user is root, but is not on Github Action (https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#administrative-privileges-of-github-hosted-runners),
+            #  so we use sudo and Docker will not complain and Github Actions will work
+            apt-get --assume-yes install sudo || true
+            sudo apt-get --assume-yes install wget git build-essential coreutils
+      -  name: Install Miniconda3
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda list
+      -  uses: actions/checkout@v2
+      -  name: Create Bitextor conda build
+         working-directory: ./conda-build/bitextor-8
+         run: |
+            . ~/miniconda3/etc/profile.d/conda.sh
+            ./make_conda_build.sh -r
+      -  name: Install Bitextor
+         run: |
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-installation
+            conda activate bitextor-installation
+            conda install -y $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`
+            conda update -y --all
+            command -v "bitextor" || command -v "bitextor.sh"
+      -  name: Run tests
+         env:
+            BITEXTOR: ${{ github.workspace }}
+         run: |
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda activate bitextor-installation
+            if [[ -f "$CONDA_PREFIX/bitextor/run-tests.sh" ]]; then
+                chmod 775 $CONDA_PREFIX/bitextor/run-tests.sh
+                $CONDA_PREFIX/bitextor/run-tests.sh -w "$BITEXTOR" -j 4
+            elif [[ -f "$CONDA_PREFIX/bitextor/run-tests-mt.sh" ]]; then
+                chmod 775 $CONDA_PREFIX/bitextor/run-tests-mt.sh
+                $CONDA_PREFIX/bitextor/run-tests-mt.sh -w "$BITEXTOR" -j 4
+            else
+                echo "(error) No test script found."
+                exit 1
+            fi

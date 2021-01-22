@@ -7,7 +7,8 @@ import subprocess
 
 sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
 from utils.args import validate_args
-from utils.common import open_xz_or_gzip_or_plain
+from utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
+    snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
 from utils.non_generic import *
 
 config = validate_args(config)
@@ -19,9 +20,8 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
-CONFIGFILE = workflow.overwrite_configfiles
-WORKDIR = os.getcwd()
-SNAKEMAKEDIR = os.path.dirname(workflow.snakefile)
+#WORKDIR = os.getcwd()
+#SNAKEMAKEDIR = os.path.dirname(workflow.snakefile)
 
 LANGS = set()
 LANG1 = ""
@@ -39,15 +39,6 @@ if "lang2" in config:
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
     PROFILING = "/usr/bin/time -v"
-if CONFIGFILE is None or (isinstance(CONFIGFILE, list) and len(CONFIGFILE) == 0):
-    CONFIGFILE = workflow.configfiles
-if CONFIGFILE is None or (isinstance(CONFIGFILE, list) and len(CONFIGFILE) == 0):
-    sys.stderr.write("WARNING: could not retrieve the config file path. Some functionalities might not be available\n")
-    CONFIGFILE = None
-elif isinstance(CONFIGFILE, list):
-    if len(CONFIGFILE) > 1:
-        sys.stderr.write(f"WARNING: multiple elements found in config file path. Using the first element")
-    CONFIGFILE = CONFIGFILE[0]
 
 #################################################################
 # CRAWLING
@@ -221,15 +212,31 @@ if "documentAlignerThreshold" in config:
 # dic
 # snakemake/include/dic-generation
 
+try:
+    os.makedirs(TMPDIR)
+except:
+    pass
+
 DIC=None
 DIC_TRAINING=None
 
 if "dic" in config:
     DIC = config["dic"]
     DIC_TRAINING = DIC
+    dic_training_file_path = f"{TMPDIR}/dic_training.value"
+    dic_training_file = False
 
-    if os.path.isfile(DIC) and ('bicleanerCorpusTrainingPrefix' in config and 'initCorpusTrainingPrefix' in config):
+    value = snake_no_more_race_get(dic_training_file_path)
+
+    if value is not None:
+        DIC_TRAINING = value
+        dic_training_file = True
+
+    if (not dic_training_file and os.path.isfile(DIC) and ('bicleanerCorpusTrainingPrefix' in config and 'initCorpusTrainingPrefix' in config)):
         DIC_TRAINING += ".generated"
+
+    # Create file with DIC_TRAINING value in order to avoid that, when DAG is reevaluated, changes the value of the variable
+    snake_no_more_race_set(dic_training_file_path, DIC_TRAINING)
 
 #################################################################
 # SEGALIGN
@@ -244,6 +251,7 @@ if "sentenceAlignerThreshold" in config:
 # CLEANING
 FIELDS = ['url1','url2','seg1','seg2','aligner']
 DEFERRED = ""
+MMHSUM_PATH = ""
 DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
@@ -262,6 +270,7 @@ OUTPUT_FILES = ["sent", "raw"]
 
 if 'deferred' in config and config['deferred']:
     DEFERRED = "--print-sent-hash"
+    MMHSUM_PATH = BITEXTOR + "/preprocess/bin/mmhsum"
     DEFERRED_FIELDS = ['checksum1','checksum2']
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
@@ -1051,7 +1060,13 @@ checkpoint split_segalign:
                 touch {output}
                 # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
                 # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
-                ps axo pid,pgid,comm | grep snakemake$ | grep \ {os.getpgid(os.getpid())}\ | awk '{{{{print $1}}}}' | xargs -I[] kill -TERM []
+                pid_to_kill="{snake_no_more_race_get_pgid()}"
+                if [[ "$pid_to_kill" == "" ]]; then
+                    echo "ERROR: could not stop the execution with a normal status. Forcing snakemake to stop"
+                    exit 1
+                else
+                    kill -TERM "$pid_to_kill" || exit 1
+                fi
                 ''')
         else:
             shell('''
