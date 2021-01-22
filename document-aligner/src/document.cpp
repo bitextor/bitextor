@@ -12,7 +12,7 @@ namespace bitextor {
 /**
  * Reads a single line of base64 encoded document into a Document.
  */
-void ReadDocument(const StringPiece &encoded, Document &document, size_t ngram_size)
+void ReadDocument(const util::StringPiece &encoded, Document &document, size_t ngram_size)
 {
 	std::string body;
 	base64_decode(encoded, body);
