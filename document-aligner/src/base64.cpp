@@ -20,7 +20,7 @@ int const INV_TABLE[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
 };
 
-size_t count_padding(const StringPiece &in)
+size_t count_padding(const util::StringPiece &in)
 {
 	const char *data = in.data();
 
@@ -33,7 +33,7 @@ size_t count_padding(const StringPiece &in)
 
 } // namespace
 
-void base64_encode(const StringPiece &in, std::string &out)
+void base64_encode(const util::StringPiece &in, std::string &out)
 {
 	out.clear();
 	out.reserve(4 * ((in.size() + 2) / 3));
@@ -56,7 +56,7 @@ void base64_encode(const StringPiece &in, std::string &out)
 		out.push_back('=');
 }
 
-void base64_decode(const StringPiece &in, std::string &out)
+void base64_decode(const util::StringPiece &in, std::string &out)
 {
 	out.clear();
 

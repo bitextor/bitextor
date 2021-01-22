@@ -37,7 +37,7 @@ ostream &operator<<(ostream &out, Row const &row) {
 typedef vector<unique_ptr<util::FilePiece>> FileSet;
 
 bool skip_rows(FileSet &files, size_t n) {
-	StringPiece line;
+	util::StringPiece line;
 
 	for (auto &file : files)
 		for (size_t i = 0; i < n; ++i)
@@ -51,7 +51,7 @@ bool read_row(FileSet &files, Row &row) {
 	row.cells.clear();
 	row.cells.reserve(files.size());
 
-	StringPiece line;
+	util::StringPiece line;
 	for (auto &file : files) {
 		if (!file->ReadLineOrEOF(line))
 			return false;
