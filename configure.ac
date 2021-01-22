@@ -182,49 +182,6 @@ print (var)" 2> /dev/null`
 ])
   fi
 
-AM_PATH_PYTHON([3.0], , [AC_MSG_ERROR([You don't have Python 3.0 or later installed.])])
-  AC_MSG_CHECKING([for tensorflow for Python])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import tensorflow; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    AC_MSG_RESULT([yes])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- tensorflow:   Please, install tensorflow and try again: sudo pip install tensorflow
-])
-  fi
-
-  AC_MSG_CHECKING([for keras for Python])
-  ac_supports_python_ver=`python3 -c "import sys; \
-import keras; \
-var = True; \
-print (var)" 2> /dev/null`
-  if test "$ac_supports_python_ver" = "True";
-  then
-    requiredversion="1.0.3"
-    kerasversion=`python3 -c "import keras; print(keras.__version__)" 2> /dev/null`
-    lowestversion=$(echo -e "$requiredversion\n$kerasversion" | sort -V | head -n 1)
-    if test "$lowestversion" == "$requiredversion";
-    then
-      AC_MSG_RESULT([yes])
-    else
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([this package requires keras at version v1.0.3 or higher, while currently installed version is $kerasversion; try running:
-pip install --upgrade keras
-if you already have an updated version of keras, check if the engine is properly configured and installed (Tensorflow, Theano...) with 'python3 -c "import keras"'
-])
-    fi
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([this package requires the following libraries for Python:
-- keras:   Please, install v1.0.3 or later and try again: sudo pip install keras
-])
-  fi
-
   AC_MSG_CHECKING([for WARC for Python3])
   ac_supports_python_ver=`python3 -c "import sys; \
 from warcio.archiveiterator import ArchiveIterator; \
