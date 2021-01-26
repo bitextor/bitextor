@@ -35,6 +35,7 @@ Bitextor folder is located at `/opt/bitextor`, with all dependencies and compila
 Same as with Docker, you can easily install Bitextor using a Conda environment with the following command:
 
 ```bash
+conda config --add channels conda-forge # It will appear a warning if you already had the channel added
 conda install -c bitextor bitextor
 ```
 
