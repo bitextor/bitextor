@@ -69,7 +69,7 @@ Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for c
 If you are using an apt-like package manager you can run the following command line to install all these dependencies:
 
 ```bash
-sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl pigz
+sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl pigz uchardet libuchardet-dev libzip-dev
 ```
 
 Additionally, [giawarc](https://github.com/paracrawl/giawarc) and [giashard](https://github.com/paracrawl/giashard) are used for WARC files preprocessing. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.

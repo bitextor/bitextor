@@ -23,8 +23,11 @@ compile-hunalign:
 compile-truecaser:
 	cd preprocess && cmake . && make -j4
 
+compile-warc2text:
+	cd warc2text && cmake -DPREPROCESS_PATH=preprocess/ . && make -j4
+
 compile-bleualign:
-	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release -DPREPROCESS_PATH=preprocess/ . && make
+	cd bleualign-cpp && cmake -DBUILD_TEST=on -DCMAKE_BUILD_TYPE=Release -DPREPROCESS_PATH=preprocess/ . && make -j4
 
 compile-document-aligner:
 	cd document-aligner && cmake -DBUILD_TESTING=OFF . && make
@@ -53,7 +56,7 @@ bitextor-train-document-alignment: bitextor-train-document-alignment.py
 
 install: install-recursive install-smttools install-hunalign install-standoff
 
-bitextor: compile-clustercat compile-bleualign compile-smttools compile-document-aligner compile-hunalign compile-truecaser
+bitextor: compile-clustercat compile-bleualign compile-smttools compile-document-aligner compile-hunalign compile-truecaser compile-warc2text
 
 nltk_data:
 	python3 install_nltk_data.py
