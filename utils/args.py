@@ -77,7 +77,7 @@ def validate_args(config):
             'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             # preprocessing
             'langs': {'type': 'list'},
-            'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc'], 'default': 'giawarc'},
+            'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'warc2preprocess', 'giawarc'], 'default': 'warc2text'},
             'shards': {'type': 'integer', 'min': 0, 'default': 8},
             'batches': {'type': 'integer', 'min': 1, 'default': 1024},
             'cleanHTML': {'type': 'boolean', 'default': False},

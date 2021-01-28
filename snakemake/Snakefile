@@ -134,9 +134,14 @@ if "crawlPrefixFilter" in config:
 # PREPROCESS
 PPROC = "w2p"
 PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
+TEXT_FILE = "plain_text.gz"
 if config["preprocessor"] == "giawarc":
     PPROC = "giawarc"
     PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
+if config["preprocessor"] == "warc2text":
+    PPROC = "warc2text"
+    PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
+    TEXT_FILE = "text.gz"
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
@@ -699,6 +704,23 @@ rule warc2preprocess:
         done
     '''
 
+rule warc2text:
+    input: get_pproc_input
+    output: expand("{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
+    params: folder=f'{DATADIR}/preprocess/{{target}}/warc2text'
+    shell: '''
+        mkdir -p {params.folder}
+        {PROFILING} {BITEXTOR}/warc2text/bin/warc2text -o {params.folder} -s -f text,url,mime {input}
+        for lang in {LANGS}; do
+            if [ ! -f {params.folder}/$lang/text.gz ]; then
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                mkdir -p {params.folder}/$lang
+                touch {params.folder}/$lang/{{text,mime,url}}
+                gzip {params.folder}/$lang/{{text,mime,url}}
+            fi
+        done
+        '''
+
 rule giawarc:
     input: get_pproc_input
     output: expand("{data}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
@@ -773,19 +795,14 @@ checkpoint shard:
         nofiles=$(ls -l {params.o} | wc -l)
         if [ "$nofiles" == "1" ]; then
             # No files generated
-            >&2 echo "WARNING: any file generated after running giashard. Creating empty files instead"
+            >&2 echo "WARNING: no files generated after running giashard. Creating empty files instead"
 
             # Fake shards
             mkdir -p {params.o}/{params.empty_shard_batch_folder}
 
             touch {params.o}/{params.empty_shard_batch_folder}/empty
-            if [[ "{PPROC}" == "giawarc" ]]; then
-                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
-                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
-            else
-                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-            fi
+            touch {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
+            gzip {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
 
             mylang="{SRC_LANG}"
             notmylang="{TRG_LANG}"
@@ -817,13 +834,8 @@ checkpoint shard:
 
                 # Create the same shards that have been created in the other lang (only 1 batch)
                 ls -d {params.o_no_lang}/$notmylang/* | xargs -I[] basename [] | xargs -I[] mkdir -p {params.o_no_lang}/$mylang/[]/1
-                if [[ "{PPROC}" == "giawarc" ]]; then
-                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,url,normalized_html}}
-                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,url,normalized_html}}
-                else
-                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                fi
+                    ls -d {params.o}/*/* | xargs -I[] touch []/{{{params.f}}}
+                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{{params.f}}}
             fi
         fi
 
@@ -845,7 +857,7 @@ def apply_format(string, replace_format, replace_token="{}", replace_only_if_tru
     return string
 
 rule split:
-    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
+    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}'
     params:
         splitter = lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), "--sentence-splitter \"{}\""),
         customnbp = lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), "--customnbp \"{}\"")
