@@ -227,6 +227,7 @@ for record in f:
             # content length and content type will be filled before writing
             http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
 
+    bdf = True
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfpass:
@@ -244,6 +245,7 @@ for record in f:
     elif url[-5:] == ".epub":
         payloads = epub2html(payload)
     else:
+        bdf = False
         if options.onlybroader:
             payloads = []
         else:
@@ -292,5 +294,11 @@ for record in f:
         if http_headers:
             http_headers.replace_header('Content-Length', str(len(clean_tree)))
             http_headers.replace_header('Content-Type', 'text/html')
+        elif not http_headers and bdf:
+            # for broader document formats without HTTP header create a fake one
+            # to make it easier to distinguish between binary and processed documents downstream (warc2text)
+            record_type = 'response'
+            http_headers = StatusAndHeaders(statusline = "200 OK", protocol = "HTTP/1.1", headers = [('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))])
+
         new_record = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(clean_tree), http_headers=http_headers)
         fo.write_record(new_record)
