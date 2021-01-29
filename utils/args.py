@@ -171,12 +171,12 @@ def validate_args(config):
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
         
-        if not os.path.isfile(config['bicleaner']):
+        if not os.path.isfile(os.path.expanduser(config['bicleaner'])):
             schema['bicleanerCorpusTrainingPrefix']['required']=True
             schema['initCorpusTrainingPrefix']['required']=True
             schema['dic']['required'] = True
 
-    if 'dic' in config and not os.path.isfile(config['dic']):
+    if 'dic' in config and not os.path.isfile(os.path.expanduser(config['dic'])):
         # if 'dic' in config and does not exist, we need to generate a new dictionary
         schema['initCorpusTrainingPrefix']['required']=True
 
