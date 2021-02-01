@@ -78,18 +78,20 @@ def validate_args(config):
             # preprocessing
             'langs': {'type': 'list'},
             'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'warc2preprocess', 'giawarc'], 'default': 'warc2text'},
+            'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor':  ['warc2text']}},
             'shards': {'type': 'integer', 'min': 0, 'default': 8},
             'batches': {'type': 'integer', 'min': 1, 'default': 1024},
             'cleanHTML': {'type': 'boolean', 'default': False},
             'ftfy': {'type': 'boolean', 'default': False},
-            'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-            'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
-            'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
-            'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
             'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
             'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            # pdfEXTRACT
+            'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
+            'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
+            'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
             # tokenization
             'sentenceSplitters': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
@@ -153,7 +155,9 @@ def validate_args(config):
             schema['dic']['required'] = True
     elif config['documentAligner'] == 'DIC':
         schema['dic']['required'] = True
-        schema['documentAligner']['dependencies']['preprocessor'] = 'warc2preprocess'
+        schema['documentAligner']['dependencies']['preprocessor'] = ['warc2preprocess', 'warc2text']
+        if config['preprocessor'] == 'warc2text':
+            config['writeHTML'] = True
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
         #schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'}) # dependencies are not working because of the frozenset

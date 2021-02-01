@@ -135,13 +135,17 @@ if "crawlPrefixFilter" in config:
 PPROC = "w2p"
 PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
 TEXT_FILE = "plain_text.gz"
+HTML_FILE = "deboilerplate_html.gz"
 if config["preprocessor"] == "giawarc":
     PPROC = "giawarc"
     PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
-if config["preprocessor"] == "warc2text":
+elif config["preprocessor"] == "warc2text":
     PPROC = "warc2text"
     PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
     TEXT_FILE = "text.gz"
+    if "writeHTML" in config and config["writeHTML"]:
+        HTML_FILE = "html.gz"
+        PPROC_FILES.append("html.gz")
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
@@ -707,10 +711,12 @@ rule warc2preprocess:
 rule warc2text:
     input: get_pproc_input
     output: expand("{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
-    params: folder=f'{DATADIR}/preprocess/{{target}}/warc2text'
+    params:
+        folder = f'{DATADIR}/preprocess/{{target}}/warc2text',
+        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         mkdir -p {params.folder}
-        {PROFILING} {BITEXTOR}/warc2text/bin/warc2text -o {params.folder} -s -f text,url,mime {input}
+        {PROFILING} {BITEXTOR}/warc2text/bin/warc2text -o {params.folder} -s -f {params.f} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
