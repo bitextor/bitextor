@@ -36,6 +36,8 @@ jobs:
       -  name: Install Bitextor
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
+            conda config --add channels main
+            conda config --append channels conda-forge
             conda create -y -n bitextor-installation
             conda activate bitextor-installation
             conda install -y $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`
@@ -56,4 +58,33 @@ jobs:
             else
                 echo "(error) No test script found."
                 exit 1
+            fi
+      -  name: Print log of tests which failed
+         if: ${{ always() }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            if [[ -f "${WORK}/data/fails.log" ]]; then
+               while read line; do
+                  eval "array=($line)"
+                  status=${array[0]}
+                  notest=${array[1]}
+                  exit_code=${array[2]}
+
+                  str="# Test $notest (exit code / desc.: $exit_code) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
+                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
+                  else
+                     echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
+                  fi
+                  echo ""
+               done < "${WORK}/data/fails.log"
+            else
+               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               exit 1
             fi
