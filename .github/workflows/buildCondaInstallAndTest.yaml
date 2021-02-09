@@ -31,11 +31,14 @@ jobs:
       -  name: Create Bitextor conda build
          working-directory: ./conda-build/bitextor-8
          run: |
+            conda deactivate || true
             . ~/miniconda3/etc/profile.d/conda.sh
-            ./make_conda_build.sh -r
+            conda deactivate && ./make_conda_build.sh -r
       -  name: Install Bitextor
          run: |
+            conda deactivate || true
             . ~/miniconda3/etc/profile.d/conda.sh
+            conda deactivate
             conda config --add channels main
             conda config --append channels conda-forge
             conda create -y -n bitextor-installation
