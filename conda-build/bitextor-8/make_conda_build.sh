@@ -43,13 +43,9 @@ fi
 conda create -y -n $CONDA_ENV_NAME python=3.8.5
 conda activate $CONDA_ENV_NAME
 
-if [[ "$(conda config --show channels | grep main)" == "" ]]; then
-  echo "Info: adding 'main' channel (remove it manually after the build is done if you want). This is common at fresh installations"
-  conda config --add channels main
-fi
 if [[ "$(conda config --show channels | grep conda-forge)" == "" ]]; then
-  echo "Info: appending 'conda-forge' channel (remove it manually after the build is done if you want). This is common at fresh installations"
-  conda config --append channels conda-forge
+  echo "Info: adding 'conda-forge' channel (remove it manually after the build is done if you want). This is common at fresh installations"
+  conda config --add channels conda-forge
 fi
 if [[ "$(conda config --show channels | grep bioconda)" == "" ]]; then
   echo "Info: appending 'bioconda' channel (remove it manually after the build is done if you want)"

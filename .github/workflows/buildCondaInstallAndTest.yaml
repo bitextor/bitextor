@@ -32,12 +32,11 @@ jobs:
          working-directory: ./conda-build/bitextor-8
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
-            ./make_conda_build.sh -r
+            conda deactivate && ./make_conda_build.sh -r
       -  name: Install Bitextor
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
-            conda config --add channels main
-            conda config --append channels conda-forge
+            conda deactivate
             conda create -y -n bitextor-installation
             conda activate bitextor-installation
             conda install -y $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`
