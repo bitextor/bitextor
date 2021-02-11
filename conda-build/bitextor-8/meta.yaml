@@ -29,7 +29,7 @@ requirements:
     #- go
     - go-cgo=1.13.5=h77d97cf_0
     - libboost=1.71=h97c9712_0
-    - pip=20.2.4=py_0
+    - pip
     - python=3.8.5=h7579374_1
     - icu
     - unzip
@@ -38,7 +38,7 @@ requirements:
     - protobuf=3.14
     - libmagic
   run:
-    - pip=20.2.4=py_0
+    - pip
     - python=3.8.5=h7579374_1
     - libboost=1.71=h97c9712_0
     - java-1.7.0-openjdk-cos6-x86_64

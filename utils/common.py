@@ -126,14 +126,26 @@ def snake_no_more_race_get_pgid():
     command = f"ps axo pid,pgid,comm | grep -E \"snakemake$|python3[.]8$\""
     pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
 
-    if len(pgid) == 0:
-        all_ppids = get_all_ppids(os.getpid())
+    all_ppids = get_all_ppids(os.getpid())
+    all_pgids = list(map(lambda pid: os.getpgid(pid), all_ppids))
 
+    if len(pgid) == 0:
         for pid in all_ppids:
             pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(pid)}\\ | awk '{{print $1}}' | grep {pid}")
 
             if len(pgid) != 0:
                 break
+    elif all_ppids[0] != all_pgids[0]:
+        idx = 0
+        while idx < len(all_ppids):
+            if all_ppids[idx] == all_pgids[idx]:
+                pgid = str(all_pgids[0])
+                break
+            idx += 1
+
+        if idx == len(all_ppids):
+            pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
+            sys.stderr.write(f"WARNIGN: could not get the process group leader of {os.getpid()}. The PID gathering might be incorrect")
 
     return pgid
 
