@@ -122,7 +122,7 @@ def validate_args(config):
             'elrc': {'type': 'boolean'},
             'tmx': {'type': 'boolean'},
             'deduped': {'type': 'boolean'},
-            'biroamer': {'type': 'boolean', 'default': False},
+            'biroamer': {'type': 'boolean', 'default': False, 'dependencies': {'deferred': False}},
             'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
             'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
             'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}

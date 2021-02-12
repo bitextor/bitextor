@@ -23,10 +23,10 @@ pip3 install -r bifixer/requirements.txt
 ### CLD3
 pip3 install Cython
 pip3 install pycld3
-### Biroamer
-pip3 install -r biroamer/requirements.txt
-### Biroamer model
-python -m spacy download en_core_web_sm
+### Biroamer and model
+pip3 install -r biroamer/requirements.txt && \
+python -m spacy download en_core_web_sm && \
+pip3 show spacy && pip3 show en_core_web_sm
 
 # Heritrix 3
 echo -e " - \e[4mInstalling Heritrix3...\e[0m"
