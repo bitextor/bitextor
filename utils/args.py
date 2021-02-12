@@ -122,7 +122,7 @@ def validate_args(config):
             'elrc': {'type': 'boolean'},
             'tmx': {'type': 'boolean'},
             'deduped': {'type': 'boolean'},
-            'biroamer': {'type': 'boolean', 'default': False, 'dependencies': {'deferred': False}},
+            'biroamer': {'type': 'boolean', 'default': False},
             'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
             'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
             'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
@@ -197,6 +197,11 @@ def validate_args(config):
                 # deduped in config but false and (tmx not in config or tmx in config and false)
                 # debuped as default value in both situations
                 schema['biroamer']['dependencies'] = {'deduped': True}
+        if 'deferred' in config and config['deferred']:
+            if isinstance(schema['biroamer']['dependencies'], dict):
+                schema['biroamer']['dependencies']['deferred'] = False
+            else:
+                schema['biroamer']['dependencies'] = {'deferred': False}
 
     v = Validator(schema)
     b = v.validate(config)
