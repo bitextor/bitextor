@@ -8,7 +8,7 @@ toolwrapper==2.1.0
 sacrebleu==1.5.0
 func_timeout==4.3.5
 cerberus==1.3.2
-requests==2.24.0
+requests==2.25.1
 urllib3==1.26.3
 python-dateutil==2.8.1
 cchardet==2.1.7
