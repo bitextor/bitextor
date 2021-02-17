@@ -26,6 +26,8 @@ pip3 install pycld3
 ### Biroamer and model
 pip3 install -r biroamer/requirements.txt && \
 python -m spacy download en_core_web_sm && \
+pip3 show spacy && pip3 show en_core_web_sm && \
+pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
 
 # Heritrix 3
