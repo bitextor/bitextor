@@ -97,7 +97,7 @@ def validate_args(config):
             'temp': {'type': 'string'},
             'hunalignThreshold': {'type': 'float'},
             'maxlines': {'type': 'integer'},
-            'parser': {'type': 'string', 'allowed': ['alcazar', 'bs4', 'modest', 'simple']},
+            'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple']},
             'onlyConcat': {'type': 'boolean'},
             'onlyPreprocessing': {'type': 'boolean'},
             'profiling': {'type': 'boolean'},

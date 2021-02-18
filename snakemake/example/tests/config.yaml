@@ -40,7 +40,7 @@ crawlFileTypes: "html,pdf" # wget only
 # PREPROCESSING
 
 boilerpipeCleaning: true # Remove boilerplates form HTML documents
-parser: 'bs4' # Tool used for obtaining plain text from HTML docuemtns, options are: 'bs4', 'alcazar', 'modest' or 'simple'
+parser: 'bs4' # Tool used for obtaining plain text from HTML docuemtns, options are: 'bs4', 'modest' or 'simple'
 
 # onlyPreprocessing: true # Only perform crawling, grouping by domain and preprocessing
 
