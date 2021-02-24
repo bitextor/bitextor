@@ -83,8 +83,8 @@ def validate_args(config):
             ## specific to warc2text:
             'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor':  ['warc2text']}},
             ## specific to warc2preprocess:
-            'cleanHTML': {'type': 'boolean', 'default': False, 'dependencies': {'preprocessor': 'warc2preprocess'}},
-            'ftfy': {'type': 'boolean', 'default': False, 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
             'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},

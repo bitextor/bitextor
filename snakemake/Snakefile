@@ -158,9 +158,9 @@ BOILERPIPE = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
 
-if config["cleanHTML"]:
+if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
-if config["ftfy"]:
+if "ftfy" in config and config["ftfy"]:
     FTFY = "--ftfy"
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
