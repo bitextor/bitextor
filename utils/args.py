@@ -76,18 +76,20 @@ def validate_args(config):
             'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             # preprocessing
-            'langs': {'type': 'list'},
             'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'warc2preprocess', 'giawarc'], 'default': 'warc2text'},
-            'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor':  ['warc2text']}},
+            'langs': {'type': 'list'},
             'shards': {'type': 'integer', 'min': 0, 'default': 8},
             'batches': {'type': 'integer', 'min': 1, 'default': 1024},
-            'cleanHTML': {'type': 'boolean', 'default': False},
-            'ftfy': {'type': 'boolean', 'default': False},
+            ## specific to warc2text:
+            'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor':  ['warc2text']}},
+            ## specific to warc2preprocess:
+            'cleanHTML': {'type': 'boolean', 'default': False, 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'ftfy': {'type': 'boolean', 'default': False, 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
             'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-            # pdfEXTRACT
+            ## pdfEXTRACT
             'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
             'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},

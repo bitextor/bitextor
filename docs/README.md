@@ -421,8 +421,8 @@ shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
 ```
 
-* `preprocessor`: this options allows preprocessing WARC files using a program written in Go. Options: `warc2preprocess` or `giawarc`
-* `langs`: a list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` is enabled, every language will be processed, but only languages specified in `langs` will move on to sentence splitting
+* `preprocessor`: this options allows to select one of three text extraction tools. Options: `warc2preprocess`, `giawarc` and `warc2text`
+* `langs`: a list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` or `warc2text`is enabled, every language will be processed, but only languages specified in `langs` will move on to sentence splitting
 * `langID`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `ftfy`: ftfy is a tool that solves encoding errors. Disabled by default
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
