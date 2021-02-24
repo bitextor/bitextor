@@ -4,49 +4,63 @@ zcat $1 | while read line; do
 	tempwarc=$(mktemp)
 	tempprocess=$(mktemp -d)
 	tempsplitsent=$(mktemp)
-	deferredhash1=$(echo $line | cut -f 6)
-	deferredhash2=$(echo $line | cut -f 7)
+	deferredhash1=$(echo "$line" | cut -f 6)
+	deferredhash2=$(echo "$line" | cut -f 7)
+	url1=$(echo "$line" | cut -f 1)
+	url2=$(echo "$line" | cut -f 2)
+	echo -n "$url1	$url2"
 	
-	wget "$(echo $line | cut -f 1)" --warc-file $tempwarc --output-document /dev/null
-	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input $tempwarc
 	
-	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $(ls $tempprocess) > $tempsplitsent
-	while read linesplit; do
+	
+	wget "$url1" --quiet --warc-file $tempwarc --output-document /dev/null
+	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input ${tempwarc}.warc.gz 2> /dev/null
+	
+	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $2 > $tempsplitsent
+
+	echo -n "	"
+	cat $tempsplitsent | base64 -d | while read linesplit; do
 		senthash=$(echo -n "$linesplit" | preprocess/bin/mmhsum)
-		found=""
-                for partdeferredhash1 in $(echo $deferredhash1 | tr "+" "\n"); do
+		found1=""
+                for partdeferredhash1 in $(echo "$deferredhash1" | tr "+" "\n"); do
 			if [[ "$senthash" == "$partdeferredhash1" ]]; then
-				echo -n "${linesplit} "
-				found="yes"
+				echo -n "${linesplit}"
+				found1="yes"
 				break
 			fi
 		done
-		if [[ "$found" != "" ]]; then
-			echo -n "	"
+		if [[ "$found1" != "" ]]; then
 			break
 		fi
-	done < $tempsplitsent
-	rm -rf $temprocess
+	done
+	rm -rf $tempprocess
+
+
+
+	wget "$url2" --quiet --warc-file $tempwarc --output-document /dev/null
+	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input ${tempwarc}.warc.gz 2> /dev/null
 	
-	wget "$(echo $line | cut -f 2)" --warc-file $tempwarc --output-document /dev/null
-	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input $tempwarc
-	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $(ls $tempprocess) > $tempsplitsent
-	while read linesplit; do
+	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $3 > $tempsplitsent
+	
+	echo -n "	"
+	cat $tempsplitsent | base64 -d | while read linesplit; do
 		senthash=$(echo -n "$linesplit" | preprocess/bin/mmhsum)
-		found=""
-		for partdeferredhash2 in $(echo $deferredhash2 | tr "+" "\n"); do
+		found2=""
+		for partdeferredhash2 in $(echo "$deferredhash2" | tr "+" "\n"); do
 			if [[ "$senthash" == "$partdeferredhash2" ]]; then
-				echo "${linesplit}"
-				found="yes"
+				echo -n "${linesplit}"
+				found2="yes"
 				break
 			fi
 		done
-		if [[ "$found" != "" ]]; then
-                        echo -n "	"
+		if [[ "$found2" != "" ]]; then
                         break
                 fi
-	done < $tempsplitsent
-	rm -rf $temprocess
+	done
+	rm -rf $tempprocess
+	echo -n "	"	
+	echo -n "$line" | cut -f 5-
+
 	rm -rf $tempwarc
+	rm -rf ${tempwarc}.warc.gz
 	rm -rf $tempsplitsent
 done

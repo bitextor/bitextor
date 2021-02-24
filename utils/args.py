@@ -203,6 +203,11 @@ def validate_args(config):
                 # deduped in config but false and (tmx not in config or tmx in config and false)
                 # debuped as default value in both situations
                 schema['biroamer']['dependencies'] = {'deduped': True}
+        if 'deferred' in config and config['deferred']:
+            if isinstance(schema['biroamer']['dependencies'], dict):
+                schema['biroamer']['dependencies']['deferred'] = False
+            else:
+                schema['biroamer']['dependencies'] = {'deferred': False}
 
     v = Validator(schema)
     b = v.validate(config)
