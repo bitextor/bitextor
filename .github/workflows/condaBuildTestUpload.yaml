@@ -1,10 +1,10 @@
-name: Build with conda and execute Bitextor tests in conda env
+name: Build, test and upload with conda
 on: [push]
 jobs:
-   conda_build_and_testing:
-      name: Build with conda and testing
+   conda_build_testing_and_upload:
+      name: Build, test with conda and and upload
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 300
       steps:
       -  name: Set distrib release version if not set
          env:
@@ -39,21 +39,22 @@ jobs:
             conda deactivate
             conda create -y -n bitextor-installation
             conda activate bitextor-installation
-            conda install -y $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`
+            conda install -y "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`"
             conda update -y --all
             command -v "bitextor" || command -v "bitextor.sh"
       -  name: Run tests
+         id: tests
          env:
             BITEXTOR: ${{ github.workspace }}
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda activate bitextor-installation
             if [[ -f "$CONDA_PREFIX/bitextor/run-tests-min.sh" ]]; then
-                chmod 775 $CONDA_PREFIX/bitextor/run-tests-min.sh
-                $CONDA_PREFIX/bitextor/run-tests-min.sh -w "$BITEXTOR" -j 4
+                chmod 775 "$CONDA_PREFIX/bitextor/run-tests-min.sh"
+                "$CONDA_PREFIX/bitextor/run-tests-min.sh" -w "$BITEXTOR" -j 4
             elif [[ -f "$CONDA_PREFIX/bitextor/run-tests.sh" ]]; then
-                chmod 775 $CONDA_PREFIX/bitextor/run-tests.sh
-                $CONDA_PREFIX/bitextor/run-tests.sh -w "$BITEXTOR" -j 4
+                chmod 775 "$CONDA_PREFIX/bitextor/run-tests.sh"
+                "$CONDA_PREFIX/bitextor/run-tests.sh" -w "$BITEXTOR" -j 4
             else
                 echo "(error) No test script found."
                 exit 1
@@ -87,3 +88,17 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Upload to Anaconda Cloud
+         if: ${{ steps.tests.outcome == 'success' }}
+         env:
+            ANACONDA_CLOUD_USERNAME: ${{ secrets.ANACONDA_CLOUD_USERNAME }}
+            ANACONDA_CLOUD_PASSWORD: ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
+         run:
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda activate bitextor-installation
+            conda install -y anaconda-client
+
+            timeout 60 anaconda login --hostname bitextor --username "$ANACONDA_CLOUD_USERNAME" --password "$ANACONDA_CLOUD_PASSWORD" || (1>&2 echo "ERROR: something wrong happenend while trying to login (max. timeout reached or log-in did not success)"; exit 1)
+
+            anaconda upload "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`"
+
