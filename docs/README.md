@@ -72,11 +72,10 @@ If you are using an apt-like package manager you can run the following command l
 sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl pigz uchardet libuchardet-dev libzip-dev
 ```
 
-Additionally, [giawarc](https://github.com/paracrawl/giawarc) and [giashard](https://github.com/paracrawl/giashard) are used for WARC files preprocessing. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
+Additionally, [giashard](https://github.com/paracrawl/giashard) is a tool used for WARC files preprocessing. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
 ```bash
 sudo snap install go # or download from http://golang.org/dl
 # build and place the necessary tools in $HOME/go/bin
-go get github.com/paracrawl/giawarc/...
 go get github.com/paracrawl/giashard/...
 ```
 
@@ -406,7 +405,7 @@ After crawling, the downloaded web are processed to extract clean text, detect l
 
 ```yaml
 # preprocessing
-preprocessor: giawarc
+preprocessor: warc2text
 langs: [en, es, fr]
 
 ## with warc2preprocess only
@@ -421,19 +420,19 @@ shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
 ```
 
-* `preprocessor`: this options allows to select one of three text extraction tools. Options: `warc2preprocess`, `giawarc` and `warc2text`
-* `langs`: a list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `giawarc` or `warc2text`is enabled, every language will be processed, but only languages specified in `langs` will move on to sentence splitting
+* `preprocessor`: this options allows to select one of two text extraction tools. Options: `warc2preprocess` and `warc2text`
+* `langs`: a list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `warc2text`is enabled, every language will be processed, but only languages specified in `langs` will move on to sentence splitting
 * `langID`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `ftfy`: ftfy is a tool that solves encoding errors. Disabled by default
 * `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
 * `html5lib`: extra parse with `html5lib`, which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs.
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `giawarc: true`
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax), 'lxml' (which uses `html5lib` parsed tree to recursively extract text from tags, so it forces the `html5lib` option) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `giawarc: true`
+* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `warc2text: true`
+* `parser`: option that selects HTML parsing library for text extraction; Options are ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax), 'lxml' (which uses `html5lib` parsed tree to recursively extract text from tags, so it forces the `html5lib` option) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `warc2text: true`
 * `PDFextract`: set to 'true' to use it instead of system native poppler `pdf2html` converter
 * `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see https://github.com/bitextor/pdf-extract/#pdfextractjson)
 * `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
 * `PDFextract_kenlm_path`: set path for kenlm binaries
-<!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` and `giawarc` WARC preprocessors -->
+<!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
 * `shards`: number os shards (2^n), default: 8
 * `batches`: batch size in MB, default: 1024
 
@@ -489,7 +488,7 @@ The variable `documentAligner` can take two different values, each of them takin
 
 <!-- The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy: -->
 
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor. NOTE: does not work with `giawarc: true`
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor.
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 <!-- * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment -->
 

@@ -136,10 +136,7 @@ PPROC = "w2p"
 PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
 TEXT_FILE = "plain_text.gz"
 HTML_FILE = "deboilerplate_html.gz"
-if config["preprocessor"] == "giawarc":
-    PPROC = "giawarc"
-    PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
-elif config["preprocessor"] == "warc2text":
+if config["preprocessor"] == "warc2text":
     PPROC = "warc2text"
     PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
     TEXT_FILE = "text.gz"
@@ -726,27 +723,6 @@ rule warc2text:
             fi
         done
         '''
-
-rule giawarc:
-    input: get_pproc_input
-    output: expand("{data}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
-    params: folder=f'{DATADIR}/preprocess/{{target}}/giawarc'
-    shell: '''
-        mkdir -p {params.folder}
-        binary=giawarc
-        if [[ "$(command -v $binary)" == "" ]]; then
-            binary=~/go/bin/giawarc
-        fi
-        cat {input} | {PROFILING} $binary -f bilang -l {LANGID} -o {params.folder} -
-        for lang in {LANGS}; do
-            if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
-                mkdir -p {params.folder}/$lang
-                touch {params.folder}/$lang/{{plain_text,mime,url}}
-                gzip {params.folder}/$lang/{{plain_text,mime,url}}
-            fi
-        done
-    '''
 
 def get_shard_input(lang):
     if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
