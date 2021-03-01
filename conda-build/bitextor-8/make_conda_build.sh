@@ -60,6 +60,9 @@ conda config --show channels
 conda install -y conda-build
 conda install -y conda-verify
 
+echo "git describe --tags:"
+git describe --tags
+
 GIT_DESCRIBE=$(git describe --tags 2> /dev/null)
 
 if [[ "$GIT_DESCRIBE" != "" ]]; then
