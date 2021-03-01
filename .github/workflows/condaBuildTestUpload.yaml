@@ -89,7 +89,7 @@ jobs:
                exit 1
             fi
       -  name: Upload to Anaconda Cloud
-         if: ${{ steps.tests.outcome == 'success' && false }}
+         if: ${{ steps.tests.outcome == 'success' }}
          env:
             ANACONDA_CLOUD_PASSWORD: ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
          run: |
