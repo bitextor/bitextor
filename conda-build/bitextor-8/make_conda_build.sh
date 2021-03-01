@@ -68,6 +68,9 @@ GIT_DESCRIBE=$(git describe --tags 2> /dev/null)
 if [[ "$GIT_DESCRIBE" != "" ]]; then
   export OWN_GIT_BUILD_STR=$(echo "$GIT_DESCRIBE" | awk -F- '{print $(NF-1)"_"$NF}')
   export OWN_GIT_DESCRIBE_NUMBER=$(echo "$GIT_DESCRIBE" | awk -F- '{print $(NF-1)}')
+else
+  export OWN_GIT_BUILD_STR=$(git describe --always 2> /dev/null)
+  export OWN_GIT_DESCRIBE_NUMBER="0"
 fi
 
 export OWN_DATE=$(date +"%FT%H%M")

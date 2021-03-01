@@ -14,7 +14,7 @@ source:
 build:
   skip: True  # [not linux64]
   number: {{ environ.get('OWN_GIT_DESCRIBE_NUMBER', 0) }}
-  string: {{ environ.get('OWN_GIT_BUILD_STR', 'OWN_DATE') }}
+  string: {{ environ.get('OWN_GIT_BUILD_STR') }}
   preserve_egg_dir: True  # Some packages need this directory in order to work fine
 
 requirements:
