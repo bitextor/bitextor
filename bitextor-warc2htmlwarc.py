@@ -61,44 +61,43 @@ def openoffice2html(data):
     datastream = io.BytesIO(data)
     try:
         openoffice_file = zipfile.ZipFile(datastream)
+        return [openoffice_file.read('content.xml')]
     except zipfile.BadZipFile:
         return []
-    return [openoffice_file.read('content.xml')]
 
 
 def office2html(data):
     datastream = io.BytesIO(data)
     try:
         office_file = zipfile.ZipFile(datastream)
+        # word/document.xml, ppt/slides/slide*.xml, xl/sharedStrings.xml
+        xmls = []
+        for xml in office_file.namelist():
+            if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
+                try:
+                    xmls.append(office_file.read(xml))
+                except Exception as ex:
+                    continue
+        return xmls
     except zipfile.BadZipFile:
         return []
-    # word/document.xml, ppt/slides/slide*.xml, xl/sharedStrings.xml
-    xmls = []
-    for xml in office_file.namelist():
-        if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
-            try:
-                xmls.append(office_file.read(xml))
-            except Exception as ex:
-                continue
-    return xmls
 
 
 def epub2html(data):
     datastream = io.BytesIO(data)
     try:
         epub_file = zipfile.ZipFile(datastream)
+        # EPUB/*html
+        xmls = []
+        for xml in epub_file.namelist():
+            if "ml" == xml[-2:]:
+                try:
+                    xmls.append(epub_file.read(xml))
+                except Exception as ex:
+                    continue
+        return xmls
     except zipfile.BadZipFile:
         return []
-    # EPUB/*html
-    xmls = []
-    for xml in epub_file.namelist():
-        if "ml" == xml[-2:]:
-            try:
-                xmls.append(epub_file.read(xml))
-            except Exception as ex:
-                continue
-    return xmls
-
 
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs basic preprocessing, which includes: HTML"
