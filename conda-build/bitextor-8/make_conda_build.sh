@@ -61,19 +61,18 @@ conda install -y conda-build
 conda install -y conda-verify
 
 echo "git describe --tags:"
-git describe --tags
+git describe --always
 
-GIT_DESCRIBE=$(git describe --tags 2> /dev/null)
+GIT_DESCRIBE=$(git describe --always 2> /dev/null)
+OWN_DATE=$(date +"%Y%m%d%H%M")
 
 if [[ "$GIT_DESCRIBE" != "" ]]; then
-  export OWN_GIT_BUILD_STR=$(echo "$GIT_DESCRIBE" | awk -F- '{print $(NF-1)"_"$NF}')
-  export OWN_GIT_DESCRIBE_NUMBER=$(echo "$GIT_DESCRIBE" | awk -F- '{print $(NF-1)}')
+  export OWN_GIT_BUILD_STR="${OWN_DATE}_${GIT_DESCRIBE}"
 else
-  export OWN_GIT_BUILD_STR=$(git describe --always 2> /dev/null)
-  export OWN_GIT_DESCRIBE_NUMBER="0"
+  export OWN_GIT_BUILD_STR="${OWN_DATE}"
 fi
 
-export OWN_DATE=$(date +"%FT%H%M")
+export OWN_GIT_DESCRIBE_NUMBER="0"
 
 echo "--------- Info ---------"
 echo "$GIT_DESCRIBE"
