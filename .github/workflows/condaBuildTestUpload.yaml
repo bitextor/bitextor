@@ -91,7 +91,7 @@ jobs:
       -  name: Upload to Anaconda Cloud
          if: ${{ steps.tests.outcome == 'success' }}
          env:
-            ANACONDA_CLOUD_PASSWORD: ${{ secrets.ANACONDA_CLOUD_PASSWORD }}
+            ANACONDA_CLOUD_TOKEN: ${{ secrets.ANACONDA_CLOUD_TOKEN }}
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda activate bitextor-installation
@@ -99,6 +99,5 @@ jobs:
 
             bitextor_file=$(ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            timeout 60 anaconda login --hostname bitextor --username bitextor --password "$ANACONDA_CLOUD_PASSWORD" || (1>&2 echo "ERROR: something wrong happenend while trying to login (max. timeout reached or log-in did not success)"; exit 1)
-            anaconda upload "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_file"
+            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_file"
 
