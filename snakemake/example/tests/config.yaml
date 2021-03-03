@@ -1,0 +1,72 @@
+bitextor: ~/permanent/bitextor
+
+# BASIC VARIABLES
+permanentDir: ~/permanent/bitextor-output-default-en-fr-small
+transientDir: ~/transient-default-en-fr-small
+dataDir: ~/permanent/data
+temp: ~/transient-default-en-fr-small
+
+lang1: en
+lang2: fr
+reverseOutputPair: true # Make the output columns lang2-lang1 instead of lang1-lang2
+
+# profiling: true # Performs /usr/bin/time over most time consuming tasks
+
+# TOKENIZER/SPLITTER/MORPH ANALIZER SCRIPTS
+wordTokenizers: {
+        'default' : "/home/lpla/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -l en -a -b -q",
+        'fr' : "/home/lpla/permanent/bitextor/preprocess/moses/tokenizer/tokenizer.perl -l fr -a -b -q"
+        }
+sentenceSplitters: {
+        'en' : "/home/lpla/permanent/bitextor/snakemake/example/nltk-sent-tokeniser.py english",
+        'fr' : "/home/lpla/permanent/bitextor/snakemake/example/nltk-sent-tokeniser.py french"
+        }
+# morphologicalAnalysers: {
+#         'en': "bash /home/lpla/permanent/bitextor/snakemake/example/morphanalyser-en.sh",
+#         'fr': "bash /home/lpla/permanent/bitextor/snakemake/example/morphanalyser-fr.sh"
+# }
+
+
+# CRAWLING
+hosts: ["asdfjkalsdjdkfjlksdjfjkdnotworkingurl.com","anothernotworkingurlasdfasdfdfdfdfdasdf.com"] # Place here your url(s)
+# WARCFiles: ["/home/lpla/SURV-20141218203026-00019.warc.gz"] # You can also use WARC files as the starting point of Bitextor
+
+crawler: wget # Choose between wget, heritrix, creepy or httrack (deprecated) crawlers
+# heritrixPath: /home/lpla/heritrix3/heritrix-3.4.0-SNAPSHOT # Set if you are using heritrix
+crawlFileTypes: "html,pdf" # wget only
+
+# onlyConcat: true # Only perform crawling and grouping WARCs by domain
+
+# PREPROCESSING
+
+boilerpipeCleaning: true # Remove boilerplates form HTML documents
+parser: 'bs4' # Tool used for obtaining plain text from HTML docuemtns, options are: 'bs4', 'modest' or 'simple'
+
+# onlyPreprocessing: true # Only perform crawling, grouping by domain and preprocessing
+
+# DOCUMENT ALIGNER
+documentAligner: DIC # Choose between 'DIC' (dictionary-based document aligner) or 'externalMT' (Machine Translation based document aligner)
+
+dic: ~/permanent/en-fr.dic # Provide a bilingual lexica to use with 'DIC' document aligner
+initCorpusTrainPrefix: ["/home/lpla/Europarl.en-fr"] # If you don't provide a dictionary for the 'DIC' document aligner, using this corpus will generate one
+
+# alignerCmd: "bash /home/lpla/permanent/bitextor/snakemake/example/dummy-translate.sh" # Provide a translation script (lang1->lang2 direction) to use with 'externalMT' document aligner
+
+# SENTENCE ALIGNER
+bleualign: false # If set, it will use 'bleualign' sentence aligner; false or not set will use 'hunalign'
+hunalignThreshold: 0
+# bleuAlignThreshold: 0.2
+
+# POSTPROCESSING
+
+bicleaner: ~/bicleaner-model/en-fr/en-fr.yaml # Use bicleaner model for parallel data filtering
+bicleanerThreshold: 0.0
+# bicleanerCorpusTrainingPrefix: ["/home/lpla/EMEA.en-fr"] # If bicleaner model does not exist, this corpus will generate one
+
+bifixer: true
+
+# deferredCrawling: true
+
+elrc: true
+tmx: true
+deduped: true
