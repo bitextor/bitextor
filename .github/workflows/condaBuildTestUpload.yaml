@@ -29,7 +29,7 @@ jobs:
             conda list
       -  uses: actions/checkout@v2
       -  name: Create Bitextor conda build
-         working-directory: ./conda-build/bitextor-8
+         working-directory: ./conda-build/bitextor-8-nightly
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda deactivate && ./make_conda_build.sh -r
