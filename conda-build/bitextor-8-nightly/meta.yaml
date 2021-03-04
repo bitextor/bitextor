@@ -6,10 +6,13 @@ package:
   version: "{{ version }}"
 
 source:
-  git_url: https://github.com/bitextor/bitextor/
-  git_branch: snake_performance
-  folder: "bitextor"
-
+  - git_url: https://github.com/bitextor/bitextor/
+    git_branch: warc2text
+    folder: "bitextor"
+  - url: http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
+    folder: heritrix-3.4.0-SNAPSHOT
+  - git_url: https://github.com/transducens/linguacrawl.git
+    folder: linguacrawl
 
 build:
   skip: True  # [not linux64]
@@ -37,6 +40,8 @@ requirements:
     - wget
     - protobuf=3.14
     - libmagic
+    - libzip=1.7.3
+    - uchardet=0.0.7
   run:
     - pip
     - python=3.8.5=h7579374_1
@@ -52,6 +57,8 @@ requirements:
     - wget
     - protobuf=3.14
     - libmagic
+    - libzip=1.7.3
+    - uchardet=0.0.7
 
 about:
   home: https://github.com/bitextor/bitextor/
