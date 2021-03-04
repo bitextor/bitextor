@@ -12,7 +12,7 @@ usage()
   echo "  -h                      It displays this help message."
 }
 
-CONDA_ENV_NAME="bitextor-build"
+CONDA_ENV_NAME="bitextor-build-nightly"
 REMOVE_ENV_IF_EXISTS=""
 
 while getopts "e:rh" options
@@ -67,10 +67,11 @@ echo "git describe --always:"
 git describe --always
 
 GIT_DESCRIBE=$(git describe --always 2> /dev/null)
-OWN_DATE=$(date +"%Y%m%d%H%M")
+
+export OWN_DATE=$(date +"%Y%m%d%H%M")
 
 if [[ "$GIT_DESCRIBE" != "" ]]; then
-  export OWN_GIT_BUILD_STR="${OWN_DATE}_${GIT_DESCRIBE}"
+  export OWN_GIT_BUILD_STR="${GIT_DESCRIBE}"
 else
   export OWN_GIT_BUILD_STR="${OWN_DATE}"
 fi

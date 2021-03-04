@@ -1,5 +1,5 @@
-{% set name = "bitextor" %}
-{% set version = "8" %}
+{% set name = "bitextor-nightly" %}
+{% set version = environ.get('OWN_DATE') %}
 
 package:
   name: "{{ name }}"
