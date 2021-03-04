@@ -14,7 +14,7 @@ crawlTimeLimit: "600" # 10min
 warcsFile: ~/warcs.gz
 
 # preprocessing
-preprocessor: "giawarc"
+preprocessor: "warc2text"
 shards: 8
 batches: 1024
 
