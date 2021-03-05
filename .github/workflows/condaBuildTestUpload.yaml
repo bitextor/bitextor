@@ -29,7 +29,7 @@ jobs:
             conda list
       -  uses: actions/checkout@v2
       -  name: Create Bitextor conda build
-         working-directory: ./conda-build/bitextor-8
+         working-directory: ./conda-build/bitextor-8-nightly
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda deactivate && ./make_conda_build.sh -r
@@ -39,7 +39,7 @@ jobs:
             conda deactivate
             conda create -y -n bitextor-installation
             conda activate bitextor-installation
-            conda install -y "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`"
+            conda install -y "$CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`"
             conda update -y --all
             command -v "bitextor" || command -v "bitextor.sh"
       -  name: Run tests
@@ -97,7 +97,7 @@ jobs:
             conda activate bitextor-installation
             conda install -y anaconda-client
 
-            bitextor_file=$(ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+            bitextor_file=$(ls $CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_file"
+            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64/$bitextor_file"
 
