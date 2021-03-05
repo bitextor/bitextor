@@ -231,7 +231,7 @@ bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 
 This command would run Bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
 
-Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `snakemake/examples/cluster.json`):
+Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `workflow/examples/cluster.json`):
 
 ```json
 {
@@ -265,7 +265,7 @@ Note that, in this case, an additional option needs to be added to the `sbatch` 
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`snakemake/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`workflow/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 * Crawling
@@ -444,7 +444,7 @@ By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/proj
 ```yaml
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
-  'default': '/home/user/bitextor/snakemake/example/nltk-sent-tokeniser.py english'
+  'default': '/home/user/bitextor/workflow/example/nltk-sent-tokeniser.py english'
 }
 
 customNBPs: {
