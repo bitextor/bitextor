@@ -46,6 +46,7 @@ if [[ "$ok" != "0" ]]; then ./autogen.sh; fi  # Re-execute autogen.sh
 
 echo -e " - \e[4mMake...\e[0m"
 CPATH="$CPATH:$CONDA_PREFIX/include" make
+cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
 
 # Heritrix 3
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"
