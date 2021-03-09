@@ -24,7 +24,7 @@ lang2: 'fr'
 # align
 documentAligner: "externalMT"
 documentAlignerThreshold: 0.1
-alignerCmd: "bash ~/bitextor/snakemake/example/dummy-translate.sh"
+alignerCmd: "bash ~/bitextor/workflow/example/dummy-translate.sh"
 translationDirection: fr2en
 
 sentenceAligner: 'bleualign'
