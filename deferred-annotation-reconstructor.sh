@@ -13,9 +13,9 @@ zcat $1 | while read line; do
 	
 	
 	wget "$url1" --quiet --warc-file $tempwarc --output-document /dev/null
-	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input ${tempwarc}.warc.gz 2> /dev/null
+	warc2text/bin/warc2text -o $tempprocess ${tempwarc}.warc.gz 2> /dev/null
 	
-	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $2 > $tempsplitsent
+	zcat $tempprocess/*/text.gz | python3 bitextor-split.py --langcode $2 > $tempsplitsent
 
 	echo -n "	"
 	cat $tempsplitsent | base64 -d | while read linesplit; do
@@ -37,9 +37,9 @@ zcat $1 | while read line; do
 
 
 	wget "$url2" --quiet --warc-file $tempwarc --output-document /dev/null
-	python3 bitextor-warc2preprocess.py --output-dir $tempprocess --input ${tempwarc}.warc.gz 2> /dev/null
+	warc2text/bin/warc2text -o $tempprocess ${tempwarc}.warc.gz 2> /dev/null
 	
-	zcat $tempprocess/*/plain_text.gz | python3 bitextor-split.py --langcode $3 > $tempsplitsent
+	zcat $tempprocess/*/text.gz | python3 bitextor-split.py --langcode $3 > $tempsplitsent
 	
 	echo -n "	"
 	cat $tempsplitsent | base64 -d | while read linesplit; do
