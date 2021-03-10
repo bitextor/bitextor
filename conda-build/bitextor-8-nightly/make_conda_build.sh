@@ -55,6 +55,10 @@ if [[ "$(conda config --show channels | grep dmnapolitano)" == "" ]]; then
   echo "Info: appending 'dmnapolitano' channel (remove it manually after the build is done if you want)"
   conda config --append channels dmnapolitano # warcio
 fi
+if [[ "$(conda config --show channels | grep esarrias)" == "" ]]; then
+  echo "Info: appending 'esarrias' channel (remove it manually after the build is done if you want)"
+  conda config --append channels esarrias # uchardet
+fi
 
 conda config --show channels
 conda install -y conda-build

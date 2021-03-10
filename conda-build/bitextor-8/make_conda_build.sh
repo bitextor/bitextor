@@ -43,17 +43,27 @@ fi
 conda create -y -n $CONDA_ENV_NAME python=3.8.5
 conda activate $CONDA_ENV_NAME
 
+NEW_CHANNELS=""
 if [[ "$(conda config --show channels | grep conda-forge)" == "" ]]; then
-  echo "Info: adding 'conda-forge' channel (remove it manually after the build is done if you want). This is common at fresh installations"
+  NEW_CHANNELS="$NEW_CHANNELS conda-forge"
   conda config --add channels conda-forge
 fi
 if [[ "$(conda config --show channels | grep bioconda)" == "" ]]; then
-  echo "Info: appending 'bioconda' channel (remove it manually after the build is done if you want)"
+  NEW_CHANNELS="$NEW_CHANNELS bioconda"
   conda config --append channels bioconda # snakemake
 fi
 if [[ "$(conda config --show channels | grep dmnapolitano)" == "" ]]; then
-  echo "Info: appending 'dmnapolitano' channel (remove it manually after the build is done if you want)"
+  NEW_CHANNELS="$NEW_CHANNELS dmnapolitano"
   conda config --append channels dmnapolitano # warcio
+fi
+
+if [[ "$(conda config --show channels | grep esarrias)" == "" ]]; then
+  NEW_CHANNELS="$NEW_CHANNELS esarrias"
+  conda config --append channels esarrias # uchardet
+fi
+
+if [ -n "${NEW_CHANNELS}" ]; then
+    echo "Info: new channels appended: $NEW_CHANNELS. They can be removed manually after the build"
 fi
 
 conda config --show channels

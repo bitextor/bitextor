@@ -132,27 +132,37 @@ if "crawlPrefixFilter" in config:
 
 #################################################################
 # PREPROCESS
-PPROC = "w2p"
-PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
-if config["preprocessor"] == "giawarc":
-    PPROC = "giawarc"
-    PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz"]
+PPROC = "warc2text"
+PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
+TEXT_FILE = "text.gz"
+HTML_FILE = ""
+if "writeHTML" in config and config["writeHTML"]:
+    HTML_FILE = "html.gz"
+    PPROC_FILES.append("html.gz")
+
+if "preprocessor" in config and config["preprocessor"] == "warc2preprocess":
+    PPROC = "w2p"
+    PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
+    TEXT_FILE = "plain_text.gz"
+    HTML_FILE = "deboilerplate_html.gz"
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
 
 CLEANHTML = ""
 FTFY = ""
-LANGID = config["langID"]
+LANGID = "cld2"
 PARSER = ""
 BOILERPIPE = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
 
-if config["cleanHTML"]:
+if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
-if config["ftfy"]:
+if "ftfy" in config and config["ftfy"]:
     FTFY = "--ftfy"
+if "langID" in config:
+    LANGID = config["langID"]
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
 if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
@@ -699,26 +709,24 @@ rule warc2preprocess:
         done
     '''
 
-rule giawarc:
+rule warc2text:
     input: get_pproc_input
-    output: expand("{data}/preprocess/{{target}}/giawarc/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
-    params: folder=f'{DATADIR}/preprocess/{{target}}/giawarc'
+    output: expand("{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
+    params:
+        folder = f'{DATADIR}/preprocess/{{target}}/warc2text',
+        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         mkdir -p {params.folder}
-        binary=giawarc
-        if [[ "$(command -v $binary)" == "" ]]; then
-            binary=~/go/bin/giawarc
-        fi
-        cat {input} | {PROFILING} $binary -f bilang -l {LANGID} -o {params.folder} -
+        {PROFILING} {BITEXTOR}/warc2text/bin/warc2text -o {params.folder} -s -f {params.f} {input}
         for lang in {LANGS}; do
-            if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
+            if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
                 mkdir -p {params.folder}/$lang
-                touch {params.folder}/$lang/{{plain_text,mime,url}}
-                gzip {params.folder}/$lang/{{plain_text,mime,url}}
+                touch {params.folder}/$lang/{{text,mime,url}}
+                gzip {params.folder}/$lang/{{text,mime,url}}
             fi
         done
-    '''
+        '''
 
 def get_shard_input(lang):
     if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
@@ -773,19 +781,14 @@ checkpoint shard:
         nofiles=$(ls -l {params.o} | wc -l)
         if [ "$nofiles" == "1" ]; then
             # No files generated
-            >&2 echo "WARNING: any file generated after running giashard. Creating empty files instead"
+            >&2 echo "WARNING: no files generated after running giashard. Creating empty files instead"
 
             # Fake shards
             mkdir -p {params.o}/{params.empty_shard_batch_folder}
 
             touch {params.o}/{params.empty_shard_batch_folder}/empty
-            if [[ "{PPROC}" == "giawarc" ]]; then
-                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
-                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,url,normalized_html}}
-            else
-                touch {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                gzip {params.o}/{params.empty_shard_batch_folder}/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-            fi
+            touch {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
+            gzip {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
 
             mylang="{SRC_LANG}"
             notmylang="{TRG_LANG}"
@@ -817,13 +820,8 @@ checkpoint shard:
 
                 # Create the same shards that have been created in the other lang (only 1 batch)
                 ls -d {params.o_no_lang}/$notmylang/* | xargs -I[] basename [] | xargs -I[] mkdir -p {params.o_no_lang}/$mylang/[]/1
-                if [[ "{PPROC}" == "giawarc" ]]; then
-                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,url,normalized_html}}
-                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,url,normalized_html}}
-                else
-                    ls -d {params.o}/*/* | xargs -I[] touch []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                fi
+                    ls -d {params.o}/*/* | xargs -I[] touch []/{{{params.f}}}
+                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{{params.f}}}
             fi
         fi
 
@@ -845,7 +843,7 @@ def apply_format(string, replace_format, replace_token="{}", replace_only_if_tru
     return string
 
 rule split:
-    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/plain_text.gz'
+    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}'
     params:
         splitter = lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), "--sentence-splitter \"{}\""),
         customnbp = lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), "--customnbp \"{}\"")

@@ -37,8 +37,8 @@ rule dic_docsegalign_idx2ridx_l2tol1:
 rule dic_docsegalign_ridx2imagesetoverlap:
     input:
         ridx=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.ridx.xz',
-        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deboilerplate_html.gz',
-        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deboilerplate_html.gz',
+        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}',
+        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.xz',
     shell: '''
         xzcat -T 0 -f {input.ridx} \
@@ -49,8 +49,8 @@ rule dic_docsegalign_ridx2imagesetoverlap:
 rule dic_docsegalign_imagesetoverlap2structuredistance:
     input:
         imagesetoverlap=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.xz',
-        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deboilerplate_html.gz',
-        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deboilerplate_html.gz',
+        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}',
+        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.xz',
     shell: '''
         xzcat -T 0 -f {input.imagesetoverlap} \
@@ -61,8 +61,8 @@ rule dic_docsegalign_imagesetoverlap2structuredistance:
 rule dic_docsegalign_structuredistance2urldistance:
     input:
         structuredistance=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.xz',
-        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deboilerplate_html.gz',
-        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deboilerplate_html.gz',
+        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}',
+        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}',
         url_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
         url_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.xz',
@@ -78,8 +78,8 @@ rule dic_docsegalign_structuredistance2urldistance:
 rule dic_docsegalign_urldistance2mutuallylinked:
     input:
         urldistance=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.xz',
-        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deboilerplate_html.gz',
-        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deboilerplate_html.gz',
+        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}',
+        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}',
         url_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
         url_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.xz',
@@ -106,8 +106,8 @@ rule dic_docsegalign_mutuallylinked2urlscomparison:
 rule dic_docsegalign_urlscomparison2urlsoverlap:
     input:
         urlscomparison=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.xz',
-        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/deboilerplate_html.gz',
-        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/deboilerplate_html.gz',
+        debpl_html_l1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}',
+        debpl_html_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.xz',
     shell: '''
         xzcat -T 0 -f {input.urlscomparison} \

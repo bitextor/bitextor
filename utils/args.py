@@ -76,20 +76,24 @@ def validate_args(config):
             'heritrixUrl': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             'heritrixUser': {'type': 'string', 'dependencies': {'crawler' : 'heritrix'}},
             # preprocessing
+            'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'warc2preprocess'], 'default': 'warc2text'},
             'langs': {'type': 'list'},
-            'preprocessor': {'type': 'string', 'allowed': ['warc2preprocess', 'giawarc'], 'default': 'giawarc'},
             'shards': {'type': 'integer', 'min': 0, 'default': 8},
             'batches': {'type': 'integer', 'min': 1, 'default': 1024},
-            'cleanHTML': {'type': 'boolean', 'default': False},
-            'ftfy': {'type': 'boolean', 'default': False},
+            ## specific to warc2text:
+            'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor':  ['warc2text']}},
+            ## specific to warc2preprocess:
+            'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+            ## pdfEXTRACT
             'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
             'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
             'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
-            'langID': {'type': 'string', 'allowed': ['cld2', 'cld3'], 'default': 'cld2'},
-            'parser': {'type': 'string', 'allowed': ['bs4', 'modest', 'simple', 'lxml'], 'dependencies': {'preprocessor': 'warc2preprocess'}},
-            'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-            'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
             # tokenization
             'sentenceSplitters': {'type': 'dict'},
             'customNBPs': {'type': 'dict'},
@@ -153,7 +157,9 @@ def validate_args(config):
             schema['dic']['required'] = True
     elif config['documentAligner'] == 'DIC':
         schema['dic']['required'] = True
-        schema['documentAligner']['dependencies']['preprocessor'] = 'warc2preprocess'
+        schema['documentAligner']['dependencies']['preprocessor'] = ['warc2preprocess', 'warc2text']
+        if config['preprocessor'] == 'warc2text':
+            config['writeHTML'] = True
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
         #schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'}) # dependencies are not working because of the frozenset

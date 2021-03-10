@@ -9,7 +9,6 @@ mkdir "$PWD/../gopath"
 go env
 #export CGO_ENABLED="1"
 export GOPATH="$PWD/../gopath"
-go get github.com/paracrawl/giawarc/...
 go get github.com/paracrawl/giashard/...
 
 # Pip dependencies
@@ -30,33 +29,6 @@ pip3 show spacy && pip3 show en_core_web_sm && \
 pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
 
-# Heritrix 3
-echo -e " - \e[4mInstalling Heritrix3...\e[0m"
-cd ..
-tmp_dir="$(mktemp -d -t heritrix3-XXXXXXXXXX)"
-cwd="$PWD"
-cd "$tmp_dir"
-wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
-unzip heritrix-3.4.0-SNAPSHOT-dist.zip
-mv "heritrix-3.4.0-SNAPSHOT" "$cwd/"
-cd "$cwd/heritrix-3.4.0-SNAPSHOT"
-# ...
-cd ..
-cd bitextor
-
-# linguacrawl
-echo -e " - \e[4mInstalling linguacrawl...\e[0m"
-cd ..
-tmp_dir="$(mktemp -d -t linguacrawl-XXXXXXXXXX)"
-cwd="$PWD"
-cd "$tmp_dir"
-git clone https://github.com/transducens/linguacrawl.git
-mv "linguacrawl" "$cwd/"
-cd "$cwd/linguacrawl"
-pip3 install -r requirements.txt || echo " - \e[4mcheck-gen: linguacrawl requeriments failed...\e[0m"
-pip3 install . || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
-cd ..
-cd bitextor
 
 echo -e " - \e[4mChecking and generating files...\e[0m"
 # Execute autogen.sh and try to fix known installation issues if any
@@ -75,6 +47,20 @@ if [[ "$ok" != "0" ]]; then ./autogen.sh; fi  # Re-execute autogen.sh
 
 echo -e " - \e[4mMake...\e[0m"
 CPATH="$CPATH:$CONDA_PREFIX/include" make
+cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
+
+# Heritrix 3
+# echo -e " - \e[4mInstalling Heritrix3...\e[0m"
+# download and unzipping handled by source property in meta.yaml
+
+# linguacrawl
+echo -e " - \e[4mInstalling linguacrawl...\e[0m"
+cd ..
+cd linguacrawl
+pip3 install -r requirements.txt || echo " - \e[4mcheck-gen: linguacrawl requeriments failed...\e[0m"
+pip3 install . || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
+cd ..
+cd bitextor
 
 # Make Biroamer
 cwd="$PWD"
@@ -107,7 +93,6 @@ cd "$PREFIX/bin"
 #echo "Could not create bitextor link...")
 ### bitextor.sh uses dirname, so we cannot use soft links directly...
 ### Other soft links
-ln -s ../gopath/bin/giawarc ./giawarc || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'giawarc'...\e[0m" # Warning: bitextor will look for giarwarc at ~/go/bin
 ln -s ../gopath/bin/giashard ./giashard || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'giashard'...\e[0m" # Warning: bitextor will look for giashard at ~/go/bin
 ln -s "$PREFIX/heritrix-3.4.0-SNAPSHOT" "$PREFIX/heritrix3" || echo -e " - \e[31m\e[4mpost-build-act: could not create link 'heritrix3' (directory)...\e[0m"
 
