@@ -7,7 +7,7 @@ package:
 
 source:
   - git_url: https://github.com/bitextor/bitextor/
-    git_branch: warc2text
+    git_branch: snake_performance
     folder: "bitextor"
   - url: http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
     folder: heritrix-3.4.0-SNAPSHOT
