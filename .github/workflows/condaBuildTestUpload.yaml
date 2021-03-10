@@ -1,5 +1,8 @@
 name: Build, test and upload with conda
-on: [push]
+on:
+   push:
+      branches:
+         - snake_performance
 jobs:
    conda_build_testing_and_upload:
       name: Build, test with conda and upload
