@@ -30,23 +30,11 @@ pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
 
 
-echo -e " - \e[4mChecking and generating files...\e[0m"
-# Execute autogen.sh and try to fix known installation issues if any
-autogen_output=$(./autogen.sh) && ok="0" || \
-  (status=$?; \
-  if [[ "$(echo $autogen_output | grep 'tensorflow for Python... no' | wc -l)" != "0" ]]; then \
-    echo -e " - \e[4mcheck-gen: trying to fix known installation issue related to TensorFlow...\e[0m"; \
-    ok="1"; \
-  else \
-    echo -e " - \e[31m\e[4mcheck-gen: unknown installation issue happened... (status: $status)\e[0m"; \
-    false; \ # Stop execution
-  fi)
-
-if [[ "$ok" == "1" ]]; then pip3 uninstall -y tensorflow && pip3 install tensorflow==2.2 keras==2.2.5; fi # tensorflow fix
-if [[ "$ok" != "0" ]]; then ./autogen.sh; fi  # Re-execute autogen.sh
-
 echo -e " - \e[4mMake...\e[0m"
-CPATH="$CPATH:$CONDA_PREFIX/include" make
+mkdir -p build && cd build
+CPATH="$CPATH:$CONDA_PREFIX/include" cmake ..
+CPATH="$CPATH:$CONDA_PREFIX/include" make -j
+cd ..
 cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
 
 # Heritrix 3
