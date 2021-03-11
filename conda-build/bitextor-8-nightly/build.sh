@@ -28,7 +28,8 @@ python -m spacy download en_core_web_sm && \
 pip3 show spacy && pip3 show en_core_web_sm && \
 pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
-
+### Linguacrawl
+pip3 install git+https://github.com/transducens/linguacrawl.git || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
 
 echo -e " - \e[4mMake...\e[0m"
 mkdir -p build && cd build
@@ -40,15 +41,6 @@ cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
 # Heritrix 3
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"
 # download and unzipping handled by source property in meta.yaml
-
-# linguacrawl
-echo -e " - \e[4mInstalling linguacrawl...\e[0m"
-cd ..
-cd linguacrawl
-pip3 install -r requirements.txt || echo " - \e[4mcheck-gen: linguacrawl requeriments failed...\e[0m"
-pip3 install . || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
-cd ..
-cd bitextor
 
 # Make Biroamer
 cwd="$PWD"

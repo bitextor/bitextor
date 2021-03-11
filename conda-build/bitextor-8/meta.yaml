@@ -11,8 +11,6 @@ source:
     folder: "bitextor"
   - url: http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
     folder: heritrix-3.4.0-SNAPSHOT
-  - git_url: https://github.com/transducens/linguacrawl.git
-    folder: linguacrawl
 
 
 build:
