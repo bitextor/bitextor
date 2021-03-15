@@ -24,8 +24,6 @@ requirements:
     - git
     - make=4.2.1
     - cmake=3.16.3
-    - automake=1.16.1
-    - pkg-config=0.29.1
     - gcc_linux-64=9.3.0
     - gxx_linux-64=9.3.0
     #- go
@@ -42,7 +40,7 @@ requirements:
     - libzip=1.7.3
     - uchardet=0.0.7
     - gperftools=2.7
-    - google-sparesehash=2.0.3
+    - google-sparsehash=2.0.3
   run:
     - pip
     - python=3.8.5=h7579374_1
@@ -61,7 +59,7 @@ requirements:
     - libzip=1.7.3
     - uchardet=0.0.7
     - gperftools=2.7
-    - google-sparesehash=2.0.3
+    - google-sparsehash=2.0.3
 
 about:
   home: https://github.com/bitextor/bitextor/

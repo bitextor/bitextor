@@ -42,16 +42,6 @@ cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"
 # download and unzipping handled by source property in meta.yaml
 
-# Make Biroamer
-cwd="$PWD"
-cd "biroamer/fast_align" && \
-mkdir build && \
-cd build && \
-cmake .. && \
-make -j || \
-echo -e " - \e[31m\e[4mmake: could not build fast_align (this might lead to problems with Biroamer)...\e[0m"
-cd "$cwd"
-
 echo -e " - \e[4mMaking post-build actions...\e[0m"
 # Clean
 find . -type d -or -type l | grep /__pycache__$ | xargs -I{} rm -rf {}
