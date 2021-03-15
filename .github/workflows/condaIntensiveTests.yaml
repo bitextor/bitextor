@@ -1,5 +1,5 @@
 name: Intensive tests with conda nightly
-on: repository_dispatch
+on: workflow_dispatch
 jobs:
    tests-mt:
       name: Tests MT
