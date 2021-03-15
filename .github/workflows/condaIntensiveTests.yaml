@@ -1,0 +1,101 @@
+name: Intensive tests with conda nightly
+on: repository_dispatch
+jobs:
+   tests-mt:
+      name: Tests MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01
+   tests-db:
+      name: Tests dictionary based
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02
+   tests-gendic:
+      name: Tests generate dictionary
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04
+   tests-genbicleaner:
+      name: Tests generate bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08
+   tests-gendic-genbicleaner:
+      name: Tests generate dictionary and bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10
+   tests-mt-db:
+      name: Tests combining dictionaries and MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20
+   tests-others:
+      name: Other tests
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda install -y -c bitextor bitextor-nightly
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40

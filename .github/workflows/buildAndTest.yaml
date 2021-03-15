@@ -1,5 +1,15 @@
 name: Build and execute Bitextor tests
-on: [push, pull_request]
+on:
+   push:
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
+         - 'img/**'
+   pull_request:
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
+         - 'img/**'
 jobs:
    build_and_testing:
       name: Build and testing
@@ -38,19 +48,6 @@ jobs:
             java-version: 8
             java-package: jdk
             architecture: x64
-#      -  name: Download protobuf
-#         run: |
-#            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-#            tar -zxvf protobuf-all-3.11.4.tar.gz
-#      -  name: Install protobuf
-#         working-directory: ./protobuf-3.11.4
-#         run: |
-#            ./configure
-#            make
-#            make check
-#            sudo make install
-#            sudo ldconfig
-#            pip3 install pycld3
       -  uses: actions/checkout@v2
       -  name: Checkout submodules
          run: git submodule update --init --force --recursive
