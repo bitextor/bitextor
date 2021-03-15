@@ -3,6 +3,10 @@ on:
    push:
       branches:
          - snake_performance
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
+         - 'img/**'
 jobs:
    conda_build_testing_and_upload:
       name: Build, test with conda and upload
@@ -92,6 +96,7 @@ jobs:
                exit 1
             fi
       -  name: Upload to Anaconda Cloud
+         id: deployment
          if: ${{ steps.tests.outcome == 'success' }}
          env:
             ANACONDA_CLOUD_TOKEN: ${{ secrets.ANACONDA_CLOUD_TOKEN }}
@@ -103,4 +108,14 @@ jobs:
             bitextor_file=$(ls $CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
             anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build-nightly/conda-bld/linux-64/$bitextor_file"
-
+      -  name: Trigger workflow with intensive tests
+         if: ${{ steps.deployment.outcome == 'success' }}
+         env:
+            BITEXTOR_CI_USER: ${{ secrets.BITEXTOR_CI_USER }}
+            BITEXTOR_CI_TOKEN: ${{ secrets.BITEXTOR_CI_TOKEN }}
+            CONDA_INTENSIVE_TESTS_WORKFLOW: "buildAndTest.yaml"
+            CONDA_INTENSIVE_TESTS_BRANCH: "snake_performance"
+         run: |
+            curl -u "${BITEXTOR_CI_USER}:${BITEXTOR_CI_TOKEN}" -X POST -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/bitextor/bitextor/actions/workflows/${CONDA_INTENSIVE_TESTS_WORKFLOW}/dispatches" \
+               -d "{\"ref\":\"${CONDA_INTENSIVE_TESTS_BRANCH}\"}"
