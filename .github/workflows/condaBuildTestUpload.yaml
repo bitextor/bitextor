@@ -113,7 +113,7 @@ jobs:
          env:
             BITEXTOR_CI_USER: ${{ secrets.BITEXTOR_CI_USER }}
             BITEXTOR_CI_TOKEN: ${{ secrets.BITEXTOR_CI_TOKEN }}
-            CONDA_INTENSIVE_TESTS_WORKFLOW: "buildAndTest.yaml"
+            CONDA_INTENSIVE_TESTS_WORKFLOW: "condaIntensiveTests.yaml"
             CONDA_INTENSIVE_TESTS_BRANCH: "snake_performance"
          run: |
             curl -u "${BITEXTOR_CI_USER}:${BITEXTOR_CI_TOKEN}" -X POST -H "Accept: application/vnd.github.v3+json" \
