@@ -60,132 +60,157 @@ Currently we only support Linux x64 for Conda environment.
 
 ### Dependencies
 
-Apart from downloading all submodules of this repository (which you can do with `git clone --recurse-submodules https://github.com/bitextor/bitextor.git` if you are cloning this repo from scratch or, in case you are downloading a tarball, just do `git submodule update --init --recursive`),
-there are some external tools that need to be in the path before installing the project. **autotools** and **pkg-config** are necessary for building and installing the project.
-Tools from **JDK** are needed to run Java dependencies ([Boilerpipe](https://boilerpipe-web.appspot.com/)); version 8 or later are required. In addition, a C++ compiler is required for compiling dependencies.
-The **libboost-all-dev** dependency is need to compile the [`clustercat`](https://github.com/jonsafari/clustercat) and [`mgiza`](https://github.com/moses-smt/mgiza) projects.
-Optionally, **[httrack](https://www.httrack.com/)** and `wget` can be used for crawling if it is installed.
+* Download **Bitextor's submodules**. If you are cloning from scratch:
 
-If you are using an apt-like package manager you can run the following command line to install all these dependencies:
+  ```bash
+  # if you are cloning from scratch:
+  git clone --recurse-submodules https://github.com/bitextor/bitextor.git
+
+  # otherwise:
+  git submodule update --init --recursive
+  ```
+
+* **Required packages**
+
+  These are some external tools that need to be in the path before installing the project. If you are using an apt-like package manager you can run the following command line to install all these dependencies:
+
+  ```bash
+  # mandatory:
+  sudo apt install python3 python3-venv python3-pip build-essential cmake libboost-all-dev liblzma-dev time curl pigz
+
+  # optional, feel free to skip dependencies for components that you don't expect to use:
+  ## wget crawler:
+  sudo apt install wget
+  ## httrack crawler:
+  sudo apt install httrack
+  ## warc2text:
+  sudo apt install uchardet libuchardet-dev libzip-dev
+  ## biroamer:
+  sudo apt install libgoogle-perftools-dev libsparsehash-dev
+  ## Heritrix, PDFExtract and boilerpipe:
+  sudo apt install openjdk-8-jdk
+  ## PDFExtract:
+  ## PDFExtract also requires protobuf and CLD3 installed (installation instructions below)
+  sudo apt install autoconf automake libtool ant maven poppler-utils apt-transport-https ca-certificates gnupg software-properties-common
+  ```
+
+* **Golang** packages
+
+  Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) for WARC files preprocessing. To install this tool Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
+
+  ```bash
+  sudo snap install go # or download from http://golang.org/dl
+  # build and place the necessary tools in $HOME/go/bin
+  go get github.com/paracrawl/giashard/...
+  ```
+
+* **Pip** dependencies
+
+  Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
+
+  Some additional Python libraries are required. They can be installed automatically with the tool pip by running (use without `sudo` if you are running in a virtualenv):
+
+  ```bash
+  pip3 install --upgrade pip
+  pip3 install -r requirements.txt
+  # bicleaner:
+  pip3 install -r bicleaner/requirements.txt
+  pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
+  # bifixer:
+  pip3 install -r bifixer/requirements.txt
+  # biroamer:
+  pip3 install -r biroamer/requirements.txt
+  python -m spacy download en_core_web_sm
+  ```
+
+  If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
+
+* [Optional] **Linguacrawl**
+
+  Linguacrawl is a top-level domain (TLD) crawler which can be installed from its' [repository](https://github.com/transducens/linguacrawl/) via pip.
+  If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used indepently of bitextor running `linguacrawl config-file.yaml`.
+
+  ```bash
+  # linguacrawl:
+  # linguacrawl also requires to have protobuf and cld3 installated (instructions below)
+  pip3 install git+https://github.com/transducens/linguacrawl.git
+  ```
+
+* [Optional] **Heritrix**
+
+  This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
+  After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
+  This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
+
+* [Optional] **Protobuf** and **CLD3**
+
+  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and linguacrawl. The requirements for installation are the following:
+
+  ```bash
+  # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
+  # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
+  sudo apt-get install autoconf automake libtool curl make g++ unzip
+  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
+  tar -zxvf protobuf-all-3.11.4.tar.gz
+  cd protobuf-3.11.4
+  ./configure
+  make
+  make check
+  sudo make install
+  sudo ldconfig
+
+  pip3 install Cython # Install Cython dependency for cld3
+  pip3 install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
+  ```
+
+### Submodules compilation
+
+Bitextor uses CMake for c++ dependencies compilation:
 
 ```bash
-sudo apt install cmake automake pkg-config python3 python3-venv python3-pip libboost-all-dev openjdk-8-jdk liblzma-dev time poppler-utils curl pigz uchardet libuchardet-dev libzip-dev
-```
-
-Additionally, [giashard](https://github.com/paracrawl/giashard) is a tool used for WARC files preprocessing. To install these tools Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
-```bash
-sudo snap install go # or download from http://golang.org/dl
-# build and place the necessary tools in $HOME/go/bin
-go get github.com/paracrawl/giashard/...
-```
-
-Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
-
-Some additional Python libraries are required. They can be installed automatically with the tool pip by running (use without `sudo` if you are running in a virtualenv):
-
-```bash
-pip3 install --upgrade pip
-pip3 install -r requirements.txt
-pip3 install -r bicleaner/requirements.txt # Install bicleaner dependencies (comment if you don't expect to use it)
-pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7" # Install kenlm for bicleaner (comment if you don't expect to use bicleaner)
-pip3 install -r bifixer/requirements.txt # Install bifixer dependencies (comment if you don't expect to use it)
-```
-
-If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
-
-### Optional dependencies
-
-#### Crawlers
-
-Apart from `creepy` and `wget` have support for:
-
-* **HTTrack:** As we explained above, the web crawler HTTrack can be used in Bitextor. To do so, first install it by running the command: `sudo apt install httrack`. This dependency is not mandatory as `wget` is supported and a Python parallel data crawler is provided in Bitextor: [Creepy](https://github.com/Aitjcize/creepy).
-
-* **heritrix3:** This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
-After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
-This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
-
-* **linguacrawl:** top-level domain (TLD) crawler which can be installed following the instructions of its [repository](https://github.com/transducens/linguacrawl/). If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used indepently of bitextor running `linguacrawl config-file.yaml`.
-
-#### Language detector
-
-In both WARC HTML processors we support cld2 language detector by default, but also cld3, although it needs a previous installation:
-
-* **Cld3**, Compact Language Detector v3, is a language identification model that can be used optionally during preprocessing. The requirements for installation are the following:
-
-```bash
-# Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
-# Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
-sudo apt-get install autoconf automake libtool curl make g++ unzip
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-tar -zxvf protobuf-all-3.11.4.tar.gz
-cd protobuf-3.11.4
-./configure
-make
-make check
-sudo make install
-sudo ldconfig
-
-pip3 install Cython # Install Cython dependency for cld3
-pip3 install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
-```
-
-#### ROAM (Random, Omit, Anonymize and Mix) the resulted TMX with Biroamer
-
-[Biroamer](https://github.com/bitextor/biroamer) has dependencies. If you want to be able to execute it, you will need to install the following dependencies (using an apt-like dependencies manager) required by `fast_align`:
-
-```bash
-sudo apt install libgoogle-perftools-dev libsparsehash-dev
-```
-
-And build it:
-```bash
-cd fast_align
-mkdir build
-cd build
+mkdir build && cd build
 cmake ..
 make -j
 ```
 
-Once you have installed the dependencies and built `fast-align`, python dependencies need to be installed as well:
+Optionally, it is possible to skip the compilation of the dependencies that are not expected to be used:
 
 ```bash
-pip3 install -r biroamer/requirements.txt
-python -m spacy download en_core_web_sm
+mkdir build && cd build
+cmake -DSKIP_MGIZA=ON -DSKIP_CLUSTERCAT=ON .. # MGIZA and Clustercat are used for dictionary generation
+# other dependencies that can be skipped:
+# WARC2TEXT
+# DOCALIGN
+# BLEUALIGN
+# HUNALIGN
+# BIROAMER
+make -j4
 ```
-
-In the case that the described steps do not work as expected, check out [biroamer's site](https://github.com/bitextor/biroamer).
-
-### Submodules compilation
-
-To compile all Bitextor submodules you will first need to run the script `configure` (if you are downloading the code directly from the GitHub repository you will need to run the script `autogen.sh` instead, which will identify the location of the external tools used). Then the code will be compiled using `make`:
-
-`./autogen.sh && make`
 
 #### Some known installation issues
 
-In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when running ./autoconf.sh or ./configure you get an error that says tensorflow is not installed (or Illegal Instruction error when importing it), please, replace the current version with version 1.5:
+* In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when Bitextor you get an `Illegal Instruction error` when importing it tensorflow, please, replace the current version with version 1.5:
 
-```bash
-sudo pip3 uninstall tensorflow
-sudo pip3 install tensorflow==1.5.0 keras==2.2.5
-```
+  ```bash
+  sudo pip3 uninstall tensorflow
+  sudo pip3 install tensorflow==1.5.0 keras==2.2.5
+  ```
 
-In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
+* In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
 
-Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
+* Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
 
-```bash
-sudo apt-get remove libboost-all-dev
-sudo apt-get autoremove
-wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz
-tar xvf boost_1_72_0.tar.gz
-cd boost_1_72_0/
-./bootstrap.sh
-./b2 -j4 --layout=system install || echo FAILURE
-cd ..
-rm -rf boost_1_72_0*
-```
+  ```bash
+  sudo apt-get remove libboost-all-dev
+  sudo apt-get autoremove
+  wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz
+  tar xvf boost_1_72_0.tar.gz
+  cd boost_1_72_0/
+  ./bootstrap.sh
+  ./b2 -j4 --layout=system install || echo FAILURE
+  cd ..
+  rm -rf boost_1_72_0*
+  ```
 
 ## Run
 
