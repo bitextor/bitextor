@@ -57,14 +57,6 @@ jobs:
             pip3 install -r bicleaner/requirements.txt
             pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
             pip3 install -r bifixer/requirements.txt
-      -  name: Compile Biroamer
-         run: |
-            cd biroamer/fast_align
-            mkdir build
-            cd build
-            cmake ..
-            make
-            cd ../../..
             pip3 install -r biroamer/requirements.txt
             python -m spacy download en_core_web_sm
       -  name: Setup golang
@@ -76,8 +68,9 @@ jobs:
             go get github.com/paracrawl/giashard/...
       -  name: Compiling bitextor and submodules
          run: |
-            ./autogen.sh
-            make
+            mkdir build && cd build
+            cmake -DSKIP_CLUSTERCAT=ON -DSKIP_MGIZA=ON ..
+            make -j
       -  name: Run tests
          env:
             BITEXTOR: ${{ github.workspace }}

@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(test_trigram)
 	string document = "Hello this is a test";
 	
 	vector<NGram> ngrams;
-	for (NGramIter iter(StringPiece(document.data(), document.size()), 3); iter; ++iter)
+	for (NGramIter iter(util::StringPiece(document.data(), document.size()), 3); iter; ++iter)
 		ngrams.push_back(*iter);
 
 	vector<NGram> expected{
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(test_equal_length)
 	string document = "Hello this is a test";
 	
 	vector<NGram> ngrams;
-	for (NGramIter iter(StringPiece(document.data(), document.size()), 5); iter; ++iter)
+	for (NGramIter iter(util::StringPiece(document.data(), document.size()), 5); iter; ++iter)
 		ngrams.push_back(*iter);
 
 	vector<NGram> expected{
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_not_enough_tokens)
 	string document = "Not enough";
 	
 	vector<NGram> ngrams;
-	for (NGramIter iter(StringPiece(document.data(), document.size()), 5); iter; ++iter)
+	for (NGramIter iter(util::StringPiece(document.data(), document.size()), 5); iter; ++iter)
 		ngrams.push_back(*iter);
 
 	BOOST_TEST(ngrams.size() == 0);

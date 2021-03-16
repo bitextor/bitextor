@@ -19,6 +19,7 @@ bleualign-cpp/tests/CTestTestfile.cmake
 bleualign-cpp/tests/Makefile
 bleualign-cpp/tests/cmake_install.cmake
 bleualign-cpp/tests/test_all
+build/
 compile
 config.guess
 config.log
