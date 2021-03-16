@@ -1,6 +1,8 @@
-name: Intensive tests with conda nightly
+name: Intensive tests with conda
 on:
    workflow_dispatch:
+      branches:
+         - snake_performance
 jobs:
    tests_mt:
       name: Tests MT
@@ -14,7 +16,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01
    tests_db:
       name: Tests dictionary based
@@ -28,7 +31,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02
    tests_gendic:
       name: Tests generate dictionary
@@ -42,7 +46,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04
    tests_genbicleaner:
       name: Tests generate bicleaner model
@@ -56,7 +61,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08
    tests_gendic_genbicleaner:
       name: Tests generate dictionary and bicleaner model
@@ -70,7 +76,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10
    tests_mt_db:
       name: Tests combining dictionaries and MT
@@ -84,7 +91,8 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20
    tests_others:
       name: Other tests
@@ -98,5 +106,6 @@ jobs:
             . ~/miniconda3/etc/profile.d/conda.sh
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
-            conda install -y -c bitextor bitextor-nightly
+            conda config --add channels conda-forge
+            conda install -y -c bitextor bitextor
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40
