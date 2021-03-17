@@ -76,7 +76,7 @@ Currently we only support Linux x64 for Conda environment.
 
   ```bash
   # mandatory:
-  sudo apt install python3 python3-venv python3-pip build-essential cmake libboost-all-dev liblzma-dev time curl pigz
+  sudo apt install python3 python3-venv python3-pip build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
 
   # optional, feel free to skip dependencies for components that you don't expect to use:
   ## wget crawler:

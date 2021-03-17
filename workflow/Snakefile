@@ -1287,7 +1287,8 @@ rule roam_tmx:
             mix_files=""
         fi
 
-        nolines_txt=$(cat {input.txt} | wc -l)
+        CAT=cat; if [[ {input.txt} == *.gz ]]; then CAT=zcat; fi
+        nolines_txt=$($CAT {input.txt} | wc -l)
         total_nolines=$(echo $nolines + $nolines_txt | bc)
 
         if [[ "$total_nolines" -lt "100000" ]] && [[ "{params.alignment_corpus}" == "" ]]; then
