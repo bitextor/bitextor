@@ -36,7 +36,7 @@ jobs:
             conda list
       -  uses: actions/checkout@v2
       -  name: Create Bitextor conda build
-         working-directory: ./conda-build/bitextor-8
+         working-directory: ./conda-build
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda deactivate && ./make_conda_build.sh -r
@@ -46,7 +46,10 @@ jobs:
             conda deactivate
             conda create -y -n bitextor-installation
             conda activate bitextor-installation
-            conda install -y "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/`ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1`"
+
+            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+
+            conda install -y "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
             conda update -y --all
             command -v "bitextor" || command -v "bitextor.sh"
       -  name: Run tests
@@ -83,8 +86,8 @@ jobs:
                   echo "$str"
                   eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
-                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
-                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                  if [[ "$(ls "${WORK}/reports/" | grep ${notest}- || true)" != "" ]]; then
+                     report_file=$(ls "${WORK}/reports/${notest}-"* | head -n 1)
                      awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
                   else
                      echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
@@ -106,6 +109,6 @@ jobs:
             conda activate bitextor-installation
             conda install -y anaconda-client
 
-            bitextor_file=$(ls $CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64 | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_file"
+            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
