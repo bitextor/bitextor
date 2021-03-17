@@ -14,10 +14,6 @@
 	path = preprocess
 	url = https://github.com/kpu/preprocess
 	ignore = dirty
-[submodule "pdf-extract"]
-	path = pdf-extract
-	url = https://github.com/bitextor/pdf-extract
-	ignore = dirty
 [submodule "bifixer"]
 	path = bifixer
 	url = https://github.com/bitextor/bifixer
