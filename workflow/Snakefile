@@ -173,8 +173,6 @@ if "PDFextract" in config and config["PDFextract"]:
         PDFEXTRACT += " --pe_configfile " + config["PDFextract_configfile"]
     if "PDFextract_sentence_join_path" in config and config["PDFextract_sentence_join_path"]:
         PDFEXTRACT += " --sentence_join_path " + config["PDFextract_sentence_join_path"]
-    else:
-        PDFEXTRACT += " --sentence_join_path " + BITEXTOR + "/pdf-extract/sentence-join/sentence-join.py"
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
         PDFEXTRACT += " --kenlm_path " + config["PDFextract_kenlm_path"]
 if "html5lib" in config and config["html5lib"]:
@@ -1289,7 +1287,8 @@ rule roam_tmx:
             mix_files=""
         fi
 
-        nolines_txt=$(cat {input.txt} | wc -l)
+        CAT=cat; if [[ {input.txt} == *.gz ]]; then CAT=zcat; fi
+        nolines_txt=$($CAT {input.txt} | wc -l)
         total_nolines=$(echo $nolines + $nolines_txt | bc)
 
         if [[ "$total_nolines" -lt "100000" ]] && [[ "{params.alignment_corpus}" == "" ]]; then

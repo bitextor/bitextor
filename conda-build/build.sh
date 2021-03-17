@@ -26,6 +26,7 @@ pip3 install pycld3
 pip3 install -r biroamer/requirements.txt && \
 python -m spacy download en_core_web_sm && \
 pip3 show spacy && pip3 show en_core_web_sm && \
+##### Fix in order to get the proper version of spacy/model due to mishandling versioning by conda
 pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
 ### Linguacrawl
@@ -36,7 +37,7 @@ mkdir -p build && cd build
 CPATH="$CPATH:$CONDA_PREFIX/include" cmake ..
 CPATH="$CPATH:$CONDA_PREFIX/include" make -j
 cd ..
-cp warc2text/cld2/internal/libcld2.so $PREFIX/lib
+cp warc2text/cld2/internal/libcld2.so "$PREFIX/lib"
 
 # Heritrix 3
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"
