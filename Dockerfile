@@ -92,7 +92,7 @@ RUN echo -e "${RED}Compiling bitextor${NC}"
 WORKDIR /home/docker/bitextor
 RUN mkdir -p build
 WORKDIR /home/docker/bitextor/build
-RUN cmake -DSKIP_MGIZA=ON -DSKIP_CLUSTERCAT=ON ..
+RUN cmake ..
 RUN make
 
 # Download Heritrix
