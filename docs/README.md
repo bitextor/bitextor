@@ -675,7 +675,7 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
-![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor7.png)
+![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor.png)
 
 ![Connecting Europe Facility](https://www.paracrawl.eu/images/logo_en_cef273x39.png)
 
