@@ -60,7 +60,7 @@ Currently we only support Linux x64 for Conda environment.
 
 ### Dependencies
 
-* Download **Bitextor's submodules**. If you are cloning from scratch:
+* Download **Bitextor's submodules**.
 
   ```bash
   # if you are cloning from scratch:
@@ -72,7 +72,7 @@ Currently we only support Linux x64 for Conda environment.
 
 * **Required packages**
 
-  These are some external tools that need to be in the path before installing the project. If you are using an apt-like package manager you can run the following command line to install all these dependencies:
+  These are some external tools that need to be in the path before installing the project. If you are using an apt-like package manager you can run the following commands line to install all these dependencies:
 
   ```bash
   # mandatory:
@@ -108,9 +108,15 @@ Currently we only support Linux x64 for Conda environment.
 
   Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
 
-  Some additional Python libraries are required. They can be installed automatically with the tool pip by running (use without `sudo` if you are running in a virtualenv):
+  Some additional Python libraries are required. They can be installed automatically with `pip`. We recommend using a virtual environment to manage Bitextor installation.
 
   ```bash
+  # create virtual environment:
+  python3 -m venv /path/to/virtual/environment
+  # activate:
+  source /path/to/virtual/environment/bin/activate
+
+  # install dependencies in virtual enviroment
   pip3 install --upgrade pip
   pip3 install -r requirements.txt
   # bicleaner:
@@ -127,8 +133,8 @@ Currently we only support Linux x64 for Conda environment.
 
 * [Optional] **Linguacrawl**
 
-  Linguacrawl is a top-level domain (TLD) crawler which can be installed from its' [repository](https://github.com/transducens/linguacrawl/) via pip.
-  If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used indepently of bitextor running `linguacrawl config-file.yaml`.
+  Linguacrawl is a top-level domain (TLD) crawler which can be installed from its [repository](https://github.com/transducens/linguacrawl/) via pip.
+  If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used independently of bitextor running `linguacrawl config-file.yaml`.
 
   ```bash
   # linguacrawl:
@@ -292,6 +298,7 @@ Bitextor uses a configuration file to define the variables required by the pipel
 **Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`workflow/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
+
 * Crawling
 * Preprocessing
 * Sharding
@@ -414,7 +421,7 @@ resumePreviousCrawl: false
 
 If `linguacrawl` is used, a YAML file is created on the fly in order to use it as configuration file, and you can check this file out to be sure that is configured as you want. There are multiple options which are provided with a default value if none was set, so might be interesting to visualize the generated YAML configuration file if you want a concrete behaviour or something is not working as you expected. Those default values are set because are mandatory for `linguacrawl`. Other default behaviour which should be taken into account is:
 
-* Default User Agent is used: Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor
+* Default User Agent is used: Mozilla/5.0 (compatible; Bitextor/8 + <https://github.com/bitextor/bitextor>)
 * Default URL blacklist is used if not specified any (you can specify "[]" if you do not want any element in the blacklist): ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
 * Default prefix filter is used if not specified any (you can specify "[]" if you do not want any element in the prefix filter list): ['mailto:']
 * A maximum of 3 attempts will be made in order to download a resource.
@@ -426,7 +433,7 @@ If `linguacrawl` is used, a YAML file is created on the fly in order to use it a
 
 ### Preprocessing and sharding
 
-After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out. After preprocessing, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) tool.
+After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out. After preprocessing, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard).
 
 ```yaml
 # preprocessing
@@ -454,7 +461,7 @@ batches: 1024 # batches of up to 1024MB
 * `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `warc2text: true`
 * `parser`: option that selects HTML parsing library for text extraction; Options are ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax), 'lxml' (which uses `html5lib` parsed tree to recursively extract text from tags, so it forces the `html5lib` option) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `warc2text: true`
 * `PDFextract`: set to 'true' to use it instead of system native poppler `pdf2html` converter
-* `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see https://github.com/bitextor/pdf-extract/#pdfextractjson)
+* `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
 * `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
 * `PDFextract_kenlm_path`: set path for kenlm binaries
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
@@ -475,6 +482,7 @@ customNBPs: {
   'fr': '/home/user/bitextor/myfrenchnbp.txt'
 }
 ```
+
 * `sentenceSplitters`: scripts for sentence splitting. All the scripts must read from the standard input and write to the standard output. When not specified, [python Moses](https://pypi.org/project/sentence-splitter) will be used.
 * `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter. See their format by checking the [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes).
 
@@ -492,12 +500,14 @@ morphologicalAnalysers: {
   'lang2': 'path/to/morph-analyser2'
 }
 ```
+
 * `wordTokenizers`: scripts for word-tokenization. These scripts must read from the standard input and write to the standard output.
 * `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages after tokenisation, or all of them if `default` script is also provided.
 
 ### Document alignment
 
 From this step forward, bitextor works with a pair of languages, which are specified through `lang1` and `lang2` parameters. The output will contain the sentence pairs in that order.
+
 ```yaml
 lang1: es
 lang2: en
