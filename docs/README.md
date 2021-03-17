@@ -677,6 +677,6 @@ The following diagram shows the structure of the pipeline and the different scri
 
 ![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor.png)
 
-![Connecting Europe Facility](https://www.paracrawl.eu/images/logo_en_cef273x39.png)
+![Connecting Europe Facility](https://raw.githubusercontent.com/bitextor/bitextor/master/img/logo_en_cef273x39_nonalpha.png)
 
 All documents and software contained in this repository reflect only the authors' view. The Innovation and Networks Executive Agency of the European Union is not responsible for any use that may be made of the information it contains.
