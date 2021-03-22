@@ -52,13 +52,11 @@ RUN echo -e "${RED}Cloning bitextor${NC}"
 WORKDIR /home/docker
 RUN git clone -b docker --recurse-submodules --depth 1 https://github.com/bitextor/bitextor.git
 
-# Installing bitextor and bicleaner dependencies
+# Installing bitextor dependencies
 RUN echo -e "${RED}Installing pip dependencies${NC}"
 WORKDIR /home/docker/bitextor
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
-RUN pip3 install -r bicleaner/requirements.txt
-RUN pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
 RUN pip3 install -r bifixer/requirements.txt
 RUN pip3 install -r biroamer/requirements.txt
 RUN python3 -m spacy download en_core_web_sm
@@ -66,6 +64,18 @@ RUN pip3 install Cython
 RUN pip3 install pycld3
 # linguacrawl is currently broken (alcazar is unavailable)
 # RUN pip3 install git+https://github.com/transducens/linguacrawl.git
+
+# Installing bicleaner and kenlm
+RUN echo -e "${RED}Installing bicleaner and kenlm${NC}"
+WORKDIR /home/docker/bitextor/bicleaner
+RUN pip3 install -r requirements.txt
+RUN git clone https://github.com/kpu/kenlm
+WORKDIR /home/docker/bitextor/bicleaner/kenlm
+RUN python3 -m pip install . --install-option="--max_order=7"
+RUN mkdir -p build
+WORKDIR /home/docker/bitextor/bicleaner/kenlm/build
+RUN cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/usr/bin
+RUN make -j $j all install
 
 # symlink python to python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
