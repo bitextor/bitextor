@@ -122,6 +122,12 @@ Currently we only support Linux x64 for Conda environment.
   # bicleaner:
   pip3 install -r bicleaner/requirements.txt
   pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
+  git clone https://github.com/kpu/kenlm
+  cd kenlm
+  python3 -m pip install . --install-option="--max_order 7"
+  mkdir -p build && cd build
+  cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/your/prefix/path
+  make -j all install
   # bifixer:
   pip3 install -r bifixer/requirements.txt
   # biroamer:
