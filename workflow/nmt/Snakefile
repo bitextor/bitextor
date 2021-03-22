@@ -1,5 +1,14 @@
 from os.path import join
 
+def get_lang_or_default_from_dict(scripts_dict, language):
+    script = ""
+    if language in scripts_dict:
+        script = scripts_dict[language]
+    elif "default" in scripts_dict:
+        script = scripts_dict["default"]
+
+    return script
+
 #Output dirs
 permanentDir = config["permanentDir"]
 modelDir = permanentDir + "/model"
@@ -13,6 +22,7 @@ detokenizer=config["LANG2Detokenizer"]
 
 LANG1=config["lang1"]
 LANG2=config["lang2"]
+BITEXTOR=config["bitextor"]
 
 #NMT commands
 trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join(config["marianArgs"])
@@ -20,8 +30,11 @@ trainCmd = "{0}/build/marian -d {1} ".format(marian, config["gpuId"]) + " ".join
 translateCmd = "{0}/build/marian-decoder --max-length-crop -d {1} --quiet-translation ".format(marian, config["gpuId"])
 
 #Tokenization
-tokenizer_l1= config["LANG1Tokenizer"]
-tokenizer_l2= config["LANG2Tokenizer"]
+if "wordTokenizers" in config:
+    tokenizer_l1 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG1)
+    tokenizer_l2 = get_lang_or_default_from_dict(config["wordTokenizers"], LANG2)
+else:
+    tokenizer_l1, tokenizer_l2 = BITEXTOR+'/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG1, BITEXTOR+'/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l ' + LANG2
 
 #Input data prefixes
 trainPrefixes=config["initCorpusTrainPrefix"]
