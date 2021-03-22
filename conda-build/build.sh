@@ -37,7 +37,7 @@ mkdir -p build && cd build
 CPATH="$CPATH:$CONDA_PREFIX/include" cmake ..
 CPATH="$CPATH:$CONDA_PREFIX/include" make -j
 cd ..
-cp warc2text/cld2/internal/libcld2.so "$PREFIX/lib"
+cp warc2text/cld2/internal/libcld2_ful.so "$PREFIX/lib"
 
 # Heritrix 3
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"
