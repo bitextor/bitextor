@@ -6,7 +6,7 @@
 
 `Bitextor` is a tool to automatically harvest bitexts from multilingual websites. To run it, it is necessary to provide:
 
-1. The source where the parallel data will be searched: one or more websites (namely, Bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL))
+1. The source where the parallel data will be searched: one or more websites (namely, Bitextor needs [website hostnames](https://en.wikipedia.org/wiki/URL) or [WARC files](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/))
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
 3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
@@ -15,9 +15,9 @@
 If you want to easily install Bitextor, just use Docker commands:
 
 ```bash
-docker pull paracrawl/bitextor # download bitextor docker image
+docker pull bitextor/bitextor # download bitextor docker image
 
-docker run -it --name bitextor paracrawl/bitextor # create a new container 'bitextor' and open an interactive terminal
+docker run -it --name bitextor bitextor/bitextor # create a new container 'bitextor' and open an interactive terminal
 
 docker start bitextor && docker exec -it bitextor bash # run an interactive terminal on an existing 'bitextor' container
 ```
@@ -195,27 +195,18 @@ make -j4
 
 #### Some known installation issues
 
-* In some machines equipped with an AMD CPU you may experience some troubles with the tensorflow version specified in `requirements.txt`. In case you have installed all the requirements successfully, but when Bitextor you get an `Illegal Instruction error` when importing it tensorflow, please, replace the current version with version 1.5:
-
-  ```bash
-  sudo pip3 uninstall tensorflow
-  sudo pip3 install tensorflow==1.5.0 keras==2.2.5
-  ```
-
-* In addition, some users have reported problems when trying to install tensorflow using `pip3` for versions of Python >= 3.7. If this is the case, you can try to install it manually or using another package management tool, or to use a lower version of Python.
-
-* Depending on the version of *libboost* that you are using, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
+* Depending on the version of *libboost* that you are using given a certain OS version or distribution package from your package manager, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
 
   ```bash
   sudo apt-get remove libboost-all-dev
   sudo apt-get autoremove
-  wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz
-  tar xvf boost_1_72_0.tar.gz
-  cd boost_1_72_0/
+  wget https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.gz
+  tar xvf boost_1_75_0.tar.gz
+  cd boost_1_75_0/
   ./bootstrap.sh
   ./b2 -j4 --layout=system install || echo FAILURE
   cd ..
-  rm -rf boost_1_72_0*
+  rm -rf boost_1_75_0*
   ```
 
 ## Run
@@ -684,8 +675,8 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
-![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor7.png)
+![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor.png)
 
-![Connecting Europe Facility](https://www.paracrawl.eu/images/logo_en_cef273x39.png)
+![Connecting Europe Facility](https://raw.githubusercontent.com/bitextor/bitextor/master/img/logo_en_cef273x39_nonalpha.png)
 
 All documents and software contained in this repository reflect only the authors' view. The Innovation and Networks Executive Agency of the European Union is not responsible for any use that may be made of the information it contains.
