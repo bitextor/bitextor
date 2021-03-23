@@ -5,15 +5,24 @@
 #include "../src/ngram.h"
 #include "../src/murmur_hash.h"
 
-using namespace std;
 using namespace bitextor;
+
+namespace std{
+std::ostream &operator<<(std::ostream &stream, NGram const &term) {
+    stream << term.hash;
+    return stream;
+}
+}
+
+using namespace std;
 
 NGram make_ngram(vector<string> const &words)
 {
-	uint64_t hash = 0;
+	NGram hash;
+	hash.hash = 0;
 
 	for (string const &word : words)
-		hash = MurmurHashCombine(MurmurHashNative(word.data(), word.size(), 0), hash);
+		hash.hash = MurmurHashCombine(MurmurHashNative(word.data(), word.size(), 0), hash.hash);
 
 	return hash;
 }
