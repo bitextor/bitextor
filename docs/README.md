@@ -461,8 +461,8 @@ batches: 1024 # batches of up to 1024MB
 * `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
 * `PDFextract_kenlm_path`: set path for kenlm binaries
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
-* `shards`: number os shards (2^n), default: 8
-* `batches`: batch size in MB, default: 1024
+* `shards`: domains and WARCs are distributed in shards for a more balanced processing. Each shard contain one or more complete domains/WARCs. The parameter sets the number os shards (as 'n' in 2^n), being 8 the default (2^8 shards).
+* `batches`: shards are split into batches for parallelization. These shards can divide a domain or WARC, so this is only used in steps that can work with this division, like document aligner. This configuration parameter set the batch size in MB, being 1024 by default.
 
 ### Sentence splitting
 
