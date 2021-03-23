@@ -13,17 +13,9 @@ on:
 jobs:
    tests_mt:
       name: Tests MT
-      runs-on: ubuntu-18.04
+      runs-on: ubuntu-20.04
       timeout-minutes: 300
       steps:
-      -  name: Set distrib release version if not set
-         env:
-            DR_VERSION: 20.04
-         run: |
-            # Hack to get setup-python to work on act (https://github.com/nektos/act/issues/213)
-            if [ ! -f "/etc/lsb-release" ] ; then
-               echo "DISTRIB_RELEASE=$DR_VERSION" > /etc/lsb-release
-            fi
       -  name: Run
          run: |
             v=""

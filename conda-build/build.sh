@@ -17,8 +17,15 @@ export PIP_NO_INDEX="False" # We are downloading requisites from PyPi
 export PIP_NO_DEPENDENCIES="False" # We need the dependencies from our defined dependencies
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt
-pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
 pip3 install -r bifixer/requirements.txt
+### KenLM
+git clone https://github.com/kpu/kenlm
+cd kenlm
+python3 -m pip install . --install-option="--max_order 7"
+mkdir -p build && cd build
+cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH="$PREFIX/bin"
+make -j all install
+cd ..
 ### CLD3
 pip3 install Cython
 pip3 install pycld3
