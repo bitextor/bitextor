@@ -558,39 +558,6 @@ documentAlignerWorkers: 2
 * `translationDirection`: the direction of the translation system, default is lang1->lang2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
 
-<!---
-#### Using a home-brew neural MT system
-
-If this option is chosen, a Marian NMT model will be trained and evaluated before using it for document alignment. Note that, given the computational cost of training an NMT system, this option requires having a GPU available. The following are mandatory variables in order to build the NMT system:
-
-```yaml
-initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
-initCorpusDevPrefix: ['/home/user/Europarl.en-fr.dev']
-initCorpusTestPrefix: ['/home/user/Europarl.en-fr.test']
-
-marianDir: /home/user/marian-dev
-mosesDir: /home/user/mosesdecoder
-subwordNmtDir: /home/user/subword-nmt
-
-nmtVocabSize: 50000
-
-LANG2Detokenizer: "/home/user/mosesdecoder/scripts/tokenizer/detokenizer.perl -l fr"
-
-gpuId: 0
-
-marianArgs: [" --optimizer-delay 1", "--mini-batch-fit", "--mini-batch 1000", "--maxi-batch 1000", "--overwrite", "--keep-best", "--valid-metrics perplexity", "--valid-log valid.log", "--log train.log", "--dropout-rnn 0.2", "--dropout-src 0.2", "--dropout-trg 0.2 ", "--cost-type ce-mean-words", "--layer-normalization", "--exponential-smoothing", "--tied-embeddings", "--valid-metrics bleu"]
-```
-
-* `initCorpusTrainingPrefix`, `initCorpusDevPrefix`,  and `initCorpusTestPrefix`: training data prefixes, development data prefixes and test data prefixes. See section *Variables for document alignment using bilingual lexica* for a description of such prefixes
-* `marianDir`: path to the directory containing the installation of the NMT tool [Marian](https://github.com/marian-nmt/marian-dev)
-* `mosesDir`: path to the directory containing the MT tool [Moses](https://github.com/moses-smt/mosesdecoder); note that only data pre-processing scripts are used from Moses and, therefore, it is not necessary to compile the project to use it to train and NMT system
-* `subwordNmtDir`: path to the directory containing the installation of the tool [subword-nmt](https://github.com/rsennrich/subword-nmt)
-* `nmtVocabSize`: size of the NMT vocabulary
-* `LANG2Detokenizer`: path to a detokenization script that reads from the standard input and writes to the standard output
-* `gpuId`: id of the GPU to be used for training and testing
-* `marianArgs`: additional arguments for Marian training
---->
-
 ### Segment alignment
 
 After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
