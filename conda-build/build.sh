@@ -25,7 +25,7 @@ python3 -m pip install . --install-option="--max_order 7"
 mkdir -p build && cd build
 cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH="$PREFIX/bin"
 make -j all install
-cd ..
+cd ../..
 ### CLD3
 pip3 install Cython
 pip3 install pycld3
