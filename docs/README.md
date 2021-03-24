@@ -12,23 +12,13 @@
 
 ## Docker installation
 
-If you want to easily install Bitextor, just use Docker commands:
+Bitextor is available via Docker:
 
 ```bash
-docker pull bitextor/bitextor # download bitextor docker image
-
-docker run -it --name bitextor bitextor/bitextor # create a new container 'bitextor' and open an interactive terminal
-
-docker start bitextor && docker exec -it bitextor bash # run an interactive terminal on an existing 'bitextor' container
+docker pull bitextor/bitextor
+docker run --name bitextor bitextor/bitextor
 ```
-
-If you have `snap` package manager in your system, just install Docker using:
-
-```bash
-sudo snap install docker
-```
-
-Bitextor folder is located at `/opt/bitextor`, with all dependencies and compilations fulfilled.
+For more information about Docker installation and usage consult [our wiki](https://github.com/bitextor/bitextor/wiki/Installing-and-running-Bitextor-via-Docker).
 
 ## Conda installation
 
