@@ -141,7 +141,7 @@ Currently we only support Linux x64 for Conda environment.
 
   This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
   After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
-  This dependency is also not mandatory (in Docker it is located at `/opt/heritrix-3.4.0-SNAPSHOT`).
+  This dependency is also not mandatory (in Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT`).
 
 * [Optional] **Protobuf** and **CLD3**
 
