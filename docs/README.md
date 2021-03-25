@@ -26,7 +26,14 @@ For more information about Docker installation and usage consult [our wiki](http
 Same as with Docker, you can easily install Bitextor using a Conda environment with the following command:
 
 ```bash
-conda config --add channels conda-forge # It will appear a warning if you already had the channel added
+conda config --show channels # Check current channels
+
+# Add necessary channels if were not added previously
+conda config --add channels conda-forge
+conda config --append channels bioconda
+conda config --append channels dmnapolitano
+conda config --append channels esarrias
+
 conda install -c bitextor bitextor
 ```
 
@@ -44,6 +51,8 @@ bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
 Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder.
+
+Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier to access to the files. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
 
 Currently we only support Linux x64 for Conda environment.
 
