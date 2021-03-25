@@ -16,6 +16,7 @@ Bitextor is available via Docker:
 
 ```bash
 docker pull bitextor/bitextor
+# or use `docker pull bitextor/bitextor:edge` for Github master branch nightly builds
 docker run --name bitextor bitextor/bitextor
 ```
 For more information about Docker installation and usage consult [our wiki](https://github.com/bitextor/bitextor/wiki/Installing-and-running-Bitextor-via-Docker).
