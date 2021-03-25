@@ -16,7 +16,7 @@ struct NGram {
 class NGramIter : public boost::iterator_facade<NGramIter, const NGram, boost::forward_traversal_tag> {
 public:
 	NGramIter();
-	NGramIter(StringPiece const &source, size_t ngram_size);
+	NGramIter(const util::StringPiece &source, size_t ngram_size);
 	
 	inline bool operator!() const {
 		return end_;

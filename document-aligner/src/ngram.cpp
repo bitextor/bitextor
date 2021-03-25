@@ -11,7 +11,7 @@ NGramIter::NGramIter() {
 	//
 }
 
-NGramIter::NGramIter(StringPiece const &source, size_t ngram_size)
+NGramIter::NGramIter(const util::StringPiece &source, size_t ngram_size)
 : token_it_(source, " \n"), // Break on newline as well; I don't care about line beginnings and endings right now
   ngram_size_(ngram_size),
   pos_(0),

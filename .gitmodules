@@ -6,10 +6,6 @@
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
 	ignore = dirty
-[submodule "hunalign"]
-	path = hunalign
-	url = https://github.com/bitextor/hunalign
-	ignore = dirty
 [submodule "bicleaner"]
 	path = bicleaner
 	url = https://github.com/bitextor/bicleaner
@@ -17,14 +13,6 @@
 [submodule "preprocess"]
 	path = preprocess
 	url = https://github.com/kpu/preprocess
-	ignore = dirty
-[submodule "standoff"]
-	path = standoff
-	url = https://github.com/bitextor/standoff
-	ignore = dirty
-[submodule "pdf-extract"]
-	path = pdf-extract
-	url = https://github.com/bitextor/pdf-extract
 	ignore = dirty
 [submodule "bifixer"]
 	path = bifixer
@@ -34,3 +22,15 @@
 	path = bleualign-cpp
 	url = https://github.com/bitextor/bleualign-cpp
 	ignore = dirty
+[submodule "biroamer"]
+	path = biroamer
+	url = https://github.com/bitextor/biroamer.git
+	ignore = dirty
+[submodule "hunalign"]
+	path = hunalign
+	url = https://github.com/bitextor/hunalign
+	ignore = dirty
+[submodule "warc2text"]
+	path = warc2text
+	url = https://github.com/bitextor/warc2text
+    ignore = dirty

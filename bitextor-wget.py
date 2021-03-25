@@ -87,9 +87,14 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
                             # if header is non ascii, create a new header, with status code only
                             # content length and content type will be filled before writing
                             record.http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
+                    uri = record.rec_headers.get_header('WARC-Target-URI')
+                    # ignore metadata records
+                    if not uri or uri.startswith('metadata://gnu.org/software/wget/warc/'):
+                        continue
                     record.length = None
                     writer.write_record(record)
-            except:
+            except Exception as e:
+                print(e, file=sys.stderr)
                 pass
 
     system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))

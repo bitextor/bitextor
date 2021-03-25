@@ -22,7 +22,6 @@ import sys
 import argparse
 import cchardet
 import re
-from lxml.html.clean import Cleaner
 import os
 import importlib
 import logging
@@ -35,29 +34,19 @@ from io import BytesIO
 
 def convert_encoding(data):
     encoding = cchardet.detect(data)['encoding']
-    if encoding is None:
-        encoding = "utf-8"
-    if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
-        # the error is caught here
-        for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
-            try:
-                return enc, data.decode(enc)
-            except:
-                pass
+    decoded = ''
+    for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']: # if detected encoding fails (or is None), try some common encodings
+        try:
+            decoded = data.decode(encoding)
+            return enc, decoded
+        except:
+            pass
     return None, ''
-
 
 def pdf2html(data):
     pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout.replace(b"&#160;", b" ")]
-
-
-def pdfextract_shell(data):
-    pconverter = subprocess.Popen(["sh", "-c", "datafile=`mktemp`; cat - > $datafile.pdf; dataoutputfile=`mktemp`; java -jar pdf-extract/runnable-jar/PDFExtract.jar -I $datafile.pdf -O $dataoutputfile > /dev/null ; cat $dataoutputfile ; rm $datafile $datafile.pdf $dataoutputfile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    converter_stdout, error = pconverter.communicate(input=data)
-    return [converter_stdout]
 
 
 def pdfextract(data, pdfextractor):
@@ -72,44 +61,43 @@ def openoffice2html(data):
     datastream = io.BytesIO(data)
     try:
         openoffice_file = zipfile.ZipFile(datastream)
+        return [openoffice_file.read('content.xml')]
     except zipfile.BadZipFile:
         return []
-    return [openoffice_file.read('content.xml')]
 
 
 def office2html(data):
     datastream = io.BytesIO(data)
     try:
         office_file = zipfile.ZipFile(datastream)
+        # word/document.xml, ppt/slides/slide*.xml, xl/sharedStrings.xml
+        xmls = []
+        for xml in office_file.namelist():
+            if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
+                try:
+                    xmls.append(office_file.read(xml))
+                except Exception as ex:
+                    continue
+        return xmls
     except zipfile.BadZipFile:
         return []
-    # word/document.xml, ppt/slides/slide*.xml, xl/sharedStrings.xml
-    xmls = []
-    for xml in office_file.namelist():
-        if "word/document.xml" == xml or "ppt/slides/slide" == xml[0:16] or "xl/sharedStrings.xml" == xml:
-            try:
-                xmls.append(office_file.read(xml))
-            except Exception as ex:
-                continue
-    return xmls
 
 
 def epub2html(data):
     datastream = io.BytesIO(data)
     try:
         epub_file = zipfile.ZipFile(datastream)
+        # EPUB/*html
+        xmls = []
+        for xml in epub_file.namelist():
+            if "ml" == xml[-2:]:
+                try:
+                    xmls.append(epub_file.read(xml))
+                except Exception as ex:
+                    continue
+        return xmls
     except zipfile.BadZipFile:
         return []
-    # EPUB/*html
-    xmls = []
-    for xml in epub_file.namelist():
-        if "ml" == xml[-2:]:
-            try:
-                xmls.append(epub_file.read(xml))
-            except Exception as ex:
-                continue
-    return xmls
-
 
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs basic preprocessing, which includes: HTML"
@@ -118,8 +106,12 @@ oparser.add_argument('-v', "--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', default=sys.stdout)
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
+oparser.add_argument('--only-broader', dest='onlybroader', action="store_true", help="Only outputs broader document format records", default=False)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
+oparser.add_argument('--pe_configfile', dest='configFile', help='PDFExtract configuration file for language model paths', default="")
+oparser.add_argument('--sentence_join_path', dest='sentenceJoinPath', help='sentence-join.py path', default="")
+oparser.add_argument('--kenlm_path', dest='kenlmPath', help='kenlm binary folder path', default="")
 oparser.add_argument('--pdfpass', dest='pdfpass', help='Pass PDFs verbatim to file', default=None)
 oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you to fix possible encoding problems',
                     default=False)
@@ -156,9 +148,12 @@ if options.pdfpass is not None:
 if not options.pdfpass and options.pdfextract:
     import jpype
     from pdfextract.extract import Extractor as ExtrP
-    extractor = ExtrP()
+    extractor = ExtrP(configFile=options.configFile, sentenceJoinPath=options.sentenceJoinPath, kenlmPath=options.kenlmPath)
 
-cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
+cleaner = None
+if options.cleanhtml:
+    from lxml.html.clean import Cleaner
+    cleaner = Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False)
 
 if options.output == sys.stdout or options.output == '-':
     filename = ""
@@ -231,6 +226,7 @@ for record in f:
             # content length and content type will be filled before writing
             http_headers = StatusAndHeaders(record.http_headers.get_statuscode(), [])
 
+    bdf = True
     # Extract payloads (XML) from non-HTML document formats
     if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
         if options.pdfpass:
@@ -248,14 +244,21 @@ for record in f:
     elif url[-5:] == ".epub":
         payloads = epub2html(payload)
     else:
-        payloads = [payload]
+        bdf = False
+        if options.onlybroader:
+            payloads = []
+        else:
+            payloads = [payload]
 
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
     for payload in payloads:
+        if not payload:
+            continue
+
+        logging.info("Processing document: " + url)
         # We convert into UTF8 first of all
         orig_encoding, text = convert_encoding(payload)
-        logging.info("Processing document: " + url)
 
         if orig_encoding is None:
             logging.info("Encoding of document " + url + " could not be identified")
@@ -290,5 +293,11 @@ for record in f:
         if http_headers:
             http_headers.replace_header('Content-Length', str(len(clean_tree)))
             http_headers.replace_header('Content-Type', 'text/html')
+        elif not http_headers and bdf:
+            # for broader document formats without HTTP header create a fake one
+            # to make it easier to distinguish between binary and processed documents downstream (warc2text)
+            record_type = 'response'
+            http_headers = StatusAndHeaders(statusline = "200 OK", protocol = "HTTP/1.1", headers = [('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))])
+
         new_record = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(clean_tree), http_headers=http_headers)
         fo.write_record(new_record)

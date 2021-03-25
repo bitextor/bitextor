@@ -50,7 +50,7 @@ do
       ;;
     -n )
       shift
-      NOTEMP="-nt"
+      NOTEMP="--notemp"
       ;;
     -s )
       shift
@@ -87,4 +87,4 @@ if [[ "$SNAKEFILE" == "" ]]; then
   exit 1
 fi
 
-snakemake --snakefile "$(dirname "$0")/snakemake/Snakefile" ${KEEPGOING} --configfile "${SNAKEFILE}" -j "${NUMJOBS}" ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname "$0")"
+snakemake --snakefile "$(dirname "$0")/workflow/Snakefile" ${NOTEMP} ${KEEPGOING} --configfile "${SNAKEFILE}" -j "${NUMJOBS}" ${CLUSTERCOMMAND} ${CLUSTERCONFIG} --config bitextor="$(dirname "$0")"

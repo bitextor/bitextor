@@ -1,0 +1,181 @@
+name: Intensive tests with conda
+on:
+   workflow_dispatch:
+      inputs:
+         conda_version:
+            description: 'Version which will be looked for'
+            required: false
+            default: ''
+         conda_build:
+            description: 'Build which will be looked for'
+            required: false
+            default: ''
+jobs:
+   tests_mt:
+      name: Tests MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01
+   tests_db:
+      name: Tests dictionary based
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02
+   tests_gendic:
+      name: Tests generate dictionary
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04
+   tests_genbicleaner:
+      name: Tests generate bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08
+   tests_gendic_genbicleaner:
+      name: Tests generate dictionary and bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10
+   tests_mt_db:
+      name: Tests combining dictionaries and MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20
+   tests_others:
+      name: Other tests
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            v=""
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="=${{ github.event.inputs.conda_version }}"
+
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
+               fi
+            fi
+
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
+            conda config --add channels conda-forge
+            conda install -y -c bitextor "bitextor${v}"
+            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40

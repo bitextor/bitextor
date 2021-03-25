@@ -1,0 +1,68 @@
+{% set name = "bitextor" %}
+{% set version = "8" %}
+
+package:
+  name: "{{ name }}"
+  version: "{{ version }}"
+
+source:
+  - git_url: https://github.com/bitextor/bitextor/
+    git_branch: snake_performance
+    folder: "bitextor"
+  - url: http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
+    folder: heritrix-3.4.0-SNAPSHOT
+
+
+build:
+  skip: True  # [not linux64]
+  number: {{ environ.get('OWN_GIT_DESCRIBE_NUMBER', 0) }}
+  string: {{ environ.get('OWN_GIT_BUILD_STR') }}
+  preserve_egg_dir: True  # Some packages need this directory in order to work fine
+
+requirements:
+  build:
+    - git
+    - make=4.2.1
+    - cmake=3.16.3
+    - gcc_linux-64=9.3.0
+    - gxx_linux-64=9.3.0
+    #- go
+    - go-cgo=1.13.5=h77d97cf_0
+    - libboost=1.71=h97c9712_0
+    - pip
+    - python=3.8.5=h7579374_1
+    - icu
+    - unzip
+    - libtool
+    - wget
+    - protobuf=3.14
+    - libmagic
+    - libzip=1.7.3
+    - uchardet=0.0.7
+    - gperftools=2.7
+    - google-sparsehash=2.0.3
+  run:
+    - pip
+    - python=3.8.5=h7579374_1
+    - libboost=1.71=h97c9712_0
+    - java-1.7.0-openjdk-cos6-x86_64
+    - xz
+    - time
+    - poppler
+    - poppler-data
+    - curl
+    - pigz
+    - icu
+    - wget
+    - protobuf=3.14
+    - libmagic
+    - libzip=1.7.3
+    - uchardet=0.0.7
+    - gperftools=2.7
+    - google-sparsehash=2.0.3
+
+about:
+  home: https://github.com/bitextor/bitextor/
+  license: GPL3
+  license_family: GPL3
+  summary: Bitextor generates translation memories from multilingual websites

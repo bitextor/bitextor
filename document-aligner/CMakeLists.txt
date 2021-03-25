@@ -6,7 +6,7 @@ project(document-aligner)
 enable_testing()
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast")
 set(CMAKE_CXX_FLAGS_DEBUG "-Wextra -g")
 
@@ -31,16 +31,20 @@ find_package(ICU REQUIRED COMPONENTS
 include_directories(
   ${PROJECT_SOURCE_DIR}
   ${Boost_INCLUDE_DIRS}
-  ${ICU_INCLUDE_DIR}
+  ${ICU_INCLUDE_DIRS}
 )
 
-if (PREPROCESS_PATH)
-  include_directories(${PREPROCESS_PATH})
-  add_subdirectory(${PREPROCESS_PATH} preprocess-bin)
-else()
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../preprocess)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../preprocess preprocess-bin)
+# kpu/preprocess dependency:
+if (NOT PREPROCESS_PATH)
+    # if preprocess_path is not defined, use the one in the parent folder of document-aligner
+    set(PREPROCESS_PATH "${PROJECT_SOURCE_DIR}/../preprocess")
 endif()
+
+if (NOT SKIP_PREPROCESS_BUILD)
+    add_subdirectory(${PREPROCESS_PATH} ${PREPROCESS_PATH}/bin)
+endif()
+
+include_directories(${PREPROCESS_PATH})
 
 # find *.h and *.cpp files
 file(GLOB dalign_cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)

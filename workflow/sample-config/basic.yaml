@@ -1,0 +1,40 @@
+# basic variables
+bitextor: ~/bitextor
+dataDir: ~/permanent/data
+permanentDir: ~/permanent
+transientDir: ~/transient
+tempDir: ~/transient
+
+# crawling
+hostsFile: ~/hosts.gz
+crawler: "wget"
+crawlTimeLimit: "600" # 10min
+
+# warcs
+warcsFile: ~/warcs.gz
+
+# preprocessing
+preprocessor: "warc2text"
+shards: 8
+batches: 1024
+
+lang1: 'en'
+lang2: 'fr'
+
+# align
+documentAligner: "externalMT"
+documentAlignerThreshold: 0.1
+alignerCmd: "bash ~/bitextor/workflow/example/dummy-translate.sh"
+translationDirection: fr2en
+
+sentenceAligner: 'bleualign'
+sentenceAlignerThreshold: 0.1
+
+# cleaning
+bifixer: true
+aggressiveDedup: true
+bicleaner: ~/permanent/bicleaner-model/en-fr/en-fr.yaml
+bicleanerThreshold: 0.5
+elrc: true
+tmx: true
+deduped: true
