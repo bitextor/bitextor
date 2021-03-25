@@ -12,4 +12,4 @@ nav:
 
 markdown_extensions:
     - toc:
-        baselevel: 2
+        toc_depth: 6
