@@ -112,7 +112,7 @@ jobs:
             bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
             anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
-         -  name: Trigger intensive tests
+      -  name: Trigger intensive tests
          # Check if tests succeeded and if we have, likely, a release (it is not sure)
          if: ${{ steps.deployment.outcome == 'success' && startsWith(github.ref, 'refs/tags/v') }}
          env:
