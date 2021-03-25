@@ -31,6 +31,10 @@ RUN apt-get -y install libgoogle-perftools-dev libsparsehash-dev
 # not necessary for bitextor, but users might find this useful:
 RUN apt-get -y install htop vim
 
+# symlink python to python3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/pip3 /usr/bin/pip
+
 # Support for UTF8
 # RUN locale-gen en_US.UTF-8
 # ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
@@ -41,16 +45,36 @@ WORKDIR /home/docker
 RUN apt-get install -y autoconf automake libtool
 RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.10.1/protobuf-all-3.10.1.tar.gz
 RUN tar -zxvf protobuf-all-3.10.1.tar.gz
+RUN rm protobuf-all-3.10.1.tar.gz
 WORKDIR /home/docker/protobuf-3.10.1
 RUN ./configure
 RUN make -j $j && make check
 RUN make install
 RUN ldconfig
 
+# Installing giashard
+RUN echo -e "${RED}Installing golang${NC}"
+WORKDIR /home/docker
+RUN wget -O go.tgz https://dl.google.com/go/go1.16.2.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go.tgz && rm go.tgz
+ENV PATH "/usr/local/go/bin:$PATH"
+RUN go version
+ENV GOPATH /home/docker/go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+RUN echo -e "${RED}Installing giashard${NC}"
+RUN go get github.com/paracrawl/giashard/...
+
+# Download Heritrix
+RUN echo -e "${RED}Downloading heritrix${NC}"
+WORKDIR /home/docker
+RUN wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
+RUN unzip heritrix-3.4.0-SNAPSHOT-dist.zip && rm heritrix-3.4.0-SNAPSHOT-dist.zip
+
 # Cloning bitextor
 RUN echo -e "${RED}Cloning bitextor${NC}"
 WORKDIR /home/docker
-RUN git clone --recurse-submodules --depth 1 https://github.com/bitextor/bitextor.git
+COPY ./ bitextor/
 
 # Installing bitextor dependencies
 RUN echo -e "${RED}Installing pip dependencies${NC}"
@@ -77,23 +101,6 @@ WORKDIR /home/docker/bitextor/bicleaner/kenlm/build
 RUN cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/usr/bin
 RUN make -j $j all install
 
-# symlink python to python3
-RUN ln -sf /usr/bin/python3 /usr/bin/python
-RUN ln -sf /usr/bin/pip3 /usr/bin/pip
-
-# Installing giashard
-WORKDIR /home/docker
-RUN echo -e "${RED}Installing golang${NC}"
-RUN wget -O go.tgz https://dl.google.com/go/go1.16.2.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go.tgz && rm go.tgz
-ENV PATH "/usr/local/go/bin:$PATH"
-RUN go version
-ENV GOPATH /home/docker/go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-RUN echo -e "${RED}Installing giashard${NC}"
-RUN go get github.com/paracrawl/giashard/...
-
 # Installing bitextor
 RUN echo -e "${RED}Compiling bitextor${NC}"
 WORKDIR /home/docker/bitextor
@@ -102,14 +109,9 @@ WORKDIR /home/docker/bitextor/build
 RUN cmake ..
 RUN make -j $j
 
-# Download Heritrix
-RUN echo -e "${RED}Downloading heritrix${NC}"
-WORKDIR /home/docker
-RUN wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
-RUN unzip heritrix-3.4.0-SNAPSHOT-dist.zip && rm heritrix-3.4.0-SNAPSHOT-dist.zip
-
 # docker run bitextor with execute bitextor.sh by default
 # any arguments passed to `docker run bitextor` command will be passed to bitextor.sh
+WORKDIR /home/docker
 ENTRYPOINT ["/home/docker/bitextor/bitextor.sh"]
 CMD ["-h"]
 
