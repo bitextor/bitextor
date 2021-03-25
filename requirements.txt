@@ -14,7 +14,7 @@ python-dateutil==2.8.1
 cchardet==2.1.7
 sentence-splitter==1.4
 mosestokenizer==1.1.0
-lxml==4.6.2
+lxml==4.6.3
 html5lib==1.1
 regex==2020.11.13
 numpy==1.19.5
