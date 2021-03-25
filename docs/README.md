@@ -131,7 +131,7 @@ Currently we only support Linux x64 for Conda environment.
   pip3 install -r bifixer/requirements.txt
   # biroamer:
   pip3 install -r biroamer/requirements.txt
-  python -m spacy download en_core_web_sm
+  python3 -m spacy download en_core_web_sm
   ```
 
   If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
