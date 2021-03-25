@@ -2,7 +2,7 @@ name: Build, test and upload with conda
 on:
    push:
       branches:
-         - snake_performance
+         - master
       paths-ignore:
          - '**.md'
          - 'docs/**'
