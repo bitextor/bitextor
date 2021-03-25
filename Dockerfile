@@ -50,7 +50,7 @@ RUN ldconfig
 # Cloning bitextor
 RUN echo -e "${RED}Cloning bitextor${NC}"
 WORKDIR /home/docker
-RUN git clone -b docker --recurse-submodules --depth 1 https://github.com/bitextor/bitextor.git
+RUN git clone -b snake_performance --recurse-submodules --depth 1 https://github.com/bitextor/bitextor.git
 
 # Installing bitextor dependencies
 RUN echo -e "${RED}Installing pip dependencies${NC}"
