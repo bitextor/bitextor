@@ -3,8 +3,6 @@ import sys
 import requests
 import subprocess
 
-#include: "utils.smk"
-
 sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
 from utils.args import validate_args
 from utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
