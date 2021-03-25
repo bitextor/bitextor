@@ -18,6 +18,7 @@ document-aligner/bin/
 document-aligner/cmake_install.cmake
 document-aligner/preprocess-bin/
 document-aligner/CTestTestfile.cmake
+document-aligner/Makefile
 model/Makefile
 model/Makefile.in
 stamp-h1
@@ -30,3 +31,4 @@ utils/__pycache__/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
+Makefile
