@@ -9,3 +9,7 @@ edit_uri: ""
 nav:
     - Home: 'README.md'
     - Technical requirements: 'technical_requirements.md'
+
+markdown_extensions:
+    - toc:
+        baselevel: 2
