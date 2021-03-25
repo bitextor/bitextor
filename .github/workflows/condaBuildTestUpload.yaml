@@ -112,3 +112,15 @@ jobs:
             bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
             anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
+         -  name: Trigger intensive tests
+         # Check if tests succeeded and if we have, likely, a release (it is not sure)
+         if: ${{ steps.deployment.outcome == 'success' && startsWith(github.ref, 'refs/tags/v') }}
+         env:
+            BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
+            BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
+         run: |
+            curl -u "${BITEXTOR_BOT_EMAIL}:${BITEXTOR_BOT_PAT_DOCKER_CD}" \
+                 -X POST   -H "Accept: application/vnd.github.v3+json" \
+                 https://api.github.com/repos/bitextor/bitextor/actions/workflows/condaIntensiveTests.yaml/dispatches \
+                 -d '{"ref":"master"}'
+                 #-d '{"ref":"master","inputs":{"conda_version":"SPECIFIC_VERSION","conda_build":"SPECIFIC_BUILD"}}'

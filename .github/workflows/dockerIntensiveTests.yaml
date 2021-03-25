@@ -1,0 +1,205 @@
+name: Intensive tests with docker
+on:
+   workflow_dispatch:
+      inputs:
+         docker_tag:
+            description: 'Tag which will be looked for'
+            required: false
+            default: 'edge'
+jobs:
+   tests_mt:
+      name: Tests MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x01'
+   tests_db:
+      name: Tests dictionary based
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x02'
+   tests_gendic:
+      name: Tests generate dictionary
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x04'
+   tests_genbicleaner:
+      name: Tests generate bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x08'
+   tests_gendic_genbicleaner:
+      name: Tests generate dictionary and bicleaner model
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x10'
+   tests_mt_db:
+      name: Tests combining dictionaries and MT
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x20'
+   tests_others:
+      name: Other tests
+      runs-on: ubuntu-20.04
+      timeout-minutes: 300
+      steps:
+      -  name: Run
+         run: |
+            tag=""
+            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
+               tag=":${{ github.event.inputs.docker_tag }}"
+            fi
+
+            sudo apt-get update
+            sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo \
+               "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+            # Test docker installation
+            sudo docker pull hello-world > /dev/null
+            sudo docker run --rm hello-world > /dev/null
+
+            # Run tests with docker
+            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker run --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" -c 'bitextor/run-tests.sh -t 0x40'
