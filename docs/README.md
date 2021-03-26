@@ -106,7 +106,7 @@ Currently we only support Linux x64 for Conda environment.
 
 * **Pip** dependencies
 
-  Furthermore, most of the scripts in Bitextor are written in Python 3. Because of this, it is necessary to install Python >= 3. All the tools explained above are available from the repositories of most Unix-like operating systems.
+  Furthermore, most of the scripts in Bitextor are written in Python 3. The minimum requirement is Python>=3.7.
 
   Some additional Python libraries are required. They can be installed automatically with `pip`. We recommend using a virtual environment to manage Bitextor installation.
 
