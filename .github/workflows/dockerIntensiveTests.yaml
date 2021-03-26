@@ -42,8 +42,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x01; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -77,6 +78,9 @@ jobs:
       name: Tests dictionary based
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -103,8 +107,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x02; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -138,6 +143,9 @@ jobs:
       name: Tests generate dictionary
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -164,8 +172,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x04; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -199,6 +208,9 @@ jobs:
       name: Tests generate bicleaner model
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -225,8 +237,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x08; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -260,6 +273,9 @@ jobs:
       name: Tests generate dictionary and bicleaner model
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -286,8 +302,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x10; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -321,6 +338,9 @@ jobs:
       name: Tests combining dictionaries and MT
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -347,8 +367,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x20; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
@@ -382,6 +403,9 @@ jobs:
       name: Other tests
       runs-on: ubuntu-20.04
       timeout-minutes: 600
+      env:
+            WORK: ${{ github.workspace }}
+            WORK_DOCKER: '/home/docker'
       steps:
       -  name: Run
          run: |
@@ -408,8 +432,9 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/run-tests.sh -t 0x40; \
-                      cp -f "${WORK_DOCKER}/data/fails.log" "${WORK_DOCKER}/volume" 2> /dev/null && \
-                      cp -f -r "${WORK_DOCKER}/reports" "${WORK_DOCKER}/volume"'
+                      cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
+                      rm -rf '"${WORK_DOCKER}/volume/reports"' && \
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:

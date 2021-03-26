@@ -233,7 +233,7 @@ run-tests "$FLAGS"
 wait
 
 # Post checking
-if [[ "$dic_md5sum_after" != "" ]] && [[ "$dic_md5sum_before" != "$dic_md5sum_after" ]]; then
+if [[ "$dic_md5sum_before" != "" ]] && [[ "$dic_md5sum_after" != "" ]] && [[ "$dic_md5sum_before" != "$dic_md5sum_after" ]]; then
     echo "Failed 40.1 (dictionary has been replaced ($dic_md5sum_before -> $dic_md5sum_after), what is not the expected)"
     echo "fail 40.1 \"dictionary replaced\"" >> "$FAILS"
 else
