@@ -52,6 +52,7 @@ download_dictionary()
 }
 
 WORK="${HOME}"
+WORK="${WORK/#\~/$HOME}" # Expand ~ to $HOME
 FORCE=""
 THREADS=1
 FLAGS="$(echo 2^32-1 | bc)"
