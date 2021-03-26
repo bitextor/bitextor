@@ -43,7 +43,8 @@ download_dictionary()
     fi
 }
 
-WORK=${HOME}
+WORK="${HOME}"
+WORK="${WORK/#\~/$HOME}" # Expand ~ to $HOME
 FORCE=""
 THREADS=1
 
