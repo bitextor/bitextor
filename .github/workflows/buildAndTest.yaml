@@ -74,10 +74,10 @@ jobs:
       -  name: Run tests
          id: tests
          env:
-            BITEXTOR: ${{ github.workspace }}
+            WORK: ${{ github.workspace }}
          run: |
             chmod 775 ./run-tests-min.sh
-            ./run-tests-min.sh -w "$BITEXTOR" -j 4
+            ./run-tests-min.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
