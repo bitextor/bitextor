@@ -86,8 +86,7 @@ RUN pip3 install -r biroamer/requirements.txt
 RUN python3 -m spacy download en_core_web_sm
 RUN pip3 install Cython
 RUN pip3 install pycld3
-# linguacrawl is currently broken (alcazar is unavailable)
-# RUN pip3 install git+https://github.com/transducens/linguacrawl.git
+RUN pip3 install git+https://github.com/transducens/linguacrawl.git
 
 # Installing bicleaner and kenlm
 RUN echo -e "${RED}Installing bicleaner and kenlm${NC}"
