@@ -214,6 +214,8 @@ make -j4
   rm -rf boost_1_75_0*
   ```
 
+* If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`.
+
 ## Run
 
 To run Bitextor use the main script `bitextor.sh`. In general, this script takes two parameters:
