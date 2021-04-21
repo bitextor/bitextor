@@ -72,7 +72,7 @@ jobs:
             WORK: ${{ github.workspace }}
          run: |
             chmod 775 ./run-tests-bitextor-only.sh
-            ./run-tests-min.sh -w "$WORK" -j 4
+            ./run-tests-bitextor-only.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
