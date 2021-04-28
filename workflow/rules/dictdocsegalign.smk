@@ -15,7 +15,7 @@ rule dic_docsegalign_lettr2idx:
 rule dic_docsegalign_idx2ridx_l1tol2:
     input:
         idx=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.xz',
-        dic=expand("{dic}", dic=DIC)
+        dic=DIC
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.ridx.xz',
     shell: '''
         xzcat -T 0 -f {input.idx} \
@@ -26,7 +26,7 @@ rule dic_docsegalign_idx2ridx_l1tol2:
 rule dic_docsegalign_idx2ridx_l2tol1:
     input:
         idx=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.xz',
-        dic=expand("{dic}", dic=DIC)
+        dic=DIC
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.ridx.xz',
     shell: '''
         xzcat -T 0 -f {input.idx} \
@@ -169,7 +169,7 @@ rule dic_docsegalign_matches2hunalign:
         '''
 
 rule dic_docsegalign_hunaligndic:
-    input: expand("{dic}", dic=DIC)
+    input: DIC
     output: f'{DATADIR}/hunalign_dic'
     run:
         with open(output[0], "wt") as outw:

@@ -14,15 +14,15 @@ else:
     trainPrefixes=None
 
 if "mkcls" in config and config["mkcls"]:
-    MKCLS="/mgiza/mgizapp/inst/mkcls"
+    MKCLS=f"{BITEXTOR}/mgiza/mgizapp/inst/mkcls"
 else:
-    MKCLS="/clustercat/bin/mkcls"
+    MKCLS=f"{BITEXTOR}/clustercat/bin/mkcls"
 
 #################################################################
 ### RULES #######################################################
 
 rule dic_generation_tokenize_file_l1:
-    input: expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=SRC_LANG)
+    input: f"{trainPrefixes}.{SRC_LANG}.xz"
     output: f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.xz"
     shell: '''
         mkdir -p {preprocCorpusDir}
@@ -30,7 +30,7 @@ rule dic_generation_tokenize_file_l1:
         '''
 
 rule dic_generation_tokenize_file_l2:
-    input: expand("{dataset}.{lang}.xz", dataset=trainPrefixes, lang=TRG_LANG)
+    input: f"{trainPrefixes}.{TRG_LANG}.xz"
     output: f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.xz"
     shell: '''
         mkdir -p {preprocCorpusDir}
@@ -62,7 +62,7 @@ rule dic_generation_mkcls:
     priority: 40
 
     shell: '''
-        {PROFILING} {BITEXTOR}{MKCLS} -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null
+        {PROFILING} {MKCLS} -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null
         '''
 
 rule dic_generation_plain2snt:
@@ -136,7 +136,7 @@ rule dic_generation_symmetrise_dic:
         vcb2=f"{mgizaModelDir}/corpus.{TRG_LANG}.filtered.vcb",
         t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
         t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
-    output: expand("{dic}", dic=DIC_TRAINING)
+    output: DIC_TRAINING
     run:
         if DIC != DIC_TRAINING:
             sys.stderr.write(f"WARNING: you are going to generate a new dictionary, but you have provided one which exists and is the one that will be used. If you want to use the new dictionary, set 'dic' config option to an existant path but unexistant file\n")
@@ -166,7 +166,7 @@ rule dic_generation_symmetrise_dic:
                 t3dic[item[1]][item[0]]=item[2]
 
         dic=open(output[0], "wt")
-        dic.write(SRC_LANG+"\t"+TRG_LANG+"\n")
+        dic.write(f"{SRC_LANG}\t{TRG_LANG}\n")
         for line in t3s:
             item=line.strip().split(" ")
             if item[0] in t3dic:

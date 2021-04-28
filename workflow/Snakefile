@@ -3,7 +3,7 @@ import sys
 import requests
 import subprocess
 
-sys.path.append(os.path.dirname(os.path.abspath(config["bitextor"]) + "/utils"))
+sys.path.append(os.path.dirname(os.path.abspath(f"{config['bitextor']}/utils")))
 from utils.args import validate_args
 from utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
     snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
@@ -36,7 +36,7 @@ if "lang2" in config:
 
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
-    PROFILING = "/usr/bin/time -v"
+    PROFILINE = "/usr/bin/time -v"
 
 #################################################################
 # CRAWLING
@@ -276,7 +276,7 @@ OUTPUT_FILES = ["sent", "raw"]
 
 if 'deferred' in config and config['deferred']:
     DEFERRED = "--print-sent-hash"
-    MMHSUM_PATH = BITEXTOR + "/preprocess/bin/mmhsum"
+    MMHSUM_PATH = f"{BITEXTOR}/preprocess/bin/mmhsum"
     DEFERRED_FIELDS = ['checksum1','checksum2']
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
@@ -459,7 +459,7 @@ rule heritrix_download:
                 if check:
                     connection_error = True
                 else:
-                    url = "https" + url[4:]
+                    url = f"https{url[4:]}"
             except:
                 if check:
                     connection_error = True
