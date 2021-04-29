@@ -29,7 +29,7 @@ zcat -f $1 | while read line; do
 	fi
 
 	echo -n "	"
-	cat $tempsplitsent1 | base64 -d | while read linesplit; do
+	while read linesplit; do
 		senthash=$(echo -n "$linesplit" | preprocess/bin/mmhsum)
 		found1=""
                 for partdeferredhash1 in $(echo "$deferredhash1" | tr "+" "\n"); do
@@ -42,7 +42,7 @@ zcat -f $1 | while read line; do
 		if [[ "$found1" != "" ]]; then
 			break
 		fi
-	done
+	done < <(cat $tempsplitsent1 | base64 -d)
 	rm -rf $tempprocess
 
 
@@ -60,7 +60,7 @@ zcat -f $1 | while read line; do
 	fi
 	
 	echo -n "	"
-	cat $tempsplitsent2 | base64 -d | while read linesplit; do
+	while read linesplit; do
 		senthash=$(echo -n "$linesplit" | preprocess/bin/mmhsum)
 		found2=""
 		for partdeferredhash2 in $(echo "$deferredhash2" | tr "+" "\n"); do
@@ -73,7 +73,7 @@ zcat -f $1 | while read line; do
 		if [[ "$found2" != "" ]]; then
                         break
                 fi
-	done
+	done < <(cat $tempsplitsent2 | base64 -d)
 	rm -rf $tempprocess
 	echo -n "	"	
 	echo -n "$line" | cut -f 5-
