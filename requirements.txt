@@ -1,4 +1,4 @@
-snakemake==6.2.1
+snakemake==6.3.0
 warcio==1.7.4
 ftfy==6.0.1
 tldextract==3.1.0
@@ -18,7 +18,7 @@ lxml==4.6.3
 html5lib==1.1
 regex==2021.4.4
 numpy==1.19.5
-setuptools==54.1.2
+setuptools==56.0.0
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
 -r requirements/requirements-mt-aligner.txt
