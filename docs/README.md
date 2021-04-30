@@ -206,13 +206,13 @@ make -j4
   ```bash
   sudo apt-get remove libboost-all-dev
   sudo apt-get autoremove
-  wget https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.gz
-  tar xvf boost_1_75_0.tar.gz
-  cd boost_1_75_0/
+  wget https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.gz
+  tar xvf boost_1_76_0.tar.gz
+  cd boost_1_76_0/
   ./bootstrap.sh
   ./b2 -j4 --layout=system install || echo FAILURE
   cd ..
-  rm -rf boost_1_75_0*
+  rm -rf boost_1_76_0*
   ```
 
 * If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`.
