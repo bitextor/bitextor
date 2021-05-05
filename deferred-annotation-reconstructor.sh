@@ -1,12 +1,12 @@
 #!/bin/bash
 
-tempcache=$(mktemp -d)
+tempcache=$(mktemp -d --tmpdir=/dev/shm)
 
 zcat -f $1 | while read line; do
-	tempwarc1=$(mktemp)
-	tempwarc2=$(mktemp)
-	tempprocess1=$(mktemp -d)
-	tempprocess2=$(mktemp -d)
+	tempwarc1=$(mktemp --tmpdir=/dev/shm)
+	tempwarc2=$(mktemp --tmpdir=/dev/shm)
+	tempprocess1=$(mktemp -d --tmpdir=/dev/shm)
+	tempprocess2=$(mktemp -d --tmpdir=/dev/shm)
 	deferredhash1=$(echo "$line" | cut -f 6)
 	deferredhash2=$(echo "$line" | cut -f 7)
 	url1=$(echo "$line" | cut -f 1)
