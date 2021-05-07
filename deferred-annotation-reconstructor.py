@@ -62,6 +62,5 @@ with gzip.open(sys.argv[1], 'rt') as bitextor_output:
                     print(l[url][partdeferredhash], end='')
                 except KeyError: # if the sentence hasn't been found
                     print('', end='')
-            print()
         print("\t" + "\t".join(parts_line[4:]))
 
