@@ -52,15 +52,18 @@ with gzip.open(sys.argv[1], 'rt') as bitextor_output:
                         with gzip.open(filename, 'r') as f:
                             segments = splitter.split(base64.b64decode(f.read()).decode('utf8'))
                             for segment in segments:
+                                segment = segment.strip()
                                 # Then calculate the MurmurHash for each sentence from the downloaded document like Bitextor does, and then store it in the cache
                                 l[url][subprocess.run(["preprocess/bin/mmhsum"], stdout=subprocess.PIPE, input=segment, encoding='utf8').stdout.rstrip('\n')]=segment
     
             # Print the reconstructed sentences
             print("\t", end='')
+            list_sentences = []
             for partdeferredhash in deferredhash.split('+'):
                 try:
-                    print(l[url][partdeferredhash], end='')
+                    list_sentences.append(l[url][partdeferredhash])
                 except KeyError: # if the sentence hasn't been found
-                    print('', end='')
+                    list_sentences.append('')
+            print(" ".join(list_sentences), end='')
         print("\t" + "\t".join(parts_line[4:]))
 
