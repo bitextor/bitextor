@@ -14,6 +14,16 @@ from warcio.warcwriter import WARCWriter
 
 l = LRU(100000) # A cache with size of 100K documents in memory
 
+if len(sys.argv) < 4 or sys.argv[1] == "--help" or sys.argv[1] == "-h":
+    print("Usage: deferred-annotation-reconstructor BITEXTOR-OUTPUT-FILE LANG-CODE-SL LANG-CODE-TL [WARCFILE]")
+    print("Reconstructs sentences from deferred crawling standoff annotations from Bitextor")
+    print()
+    print("All arguments are positional.")
+    print()
+    print("Report bugs to: https://github.com/bitextor/bitextor/issues")
+    print("Bitextor home page: <https://github.com/bitextor/bitextor>")
+    exit()
+
 with gzip.open(sys.argv[1], 'rt') as bitextor_output:
     for line in bitextor_output:
         # Parse bitextor ".sent.gz" line with deferred crawling annotations
@@ -30,7 +40,7 @@ with gzip.open(sys.argv[1], 'rt') as bitextor_output:
             if url not in l: # If we don't crawled or retrieved the document where this sentence is located
                 l[url]=dict() # Init the cache if the url didn't exist with a Python dictionary, which will store the deferred annotation and the actual sentence
                 fp = tempfile.NamedTemporaryFile(suffix=".warc.gz") # File to store the WARC records/documents that match their URL
-                if len(sys.argv) > 4: # if an already crawled WARC is given by argument, let's look for the content of the url from the line we are actually iterating on
+                if len(sys.argv) == 5: # if an already crawled WARC is given by argument, let's look for the content of the url from the line we are actually iterating on
                     writer = WARCWriter(fp, gzip=True)
                     for record in ArchiveIterator(open(sys.argv[4],'rb')):
                         if url == record.rec_headers.get_header('WARC-Target-URI'):
