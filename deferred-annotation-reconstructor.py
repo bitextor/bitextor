@@ -46,7 +46,8 @@ with gzip.open(sys.argv[1], 'rt') as bitextor_output:
                         if url == record.rec_headers.get_header('WARC-Target-URI'):
                             writer.write_record(record)
                 else: # download the url with wget
-                    subprocess.run(["wget", url, "--warc-file", ".".join(fp.name.split('.')[:-2])])
+                    with tempfile.TemporaryDirectory() as tempcrawling:
+                        subprocess.run(["wget", url, "-P", tempcrawling, "-o", "/dev/null", "--warc-file", ".".join(fp.name.split('.')[:-2])])
 
                 with tempfile.TemporaryDirectory() as tempprocess:
                     # Process the downloaded document the same way Bitextor does in Paracrawl (warc2text + Moses sentence splitter Python port)
