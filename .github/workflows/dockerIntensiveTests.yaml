@@ -19,7 +19,7 @@ jobs:
       steps:
       -  name: Run
          run: |
-            tag=""
+            tag=":edge"
             if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
                tag=":${{ github.event.inputs.docker_tag }}"
             fi
