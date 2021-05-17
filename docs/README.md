@@ -24,7 +24,7 @@ For more information about Docker installation and usage consult [our wiki](http
 
 ## Conda installation
 
-Same as with Docker, you can easily install Bitextor using a Conda environment with the following command:
+Same as with Docker, you can easily install Bitextor using a Conda environment with the following commands:
 
 ```bash
 conda config --show channels # Check current channels
@@ -36,6 +36,20 @@ conda config --append channels dmnapolitano
 conda config --append channels esarrias
 
 conda install -c bitextor bitextor
+```
+
+If you want the latest updates, you can install the nightly version instead (only when major features/bug fixes are introduced, we release a new version):
+
+```bash
+conda config --show channels # Check current channels
+
+# Add necessary channels if were not added previously
+conda config --add channels conda-forge
+conda config --append channels bioconda
+conda config --append channels dmnapolitano
+conda config --append channels esarrias
+
+conda install -c bitextor bitextor-nightly
 ```
 
 If you want a concrete version, you can look in the [Anaconda Repository](https://anaconda.org/anaconda/repo) or use the following command:
