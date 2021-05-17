@@ -137,11 +137,11 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
 
     idcounter = 0
     prev_hash = ""
-    prev_fieldsdict = dict()
     urls1 = set()
     urls2 = set()
-    bestseg1 = ""
-    bestseg2 = ""
+    bestseg = dict() 
+    bestchecksum1 = ""
+    bestchecksum2 = ""
     columns = options.columns.split(',')
     fieldsdict = dict()
 
@@ -160,17 +160,14 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
         if 'seg2' not in fieldsdict:
             fieldsdict['seg2'] = ""
         if prev_hash == "" and options.dedup:
-            bestseg1 = fieldsdict['seg1']
-            bestseg2 = fieldsdict['seg2']
+            bestseg = dict(fieldsdict)
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
             prev_hash = line_hash
-            prev_fieldsdict = dict(fieldsdict)
         elif prev_hash == line_hash and options.dedup:
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
             prev_hash = line_hash
-            prev_fieldsdict = dict(fieldsdict)
         elif not options.dedup:
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
@@ -181,19 +178,15 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             urls2 = set()
         else:
             idcounter += 1
-            prev_fieldsdict['seg1'] = bestseg1
-            prev_fieldsdict['seg2'] = bestseg2
-            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, prev_fieldsdict, options.mint, options.no_delete_seg)
+            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, bestseg, options.mint, options.no_delete_seg)
             if text_writer:
-                text_writer.write("\t".join([x for x in prev_fieldsdict.values() if x])+"\n")
+                text_writer.write("\t".join([x for x in bestseg.values() if x])+"\n")
             urls1 = set()
             urls2 = set()
-            bestseg1 = fieldsdict['seg1']
-            bestseg2 = fieldsdict['seg2']
+            bestseg = dict(fieldsdict)
             urls1.add(fieldsdict['url1'])
             urls2.add(fieldsdict['url2'])
             prev_hash = line_hash
-            prev_fieldsdict = dict(fieldsdict)
 
     if options.dedup:
         idcounter += 1

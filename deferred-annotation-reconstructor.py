@@ -70,7 +70,7 @@ with gzip.open(sys.argv[1], 'rt') as bitextor_output:
             # Print the reconstructed sentences
             print("\t", end='')
             list_sentences = []
-            for partdeferredhash in deferredhash.split('+'):
+            for partdeferredhash in deferredhash.split('#')[0].split('+'):
                 try:
                     list_sentences.append(l[url][partdeferredhash])
                 except KeyError: # if the sentence hasn't been found
