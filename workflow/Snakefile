@@ -720,8 +720,8 @@ rule warc2text:
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
                 mkdir -p {params.folder}/$lang
-                touch {params.folder}/$lang/{{text,mime,url}}
-                gzip {params.folder}/$lang/{{text,mime,url}}
+                touch {params.folder}/$lang/{{{params.f}}}
+                gzip {params.folder}/$lang/{{{params.f}}}
             fi
         done
         '''

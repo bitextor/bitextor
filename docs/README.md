@@ -24,7 +24,7 @@ For more information about Docker installation and usage consult [our wiki](http
 
 ## Conda installation
 
-Same as with Docker, you can easily install Bitextor using a Conda environment with the following command:
+Same as with Docker, you can easily install Bitextor using a Conda environment with the following commands:
 
 ```bash
 conda config --show channels # Check current channels
@@ -36,6 +36,20 @@ conda config --append channels dmnapolitano
 conda config --append channels esarrias
 
 conda install -c bitextor bitextor
+```
+
+If you want the latest updates, you can install the nightly version instead (only when major features/bug fixes are introduced, we release a new version):
+
+```bash
+conda config --show channels # Check current channels
+
+# Add necessary channels if were not added previously
+conda config --add channels conda-forge
+conda config --append channels bioconda
+conda config --append channels dmnapolitano
+conda config --append channels esarrias
+
+conda install -c bitextor bitextor-nightly
 ```
 
 If you want a concrete version, you can look in the [Anaconda Repository](https://anaconda.org/anaconda/repo) or use the following command:
@@ -320,13 +334,27 @@ bitextor: /home/user/bitextor
 permanentDir: /home/user/permanent/bitextor-output
 dataDir: /home/user/permanent/data
 transientDir: /home/user/transient
+tempDir: /home/user/transient
 
 profiling: true
 ```
 
 * `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled).
-* `permanentDir`, `transientDir` and `dataDir`: Folders used during processing: `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing, `transientDir` will contain the rest of files generated in the pipeline.
+* `permanentDir`, `transientDir`, `tempDir` and `dataDir` are the folders used during processing. `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing;`transientDir` will contain the result of every step of the pipeline, and `tempDir` will contain temporary files that are needed by some steps and removed immediately after they are no longer required.
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
+
+### Workflow execution
+
+There are some optional parameters that allow for a finer control of the execution of the pipeline, namely it is possible to configure some jobs to use more than one core; and it is possible to have a partial execution of Bitextor by specifying what step should be final.
+
+```yaml
+until: preprocess 
+parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
+```
+
+* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values are: {`crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`}.
+* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. The jobs that can be executed in parallel in this way are: {`split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `sents`}.
+
 
 ### Data sources
 
@@ -366,7 +394,7 @@ onlyConcat: false
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour (`linguacrawl` needs only the quantity, without any suffix)
 * `crawlWait`: option that specifies the time that should be waited between the retrievals. It is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
-* `crawlFileTypes`: **wget-specific/linguacrawl-specific option** that allows to specify the files which we want to retrieve. Both `wget` and `linguacrawl` use the Content-Type in order to search a pattern which matchs, so either "html" or "text/html" will retrieve those files with Content-Type "text/html". The [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) contains [MIME](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) values
+* `crawlFileTypes`: **wget-specific/linguacrawl-specific option** that allows to specify the files which we want to retrieve. Both `wget` and `linguacrawl` use the Content-Type in order to search a pattern which matches, so either "html" or "text/html" will retrieve those files with Content-Type "text/html". The [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) contains [MIME](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) values
 * `crawlSizeLimit`: **creepy-specific/linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K) (in the case of `Creepy`, but not for `linguacrawl`)
 * `crawlTLD`: **creepy-specific/linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org* for `Creepy`. In the case of `linguacrawl` the TLD can be specified directly without wildcards and in a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
 * `crawlerNumThreads`: **creepy-specific/linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
@@ -554,7 +582,6 @@ mkcls: true
 alignerCmd: "example/dummy-translate.sh"
 translationDirection: "es2en"
 documentAlignerThreshold: 0.1
-documentAlignerWorkers: 2
 ```
 
 * `alignerCmd`: command to call the external MT script
@@ -568,7 +595,6 @@ After document alignment, the next step in the pipeline is segment alignment. Th
 ```yaml
 sentenceAligner: bleualign
 sentenceAlignerThreshold: 0.1
-sentenceAlignerWorkers: 1
 ```
 
 * `sentenceAligner`: segment aligner tool which is going to be used. Default is `bleualign`, but `hunalign` can be used in order to achieve a dictionary-based alignment. If `bleualign` is used, `documentAligner: externalMT` is mandatory, but in the case of `hunalign`, both `externalMT` and `DIC` are allowed as document aligner.
