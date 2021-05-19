@@ -14,7 +14,7 @@ from warcio.warcwriter import WARCWriter
 
 l = LRU(100000) # A cache with size of 100K documents in memory
 
-if len(sys.argv) < 4 or sys.argv[1] == "--help" or sys.argv[1] == "-h":
+if len(sys.argv) < 4 or "--help" in sys.argv or "-h" in sys.argv:
     print("Usage: deferred-annotation-reconstructor BITEXTOR-OUTPUT-FILE LANG-CODE-SL LANG-CODE-TL [WARCFILE]")
     print("Reconstructs sentences from deferred crawling standoff annotations from Bitextor")
     print()
