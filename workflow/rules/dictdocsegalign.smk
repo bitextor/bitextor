@@ -195,6 +195,6 @@ rule dic_docsegalign_alignsegments_hunalign:
     shell: '''
         xzcat -T 0 {input.hunalign_matches} \
             | {PROFILING} {BITEXTOR}/bitextor-align-segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
-                --hunalign-dir "{BITEXTOR}/hunalign/src/hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
+                --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | xz -T 0 > {output}
         '''

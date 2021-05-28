@@ -9,20 +9,15 @@ mgizaModelDir = f"{TRANSIENT}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
 preprocCorpusDir = f"{TRANSIENT}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
 
 if "initCorpusTrainingPrefix" in config:
-    trainPrefixes=config["initCorpusTrainingPrefix"]
+    TRAIN_PREFIXES=config["initCorpusTrainingPrefix"]
 else:
-    trainPrefixes=None
-
-if "mkcls" in config and config["mkcls"]:
-    MKCLS=f"{BITEXTOR}/mgiza/mgizapp/inst/mkcls"
-else:
-    MKCLS=f"{BITEXTOR}/clustercat/bin/mkcls"
+    TRAIN_PREFIXES=None
 
 #################################################################
 ### RULES #######################################################
 
 rule dic_generation_tokenize_file_l1:
-    input: f"{trainPrefixes}.{SRC_LANG}.xz"
+    input: expand("{trainPrefixes}.{src_lang}.xz", trainPrefixes=TRAIN_PREFIXES, src_lang=SRC_LANG)
     output: f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.xz"
     shell: '''
         mkdir -p {preprocCorpusDir}
@@ -30,7 +25,7 @@ rule dic_generation_tokenize_file_l1:
         '''
 
 rule dic_generation_tokenize_file_l2:
-    input: f"{trainPrefixes}.{TRG_LANG}.xz"
+    input: expand("{trainPrefixes}.{trg_lang}.xz", trainPrefixes=TRAIN_PREFIXES, trg_lang=TRG_LANG)
     output: f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.xz"
     shell: '''
         mkdir -p {preprocCorpusDir}
@@ -62,7 +57,7 @@ rule dic_generation_mkcls:
     priority: 40
 
     shell: '''
-        {PROFILING} {MKCLS} -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null
+        {PROFILING} mkcls -c50 -n2 -p{input} -V{output} opt 2> /dev/null > /dev/null
         '''
 
 rule dic_generation_plain2snt:
@@ -77,7 +72,7 @@ rule dic_generation_plain2snt:
     priority: 40
     shell: '''
         mkdir -p {mgizaModelDir}
-        {BITEXTOR}/mgiza/mgizapp/bin/plain2snt {input.l1} {input.l2} 2> /dev/null > /dev/null
+        plain2snt {input.l1} {input.l2} 2> /dev/null > /dev/null
         mv {preprocCorpusDir}/corpus.clean.{SRC_LANG}_corpus.clean.{TRG_LANG}.snt {output.snt_2_1}
         mv {preprocCorpusDir}/corpus.clean.{TRG_LANG}_corpus.clean.{SRC_LANG}.snt {output.snt_1_2}
         cp {preprocCorpusDir}/corpus.clean.{SRC_LANG}.vcb {output.vcb1}
@@ -93,7 +88,7 @@ rule dic_generation_snt2cooc:
         snt="{prefix}.{l2}-{l1}-int-train.snt"
     output: "{prefix}.{l2}-{l1}.cooc"
     shell: '''
-        {PROFILING} {BITEXTOR}/mgiza/mgizapp/bin/snt2cooc {output} {input.vcb1} {input.vcb2} {input.snt} 2> /dev/null
+        {PROFILING} snt2cooc {output} {input.vcb1} {input.vcb2} {input.snt} 2> /dev/null
         '''
 
 rule dic_generation_mgiza:
@@ -104,7 +99,7 @@ rule dic_generation_mgiza:
         cooc="{prefix}.{l2}-{l1}.cooc"
     output: "{prefix}.{l2}-{l1}.t3.final"
     shell: '''
-        {PROFILING} {BITEXTOR}/mgiza/mgizapp/bin/mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} \
+        {PROFILING} mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} \
             -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} \
             -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
         '''

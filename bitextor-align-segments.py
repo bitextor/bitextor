@@ -40,19 +40,19 @@ import subprocess
 from tempfile import NamedTemporaryFile
 
 
-def run_aligner(filename_s, filename_t, dic, hunaligndir, thresh="0"):
+def run_aligner(filename_s, filename_t, dic, hunalign_bin, thresh="0"):
     # option -ppthresh=10?
     if dic is None or dic == "":
-        if hunaligndir is None:
+        if hunalign_bin is None:
             hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "-thresh=" + thresh, "/dev/null",
                         filename_s, filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", "-realign", "-thresh=" + thresh, "/dev/null", filename_s, filename_t]
+            hunalign = [hunalign_bin, "-realign", "-thresh=" + thresh, "/dev/null", filename_s, filename_t]
     else:
-        if hunaligndir is None:
+        if hunalign_bin is None:
             hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-thresh=" + thresh, dic, filename_s, filename_t]
         else:
-            hunalign = [hunaligndir + "/hunalign", "-thresh=" + thresh, dic, filename_s, filename_t]
+            hunalign = [hunalign_bin, "-thresh=" + thresh, dic, filename_s, filename_t]
 
     p = subprocess.Popen(hunalign, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     for line_o in p.stdout:
@@ -72,7 +72,7 @@ def align(file1, file2, file1orig, file2orig, dic, hashprogram):
 
     thresh = str(thresh)
 
-    hunalign_output = run_aligner(file1, file2, dic, options.hunaligndir, thresh)
+    hunalign_output = run_aligner(file1, file2, dic, options.hunalign_bin, thresh)
     try:
         prev_hun = next(hunalign_output).strip()
         prev_fields = prev_hun.split(b"\t")
@@ -140,11 +140,10 @@ oparser.add_argument('aligned_docs', metavar='FILE', nargs='?',
                      help='File containing the set of aliged documents encoded as base64. Format is: '
                           '\'url1 <tab> url2 <tab> sentences1 <tab> sentences2 <tab> tokenized1 <tab> tokenzied2\'',
                      default=None)
-oparser.add_argument("--hunalign-dir",
-                     help="Path to the installation of hunalign (for example: '/usr/local/bin'. If this option is not "
-                          "defined, the executable will be searched in the same directory where this scritp is "
-                          "placed.",
-                     dest="hunaligndir", required=False, default=None)
+oparser.add_argument("--hunalign",
+                     help="Path to the hunalign executable. If this option is not defined, the executable will "
+                          "be searched in the same directory where this scritp is placed",
+                     dest="hunalign_bin", required=False, default=None)
 oparser.add_argument("-d", help="Bilingual dictionary used for aligning and scoring", dest="dic", required=False,
                      default=None)
 oparser.add_argument("-t", "--tmp-dir",

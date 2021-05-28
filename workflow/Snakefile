@@ -18,6 +18,7 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
+
 #WORKDIR = os.getcwd()
 #SNAKEMAKEDIR = os.path.dirname(workflow.snakefile)
 
@@ -280,7 +281,7 @@ OUTPUT_FILES = ["sent", "raw"]
 
 if 'deferred' in config and config['deferred']:
     DEFERRED = "--print-sent-hash"
-    MMHSUM_PATH = f"{BITEXTOR}/preprocess/bin/mmhsum"
+    MMHSUM_PATH = f"mmhsum"
     DEFERRED_FIELDS = ['checksum1','checksum2']
     BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
 if 'bifixer' in config and config['bifixer']:
@@ -377,7 +378,7 @@ elif UNTIL == 'crawl':
             for host in hosts:
                 OUTPUT.append(f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
 elif UNTIL == 'preprocess':
-    OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, langs=LANGS, pproc_file=PPROC_FILES)
+    OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES)
 elif UNTIL == 'shard':
     OUTPUT = expand('{datadir}/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
 elif UNTIL == 'split':
@@ -403,7 +404,7 @@ else:
     elif UNTIL == 'filter':
         OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
 
-shell.prefix("set -euo pipefail;")
+shell.prefix("set -euo pipefail; if [ \"{BITEXTOR}\" != \"\" ] ; then PATH={BITEXTOR}/bin:$PATH; LD_LIBRARY_PATH={BITEXTOR}/lib:$LD_LIBRARY_PATH ; fi;")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -417,6 +418,7 @@ include: "rules/dictdocsegalign.smk"
 
 #################################################################
 ### CRAWLING ####################################################
+
 rule creepy_download:
     params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
     output: f'{DATADIR}/warc/{{target}}/creepy.warc.gz'
@@ -711,6 +713,7 @@ rule warc2preprocess:
         done
     '''
 
+
 rule warc2text:
     input: get_pproc_input
     output: expand("{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
@@ -719,7 +722,7 @@ rule warc2text:
         f = ','.join([f.strip(".gz") for f in PPROC_FILES])
     shell: '''
         mkdir -p {params.folder}
-        {PROFILING} {BITEXTOR}/warc2text/bin/warc2text -o {params.folder} -s -f {params.f} {input}
+        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -866,7 +869,7 @@ rule custom_translate:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
         fi
         zcat {input.source} \
-            | {PROFILING} {BITEXTOR}/preprocess/bin/b64filter {BITEXTOR}/preprocess/bin/cache ${{parallel_cmd}} {MT_COMMAND} \
+            | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \
             | pigz -c > {output}
         n_before=$(zcat {input.source} | base64 -d | wc -l)
         n_after=$(zcat {output} | base64 -d | wc -l)
@@ -965,7 +968,7 @@ rule mt_matches:
     threads: THREADS['docalign']
     shell: '''
         mkdir -p {params.folder}
-        {PROFILING} {BITEXTOR}/document-aligner/bin/docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         '''
 
 ### SEGALIGN ####################################################
@@ -996,11 +999,11 @@ rule bleualign:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
         cat {input.indices} \
-            | {BITEXTOR}/document-aligner/bin/docjoin \
+            | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bleualign-cpp/bleualign_cpp {DEFERRED} --bleu-threshold {SEGALIGN_THRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         '''
 
@@ -1134,13 +1137,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} {BITEXTOR}/preprocess/bin/cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
@@ -1270,8 +1273,12 @@ rule roam_tmx:
                      "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
         fi
 
+        # fast_align_bin=$(command -v fast_align)
+        # fast_align_prefix=${{fast_align_bin%/*}}
+
         zcat {input.tmx} \
             | {PROFILING} {BITEXTOR}/biroamer/biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
+                # -f "$fast_align_prefix" \
                 {params.omit} {params.alignment_corpus} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}
         '''

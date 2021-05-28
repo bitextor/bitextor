@@ -1,5 +1,5 @@
 # basic variables
-bitextor: ~/bitextor
+bitextor: /home/user/bitextor
 dataDir: ~/permanent/data
 permanentDir: ~/permanent
 transientDir: ~/transient
