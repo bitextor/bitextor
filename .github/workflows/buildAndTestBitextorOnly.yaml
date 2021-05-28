@@ -1,4 +1,4 @@
-name: Build and execute Bitextor tests
+name: Build and testing Bitextor only
 on:
    push:
       paths-ignore:
@@ -102,14 +102,3 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
-      -  name: Trigger intensive tests with Docker
-         # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         if: ${{ steps.tests.outcome == 'success' && startsWith(github.ref, 'refs/tags/v') }}
-         env:
-            BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
-            BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
-         run: |
-            curl -u "${BITEXTOR_BOT_EMAIL}:${BITEXTOR_BOT_PAT_DOCKER_CD}" \
-                 -X POST   -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/repos/bitextor/bitextor/actions/workflows/dockerIntensiveTests.yaml/dispatches \
-                 -d '{"ref":"master","inputs":{"docker_tag":"edge"}}'

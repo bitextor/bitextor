@@ -53,9 +53,28 @@ download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitex
 
 
 # Run tests
-# MT (id >= 10)
+annotate_and_echo_info()
+{
+  test_id=$1
+  status=$2
+  nolines=$3
+  error_file="$FAILS"
 
-snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-el.report" && bash "${BITEXTOR}/deferred-annotation-reconstructor.sh" "${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz" en el "${WORK}/data/warc/primeminister.warc.gz" "${WORK}/data/warc/primeminister.warc.gz" > "${WORK}/outputdeferred" && [ "$(zcat -f ${WORK}/outputdeferred | grep '		' | wc -l)" == "0" ] && echo "Ok 10 (no. lines in deferred reconstruction: $(zcat -f ${WORK}/outputdeferred | wc -l))" || (status="$?"; echo "Failed 10 (status: $status)"; echo "fail 10 $status" >> "$FAILS")
+  if [[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]; then
+    echo "Ok ${test_id} (nolines: ${nolines})"
+  else if [[ "$status" != "0" ]]; then
+    echo "Failed ${test_id} (status: ${status})"
+    echo "fail ${test_id} ${status}" >> "$error_file"
+  else if [[ "$nolines" == "0" ]]; then
+    echo "Failed ${test_id} (nolines: ${nolines})"
+    echo "fail ${test_id} '0 no. lines'" >> "$error_file"
+  fi
+  fi
+  fi
+}
+
+# MT (id >= 10)
+snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-el.report" && bash "${BITEXTOR}/deferred-annotation-reconstructor.sh" "${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz" en el "${WORK}/data/warc/primeminister.warc.gz" "${WORK}/data/warc/primeminister.warc.gz" > "${WORK}/outputdeferred" && [ "$(zcat -f ${WORK}/outputdeferred | grep '		' | wc -l)" == "0" ]; (status="$?"; nolines=$(zcat -f ${WORK}/outputdeferred | wc -l); annotate_and_echo_info 10 "$status" "$nolines")
 
 # Results
 failed=$(cat "$FAILS" | wc -l)

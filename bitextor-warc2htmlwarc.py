@@ -280,7 +280,7 @@ for record in f:
 
             if options.ftfy:
                 import ftfy
-                tree = ftfy.fix_text(clean_html, fix_entities=False, fix_character_width=False)
+                tree = ftfy.fix_text(clean_html, unescape_html=False, fix_character_width=False)
             else:
                 tree = clean_html
 
