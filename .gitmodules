@@ -1,7 +1,3 @@
-[submodule "clustercat"]
-	path = clustercat
-	url = https://github.com/jonsafari/clustercat
-	ignore = dirty
 [submodule "mgiza"]
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
