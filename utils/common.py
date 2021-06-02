@@ -34,7 +34,7 @@ class ExternalTextProcessor(object):
         proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         outs, errs = proc.communicate(input=bytes(input_text, encoding='utf-8'))
 
-        return outs.decode('utf-8')
+        return outs.decode('utf-8'), errs.decode('utf-8'), proc.returncode
 
 @contextmanager
 def open_xz_or_gzip_or_plain(file_path, mode='rt'):

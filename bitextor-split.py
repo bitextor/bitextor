@@ -41,7 +41,13 @@ def filter_trash(sentence):
 
 
 def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
-    segments = external_splitter.process(content).strip().split("\n")
+    output, error_output, returncode = external_splitter.process(content)
+    if returncode != 0:
+        print(f"External sentence splitter existed with non-zero code: {returncode}", file=sys.stderr)
+        print(error_output.strip(), file=sys.stderr)
+        sys.exit(1)
+
+    segments = output.strip().split("\n")
     # prune long sentences
     if prune_threshold and prune_type == "words":
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
