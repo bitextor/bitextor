@@ -27,10 +27,10 @@ import os
 import sys
 import argparse
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
-from keras.optimizers import SGD
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 np.random.seed(1058)
 

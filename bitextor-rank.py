@@ -31,7 +31,7 @@ import os
 import sys
 import argparse
 from operator import itemgetter
-from keras.models import model_from_json
+from tensorflow.keras.models import model_from_json
 import numpy as np
 stderr = sys.stderr
 sys.stderr = open(os.devnull, 'w')

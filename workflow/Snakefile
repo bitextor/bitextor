@@ -194,6 +194,9 @@ MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
 PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 
+# Sharding
+EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
+
 #################################################################
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
@@ -703,6 +706,7 @@ rule warc2preprocess:
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
                 gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
+                touch {EMPTY_SHARD_CHECK}
             fi
         done
     '''
@@ -722,6 +726,9 @@ rule warc2text:
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{{params.f}}}
                 gzip {params.folder}/$lang/{{{params.f}}}
+
+                # Generate empty file in order to be able to check if is needed to generate empty shards later
+                touch {EMPTY_SHARD_CHECK}
             fi
         done
         '''
@@ -752,7 +759,7 @@ def get_shard_input_linguacrawl_prov_warcs(lang):
 # DAG will be re-evaluated after completing shard rule (because number of batches is dynamic and unknown)
 checkpoint shard:
     # use url.gz as input to avoid having directories as input
-    input: 
+    input:
         get_shard_input_linguacrawl_prov_warcs,
         get_shard_input
     output: f'{DATADIR}/shards/02.batches.{{lang}}' # list of batches created for lang
@@ -762,7 +769,6 @@ checkpoint shard:
         o_no_lang = f'{DATADIR}/shards',
         o = f'{DATADIR}/shards/{{lang}}',
         f = ','.join([f.strip(".gz") for f in PPROC_FILES]),
-        empty_shard_folder = "EMPTY",
         empty_shard_batch_folder = "EMPTY/1"
     shell: '''
         ulimit -n 2048
@@ -776,51 +782,19 @@ checkpoint shard:
 
         {PROFILING} $binary -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
 
-        nofiles=$(ls -l {params.o} | wc -l)
-        if [ "$nofiles" == "1" ]; then
+        nofiles=$(ls {params.o} | wc -l)
+        if [ "$nofiles" == "0" ]; then
             # No files generated
-            >&2 echo "WARNING: no files generated after running giashard. Creating empty files instead"
+            >&2 echo "WARNING: no files generated after running giashard (lang '{wildcards.lang}'). Creating empty files instead"
+        fi
 
-            # Fake shards
+        if [[ -f "{EMPTY_SHARD_CHECK}" ]]; then
+            # Generate empty shards if needed in order to avoid the pipeline to break
             mkdir -p {params.o}/{params.empty_shard_batch_folder}
 
             touch {params.o}/{params.empty_shard_batch_folder}/empty
             touch {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
             gzip {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
-
-            mylang="{SRC_LANG}"
-            notmylang="{TRG_LANG}"
-
-            if [ "{wildcards.lang}" == "{TRG_LANG}" ]; then
-                mylang="{TRG_LANG}"
-                notmylang="{SRC_LANG}"
-            fi
-
-            create_all=1
-
-            while [ ! -f "{DATADIR}/shards/02.batches.$notmylang" ]; do
-                if [ -f "{params.o_no_lang}/$notmylang/{params.empty_shard_batch_folder}/empty" ]; then
-                    # Avoid deadlock (if both langs do not generate shards and reach this point at the same time)
-                    create_all=0
-                    break
-                else
-                    sleep 1
-                fi
-            done
-
-            if [ -f "{params.o_no_lang}/$notmylang/{params.empty_shard_batch_folder}/empty" ]; then
-                # In case that did not enter in the while loop, this condition might still be true
-                create_all=0
-            fi
-
-            if [ "$create_all" == "1" ]; then
-                rm -rf {params.o}/{params.empty_shard_folder}
-
-                # Create the same shards that have been created in the other lang (only 1 batch)
-                ls -d {params.o_no_lang}/$notmylang/* | xargs -I[] basename [] | xargs -I[] mkdir -p {params.o_no_lang}/$mylang/[]/1
-                    ls -d {params.o}/*/* | xargs -I[] touch []/{{{params.f}}}
-                    ls -d {params.o}/*/* | xargs -I[] gzip []/{{{params.f}}}
-            fi
         fi
 
         ls -d {params.o}/*/* > {output}
