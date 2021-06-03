@@ -65,9 +65,21 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
-Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder.
+If you are experiencing troubles installing new versions of Bitextor in your environment, you can try the following commands:
+```bash
+# Be sure you do not have any other versions installed
+conda uninstall bitextor
+conda uninstall bitextor-nightly
 
-Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier to access to the files. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
+# Remove old and cached packages which might be installing other unexpected dependencies/versions
+conda clean --all
+```
+
+Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder, or you can find your installation even easier through `$CONDA_PREFIX/bitextor`.
+
+Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier the access to the files in your home directory. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
+
+Remember to set the `bitextor` directive of your YAML file correctly, either with the provided soft link or `$CONDA_PREFIX/bitextor`.
 
 Currently we only support Linux x64 for Conda environment.
 
