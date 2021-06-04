@@ -65,9 +65,21 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
-Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder.
+If you are experiencing troubles installing new versions of Bitextor in your environment, you can try the following commands:
+```bash
+# Be sure you do not have any other versions installed
+conda uninstall bitextor
+conda uninstall bitextor-nightly
 
-Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier to access to the files. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
+# Remove old and cached packages which might be installing other unexpected dependencies/versions
+conda clean --all
+```
+
+Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder, or you can find your installation even easier through `$CONDA_PREFIX/bitextor`.
+
+Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier the access to the files in your home directory. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
+
+Remember to set the `bitextor` directive of your YAML file correctly, either with the provided soft link or `$CONDA_PREFIX/bitextor`.
 
 Currently we only support Linux x64 for Conda environment.
 
@@ -493,7 +505,7 @@ batches: 1024 # batches of up to 1024MB
 * `PDFextract_kenlm_path`: set path for kenlm binaries
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
 * `shards`: domains and WARCs are distributed in shards for a more balanced processing, and all documents in a shard will be compared for document alignment. Each shard contain one or more complete domains/WARCs. The parameter sets the number os shards (as 'n' in 2^n), being 8 the default (2^8 shards). If you set it to zero with `shards: 0` it will be forcing all domains and WARCs provided to Bitextor to be compared for alignment.
-* `batches`: shards are split into batches for parallelization. These shards can divide a domain or WARC, so this is only used in steps that can work with this division, like document aligner. This configuration parameter set the batch size in MB, being 1024 by default.
+* `batches`: shards are split into batches for parallelization. These batches can divide a domain or WARC, so this is only used in steps that can work with this division, like document aligner. This configuration parameter set the batch size in MB, being 1024 by default.
 
 ### Sentence splitting
 
