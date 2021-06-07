@@ -277,6 +277,9 @@ ELRC_FIELDS = []
 TMX = False
 DEDUPED = False
 BIROAMER = False
+BIROAMER_MIX_FILES = '/dev/null'
+BIROAMER_ALIGNMENT_CORPUS = ""
+BIROAMER_OMIT = ""
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 
@@ -288,6 +291,7 @@ if 'deferred' in config and config['deferred']:
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
     BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
+
 if 'aggressiveDedup' in config and not config['aggressiveDedup']:
     AGGRESSIVE_DEDUP = ''
 if 'bicleaner' in config:
@@ -313,6 +317,15 @@ if 'biroamer' in config and config['biroamer']:
         OUTPUT_FILES.append('deduped-roamed.tmx')
     else:
         OUTPUT_FILES.append('not-deduped-roamed.tmx')
+
+    if 'biroamerMixFiles' in config and len(config['biroamerMixFiles']) > 0:
+        BIROAMER_MIX_FILES = ' '.join(config['biroamerMixFiles'])
+
+    if "biroamerImproveAlignmentCorpus" in config:
+        BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
+
+    if "biroamerOmitRandomSentences" in config and config["biroamerOmitRandomSentences"]:
+        BIROAMER_OMIT = "-o"
 
 BEFORE_ELRC_FIELDS = FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
 TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
@@ -1253,12 +1266,9 @@ rule roam_tmx:
     params:
         tokenizer_l1 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), "-t \"{}\""),
         tokenizer_l2 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), "-T \"{}\""),
-        mix_files = '/dev/null' if not 'biroamerMixFiles' in config or len(config['biroamerMixFiles']) == 0 else ' '.join(config['biroamerMixFiles']),
-        alignment_corpus = "" if "biroamerImproveAlignmentCorpus" not in config else f"-a {config['biroamerImproveAlignmentCorpus']}",
-        omit = "" if "biroamerOmitRandomSentences" not in config or not config['biroamerOmitRandomSentences'] else "-o",
     shell: '''
         mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
-        cat {params.mix_files} > $mix_files
+        cat {BIROAMER_MIX_FILES} > $mix_files
         nolines=$(cat $mix_files | wc -l)
 
         if [[ "$nolines" != "0" ]]; then
@@ -1271,13 +1281,13 @@ rule roam_tmx:
         nolines_txt=$($CAT {input.txt} | wc -l)
         total_nolines=$(echo $nolines + $nolines_txt | bc)
 
-        if [[ "$total_nolines" -lt "100000" ]] && [[ "{params.alignment_corpus}" == "" ]]; then
+        if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then
             >&2 echo "WARNING: biroamer suggests, at least, 100k lines in order to have a good alignment (current nolines: $total_nolines)."\
                      "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
         fi
 
         zcat {input.tmx} \
-            | {PROFILING} biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
-                {params.omit} {params.alignment_corpus} $mix_files {LANG1} {LANG2} \
+            | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
+                {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}
         '''

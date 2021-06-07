@@ -32,14 +32,6 @@ if(NOT SKIP_BLEUALIGN)
 endif()
 
 if (NOT SKIP_HUNALIGN)
-    # add_custom_target(hunalign ALL
-    #     COMMAND $(MAKE)
-    #     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/hunalign/src/hunalign
-    # )
-    # add_custom_command(TARGET hunalign
-    #     POST_BUILD
-    #     COMMAND bash -c "mv ${PROJECT_SOURCE_DIR}/hunalign/src/hunalign/hunalign ${PROJECT_BINARY_DIR}/bin/hunalign"
-    # )
     add_subdirectory(${PROJECT_SOURCE_DIR}/hunalign/src)
     install(PROGRAMS ${PROJECT_BINARY_DIR}/bin/hunalign
         DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -53,8 +45,8 @@ if (NOT SKIP_DOCALIGN)
 endif()
 
 if (NOT SKIP_BIROAMER)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/biroamer/fast_align fast_align)
-    install(TARGETS fast_align atools DESTINATION ${CMAKE_INSTALL_BINDIR})
+    add_subdirectory(${PROJECT_SOURCE_DIR}/biroamer fast_align)
+    # install handled from biroamer/CMakeLists.txt
 endif()
 
 if (NOT SKIP_MGIZA)
