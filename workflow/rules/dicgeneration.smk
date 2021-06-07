@@ -36,7 +36,7 @@ rule dic_generation_lowercase:
     input: "{prefix}.tok.{lang}.xz"
     output: "{prefix}.tok.low.{lang}"
     shell: '''
-        xzcat {input} | {PROFILING} {BITEXTOR}/preprocess/moses/tokenizer/lowercase.perl > {output}
+        xzcat {input} | {PROFILING} {WORKFLOW}/../preprocess/moses/tokenizer/lowercase.perl > {output}
         '''
 
 rule dic_generation_clean:
@@ -47,7 +47,7 @@ rule dic_generation_clean:
         f"{{prefix}}.clean.{SRC_LANG}",
         f"{{prefix}}.clean.{TRG_LANG}"
     shell: '''
-        {PROFILING} perl {BITEXTOR}/utils/clean-corpus-n.perl {wildcards.prefix}.tok.low \
+        {PROFILING} perl {WORKFLOW}/utils/clean-corpus-n.perl {wildcards.prefix}.tok.low \
             {SRC_LANG} {TRG_LANG} {wildcards.prefix}.clean 1 80 {wildcards.prefix}.lines-retained
         '''
 

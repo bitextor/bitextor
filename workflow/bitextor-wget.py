@@ -79,8 +79,6 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
             try:
                 for record in ArchiveIterator(f_in):
                     if record.http_headers:
-                        if record.http_headers.get_header('Transfer-Encoding') == "chunked":
-                            continue
                         try:
                             record.http_headers.to_ascii_bytes()
                         except UnicodeEncodeError:

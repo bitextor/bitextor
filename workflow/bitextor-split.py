@@ -23,7 +23,6 @@ import string
 
 from sentence_splitter import SentenceSplitter, SentenceSplitterException
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
 from utils.common import open_xz_or_gzip_or_plain
 from utils.common import ExternalTextProcessor
 

@@ -3,7 +3,6 @@ import sys
 import requests
 import subprocess
 
-sys.path.append(os.path.dirname(os.path.abspath(f"{config['bitextor']}/utils")))
 from utils.args import validate_args
 from utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
     snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
@@ -13,7 +12,8 @@ config = validate_args(config)
 
 #################################################################
 # BASIC PARAMETERS
-BITEXTOR = config["bitextor"]
+
+WORKFLOW = workflow.basedir
 DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
@@ -188,7 +188,8 @@ if WORDTOKS:
     WORDTOK1 = get_lang_or_default(WORDTOKS, LANG1)
     WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
 else:
-    WORDTOK1, WORDTOK2 = f"{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{BITEXTOR}/preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+    # TODO: decide where to put this
+    WORDTOK1, WORDTOK2 = f"{WORKFLOW}/../preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{WORKFLOW}/../preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
 MORPHTOK1 = get_lang_or_default(MORPHTOKS, LANG1)
 MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 
@@ -404,7 +405,8 @@ else:
     elif UNTIL == 'filter':
         OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
 
-shell.prefix("set -euo pipefail; if [ \"{BITEXTOR}\" != \"\" ] ; then PATH={BITEXTOR}/bin:$PATH; LD_LIBRARY_PATH={BITEXTOR}/lib:$LD_LIBRARY_PATH ; fi;")
+# shell.prefix("set -euo pipefail; if [ \"{BITEXTOR}\" != \"\" ] ; then PATH={BITEXTOR}/bin:$PATH; LD_LIBRARY_PATH={BITEXTOR}/lib:$LD_LIBRARY_PATH ; fi;")
+shell.prefix("set -euo pipefail; PATH={WORKFLOW}/bin:$PATH; LD_LIBRARY_PATH={WORKFLOW}/lib:$LD_LIBRARY_PATH;")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -424,7 +426,7 @@ rule creepy_download:
     output: f'{DATADIR}/warc/{{target}}/creepy.warc.gz'
     shell: '''
         mkdir -p {params.folder} {TMPDIR}
-        {PROFILING} python3 {BITEXTOR}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
+        {PROFILING} {WORKFLOW}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
         '''
 
 rule httrack_download:
@@ -434,8 +436,8 @@ rule httrack_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX)
-        {PROFILING} {BITEXTOR}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
-        {BITEXTOR}/bitextor-webdir2warc.sh $DIRNAME > {output}
+        {PROFILING} {WORKFLOW}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
+        bitextor-webdir2warc.sh $DIRNAME > {output}
         rm -rf $DIRNAME
         '''
 
@@ -446,7 +448,7 @@ rule wget_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-        {PROFILING} {BITEXTOR}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
+        {PROFILING} {WORKFLOW}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
         rm -rf $DIRNAME
         '''
 
@@ -486,7 +488,7 @@ rule heritrix_download:
                     curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
                     curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine
                     DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-                    cat {BITEXTOR}/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml
+                    cat {WORKFLOW}/data/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml
                     curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml
                     curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
                     curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
@@ -567,7 +569,7 @@ checkpoint linguacrawl_download:
         if LANG1 or LANG2:
             yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
             yaml_content += f"min_percent_mandatory_lang: 10\n"
-        
+
         #tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
         tld = LANGS.union([url.split('.')[-1] for url in HOSTS]).union(TLD_CRAWL)
         tld = "','".join(tld)
@@ -699,8 +701,8 @@ rule warc2preprocess:
     shell: '''
         mkdir -p {params.folder}
         cat {input} | \
-            {PROFILING} {BITEXTOR}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
-            {PROFILING} {BITEXTOR}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} \
+            {PROFILING} {WORKFLOW}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
+            {PROFILING} {WORKFLOW}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} \
                 --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
@@ -739,7 +741,7 @@ rule warc2text:
 def get_shard_input(lang):
     if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
         warcs_path, warcs = get_warcs_names(None)
-        
+
         for warc in warcs_path:
             if not os.path.exists(warc):
                 warcs.remove(warc.split("/")[-1])
@@ -830,7 +832,7 @@ rule split:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-split.py \
+            | {PROFILING} ${{parallel_cmd}} {WORKFLOW}/bitextor-split.py \
                 {params.splitter} {params.customnbp} \
                 --langcode "{wildcards.lang}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
@@ -905,7 +907,7 @@ rule tokenise_translated:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} {WORKFLOW}/bitextor-tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -924,7 +926,7 @@ rule tokenise_target:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} {WORKFLOW}/bitextor-tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -943,7 +945,7 @@ rule tokenise_source:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} {BITEXTOR}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} {WORKFLOW}/bitextor-tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {SRC_LANG} \
             | pigz -c > {output}
@@ -1053,7 +1055,7 @@ checkpoint split_segalign:
                 fi
                 $CAT {input} \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-                    | python3 {BITEXTOR}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                    | python3 {WORKFLOW}/utils/split.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
                 else
@@ -1079,7 +1081,7 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+            | {PROFILING} ${{parallel_cmd}} bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
             > {output}
         '''
 
@@ -1119,7 +1121,8 @@ rule bicleaner_train_model:
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
         # Parameters for good/bad examples have been removed -> now the whole file is being used (https://github.com/bitextor/bicleaner/commit/cdd1bc03928701884cd42ffac4b602220ec3e732)
-        {PROFILING} python3  {BITEXTOR}/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+        bicleaner_wd=$(realpath {WORKFLOW}/..)
+        {PROFILING} python3  $bicleaner_wd/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         rm $training
         '''
 
@@ -1137,13 +1140,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 {BITEXTOR}/bicleaner/bicleaner/bicleaner_classifier_lite.py --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 bicleaner-classify-_lite --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
@@ -1168,9 +1171,9 @@ rule filter:
             cat_cmd = "zcat"
         cmd = f''' {cat_cmd} {input} '''
         if BICLEANER:
-            cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
+            cmd += f''' | {PROFILING} {WORKFLOW}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
         if ELRC:
-            cmd += f''' | {PROFILING} python3 {BITEXTOR}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
+            cmd += f''' | {PROFILING} {WORKFLOW}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
         cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
         cmd += f''' > {output} '''
         shell(cmd)
@@ -1219,7 +1222,7 @@ rule tmx:
     output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
     shell: '''
         zcat {input} \
-            | {PROFILING} python3 {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} {WORKFLOW}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         '''
 
@@ -1231,7 +1234,7 @@ rule deduped_tmx:
         stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.deduped'
     shell: '''
         zcat {input} \
-            | {PROFILING} {BITEXTOR}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} {WORKFLOW}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}
@@ -1273,12 +1276,8 @@ rule roam_tmx:
                      "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
         fi
 
-        # fast_align_bin=$(command -v fast_align)
-        # fast_align_prefix=${{fast_align_bin%/*}}
-
         zcat {input.tmx} \
-            | {PROFILING} {BITEXTOR}/biroamer/biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
-                # -f "$fast_align_prefix" \
+            | {PROFILING} biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
                 {params.omit} {params.alignment_corpus} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}
         '''
