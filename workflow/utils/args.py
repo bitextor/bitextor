@@ -36,7 +36,6 @@ def isstrlist(field, value, error):
 def validate_args(config):
     schema = {
             # required parameters
-            'bitextor': {'required': True, 'type': 'string'},
             # output folders
             'dataDir': {'type': 'string', 'required': True},
             'permanentDir': {'type': 'string', 'required': True},

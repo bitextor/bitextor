@@ -1,4 +1,6 @@
 #!/bin/bash
+DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+source $DIR/common.sh
 
 exit_program()
 {
@@ -21,36 +23,6 @@ exit_program()
   exit 1
 }
 
-download_warc()
-{
-    warc=$1
-    remote=$2
-    if [ ! -f "${warc}" ]; then
-        wget -q "${remote}" -O "${warc}"
-    fi
-}
-
-download_bicleaner_model()
-{
-    base="https://github.com/bitextor/bicleaner-data/releases/latest/download"
-    langs=$1
-    output=$2
-    if [ ! -f "${output}/${langs}.tar.gz" ]; then
-        wget -q "${base}/${langs}.tar.gz" -P "${output}"
-        tar xzf "${output}/${langs}.tar.gz" -C "${output}"
-    fi
-}
-
-download_dictionary()
-{
-    base="https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0"
-    langs=$1
-    output=$2
-    if [ ! -f "${output}/${langs}.dic" ]; then
-        wget -q "${base}/${langs}.dic" -P "${output}"
-    fi
-}
-
 WORK="${HOME}"
 WORK="${WORK/#\~/$HOME}" # Expand ~ to $HOME
 FORCE=""
@@ -69,7 +41,7 @@ while getopts "hf:w:j:t:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="$(dirname "$0")"
+BITEXTOR=$DIR/..
 BICLEANER="${WORK}/bicleaner-model"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
@@ -128,39 +100,54 @@ fi
 
 wait
 
-# Tests
-annotate_and_echo_info()
-{
-  test_id=$1
-  status=$2
-  nolines=$3
-  error_file="$FAILS"
-
-  if [[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]; then
-    echo "Ok ${test_id} (nolines: ${nolines})"
-  else if [[ "$status" != "0" ]]; then
-    echo "Failed ${test_id} (status: ${status})"
-    echo "fail ${test_id} ${status}" >> "$error_file"
-  else if [[ "$nolines" == "0" ]]; then
-    echo "Failed ${test_id} (nolines: ${nolines})"
-    echo "fail ${test_id} '0 no. lines'" >> "$error_file"
-  fi
-  fi
-  fi
-}
-
 # MT (id >= 10)
 tests-mt()
 {
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 10 "$status" "$nolines")) &
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/11-mt-en-el.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz | wc -l); annotate_and_echo_info 11 "$status" "$nolines")) &
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" dataDir="${WORK}/data/data-mt-en-ru" transientDir="${WORK}/transient-mt-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True -j ${THREADS} &> "${WORK}/reports/12-mt-en-ru.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz | wc -l); annotate_and_echo_info 12 "$status" "$nolines")) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
+                dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True \
+            &> "${WORK}/reports/10-mt-en-fr.report"
+        annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
+    ) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
+                dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
+                warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
+                documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                deferred=True tmx=True \
+            &> "${WORK}/reports/11-mt-en-el.report"
+       annotate_and_echo_info 11 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz)"
+    ) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" \
+                dataDir="${WORK}/data/data-mt-en-ru" transientDir="${WORK}/transient-mt-en-ru" \
+                warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
+                documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                deferred=True tmx=True \
+            &> "${WORK}/reports/12-mt-en-ru.report"
+        annotate_and_echo_info 12 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz)"
+    ) &
 }
 
 # Dictionary-based (id >= 20)
 tests-db()
 {
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/20-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 20 "$status" "$nolines")) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
+                dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
+                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+            &> "${WORK}/reports/20-en-fr.report"
+        annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
+    ) &
 }
 
 ### Generate dictionary (id >= 30)
@@ -170,11 +157,29 @@ tests-gendic()
     rm -f "${WORK}/permanent/new-en-fr.dic"
 
     if [[ "$CI" == "true" ]]; then
-        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/30-gendic-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 30 "$status" "$nolines")
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" \
+                dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" sentenceAligner="hunalign" \
+                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+            &> "${WORK}/reports/30-gendic-en-fr.report"
+        annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
         echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))"
         rm -rf "${WORK}/transient-gendic-en-fr"
     else
-        (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/30-gendic-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 30 "$status" "$nolines")) &
+        (
+            snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+                --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" \
+                    dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${WORK}/transient-gendic-en-fr" \
+                    warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                    documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" sentenceAligner="hunalign" \
+                    initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                    bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+                &> "${WORK}/reports/30-gendic-en-fr.report"
+            annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
+        ) &
     fi
 }
 
@@ -185,13 +190,33 @@ tests-genbicleaner()
 
     if [[ "$CI" == "true" ]]; then
         # Run sequential instead of parallel in order to avoid get run out of memory (GitHub Actions)
-        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/40-genbicleaner-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 40 "$status" "$nolines") && \
-        dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" \
+                dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
+                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleanerThreshold=0.1 deferred=False tmx=True \
+            &> "${WORK}/reports/40-genbicleaner-en-fr.report"
+        annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
+            dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
         echo "Removing '${WORK}/transient-genbicleaner-en-fr' ($(du -sh ${WORK}/transient-genbicleaner-en-fr | awk '{print $1}'))"
         rm -rf "${WORK}/transient-genbicleaner-en-fr/"
     else
-        (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/40-genbicleaner-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 40 "$status" "$nolines"; \
-        dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')) &
+        (
+            snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+                --config profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" \
+                    dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${WORK}/transient-genbicleaner-en-fr" \
+                    warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                    documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
+                    initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                    bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                    bicleanerThreshold=0.1 deferred=False tmx=True \
+                &> "${WORK}/reports/40-genbicleaner-en-fr.report"
+            annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
+                dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+        ) &
     fi
 }
 
@@ -203,25 +228,75 @@ tests-gendic-genbicleaner()
 
     if [[ "$CI" == "true" ]]; then
         # Run sequential instead of parallel in order to avoid get run out of memory (GitHub Actions)
-        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 50 "$status" "$nolines")
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" \
+                dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" sentenceAligner="hunalign" \
+                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleanerThreshold=0.1 deferred=False tmx=True \
+            &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"
+        annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
         echo "Removing '${WORK}/transient-gendicbicleaner-en-fr' ($(du -sh ${WORK}/transient-gendicbicleaner-en-fr | awk '{print $1}'))"
         rm -rf "${WORK}/transient-gendicbicleaner-en-fr"
     else
-        (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" sentenceAligner="hunalign" bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 50 "$status" "$nolines")) &
+        (
+            snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+                --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" \
+                    dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${WORK}/transient-gendicbicleaner-en-fr" \
+                    warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                    documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" sentenceAligner="hunalign" \
+                    initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                    bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                    bicleanerThreshold=0.1 deferred=False tmx=True \
+                &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"
+            annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
+        ) &
     fi
 }
 
 # MT and dictionary-based (id >= 60)
 tests-mt-db()
 {
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True -j ${THREADS} &> "${WORK}/reports/60-mtdb-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 60 "$status" "$nolines")) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
+                dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" \
+                preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" \
+                dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
+                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+            &> "${WORK}/reports/60-mtdb-en-fr.report"
+        annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
+    ) &
 }
 
 # Other options (id >= 100)
 tests-others()
 {
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${WORK}/transient-mto1-en-ru" warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=False tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/100-mto1-en-ru.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mto1-output-en-ru/en-ru.sent.gz | wc -l); annotate_and_echo_info 100 "$status" "$nolines")) &
-    (snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${WORK}/transient-mto2-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True -j ${THREADS} &> "${WORK}/reports/101-mto2-en-fr.report"; (status="$?"; nolines=$(zcat ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz | wc -l); annotate_and_echo_info 101 "$status" "$nolines")) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" \
+                dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${WORK}/transient-mto1-en-ru" \
+                warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
+                documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                deferred=False tmx=True deduped=True biroamer=True \
+            &> "${WORK}/reports/100-mto1-en-ru.report"
+        annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-ru/en-ru.sent.gz)"
+    ) &
+    (
+        snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
+                dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${WORK}/transient-mto2-en-fr" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" \
+                sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
+                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 \
+                deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True \
+            &> "${WORK}/reports/101-mto2-en-fr.report"
+        annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
+    ) &
 }
 
 run-tests()
@@ -253,10 +328,10 @@ run-tests "$FLAGS"
 wait
 
 # Post checking
-if [[ "$dic_md5sum_before" != "" ]] && [[ "$dic_md5sum_after" != "" ]] && [[ "$dic_md5sum_before" != "$dic_md5sum_after" ]]; then
+if [[ "$(( ($flags & (2**3)) >> 3 ))" == "1" ]] && [[ "$dic_md5sum_before" != "" ]] && [[ "$dic_md5sum_after" != "" ]] && [[ "$dic_md5sum_before" != "$dic_md5sum_after" ]]; then
     echo "Failed 40.1 (dictionary has been replaced ($dic_md5sum_before -> $dic_md5sum_after), what is not the expected)"
     echo "fail 40.1 \"dictionary replaced\"" >> "$FAILS"
-else
+elif [[ "$(( ($flags & (2**3)) >> 3 ))" == "1" ]]; then
     echo "Ok 40.1"
 fi
 

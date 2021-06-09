@@ -1,5 +1,8 @@
 #!/bin/bash
 
+DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+source $DIR/common.sh
+
 exit_program()
 {
   >&2 echo "$1 [-w workdir] [-f force_command] [-j threads]"
@@ -12,16 +15,6 @@ exit_program()
   >&2 echo "  -j <threads>            Threads to use when running the tests"
   exit 1
 }
-
-download_warc()
-{
-    warc=$1
-    remote=$2
-    if [ ! -f "${warc}" ]; then
-        wget -q "${remote}" -O "${warc}"
-    fi
-}
-
 
 WORK="${HOME}"
 WORK="${WORK/#\~/$HOME}" # Expand ~ to $HOME
@@ -39,7 +32,7 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="$(dirname "$0")"
+BITEXTOR="$DIR/.."
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
@@ -51,31 +44,8 @@ touch "$FAILS"
 # WARCs
 download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz
 
-
-# Run tests
-annotate_and_echo_info()
-{
-  test_id=$1
-  status=$2
-  nolines=$3
-  error_file="$FAILS"
-
-  if [[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]; then
-    echo "Ok ${test_id} (nolines: ${nolines})"
-  else if [[ "$status" != "0" ]]; then
-    echo "Failed ${test_id} (status: ${status})"
-    echo "fail ${test_id} ${status}" >> "$error_file"
-  else if [[ "$nolines" == "0" ]]; then
-    echo "Failed ${test_id} (nolines: ${nolines})"
-    echo "fail ${test_id} '0 no. lines'" >> "$error_file"
-  fi
-  fi
-  fi
-}
-
-
 # MT (id >= 10)
-snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config bitextor="${BITEXTOR}" profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-el.report" && python3 "${BITEXTOR}/deferred-annotation-reconstructor.py" "${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz" en el "${WORK}/data/warc/primeminister.warc.gz" | python3 "${BITEXTOR}/bifixer/bifixer/bifixer.py" --sdeferredcol 6 --tdeferredcol 7 --ignore_duplicates - - en el > "${WORK}/outputdeferred" && [ "$(diff ${WORK}/outputdeferred <(zcat ${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz))" == "" ] ; (status="$?"; nolines=$(zcat -f ${WORK}/outputdeferred | wc -l); annotate_and_echo_info 10 "$status" "$nolines")
+snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True -j ${THREADS} &> "${WORK}/reports/10-mt-en-el.report" && python3 "${BITEXTOR}/deferred-annotation-reconstructor.py" "${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz" en el "${WORK}/data/warc/primeminister.warc.gz" | bifixer --sdeferredcol 6 --tdeferredcol 7 --ignore_duplicates - - en el  > "${WORK}/outputdeferred" && [ "$(diff ${WORK}/outputdeferred <(zcat ${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz))" == "" ] ; (status="$?"; nolines=$(zcat -f ${WORK}/outputdeferred | wc -l); annotate_and_echo_info 10 "$status" "$nolines")
 
 # Results
 failed=$(cat "$FAILS" | wc -l)

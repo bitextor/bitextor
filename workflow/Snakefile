@@ -1081,7 +1081,7 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+            | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
             > {output}
         '''
 
