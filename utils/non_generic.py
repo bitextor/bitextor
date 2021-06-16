@@ -16,12 +16,17 @@
 # Non-generic files (used in concrete places and moments)
 
 import tldextract
+import validators
 from itertools import product
 
 def create_domain_key_2_host_map(hosts):
     key2hosts = {}
+    badhosts = []
     for host in hosts:
         # don't merge blog sites
+        if not validators.domain(host):
+            badhosts.append(host)
+            continue
         if host.find(".blogspot.") >= 0 or host.find(".wordpress.") >= 0:
             key = host
         else:
@@ -30,6 +35,8 @@ def create_domain_key_2_host_map(hosts):
         if key not in key2hosts:
             key2hosts[key] = []
         key2hosts[key].append(host)
+    if badhosts:
+        raise ValueError("Some hosts are not valid: %s" % (str(badhosts)))
     return key2hosts
 
 
