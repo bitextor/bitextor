@@ -36,7 +36,7 @@ def create_domain_key_2_host_map(hosts):
             key2hosts[key] = []
         key2hosts[key].append(host)
     if badhosts:
-        raise ValueError("Some hosts are not valid: %s" % (str(badhosts)))
+        raise ValueError("ERROR: Some hosts are not valid: \n%s" % ("\n".join(badhosts)))
     return key2hosts
 
 
