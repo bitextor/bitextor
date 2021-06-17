@@ -1,34 +1,97 @@
-bleualign-cpp/CMakeCache.txt
-bleualign-cpp/CMakeFiles/
-bleualign-cpp/CTestTestfile.cmake
-bleualign-cpp/Makefile
-bleualign-cpp/bleualign_cpp
-bleualign-cpp/cmake_install.cmake
-bleualign-cpp/gtest/
-bleualign-cpp/libbleualign_cpp_lib.so
-bleualign-cpp/preprocess-bin/
-bleualign-cpp/tests/CMakeFiles/
-bleualign-cpp/tests/CTestTestfile.cmake
-bleualign-cpp/tests/Makefile
-bleualign-cpp/tests/cmake_install.cmake
-bleualign-cpp/tests/test_all
-document-aligner/CMakeCache.txt
-document-aligner/CMakeFiles/
-document-aligner/bin/
-document-aligner/cmake_install.cmake
-document-aligner/preprocess-bin/
-document-aligner/CTestTestfile.cmake
-document-aligner/Makefile
-model/Makefile
-model/Makefile.in
-stamp-h1
-utils/Makefile
-utils/Makefile.in
 .snakemake/
 .idea/
+workflow/bin
+workflow/lib
+workflow/include
+
+### PYTHON ###
+# Byte-compiled / optimized / DLL files
 __pycache__/
-utils/__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+### C++ ###
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+### CMAKE ###
+CMakeLists.txt.user
 CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
+CMakeFiles
+CMakeScripts
+Testing
 Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
