@@ -189,7 +189,7 @@ if WORDTOKS:
     WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
 else:
     # TODO: decide where to put this
-    WORDTOK1, WORDTOK2 = f"{WORKFLOW}/../preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{WORKFLOW}/../preprocess/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+    WORDTOK1, WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
 MORPHTOK1 = get_lang_or_default(MORPHTOKS, LANG1)
 MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 

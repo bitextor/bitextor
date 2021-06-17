@@ -13,6 +13,8 @@ if "initCorpusTrainingPrefix" in config:
 else:
     TRAIN_PREFIXES=None
 
+LOWERCASE = f"{WORKFLOW}/data/moses/tokenizer/lowercase.perl"
+
 #################################################################
 ### RULES #######################################################
 
@@ -36,7 +38,7 @@ rule dic_generation_lowercase:
     input: "{prefix}.tok.{lang}.xz"
     output: "{prefix}.tok.low.{lang}"
     shell: '''
-        xzcat {input} | {PROFILING} {WORKFLOW}/../preprocess/moses/tokenizer/lowercase.perl > {output}
+        xzcat {input} | {PROFILING} {LOWERCASE} > {output}
         '''
 
 rule dic_generation_clean:
