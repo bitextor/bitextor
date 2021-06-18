@@ -30,3 +30,7 @@
 	path = warc2text
 	url = https://github.com/bitextor/warc2text
     ignore = dirty
+[submodule "knlm"]
+	path = kenlm
+	url = https://github.com/kpu/kenlm
+    ignore = dirty
