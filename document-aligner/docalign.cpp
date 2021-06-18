@@ -310,6 +310,11 @@ int main(int argc, char *argv[])
 
 		size_t refs_cnt = queue_lines(vm["translated-tokens"].as<std::string>(), queue);
 
+		UTIL_THROW_IF(refs_cnt != in_document_cnt, util::Exception, "Line count changed"
+			<< " from " << in_document_cnt << " to " << refs_cnt
+			<< " while reading " << vm["translated-tokens"].as<std::string>() 
+			<< " in a second pass.");
+		
 		stop(queue, workers);
 
 		if (verbose)
@@ -397,7 +402,12 @@ int main(int argc, char *argv[])
 			}
 		}));
 
-		queue_lines(vm["english-tokens"].as<std::string>(), read_queue);
+		size_t read_cnt = queue_lines(vm["english-tokens"].as<std::string>(), read_queue);
+
+		UTIL_THROW_IF(read_cnt != en_document_cnt, util::Exception, "Line count changed"
+			<< " from " << en_document_cnt << " to " << read_cnt
+			<< " while reading " << vm["english-tokens"].as<std::string>() 
+			<< " in a second pass.");
 
 		// Tell all workers there is nothing left and wait for them to stop.
 		stop(read_queue, read_workers);

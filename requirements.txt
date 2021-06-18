@@ -3,7 +3,7 @@ warcio==1.7.4
 ftfy==6.0.3
 tldextract==3.1.0
 mmh3==3.0.0
-tqdm==4.61.0
+tqdm==4.61.1
 toolwrapper==2.1.0
 sacrebleu==1.5.1
 func_timeout==4.3.5
@@ -20,6 +20,7 @@ regex==2021.4.4
 numpy==1.19.5
 setuptools==57.0.0
 lru-dict==1.1.7
+validators==0.18.2
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
 -r requirements/requirements-mt-aligner.txt
