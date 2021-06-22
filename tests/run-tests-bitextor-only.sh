@@ -31,7 +31,7 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="$DIR/.."
+BITEXTOR="bitextor"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
@@ -95,11 +95,11 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
 # MT (id >= 10)
 (
-    snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
             dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+            documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=True tmx=True \
         &> "${WORK}/reports/10-mt-en-fr.report"
     annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
@@ -107,7 +107,7 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
 # Dictionary-based (id >= 20)
 (
-    snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
             dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
@@ -120,11 +120,11 @@ wait
 
 # MT and dictionary-based (id >= 60)
 (
-    snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
             dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" \
+            documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" \
             dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" deferred=False tmx=True \
         &> "${WORK}/reports/60-mtdb-en-fr.report"
     annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
@@ -132,21 +132,21 @@ wait
 
 # Other options (id >= 100)
 (
-    snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-fr" \
             dataDir="${WORK}/data/data-mto1-en-fr" transientDir="${WORK}/transient-mto1-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="externalMT" alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+            documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=False ftfy=True tmx=True deduped=True \
         &> "${WORK}/reports/100-mto1-en-fr.report"
         annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-fr/en-fr.sent.gz)"
 ) &
 (
-    snakemake --snakefile "${BITEXTOR}/workflow/Snakefile" ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
             dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${WORK}/transient-mto2-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${BITEXTOR}/workflow/example/dummy-translate.sh" \
+            documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 deferred=False tmx=True deduped=True \
         &> "${WORK}/reports/101-mto2-en-fr.report"
         annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
