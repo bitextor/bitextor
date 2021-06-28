@@ -1,5 +1,5 @@
 beautifulsoup4==4.9.3
 pycld2==0.41
 python-magic==0.4.24
-selectolax==0.2.11
+selectolax==0.2.12
 Cython==0.29.23
