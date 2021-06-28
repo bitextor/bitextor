@@ -264,6 +264,7 @@ MMHSUM_PATH = ""
 DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
+BIFIXER_DEFERRED_COLS = ""
 AGGRESSIVE_DEDUP = "--aggressive_dedup"
 BICLEANER = False
 BICLEANER_MODEL = ""
@@ -281,6 +282,7 @@ if 'deferred' in config and config['deferred']:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"{BITEXTOR}/preprocess/bin/mmhsum"
     DEFERRED_FIELDS = ['checksum1','checksum2']
+    BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
 if 'bifixer' in config and config['bifixer']:
     BIFIXER = True
     BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
@@ -1074,7 +1076,7 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
+            | {PROFILING} ${{parallel_cmd}} python3 {BITEXTOR}/bifixer/bifixer/bifixer.py -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
             > {output}
         '''
 
