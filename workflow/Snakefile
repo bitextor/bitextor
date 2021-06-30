@@ -1271,7 +1271,7 @@ rule roam_tmx:
         fi
 
         zcat {input.tmx} \
-            | {PROFILING} {BITEXTOR}/biroamer/biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
+            | {PROFILING} {BITEXTOR}/biroamer/biroamer.sh {params.tokenizer_l1} {params.tokenizer_l2} \
                 {params.omit} {params.alignment_corpus} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}
         '''
