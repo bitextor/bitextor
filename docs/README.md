@@ -103,7 +103,7 @@ Currently we only support Linux x64 for Conda environment.
 
   ```bash
   # mandatory:
-  sudo apt install python3 python3-venv python3-pip build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
+  sudo apt install python3 python3-venv python3-pip golang-go build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
 
   # optional, feel free to skip dependencies for components that you don't expect to use:
   ## wget crawler:
@@ -123,10 +123,9 @@ Currently we only support Linux x64 for Conda environment.
 
 * **Golang** packages
 
-  Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) for WARC files preprocessing. To install this tool Golang has to be installed. The latest version can be installed from [here](http://golang.org/dl) or using snap.
+  Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) for WARC files preprocessing. To install this tool, Golang has to be installed (it should be already installed if you run the previous apt command). If you prefer the latest version, can be installed from [here](http://golang.org/dl) or using snap (you might need to first uninstall the apt package).
 
   ```bash
-  sudo snap install go # or download from http://golang.org/dl
   # build and place the necessary tools in $HOME/go/bin
   go get github.com/paracrawl/giashard/...
   ```
