@@ -36,7 +36,7 @@ if "lang2" in config:
 
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
-    PROFILINE = "/usr/bin/time -v"
+    PROFILING = "/usr/bin/time -v"
 
 #################################################################
 # CRAWLING
