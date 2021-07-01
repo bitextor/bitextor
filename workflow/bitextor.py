@@ -28,10 +28,9 @@ def parse_args():
     if not options.config and not options.configfiles:
         oparser.error("provide Bitextor configuration via --configfile or --config")
 
-    print(options.config)
-
     return options
 
+# parsing Bitextor config passed a list of KEY=VALUE pairs
 class ParseDict(argparse.Action):
 
     @staticmethod

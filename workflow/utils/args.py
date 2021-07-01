@@ -139,7 +139,7 @@ def validate_args(config):
             schema['crawlTLD']['type'] = 'list'
             schema['crawlTLD']['check_with'] = isstrlist
             schema['resumePreviousCrawl']['type'] = 'boolean'
-    
+
     if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
         schema['lang1']['required'] = True
         schema['lang2']['required'] = True
@@ -147,7 +147,7 @@ def validate_args(config):
     elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
         # if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
         schema['langs']['required'] = True
-    
+
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
         schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
@@ -175,7 +175,7 @@ def validate_args(config):
     if 'bicleaner' in config:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
-        
+
         if not os.path.isfile(os.path.expanduser(config['bicleaner'])):
             schema['bicleanerCorpusTrainingPrefix']['required']=True
             schema['initCorpusTrainingPrefix']['required']=True
@@ -215,7 +215,7 @@ def validate_args(config):
         print("Validation error. Stopping.", v.errors, file=sys.stderr)
         exit()
 
-    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()}) 
+    config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
     config.update({k: [os.path.expanduser(i) for i in v] if v is list else v for k, v in config.items()})
 
     return v.normalized(config)
