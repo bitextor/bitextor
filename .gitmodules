@@ -34,3 +34,6 @@
 	path = warc2text
 	url = https://github.com/bitextor/warc2text
     ignore = dirty
+[submodule "deferred-crawling"]
+	path = deferred-crawling
+	url = https://github.com/bitextor/deferred-crawling

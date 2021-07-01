@@ -19,10 +19,10 @@ html5lib==1.1
 regex==2021.4.4
 numpy==1.19.5
 setuptools==57.0.0
-lru-dict==1.1.7
 validators==0.18.2
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
 -r requirements/requirements-mt-aligner.txt
 -r requirements/requirements-pdfextract.txt
 -r requirements/requirements-w2p.txt
+-r deferred-crawling/requirements.txt
