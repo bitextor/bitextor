@@ -23,8 +23,8 @@ import string
 
 from sentence_splitter import SentenceSplitter, SentenceSplitterException
 
-from utils.common import open_xz_or_gzip_or_plain
-from utils.common import ExternalTextProcessor
+from bitextor.utils.common import open_xz_or_gzip_or_plain
+from bitextor.utils.common import ExternalTextProcessor
 
 # True -> keep sentence
 # False -> throw away

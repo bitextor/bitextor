@@ -22,18 +22,16 @@
 # 2. RIDX files are read and most promising document pairs are aligned.
 
 # 3. The output of the script is a tab-separated file where each line contains the URLs of both files
-# 
+#
 # Output format:
 #   file_lang1	file_lang2	plaintext_encoded_base64_lang1	plaintext_encoded_base64_lang2
 #
 
 import sys
 import argparse
-import os
 from operator import itemgetter
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain, dummy_open
+from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) "
                                               "file (either from a file or from the standard input) and produces a "

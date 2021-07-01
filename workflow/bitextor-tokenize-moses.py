@@ -24,14 +24,9 @@ import ast
 import lzma
 from toolwrapper import ToolWrapper
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain
-from utils.common import ExternalTextProcessor
+from bitextor.utils.common import open_xz_or_gzip_or_plain
+from bitextor.utils.common import ExternalTextProcessor
 import html
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain
-
 
 def get_lang_or_default(dictionary, language):
     if not dictionary:

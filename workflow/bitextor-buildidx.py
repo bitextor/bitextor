@@ -29,14 +29,11 @@
 # Generates .idx -> index
 #
 
-import os
-import sys
 import base64
 import argparse
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from unicodepunct import get_unicode_punct
-from utils.common import open_xz_or_gzip_or_plain
+from bitextor.utils.unicodepunct import get_unicode_punct
+from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
 oparser = argparse.ArgumentParser(

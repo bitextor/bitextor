@@ -34,12 +34,9 @@ import argparse
 import time
 import locale
 import re
-import os
 from xml.sax.saxutils import escape
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain, dummy_open
-
+from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False):
     info_tag = []

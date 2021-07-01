@@ -18,13 +18,10 @@
 
 import argparse
 import sys
-import os
 import gzip
 import lzma
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/utils")
-from utils.common import open_xz_or_gzip_or_plain
-
+from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 def open_xz_or_gzip(filename, mode='rt'):
     if filename[-3:] == '.xz':
