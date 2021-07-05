@@ -9,7 +9,7 @@ rule dic_docsegalign_lettr2idx:
         text2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.xz',
     shell: '''
-        {PROFILING} python3 {WORKFLOW}/bitextor-buildidx.py  --lang1 {SRC_LANG} --lang2 {TRG_LANG} -m 15 --text1 {input.text1} --text2 {input.text2} | xz -T 0 > {output}
+        {PROFILING} python3 {WORKFLOW}/bitextor_buildidx.py  --lang1 {SRC_LANG} --lang2 {TRG_LANG} -m 15 --text1 {input.text1} --text2 {input.text2} | xz -T 0 > {output}
         '''
 
 rule dic_docsegalign_idx2ridx_l1tol2:
@@ -19,7 +19,7 @@ rule dic_docsegalign_idx2ridx_l1tol2:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.ridx.xz',
     shell: '''
         xzcat -T 0 -f {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-idx2ridx.py -d {input.dic} --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_idx2ridx.py -d {input.dic} --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
             | xz -T 0 > {output}
         '''
 
@@ -30,7 +30,7 @@ rule dic_docsegalign_idx2ridx_l2tol1:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.ridx.xz',
     shell: '''
         xzcat -T 0 -f {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-idx2ridx.py -d {input.dic} --lang1 {TRG_LANG} --lang2 {SRC_LANG} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_idx2ridx.py -d {input.dic} --lang1 {TRG_LANG} --lang2 {SRC_LANG} \
             | xz -T 0 > {output}
         '''
 
@@ -42,7 +42,7 @@ rule dic_docsegalign_ridx2imagesetoverlap:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.xz',
     shell: '''
         xzcat -T 0 -f {input.ridx} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-imagesetoverlap.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_imagesetoverlap.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
             | xz -T 0 > {output}
         '''
 
@@ -54,7 +54,7 @@ rule dic_docsegalign_imagesetoverlap2structuredistance:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.xz',
     shell: '''
         xzcat -T 0 -f {input.imagesetoverlap} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-structuredistance.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_structuredistance.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
             | xz -T 0 > {output}
         '''
 
@@ -69,7 +69,7 @@ rule dic_docsegalign_structuredistance2urldistance:
     priority: 8
     shell: '''
         xzcat -T 0 -f {input.structuredistance} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-urlsdistance.py \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_urlsdistance.py \
                 --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
                 --url1 {input.url_l1} --url2 {input.url_l2} \
             | xz -T 0 > {output}
@@ -85,7 +85,7 @@ rule dic_docsegalign_urldistance2mutuallylinked:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.xz',
     shell: '''
         xzcat -T 0 -f {input.urldistance} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-mutuallylinked.py \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_mutuallylinked.py \
                 --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
                 --url1 {input.url_l1} --url2 {input.url_l2} \
             | xz -T 0 > {output}
@@ -99,7 +99,7 @@ rule dic_docsegalign_mutuallylinked2urlscomparison:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.xz',
     shell: '''
         xzcat -T 0 -f {input.mutuallylinked} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-urlscomparison.py --url1 {input.url_l1} --url2 {input.url_l2} \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_urlscomparison.py --url1 {input.url_l1} --url2 {input.url_l2} \
             | xz -T 0 > {output}
         '''
 
@@ -111,7 +111,7 @@ rule dic_docsegalign_urlscomparison2urlsoverlap:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.xz',
     shell: '''
         xzcat -T 0 -f {input.urlscomparison} \
-            | {PROFILING} python3 {WORKFLOW}/features/bitextor-urlsetoverlap.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
+            | {PROFILING} python3 {WORKFLOW}/features/bitextor_urlsetoverlap.py --html1 {input.debpl_html_l1} --html2 {input.debpl_html_l2} \
             | xz -T 0 > {output}
         '''
 
@@ -120,7 +120,7 @@ rule dic_docsegalign_urlsoverlap2rank:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.rank.xz',
     shell: '''
         xzcat -T 0 -f {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-rank.py -m {WORKFLOW}/data/model/keras.model -w {WORKFLOW}/data/model/keras.weights \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_rank.py -m {WORKFLOW}/data/model/keras.model -w {WORKFLOW}/data/model/keras.weights \
             | xz -T 0 > {output}
         '''
 
@@ -132,7 +132,7 @@ rule dic_docsegalign_aligndocumentsBitextor:
         url_l2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bitextor.06_01.matches'
     shell: '''
-        {PROFILING} python3 {WORKFLOW}/bitextor-align-documents.py \
+        {PROFILING} python3 {WORKFLOW}/bitextor_align_documents.py \
             --lines1 $(zcat {input.url_l1} | wc -l) --lines2 $(zcat {input.url_l2} | wc -l) \
             -n 1 -i converge -r /dev/null {input.rank1} {input.rank2} > {output}
         '''
@@ -162,7 +162,7 @@ rule dic_docsegalign_matches2hunalign:
     shell: '''
         cut -f {params.c1},{params.c2} {input.indices} \
             | LC_ALL=C sort -nk1 \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-build-docalign.py \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_docalign.py \
                 --columns1 {input.url_l1} {input.plain1} {input.tok1} --columns2 {input.url_l2} {input.plain2} {input.tok2} \
             | awk -F\'\t\' \'{{print $2,$6,$3,$7,$4,$8}}\' OFS=\'\t\' \
             | xz -T 0 -f > {output} # Format: url1 <tab> url2 <tab> text1 <tab> text2 <tab> tok1 <tab> tok2
@@ -194,7 +194,7 @@ rule dic_docsegalign_alignsegments_hunalign:
     output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.xz'
     shell: '''
         xzcat -T 0 {input.hunalign_matches} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-align-segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
                 --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | xz -T 0 > {output}
         '''

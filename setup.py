@@ -61,7 +61,7 @@ if __name__ == "__main__":
         },
         entry_points={
             "console_scripts": [
-                "bitextor = bitextor.bitextor:main"
+                "bitextor = bitextor.bitextor_main:main"
             ]
         }
         )

@@ -3,12 +3,10 @@ import sys
 import requests
 import subprocess
 
-# don't import bitextor.util because there is a 'python.py' in the directory and python gets confused
-# import utils because 'utils' folder is in the same directory as 'Snakefile'
-from utils.args import validate_args
-from utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
+from bitextor.utils.args import validate_args
+from bitextor.utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
     snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
-from utils.non_generic import *
+from bitextor.utils.non_generic import *
 
 config = validate_args(config)
 
@@ -441,7 +439,7 @@ rule creepy_download:
     output: f'{DATADIR}/warc/{{target}}/creepy.warc.gz'
     shell: '''
         mkdir -p {params.folder} {TMPDIR}
-        {PROFILING} python3 {WORKFLOW}/bitextor-creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
+        {PROFILING} python3 {WORKFLOW}/bitextor_creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
         '''
 
 rule httrack_download:
@@ -451,8 +449,8 @@ rule httrack_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX)
-        {PROFILING} python3 {WORKFLOW}/bitextor-httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
-        bitextor-webdir2warc.sh $DIRNAME > {output}
+        {PROFILING} python3 {WORKFLOW}/bitextor_httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
+        bitextor_webdir2warc.sh $DIRNAME > {output}
         rm -rf $DIRNAME
         '''
 
@@ -463,7 +461,7 @@ rule wget_download:
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-        {PROFILING} python3 {WORKFLOW}/bitextor-wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
+        {PROFILING} python3 {WORKFLOW}/bitextor_wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
         rm -rf $DIRNAME
         '''
 
@@ -716,8 +714,8 @@ rule warc2preprocess:
     shell: '''
         mkdir -p {params.folder}
         cat {input} | \
-            {PROFILING} python3 {WORKFLOW}/bitextor-warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
-            {PROFILING} python3 {WORKFLOW}/bitextor-warc2preprocess.py --input - --langs {params.pproclangs} \
+            {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
+            {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
                 --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
@@ -847,7 +845,7 @@ rule split:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor-split.py \
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
                 --langcode "{wildcards.lang}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
@@ -922,7 +920,7 @@ rule tokenise_translated:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -941,7 +939,7 @@ rule tokenise_target:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
@@ -960,7 +958,7 @@ rule tokenise_source:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor-tokenize.py \
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {SRC_LANG} \
             | pigz -c > {output}
@@ -1070,7 +1068,7 @@ checkpoint split_segalign:
                 fi
                 $CAT {input} \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
-                    | python3 {WORKFLOW}/bitextor-split-segalign.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                    | python3 {WORKFLOW}/bitextor_split_segalign.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
                 else
@@ -1181,9 +1179,9 @@ rule filter:
             cat_cmd = "zcat"
         cmd = f''' {cat_cmd} {input} '''
         if BICLEANER:
-            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor-filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
+            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor_filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
         if ELRC:
-            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor-elrc-filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
+            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
         cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
         cmd += f''' > {output} '''
         shell(cmd)
@@ -1232,7 +1230,7 @@ rule tmx:
     output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
     shell: '''
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         '''
 
@@ -1244,7 +1242,7 @@ rule deduped_tmx:
         stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.deduped'
     shell: '''
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor-buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}
