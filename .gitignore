@@ -3,6 +3,7 @@
 workflow/bin
 workflow/lib
 workflow/include
+workflow/share
 
 ### PYTHON ###
 # Byte-compiled / optimized / DLL files

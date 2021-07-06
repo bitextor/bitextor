@@ -23,12 +23,10 @@ endif()
 
 if(NOT SKIP_WARC2TEXT)
     add_subdirectory(${PROJECT_SOURCE_DIR}/warc2text warc2text)
-    # install handled from warc2text/CMakeLists.txt
 endif()
 
 if(NOT SKIP_BLEUALIGN)
     add_subdirectory(${PROJECT_SOURCE_DIR}/bleualign-cpp bleualign-cpp)
-    # install handled from bleualign-cpp/CMakeLists.txt
 endif()
 
 if (NOT SKIP_HUNALIGN)
@@ -41,14 +39,17 @@ endif()
 if (NOT SKIP_DOCALIGN)
     set(BUILD_TESTING OFF)
     add_subdirectory(${PROJECT_SOURCE_DIR}/document-aligner document-aligner)
-    # install handled from document-aligner/CMakeLists.txt
 endif()
 
 if (NOT SKIP_BIROAMER)
     add_subdirectory(${PROJECT_SOURCE_DIR}/biroamer fast_align)
-    # install handled from biroamer/CMakeLists.txt
 endif()
 
 if (NOT SKIP_MGIZA)
     add_subdirectory(${PROJECT_SOURCE_DIR}/mgiza/mgizapp mgizapp)
+endif()
+
+if (NOT SKIP_KENLM)
+    set(KENLM_MAX_ORDER 7)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/kenlm kenlm)
 endif()

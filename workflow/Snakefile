@@ -282,6 +282,7 @@ BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
+BICLEANER_TRAIN_PREFIXES = None
 
 if 'deferred' in config and config['deferred']:
     DEFERRED = "--print-sent-hash"
@@ -300,6 +301,8 @@ if 'bicleaner' in config:
     BICLEANER_FIELDS = ['bicleaner']
 if 'bicleanerThreshold' in config:
     BICLEANER_THRESHOLD = config['bicleanerThreshold']
+if "bicleanerCorpusTrainingPrefix" in config:
+    BICLEANER_TRAIN_PREFIXES=config["bicleanerCorpusTrainingPrefix"]
 if 'elrc' in config and config['elrc']:
     ELRC = True
     ELRC_FIELDS = ['lengthratio','numTokensSL','numTokensTL']
@@ -1107,15 +1110,11 @@ bicleaner_input = rules.bifixer.output
 if not BIFIXER:
     bicleaner_input = rules.bifixer.input.segalign
 
-if "bicleanerCorpusTrainingPrefix" in config:
-    bicleanerTrainPrefixes=config["bicleanerCorpusTrainingPrefix"]
-else:
-    bicleanerTrainPrefixes=None
 
 rule bicleaner_train_model:
     input:
-        corpusl1=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG1),
-        corpusl2=expand("{dataset}.{lang}.xz", dataset=bicleanerTrainPrefixes, lang=LANG2),
+        corpusl1=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG1),
+        corpusl2=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG2),
         e2f=f"{DIC_TRAINING}.lex.e2f.gz",
         f2e=f"{DIC_TRAINING}.lex.f2e.gz",
         vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
@@ -1134,8 +1133,7 @@ rule bicleaner_train_model:
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
         # Parameters for good/bad examples have been removed -> now the whole file is being used (https://github.com/bitextor/bicleaner/commit/cdd1bc03928701884cd42ffac4b602220ec3e732)
-        bicleaner_wd=$(realpath {WORKFLOW}/..)
-        {PROFILING} python3  $bicleaner_wd/bicleaner/bicleaner/bicleaner_train.py $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         rm $training
         '''
 
@@ -1159,7 +1157,7 @@ rule bicleaner:
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} python3 bicleaner-classify-_lite --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
