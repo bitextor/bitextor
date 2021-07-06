@@ -59,6 +59,7 @@ jobs:
             pip3 install ./kenlm --install-option="--max_order 7"
             pip3 install ./biroamer
             python -m spacy download en_core_web_sm
+            pip3 install -r deferred-crawling/requirements.txt
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:

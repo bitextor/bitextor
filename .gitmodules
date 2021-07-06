@@ -33,3 +33,6 @@
 [submodule "kenlm"]
 	path = kenlm
 	url = https://github.com/kpu/kenlm
+[submodule "deferred-crawling"]
+	path = deferred-crawling
+	url = https://github.com/bitextor/deferred-crawling
