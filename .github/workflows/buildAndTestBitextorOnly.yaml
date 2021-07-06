@@ -53,7 +53,7 @@ jobs:
          run: git submodule update --init --force --recursive
       -  name: Install additional python requirements
          run: |
-            pip3 install -r requirements.txt
+            pip3 install .
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:
@@ -64,15 +64,16 @@ jobs:
       -  name: Compiling bitextor and submodules
          run: |
             mkdir build && cd build
-            cmake -DSKIP_CLUSTERCAT=ON -DSKIP_MGIZA=ON ..
+            cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/usr ..
             make -j
+            sudo make install
       -  name: Run tests
          id: tests
          env:
             WORK: ${{ github.workspace }}
          run: |
-            chmod 775 ./run-tests-bitextor-only.sh
-            ./run-tests-bitextor-only.sh -w "$WORK" -j 4
+            chmod 775 ./tests/run-tests-bitextor-only.sh
+            ./tests/run-tests-bitextor-only.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:

@@ -53,11 +53,11 @@ jobs:
          run: git submodule update --init --force --recursive
       -  name: Install additional python requirements
          run: |
-            pip3 install -r requirements.txt
-            pip3 install -r bicleaner/requirements.txt
-            pip3 install https://github.com/kpu/kenlm/archive/master.zip --install-option="--max_order 7"
-            pip3 install -r bifixer/requirements.txt
-            pip3 install -r biroamer/requirements.txt
+            pip3 install .
+            pip3 install ./bifixer
+            pip3 install ./bicleaner
+            pip3 install ./kenlm --install-option="--max_order 7"
+            pip3 install ./biroamer
             python -m spacy download en_core_web_sm
       -  name: Setup golang
          uses: actions/setup-go@v2
@@ -69,15 +69,16 @@ jobs:
       -  name: Compiling bitextor and submodules
          run: |
             mkdir build && cd build
-            cmake -DSKIP_CLUSTERCAT=ON -DSKIP_MGIZA=ON ..
+            cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/usr ..
             make -j
+            sudo make install
       -  name: Run tests
          id: tests
          env:
             WORK: ${{ github.workspace }}
          run: |
-            chmod 775 ./run-deferred-tests.sh
-            ./run-deferred-tests.sh -w "$WORK" -j 4
+            chmod 775 ./tests/run-deferred-tests.sh
+            ./tests/run-deferred-tests.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
