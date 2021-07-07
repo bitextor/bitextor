@@ -50,7 +50,7 @@ ${BITEXTOR} ${FORCE} --notemp \
   --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
     dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
-    documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" \
+    documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
     sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True -j ${THREADS} \
   &> "${WORK}/reports/10-mt-en-el.report"
 

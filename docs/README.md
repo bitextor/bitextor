@@ -20,6 +20,7 @@ docker pull bitextor/bitextor
 # or use `docker pull bitextor/bitextor:edge` for Github master branch nightly builds
 docker run --name bitextor bitextor/bitextor
 ```
+
 For more information about Docker installation and usage consult [our wiki](https://github.com/bitextor/bitextor/wiki/Bitextor-Docker).
 
 ## Conda installation
@@ -66,6 +67,7 @@ bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
 If you are experiencing troubles installing new versions of Bitextor in your environment, you can try the following commands:
+
 ```bash
 # Be sure you do not have any other versions installed
 conda uninstall bitextor
@@ -285,7 +287,7 @@ bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
 
 This command would run Bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
 
-Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `workflow/examples/cluster.json`):
+Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `bitextor/examples/cluster.json`):
 
 ```json
 {
@@ -319,7 +321,7 @@ Note that, in this case, an additional option needs to be added to the `sbatch` 
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`workflow/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`bitextor/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
@@ -359,13 +361,12 @@ profiling: true
 There are some optional parameters that allow for a finer control of the execution of the pipeline, namely it is possible to configure some jobs to use more than one core; and it is possible to have a partial execution of Bitextor by specifying what step should be final.
 
 ```yaml
-until: preprocess 
+until: preprocess
 parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
 ```
 
 * `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values are: {`crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`}.
 * `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. The jobs that can be executed in parallel in this way are: {`split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `sents`}.
-
 
 ### Data sources
 
@@ -513,7 +514,7 @@ By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/proj
 ```yaml
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
-  'default': '/home/user/bitextor/workflow/example/nltk-sent-tokeniser.py english'
+  'default': '/home/user/bitextor/bitextor/example/nltk-sent-tokeniser.py english'
 }
 
 customNBPs: {
@@ -651,7 +652,7 @@ deferred: false
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum. 
+* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum.
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 

@@ -112,7 +112,7 @@ tests-mt()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
                 dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-                documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
                 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True \
             &> "${WORK}/reports/10-mt-en-fr.report"
         annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
@@ -122,7 +122,7 @@ tests-mt()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
                 dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
-                documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
                 deferred=True tmx=True \
             &> "${WORK}/reports/11-mt-en-el.report"
        annotate_and_echo_info 11 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz)"
@@ -132,7 +132,7 @@ tests-mt()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" \
                 dataDir="${WORK}/data/data-mt-en-ru" transientDir="${WORK}/transient-mt-en-ru" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
-                documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
                 deferred=True tmx=True \
             &> "${WORK}/reports/12-mt-en-ru.report"
         annotate_and_echo_info 12 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz)"
@@ -268,7 +268,7 @@ tests-mt-db()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
                 dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" \
                 preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-                documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" \
+                documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
                 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/60-mtdb-en-fr.report"
@@ -284,7 +284,7 @@ tests-others()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" \
                 dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${WORK}/transient-mto1-en-ru" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
-                documentAligner="externalMT" alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" sentenceAligner="bleualign" \
+                documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
                 deferred=False tmx=True deduped=True biroamer=True \
             &> "${WORK}/reports/100-mto1-en-ru.report"
         annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-ru/en-ru.sent.gz)"
@@ -294,7 +294,7 @@ tests-others()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
                 dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${WORK}/transient-mto2-en-fr" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-                documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../workflow/example/dummy-translate.sh" \
+                documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
                 bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True \

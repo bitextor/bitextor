@@ -1,9 +1,9 @@
 .snakemake/
 .idea/
-workflow/bin
-workflow/lib
-workflow/include
-workflow/share
+bitextor/bin
+bitextor/lib
+bitextor/include
+bitextor/share
 
 ### PYTHON ###
 # Byte-compiled / optimized / DLL files

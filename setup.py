@@ -21,7 +21,7 @@ if __name__ == "__main__":
     requirements=[]
     wd = os.path.dirname(os.path.abspath(__file__))
 
-    copytree("preprocess/moses", os.path.join(wd, "workflow/data/moses"))
+    copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
 
     for req_file in requirements_files:
         with open(req_file) as rf:
@@ -42,7 +42,6 @@ if __name__ == "__main__":
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/bitextor/bitextor",
-        package_dir={'bitextor': 'workflow'},
         packages=["bitextor", "bitextor.utils", "bitextor.features"],
         #classifiers=[],
         #project_urls={},
