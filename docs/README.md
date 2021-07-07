@@ -146,34 +146,15 @@ Currently we only support Linux x64 for Conda environment.
 
   # install dependencies in virtual enviroment
   pip3 install --upgrade pip
-  pip3 install -r requirements.txt
-  # bicleaner:
-  pip3 install -r bicleaner/requirements.txt
-  git clone https://github.com/kpu/kenlm
-  cd kenlm
-  python3 -m pip install . --install-option="--max_order 7"
-  mkdir -p build && cd build
-  cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/your/prefix/path
-  make -j all install
-  # bifixer:
-  pip3 install -r bifixer/requirements.txt
-  # biroamer:
-  pip3 install -r biroamer/requirements.txt
-  python3 -m spacy download en_core_web_sm
+  # bitextor:
+  pip3 install .
+  # additional dependencies:
+  pip3 install ./bicleaner && pip install ./kenlm --install-option="--max_order 7"
+  pip3 install ./bifixer
+  pip3 install ./biroamer && python3 -m spacy download en_core_web_sm
   ```
 
-  If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
-
-* [Optional] **Linguacrawl**
-
-  Linguacrawl is a top-level domain (TLD) crawler which can be installed from its [repository](https://github.com/transducens/linguacrawl/) via pip.
-  If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used independently of bitextor running `linguacrawl config-file.yaml`.
-
-  ```bash
-  # linguacrawl:
-  # linguacrawl also requires to have protobuf and cld3 installated (instructions below)
-  pip3 install git+https://github.com/transducens/linguacrawl.git
-  ```
+  If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation.
 
 * [Optional] **Heritrix**
 
@@ -183,7 +164,7 @@ Currently we only support Linux x64 for Conda environment.
 
 * [Optional] **Protobuf** and **CLD3**
 
-  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and linguacrawl. The requirements for installation are the following:
+  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and [Linguacrawl](https://github.com/transducens/linguacrawl). The requirements for installation are the following:
 
   ```bash
   # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
@@ -204,26 +185,27 @@ Currently we only support Linux x64 for Conda environment.
 
 ### Submodules compilation
 
-Bitextor uses CMake for c++ dependencies compilation:
+Compile and install Bitextor's C++ dependencies:
 
 ```bash
 mkdir build && cd build
-cmake ..
-make -j
+cmake -DCMAKE_INSTALL_PREFIX=/your/prefix/path
+make -j install
 ```
 
 Optionally, it is possible to skip the compilation of the dependencies that are not expected to be used:
 
 ```bash
 mkdir build && cd build
-cmake -DSKIP_MGIZA=ON -DSKIP_CLUSTERCAT=ON .. # MGIZA and Clustercat are used for dictionary generation
+cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/your/prefix/path .. # MGIZA and Clustercat are used for dictionary generation
 # other dependencies that can be skipped:
 # WARC2TEXT
 # DOCALIGN
 # BLEUALIGN
 # HUNALIGN
 # BIROAMER
-make -j4
+# KENLM
+make -j install
 ```
 
 #### Some known installation issues
@@ -242,11 +224,11 @@ make -j4
   rm -rf boost_1_76_0*
   ```
 
-* If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`.
+<!-- * If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`. -->
 
 ## Run
 
-To run Bitextor use the main script `bitextor.sh`. In general, this script takes two parameters:
+To run Bitextor use the `bitextor`. In general, Bitextor takes two parameters:
 
 ```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
@@ -263,7 +245,7 @@ For example, on a machine with 4 cores, one could run Bitextor as follows:
 bitextor.sh -s myconfig.yaml -j 4
 ```
 
-If Bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used:
+<!-- If Bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used:
 
 ```bash
 bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>] [-k] [-n]
@@ -275,9 +257,9 @@ where
 * `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
 * `<CLUSTERCONFIG>` is a JSON configuration file that specifies the specific requirements for each job in the cluster (for example, this file specifies if a job requires a certain amount of RAM memory, or access to one or more GPUs, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
 * `-k` option is for going on with independent jobs if a Bitextor rule/job fails.
-* `-n` option will ignore temp() folder/files declarations. This is useful when running only a part of the workflow, since temp() would lead to deletion of probably needed files by other parts of the workflow.
+* `-n` option will ignore temp() folder/files declarations. This is useful when running only a part of the workflow, since temp() would lead to deletion of probably needed files by other parts of the workflow. -->
 
-### Running Bitextor on a cluster
+<!-- ### Running Bitextor on a cluster
 
 When running on a cluster with, for example, the [SLURM](https://slurm.schedmd.com/) workload manager installed, one could run Bitextor as:
 
@@ -315,7 +297,7 @@ This configuration file tells the cluster to set the option `gres` to empty for 
 bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
 ```
 
-Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`.
+Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`. -->
 
 ## Bitextor configuration file
 
@@ -342,8 +324,6 @@ Following is a description of configuration related to each step, as well as bas
 There are a few variables that are mandatory for running Bitextor, independently of the task to be carried out:
 
 ```yaml
-bitextor: /home/user/bitextor
-
 permanentDir: /home/user/permanent/bitextor-output
 dataDir: /home/user/permanent/data
 transientDir: /home/user/transient
@@ -352,7 +332,6 @@ tempDir: /home/user/transient
 profiling: true
 ```
 
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled).
 * `permanentDir`, `transientDir`, `tempDir` and `dataDir` are the folders used during processing. `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing;`transientDir` will contain the result of every step of the pipeline, and `tempDir` will contain temporary files that are needed by some steps and removed immediately after they are no longer required.
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 

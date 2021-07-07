@@ -7,9 +7,9 @@ tqdm>=4.60.0,<=4.61.1
 toolwrapper>=0.4.1,<=2.1.0
 sacrebleu==1.5.1
 func_timeout==4.3.5
-cerberus==1.3.4
+cerberus>=1.3.3,<=1.3.4
 requests==2.25.1
-urllib3==1.26.6
+urllib3>=1.25.8,<=1.26.6
 python-dateutil==2.8.1
 cchardet==2.1.7
 sentence-splitter==1.4
@@ -24,4 +24,4 @@ validators==0.18.2
 -r requirements/requirements-dict-aligner.txt
 -r requirements/requirements-pdfextract.txt
 -r requirements/requirements-w2p.txt
--r deferred-crawling/requirements.txt
+-r requirements/requirements-linguacrawl.txt

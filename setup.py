@@ -13,21 +13,29 @@ def copytree(src, dst):
         else:
             shutil.copy(s, d)
 
+def reqs_from_file(src):
+    requirements = []
+    with open(src) as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("-r"):
+                requirements.append(line)
+            else:
+                add_src = line.split(' ')[1]
+                add_req = reqs_from_file(add_src)
+                requirements.extend(add_req)
+    return requirements
+
 if __name__ == "__main__":
+
     with open("docs/README.md", "r") as fh:
         long_description = fh.read()
 
-    requirements_files=["requirements.txt", "requirements/requirements-boilerpipe.txt", "requirements/requirements-dict-aligner.txt", "requirements/requirements-pdfextract.txt", "requirements/requirements-w2p.txt"]
     requirements=[]
     wd = os.path.dirname(os.path.abspath(__file__))
 
     copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
-
-    for req_file in requirements_files:
-        with open(req_file) as rf:
-            for line in rf:
-                if not line.startswith("-r"):
-                    requirements.append(line.strip())
+    requirements = reqs_from_file("requirements.txt")
 
     setuptools.setup(
         name="bitextor",
@@ -48,7 +56,7 @@ if __name__ == "__main__":
         package_data={
             "bitextor": [
                 "Snakefile",
-                "bitextor-webdir2warc.sh",
+                "bitextor_webdir2warc.sh",
                 "rules/*",
                 "utils/clean-corpus-n.perl",
                 "data/*",

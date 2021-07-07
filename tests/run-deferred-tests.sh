@@ -64,8 +64,8 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
     | bifixer -q --sdeferredcol 6 --tdeferredcol 7 --ignore_duplicates - - en el  \
     > "${WORK}/outputdeferred"
 
-    diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null
-    annotate_and_echo_info 10 "$?" "$(wc -l ${WORK}/outputdeferred)"
+  diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null
+  annotate_and_echo_info 10 "$?" "$(wc -l ${WORK}/outputdeferred)"
 else
   annotate_and_echo_info 10 "${BITEXTOR_STATUS}" "0"
 fi
