@@ -214,9 +214,14 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="bitextor"
+
+            if [[ "${{ github.event.inputs.conda_package }}" != "" ]]; then
+               v="${{ github.event.inputs.conda_package }}"
+            fi
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -234,7 +239,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
