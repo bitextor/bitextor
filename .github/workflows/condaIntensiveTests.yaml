@@ -29,7 +29,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -90,7 +90,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -151,7 +151,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -297,7 +297,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -370,7 +370,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -431,7 +431,7 @@ jobs:
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
