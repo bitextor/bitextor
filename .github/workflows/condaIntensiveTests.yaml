@@ -4,6 +4,10 @@ on:
       - cron: '0 3 * * 0'
    workflow_dispatch:
       inputs:
+         conda_package:
+            description: 'Package which will be installed'
+            required: false
+            default: 'bitextor'
          conda_version:
             description: 'Version which will be looked for'
             required: false
@@ -22,7 +26,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
@@ -82,7 +87,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
@@ -142,7 +148,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
@@ -214,11 +221,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v="bitextor"
-
-            if [[ "${{ github.event.inputs.conda_package }}" != "" ]]; then
-               v="${{ github.event.inputs.conda_package }}"
-            fi
+            v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="${v}=${{ github.event.inputs.conda_version }}"
@@ -291,7 +294,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
@@ -363,7 +367,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
@@ -423,7 +428,8 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="=${{ github.event.inputs.conda_version }}"
 
