@@ -47,7 +47,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -108,7 +109,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -169,7 +171,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -315,7 +317,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -388,7 +390,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -449,7 +452,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
