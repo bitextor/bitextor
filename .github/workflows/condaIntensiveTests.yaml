@@ -4,6 +4,10 @@ on:
       - cron: '0 3 * * 0'
    workflow_dispatch:
       inputs:
+         conda_package:
+            description: 'Package which will be installed'
+            required: false
+            default: 'bitextor'
          conda_version:
             description: 'Version which will be looked for'
             required: false
@@ -22,9 +26,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -42,7 +47,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -82,9 +88,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -102,7 +109,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -142,9 +150,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -162,7 +171,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -214,9 +223,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -234,7 +244,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -286,9 +296,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -306,7 +317,7 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -358,9 +369,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -378,7 +390,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}
@@ -418,9 +431,10 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            v=""
+            v="${{ github.event.inputs.conda_package }}"
+
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="=${{ github.event.inputs.conda_version }}"
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
                if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
                   v="${v}=${{ github.event.inputs.conda_build }}"
@@ -438,7 +452,8 @@ jobs:
             conda config --append channels dmnapolitano
             conda config --append channels esarrias
 
-            conda install -y -c bitextor "bitextor${v}"
+            conda install -y -c bitextor "${v}"
+
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40 -w "$WORK"
       -  name: Print log of tests which failed
          if: ${{ always() }}

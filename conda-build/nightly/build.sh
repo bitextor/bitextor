@@ -15,6 +15,8 @@ go get github.com/paracrawl/giashard/...
 echo -e " - \e[4mInstalling python3 dependencies...\e[0m"
 export PIP_NO_INDEX="False" # We are downloading requisites from PyPi
 export PIP_NO_DEPENDENCIES="False" # We need the dependencies from our defined dependencies
+export PIP_IGNORE_INSTALLED="False" # We need to take into account the dependencies
+
 pip3 install -r requirements.txt
 pip3 install -r bicleaner/requirements.txt
 pip3 install -r bifixer/requirements.txt
@@ -34,17 +36,17 @@ pip3 install -r biroamer/requirements.txt && \
 python -m spacy download en_core_web_sm && \
 pip3 show spacy && pip3 show en_core_web_sm && \
 ##### Fix in order to get the proper version of spacy/model due to mishandling versioning by conda
-pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
+#pip3 uninstall -y spacy && pip3 install spacy==2.2.3 && \
 pip3 show spacy && pip3 show en_core_web_sm
 ### Linguacrawl
-pip3 install git+https://github.com/transducens/linguacrawl.git || echo " - \e[4mcheck-gen: linguacrawl installation failed...\e[0m"
+pip3 install git+https://github.com/transducens/linguacrawl.git
 
 echo -e " - \e[4mMake...\e[0m"
 mkdir -p build && cd build
 CPATH="$CPATH:$CONDA_PREFIX/include" cmake ..
 CPATH="$CPATH:$CONDA_PREFIX/include" make -j
 cd ..
-cp warc2text/cld2/internal/libcld2_full.so "$PREFIX/lib"
+cp warc2text/lib/libcld2_full.so "$PREFIX/lib"
 
 # Heritrix 3
 # echo -e " - \e[4mInstalling Heritrix3...\e[0m"

@@ -1,5 +1,5 @@
 {% set name = "bitextor" %}
-{% set version = "8" %}
+{% set version = "8.0.1" %}
 
 package:
   name: "{{ name }}"

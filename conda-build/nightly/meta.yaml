@@ -1,5 +1,4 @@
 {% set name = "bitextor-nightly" %}
-{% set version = "8" %}
 
 package:
   name: "{{ name }}"

@@ -1,9 +1,9 @@
-snakemake==6.5.2
+snakemake==6.5.3
 warcio==1.7.4
 ftfy==6.0.3
 tldextract==3.1.0
 mmh3==3.0.0
-tqdm>=4.60.0,<=4.61.1
+tqdm>=4.60.0,<=4.61.2
 toolwrapper>=0.4.1,<=2.1.0
 sacrebleu==1.5.1
 func_timeout==4.3.5
@@ -16,9 +16,9 @@ sentence-splitter==1.4
 mosestokenizer==1.1.0
 lxml==4.6.3
 html5lib==1.1
-regex>=2019.08.19
+regex>=2019.08.19,<=2021.7.6
 numpy==1.19.5
-setuptools==57.0.0
+setuptools==57.1.0
 validators==0.18.2
 -r requirements/requirements-boilerpipe.txt
 -r requirements/requirements-dict-aligner.txt
