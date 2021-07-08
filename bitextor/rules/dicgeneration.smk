@@ -133,7 +133,7 @@ rule dic_generation_symmetrise_dic:
         vcb2=f"{mgizaModelDir}/corpus.{TRG_LANG}.filtered.vcb",
         t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
         t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
-    output: f"{DIC_TRAINING}"
+    output: expand("{dic}", dic=DIC_TRAINING)
     run:
         if DIC != DIC_TRAINING:
             sys.stderr.write(f"WARNING: you are going to generate a new dictionary, but you have provided one which exists and is the one that will be used. If you want to use the new dictionary, set 'dic' config option to an existant path but unexistant file\n")
