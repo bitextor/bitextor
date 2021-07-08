@@ -111,7 +111,6 @@ def validate_args(config):
             # dictionary
             'dic': {'type': 'string', 'dependencies': {}},
             'initCorpusTrainingPrefix': {'type': 'list'},
-            'mkcls': {'type': 'boolean'},
             # sentence alignment
             'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
             'sentenceAlignerThreshold': {'type': 'float'},
