@@ -59,6 +59,7 @@ requirements:
     - uchardet=0.0.7
     - gperftools=2.7
     - google-sparsehash=2.0.3
+    - parallel
 
 about:
   home: https://github.com/bitextor/bitextor/

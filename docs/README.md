@@ -123,7 +123,7 @@ Currently we only support Linux x64 for Conda environment.
 
   ```bash
   mkdir build && cd build
-  cmake -DCMAKE_INSTALL_PREFIX=/your/prefix/path
+  cmake -DCMAKE_INSTALL_PREFIX=/your/prefix/path ..
   make -j install
   ```
 
@@ -164,6 +164,8 @@ Currently we only support Linux x64 for Conda environment.
   pip3 install ./bicleaner && pip install ./kenlm --install-option="--max_order 7"
   pip3 install ./bifixer
   pip3 install ./biroamer && python3 -m spacy download en_core_web_sm
+  # optional, feel free to skip components that you don't expect to use:
+  pip3 install git+https://github.com/transducens/linguacrawl.git
   ```
 
   If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation.
@@ -218,7 +220,7 @@ usage: bitextor [-C FILE [FILE ...]] [-c KEY=VALUE [KEY=VALUE ...]]
                 [--forceall] [--forcerun [TARGET [TARGET ...]]]
                 [-q] [-h]
 
-lauch Bitextor
+launch Bitextor
 
 Bitextor config::
   -C FILE [FILE ...], --configfile FILE [FILE ...]
