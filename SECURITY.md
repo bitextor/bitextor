@@ -12,4 +12,4 @@ Bitextor versions currently being supported with security updates.
 ## Reporting a Vulnerability
 
 To report a vulnerability, please contact any of the listed developers in
-the CREDITS file (https://github.com/bitextor/bitextor/blob/master/CREDITS).
+the [CREDITS](CREDITS).
