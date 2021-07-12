@@ -68,7 +68,8 @@ if __name__ == "__main__":
         },
         entry_points={
             "console_scripts": [
-                "bitextor = bitextor.bitextor_main:main"
+                "bitextor = bitextor.bitextor_cli:main",
+                "bitextor-full = bitextor.bitextor_cli:main_full"
             ]
         }
         )
