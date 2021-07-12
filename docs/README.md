@@ -77,12 +77,6 @@ conda uninstall bitextor-nightly
 conda clean --all
 ```
 
-Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder, or you can find your installation even easier through `$CONDA_PREFIX/bitextor`.
-
-Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier the access to the files in your home directory. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
-
-Remember to set the `bitextor` directive of your YAML file correctly, either with the provided soft link or `$CONDA_PREFIX/bitextor`.
-
 Currently we only support Linux x64 for Conda environment.
 
 ## Manual installation
@@ -121,6 +115,24 @@ Currently we only support Linux x64 for Conda environment.
   ## PDFExtract:
   ## PDFExtract also requires protobuf and CLD3 installed (installation instructions below)
   sudo apt install autoconf automake libtool ant maven poppler-utils apt-transport-https ca-certificates gnupg software-properties-common
+  ```
+
+* **C++** dependencies
+
+  Compile and install Bitextor's C++ dependencies:
+
+  ```bash
+  mkdir build && cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/your/prefix/path
+  make -j install
+  ```
+
+  Optionally, it is possible to skip the compilation of the dependencies that are not expected to be used:
+
+  ```bash
+  cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/your/prefix/path .. # MGIZA is used for dictionary generation
+  # other dependencies that can optionally be skipped:
+  # WARC2TEXT, DOCALIGN, BLEUALIGN, HUNALIGN, BIROAMER, KENLM
   ```
 
 * **Golang** packages
@@ -162,9 +174,9 @@ Currently we only support Linux x64 for Conda environment.
   After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
   This dependency is also not mandatory (in Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT`).
 
-* [Optional] **Protobuf** and **CLD3**
+* [Optional] **Protobuf**
 
-  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and [Linguacrawl](https://github.com/transducens/linguacrawl). The requirements for installation are the following:
+  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and [Linguacrawl](https://github.com/transducens/linguacrawl). CLD3 needs `protobuf` to work, the requirements for installation are the following:
 
   ```bash
   # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
@@ -178,37 +190,9 @@ Currently we only support Linux x64 for Conda environment.
   make check
   sudo make install
   sudo ldconfig
-
-  pip3 install Cython # Install Cython dependency for cld3
-  pip3 install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
   ```
 
-### Submodules compilation
-
-Compile and install Bitextor's C++ dependencies:
-
-```bash
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/your/prefix/path
-make -j install
-```
-
-Optionally, it is possible to skip the compilation of the dependencies that are not expected to be used:
-
-```bash
-mkdir build && cd build
-cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/your/prefix/path .. # MGIZA and Clustercat are used for dictionary generation
-# other dependencies that can be skipped:
-# WARC2TEXT
-# DOCALIGN
-# BLEUALIGN
-# HUNALIGN
-# BIROAMER
-# KENLM
-make -j install
-```
-
-#### Some known installation issues
+<!-- #### Some known installation issues
 
 * Depending on the version of *libboost* that you are using given a certain OS version or distribution package from your package manager, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
 
@@ -222,88 +206,51 @@ make -j install
   ./b2 -j4 --layout=system install || echo FAILURE
   cd ..
   rm -rf boost_1_76_0*
-  ```
+  ``` -->
 
 <!-- * If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`. -->
 
-## Run
+## Usage
 
-To run Bitextor use the `bitextor`. In general, Bitextor takes two parameters:
+```text
+usage: bitextor [-C FILE [FILE ...]] [-c KEY=VALUE [KEY=VALUE ...]]
+                [-j JOBS] [-k] [--notemp] [--dry-run]
+                [--forceall] [--forcerun [TARGET [TARGET ...]]]
+                [-q] [-h]
 
-```bash
-bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
+lauch Bitextor
+
+Bitextor config::
+  -C FILE [FILE ...], --configfile FILE [FILE ...]
+                        Bitextor YAML configuration file
+  -c KEY=VALUE [KEY=VALUE ...], --config KEY=VALUE [KEY=VALUE ...]
+                        Set or overwrite values for Bitextor config
+
+Optional arguments::
+  -j JOBS, --jobs JOBS  Number of provided cores
+  -k, --keep-going      Go on with independent jobs if a job fails
+  --notemp              Disable deletion of intermediate files marked as temporary
+  --dry-run             Do not execute anything and display what would be done
+  --forceall            Force rerun every job
+  --forcerun TARGET [TARGET ...]
+                        List of files and rules that shall be re-created/re-executed
+  -q, --quiet           Do not print job information
+  -h, --help            Show this help message and exit
 ```
 
-where
+## Advanced usage
 
-* `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run Bitextor (learn more about Bitextor configuration in the next section), and
-* `<NUMJOBS>` is the number of jobs that can be launched in parallel; a job is a single step of the pipeline (see section Pipeline description) and can be run in parallel for different websites
+Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow using a [Snakefile](bitextor/Snakefile) and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake and exposes all of Snakemake's parameters.
 
-For example, on a machine with 4 cores, one could run Bitextor as follows:
+### Execution on a cluster
 
-```bash
-bitextor.sh -s myconfig.yaml -j 4
-```
-
-<!-- If Bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used:
-
-```bash
-bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>] [-k] [-n]
-```
-
-where
-
-* `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
-* `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a JSON configuration file that specifies the specific requirements for each job in the cluster (for example, this file specifies if a job requires a certain amount of RAM memory, or access to one or more GPUs, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
-* `-k` option is for going on with independent jobs if a Bitextor rule/job fails.
-* `-n` option will ignore temp() folder/files declarations. This is useful when running only a part of the workflow, since temp() would lead to deletion of probably needed files by other parts of the workflow. -->
-
-<!-- ### Running Bitextor on a cluster
-
-When running on a cluster with, for example, the [SLURM](https://slurm.schedmd.com/) workload manager installed, one could run Bitextor as:
-
-```bash
-bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
-```
-
-This command would run Bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
-
-Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `bitextor/examples/cluster.json`):
-
-```json
-{
-    "__default__" :
-    {
-        "gres": ""
-    },
-
-    "docaling_translate_nmt" :
-    {
-        "gres": "--gres gpu:tesla:1"
-    },
-
-    "train_nmt_all":
-    {
-        "gres": "--gres gpu:tesla:1"
-    }
-
-}
-```
-
-This configuration file tells the cluster to set the option `gres` to empty for all jobs except for `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In [SLURM](https://slurm.schedmd.com/) `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a Tesla GPU is required by these two jobs. Once we had our configuration file, we could call Bitextor in the following way:
-
-```bash
-bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
-```
-
-Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`. -->
+To run Bitextor on a cluster with a software that allows to manage job queues, it is recommended to use `bitextor-full` command and use [Snakemake's cluster configuration](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
 
 ## Bitextor configuration file
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`bitextor/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist configuration file sample can be found in this repository (`bitextor/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
