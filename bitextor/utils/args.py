@@ -15,6 +15,7 @@
 
 import sys
 import os
+import pprint
 
 from cerberus import Validator
 
@@ -40,7 +41,7 @@ def validate_args(config):
             'dataDir': {'type': 'string', 'required': True},
             'permanentDir': {'type': 'string', 'required': True},
             'transientDir': {'type': 'string', 'required': True},
-            'tempDir': {'type': 'string', 'default_setter': lambda doc: doc["transientDir"]},
+            'tempDir': {'type': 'string', 'default_setter': lambda doc: doc["transientDir"] if "transientDir" in doc else ""},
             # profiling
             'profiling': {'type': 'boolean', 'default': False},
             # execute until X:
@@ -149,13 +150,17 @@ def validate_args(config):
 
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
-        schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
+
+        if "lang1" in config and "lang2" in config:
+            schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
 
         if "sentenceAligner" in config and config["sentenceAligner"] == "hunalign":
             schema['dic']['required'] = True
+
     elif config['documentAligner'] == 'DIC':
         schema['dic']['required'] = True
         schema['documentAligner']['dependencies']['preprocessor'] = ['warc2preprocess', 'warc2text']
+
         if config['preprocessor'] == 'warc2text':
             config['writeHTML'] = True
 
@@ -188,11 +193,11 @@ def validate_args(config):
         schema['dic']['required'] = True
 
     if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
-        sys.stderr.write("WARNING: your target consists of temporary files. Make sure to use --notemp parameter to preserve your output\n")
+        print("WARNING: your target consists of temporary files. Make sure to use --notemp parameter to preserve your output", file=sys.stderr)
 
     if 'biroamer' in config and config['biroamer']:
         if ('tmx' not in config or not config['tmx']) and ('deduped' not in config or not config['deduped']):
-            sys.stderr.write("ERROR: if you want to use biroamer, you need either 'tmx' or 'deduped' config option set to 'true' (if both, deduped will be used)\n")
+            print("ERROR: if you want to use biroamer, you need either 'tmx' or 'deduped' config option set to 'true' (if both, deduped will be used)", file=sys.stderr)
 
             if 'deduped' not in config:
                 # tmx not in config or tmx in config but false
@@ -211,10 +216,11 @@ def validate_args(config):
     b = v.validate(config)
 
     if not b:
-        print("Validation error. Stopping.", v.errors, file=sys.stderr)
-        exit()
+        print("Validation errors. Stopping.", file=sys.stderr)
+        pprint.pprint(v.errors, indent=2, sort_dicts=False, stream=sys.stderr, width=100)
+        return b, {}
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
     config.update({k: [os.path.expanduser(i) for i in v] if v is list else v for k, v in config.items()})
 
-    return v.normalized(config)
+    return b, v.normalized(config)

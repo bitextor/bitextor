@@ -8,7 +8,8 @@ from bitextor.utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
     snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
 from bitextor.utils.non_generic import *
 
-config = validate_args(config)
+valid, config = validate_args(config)
+assert valid # workaround for not being able to exit() in snakemake
 
 #################################################################
 # BASIC PARAMETERS
