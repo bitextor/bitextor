@@ -1,5 +1,4 @@
-
-# ![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/banner.png)
+# ![Bitextor](https://raw.githubusercontent.com/bitextor/bitextor/master/docs/img/banner.png)
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 [![Chat on Discord](https://camo.githubusercontent.com/b4175720ede4f2621aa066ffbabb70ae30044679/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f636861742d446973636f72642d627269676874677265656e2e737667)](https://discord.gg/etYDaZm)
@@ -45,7 +44,7 @@ Optional arguments::
 
 ## Advanced usage
 
-Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow using a [Snakefile](bitextor/Snakefile) and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake and exposes all of Snakemake's parameters.
+Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow using a [Snakefile](../bitextor/Snakefile) and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake and exposes all of Snakemake's parameters.
 
 ### Execution on a cluster
 
@@ -55,7 +54,7 @@ To run Bitextor on a cluster with a software that allows to manage job queues, i
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist [configuration file sample](bitextor/sample-config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist [configuration file sample](../bitextor/sample-config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
@@ -419,8 +418,8 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
-![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor.png)
+![Banner](img/bitextor.png)
 
-![Connecting Europe Facility](https://raw.githubusercontent.com/bitextor/bitextor/master/img/logo_en_cef273x39_nonalpha.png)
+![Connecting Europe Facility](img/logo_en_cef273x39_nonalpha.png)
 
 All documents and software contained in this repository reflect only the authors' view. The Innovation and Networks Executive Agency of the European Union is not responsible for any use that may be made of the information it contains.

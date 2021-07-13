@@ -1,5 +1,7 @@
 # Bitextor installation
 
+Bitextor can be installed via Docker, Conda or built from source.
+
 ## Docker installation
 
 Bitextor is available via Docker:
