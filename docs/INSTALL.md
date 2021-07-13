@@ -97,8 +97,6 @@ Step-by-step Bitextor installation from source
   # optional, feel free to skip dependencies for components that you don't expect to use:
   ## wget crawler:
   sudo apt install wget
-  ## httrack crawler:
-  sudo apt install httrack
   ## warc2text:
   sudo apt install uchardet libuchardet-dev libzip-dev
   ## biroamer:

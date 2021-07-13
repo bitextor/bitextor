@@ -443,18 +443,6 @@ rule creepy_download:
         {PROFILING} python3 {WORKFLOW}/bitextor_creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
         '''
 
-rule httrack_download:
-    params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
-    output: f'{DATADIR}/warc/{{target}}/httrack.warc.gz'
-    shell: '''
-        mkdir -p {params.folder} {TMPDIR}
-        echo hostname=$HOSTNAME
-        DIRNAME=$(mktemp -d {TMPDIR}/downloaded.{wildcards.target}.XXXXXX)
-        {PROFILING} python3 {WORKFLOW}/bitextor_httrack.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {CRAWLPAGELIMIT} {USERAGENT} {CRAWLWAIT}
-        bitextor_webdir2warc.sh $DIRNAME > {output}
-        rm -rf $DIRNAME
-        '''
-
 rule wget_download:
     params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
     output: f'{DATADIR}/warc/{{target}}/wget.warc.gz'

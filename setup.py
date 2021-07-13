@@ -56,7 +56,6 @@ if __name__ == "__main__":
         package_data={
             "bitextor": [
                 "Snakefile",
-                "bitextor_webdir2warc.sh",
                 "rules/*",
                 "utils/clean-corpus-n.perl",
                 "data/*",

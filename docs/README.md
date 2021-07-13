@@ -118,7 +118,7 @@ warcsFile: /home/user/warcs.gz
 
 ### Crawling
 
-Five crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool, [HTTrack](https://www.httrack.com/) and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Five crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 
 ```yaml
 crawler: wget
@@ -133,7 +133,7 @@ crawlerConnectionTimeout: 10
 onlyConcat: false
 ```
 
-* `crawler`: set which crawler is used (`heritrix`, `wget`,`creepy`, `httrack` or `linguacrawl`)
+* `crawler`: set which crawler is used (`heritrix`, `wget`,`creepy` or `linguacrawl`)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour (`linguacrawl` needs only the quantity, without any suffix)
 * `crawlWait`: option that specifies the time that should be waited between the retrievals. It is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
