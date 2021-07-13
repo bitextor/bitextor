@@ -9,7 +9,7 @@ from sys import argv
 
 def parse_args():
     oparser = argparse.ArgumentParser(
-        description="lauch Bitextor", add_help=False)
+        description="launch Bitextor", add_help=False)
     config = oparser.add_argument_group("Bitextor config")
 
     config.add_argument("-C", "--configfile", dest="configfiles", metavar="FILE",
@@ -42,8 +42,7 @@ def parse_args():
     options = oparser.parse_args()
 
     if not options.config and not options.configfiles:
-        oparser.error(
-            "provide Bitextor configuration via --configfile or --config")
+        oparser.error("provide Bitextor configuration via --configfile or --config")
 
     return options
 
