@@ -139,18 +139,25 @@ def validate_args(config):
             schema['crawlTLD']['check_with'] = isstrlist
             schema['resumePreviousCrawl']['type'] = 'boolean'
 
-    if ('onlyPreprocess' not in config or not config['onlyPreprocess']) and ('onlyCrawl' not in config or not config['onlyCrawl']):
+    untilPreprocess = False
+    untilCrawling = False
+    if 'until' in config:
+        untilPreprocess = config['until'] == 'preprocess'
+        untilCrawling = config['until'] == 'crawl'
+
+    bothLangsSpecified = "lang1" in config and "lang2" in config
+
+    if not untilCrawling and not untilPreprocess:
         schema['lang1']['required'] = True
         schema['lang2']['required'] = True
 
-    elif ('onlyPreprocess' in config and config['onlyPreprocess']) and ('lang1' not in config or 'lang2' not in config):
-        # if onlyPreprocess in true, target languages should be indicated either with 'lang1' and 'lang2', or 'langs'
+    elif untilPreprocess and not bothLangsSpecified:
         schema['langs']['required'] = True
 
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
 
-        if "lang1" in config and "lang2" in config:
+        if bothLangsSpecified:
             schema['translationDirection']['allowed'] = [f'{config["lang1"]}2{config["lang2"]}', f'{config["lang2"]}2{config["lang1"]}']
 
         if "sentenceAligner" in config and config["sentenceAligner"] == "hunalign":

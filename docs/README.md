@@ -128,8 +128,6 @@ crawlSizeLimit: 1G
 crawlTLD: false
 crawlerNumThreads: 1
 crawlerConnectionTimeout: 10
-
-onlyConcat: false
 ```
 
 * `crawler`: set which crawler is used (`heritrix`, `wget` or `linguacrawl`)
@@ -149,7 +147,6 @@ onlyConcat: false
 * `crawlScoutSteps`: **linguacrawl-specific option** that allows to specify the number of documents to be downloaded from a web-site before the scouting criterion is evaluated (one of the most important features of `linguacrawl` is the scout strategy that implements in order to be as efficient as possible)
 * `crawlBlackListURL`: **linguacrawl-specific option** that allows to specify a list of domains which will not be taken into account (i.e. they will not be crawled). The default value is: 'wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram'
 * `crawlPrefixFilter`: **linguacrawl-specific option** that allows to avoid resources which begins with a concrete pattern and we know, previously, that is not going to give us useful information
-* `onlyConcat`: stop Bitextor after the crawling step and group WARC files by domain
 
 If you want to also crawl PDFs (only `wget` support for now), use these settings:
 
