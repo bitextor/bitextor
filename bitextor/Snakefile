@@ -419,8 +419,7 @@ else:
     elif UNTIL == 'filter':
         OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
 
-# shell.prefix("set -euo pipefail; if [ \"{BITEXTOR}\" != \"\" ] ; then PATH={BITEXTOR}/bin:$PATH; LD_LIBRARY_PATH={BITEXTOR}/lib:$LD_LIBRARY_PATH ; fi;")
-shell.prefix("set -euo pipefail; PATH={WORKFLOW}/bin:$PATH; LD_LIBRARY_PATH={WORKFLOW}/lib:$LD_LIBRARY_PATH;")
+shell.prefix("set -euo pipefail;")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
