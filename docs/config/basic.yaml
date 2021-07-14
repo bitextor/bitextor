@@ -1,0 +1,39 @@
+# BASIC VARIABLES
+dataDir: ~/permanent/data
+permanentDir: ~/permanent
+transientDir: ~/transient
+tempDir: ~/transient
+
+# DATA SOURCES - CRAWLING
+hostsFile: ~/hosts.gz # contains a domain to crawl per line
+crawler: "wget"
+crawlTimeLimit: "86400" # 24 hours
+
+# DATA SOURCES - WARC FILES
+warcsFile: ~/warcs.gz # contains a path to a WARC file per line
+
+# PREPROCESSING
+preprocessor: "warc2text"
+shards: 8 # 2^8 = 256 shards
+batches: 1024 # each shard split into chunks of 1024 MB
+
+lang1: 'en'
+lang2: 'fr'
+
+# ALIGN
+documentAligner: "externalMT"
+documentAlignerThreshold: 0.1
+alignerCmd: "bash /path/to/your/translate.sh"
+translationDirection: fr2en
+
+sentenceAligner: 'bleualign'
+sentenceAlignerThreshold: 0.1
+
+# CLEANING
+bifixer: true
+bicleaner: ~/bicleaner-model/en-fr/en-fr.yaml
+bicleanerThreshold: 0.5
+biroamer: false
+
+deduped: true
+tmx: true

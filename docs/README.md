@@ -44,7 +44,7 @@ Optional arguments::
 
 ## Advanced usage
 
-Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow using a [Snakefile](../bitextor/Snakefile) and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake and exposes all of Snakemake's parameters.
+Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake CLI with Bitextor's workflow and exposes all of Snakemake's parameters.
 
 ### Execution on a cluster
 
@@ -54,7 +54,7 @@ To run Bitextor on a cluster with a software that allows to manage job queues, i
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist [configuration file sample](../bitextor/sample-config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist [configuration file sample](config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
