@@ -435,14 +435,6 @@ include: "rules/dictdocsegalign.smk"
 #################################################################
 ### CRAWLING ####################################################
 
-rule creepy_download:
-    params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
-    output: f'{DATADIR}/warc/{{target}}/creepy.warc.gz'
-    shell: '''
-        mkdir -p {params.folder} {TMPDIR}
-        {PROFILING} python3 {WORKFLOW}/bitextor_creepy.py {TLD_CRAWL} {CRAWLSIZELIMIT} {CRAWLTIMELIMIT} {CRAWLWAIT} {CRAWLJOBS} {CRAWLTIMEOUT} {CRAWLDUMPARGS} {CONTINUECRAWL} {USERAGENT} {params.url} > {output}
-        '''
-
 rule wget_download:
     params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
     output: f'{DATADIR}/warc/{{target}}/wget.warc.gz'

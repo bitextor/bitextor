@@ -117,7 +117,7 @@ warcsFile: /home/user/warcs.gz
 
 ### Crawling
 
-Five crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Three crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 
 ```yaml
 crawler: wget
@@ -132,17 +132,17 @@ crawlerConnectionTimeout: 10
 onlyConcat: false
 ```
 
-* `crawler`: set which crawler is used (`heritrix`, `wget`,`creepy` or `linguacrawl`)
+* `crawler`: set which crawler is used (`heritrix`, `wget` or `linguacrawl`)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour (`linguacrawl` needs only the quantity, without any suffix)
 * `crawlWait`: option that specifies the time that should be waited between the retrievals. It is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
 * `crawlFileTypes`: **wget-specific/linguacrawl-specific option** that allows to specify the files which we want to retrieve. Both `wget` and `linguacrawl` use the Content-Type in order to search a pattern which matches, so either "html" or "text/html" will retrieve those files with Content-Type "text/html". The [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) contains [MIME](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) values
-* `crawlSizeLimit`: **creepy-specific/linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K) (in the case of `Creepy`, but not for `linguacrawl`)
-* `crawlTLD`: **creepy-specific/linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org* for `Creepy`. In the case of `linguacrawl` the TLD can be specified directly without wildcards and in a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
-* `crawlerNumThreads`: **creepy-specific/linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
-* `crawlerConnectionTimeout`: **creepy-specific/linguacrawl-specific option** that allows to specify the connection timeout to a web server
-* `dumpCurrentCrawl`: **creepy-specific/linguacrawl-specific option** that allows to visualize more information about what the crawler is doing, like a 'verbose' option
-* `resumePreviousCrawl`: **creepy-specific/linguacrawl-specific option** that allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed. This option might be used for those cases where the crawling was stopped at the same time that the workflow, or after removing those files which makes necessary the crawler to be executed again (this last option might be difficult to achieve)
+* `crawlSizeLimit`: **linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends
+* `crawlTLD`: **linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); TLD can be specified as a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
+* `crawlerNumThreads`: **linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
+* `crawlerConnectionTimeout`: **linguacrawl-specific option** that allows to specify the connection timeout to a web server
+* `dumpCurrentCrawl`: **linguacrawl-specific option** that allows to visualize more information about what the crawler is doing, like a 'verbose' option
+* `resumePreviousCrawl`: **linguacrawl-specific option** that allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed. This option might be used for those cases where the crawling was stopped at the same time that the workflow, or after removing those files which makes necessary the crawler to be executed again (this last option might be difficult to achieve)
 * `crawlCat`: **linguacrawl-specific option** that allows to merge all the downloaded WARCs in just one (`linguacrawl` generates one warc per domain/subdomain accordin to the documentation, which does not specify concretely which one). This option will improbe the number of rules of preprocessing to run, but will cause to lose important information like the source of the WARCs. Be aware that this option might be equally as dangerous if enabled in the case of a large crawling since the preprocessing of a very large WARC might even cost more resources (either time or memory) that the processing of thousands of little WARCs
 * `crawlCatMaxSize`: **linguacrawl-specific option** that allows to specify a max. size of the merged WARC. If this option is specified, multiple WARCs will be generated where the retrieved WARCs will be being merged, and new WARCs will be used when the max. size has been reached. The unity being used is the byte, so if we want a max. size of 1 KiB, the value which we should set would be 1024
 * `crawlMaxFolderTreeDepth`: **linguacrawl-specific option** that allows to specify the max. folder depth for a URL to be taken into account
