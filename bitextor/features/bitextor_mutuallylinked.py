@@ -22,6 +22,7 @@ import base64
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
+
 def extract_urls(html_file, url_file, docs, fileid):
     with open_xz_or_gzip_or_plain(html_file) as hd:
         with open_xz_or_gzip_or_plain(url_file) as ud:
@@ -32,22 +33,22 @@ def extract_urls(html_file, url_file, docs, fileid):
                 fileid += 1
     return fileid
 
+
 def main():
     oparser = argparse.ArgumentParser(
         description="Script that rescores the aligned-document candidates provided by script bitextor-idx2ridx by using "
                     "the Levenshtein edit distance of the structure of the files.")
-    oparser.add_argument('ridx', metavar='RIDX', nargs='?',
-                        help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
-                            'the script will read from the standard input)',
-                        default=None)
+    oparser.add_argument('ridx', metavar='RIDX', nargs='?', default=None,
+                         help='File with extension .ridx (reverse index) from bitextor-idx2ridx (if not provided, '
+                         'the script will read from the standard input)')
     oparser.add_argument("--html1", help="File produced during pre-processing containing all HTML files in a WARC file for SL",
-                        dest="html1", required=True)
+                         dest="html1", required=True)
     oparser.add_argument("--html2", help="File produced during pre-processing containing all HTML files in a WARC file for TL",
-                        dest="html2", required=True)
+                         dest="html2", required=True)
     oparser.add_argument("--url1", help="File produced during pre-processing containing all the URLs in a WARC file for SL",
-                        dest="url1", required=True)
+                         dest="url1", required=True)
     oparser.add_argument("--url2", help="File produced during pre-processing containing all the URLs in a WARC file for TL",
-                        dest="url2", required=True)
+                         dest="url2", required=True)
     options = oparser.parse_args()
 
     if options.ridx is None:
@@ -59,7 +60,6 @@ def main():
     offset = 1
     offset = extract_urls(options.html1, options.url1, documents, offset)
     offset = extract_urls(options.html2, options.url2, documents, offset)
-
 
     for i in reader:
         fields = i.strip().split("\t")
@@ -77,6 +77,7 @@ def main():
                     candidate += ":0"
                 sys.stdout.write("\t" + candidate)
             sys.stdout.write("\n")
+
 
 if __name__ == '__main__':
     main()

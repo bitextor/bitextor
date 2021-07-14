@@ -43,6 +43,7 @@ def tokenize_moses(text, word_tokeniser, morph_analyser):
 
     return tokenized_text
 
+
 def tokenize_external(text, word_tokeniser, morph_analyser):
     tokenized_text = word_tokeniser.process(text)
 
@@ -54,11 +55,14 @@ def tokenize_external(text, word_tokeniser, morph_analyser):
 
     return tokenized_text
 
+
 oparser = argparse.ArgumentParser(description="Tool that tokenizes plain text")
 oparser.add_argument('--text', dest='text', help='Plain text file', default="-")
-oparser.add_argument('--word-tokenizer', dest='tokenizer', default=None, help="Word tokenisation command line. If not provided, Moses tokenizer.perl will be used")
+oparser.add_argument('--word-tokenizer', dest='tokenizer', default=None,
+                     help="Word tokenisation command line. If not provided, Moses tokenizer.perl will be used")
 oparser.add_argument('--morph-analyser', dest='lemmatizer', default="", help="Morphological analyser command line")
-oparser.add_argument('--langcode', dest='langcode', default="en", help="Language code for default sentence splitter and tokenizer")
+oparser.add_argument('--langcode', dest='langcode', default="en",
+                     help="Language code for default sentence splitter and tokenizer")
 
 options = oparser.parse_args()
 

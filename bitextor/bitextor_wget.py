@@ -35,8 +35,9 @@ def check_wget_compression(cmd):
     try:
         subprocess.check_call(cmd, shell=True)
         return True
-    except:
+    except BaseException:
         return False
+
 
 def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
     cmd = ""
@@ -61,12 +62,8 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
     if check_wget_compression("wget --help | grep 'no-warc-compression'"):
         warcoption += " --no-warc-compression"
 
-    cmd += "wget --mirror {WAIT} {FILETYPES} -q -o /dev/null {URL} -P {DOWNLOAD_PATH} {AGENT} {WARC}".format(WAIT=waitoption,
-                                                                                                 FILETYPES=filetypesoption,
-                                                                                                 URL=url,
-                                                                                                 DOWNLOAD_PATH=out_path,
-                                                                                                 AGENT=agentoption,
-                                                                                                 WARC=warcoption)
+    cmd += f"wget --mirror {waitoption} {filetypesoption} -q -o /dev/null {url} -P {out_path} {agentoption} {warcoption}"
+
     # print("cmd", cmd)
     try:
         system_check(cmd)
@@ -95,7 +92,7 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
                 print(e, file=sys.stderr)
                 pass
 
-    system_check("rm {WARC}".format(WARC=warcfilebasename+".warc"))
+    system_check("rm {WARC}".format(WARC=warcfilebasename + ".warc"))
 
 
 if __name__ == "__main__":
@@ -136,7 +133,7 @@ if __name__ == "__main__":
                 connection_error = True
             else:
                 url = "https" + url[4:]
-        except:
+        except BaseException:
             if check:
                 connection_error = True
                 sys.stderr.write("WARNING: error connecting: ")
@@ -155,7 +152,7 @@ if __name__ == "__main__":
                             args.wait = str(crawldelay)
                     except ValueError:
                         pass
-        except:
+        except BaseException:
             sys.stderr.write("WARNING: Error downloading robots.txt: ")
             sys.stderr.write(str(sys.exc_info()[0]) + "\n")
 
@@ -163,7 +160,7 @@ if __name__ == "__main__":
     else:
         # Create empty warc
         warc_file_basename = args.warcfilename[0:args.warcfilename.find(".warc.gz")]
-        
+
         with open(warc_file_basename + ".warc.gz", 'w') as f_out:
             f_out.close()
 

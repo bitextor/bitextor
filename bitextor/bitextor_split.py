@@ -26,6 +26,7 @@ from sentence_splitter import SentenceSplitter, SentenceSplitterException
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 from bitextor.utils.common import ExternalTextProcessor
 
+
 # True -> keep sentence
 # False -> throw away
 def filter_trash(sentence):
@@ -52,11 +53,12 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
-     
+
     segments = [s for s in segments if filter_trash(s)]
 
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
+
 
 def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     segments = moses_splitter.split(content)
@@ -68,15 +70,19 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
         segments = [s for s in segments if not len(s) > prune_threshold]
 
     segments = [s for s in segments if filter_trash(s)]
-    
+
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
 
+
 oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")
 oparser.add_argument('--text', dest='text', help='Plain text file', default="-")
-oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. If not provided, Moses split_sentences Python port will be used.")
-oparser.add_argument('--langcode', dest='langcode', default="en", help="Language code for default sentence splitter and tokenizer")
-oparser.add_argument('--customnbp', dest='customnbp', help="Path for custom non breaking prefixes used by Moses Sentence Splitter Python port")
+oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. "
+                     "If not provided, Moses split_sentences Python port will be used.")
+oparser.add_argument('--langcode', dest='langcode', default="en",
+                     help="Language code for default sentence splitter and tokenizer")
+oparser.add_argument('--customnbp', dest='customnbp',
+                     help="Path for custom non breaking prefixes used by Moses Sentence Splitter Python port")
 oparser.add_argument('--sentences-output', default="plain_sentences.xz", dest='sent_output',
                      help="Path of the output file that will contain sentence splitted text")
 oparser.add_argument("--prune", dest="prune_threshold", type=int, default=0,
@@ -90,14 +96,14 @@ splitter = options.splitter
 splitter_func = None
 # no sentence splitter command provided, use moses:
 if not splitter:
-    splitter_func = split_moses  
+    splitter_func = split_moses
     try:
         if options.customnbp:
             splitter = SentenceSplitter(language=options.langcode, non_breaking_prefix_file=options.customnbp)
         else:
             splitter = SentenceSplitter(language=options.langcode)
     except SentenceSplitterException as e:
-        sys.stderr.write(str(e)+"\n")
+        sys.stderr.write(str(e) + "\n")
         splitter = SentenceSplitter(language='en')
 
 # use custom sentence splitter via ExternalTextProcessor (inefficient):

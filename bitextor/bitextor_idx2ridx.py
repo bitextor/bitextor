@@ -193,7 +193,7 @@ for document_index1 in index_text1:
                 num_intersect_words = len(c3)
                 num_trans_words_text2 = dict_words[document_index2]
                 similar[document_index2] = (float(min_vocab) / float(max_vocab)) * (
-                            float(num_intersect_words) / float(num_trans_words_text2))
+                    float(num_intersect_words) / float(num_trans_words_text2))
 
     if len(similar) > 0:
         similar = sorted(list(similar.items()), key=itemgetter(1), reverse=True)

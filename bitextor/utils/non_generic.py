@@ -19,6 +19,7 @@ import tldextract
 import validators
 from itertools import product
 
+
 def create_domain_key_2_host_map(hosts):
     key2hosts = {}
     badhosts = []
@@ -65,8 +66,11 @@ def get_customnbp(nbp_dict, language):
         nbp = nbp_dict[language]
     return nbp
 
+
 def get_mt_docalign_inputs(src_batches, trg_batches):
     # product( [[shard, batch], [shard, batch], ...], [[shard, batch], [shard, batch], ...] )
-    iterator = product( [batch.split('/')[-2:] for batch in src_batches], [batch.split('/')[-2:] for batch in trg_batches] )
+    iterator = product([batch.split('/')[-2:] for batch in src_batches],
+                       [batch.split('/')[-2:] for batch in trg_batches])
     # each item -> (shard, (src_batch, trg_batch))
-    return [(src_shard, (src_batch, trg_batch)) for ((src_shard, src_batch), (trg_shard, trg_batch)) in iterator if src_shard == trg_shard]
+    return [(src_shard, (src_batch, trg_batch))
+            for ((src_shard, src_batch), (trg_shard, trg_batch)) in iterator if src_shard == trg_shard]

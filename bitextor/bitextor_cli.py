@@ -67,7 +67,7 @@ class ParseDict(argparse.Action):
         for parser in [int, float, ParseDict._bool_parser, ParseDict._yaml_base_load, str]:
             try:
                 return parser(value)
-            except:
+            except BaseException:
                 pass
 
     def __call__(self, parser, namespace, values, option_string=None):

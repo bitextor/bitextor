@@ -28,6 +28,7 @@ from bitextor.utils.common import open_xz_or_gzip_or_plain
 from bitextor.utils.common import ExternalTextProcessor
 import html
 
+
 def get_lang_or_default(dictionary, language):
     if not dictionary:
         return None
@@ -65,7 +66,7 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         word_tokeniser.writeline(sent)
         tokenized_text = tokenized_text + word_tokeniser.readline().strip() + "\n"
     if morph_analyser:
-        proc_morph = ExternalTextProcessor(morph_analyser.split()) # Apertium does line buffering
+        proc_morph = ExternalTextProcessor(morph_analyser.split())  # Apertium does line buffering
         tokenized_text = proc_morph.process(tokenized_text)
 
     b64text = base64.b64encode(tokenized_text.lower().encode("utf-8"))
@@ -103,20 +104,20 @@ else:
 
 try:
     options.splitters = ast.literal_eval(options.splitters)
-except:
+except BaseException:
     print("Sentence splitters incorrect format", file=sys.stderr)
     sys.exit(1)
 
 try:
     options.tokenizers = ast.literal_eval(options.tokenizers)
-except:
+except BaseException:
     print("Word tokenizers incorrect format", file=sys.stderr)
     sys.exit(1)
 
 try:
     if options.lemmatizers:
         options.lemmatizers = ast.literal_eval(options.lemmatizers)
-except:
+except BaseException:
     print("Morphological analysers incorrect format")
     sys.exit(1)
 
@@ -125,9 +126,9 @@ lang_files = {}
 folder = os.fsencode(options.folder)
 for langfolder in os.listdir(folder):
     lang = os.fsdecode(langfolder)
-    if not os.path.isdir(options.folder+"/"+lang) or len(lang) > 2:
+    if not os.path.isdir(options.folder + "/" + lang) or len(lang) > 2:
         continue
-    fullname = os.path.join(options.folder, lang+"/plain_text.xz")
+    fullname = os.path.join(options.folder, lang + "/plain_text.xz")
     if os.path.isfile(fullname) and (not langs or lang in langs):
         if lang not in lang_files:
             lang_files[lang] = lzma.open(os.path.join(options.folder, lang + "/plain_tokenized.xz"), "wb")

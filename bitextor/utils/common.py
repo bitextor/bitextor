@@ -25,6 +25,7 @@ import psutil
 import sys
 import os
 
+
 class ExternalTextProcessor(object):
 
     def __init__(self, cmd):
@@ -35,6 +36,7 @@ class ExternalTextProcessor(object):
         outs, errs = proc.communicate(input=bytes(input_text, encoding='utf-8'))
 
         return outs.decode('utf-8'), errs.decode('utf-8'), proc.returncode
+
 
 @contextmanager
 def open_xz_or_gzip_or_plain(file_path, mode='rt'):
@@ -105,6 +107,7 @@ def check_lengths(file_path_from, file_path_to, throw=True):
 
     return f1_lines == f2_lines
 
+
 def get_all_ppids(pid, append_pid=False):
     result = []
 
@@ -122,9 +125,11 @@ def get_all_ppids(pid, append_pid=False):
 
     return result
 
+
 def snake_no_more_race_get_pgid():
     command = f"ps axo pid,pgid,comm | grep -E \"snakemake$|python3[.]8$\""
-    pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
+    pgid = subprocess.getoutput(
+        f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
 
     all_ppids = get_all_ppids(os.getpid())
     all_pgids = list(map(lambda pid: os.getpgid(pid), all_ppids))
@@ -144,10 +149,13 @@ def snake_no_more_race_get_pgid():
             idx += 1
 
         if idx == len(all_ppids):
-            pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
-            sys.stderr.write(f"WARNIGN: could not get the process group leader of {os.getpid()}. The PID gathering might be incorrect")
+            pgid = subprocess.getoutput(
+                f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
+            sys.stderr.write(
+                f"WARNIGN: could not get the process group leader of {os.getpid()}. The PID gathering might be incorrect")
 
     return pgid
+
 
 def snake_no_more_race_get(file_path):
     value = None
@@ -169,6 +177,7 @@ def snake_no_more_race_get(file_path):
         f.close()
 
     return value
+
 
 def snake_no_more_race_set(file_path, value):
     if not os.path.isfile(file_path):

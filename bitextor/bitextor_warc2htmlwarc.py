@@ -22,8 +22,6 @@ import sys
 import argparse
 import cchardet
 import re
-import os
-import importlib
 import logging
 import lzma
 import subprocess
@@ -35,16 +33,19 @@ from io import BytesIO
 def convert_encoding(data):
     encoding = cchardet.detect(data)['encoding']
     decoded = ''
-    for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']: # if detected encoding fails (or is None), try some common encodings
+    # if detected encoding fails (or is None), try some common encodings
+    for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
         try:
             decoded = data.decode(encoding)
             return enc, decoded
-        except:
+        except BaseException:
             pass
     return None, ''
 
+
 def pdf2html(data):
-    pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    pconverter = subprocess.Popen(["pdftohtml", "-i", "-stdout", "-", "-"],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout.replace(b"&#160;", b" ")]
 
@@ -53,7 +54,7 @@ def pdfextract(data, pdfextractor):
     pdfextractor.setData(data)
     try:
         return [bytes(pdfextractor.getHTML(), 'utf8')]
-    except:
+    except BaseException:
         return [b""]
 
 
@@ -99,6 +100,7 @@ def epub2html(data):
     except zipfile.BadZipFile:
         return []
 
+
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs basic preprocessing, which includes: HTML"
                 "normalization, deduplication. The result is a WARC file.")
@@ -106,22 +108,30 @@ oparser.add_argument('-v', "--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', default=sys.stdout)
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
-oparser.add_argument('--only-broader', dest='onlybroader', action="store_true", help="Only outputs broader document format records", default=False)
+oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
+                     help="Only outputs broader document format records", default=False)
 oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
-oparser.add_argument('--pe_configfile', dest='configFile', help='PDFExtract configuration file for language model paths', default="")
+oparser.add_argument('--pe_configfile', dest='configFile', default="",
+                     help='PDFExtract configuration file for language model paths')
+
 oparser.add_argument('--sentence_join_path', dest='sentenceJoinPath', help='sentence-join.py path', default="")
 oparser.add_argument('--kenlm_path', dest='kenlmPath', help='kenlm binary folder path', default="")
 oparser.add_argument('--pdfpass', dest='pdfpass', help='Pass PDFs verbatim to file', default=None)
 oparser.add_argument('--ftfy', action='store_true', help='User fix-text-for-you to fix possible encoding problems',
-                    default=False)
+                     default=False)
 oparser.add_argument('--cleanhtml', action='store_true', help='Clean HTML to remove javascript, css and head tags',
                      default=False)
-oparser.add_argument('--disable-output-gzip', dest='disable_output_gzip', action='store_true', help='Disable compression of output WARC')
-oparser.add_argument('--disable-pdfs-gzip', dest='disable_pdfs_gzip', action='store_true', help='Disable compression of PDFs WARC (if --pdfpass is enabled)')
+oparser.add_argument('--disable-output-gzip', dest='disable_output_gzip', action='store_true',
+                     help='Disable compression of output WARC')
+oparser.add_argument('--disable-pdfs-gzip', dest='disable_pdfs_gzip', action='store_true',
+                     help='Disable compression of PDFs WARC (if --pdfpass is enabled)')
 options = oparser.parse_args()
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO if options.verbose else logging.ERROR,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 f = None
 fo = None
@@ -148,7 +158,10 @@ if options.pdfpass is not None:
 if not options.pdfpass and options.pdfextract:
     import jpype
     from pdfextract.extract import Extractor as ExtrP
-    extractor = ExtrP(configFile=options.configFile, sentenceJoinPath=options.sentenceJoinPath, kenlmPath=options.kenlmPath)
+    extractor = ExtrP(
+        configFile=options.configFile,
+        sentenceJoinPath=options.sentenceJoinPath,
+        kenlmPath=options.kenlmPath)
 
 cleaner = None
 if options.cleanhtml:
@@ -160,7 +173,12 @@ if options.output == sys.stdout or options.output == '-':
 else:
     filename = options.output
 
-fo.write_record(fo.create_warcinfo_record(filename=filename, info={'software': 'bitextor/bitextor-warc2htmlwarc.py', 'format': 'WARC File Format 1.0'}))
+fo.write_record(
+    fo.create_warcinfo_record(
+        filename=filename,
+        info={
+            'software': 'bitextor/bitextor-warc2htmlwarc.py',
+            'format': 'WARC File Format 1.0'}))
 
 for record in f:
     # Initial checks
@@ -184,22 +202,25 @@ for record in f:
         logging.info("Skipping page, over limit. " + str(pageSize) + " " + url)
         continue
     if record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None:
-        if "image/" in record.http_headers.get_header('Content-Type') or "audio/" in record.http_headers.get_header(
-                'Content-Type') or "video/" in record.http_headers.get_header(
-                'Content-Type') or "text/x-component" in record.http_headers.get_header(
-                'Content-Type') or "text/x-js" in record.http_headers.get_header(
-                'Content-Type') or "text/javascript" in record.http_headers.get_header(
-                'Content-Type') or "application/x-javascript" in record.http_headers.get_header(
-                'Content-Type') or "text/css" in record.http_headers.get_header(
-                'Content-Type') or "application/javascript" in record.http_headers.get_header(
-                'Content-Type') or "application/x-shockwave-flash" in record.http_headers.get_header(
-                'Content-Type') or "application/octet-stream" in record.http_headers.get_header(
-                'Content-Type') or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
+        if "image/" in record.http_headers.get_header('Content-Type') \
+                or "audio/" in record.http_headers.get_header('Content-Type') \
+                or "video/" in record.http_headers.get_header('Content-Type') \
+                or "text/x-component" in record.http_headers.get_header('Content-Type') \
+                or "text/x-js" in record.http_headers.get_header('Content-Type') \
+                or "text/javascript" in record.http_headers.get_header('Content-Type') \
+                or "application/x-javascript" in record.http_headers.get_header('Content-Type') \
+                or "text/css" in record.http_headers.get_header('Content-Type') \
+                or "application/javascript" in record.http_headers.get_header('Content-Type') \
+                or "application/x-shockwave-flash" in record.http_headers.get_header('Content-Type') \
+                or "application/octet-stream" in record.http_headers.get_header('Content-Type') \
+                or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
             continue
 
     url = url.lower()
     url = url.replace('\t', ' ')
-    if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
+    if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" \
+            or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" \
+            or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
 
     # Ignore robots.txt when processing records
@@ -228,9 +249,17 @@ for record in f:
 
     bdf = True
     # Extract payloads (XML) from non-HTML document formats
-    if url[-4:] == ".pdf" or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None) and "application/pdf" in record.http_headers.get_header('Content-Type')):
+    if url[-4:] == ".pdf" \
+            or ((record.http_headers is not None and record.http_headers.get_header('Content-Type') is not None)
+                and "application/pdf" in record.http_headers.get_header('Content-Type')
+                ):
         if options.pdfpass:
-            new_record = po.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(payload), http_headers=http_headers)
+            new_record = po.create_warc_record(
+                uri=url,
+                record_type=record_type,
+                warc_content_type=record.content_type,
+                payload=BytesIO(payload),
+                http_headers=http_headers)
             po.write_record(new_record)
             continue  # do not process further!
         if options.pdfextract:
@@ -297,7 +326,16 @@ for record in f:
             # for broader document formats without HTTP header create a fake one
             # to make it easier to distinguish between binary and processed documents downstream (warc2text)
             record_type = 'response'
-            http_headers = StatusAndHeaders(statusline = "200 OK", protocol = "HTTP/1.1", headers = [('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))])
+            http_headers = StatusAndHeaders(
+                statusline="200 OK",
+                protocol="HTTP/1.1",
+                headers=[('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))]
+            )
 
-        new_record = fo.create_warc_record(uri=url, record_type=record_type, warc_content_type=record.content_type, payload=BytesIO(clean_tree), http_headers=http_headers)
+        new_record = fo.create_warc_record(
+            uri=url,
+            record_type=record_type,
+            warc_content_type=record.content_type,
+            payload=BytesIO(clean_tree),
+            http_headers=http_headers)
         fo.write_record(new_record)

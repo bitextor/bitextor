@@ -156,9 +156,12 @@ else:
                             # Same check for already paired documents in several iterations
                             documentsFile2.add(int(field_n[0]))
                             if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
-                                average = (float(best_ridx2_inv[int(fields[0])][int(field_n[0])]) + float(field_n[
-                                                                                                              1])) / 2  #
-                                # TODO: we should implement also the product of the score/probability as an option/parameter
+                                average = (
+                                    float(best_ridx2_inv[int(fields[0])][int(field_n[0])])
+                                    + float(field_n[2])
+                                ) / 2  #
+                                # TODO: we should implement also the product of the score/probability as
+                                # an option/parameter
                                 new_candidate_list[field_n[0]] = average
                             if options.nonsymmetric:
                                 if field_n[0] not in new_candidate_list:
@@ -191,7 +194,8 @@ else:
                         new_candidate_list = best_ridx2[int(document)]
                         candidateDocuments.append(len(new_candidate_list))
                         sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
-                        if int(document) not in indicesProb or indicesProb[int(document)] < int(sorted_candidates[0][1]):
+                        if int(document) not in indicesProb \
+                                or indicesProb[int(document)] < int(sorted_candidates[0][1]):
                             indices[int(document)] = int(sorted_candidates[0][0])
                             indicesProb[int(document)] = float(sorted_candidates[0][1])
                         pairedDocs.add(int(document))
@@ -213,8 +217,8 @@ for k in indices:
         if indices[k] in documentsFile2:
             # Write the output keeping the language documents always in the same order
             # (this is done because of the non-symmetric option that causes swaps in the last algorithm)
-            print("{0}\t{1}".format(str(k), str(indices[k]-file2_start_counter)))
+            print("{0}\t{1}".format(str(k), str(indices[k] - file2_start_counter)))
         else:
-            print("{1}\t{0}".format(str(k-file2_start_counter), str(indices[k])))
+            print("{1}\t{0}".format(str(k - file2_start_counter), str(indices[k])))
         if not options.nonsymmetric:
             documents.remove(k)

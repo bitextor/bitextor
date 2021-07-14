@@ -19,7 +19,7 @@
 # 1. File .ridx is read and, for each line, the first candidate is chosen; the pair of indexes is stored in a
 # dictionary. It is possible to provide two ridx files and combine them
 # 2. The name of the aligned files are provided together with the clean text in base64 following this format:
-# 
+#
 # Output format:
 #   file_lang1	file_lang2	cleantext_encoded_base64_lang1	cleantext_encoded_base64_lang2
 #

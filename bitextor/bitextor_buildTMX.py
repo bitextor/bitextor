@@ -38,6 +38,7 @@ from xml.sax.saxutils import escape
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
+
 def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
@@ -51,7 +52,8 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
         print("     <seg>" + escape(seg) + "</seg>")
     else:
         print("     <seg></seg>")
-    if "numTokensSL" in fields_dict and fields_dict["numTokensSL"] != "" and int(fields_dict["numTokensSL"]) < int(mint):
+    if "numTokensSL" in fields_dict and fields_dict["numTokensSL"] != "" \
+            and int(fields_dict["numTokensSL"]) < int(mint):
         info_tag.append("very short segments, shorter than " + str(options.mint))
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
@@ -79,8 +81,24 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
     if 'checksum2' not in fields_dict:
         fields_dict['checksum2'] = None
 
-    printseg(lang1, tu_columns, tu_urls1, fields_dict['seg1'], fields_dict, mint, fields_dict['checksum1'], no_delete_seg)
-    printseg(lang2, tu_columns, tu_urls2, fields_dict['seg2'], fields_dict, mint, fields_dict['checksum2'], no_delete_seg)
+    printseg(
+        lang1,
+        tu_columns,
+        tu_urls1,
+        fields_dict['seg1'],
+        fields_dict,
+        mint,
+        fields_dict['checksum1'],
+        no_delete_seg)
+    printseg(
+        lang2,
+        tu_columns,
+        tu_urls2,
+        fields_dict['seg2'],
+        fields_dict,
+        mint,
+        fields_dict['checksum2'],
+        no_delete_seg)
 
     print("   </tu>")
 
@@ -110,7 +128,8 @@ oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if stan
                      dest="no_delete_seg", action='store_true')
 oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
                      dest="text_file_deduped")
-oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. Like 'bifixerhash', 'seg1,seg2' , 'checksum1,checksum2'")
+oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. "
+                     "Like 'bifixerhash', 'seg1,seg2' , 'checksum1,checksum2'")
 
 options = oparser.parse_args()
 
@@ -136,7 +155,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     prev_hash = ""
     urls1 = set()
     urls2 = set()
-    bestseg = dict() 
+    bestseg = dict()
     bestchecksum1 = ""
     bestchecksum2 = ""
     columns = options.columns.split(',')
@@ -175,9 +194,18 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             urls2 = set()
         else:
             idcounter += 1
-            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, bestseg, options.mint, options.no_delete_seg)
+            printtu(
+                idcounter,
+                options.lang1,
+                options.lang2,
+                columns,
+                urls1,
+                urls2,
+                bestseg,
+                options.mint,
+                options.no_delete_seg)
             if text_writer:
-                text_writer.write("\t".join([x for x in bestseg.values() if x])+"\n")
+                text_writer.write("\t".join([x for x in bestseg.values() if x]) + "\n")
             urls1 = set()
             urls2 = set()
             bestseg = dict(fieldsdict)
@@ -188,8 +216,17 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     if options.dedup:
         idcounter += 1
         if fieldsdict != {}:
-            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint, options.no_delete_seg)
+            printtu(
+                idcounter,
+                options.lang1,
+                options.lang2,
+                columns,
+                urls1,
+                urls2,
+                fieldsdict,
+                options.mint,
+                options.no_delete_seg)
         if text_writer:
-            text_writer.write("\t".join([x for x in fieldsdict.values() if x])+"\n")
+            text_writer.write("\t".join([x for x in fieldsdict.values() if x]) + "\n")
     print(" </body>")
     print("</tmx>")

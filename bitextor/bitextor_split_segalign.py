@@ -2,17 +2,18 @@ import argparse
 import gzip
 from sys import stdin
 
+
 def columns(cols):
     ranges = []
     for c in cols.strip().split(','):
-        start=1
-        end=1
+        start = 1
+        end = 1
         if c.startswith('-'):
             start = None
             end = int(c)
         elif c.endswith('-'):
             start = int(c) - 1
-            end = None 
+            end = None
         elif '-' in c:
             start = c.split('-')[0] - 1
             end = c.split('-')[1]
@@ -21,7 +22,8 @@ def columns(cols):
             end = int(c)
         ranges.append((start, end))
     return ranges
-        
+
+
 oparser = argparse.ArgumentParser('split file by size of specified fields')
 oparser.add_argument('-s', '--size', default=1024, help="size in MB")
 oparser.add_argument('-o', '--output', default="", help="output files prefix")

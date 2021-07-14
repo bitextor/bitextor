@@ -44,15 +44,40 @@ def run_aligner(filename_s, filename_t, dic, hunalign_bin, thresh="0"):
     # option -ppthresh=10?
     if dic is None or dic == "":
         if hunalign_bin is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-realign", "-thresh=" + thresh, "/dev/null",
-                        filename_s, filename_t]
+            hunalign = [
+                os.path.dirname(os.path.abspath(__file__)) + "hunalign",
+                "-realign",
+                "-thresh=" + thresh,
+                "/dev/null",
+                filename_s,
+                filename_t
+            ]
         else:
-            hunalign = [hunalign_bin, "-realign", "-thresh=" + thresh, "/dev/null", filename_s, filename_t]
+            hunalign = [
+                hunalign_bin,
+                "-realign",
+                "-thresh=" + thresh,
+                "/dev/null",
+                filename_s,
+                filename_t
+            ]
     else:
         if hunalign_bin is None:
-            hunalign = [os.path.dirname(os.path.abspath(__file__)) + "hunalign", "-thresh=" + thresh, dic, filename_s, filename_t]
+            hunalign = [
+                os.path.dirname(os.path.abspath(__file__)) + "hunalign",
+                "-thresh=" + thresh,
+                dic,
+                filename_s,
+                filename_t
+            ]
         else:
-            hunalign = [hunalign_bin, "-thresh=" + thresh, dic, filename_s, filename_t]
+            hunalign = [
+                hunalign_bin,
+                "-thresh=" + thresh,
+                dic,
+                filename_s,
+                filename_t
+            ]
 
     p = subprocess.Popen(hunalign, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     for line_o in p.stdout:
@@ -93,8 +118,16 @@ def align(file1, file2, file1orig, file2orig, dic, hashprogram):
         line1 = filereader1.readline().strip()
         line2 = filereader2.readline().strip()
         if hashprogram:
-            hash1 = subprocess.run([hashprogram], stdout=subprocess.PIPE, input=line1, encoding='utf8').stdout.rstrip('\n')
-            hash2 = subprocess.run([hashprogram], stdout=subprocess.PIPE, input=line2, encoding='utf8').stdout.rstrip('\n')
+            hash1 = subprocess.run(
+                [hashprogram],
+                stdout=subprocess.PIPE,
+                input=line1,
+                encoding='utf8').stdout.rstrip('\n')
+            hash2 = subprocess.run(
+                [hashprogram],
+                stdout=subprocess.PIPE,
+                input=line2,
+                encoding='utf8').stdout.rstrip('\n')
 
         prev_fields = prev_hun.split(b"\t")
         hunalign_fields = hun_line.split(b"\t")
@@ -114,18 +147,28 @@ def align(file1, file2, file1orig, file2orig, dic, hashprogram):
                 tmp = filereader1.readline().strip()
                 line1 += " " + tmp
                 if hashprogram:
-                    hash1 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE, input=tmp, encoding='utf8').stdout.rstrip('\n')
+                    hash1 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE,
+                                                  input=tmp, encoding='utf8').stdout.rstrip('\n')
 
         if int(hunalign_fields[1]) - int(prev_fields[1]) > 1:
             for i in range((int(hunalign_fields[1]) - int(prev_fields[1])) - 1):
                 tmp = filereader2.readline().strip()
                 line2 += " " + tmp
                 if hashprogram:
-                    hash2 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE, input=tmp, encoding='utf8').stdout.rstrip('\n')
+                    hash2 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE,
+                                                  input=tmp, encoding='utf8').stdout.rstrip('\n')
         if not hashprogram:
             print("{0}\t{1}\t{2}\t{3}\t{4}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8")))
         else:
-            print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}".format(filename1, filename2, line1, line2, prev_fields[2].decode("utf8"), hash1, hash2))
+            print(
+                "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}".format(
+                    filename1,
+                    filename2,
+                    line1,
+                    line2,
+                    prev_fields[2].decode("utf8"),
+                    hash1,
+                    hash2))
 
         prev_hun = hun_line
 
@@ -199,4 +242,3 @@ for line in reader_list:
     os.remove(tmp_file1_origtext.name)
     os.remove(tmp_file2.name)
     os.remove(tmp_file2_origtext.name)
-

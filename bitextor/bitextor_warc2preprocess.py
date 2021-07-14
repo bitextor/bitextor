@@ -35,6 +35,7 @@ import sys
 import html5lib
 from lxml import etree
 
+
 def remove_control_characters(html):
     # type: (t.Text) -> t.Text
     """
@@ -62,15 +63,55 @@ def remove_control_characters(html):
     # Otherwise we'd remove emojis by mistake on narrow-unicode builds of Python
     html = html.decode('utf8').encode("ascii", "xmlcharrefreplace").decode("utf-8")
     html = re.sub(r"&#(\d+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0)), html)
-    html = re.sub(r"&#[xX]([0-9a-fA-F]+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0), base=16), html)
+    html = re.sub(
+        r"&#[xX]([0-9a-fA-F]+);?",
+        lambda c: strip_illegal_xml_characters(
+            c.group(1),
+            c.group(0),
+            base=16
+        ),
+        html)
     html = ILLEGAL_XML_CHARS_RE.sub("", html)
     return html
+
+
 # A regex matching the "invalid XML character range"
 ILLEGAL_XML_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]")
 
 
 class SimpleParser(HTMLTokenizer):
-    startendNL = ["ul", "ol", "dl", "tr", "p", "div", "li", "dd", "dt", "th", "td", "h1", "h2", "h3", "h4", "h5", "h6", "article", "aside", "blockquote", "details", "summary", "figcaption", "footer", "form", "header", "legend", "main", "nav", "pre", "section"]
+    startendNL = [
+        "ul",
+        "ol",
+        "dl",
+        "tr",
+        "p",
+        "div",
+        "li",
+        "dd",
+        "dt",
+        "th",
+        "td",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "article",
+        "aside",
+        "blockquote",
+        "details",
+        "summary",
+        "figcaption",
+        "footer",
+        "form",
+        "header",
+        "legend",
+        "main",
+        "nav",
+        "pre",
+        "section"]
     selfNL = ["br", "hr"]
     noText = ["script", "noscript", "style"]
     lastTok = ""
@@ -116,12 +157,12 @@ def convert_encoding(data):
     if encoding is None:
         encoding = "utf-8"
     if len(data) > 0:
-        # We convert, even if the text is detected to be UTF8 so, if it is an error and conversion fails, 
-        # the error is caught here
+        # We convert, even if the text is detected to be UTF8 so,
+        # if it is an error and conversion fails, the error is caught here
         for enc in [encoding, 'utf-8', 'iso-8859-1', 'windows‑1252']:
             try:
                 return enc, data.decode(enc)
-            except:
+            except BaseException:
                 pass
     return None, ''
 
@@ -134,23 +175,41 @@ def open_xz_or_gzip(path, mode):
     else:
         return open(path, mode)
 
+
 def open_output_files(options, lang, files_dict):
-   if not options.xzlang and lang not in files_dict:
-        if not os.path.exists(options.outDir + "/" + lang):
-            os.makedirs(options.outDir + "/" + lang)
-        urlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/url." + options.compression, "w")
-        encodingFile = open_xz_or_gzip(options.outDir + "/" + lang + "/encoding." + options.compression, "w")
-        mimeFile = open_xz_or_gzip(options.outDir + "/" + lang + "/mime." + options.compression, "w")
-        normHtmlFile = open_xz_or_gzip(options.outDir + "/" + lang + "/normalized_html." + options.compression, "w")
-        plainTextFile = open_xz_or_gzip(options.outDir + "/" + lang + "/plain_text." + options.compression, "w")
+    if not options.xzlang and lang not in files_dict:
+        if not os.path.exists(f"{options.outDir}/{lang}"):
+            os.makedirs(f"{options.outDir}/{lang}")
+        urlFile = open_xz_or_gzip(f"{options.outDir}/{lang}/url.{options.compression}", "w")
+        encodingFile = open_xz_or_gzip(f"{options.outDir}/{lang}/encoding.{options.compression}", "w")
+        mimeFile = open_xz_or_gzip(f"{options.outDir}/{lang}/mime.{options.compression}", "w")
+        normHtmlFile = open_xz_or_gzip(f"{options.outDir}/{lang}/normalized_html.{options.compression}", "w")
+        plainTextFile = open_xz_or_gzip(f"{options.outDir}/{lang}/plain_text.{options.compression}", "w")
         if options.boilerpipe:
-            deboilFile = open_xz_or_gzip(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression, "w")
-            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile, "deboilFile": deboilFile}
+            deboilFile = open_xz_or_gzip(f"{options.outDir}/{lang}/deboilerplate_html.{options.compression}", "w")
+            files_dict[lang] = {
+                "urlFile": urlFile,
+                "encodingFile": encodingFile,
+                "mimeFile": mimeFile,
+                "normHtmlFile": normHtmlFile,
+                "plainTextFile": plainTextFile,
+                "deboilFile": deboilFile
+            }
         else:
-            if not os.path.exists(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression) and not os.path.islink(options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression):
-                os.symlink("normalized_html." + options.compression, options.outDir + "/" + lang + "/" + "deboilerplate_html." + options.compression)
-            files_dict[lang] = {"urlFile": urlFile, "encodingFile": encodingFile, "mimeFile": mimeFile, "normHtmlFile": normHtmlFile, "plainTextFile": plainTextFile}
- 
+            if not os.path.exists(f"{options.outDir}/{lang}/deboilerplate_html.{options.compression}") \
+                    and not os.path.islink(f"{options.outDir}/{lang}/deboilerplate_html.{options.compression}"):
+                os.symlink(
+                    f"normalized_html.{options.compression}",
+                    f"{options.outDir}/{lang}/deboilerplate_html.{options.compression}"
+                )
+            files_dict[lang] = {
+                "urlFile": urlFile,
+                "encodingFile": encodingFile,
+                "mimeFile": mimeFile,
+                "normHtmlFile": normHtmlFile,
+                "plainTextFile": plainTextFile}
+
+
 oparser = argparse.ArgumentParser(
     description="Script that takes every record in a WARC file and runs preprocessing, which includes: HTML"
                 "normalization, deduplication, MIME and language identification, and boilerplate removing. The result"
@@ -164,7 +223,8 @@ oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', '
 oparser.add_argument("--html5lib", action="store_true", default=False, help="Process HTML tree with html5lib")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
-oparser.add_argument('--input_hash', dest='inputHash', help='Input path for previous Bitextor Murmur Hash plain texts file')
+oparser.add_argument('--input_hash', dest='inputHash',
+                     help='Input path for previous Bitextor Murmur Hash plain texts file')
 oparser.add_argument('--lang1', dest='l1', help='Language l1 in the crawl', default=None)
 oparser.add_argument('--lang2', dest='l2', help='Language l2 in the crawl', default=None)
 oparser.add_argument('--input', dest='input', help='Input WARC file', default=sys.stdin)
@@ -173,10 +233,15 @@ oparser.add_argument('--xzlang', action="store_true", help='Separate output into
 oparser.add_argument('--langs', dest="langs", default="",
                      help='List of languages to include or ignore (%%): l1,l2,%%l3,%%l4')
 oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
-oparser.add_argument('--compression', dest='compression', default='gz', choices={'xz','gz'}, help='Compression type for the output files')
+oparser.add_argument('--compression', dest='compression', default='gz', choices={'xz', 'gz'},
+                     help='Compression type for the output files')
 options = oparser.parse_args()
 
-logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.INFO if options.verbose else logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO if options.verbose else logging.ERROR,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 if options.input == sys.stdin or options.input == '-':
     f = ArchiveIterator(sys.stdin.buffer)
@@ -237,7 +302,9 @@ if options.boilerpipe:
     import jpype
     if not jpype.isJVMStarted():
         jars = []
-        for top, dirs, files in os.walk(os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'):
+        for top, dirs, files in os.walk(
+            os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'
+        ):
             for nm in files:
                 if nm[-4:] == ".jar":
                     jars.append(os.path.join(top, nm))
@@ -250,7 +317,8 @@ for record in f:
     # Initial checks
     if record.rec_type != 'response' and record.rec_type != 'resource':
         continue
-    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
+    if record.rec_headers.get_header('WARC-Target-URI')[0] == '<' \
+            and record.rec_headers.get_header('WARC-Target-URI')[-1] == '>':
         url = record.rec_headers.get_header('WARC-Target-URI')[1:-1]
     else:
         url = record.rec_headers.get_header('WARC-Target-URI')
@@ -259,7 +327,9 @@ for record in f:
         continue
     url = url.lower()
     url = url.replace('\t', ' ')
-    if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" or url[-5:] == ".midi" or url[-4:] == ".swf":
+    if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" \
+            or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" \
+            or url[-5:] == ".midi" or url[-4:] == ".swf":
         continue
 
     # Ignore robots.txt when processing records
@@ -268,13 +338,13 @@ for record in f:
 
     payload = record.content_stream().read()
 
-
     # We convert into UTF8 first of all
     orig_encoding, text = convert_encoding(payload)
 
-    #Fix HTML issues with html5lib if activated through parameters
+    # Fix HTML issues with html5lib if activated through parameters
     if options.html5lib or options.parser == "lxml":
-        document = html5lib.parse(remove_control_characters(bytes(text,'utf8')), treebuilder="lxml", namespaceHTMLElements=False)
+        document = html5lib.parse(remove_control_characters(bytes(text, 'utf8')),
+                                  treebuilder="lxml", namespaceHTMLElements=False)
         text = etree.tostring(document, encoding="utf8").decode('utf8')
 
     logging.info("Processing document: " + url)
@@ -284,7 +354,7 @@ for record in f:
 
     date = record.rec_headers.get_header('WARC-Date')
     recordId = record.rec_headers.get_header('WARC-Record-ID')
-    
+
     if len(text.strip()) == 0:
         continue
 
@@ -336,7 +406,7 @@ for record in f:
         logging.info(url + ": Getting text with modest (selectolax)")
         try:
             tree = HTMLParser(deboiled)
-        except:
+        except BaseException:
             logging.info("Tree structure issues in HTML/XML. Ignoring this document")
             continue
         for tag in tree.css('script'):
@@ -349,12 +419,13 @@ for record in f:
             logging.info("Body is empty. Ignoring this document")
             continue
         plaintext = tree.body.text(separator='\n')
-    
+
     # or get text by moving through the lxml tree
     elif options.parser == "lxml":
         from standoff import deferred_document
         logging.info(url + ": Getting text with lxml")
-        standoff_document, plaintext = deferred_document.getDocumentStandoff(html5lib.parse(text,treebuilder="lxml",namespaceHTMLElements=False))
+        standoff_document, plaintext = deferred_document.getDocumentStandoff(
+            html5lib.parse(text, treebuilder="lxml", namespaceHTMLElements=False))
 
     # or use an HTML tokenizer
     else:
@@ -363,10 +434,14 @@ for record in f:
         try:
             parser.feed(text)
             plaintext = parser.get_text()
-        except:
+        except BaseException:
             logging.info("Tree structure issues in HTML/XML. Ignoring this document")
             continue
-    plaintext = re.sub(r"\n+", "\n", re.sub(r" *\n *", "\n", re.sub(r"[ \t\v\f]+", " ", re.sub(r"\r", "", plaintext.replace(u'\xa0', u' '))))).strip()
+    plaintext = re.sub(r"\n+", "\n",
+                       re.sub(r" *\n *", "\n",
+                              re.sub(r"[ \t\v\f]+", " ",
+                                     re.sub(r"\r", "",
+                                            plaintext.replace(u'\xa0', u' '))))).strip()
     if options.langid == "cld3":
         if plaintext:
             lang = guess_lang_from_data3(cld3model, plaintext)
@@ -387,7 +462,7 @@ for record in f:
         continue
 
     if len(plaintext) > 0:
-        
+
         seen_html.add(html_hash)
         seen_plain_text.add(plaintext_hash)
         # Guessing MIME of the file (checked on original content)

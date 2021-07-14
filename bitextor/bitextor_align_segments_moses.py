@@ -206,4 +206,3 @@ for line in reader_list:
     os.remove(tmp_file1_origtext.name)
     os.remove(tmp_file2.name)
     os.remove(tmp_file2_origtext.name)
-

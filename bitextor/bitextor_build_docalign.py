@@ -23,6 +23,7 @@ import lzma
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
+
 def open_xz_or_gzip(filename, mode='rt'):
     if filename[-3:] == '.xz':
         return lzma.open(filename, mode)
@@ -83,7 +84,8 @@ if __name__ == "__main__":
         elif doc2_current_line > doc2:
             data2 = lang2_read_docs[doc2]
             print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
-            del lang2_read_docs[doc2] # so far document aligner doesn't produce repeated indices, so deleting entries is safe
+            # so far document aligner doesn't produce repeated indices, so deleting entries is safe
+            del lang2_read_docs[doc2]
 
     for r in readers1:
         r.close()
