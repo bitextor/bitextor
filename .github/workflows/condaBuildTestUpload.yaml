@@ -59,16 +59,9 @@ jobs:
          run: |
             . ~/miniconda3/etc/profile.d/conda.sh
             conda activate bitextor-installation
-            if [[ -f "$CONDA_PREFIX/bitextor/run-tests-min.sh" ]]; then
-               chmod 775 "$CONDA_PREFIX/bitextor/run-tests-min.sh"
-               "$CONDA_PREFIX/bitextor/run-tests-min.sh" -w "$WORK" -j 4
-            elif [[ -f "$CONDA_PREFIX/bitextor/run-tests.sh" ]]; then
-               chmod 775 "$CONDA_PREFIX/bitextor/run-tests.sh"
-               "$CONDA_PREFIX/bitextor/run-tests.sh" -w "$WORK" -j 4
-            else
-               echo "(error) No test script found."
-               exit 1
-            fi
+
+            chmod 775 "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh"
+            "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh" -w "$WORK" -j 4
       -  name: Print log of tests which failed
          if: ${{ always() }}
          env:
