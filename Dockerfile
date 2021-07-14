@@ -80,33 +80,30 @@ COPY ./ bitextor/
 RUN echo -e "${RED}Installing pip dependencies${NC}"
 WORKDIR /home/docker/bitextor
 RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
-RUN pip3 install -r bifixer/requirements.txt
-RUN pip3 install -r biroamer/requirements.txt
+## bitextor
+RUN pip3 install .
+## bicleaner
+RUN pip3 install ./bicleaner
+RUN pip3 install ./kenlm --install-option="--max_order=7"
+##  bifixer
+RUN pip3 install ./bifixer
+## biroamer
+RUN pip3 install ./biroamer
 RUN python3 -m spacy download en_core_web_sm
+## cld3
 RUN pip3 install Cython
 RUN pip3 install pycld3
+## linguacrawl
 RUN pip3 install git+https://github.com/transducens/linguacrawl.git
 
-# Installing bicleaner and kenlm
-RUN echo -e "${RED}Installing bicleaner and kenlm${NC}"
-WORKDIR /home/docker/bitextor/bicleaner
-RUN pip3 install -r requirements.txt
-RUN git clone https://github.com/kpu/kenlm
-WORKDIR /home/docker/bitextor/bicleaner/kenlm
-RUN python3 -m pip install . --install-option="--max_order=7"
-RUN mkdir -p build
-WORKDIR /home/docker/bitextor/bicleaner/kenlm/build
-RUN cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/usr/bin
-RUN make -j $j all install
 
 # Installing bitextor
 RUN echo -e "${RED}Compiling bitextor${NC}"
 WORKDIR /home/docker/bitextor
 RUN mkdir -p build
 WORKDIR /home/docker/bitextor/build
-RUN cmake ..
-RUN make -j $j
+RUN cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+RUN make -j $j install
 
 # docker run bitextor with execute bitextor.sh by default
 # any arguments passed to `docker run bitextor` command will be passed to bitextor.sh

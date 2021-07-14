@@ -60,6 +60,12 @@ target_link_libraries(docalign ${Boost_LIBRARIES} preprocess_util)
 add_executable(docjoin docjoin.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
 target_link_libraries(docjoin preprocess_util)
 
+include(GNUInstallDirs)
+install(TARGETS docjoin docalign
+    DESTINATION ${CMAKE_INTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_LIBRARY_BINDIR}
+)
+
 if (BUILD_TESTING)
   add_executable(ngram_test tests/ngram_test.cpp ${dalign_cpp_headers} ${dalign_cpp_cpp})
   target_compile_definitions(ngram_test PRIVATE "BOOST_TEST_DYN_LINK=1")

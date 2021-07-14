@@ -1,5 +1,4 @@
-
-# ![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/banner.png)
+# ![Bitextor](img/banner.png)
 
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 [![Chat on Discord](https://camo.githubusercontent.com/b4175720ede4f2621aa066ffbabb70ae30044679/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f636861742d446973636f72642d627269676874677265656e2e737667)](https://discord.gg/etYDaZm)
@@ -11,315 +10,51 @@
 2. The two languages on which the user is interested: language IDs must be provided following the [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
 3. A source of bilingual information between these two languages: either a bilingual lexicon (such as those available at the [bitextor-data repository](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0)), a machine translation (MT) system, or a parallel corpus to be used to produce either a lexicon or an MT system (depending on the alignment strategy chosen, see below)
 
-## Docker installation
+## Installation
 
-Bitextor is available via Docker:
+Bitextor can be installed via Docker, Conda or built from source. See [INSTALL.md](INSTALL.md) for instructions.
 
-```bash
-docker pull bitextor/bitextor
-# or use `docker pull bitextor/bitextor:edge` for Github master branch nightly builds
-docker run --name bitextor bitextor/bitextor
-```
-For more information about Docker installation and usage consult [our wiki](https://github.com/bitextor/bitextor/wiki/Bitextor-Docker).
+## Usage
 
-## Conda installation
+```text
+usage: bitextor [-C FILE [FILE ...]] [-c KEY=VALUE [KEY=VALUE ...]]
+                [-j JOBS] [-k] [--notemp] [--dry-run]
+                [--forceall] [--forcerun [TARGET [TARGET ...]]]
+                [-q] [-h]
 
-Same as with Docker, you can easily install Bitextor using a Conda environment with the following commands:
+launch Bitextor
 
-```bash
-conda config --show channels # Check current channels
+Bitextor config::
+  -C FILE [FILE ...], --configfile FILE [FILE ...]
+                        Bitextor YAML configuration file
+  -c KEY=VALUE [KEY=VALUE ...], --config KEY=VALUE [KEY=VALUE ...]
+                        Set or overwrite values for Bitextor config
 
-# Add necessary channels if were not added previously
-conda config --add channels conda-forge
-conda config --append channels bioconda
-conda config --append channels dmnapolitano
-conda config --append channels esarrias
-
-conda install -c bitextor bitextor
-```
-
-If you want the latest updates, you can install the nightly version instead (only when major features/bug fixes are introduced, we release a new version):
-
-```bash
-conda config --show channels # Check current channels
-
-# Add necessary channels if were not added previously
-conda config --add channels conda-forge
-conda config --append channels bioconda
-conda config --append channels dmnapolitano
-conda config --append channels esarrias
-
-conda install -c bitextor bitextor-nightly
+Optional arguments::
+  -j JOBS, --jobs JOBS  Number of provided cores
+  -k, --keep-going      Go on with independent jobs if a job fails
+  --notemp              Disable deletion of intermediate files marked as temporary
+  --dry-run             Do not execute anything and display what would be done
+  --forceall            Force rerun every job
+  --forcerun TARGET [TARGET ...]
+                        List of files and rules that shall be re-created/re-executed
+  -q, --quiet           Do not print job information
+  -h, --help            Show this help message and exit
 ```
 
-If you want a concrete version, you can look in the [Anaconda Repository](https://anaconda.org/anaconda/repo) or use the following command:
+## Advanced usage
 
-```bash
-conda search -c bitextor bitextor
-```
+Bitextor uses [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) to define Bitextor's workflow and manage its execution. Snakemake provides a lot of flexibility in terms of configuring the execution of the pipeline. For advanced users that want to make the most out of this tool, `bitextor-full` command is provided that calls Snakemake CLI with Bitextor's workflow and exposes all of Snakemake's parameters.
 
-In order to install Miniconda or Anaconda you can follow the instructions of the [official page](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), but if you want to install Miniconda (Linux x64), you should execute the following (it is an interactive installer, so you will need to follow the steps):
+### Execution on a cluster
 
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-```
-
-If you are experiencing troubles installing new versions of Bitextor in your environment, you can try the following commands:
-```bash
-# Be sure you do not have any other versions installed
-conda uninstall bitextor
-conda uninstall bitextor-nightly
-
-# Remove old and cached packages which might be installing other unexpected dependencies/versions
-conda clean --all
-```
-
-Installing Bitextor using Conda will install all optional and mandatory dependencies. Unlike the other installation methods, you will will be able to run Bitextor using `bitextor` or `bitextor.sh` command instead of execute `/path/to/bitextor.sh`. If you have installed Conda in your home directory as it is by default, Bitextor installation will be in `$HOME/miniconda3/envs/YOUR_ENV/` (if Miniconda3), where Bitextor will reside in `bitextor` folder, or you can find your installation even easier through `$CONDA_PREFIX/bitextor`.
-
-Besides, if there is not a directory called `bitextor` in `/opt` (`$HOME` if cannot read/write `/opt` directory), a soft link will be created to make easier the access to the files in your home directory. The same applies to Heritrix3, which will have a directory called `heritrix3` as well if possible.
-
-Remember to set the `bitextor` directive of your YAML file correctly, either with the provided soft link or `$CONDA_PREFIX/bitextor`.
-
-Currently we only support Linux x64 for Conda environment.
-
-## Manual installation
-
-### Dependencies
-
-* Download **Bitextor's submodules**.
-
-  ```bash
-  # if you are cloning from scratch:
-  git clone --recurse-submodules https://github.com/bitextor/bitextor.git
-
-  # otherwise:
-  git submodule update --init --recursive
-  ```
-
-* **Required packages**
-
-  These are some external tools that need to be in the path before installing the project. If you are using an apt-like package manager you can run the following commands line to install all these dependencies:
-
-  ```bash
-  # mandatory:
-  sudo apt install python3 python3-venv python3-pip golang-go build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
-
-  # optional, feel free to skip dependencies for components that you don't expect to use:
-  ## wget crawler:
-  sudo apt install wget
-  ## httrack crawler:
-  sudo apt install httrack
-  ## warc2text:
-  sudo apt install uchardet libuchardet-dev libzip-dev
-  ## biroamer:
-  sudo apt install libgoogle-perftools-dev libsparsehash-dev
-  ## Heritrix, PDFExtract and boilerpipe:
-  sudo apt install openjdk-8-jdk
-  ## PDFExtract:
-  ## PDFExtract also requires protobuf and CLD3 installed (installation instructions below)
-  sudo apt install autoconf automake libtool ant maven poppler-utils apt-transport-https ca-certificates gnupg software-properties-common
-  ```
-
-* **Golang** packages
-
-  Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) for WARC files preprocessing. To install this tool, Golang has to be installed (it should be already installed if you run the previous apt command). If you prefer the latest version, can be installed from [here](http://golang.org/dl) or using snap (you might need to first uninstall the apt package).
-
-  ```bash
-  # build and place the necessary tools in $HOME/go/bin
-  go get github.com/paracrawl/giashard/...
-  ```
-
-* **Pip** dependencies
-
-  Furthermore, most of the scripts in Bitextor are written in Python 3. The minimum requirement is Python>=3.7.
-
-  Some additional Python libraries are required. They can be installed automatically with `pip`. We recommend using a virtual environment to manage Bitextor installation.
-
-  ```bash
-  # create virtual environment:
-  python3 -m venv /path/to/virtual/environment
-  # activate:
-  source /path/to/virtual/environment/bin/activate
-
-  # install dependencies in virtual enviroment
-  pip3 install --upgrade pip
-  pip3 install -r requirements.txt
-  # bicleaner:
-  pip3 install -r bicleaner/requirements.txt
-  git clone https://github.com/kpu/kenlm
-  cd kenlm
-  python3 -m pip install . --install-option="--max_order 7"
-  mkdir -p build && cd build
-  cmake .. -DKENLM_MAX_ORDER=7 -DCMAKE_INSTALL_PREFIX:PATH=/your/prefix/path
-  make -j all install
-  # bifixer:
-  pip3 install -r bifixer/requirements.txt
-  # biroamer:
-  pip3 install -r biroamer/requirements.txt
-  python3 -m spacy download en_core_web_sm
-  ```
-
-  If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and in the previous command.
-
-* [Optional] **Linguacrawl**
-
-  Linguacrawl is a top-level domain (TLD) crawler which can be installed from its [repository](https://github.com/transducens/linguacrawl/) via pip.
-  If you decide to use it, be aware that CLD3 is needed first in order to install linguacrawl. Once installed, this crawler can be used independently of bitextor running `linguacrawl config-file.yaml`.
-
-  ```bash
-  # linguacrawl:
-  # linguacrawl also requires to have protobuf and cld3 installated (instructions below)
-  pip3 install git+https://github.com/transducens/linguacrawl.git
-  ```
-
-* [Optional] **Heritrix**
-
-  This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
-  After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
-  This dependency is also not mandatory (in Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT`).
-
-* [Optional] **Protobuf** and **CLD3**
-
-  CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and linguacrawl. The requirements for installation are the following:
-
-  ```bash
-  # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
-  # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
-  sudo apt-get install autoconf automake libtool curl make g++ unzip
-  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-  tar -zxvf protobuf-all-3.11.4.tar.gz
-  cd protobuf-3.11.4
-  ./configure
-  make
-  make check
-  sudo make install
-  sudo ldconfig
-
-  pip3 install Cython # Install Cython dependency for cld3
-  pip3 install pycld3 # Install cld3 Python fork from https://github.com/bsolomon1124/pycld3
-  ```
-
-### Submodules compilation
-
-Bitextor uses CMake for c++ dependencies compilation:
-
-```bash
-mkdir build && cd build
-cmake ..
-make -j
-```
-
-Optionally, it is possible to skip the compilation of the dependencies that are not expected to be used:
-
-```bash
-mkdir build && cd build
-cmake -DSKIP_MGIZA=ON -DSKIP_CLUSTERCAT=ON .. # MGIZA and Clustercat are used for dictionary generation
-# other dependencies that can be skipped:
-# WARC2TEXT
-# DOCALIGN
-# BLEUALIGN
-# HUNALIGN
-# BIROAMER
-make -j4
-```
-
-#### Some known installation issues
-
-* Depending on the version of *libboost* that you are using given a certain OS version or distribution package from your package manager, you may experience some problems when compiling some of the sub-modules included in Bitextor. If this is the case you can install it manually by running the following commands:
-
-  ```bash
-  sudo apt-get remove libboost-all-dev
-  sudo apt-get autoremove
-  wget https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.gz
-  tar xvf boost_1_76_0.tar.gz
-  cd boost_1_76_0/
-  ./bootstrap.sh
-  ./b2 -j4 --layout=system install || echo FAILURE
-  cd ..
-  rm -rf boost_1_76_0*
-  ```
-
-* If `mkcls` or any other binary included in `clustercat` submodule doesn't work during statistical dictionaries creation with an error like `Illegal instruction (core dumped)`, simply remove those binaries with `cd clustercat && rm -r bin` and compile them with `make`.
-
-## Run
-
-To run Bitextor use the main script `bitextor.sh`. In general, this script takes two parameters:
-
-```bash
-bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>]
-```
-
-where
-
-* `<CONFIGFILE>` is a [YAML](https://en.wikipedia.org/wiki/YAML) configuration file containing the list of parameters to run Bitextor (learn more about Bitextor configuration in the next section), and
-* `<NUMJOBS>` is the number of jobs that can be launched in parallel; a job is a single step of the pipeline (see section Pipeline description) and can be run in parallel for different websites
-
-For example, on a machine with 4 cores, one could run Bitextor as follows:
-
-```bash
-bitextor.sh -s myconfig.yaml -j 4
-```
-
-If Bitextor is run on a cluster with a software that allows to manage job queues, two more options can be used:
-
-```bash
-bitextor.sh -s <CONFIGFILE> [-j <NUMJOBS>] [-c <CLUSTERCOMMAND>] [-g <CLUSTERCONFIG>] [-k] [-n]
-```
-
-where
-
-* `<NUMJOBS>` is redefined as the number of jobs that can be submitted to the cluster queue at the same time,
-* `<CLUSTERCOMMAND>` is the command that allows to submit a job to a cluster node (for example, this command would be `sbatch` in SLURM or `qsub` in PBS),
-* `<CLUSTERCONFIG>` is a JSON configuration file that specifies the specific requirements for each job in the cluster (for example, this file specifies if a job requires a certain amount of RAM memory, or access to one or more GPUs, for example).  Further information about how to configure job requirements in a cluster can be obtained in [Snakemake's documentation](https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html#cluster-configuration).
-* `-k` option is for going on with independent jobs if a Bitextor rule/job fails.
-* `-n` option will ignore temp() folder/files declarations. This is useful when running only a part of the workflow, since temp() would lead to deletion of probably needed files by other parts of the workflow.
-
-### Running Bitextor on a cluster
-
-When running on a cluster with, for example, the [SLURM](https://slurm.schedmd.com/) workload manager installed, one could run Bitextor as:
-
-```bash
-bitextor.sh -s myconfig.yaml -j 20 -c "sbatch"
-```
-
-This command would run Bitextor allowing to submit 20 jobs in the cluster queue at the same time, assuming that all jobs can be run in any node of the cluster.
-
-Now assume that we plan to train a neural MT (NMT) system with Bitextor for document alignment (see next section). In this case, we would need to configure the call to the cluster in a way that those rules that require using GPUs for training or running NMT are run in nodes with GPUs. We could create a cluster configuration file such as the following (extracted from `workflow/examples/cluster.json`):
-
-```json
-{
-    "__default__" :
-    {
-        "gres": ""
-    },
-
-    "docaling_translate_nmt" :
-    {
-        "gres": "--gres gpu:tesla:1"
-    },
-
-    "train_nmt_all":
-    {
-        "gres": "--gres gpu:tesla:1"
-    }
-
-}
-```
-
-This configuration file tells the cluster to set the option `gres` to empty for all jobs except for `docalign_translate_nmt` and `train_nmt_all` for which it would take value `--gres gpu:tesla:1`. In [SLURM](https://slurm.schedmd.com/) `--gres` is the option that allows to specify a resource when queuing a job; in the example we would be specifying that a Tesla GPU is required by these two jobs. Once we had our configuration file, we could call Bitextor in the following way:
-
-```bash
-bitextor.sh -s myconfig.yaml -j 20 -c "sbatch {cluster.gres}" -g cluster.json
-```
-
-Note that, in this case, an additional option needs to be added to the `sbatch` command so it is called using the specific `gres` option as indicated in the config file `cluster.json` described above: it will be empty for most jobs but for `docalign_translate_nmt` and `train_nmt_all`.
+To run Bitextor on a cluster with a software that allows to manage job queues, it is recommended to use `bitextor-full` command and use [Snakemake's cluster configuration](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
 
 ## Bitextor configuration file
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist configuration file sample (`basic.yaml`) can be found in this repository (`workflow/sample-config/basic.yaml`). You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A minimalist [configuration file sample](config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
@@ -340,8 +75,6 @@ Following is a description of configuration related to each step, as well as bas
 There are a few variables that are mandatory for running Bitextor, independently of the task to be carried out:
 
 ```yaml
-bitextor: /home/user/bitextor
-
 permanentDir: /home/user/permanent/bitextor-output
 dataDir: /home/user/permanent/data
 transientDir: /home/user/transient
@@ -350,7 +83,6 @@ tempDir: /home/user/transient
 profiling: true
 ```
 
-* `bitextor`: Directory where Bitextor is installed (the repository or tarball downloaded and compiled).
 * `permanentDir`, `transientDir`, `tempDir` and `dataDir` are the folders used during processing. `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing;`transientDir` will contain the result of every step of the pipeline, and `tempDir` will contain temporary files that are needed by some steps and removed immediately after they are no longer required.
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 
@@ -359,13 +91,12 @@ profiling: true
 There are some optional parameters that allow for a finer control of the execution of the pipeline, namely it is possible to configure some jobs to use more than one core; and it is possible to have a partial execution of Bitextor by specifying what step should be final.
 
 ```yaml
-until: preprocess 
+until: preprocess
 parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
 ```
 
 * `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values are: {`crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`}.
 * `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. The jobs that can be executed in parallel in this way are: {`split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `sents`}.
-
 
 ### Data sources
 
@@ -386,7 +117,7 @@ warcsFile: /home/user/warcs.gz
 
 ### Crawling
 
-Five crawlers are supported by Bitextor: one is based on the library [Creepy](https://github.com/Aitjcize/creepy), [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool, [HTTrack](https://www.httrack.com/) and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Three crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
 
 ```yaml
 crawler: wget
@@ -401,17 +132,17 @@ crawlerConnectionTimeout: 10
 onlyConcat: false
 ```
 
-* `crawler`: set which crawler is used (`heritrix`, `wget`,`creepy`, `httrack` or `linguacrawl`)
+* `crawler`: set which crawler is used (`heritrix`, `wget` or `linguacrawl`)
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour (`linguacrawl` needs only the quantity, without any suffix)
 * `crawlWait`: option that specifies the time that should be waited between the retrievals. It is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
 * `crawlFileTypes`: **wget-specific/linguacrawl-specific option** that allows to specify the files which we want to retrieve. Both `wget` and `linguacrawl` use the Content-Type in order to search a pattern which matches, so either "html" or "text/html" will retrieve those files with Content-Type "text/html". The [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) contains [MIME](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) values
-* `crawlSizeLimit`: **creepy-specific/linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends; it can be specified in GB (G), MB (M) or KB (K) (in the case of `Creepy`, but not for `linguacrawl`)
-* `crawlTLD`: **creepy-specific/linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); a TLD could be, for example, *.es*, *.info* or *.org* for `Creepy`. In the case of `linguacrawl` the TLD can be specified directly without wildcards and in a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
-* `crawlerNumThreads`: **creepy-specific/linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
-* `crawlerConnectionTimeout`: **creepy-specific/linguacrawl-specific option** that allows to specify the connection timeout to a web server
-* `dumpCurrentCrawl`: **creepy-specific/linguacrawl-specific option** that allows to visualize more information about what the crawler is doing, like a 'verbose' option
-* `resumePreviousCrawl`: **creepy-specific/linguacrawl-specific option** that allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed. This option might be used for those cases where the crawling was stopped at the same time that the workflow, or after removing those files which makes necessary the crawler to be executed again (this last option might be difficult to achieve)
+* `crawlSizeLimit`: **linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends
+* `crawlTLD`: **linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); TLD can be specified as a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
+* `crawlerNumThreads`: **linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
+* `crawlerConnectionTimeout`: **linguacrawl-specific option** that allows to specify the connection timeout to a web server
+* `dumpCurrentCrawl`: **linguacrawl-specific option** that allows to visualize more information about what the crawler is doing, like a 'verbose' option
+* `resumePreviousCrawl`: **linguacrawl-specific option** that allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed. This option might be used for those cases where the crawling was stopped at the same time that the workflow, or after removing those files which makes necessary the crawler to be executed again (this last option might be difficult to achieve)
 * `crawlCat`: **linguacrawl-specific option** that allows to merge all the downloaded WARCs in just one (`linguacrawl` generates one warc per domain/subdomain accordin to the documentation, which does not specify concretely which one). This option will improbe the number of rules of preprocessing to run, but will cause to lose important information like the source of the WARCs. Be aware that this option might be equally as dangerous if enabled in the case of a large crawling since the preprocessing of a very large WARC might even cost more resources (either time or memory) that the processing of thousands of little WARCs
 * `crawlCatMaxSize`: **linguacrawl-specific option** that allows to specify a max. size of the merged WARC. If this option is specified, multiple WARCs will be generated where the retrieved WARCs will be being merged, and new WARCs will be used when the max. size has been reached. The unity being used is the byte, so if we want a max. size of 1 KiB, the value which we should set would be 1024
 * `crawlMaxFolderTreeDepth`: **linguacrawl-specific option** that allows to specify the max. folder depth for a URL to be taken into account
@@ -513,7 +244,7 @@ By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/proj
 ```yaml
 sentenceSplitters: {
   'fr': '/home/user/bitextor/preprocess/moses/ems/support/split-sentences.perl -q -b -l fr',
-  'default': '/home/user/bitextor/workflow/example/nltk-sent-tokeniser.py english'
+  'default': '/home/user/bitextor/bitextor/example/nltk-sent-tokeniser.py english'
 }
 
 customNBPs: {
@@ -651,7 +382,7 @@ deferred: false
 * `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
 * `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum. 
+* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum.
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool
 
@@ -687,8 +418,8 @@ Bitextor is a pipeline that runs a collection of scripts to produce a parallel c
 
 The following diagram shows the structure of the pipeline and the different scripts that are used in each stage:
 
-![Banner](https://raw.githubusercontent.com/bitextor/bitextor/master/img/bitextor.png)
+![Banner](img/bitextor.png)
 
-![Connecting Europe Facility](https://raw.githubusercontent.com/bitextor/bitextor/master/img/logo_en_cef273x39_nonalpha.png)
+![Connecting Europe Facility](img/logo_en_cef273x39_nonalpha.png)
 
 All documents and software contained in this repository reflect only the authors' view. The Innovation and Networks Executive Agency of the European Union is not responsible for any use that may be made of the information it contains.

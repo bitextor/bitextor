@@ -1,7 +1,3 @@
-[submodule "clustercat"]
-	path = clustercat
-	url = https://github.com/jonsafari/clustercat
-	ignore = dirty
 [submodule "mgiza"]
 	path = mgiza
 	url = https://github.com/moses-smt/mgiza
@@ -33,7 +29,12 @@
 [submodule "warc2text"]
 	path = warc2text
 	url = https://github.com/bitextor/warc2text
-    ignore = dirty
+	ignore = dirty
+[submodule "kenlm"]
+	path = kenlm
+	url = https://github.com/kpu/kenlm
+	ignore = dirty
 [submodule "deferred-crawling"]
 	path = deferred-crawling
 	url = https://github.com/bitextor/deferred-crawling
+	ignore = dirty

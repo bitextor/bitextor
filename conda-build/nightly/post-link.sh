@@ -21,22 +21,3 @@ else
     fi
   done
 fi
-
-if [[ ! -d "$PREFIX/bitextor" ]]; then
-  echo "Could not find Bitextor in '$PREFIX/bitextor', and it should be (broken build?)" \
-    >> "$PREFIX/.messages.txt"
-else
-  for h in "${installation_paths[@]}"; do
-    if [[ -w "$h" ]]; then
-      if [[ ! -d "$h/bitextor" ]]; then
-        ln -s "$PREFIX/bitextor" "$h/bitextor"
-        echo "Bitextor is in '$h/bitextor'" >> "$PREFIX/.messages.txt"
-      else
-        echo "Bitextor installation found in '$h/bitextor'. Soft link will not be created, but you can create it if you want using '$PREFIX/bitextor'" \
-          >> "$PREFIX/.messages.txt"
-      fi
-
-      break
-    fi
-  done
-fi

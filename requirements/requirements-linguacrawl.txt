@@ -1,0 +1,1 @@
+linguacrawl @ git+https://github.com/transducens/linguacrawl.git
