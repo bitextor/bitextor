@@ -4,12 +4,17 @@ import requests
 import subprocess
 
 from bitextor.utils.args import validate_args
-from bitextor.utils.common import open_xz_or_gzip_or_plain, get_all_ppids, \
-    snake_no_more_race_get_pgid, snake_no_more_race_get, snake_no_more_race_set
+from bitextor.utils.common import (
+    open_xz_or_gzip_or_plain,
+    get_all_ppids,
+    snake_no_more_race_get_pgid,
+    snake_no_more_race_get,
+    snake_no_more_race_set,
+)
 from bitextor.utils.non_generic import *
 
 valid, config = validate_args(config)
-assert valid # workaround for not being able to exit() in snakemake
+assert valid  # workaround for not being able to exit() in snakemake
 
 #################################################################
 # BASIC PARAMETERS
@@ -56,7 +61,9 @@ HERITRIXURL = "https://localhost:8443"
 HERITRIXUSER = "admin:admin"
 CRAWLMAXFOLDERTREEDEPTH = ""
 CRAWLSCOUTSTEPS = ""
-CRAWLBLACKLISTURL = "['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']"
+CRAWLBLACKLISTURL = (
+    "['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']"
+)
 CRAWLPREFIXFILTER = "['mailto:']"
 
 if "crawler" in config:
@@ -162,7 +169,7 @@ if "langID" in config:
     LANGID = config["langID"]
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-if "boilerpipeCleaning" in config and config["boilerpipeCleaning"]==True:
+if "boilerpipeCleaning" in config and config["boilerpipeCleaning"] == True:
     BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT = "--pdfextract "
@@ -187,7 +194,10 @@ if WORDTOKS:
     WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
 else:
     # TODO: decide where to put this
-    WORDTOK1, WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}", f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+    WORDTOK1, WORDTOK2 = (
+        f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}",
+        f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}",
+    )
 MORPHTOK1 = get_lang_or_default(MORPHTOKS, LANG1)
 MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 
@@ -202,12 +212,12 @@ EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
 DOCALIGN = config["documentAligner"]
 # mt
 if DOCALIGN == "externalMT":
-    MT_COMMAND = config['alignerCmd']
+    MT_COMMAND = config["alignerCmd"]
 else:
     MT_COMMAND = None
 SRC_LANG = LANG1
 TRG_LANG = LANG2
-if "translationDirection" in config and config["translationDirection"] == f'{LANG2}2{LANG1}':
+if "translationDirection" in config and config["translationDirection"] == f"{LANG2}2{LANG1}":
     SRC_LANG = LANG2
     TRG_LANG = LANG1
 
@@ -226,8 +236,8 @@ try:
 except:
     pass
 
-DIC=None
-DIC_TRAINING=None
+DIC = None
+DIC_TRAINING = None
 
 if "dic" in config:
     DIC = config["dic"]
@@ -241,7 +251,11 @@ if "dic" in config:
         DIC_TRAINING = value
         dic_training_file = True
 
-    if (not dic_training_file and os.path.isfile(DIC) and ('bicleanerCorpusTrainingPrefix' in config and 'initCorpusTrainingPrefix' in config)):
+    if (
+        not dic_training_file
+        and os.path.isfile(DIC)
+        and ("bicleanerCorpusTrainingPrefix" in config and "initCorpusTrainingPrefix" in config)
+    ):
         DIC_TRAINING += ".generated"
 
     # Create file with DIC_TRAINING value in order to avoid that, when DAG is reevaluated, changes the value of the variable
@@ -253,12 +267,12 @@ SEGALIGN = config["sentenceAligner"]
 # bleualign
 SEGALIGN_THRESHOLD = 0.0
 if "sentenceAlignerThreshold" in config:
-    SEGALIGN_THRESHOLD=config["sentenceAlignerThreshold"]
+    SEGALIGN_THRESHOLD = config["sentenceAlignerThreshold"]
 # hunalign
 # snakemake/include/dic-docsegalign
 #################################################################
 # CLEANING
-FIELDS = ['url1','url2','seg1','seg2','aligner']
+FIELDS = ["url1", "url2", "seg1", "seg2", "aligner"]
 DEFERRED = ""
 MMHSUM_PATH = ""
 DEFERRED_FIELDS = []
@@ -275,52 +289,52 @@ ELRC_FIELDS = []
 TMX = False
 DEDUPED = False
 BIROAMER = False
-BIROAMER_MIX_FILES = '/dev/null'
+BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = None
 
-if 'deferred' in config and config['deferred']:
+if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
-    DEFERRED_FIELDS = ['checksum1','checksum2']
+    DEFERRED_FIELDS = ["checksum1", "checksum2"]
     BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
-if 'bifixer' in config and config['bifixer']:
+if "bifixer" in config and config["bifixer"]:
     BIFIXER = True
-    BIFIXER_FIELDS = ['bifixerhash','bifixerscore']
+    BIFIXER_FIELDS = ["bifixerhash", "bifixerscore"]
 
-if 'aggressiveDedup' in config and not config['aggressiveDedup']:
-    AGGRESSIVE_DEDUP = ''
-if 'bicleaner' in config:
+if "aggressiveDedup" in config and not config["aggressiveDedup"]:
+    AGGRESSIVE_DEDUP = ""
+if "bicleaner" in config:
     BICLEANER = True
-    BICLEANER_MODEL = config['bicleaner']
-    BICLEANER_FIELDS = ['bicleaner']
-if 'bicleanerThreshold' in config:
-    BICLEANER_THRESHOLD = config['bicleanerThreshold']
+    BICLEANER_MODEL = config["bicleaner"]
+    BICLEANER_FIELDS = ["bicleaner"]
+if "bicleanerThreshold" in config:
+    BICLEANER_THRESHOLD = config["bicleanerThreshold"]
 if "bicleanerCorpusTrainingPrefix" in config:
-    BICLEANER_TRAIN_PREFIXES=config["bicleanerCorpusTrainingPrefix"]
-if 'elrc' in config and config['elrc']:
+    BICLEANER_TRAIN_PREFIXES = config["bicleanerCorpusTrainingPrefix"]
+if "elrc" in config and config["elrc"]:
     ELRC = True
-    ELRC_FIELDS = ['lengthratio','numTokensSL','numTokensTL']
-if 'tmx' in config and config['tmx']:
+    ELRC_FIELDS = ["lengthratio", "numTokensSL", "numTokensTL"]
+if "tmx" in config and config["tmx"]:
     TMX = True
-    OUTPUT_FILES.append('not-deduped.tmx')
-if 'deduped' in config and config['deduped']:
+    OUTPUT_FILES.append("not-deduped.tmx")
+if "deduped" in config and config["deduped"]:
     DEDUPED = True
-    OUTPUT_FILES.append('deduped.tmx')
-    OUTPUT_FILES.append('deduped.txt')
-if 'biroamer' in config and config['biroamer']:
+    OUTPUT_FILES.append("deduped.tmx")
+    OUTPUT_FILES.append("deduped.txt")
+if "biroamer" in config and config["biroamer"]:
     BIROAMER = True
 
-    if 'deduped.tmx' in OUTPUT_FILES:
-        OUTPUT_FILES.append('deduped-roamed.tmx')
+    if "deduped.tmx" in OUTPUT_FILES:
+        OUTPUT_FILES.append("deduped-roamed.tmx")
     else:
-        OUTPUT_FILES.append('not-deduped-roamed.tmx')
+        OUTPUT_FILES.append("not-deduped-roamed.tmx")
 
-    if 'biroamerMixFiles' in config and len(config['biroamerMixFiles']) > 0:
-        BIROAMER_MIX_FILES = ' '.join(config['biroamerMixFiles'])
+    if "biroamerMixFiles" in config and len(config["biroamerMixFiles"]) > 0:
+        BIROAMER_MIX_FILES = " ".join(config["biroamerMixFiles"])
 
     if "biroamerImproveAlignmentCorpus" in config:
         BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
@@ -331,16 +345,16 @@ if 'biroamer' in config and config['biroamer']:
 BEFORE_ELRC_FIELDS = FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
 TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
 
-FILTER_SORT_FIELDS="-k3,4"
-TMX_DEDUP_FIELDS = 'seg1,seg2'
-if 'bifixerhash' in BEFORE_ELRC_FIELDS:
-    i = BEFORE_ELRC_FIELDS.index('bifixerhash')
-    i = i + 1 # sort counts from 1, not 0
-    FILTER_SORT_FIELDS = f'-k{i},{i} -k{i+1},{i+1}nr'
-    TMX_DEDUP_FIELDS = 'bifixerhash'
+FILTER_SORT_FIELDS = "-k3,4"
+TMX_DEDUP_FIELDS = "seg1,seg2"
+if "bifixerhash" in BEFORE_ELRC_FIELDS:
+    i = BEFORE_ELRC_FIELDS.index("bifixerhash")
+    i = i + 1  # sort counts from 1, not 0
+    FILTER_SORT_FIELDS = f"-k{i},{i} -k{i+1},{i+1}nr"
+    TMX_DEDUP_FIELDS = "bifixerhash"
 
-BEFORE_ELRC_FIELDS = ','.join(BEFORE_ELRC_FIELDS)
-TMX_FIELDS = ','.join(TMX_FIELDS)
+BEFORE_ELRC_FIELDS = ",".join(BEFORE_ELRC_FIELDS)
+TMX_FIELDS = ",".join(TMX_FIELDS)
 #################################################################
 # DATASOURCES
 HOSTS = set()
@@ -364,90 +378,132 @@ if "warcsFile" in config:
 
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 # process WARCs individually
-TARGET_2_WARCS = {f'{k}': v for k,v in enumerate(WARCS)}
+TARGET_2_WARCS = {f"{k}": v for k, v in enumerate(WARCS)}
 # group crawled hosts by domains
-TARGET_2_WARCS.update(dict([(domain, [f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz' for host in hosts]) for (domain, hosts) in DOMAIN_2_HOSTS.items()]))
+TARGET_2_WARCS.update(
+    dict([
+        (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
+        for (domain, hosts) in DOMAIN_2_HOSTS.items()
+    ])
+)
 
 TARGETS = TARGET_2_WARCS.keys()
 
 #################################################################
 ### WORKFLOW EXECUTION ##########################################
-THREADS = {'split': 1, 'translate': 1, 'tokenise_src': 1, 'tokenise_trg': 1, 'docalign': 1, 'segalign': 1, 'bifixer': 1, 'bicleaner': 1, 'sents': 1}
-if 'parallelWorkers' in config:
-    for k in config['parallelWorkers']:
-        THREADS[k] = config['parallelWorkers'][k]
+THREADS = {
+    "split": 1,
+    "translate": 1,
+    "tokenise_src": 1,
+    "tokenise_trg": 1,
+    "docalign": 1,
+    "segalign": 1,
+    "bifixer": 1,
+    "bicleaner": 1,
+    "sents": 1,
+}
+if "parallelWorkers" in config:
+    for k in config["parallelWorkers"]:
+        THREADS[k] = config["parallelWorkers"][k]
 
 OUTPUT = []
-UNTIL = config['until'] if 'until' in config else ''
-if 'until' not in config:
-    OUTPUT = expand('{permanent}/{lang1}-{lang2}.{output_file}.gz', permanent=PERMANENT, target=TARGETS, lang1=LANG1, lang2=LANG2, output_file=OUTPUT_FILES)
+UNTIL = config["until"] if "until" in config else ""
+if "until" not in config:
+    OUTPUT = expand(
+        "{permanent}/{lang1}-{lang2}.{output_file}.gz",
+        permanent=PERMANENT,
+        target=TARGETS,
+        lang1=LANG1,
+        lang2=LANG2,
+        output_file=OUTPUT_FILES,
+    )
     # this has to be added, because tokenisation rules are the last rules that don't need both shards
     # otherwise snakemake waites for both shards be completed to continue
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
-elif UNTIL == 'crawl':
+    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
+    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+elif UNTIL == "crawl":
     if CRAWLTARGET == "linguacrawl":
-        OUTPUT.append(f'{DATADIR}/warc/linguacrawl.finished')
+        OUTPUT.append(f"{DATADIR}/warc/linguacrawl.finished")
     else:
         for domain, hosts in DOMAIN_2_HOSTS.items():
             for host in hosts:
-                OUTPUT.append(f'{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz')
-elif UNTIL == 'preprocess':
-    OUTPUT = expand('{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}', datadir=DATADIR, target=TARGETS, pproc=PPROC, lang=LANGS, pproc_file=PPROC_FILES)
-elif UNTIL == 'shard':
-    OUTPUT = expand('{datadir}/shards/02.batches.{lang}', datadir=DATADIR, lang=LANGS)
-elif UNTIL == 'split':
-    OUTPUT = expand('{datadir}/shards/03.split.{lang}', datadir=DATADIR, lang=LANGS)
-elif UNTIL == 'translate':
-    OUTPUT = f'{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}'
-elif UNTIL == 'tokenise_trg':
+                OUTPUT.append(f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz")
+elif UNTIL == "preprocess":
+    OUTPUT = expand(
+        "{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}",
+        datadir=DATADIR,
+        target=TARGETS,
+        pproc=PPROC,
+        lang=LANGS,
+        pproc_file=PPROC_FILES,
+    )
+elif UNTIL == "shard":
+    OUTPUT = expand("{datadir}/shards/02.batches.{lang}", datadir=DATADIR, lang=LANGS)
+elif UNTIL == "split":
+    OUTPUT = expand("{datadir}/shards/03.split.{lang}", datadir=DATADIR, lang=LANGS)
+elif UNTIL == "translate":
+    OUTPUT = f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}"
+elif UNTIL == "tokenise_trg":
     # TODO: decide where to put '0X_step' files (output of aggregate rules)
-    OUTPUT = f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
-elif UNTIL == 'tokenise_src':
-    OUTPUT = f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}'
+    OUTPUT = f"{DATADIR}/shards/05.tokenise.{TRG_LANG}"
+elif UNTIL == "tokenise_src":
+    OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
 else:
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{TRG_LANG}')
-    OUTPUT.append(f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}')
-    if UNTIL == 'docalign':
-        OUTPUT.append(f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}')
-    elif UNTIL == 'segalign':
-        OUTPUT.append(f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}')
-    elif UNTIL == 'bifixer':
-        OUTPUT.append(f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}')
-    elif UNTIL == 'bicleaner':
-        OUTPUT.append(f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}')
-    elif UNTIL == 'filter':
-        OUTPUT.append(f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}')
+    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
+    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+    if UNTIL == "docalign":
+        OUTPUT.append(f"{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}")
+    elif UNTIL == "segalign":
+        OUTPUT.append(f"{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}")
+    elif UNTIL == "bifixer":
+        OUTPUT.append(f"{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}")
+    elif UNTIL == "bicleaner":
+        OUTPUT.append(f"{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}")
+    elif UNTIL == "filter":
+        OUTPUT.append(f"{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}")
 
 shell.prefix("set -euo pipefail;")
+
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
 rule all:
-    input: OUTPUT
+    input:
+        OUTPUT,
+
 
 #################################################################
 ### INCLUDE #####################################################
 include: "rules/dicgeneration.smk"
 include: "rules/dictdocsegalign.smk"
 
+
 #################################################################
 ### CRAWLING ####################################################
 
+
 rule wget_download:
-    params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
-    output: f'{DATADIR}/warc/{{target}}/wget.warc.gz'
-    shell: '''
+    params:
+        url="http://{target}",
+        folder=f"{DATADIR}/warc/{{target}}",
+    output:
+        f"{DATADIR}/warc/{{target}}/wget.warc.gz",
+    shell:
+        """
         mkdir -p {params.folder} {TMPDIR}
         echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
         {PROFILING} python3 {WORKFLOW}/bitextor_wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
         rm -rf $DIRNAME
-        '''
+        """
+
 
 rule heritrix_download:
-    params: url="http://{target}", folder=f"{DATADIR}/warc/{{target}}"
-    output: f'{DATADIR}/warc/{{target}}/heritrix.warc.gz'
+    params:
+        url="http://{target}",
+        folder=f"{DATADIR}/warc/{{target}}",
+    output:
+        f"{DATADIR}/warc/{{target}}/heritrix.warc.gz",
     run:
         # Check the connection
         url = params.url
@@ -472,45 +528,48 @@ rule heritrix_download:
             params.url = url
 
             # Execute heritrix
-            shell('''
-                    mkdir -p {params.folder} {TMPDIR}
-                    echo hostname=$HOSTNAME
-                    if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ]
-                        then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER}
-                    fi
-                    curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                    curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine
-                    DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-                    cat {WORKFLOW}/data/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml
-                    curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml
-                    curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                    curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                    sleep 2
-                    curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                    RUNTIME=0
-                    sleep 15
-                    while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ]
-                    do
-                        sleep 5
-                        RUNTIME=$((RUNTIME+5))
-                        if [ "{CRAWLTIMELIMIT}" != "" ]
+            shell(
+                """
+                mkdir -p {params.folder} {TMPDIR}
+                echo hostname=$HOSTNAME
+                if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ]
+                    then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER}
+                fi
+                curl -v -d "action=teardown" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                curl -v -d "createpath={wildcards.target}&action=create" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine
+                DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
+                cat {WORKFLOW}/data/crawler-beans.cxml | sed "s@http://example.example/example@{params.url}@g" > $DIRNAME/my-crawler-beans.cxml
+                curl -v -T $DIRNAME/my-crawler-beans.cxml -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}/jobdir/crawler-beans.cxml
+                curl -v -d "action=build" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                curl -v -d "action=launch&checkpoint=latest" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                sleep 2
+                curl -v -d "action=unpause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                RUNTIME=0
+                sleep 15
+                while [ -f {HERITRIXPATH}/jobs/{wildcards.target}/latest/warcs/*warc.gz.open ]
+                do
+                    sleep 5
+                    RUNTIME=$((RUNTIME+5))
+                    if [ "{CRAWLTIMELIMIT}" != "" ]
+                    then
+                        if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ]
                         then
-                            if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ]
-                            then
-                                echo "Crawling time limit reached"
-                                curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                                curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                                curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
-                            fi
+                            echo "Crawling time limit reached"
+                            curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                            curl -v -d "action=checkpoint" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
+                            curl -v -d "action=terminate" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
                         fi
-                    done
-                    echo "Job {wildcards.target} finished!"
-                    cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}
-                ''')
+                    fi
+                done
+                echo "Job {wildcards.target} finished!"
+                cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}
+                """
+            )
         else:
             # Create empty warc file
-            with open(output[0], 'wb') as f_out:
+            with open(output[0], "wb") as f_out:
                 f_out.close()
+
 
 # Is needed a checkpoint because we do not know the resulted warcs since we let the user decide if he wants to
 #  either join all the warcs (it loses important information like the source of the warcs) or not
@@ -519,15 +578,18 @@ checkpoint linguacrawl_download:
     params:
         folder=f"{DATADIR}/warc/linguacrawl",
         yaml_file=f"{TMPDIR}/linguacrawl.yaml",
-    output: f'{DATADIR}/warc/linguacrawl.finished'
+    output:
+        f"{DATADIR}/warc/linguacrawl.finished",
     run:
         global HOSTS
-        shell('''
-                mkdir -p {params.folder} {TMPDIR}
-                echo hostname=$HOSTNAME
-                touch {params.yaml_file}
-                cat < /dev/null > {params.yaml_file}
-            ''')
+        shell(
+            """
+            mkdir -p {params.folder} {TMPDIR}
+            echo hostname=$HOSTNAME
+            touch {params.yaml_file}
+            cat < /dev/null > {params.yaml_file}
+            """
+        )
 
         yaml_content = ""
         useragent = USERAGENT
@@ -549,11 +611,15 @@ checkpoint linguacrawl_download:
         yaml_content += f"max_jobs: {CRAWLJOBS}\n" if CRAWLJOBS else ""
         yaml_content += f"resume_crawling: True\n" if CONTINUECRAWL else ""
         yaml_content += f"seed_urls: ['{hosts}']\n"
-        #yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
+        # yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
         yaml_content += f"prefix_filter: {CRAWLPREFIXFILTER}\n"
         yaml_content += f"verbose: True\n" if CRAWLDUMPARGS else "verbose: False\n"
         yaml_content += f"accepted_content: '{CRAWLFILETYPES}'\n"
-        yaml_content += f"max_folder_tree_depth: {CRAWLMAXFOLDERTREEDEPTH}\n" if CRAWLMAXFOLDERTREEDEPTH else "max_folder_tree_depth: 20\n"
+        yaml_content += (
+            f"max_folder_tree_depth: {CRAWLMAXFOLDERTREEDEPTH}\n"
+            if CRAWLMAXFOLDERTREEDEPTH
+            else "max_folder_tree_depth: 20\n"
+        )
         yaml_content += f"max_attempts: 3\n"
         yaml_content += f"scout_steps: {CRAWLSCOUTSTEPS}\n" if CRAWLSCOUTSTEPS else "scout_steps: 200\n"
         yaml_content += f"min_langs_in_site: 2\n"
@@ -563,8 +629,8 @@ checkpoint linguacrawl_download:
             yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
             yaml_content += f"min_percent_mandatory_lang: 10\n"
 
-        #tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
-        tld = LANGS.union([url.split('.')[-1] for url in HOSTS]).union(TLD_CRAWL)
+        # tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
+        tld = LANGS.union([url.split(".")[-1] for url in HOSTS]).union(TLD_CRAWL)
         tld = "','".join(tld)
 
         yaml_content += f"accepted_tlds: ['{tld}']\n"
@@ -578,29 +644,33 @@ checkpoint linguacrawl_download:
 
         shell("{PROFILING} linguacrawl {params.yaml_file}")
 
-        all_files = subprocess.Popen(('ls', params.folder), stdout=subprocess.PIPE)
+        all_files = subprocess.Popen(("ls", params.folder), stdout=subprocess.PIPE)
         try:
             # Process the resulted warcs
-            warcs = subprocess.check_output(('grep', '[.]warc[.]gz$'), stdin=all_files.stdout)  # It will throw an exception if no warcs were downloaded
+            warcs = subprocess.check_output(
+                ("grep", "[.]warc[.]gz$"), stdin=all_files.stdout
+            )  # It will throw an exception if no warcs were downloaded
             all_files.wait()
 
             warcs = warcs.decode("utf-8").split("\n")
             warcs = list(filter(lambda warc: len(warc) != 0, warcs))
             warcs = list(map(lambda warc: f"{params.folder}/{warc}", warcs))
 
-            if ('crawlCat' not in config or not config['crawlCat']):
+            if "crawlCat" not in config or not config["crawlCat"]:
                 warcs = "\n".join(warcs)
                 shell(f'echo -e "{warcs}" > {{output[0]}}')
             else:
-                if 'crawlCatMaxSize' not in config or config['crawlCatMaxSize'] <= 0:
+                if "crawlCatMaxSize" not in config or config["crawlCatMaxSize"] <= 0:
                     warcs = " ".join(warcs)
-                    shell(f'''
+                    shell(
+                        f"""
                         cat {warcs} > {params.folder}/linguacrawl.warc.gz
                         echo "{params.folder}/linguacrawl.warc.gz" > {{output[0]}}
-                        ''')
+                        """
+                    )
                 else:
                     # Improve the number of preprocess rules that are executed
-                    max_limit = config['crawlCatMaxSize']
+                    max_limit = config["crawlCatMaxSize"]
                     current = 0
                     blocks = 0
                     files = [f"{params.folder}/linguacrawl{blocks}.warc.gz"]
@@ -613,10 +683,10 @@ checkpoint linguacrawl_download:
 
                         shell(f"cat {warc} >> {files[-1]}")
 
-                        du_command = subprocess.Popen(('du', '-b', warc), stdout=subprocess.PIPE)
+                        du_command = subprocess.Popen(("du", "-b", warc), stdout=subprocess.PIPE)
 
                         try:
-                            du_warc = subprocess.check_output(('awk', '{print $1}'), stdin=du_command.stdout)
+                            du_warc = subprocess.check_output(("awk", "{print $1}"), stdin=du_command.stdout)
                             du_command.wait()
 
                             current += int(du_warc)
@@ -633,6 +703,7 @@ checkpoint linguacrawl_download:
             sys.stderr.write("WARNING: could not find any file after crawling\n")
             shell(f"touch {output}")
 
+
 #################################################################
 ### PREPROCESS ##################################################
 
@@ -642,12 +713,14 @@ checkpoint linguacrawl_download:
 #     for lang in LANGS:
 #         pproc_output[f"{lang}_{name}"] = f"{DATADIR}/preprocess/{{target}}/{PPROC}/{lang}/{pproc_file}"
 
+
 def get_linguacrawl_warcs():
     warcs = []
     with checkpoints.linguacrawl_download.get().output[0].open() as f:
         for line in f:
             warcs.append(line.strip())
     return warcs
+
 
 def get_warcs_names(wildcards):
     if CRAWLTARGET == "linguacrawl":
@@ -656,8 +729,9 @@ def get_warcs_names(wildcards):
 
     return TARGET_2_WARCS[wildcards.target].split("/")[-1]
 
+
 def get_pproc_input(wildcards):
-    if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
+    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
         try:
             # Retrieve warcs names, that in first instance will fail because linguacrawl has not been executed yet
             warcs, warcs_targets = get_warcs_names(wildcards)
@@ -685,13 +759,19 @@ def get_pproc_input(wildcards):
 
     return TARGET_2_WARCS[wildcards.target]
 
+
 rule warc2preprocess:
-    #input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
-    input: get_pproc_input
-    output:expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
+    # input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
+    input:
+        get_pproc_input,
+    output:
+        expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES),
     threads: 2
-    params: folder=f'{DATADIR}/preprocess/{{target}}/w2p', pproclangs=",".join(LANGS)
-    shell: '''
+    params:
+        folder=f"{DATADIR}/preprocess/{{target}}/w2p",
+        pproclangs=",".join(LANGS),
+    shell:
+        """
         mkdir -p {params.folder}
         cat {input} | \
             {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
@@ -706,16 +786,24 @@ rule warc2preprocess:
                 touch {EMPTY_SHARD_CHECK}
             fi
         done
-    '''
+        """
 
 
 rule warc2text:
-    input: get_pproc_input
-    output: expand("{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES)
+    input:
+        get_pproc_input,
+    output:
+        expand(
+            "{data}/preprocess/{{target}}/warc2text/{lang}/{pproc_file}",
+            data=DATADIR,
+            lang=LANGS,
+            pproc_file=PPROC_FILES,
+        ),
     params:
-        folder = f'{DATADIR}/preprocess/{{target}}/warc2text',
-        f = ','.join([f.strip(".gz") for f in PPROC_FILES])
-    shell: '''
+        folder=f"{DATADIR}/preprocess/{{target}}/warc2text",
+        f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+    shell:
+        """
         mkdir -p {params.folder}
         {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
         for lang in {LANGS}; do
@@ -729,10 +817,11 @@ rule warc2text:
                 touch {EMPTY_SHARD_CHECK}
             fi
         done
-        '''
+        """
+
 
 def get_shard_input(lang):
-    if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
+    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
         warcs_path, warcs = get_warcs_names(None)
 
         for warc in warcs_path:
@@ -740,35 +829,46 @@ def get_shard_input(lang):
                 warcs.remove(warc.split("/")[-1])
                 sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
 
-        return expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=warcs, pproc=PPROC)
+        return expand(
+            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=warcs, pproc=PPROC
+        )
 
     # crawler != linguacrawl
     return expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
+
 
 # We split the behaviour in 2 functions in order to make work the linguacrawl checkpoint
 #  because when the exception is thrown with get_warcs_names() due to linguacrawl checkpoint,
 #  we cannot retrieve the defined warcs at the same time (snakemake does not allow to use yield),
 #  so using a separate function allows us to execute in parallel linguacrawl and warcs preprocess
 def get_shard_input_linguacrawl_prov_warcs(lang):
-    if (CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0):
-        return expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=list(range(len(WARCS))), pproc=PPROC)
+    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
+        return expand(
+            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+            datadir=DATADIR,
+            target=list(range(len(WARCS))),
+            pproc=PPROC,
+        )
     return []
+
 
 # DAG will be re-evaluated after completing shard rule (because number of batches is dynamic and unknown)
 checkpoint shard:
     # use url.gz as input to avoid having directories as input
     input:
         get_shard_input_linguacrawl_prov_warcs,
-        get_shard_input
-    output: f'{DATADIR}/shards/02.batches.{{lang}}' # list of batches created for lang
+        get_shard_input,
+    output:
+        f"{DATADIR}/shards/02.batches.{{lang}}",  # list of batches created for lang
     params:
-        n = SHARDS,
-        b = BATCHES,
-        o_no_lang = f'{DATADIR}/shards',
-        o = f'{DATADIR}/shards/{{lang}}',
-        f = ','.join([f.strip(".gz") for f in PPROC_FILES]),
-        empty_shard_batch_folder = "EMPTY/1"
-    shell: '''
+        n=SHARDS,
+        b=BATCHES,
+        o_no_lang=f"{DATADIR}/shards",
+        o=f"{DATADIR}/shards/{{lang}}",
+        f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+        empty_shard_batch_folder="EMPTY/1",
+    shell:
+        """
         ulimit -n 2048
         mkdir -p {params.o}
         rm -rf {params.o}/* # remove anything that might be left after a previous run
@@ -796,7 +896,8 @@ checkpoint shard:
         fi
 
         ls -d {params.o}/*/* > {output}
-        '''
+        """
+
 
 # obtain list of batches for lang
 def get_batches(lang):
@@ -806,20 +907,27 @@ def get_batches(lang):
             batches.append(line.strip())
     return batches
 
+
 def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
     if replace_only_if_true and string or not replace_only_if_true:
         return replace_format.replace(replace_token, string)
 
     return string
 
+
 rule split:
-    input: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}'
+    input:
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}",
     params:
-        splitter = lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), "--sentence-splitter \"{}\""),
-        customnbp = lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), "--customnbp \"{}\"")
-    output: f'{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz'
-    threads: THREADS['split']
-    shell: '''
+        splitter=lambda wildcards: apply_format(
+            get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'
+        ),
+        customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
+    output:
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz",
+    threads: THREADS["split"]
+    shell:
+        """
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
@@ -830,12 +938,17 @@ rule split:
                 --langcode "{wildcards.lang}" \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule aggregate_split:
-    input: lambda wildcards: [f'{batch}/sentences.gz' for batch in get_batches(wildcards.lang)]
-    output: f'{DATADIR}/shards/03.split.{{lang}}'
-    shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [f"{batch}/sentences.gz" for batch in get_batches(wildcards.lang)],
+    output:
+        f"{DATADIR}/shards/03.split.{{lang}}",
+    shell:
+        """ echo "{input}" | tr ' ' '\n' > {output} """
+
 
 #################################################################
 ### DOCALIGN ####################################################
@@ -846,19 +959,32 @@ def get_align_inputs(src_lang, trg_lang):
     inputs = get_mt_docalign_inputs(src_batches, trg_batches)
     return inputs
 
+
 rule aggregate_matches:
-    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_01.matches' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: f'{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_01.matches"
+            for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
+        ],
+    output:
+        f"{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
+
 # MT ############################################################
+
 
 rule custom_translate:
     input:
-        source=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
-    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz'
-    threads: max(2, THREADS['translate'])
-    params: THREADS['translate']
-    shell: '''
+        source=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+    output:
+        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
+    threads: max(2, THREADS["translate"])
+    params:
+        THREADS["translate"],
+    shell:
+        """
         parallel_cmd=""
         if [ {params} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
@@ -874,27 +1000,35 @@ rule custom_translate:
             >&2 echo "Lines count differ: source $n_before, target $n_after"
             exit 1
         fi
-        '''
-        # TODO: add early stopping
+        """
+
 
 if MT_COMMAND is None:
-    translation_output = f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
+    translation_output = f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz"
 else:
     translation_output = rules.custom_translate.output
 
+
 rule aggregate_translate:
-    input: lambda wildcards: [f'{batch}/sentences_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}'
-    shell: ''' echo "{input}" | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [f"{batch}/sentences_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
+    output:
+        f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}",
+    shell:
+        """ echo "{input}" | tr ' ' '\n' > {output} """
+
 
 rule tokenise_translated:
-    input: translation_output
-    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz'
+    input:
+        translation_output,
+    output:
+        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz",
     params:
-        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
-        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
-    threads: THREADS['tokenise_src']
-    shell: '''
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
+    threads: THREADS["tokenise_src"]
+    shell:
+        """
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
@@ -904,16 +1038,20 @@ rule tokenise_translated:
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule tokenise_target:
-    input: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz'
-    output: f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz'
+    input:
+        f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+    output:
+        f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     params:
-        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
-        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
-    threads: THREADS['tokenise_trg']
-    shell: '''
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
+    threads: THREADS["tokenise_trg"]
+    shell:
+        """
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
@@ -923,16 +1061,20 @@ rule tokenise_target:
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule tokenise_source:
-    input: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz'
-    output: f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz'
+    input:
+        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+    output:
+        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
     params:
-        tokeniser = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), "--word-tokenizer \"{}\""),
-        lemmatizer = lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), "--morph-analyser \"{}\"")
-    threads: THREADS['tokenise_src']
-    shell: '''
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
+    threads: THREADS["tokenise_src"]
+    shell:
+        """
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
@@ -942,52 +1084,76 @@ rule tokenise_source:
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {SRC_LANG} \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule aggregate_tokenise_target:
-    input: lambda wildcards: [f'{batch}/tokenised.gz' for batch in get_batches(TRG_LANG)]
-    output: f'{DATADIR}/shards/05.tokenise.{TRG_LANG}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(TRG_LANG)],
+    output:
+        f"{DATADIR}/shards/05.tokenise.{TRG_LANG}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
 
 rule aggregate_tokenise_source:
-    input: lambda wildcards: [f'{batch}/tokenised_{TRG_LANG}.gz' for batch in get_batches(SRC_LANG)]
-    output: f'{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [f"{batch}/tokenised_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
+    output:
+        f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
 
 rule mt_matches:
     input:
         l1=rules.tokenise_translated.output,
-        l2=rules.tokenise_target.output
-    output: f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches'
-    params: folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}'
-    threads: THREADS['docalign']
-    shell: '''
+        l2=rules.tokenise_target.output,
+    output:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches",
+    params:
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}",
+    threads: THREADS["docalign"]
+    shell:
+        """
         mkdir -p {params.folder}
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
-        '''
+        """
+
 
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: f'{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz"
+            for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
+        ],
+    output:
+        f"{TRANSIENT}/06_02.segalign.{LANG1}_{LANG2}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
 
 # BLEUALIGN #####################################################
 rule bleualign:
     input:
         indices=rules.mt_matches.output,
-        plain1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz',
-        plain2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz',
-        url1=f'{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz',
-        url2=f'{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz',
-        translated1=translation_output
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+        url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
+        url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
+        translated1=translation_output,
     params:
-        folder=f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}',
-        workers=THREADS['segalign']
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}",
+        workers=THREADS["segalign"],
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
-    output: temp(f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz')
-    threads: max(THREADS['segalign'], 2)
-    shell: '''
+    output:
+        temp(
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz"
+        ),
+    threads: max(THREADS["segalign"], 2)
+    shell:
+        """
         mkdir -p {params.folder}
         parallel_cmd=""
         if [ {params.workers} -gt 1 ]; then
@@ -1000,30 +1166,38 @@ rule bleualign:
                 -l {input.translated1} \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
-        '''
+        """
+
 
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = '06_02.segalign'
-split_input_extension = '.gz'
+split_input_filename = "06_02.segalign"
+split_input_extension = ".gz"
 
 if SEGALIGN == "hunalign":
-    split_input_filename = 'hunalign.06_02.segalign'
-    split_input_extension = '.xz'
+    split_input_filename = "hunalign.06_02.segalign"
+    split_input_extension = ".xz"
+
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
-    input: lambda wildcards: [f'{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}' for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)]
-    output: batches=f'{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches'
+    input:
+        lambda wildcards: [
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}"
+            for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
+        ],
+    output:
+        batches=f"{TRANSIENT}/{LANG1}_{LANG2}/{LANG1}_{LANG2}.postprocessing_batches",
     params:
-        size=BATCHES, # use same parameter as for shards
-        folder=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}'
+        size=BATCHES,  # use same parameter as for shards
+        folder=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}",
     run:
         # We need to make this check in order to avoid the pipeline to break in the case that no input was received (e.g. no common shards)
         # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
         #  running the script, so it fails even before we are able to check if the input is empty in bash script
         if len(input) == 0:
-            shell(f'''
+            shell(
+                f"""
                 >&2 echo "INFO: no data to work with. Stopping execution"
                 touch {output}
                 # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
@@ -1035,9 +1209,11 @@ checkpoint split_segalign:
                 else
                     kill -TERM "$pid_to_kill" || exit 1
                 fi
-                ''')
+                """
+            )
         else:
-            shell('''
+            shell(
+                """
                 mkdir -p {params.folder}
                 rm -f {params.folder}/* # remove anything that might be left after a previous run
                 CAT=cat
@@ -1054,20 +1230,26 @@ checkpoint split_segalign:
                 else
                     ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
                 fi
-                ''')
+                """
+            )
+
 
 def get_postproc_batches():
     batches = []
     with checkpoints.split_segalign.get().output.batches.open() as f:
         for line in f:
-            batches.append(line.strip().split('/')[-1]) # obtain just the number of the chunks
+            batches.append(line.strip().split("/")[-1])  # obtain just the number of the chunks
     return batches
 
+
 rule bifixer:
-    input: segalign=f'{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz',
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}')
-    threads: THREADS['bifixer']
-    shell: '''
+    input:
+        segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}"),
+    threads: THREADS["bifixer"]
+    shell:
+        """
         CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
@@ -1076,12 +1258,17 @@ rule bifixer:
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
             > {output}
-        '''
+        """
+
 
 rule aggregate_bifixer:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}' for batch in get_postproc_batches()]
-    output: f'{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}" for batch in get_postproc_batches()],
+    output:
+        f"{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
 
 bicleaner_input = rules.bifixer.output
 if not BIFIXER:
@@ -1097,11 +1284,11 @@ rule bicleaner_train_model:
         vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
         vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
         dic=f"{DIC_TRAINING}",  # If DIC != DIC_TRAINING, DIC_TRAINING will be generated but not used because of this input
-                                # This input makes the dictionary to be generated (without it, statistical info would be generated but not the dic)
+        # This input makes the dictionary to be generated (without it, statistical info would be generated but not the dic)
     output:
-        model=BICLEANER_MODEL
-
-    shell: '''
+        model=BICLEANER_MODEL,
+    shell:
+        """
         training=$(mktemp {TMPDIR}/train.XXXXXXXX)
         paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
         DIR=$(dirname {BICLEANER_MODEL})
@@ -1112,14 +1299,20 @@ rule bicleaner_train_model:
         # Parameters for good/bad examples have been removed -> now the whole file is being used (https://github.com/bitextor/bicleaner/commit/cdd1bc03928701884cd42ffac4b602220ec3e732)
         {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         rm $training
-        '''
+        """
+
 
 rule bicleaner:
-    input: bifixer=bicleaner_input, model=BICLEANER_MODEL
-    output: f'{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz'
-    params: THREADS['bicleaner']
-    threads: max(2, THREADS['bicleaner'])
-    shell: '''
+    input:
+        bifixer=bicleaner_input,
+        model=BICLEANER_MODEL,
+    output:
+        f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
+    params:
+        THREADS["bicleaner"],
+    threads: max(2, THREADS["bicleaner"])
+    shell:
+        """
         parallel_cmd=""
         if [ {params} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
@@ -1138,50 +1331,72 @@ rule bicleaner:
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
-        '''
+        """
+
 
 rule aggregate_bicleaner:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{batch}.gz' for batch in get_postproc_batches()]
-    output: f'{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
+    input:
+        lambda wildcards: [
+            f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{batch}.gz" for batch in get_postproc_batches()
+        ],
+    output:
+        f"{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
 
 filter_input = rules.bicleaner.output
 if not BICLEANER:
     filter_input = rules.bicleaner.input.bifixer
 
+
 rule filter:
-    input: filter_input
-    output: temp(f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}')
+    input:
+        filter_input,
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
     run:
         cat_cmd = "cat"
         if input[0][-3:] == ".gz":
             cat_cmd = "zcat"
-        cmd = f''' {cat_cmd} {input} '''
+        cmd = f""" {cat_cmd} {input} """
         if BICLEANER:
-            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor_filterbicleaner.py --threshold {BICLEANER_THRESHOLD} '''
+            cmd += (
+                f""" | {PROFILING} python3 {WORKFLOW}/bitextor_filterbicleaner.py --threshold {BICLEANER_THRESHOLD} """
+            )
         if ELRC:
-            cmd += f''' | {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -c "{BEFORE_ELRC_FIELDS}" -s '''
-        cmd += f''' | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} ''' # sorted by either sentences or bifixer
-        cmd += f''' > {output} '''
+            cmd += f""" | {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -c "{BEFORE_ELRC_FIELDS}" -s """
+        cmd += f""" | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} """  # sorted by either sentences or bifixer
+        cmd += f""" > {output} """
         shell(cmd)
 
-rule aggregate_filter:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}' for batch in get_postproc_batches()]
-    output: f'{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}'
-    shell: ''' echo {input} | tr ' ' '\n' > {output} '''
 
-raw_input_filename = rules.filter.input[0].split('/')[-2] # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
+rule aggregate_filter:
+    input:
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}" for batch in get_postproc_batches()],
+    output:
+        f"{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
+
+raw_input_filename = rules.filter.input[0].split("/")[-2]  # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 extension = ""
 if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.segalign"]:
     extension = ".gz"
 
+
 rule raw:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}' for batch in get_postproc_batches()]
+    input:
+        lambda wildcards: [
+            f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}" for batch in get_postproc_batches()
+        ],
     output:
-        corpus=f'{PERMANENT}/{LANG1}-{LANG2}.raw.gz',
-        stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.raw'
-    shell: '''
+        corpus=f"{PERMANENT}/{LANG1}-{LANG2}.raw.gz",
+        stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.raw",
+    shell:
+        """
         if [[ {input[0]} == *.gz ]]; then
             cat {input} > {output.corpus}
         else
@@ -1194,33 +1409,44 @@ rule raw:
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
-        '''
+        """
+
 
 rule sents:
-    input: lambda wildcards: [f'{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}' for batch in get_postproc_batches()]
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.sent.gz'
-    threads: THREADS['sents']
-    shell: '''
+    input:
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+    output:
+        f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
+    threads: THREADS["sents"]
+    shell:
+        """
         LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --parallel {threads} --compress-program=gzip -T {TMPDIR} --merge {input} \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule tmx:
-    input: rules.sents.output
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz'
-    shell: '''
+    input:
+        rules.sents.output,
+    output:
+        f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz",
+    shell:
+        """
         zcat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
-        '''
+        """
+
 
 rule deduped_tmx:
-    input: rules.sents.output
+    input:
+        rules.sents.output,
     output:
-        tmx=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz',
-        txt=f'{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz',
-        stats=f'{PERMANENT}/{LANG1}-{LANG2}.stats.deduped'
-    shell: '''
+        tmx=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz",
+        txt=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz",
+        stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.deduped",
+    shell:
+        """
         zcat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
@@ -1231,17 +1457,20 @@ rule deduped_tmx:
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
-        '''
+        """
+
 
 rule roam_tmx:
     input:
         tmx=rules.tmx.output if not DEDUPED else rules.deduped_tmx.output.tmx,
-        txt=rules.sents.output if not DEDUPED else rules.deduped_tmx.output.txt
-    output: f'{PERMANENT}/{LANG1}-{LANG2}.not-deduped-roamed.tmx.gz' if not DEDUPED else f'{PERMANENT}/{LANG1}-{LANG2}.deduped-roamed.tmx.gz'
+        txt=rules.sents.output if not DEDUPED else rules.deduped_tmx.output.txt,
+    output:
+        f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped-roamed.tmx.gz" if not DEDUPED else f"{PERMANENT}/{LANG1}-{LANG2}.deduped-roamed.tmx.gz",
     params:
-        tokenizer_l1 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), "-t \"{}\""),
-        tokenizer_l2 = lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), "-T \"{}\""),
-    shell: '''
+        tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), '-t "{}"'),
+        tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), '-T "{}"'),
+    shell:
+        """
         mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
         cat {BIROAMER_MIX_FILES} > $mix_files
         nolines=$(cat $mix_files | wc -l)
@@ -1265,4 +1494,4 @@ rule roam_tmx:
             | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}
-        '''
+        """
