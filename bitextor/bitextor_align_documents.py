@@ -157,9 +157,8 @@ else:
                             documentsFile2.add(int(field_n[0]))
                             if int(fields[0]) in best_ridx2_inv and int(field_n[0]) in best_ridx2_inv[int(fields[0])]:
                                 average = (
-                                    float(best_ridx2_inv[int(fields[0])][int(field_n[0])])
-                                    + float(field_n[2])
-                                ) / 2  #
+                                    float(best_ridx2_inv[int(fields[0])][int(field_n[0])]) + float(field_n[1])
+                                ) / 2
                                 # TODO: we should implement also the product of the score/probability as
                                 # an option/parameter
                                 new_candidate_list[field_n[0]] = average
