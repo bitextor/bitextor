@@ -22,6 +22,7 @@ import requests
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
+from bitextor.utils.common import check_connection
 
 
 def system_check(cmd):
@@ -122,25 +123,10 @@ if __name__ == "__main__":
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
 
-    url = args.url
-    connection_error = False
-
-    for check in range(2):
-        try:
-            connection = requests.get(url, timeout=15)
-        except requests.exceptions.ConnectTimeout:
-            if check:
-                connection_error = True
-            else:
-                url = "https" + url[4:]
-        except BaseException:
-            if check:
-                connection_error = True
-                sys.stderr.write("WARNING: error connecting: ")
-                sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+    connection_error, fixed_url = check_connection(args.url)
 
     if not connection_error:
-        args.url = url
+        args.url = fixed_url
 
         try:
             robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
@@ -152,9 +138,9 @@ if __name__ == "__main__":
                             args.wait = str(crawldelay)
                     except ValueError:
                         pass
-        except BaseException:
-            sys.stderr.write("WARNING: Error downloading robots.txt: ")
-            sys.stderr.write(str(sys.exc_info()[0]) + "\n")
+        except BaseException as e:
+            sys.stderr.write("WARNING: Error downloading robots.txt\n")
+            sys.stderr.write(str(e) + "\n")
 
         run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)
     else:

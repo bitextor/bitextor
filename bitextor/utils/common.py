@@ -24,7 +24,7 @@ import subprocess
 import psutil
 import sys
 import os
-
+import requests
 
 class ExternalTextProcessor(object):
 
@@ -195,3 +195,24 @@ def snake_no_more_race_set(file_path, value):
 
         return True
     return False
+
+
+def check_connection(url):
+    connection_error = False
+    connection = None
+
+    for check in range(2):
+        try:
+            connection = requests.get(url, timeout=15)
+        except requests.exceptions.ConnectTimeout:
+            if check:
+                connection_error = True
+            else:
+                url = f"https{url[4:]}"
+        except BaseException as e:
+            if check:
+                connection_error = True
+                sys.stderr.write(f"WARNING: error connecting to {url}\n")
+                sys.stderr.write(str(e) + "\n")
+
+    return connection_error, url
