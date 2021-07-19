@@ -161,9 +161,41 @@ If you don't want to install all Python requirements in `requirements.txt` becau
 
 ### [Optional] Heritrix
 
-This crawler can be installed unzipping the content of this .zip, so 'bin' folder gets in the "$PATH": <https://github.com/internetarchive/heritrix3/wiki#downloads>.
-After extracting heritrix, [configure](https://github.com/internetarchive/heritrix3/wiki/Heritrix%20Configuration) it and [run](https://github.com/internetarchive/heritrix3/wiki/Running%20Heritrix%203.0%20and%203.1) the web interface.
-This dependency is also not mandatory (in Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT`).
+[Heritrix](https://github.com/internetarchive/heritrix3) is Internet Archive's web crawler. To use it in Bitextor, first download Heritrix from [here](https://github.com/internetarchive/heritrix3/wiki#downloads) and unzip the release.
+
+```bash
+# download
+wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
+unzip heritrix-3.4.0-SNAPSHOT-dist.zip
+```
+
+To use heritrix, Java has to be installed and `JAVA_HOME` environment variable must point to Java installation. `HERITRIX_HOME` environment variable must be set to the path where heritrix was unzipped. Make sure that `heritrix` binary is executable.
+
+```bash
+# configure
+export JAVA_HOME=/path/to/jdk-install-dir
+export HERITRIX_HOME=/path/to/heritrix-3.4.0-SNAPSHOT-dist
+chmod u+x $HERITRIX_HOME/bin/heritrix
+```
+
+Before running Bitextor with heritrix, Heritrix Web UI should be launched, specifying the username and the password. The URL will be `https://localhost:8443`, unless specified otherwise.
+
+```bash
+# run
+$HERITRIX_HOME/bin/heritrix -a admin:admin
+```
+
+Heritrix Web UI settings (URL and username:password), along with the installation directory should be passed to Bitextor via `heritrixUser`, `heritrixUrl` and `heritrixPath` configuration parameters.
+
+```yaml
+heritrixUser: "admin:admin"
+heritrixUrl: "https://localhost:8443"
+heritrixPath: "/path/to/heritrix-3.4.0-SNAPSHOT-dist"
+```
+
+If you experience problems with these steps or want additional information please refer to [this guide](https://heritrix.readthedocs.io/en/latest/getting-started.html).
+
+In Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT` and is not running by default, i.e. it should be launched manually before executing Bitextor crawling with Heritrix.
 
 ### [Optional] Protobuf
 
