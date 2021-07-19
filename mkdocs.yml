@@ -6,9 +6,14 @@ site_author: Bitextor Team
 
 repo_url: https://github.com/bitextor/bitextor/
 
+theme:
+    name: readthedocs
+    nav_style: dark
+
 nav:
     - Home: 'README.md'
     - Installation: 'INSTALL.md'
+    - Configuration: 'CONFIG.md'
 
 markdown_extensions:
     - toc:

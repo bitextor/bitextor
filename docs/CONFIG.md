@@ -44,14 +44,8 @@ parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
 profiling: true
 ```
 
-* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule
-
-  > Allowed values: `{crawl, preprocess, shard, split, translate, tokenise_src, tokenise_trg, docalign, segalign, bifixer, bicleaner, filter}`
-
-* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job
-
-  > Allowed values: `{split, translate, tokenise_src, tokenise_trg, docalign, segalign, bifixer, bicleaner, sents}`
-
+* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`
+* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. Allowed values: `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `sents`
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 
 ## Data sources
@@ -67,13 +61,9 @@ warcs: ["/path/to/a.warc.gz", "/path/to/b.warc.gz"]
 warcsFile: ~warcs.gz
 ```
 
-* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path
-
-  > For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
-
+* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
 * `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.
-* `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use
-  > WARC files must contain individually compressed records
+* `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use; WARC files must contain individually compressed records
 * `warcsFile`: a path to a file that contains a list of WARC files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 
 ## Crawling
@@ -106,7 +96,7 @@ crawlerConnectionTimeout: 10
 * `crawlCatMaxSize`: **linguacrawl-specific option** that allows to specify a max. size of the merged WARC. If this option is specified, multiple WARCs will be generated where the retrieved WARCs will be being merged, and new WARCs will be used when the max. size has been reached. The unity being used is the byte, so if we want a max. size of 1 KiB, the value which we should set would be 1024
 * `crawlMaxFolderTreeDepth`: **linguacrawl-specific option** that allows to specify the max. folder depth for a URL to be taken into account
 * `crawlScoutSteps`: **linguacrawl-specific option** that allows to specify the number of documents to be downloaded from a web-site before the scouting criterion is evaluated (one of the most important features of `linguacrawl` is the scout strategy that implements in order to be as efficient as possible)
-* `crawlBlackListURL`: **linguacrawl-specific option** that allows to specify a list of domains which will not be taken into account (i.e. they will not be crawled). The default value is: 'wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram'
+* `crawlBlackListURL`: **linguacrawl-specific option** that allows to specify a list of domains which will not be taken into account (i.e. they will not be crawled). The default value is: `['wordpress', 'blogspot', 'facebook', 'google', 'wikipedia', 'youtube', 'perehodi', 'twitter', 'instagram']`
 * `crawlPrefixFilter`: **linguacrawl-specific option** that allows to avoid resources which begins with a concrete pattern and we know, previously, that is not going to give us useful information
 
 If you want to also crawl PDFs (only `wget` support for now), use these settings:
@@ -162,7 +152,7 @@ If `linguacrawl` is used, a YAML file is created on the fly in order to use it a
 
 After crawling, the downloaded webs are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
 
-After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs. Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contins one or more complete domain(s). Shards are split into batches of specified size to keep memory consumption in check. Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
+After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs. Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contains one or more complete domain(s). Shards are split into batches of specified size to keep memory consumption in check. Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
 
 ```yaml
 # preprocessing
@@ -181,17 +171,15 @@ shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
 ```
 
-* `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`
-  > `warc2text` is faster but less flexibile (less options) than `warc2preprocess`
+* `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`. `warc2text` is faster but less flexibile (less options) than `warc2preprocess`
 * `langs`: list of languages that will be processed in addition to `lang1` and `lang2`
 
 Options specific to `warc2preprocess`:
 
-* `langID`: specify the model that should be used for language identification, [`cld2`](https://github.com/CLD2Owners/cld2) (default) or [`cld3`](https://github.com/google/cld3)
-  > `cld2` is faster, but `cld2` can be more accurate for certain languages
-* `ftfy`: **warc2preprocess specific** ftfy is a tool that solves encoding errors (disabled by default)
+* `langID`: specify the model that should be used for language identification, [`cld2`](https://github.com/CLD2Owners/cld2) (default) or [`cld3`](https://github.com/google/cld3); `cld2` is faster, but `cld3` can be more accurate for certain languages
+* `ftfy`: ftfy is a tool that solves encoding errors (disabled by default)
 * `cleanHTML`: attempt to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow, in order to improve overall speed; this has an unwanted side effect of removing too much content if the HTML document is malformed (disabled by default)
-* `html5lib`: extra parsing with `html5lib`, which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
+* `html5lib`: extra parsing with [`html5lib`](https://pypi.org/project/html5lib/), which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
 * `boilerpipeCleaning`: enable [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents (disabled by default)
 * `parser`: option that selects HTML parsing library for text extraction, [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
 * `PDFextract`: use [PDFExtraxt](https://github.com/bitextor/python-pdfextract) instead of poppler `pdf2html` converter
@@ -202,10 +190,9 @@ Options specific to `warc2preprocess`:
 
 Sharding options:
 
-* `shards`: set number of shards, where a value of 'n' will result in 2^n shards; default is 8 (2^8 shards)
-  > `shards: 0` will force all domains to be compared for alignment
-* `batches`: batch size in MB; default is 1024
-  > large batches will increase memory consumption during document alignment, but will reduce time overhead
+* `shards`: set number of shards, where a value of 'n' will result in 2^n shards; default is 8 (2^8 shards). `shards: 0` will force all domains to be compared for alignment
+
+* `batches`: batch size in MB; default is 1024. Large batches will increase memory consumption during document alignment, but will reduce time overhead
 
 ## Sentence splitting
 
@@ -287,7 +274,8 @@ This variable must contain one or more **corpus prefixes**. For a given prefix (
 
 ```yaml
 mkcls: true
-``` -->
+```
+-->
 
 ### Using external MT
 
@@ -297,13 +285,13 @@ translationDirection: "es2en"
 documentAlignerThreshold: 0.1
 ```
 
-* `alignerCmd`: command to call the external MT script
+* `alignerCmd`: command to call the external MT script; the MT system must read documents (one sentence per line) from standard input, and write the translation, with the **same number of lines**, to standard output
 * `translationDirection`: the direction of the translation system, specified as '`srcLang`2`trgLang`'; default is lang1->lang2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
 
 ## Segment alignment
 
-After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using [hunalign](http://mokk.bme.hu/resources/hunalign/) or [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using [hunalign](https://github.com/bitextor/hunalign) or [bleualign](https://github.com/bitextor/bleualign-cpp). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
 
 ```yaml
 sentenceAligner: bleualign
@@ -327,8 +315,7 @@ bicleanerThreshold: 0.6
 ```
 
 * `bicleaner`: path to the YAML configuration file of a pre-trained model
-* `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering)
-  > it is recommended to set it to values in [0.5,0.7]
+* `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
 If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
 
@@ -337,12 +324,7 @@ initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 
-* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model
-  > if `dic` is provided and does not exist, it will be generated;
-  >
-  > if `dic` is provided and eixts, it should not be replaced, and '`dic`.generated' will be created;
-  >
-  > if `hunalign` is used, the provided `dic` will be prioritised instead of the generated one
+* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model. If `dic` is provided and does not exist, it will be generated; if `dic` is provided and eixts, it should not be replaced, and '`dic`.generated' will be created. If `hunalign` is used, the provided `dic` will be prioritised instead of the generated one
 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 
@@ -366,8 +348,7 @@ biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
 deferred: false
 ```
 
-* `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal
-<!-- When using `bifixer: true` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
+* `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal <!-- When using `bifixer: true` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
 * `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
