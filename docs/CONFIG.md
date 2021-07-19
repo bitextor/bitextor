@@ -7,7 +7,7 @@ Bitextor uses a configuration file to define the variables required by the pipel
 Current pipeline constists of the following steps:
 
 * Crawling
-* Preprocessing
+* Plain text extraction
 * Sharding
 * Sentence splitting
 * Translation
@@ -18,21 +18,21 @@ Current pipeline constists of the following steps:
 
 Following is a description of configuration related to each step, as well as basic variables.
 
-## Basic variables
+## Data storage
 
-There are a few variables that are mandatory for running Bitextor, independently of the task to be carried out:
+There are a few variables that are mandatory for running Bitextor, independently of the task to be carried out, namely the ones related to where final & intermediate files should be stored.
 
 ```yaml
-permanentDir: /home/user/permanent/bitextor-output
-dataDir: /home/user/permanent/data
-transientDir: /home/user/transient
-tempDir: /home/user/transient
-
-profiling: true
+permanentDir: ~/permanent/bitextor-output
+dataDir: ~/permanent/data
+transientDir: ~/transient
+tempDir: ~/transient
 ```
 
-* `permanentDir`, `transientDir`, `tempDir` and `dataDir` are the folders used during processing. `permanentDir` will contain the final results of the run, i.e. the parallel corpus built; `dataDir` will contain the results of crawling (WARC files) and files generated during preprocessing;`transientDir` will contain the result of every step of the pipeline, and `tempDir` will contain temporary files that are needed by some steps and removed immediately after they are no longer required.
-* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
+* `permanentDir`: will contain the final results of the run, i.e. the parallel corpus built
+* `dataDir`: will contain the results of crawling (WARC files) and files generated during preprocessing (plain text extraction, sharding, sentence splitting, tokenisation and translation), i.e. every step up to document alignment
+* `transientDir`: will contain the results of intermediate steps related to document and sentence alignment, as well as cleaning
+* `tempDir`: will contain temporary files that are needed by some steps and removed immediately after they are no longer required
 
 ### Workflow execution
 
@@ -41,26 +41,39 @@ There are some optional parameters that allow for a finer control of the executi
 ```yaml
 until: preprocess
 parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
+profiling: true
 ```
 
-* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values are: {`crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`}.
-* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. The jobs that can be executed in parallel in this way are: {`split`, `translate`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `sents`}.
+* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule
+
+  > Allowed values: `{crawl, preprocess, shard, split, translate, tokenise_src, tokenise_trg, docalign, segalign, bifixer, bicleaner, filter}`
+
+* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job
+
+  > Allowed values: `{split, translate, tokenise_src, tokenise_trg, docalign, segalign, bifixer, bicleaner, sents}`
+
+* `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 
 ## Data sources
 
-The next set of options refer to the source from which data will be crawled. Three options can be specified for crawling: one is to specify a list of websites to be crawled in the config file, another one is defining a list of websites in a separated gzipped file, while the last one is to provide a *langstat* file (see below) containing language statistics regarding the documents in one or more websites, so promising websites can be identified.
+The next set of option srefer to the source from which data will be harvested. It is possible to specify a list of websites to be crawled and/or a list of [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files that contain pre-crawled websites.
+Both can be specified either via a list of source directly in the config file, or via a separated gzipped file that contains one source per line.
 
 ```yaml
 hosts: ["www.elisabethtea.com","vade-antea.fr"]
-hostsFile: /home/user/hosts.gz
+hostsFile: ~/hosts.gz
 
-warcs: ["/home/user/a.warc.gz", "/home/user/b.warc.gz"]
-warcsFile: /home/user/warcs.gz
+warcs: ["/path/to/a.warc.gz", "/path/to/b.warc.gz"]
+warcsFile: ~warcs.gz
 ```
 
-* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, this is, the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
+* `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path
+
+  > For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
+
 * `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.
-* `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use. This option allows to  a define a list of gz compressed WARC files (each record compressed individually), which will be used to extract parallel data.
+* `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use
+  > WARC files must contain individually compressed records
 * `warcsFile`: a path to a file that contains a list of WARC files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 
 ## Crawling
@@ -147,7 +160,9 @@ If `linguacrawl` is used, a YAML file is created on the fly in order to use it a
 
 ## Preprocessing and sharding
 
-After crawling, the downloaded web are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out. After preprocessing, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard).
+After crawling, the downloaded webs are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
+
+After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs. Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contins one or more complete domain(s). Shards are split into batches of specified size to keep memory consumption in check. Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
 
 ```yaml
 # preprocessing
@@ -166,25 +181,37 @@ shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
 ```
 
-* `preprocessor`: this options allows to select one of two text extraction tools. Options: `warc2preprocess` and `warc2text`. `warc2text` is the default option, it is faster but currently unable to process PDFs.
-* `langs`: a list of languages that will be processed during the preprocessing step. When this option is empty, only LANG1 and LANG2 will be processed during this step. NOTE: if `warc2text`is enabled, every language will be processed, but only languages specified in `langs` will move on to sentence splitting
-* `langID`: specify the model that should be used for language identification. Options are [`cld2`](https://github.com/CLD2Owners/cld2) (default) and [`cld3`](https://github.com/google/cld3). Note that `cld2` is faster, but `cld3` can be more accurate for certain languages. `warc2text` uses `cld2`
-* `ftfy`: ftfy is a tool that solves encoding errors. Disabled by default
-* `cleanHTML`: cleaning HTML takes place before parsing, and the point of this step is to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow. This has an unwanted side effect of removed too much content if the HTML document is malformed. So, enable this step if you want to gain time at the risk of losing some text
-* `html5lib`: extra parse with `html5lib`, which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs.
-* `boilerpipeCleaning`: option that enables the use of the tool [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents; by default this is disabled. NOTE: this option does not do anything with `warc2text: true`
-* `parser`: option that selects HTML parsing library for text extraction; Options are ['bs4'](https://www.crummy.com/software/BeautifulSoup/bs4/doc/), ['modest'](https://github.com/rushter/selectolax), 'lxml' (which uses `html5lib` parsed tree to recursively extract text from tags, so it forces the `html5lib` option) or 'simple', which is an HTML tokenizer built with [HTMLParser](https://docs.python.org/3/library/html.parser.html). NOTE: does not do anything `warc2text: true`
-* `PDFextract`: set to 'true' to use it instead of system native poppler `pdf2html` converter
+* `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`
+  > `warc2text` is faster but less flexibile (less options) than `warc2preprocess`
+* `langs`: list of languages that will be processed in addition to `lang1` and `lang2`
+
+Options specific to `warc2preprocess`:
+
+* `langID`: specify the model that should be used for language identification, [`cld2`](https://github.com/CLD2Owners/cld2) (default) or [`cld3`](https://github.com/google/cld3)
+  > `cld2` is faster, but `cld2` can be more accurate for certain languages
+* `ftfy`: **warc2preprocess specific** ftfy is a tool that solves encoding errors (disabled by default)
+* `cleanHTML`: attempt to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow, in order to improve overall speed; this has an unwanted side effect of removing too much content if the HTML document is malformed (disabled by default)
+* `html5lib`: extra parsing with `html5lib`, which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
+* `boilerpipeCleaning`: enable [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents (disabled by default)
+* `parser`: option that selects HTML parsing library for text extraction, [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
+* `PDFextract`: use [PDFExtraxt](https://github.com/bitextor/python-pdfextract) instead of poppler `pdf2html` converter
 * `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
 * `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
 * `PDFextract_kenlm_path`: set path for kenlm binaries
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
-* `shards`: domains and WARCs are distributed in shards for a more balanced processing, and all documents in a shard will be compared for document alignment. Each shard contain one or more complete domains/WARCs. The parameter sets the number os shards (as 'n' in 2^n), being 8 the default (2^8 shards). If you set it to zero with `shards: 0` it will be forcing all domains and WARCs provided to Bitextor to be compared for alignment.
-* `batches`: shards are split into batches for parallelization. These batches can divide a domain or WARC, so this is only used in steps that can work with this division, like document aligner. This configuration parameter set the batch size in MB, being 1024 by default.
+
+Sharding options:
+
+* `shards`: set number of shards, where a value of 'n' will result in 2^n shards; default is 8 (2^8 shards)
+  > `shards: 0` will force all domains to be compared for alignment
+* `batches`: batch size in MB; default is 1024
+  > large batches will increase memory consumption during document alignment, but will reduce time overhead
 
 ## Sentence splitting
 
 By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/project/sentence-splitter/) will be used for sentence splitting. This is recommened even without language support, since it is possible to provide custom non-breaking prefixes. External sentence splitter can by used via `sentence-splitters` parameter (less efficient).
+
+Custom sentence splitters must read plain text documents from standard input and write one sentence per line to standard output.
 
 ```yaml
 sentenceSplitters: {
@@ -197,12 +224,14 @@ customNBPs: {
 }
 ```
 
-* `sentenceSplitters`: scripts for sentence splitting. All the scripts must read from the standard input and write to the standard output. When not specified, [python Moses](https://pypi.org/project/sentence-splitter) will be used.
-* `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter. See their format by checking the [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes).
+* `sentenceSplitters`: provide custom scripts for sentence segmentation per language, script specified under `default` will be applied to all lanuages
+* `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter; see [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes) for examples
 
 ### Tokenisation
 
 [Moses `tokenizer.perl`](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) is the default tokeniser, which is used through an efficient Python wrapper. This is the recommended option unless a language is not supported.
+
+Custom scripts for tokenisation must read sentences from standard input and write the same number of tokenised sentences to standard output.
 
 ```yaml
 wordTokenizers: {
@@ -215,7 +244,7 @@ morphologicalAnalysers: {
 }
 ```
 
-* `wordTokenizers`: scripts for word-tokenization. These scripts must read from the standard input and write to the standard output.
+* `wordTokenizers`: scripts for word-tokenization per language, `default` script will be applied to all languages
 * `morphologicalAnalysers`: scripts for morphological analysis (lemmatizer/stemmer). It will only be applied to specified languages after tokenisation, or all of them if `default` script is also provided.
 
 ## Document alignment
@@ -235,11 +264,8 @@ documentAligner: externalMT
 
 The variable `documentAligner` can take two different values, each of them taking a different document-alignment strategy:
 
-<!-- The variable `documentAligner` can take three different values, each of them taking a different document-alignment strategy: -->
-
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor.
+* `DIC`: takes the strategy using bilingual lexica and a linear regressor
 * `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
-<!-- * `NMT`: uses parallel data to train a neural MT (NMT) system that is then used for document alignment -->
 
 ### Using bilingual lexica
 
@@ -253,15 +279,15 @@ Option `dic` specifies the path to the bilingual lexicon to be used for document
 initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 
-This variable must contain one or more **corpus prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file `prefix`.`lang1` and another `prefix`.`lang2` (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
+This variable must contain one or more **corpus prefixes**. For a given prefix (`/home/user/training` in the example) the pipeline expects to find one file '`prefix`.`lang1`' and another '`prefix`.`lang2`' (in the example, `/home/user/Europarl.en-fr.train.en` and `/home/user/Europarl.en-fr.train.fr`). If several training prefixes are provided, the corresponding files will be concatenated before building the bilingual lexicon.
 
 **Suggestion**: a number of pre-built bilingual lexica is available in the repository [bitextor-data](https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0). It is also possible to use other lexica already available, such as those in [OPUS](http://opus.nlpl.eu/), as long as their format is the same as those in the repository.
 
-If you are running out of memory in the `mkcls` rule, maybe you should activate original `mkcls` binary instead of `clustercat` interface using:
+<!-- If you are running out of memory in the `mkcls` rule, maybe you should activate original `mkcls` binary instead of `clustercat` interface using:
 
 ```yaml
 mkcls: true
-```
+``` -->
 
 ### Using external MT
 
@@ -272,32 +298,37 @@ documentAlignerThreshold: 0.1
 ```
 
 * `alignerCmd`: command to call the external MT script
-* `translationDirection`: the direction of the translation system, default is lang1->lang2
+* `translationDirection`: the direction of the translation system, specified as '`srcLang`2`trgLang`'; default is lang1->lang2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
 
 ## Segment alignment
 
-After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using the tool [hunalign](http://mokk.bme.hu/resources/hunalign/) or the tool [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
+After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using [hunalign](http://mokk.bme.hu/resources/hunalign/) or [bleualign](https://github.com/rsennrich/Bleualign). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
 
 ```yaml
 sentenceAligner: bleualign
 sentenceAlignerThreshold: 0.1
 ```
 
-* `sentenceAligner`: segment aligner tool which is going to be used. Default is `bleualign`, but `hunalign` can be used in order to achieve a dictionary-based alignment. If `bleualign` is used, `documentAligner: externalMT` is mandatory, but in the case of `hunalign`, both `externalMT` and `DIC` are allowed as document aligner.
-* `sentenceAlignerThreshold`: score threshold for filtering pairs of sentences with a score too low. The value should be set to a value in [0,1] (both `bleualign` and `hunalign`). The default value is 0.0.
+* `sentenceAligner`: segment aligner tool, `bleualign` or `hunalign`
+* `sentenceAlignerThreshold`: threshold for filtering pairs of sentences with a score too low, values in [0,1] range; default is 0.0
 
 ## Parallel data filtering
 
-Parallel data filtering is carried out with the tool [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score (learn more about Bicleaner [here](https://github.com/bitextor/bicleaner)). The options required to make it work are:
+Parallel data filtering is carried out with [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score.
+
+A number of pre-trained models for Bicleaner are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed.
+
+The options required to make it work are:
 
 ```yaml
 bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
 
-* `bicleaner`: path to the YAML configuration file of a pre-trained model. A number of pre-trained models are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed
-* `bicleanerThreshold`: threshold for the confidence score obtained with bitextor to filter low-confidence segment pairs. It is recommended to set it to values in [0.5,0.7], even though it is set to 0.0 by default
+* `bicleaner`: path to the YAML configuration file of a pre-trained model
+* `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering)
+  > it is recommended to set it to values in [0.5,0.7]
 
 If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
 
@@ -306,14 +337,20 @@ initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 
-* `initCorpusTrainingPrefix`: prefix to parallel corpus (see section *Variables for document alignment using bilingual lexica*) that will be used to train statistical dictionaries which are part of the Bicleaner model. This option affects and is affected by `dic` config option, which in case that provided `dic` does not exist, a new one will be generated; in case that provided `dic` does exist, should not be replaced (it does might!) but a new one would be generated and stored in "`dic`.generated". If `sentenceAligner: hunalign` is being used and this situation happens, the provided and existant `dic` will be used in the main pipeline while the new dictionary will only be used in order to train the Bicleaner model
+* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model
+  > if `dic` is provided and does not exist, it will be generated;
+  >
+  > if `dic` is provided and eixts, it should not be replaced, and '`dic`.generated' will be created;
+  >
+  > if `hunalign` is used, the provided `dic` will be prioritised instead of the generated one
+
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 
 It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
 
 ## Post-processing
 
-Some other options can be configured to specify the output format of our corpus:
+Some other options can be configured to specify the output format of the parallel corpus:
 
 ```yaml
 bifixer: true
@@ -327,19 +364,17 @@ biroamerOmitRandomSentences: true
 biroamerMixFiles: ["/home/user/file-tp-mix1", "/home/user/file-to-mix2"]
 biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
 deferred: false
-
 ```
 
-* `bifixer`: if this option is set, [Bifixer](https://github.com/bitextor/bifixer) is used to fix parallel sentences and tag near-duplicates for removal. When using `bifixer: true`
-<!-- it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
-* `elrc`: if this option is set, some ELRC quality indicators are added to the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
-* `tmx`: if this option is set, the output corpus is formatted as a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory
-* `deduped`: if this option is set in conjunction with `tmx`, the resulting TMX will not contain repeated segment pairs; if a segment pair is found in more than one pair of documents, it will be provided with more than two URLs, so it is possible to know in which original URLs it appeared
-
-* `biroamer`: through this option, ROAM (randomize, omit, anonymize and mix) feature is enabled, using [Biroamer](https://github.com/bitextor/biroamer). In order to use this `tmx: true` or `deduped: true` will be necessary
-* `biroamerOmitRandomSentences`: in order to omit random sentences, this option can be used. The quantity of sentences removed are close to 10% of the original TMX
-* `biroamerMixFiles`: when it is necessary to add external sentences to improve anonymization, this option accepts a list of files which will add the stored sentences. The files are expected to be in morse format, and those files will be concatenated
-* `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection. The corpus file is exteced to be in morse format.
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum.
+* `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal
+<!-- When using `bifixer: true` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
+* `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
+* `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
+* `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
+* `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this `tmx: true` or `deduped: true` will be necessary
+* `biroamerOmitRandomSentences`: omit close to 10% of the tmx corpus
+* `biroamerMixFiles`: use extra sentences to improve anonymization, this option accepts a list of files which will add the stored sentences, the files are expected to be in Moses format
+* `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection; expected to be in Moses format.
+* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool.

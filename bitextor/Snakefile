@@ -411,7 +411,6 @@ if "until" not in config:
     OUTPUT = expand(
         "{permanent}/{lang1}-{lang2}.{output_file}.gz",
         permanent=PERMANENT,
-        target=TARGETS,
         lang1=LANG1,
         lang2=LANG2,
         output_file=OUTPUT_FILES,
