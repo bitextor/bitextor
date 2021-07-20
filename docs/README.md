@@ -56,6 +56,58 @@ Bitextor uses a configuration file to define the variables required by the pipel
 
 **Suggestion**: A minimalist [configuration file sample](config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
 
+## Bitextor output
+
+Bitextor generates the final parallel corpora in multiple formats. These files will be placed in `permanentDir` folder and will have the following format: `{lang1}-{lang2}.{prefix}.gz`, where `{prefix}` corresponds to a descriptor of the corresponding format.
+
+### Default
+
+The files that will be always generated (regardless of configuration) are `{lang1}-{lang2}.raw.gz` and `{lang1}-{lang2}.sent.gz`. These files come in Moses format, i.e. tab-separated columns.
+
+* `{lang1}-{lang2}.raw.gz`: parallel corpus that contains every aligned sentences,this file has **no de-duplication** and the sentences are **not filtered**.
+
+  The columns in this file are `url1 url2 sent1 sent2 aligner_score`, where:
+
+  * `sent1` and `sent2` correspond to the sentence pair in `lang1` and `lang2`
+  * `url1` and `url2` correspond to the source documents of the sentences
+  * `aligner_score` is the score given to the pair by the sentence aligner (bleualign or hunalign)
+
+  This file comes accompanied by the corresponding statistics file `{lang1}-{lang2}.stats.raw`, which provides information the size of the corpus in MB and in number of  tokens.
+
+* `{lang1}-{lang2}.sent.gz`: parallel corpus after adding **deferred** checksums, running **Bifixer**, filtering using **Bicleaner** with the specified threshold, adding **ELRC** metrics, and **sorted** to have the duplicate or (near-duplicate) sentences together.
+
+    In this case, the columns depend largely on the configuration of Bitextor, so the columns corresponding to the steps that were not enabled will be omitted in this file.
+
+    The possible columns that may appear in this file are (in this order):
+
+  1. default: `url1 url2 sent1 sent2 aligner_score`
+  2. deferred: `deferred_checksum1 deferred_checksum2`
+      * these fields may be used to reconstruct the original corpus using [Deferred crawling reconstructor](https://github.com/bitextor/deferred-crawling)
+  3. bifixer: `bifixer_hash bifixer_score`
+      * `bifixer_hash` tags duplicate or near-duplicate sentences
+      * `bifixer_score` rates quality of duplicate or near-duplicate sentences
+  4. bicleaner: `bicleaner_score`
+      * quality score given to the sentence pair by Bicleaner
+  5. elrc: `length_ratio num_tokens_src num_tokens_trg`
+      * `num_tokens_src` is the number of tokens in source sentence
+      * `num_tokens_trg` is the number of tokens in target sentence
+      * `length_ratio` is the ratio between the two (source divided by target)
+
+### TMX
+
+* `{lang1}-{lang2}.not-deduped.tmx`
+
+### De-duplication
+
+* `{lang1}-{lang2}.deduped.tmx`
+* `{lang1}-{lang2}.deduped.txt`
+* `{lang1}-{lang2}.stats.deduped`
+
+### Biroamer
+
+* `{lang1}-{lang2}.deduped-roamed.tmx`
+* `{lang1}-{lang2}.not-deduped-roamed.tmx`
+
 ## Pipeline description
 
 Bitextor is a pipeline that runs a collection of scripts to produce a parallel corpus from a collection of multilingual websites. The pipeline is divided in five stages:
