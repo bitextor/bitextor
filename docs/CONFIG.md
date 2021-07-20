@@ -191,7 +191,6 @@ Options specific to `warc2preprocess`:
 Sharding options:
 
 * `shards`: set number of shards, where a value of 'n' will result in 2^n shards; default is 8 (2^8 shards). `shards: 0` will force all domains to be compared for alignment
-
 * `batches`: batch size in MB; default is 1024. Large batches will increase memory consumption during document alignment, but will reduce time overhead
 
 ## Sentence splitting
