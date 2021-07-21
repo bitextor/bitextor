@@ -328,9 +328,9 @@ if "biroamer" in config and config["biroamer"]:
     BIROAMER = True
 
     if "deduped.tmx" in OUTPUT_FILES:
-        OUTPUT_FILES.append("deduped-roamed.tmx")
+        OUTPUT_FILES.append("deduped.roamed.tmx")
     else:
-        OUTPUT_FILES.append("not-deduped-roamed.tmx")
+        OUTPUT_FILES.append("not-deduped.roamed.tmx")
 
     if "biroamerMixFiles" in config and len(config["biroamerMixFiles"]) > 0:
         BIROAMER_MIX_FILES = " ".join(config["biroamerMixFiles"])
@@ -1437,12 +1437,22 @@ rule deduped_tmx:
         """
 
 
+roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.roamed.tmx.gz"
+roam_tmx_input = rules.tmx.output
+roam_txt_input = rules.sents.output
+
+if DEDUPED:
+    roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.deduped.roamed.tmx.gz"
+    roam_tmx_input = rules.deduped_tmx.output.tmx
+    roam_txt_input = rules.deduped_tmx.output.txt
+
+
 rule roam_tmx:
     input:
-        tmx=rules.tmx.output if not DEDUPED else rules.deduped_tmx.output.tmx,
-        txt=rules.sents.output if not DEDUPED else rules.deduped_tmx.output.txt,
+        tmx=roam_tmx_input,
+        txt=roam_txt_input,
     output:
-        f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped-roamed.tmx.gz" if not DEDUPED else f"{PERMANENT}/{LANG1}-{LANG2}.deduped-roamed.tmx.gz",
+        roam_tmx_output,
     params:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), '-t "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), '-T "{}"'),
