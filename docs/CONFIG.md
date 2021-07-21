@@ -34,7 +34,7 @@ tempDir: ~/transient
 * `transientDir`: will contain the results of intermediate steps related to document and sentence alignment, as well as cleaning
 * `tempDir`: will contain temporary files that are needed by some steps and removed immediately after they are no longer required
 
-### Workflow execution
+## Workflow execution
 
 There are some optional parameters that allow for a finer control of the execution of the pipeline, namely it is possible to configure some jobs to use more than one core; and it is possible to have a partial execution of Bitextor by specifying what step should be final.
 
@@ -213,7 +213,7 @@ customNBPs: {
 * `sentenceSplitters`: provide custom scripts for sentence segmentation per language, script specified under `default` will be applied to all lanuages
 * `customNBPs`: provide a set of files with custom Non-Breaking Prefixes for the default sentence-splitter; see [already existing files](https://github.com/berkmancenter/mediacloud-sentence-splitter/tree/develop/sentence_splitter/non_breaking_prefixes) for examples
 
-### Tokenisation
+## Tokenisation
 
 [Moses `tokenizer.perl`](https://github.com/moses-smt/mosesdecoder/blob/master/scripts/tokenizer/tokenizer.perl) is the default tokeniser, which is used through an efficient Python wrapper. This is the recommended option unless a language is not supported.
 

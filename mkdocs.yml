@@ -14,6 +14,7 @@ nav:
     - Home: 'README.md'
     - Installation: 'INSTALL.md'
     - Configuration: 'CONFIG.md'
+    - Output: 'OUTPUT.md'
 
 markdown_extensions:
     - toc:
