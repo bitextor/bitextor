@@ -69,7 +69,7 @@ Bitextor generates the final parallel corpora in multiple formats. These files w
 * `{lang1}-{lang2}.not-deduped.roamed.tmx.gz` - generated `biroamer: true`, `tmx: true`
 and `dedup: false`
 
-See [detailed description](OUTPUT.md) about output files.
+See [detailed description](OUTPUT.md) of the output files.
 
 ## Pipeline description
 
