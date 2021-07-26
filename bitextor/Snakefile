@@ -750,7 +750,7 @@ rule warc2preprocess:
 rule warc2text:
     """
     Process a list of WARCs (or a single WARC)
-        and produce {text,mime,url}.gz and optinally html.gz
+        and produce {text,mime,url}.gz and optionally html.gz
     """
     input:
         get_pproc_input,
@@ -785,7 +785,7 @@ rule warc2text:
 # DAG will be re-evaluated after completing shard rule (because number of batches is dynamic and unknown)
 checkpoint shard:
     """
-    Use giashard to shard of the warc2text/warc2preprocess output to balance jobs
+    Use giashard to shard the output of warc2text/warc2preprocess to balance jobs
     :input: output of the preprocessing rules
     :output: a plain text files that contains the list of every batch generated
         (i.e. each line has a path to a batch folder)
@@ -837,9 +837,9 @@ checkpoint shard:
 rule split:
     """
     Use sentence splitter to obtain sentences from the plain text file
-    :input: gz-compressed file with base64 document per line
-        document is the plain text extract by the preprocess
-    :output: gz-compressed file with base64 document per line
+    :input: gz-compressed file with a base64-encoded document per line
+        document is the plain text extracted by the preprocess
+    :output: gz-compressed file with a base64-encoded document per line
         output must have the same number of lines as the input (i.e. same number of docs)
     """
     input:
@@ -871,7 +871,7 @@ rule aggregate_split:
     """
     Helper rule to implement until=split config
     :input: the result of every split rule
-    :output: a file that contains the path of the output of every split rule per lang
+    :output: a file that contains the path tp the output of every split rule per lang
     """
     input:
         lambda wildcards: [f"{batch}/sentences.gz" for batch in get_batches(wildcards.lang)],
@@ -887,7 +887,7 @@ rule aggregate_matches:
     """
     Helper rule to implement until=docalign config
     :input: the result of every docalign result
-    :output: a file that contains the path of the output of every matches file
+    :output: a file that contains the path to the output of every matches file
     """
     input:
         lambda wildcards: [
@@ -904,11 +904,11 @@ rule aggregate_matches:
 rule custom_translate:
     """
     Translate source documents into target language (according to translationDirection)
-    :input: gz-compressed file with base64 document per line
+    :input: gz-compressed file with a base64-encoded document per line
         the documents are the output of sentence splitting
-    :output: gz-compressed file with base64 translated document per line
+    :output: gz-compressed file with a base64-encoded translated document per line
         output must have the same number of lines as the input (i.e. same number of docs)
-        each line (document) must have the same number of lines after b64decoding before and after translation
+        each translated document must have the same number of lines as the source
     """
     input:
         source=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
@@ -941,7 +941,7 @@ rule aggregate_translate:
     """
     Helper rule to implement until=translate config
     :input: the result of every translate rule
-    :output: a file that contains the path of the output of every translate rule per lang
+    :output: a file that contains the path to the output of every translate rule per lang
     """
     input:
         lambda wildcards: [f"{batch}/sentences_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
@@ -954,11 +954,11 @@ rule aggregate_translate:
 rule tokenise_translated:
     """
     Tokenise the output of translation rule to feed into mt-docalign
-    :input: gz-compressed file with base64 document per line
+    :input: gz-compressed file with a base64-encoded document per line
         the documents are the output of translation
-    :output: gz-compressed file with base64 translated and tokenised document per line
+    :output: gz-compressed file with a base64-encoded translated and tokenised document per line
         output must have the same number of lines as the input (i.e. same number of docs)
-        each line (document) must have the same number of lines after b64decoding before and after translation
+        each tokenised document must have the same number of lines as the source
     """
     input:
         rules.custom_translate.output,
@@ -985,11 +985,11 @@ rule tokenise_translated:
 rule tokenise_target:
     """
     Tokenise the target side documents to feed into mt-docalign or dic-docalign
-    :input: gz-compressed file with base64 document per line
+    :input: gz-compressed file with a base64-encoded document per line
         the documents are the output of sentence splitting
-    :output: gz-compressed file with base64 tokenised document per line
+    :output: gz-compressed file with a base64-encoded tokenised document per line
         output must have the same number of lines as the input (i.e. same number of docs)
-        each line (document) must have the same number of lines after b64decoding before and after translation
+        each tokenised document must have the same number of lines as the source
     """
     input:
         f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
@@ -1016,11 +1016,11 @@ rule tokenise_target:
 rule tokenise_source:
     """
     Tokenise the source side documents to feed into dic-docalign
-    :input: gz-compressed file with base64 document per line
+    :input: gz-compressed file with a base64-encoded document per line
         the documents are the output of sentence splitting
-    :output: gz-compressed file with base64 tokenised document per line
+    :output: gz-compressed file with a base64-encoded tokenised document per line
         output must have the same number of lines as the input (i.e. same number of docs)
-        each line (document) must have the same number of lines after b64decoding before and after translation
+        each tokenised document must have the same number of lines as the source
     """
     input:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
@@ -1048,7 +1048,7 @@ rule aggregate_tokenise_target:
     """
     Helper rule to implement until=tokenise_trg config
     :input: the result of every tokenise_target rule
-    :output: a file that contains the path of the output of every tokenise_target rule
+    :output: a file that contains the path to the output of every tokenise_target rule
     """
     input:
         lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(TRG_LANG)],
@@ -1062,7 +1062,7 @@ rule aggregate_translate_tokenise_source:
     """
     Helper rule to implement until=tokenise_src config
     :input: the result of every tokenise_translated rule
-    :output: a file that contains the path of the output of every tokenise_translated rule
+    :output: a file that contains the path to the output of every tokenise_translated rule
     """
     input:
         lambda wildcards: [f"{batch}/tokenised_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
@@ -1076,7 +1076,7 @@ rule aggregate_tokenise_source:
     """
     Helper rule to implement until=tokenise_src config when docalign=DIC
     :input: the result of every tokenise_source rule
-    :output: a file that contains the path of the output of every tokenise_source rule
+    :output: a file that contains the path to the output of every tokenise_source rule
     """
     input:
         lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(SRC_LANG)],
@@ -1089,9 +1089,9 @@ rule aggregate_tokenise_source:
 rule mt_matches:
     """
     Align documents using mt document aligner
-    :input.l1: gz-compressed file with base64 document per line
-        source language document translate into target language document, and tokenised
-    :input.l2: gz-compressed file with base64 document per line
+    :input.l1: gz-compressed file with a base64-encoded document per line
+        source language document translated into target language document, and tokenised
+    :input.l2: gz-compressed file with a base64-encoded document per line
         tokenised target language documents
     :output: indices file
         plain text file with 3 tab separated columns: score, src_index, trg_index
@@ -1118,7 +1118,7 @@ rule aggregate_segalign:
     """
     Helper rule to implement until=segalign config
     :input: the result of every segalin result
-    :output: a file that contains the path of every segalign result
+    :output: a file that contains the path to every segalign result
     """
     input:
         lambda wildcards: [
@@ -1134,13 +1134,16 @@ rule aggregate_segalign:
 # BLEUALIGN #####################################################
 rule bleualign:
     """
-    Use bleualign to align sentence withing the document matches
+    Use bleualign to align sentences withing the matched documents
     :input.indices: output of mt docalign (columns are "score src_index trg_index")
-    :input.plain1: gz-compressed file with base64 sentence-split document per line for source language
-    :input.plain2: gz-compressed file with base64 sentence-split document per line for target language
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split source documents
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split target documents
     :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
     :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
-    :input.translated1: gz-compressed file with base64 translated document (source -> target) per line
+    :input.translated1: gz-compressed file with a base64-encoded document per line
+        source documents translated into target language
     :output: aligned sentences
         gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,score
     """
@@ -1190,6 +1193,7 @@ checkpoint split_segalign:
     """
     Join all of the output of segalign and split them again into even chunks this time
         each batch is a gz-compressed file that has the same format as segalign output
+        if translatationDirection is different from lang1->lang2, in this rule the columns are switched
     :input: the result of every segalin result
     :output: a plain text files that contains the list of every postprocessing batch generated
         (i.e. each line has a path to a postprocessing batch file without the extension)
@@ -1253,7 +1257,7 @@ rule bifixer:
     :input: a single chunk of segalign output
         gz-compressed, columns are: url1 url2 sent1 sent2 score deferred1 deferred2
         (deferred is optional)
-    :output: plain text, marked as temp, same columns as input with two new columsn: hash and score
+    :output: plain text, marked as temp, same columns as input with two new columns: hash and score
     """
     input:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
@@ -1277,7 +1281,7 @@ rule aggregate_bifixer:
     """
     Helper rule to implement until=bifixer config
     :input: the result of every bifixer result
-    :output: a file that contains the path of every bifixer result
+    :output: a file that contains the path to every bifixer result
     """
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}" for batch in get_postproc_batches()],
@@ -1364,7 +1368,7 @@ rule aggregate_bicleaner:
     """
     Helper rule to implement until=bicleaner config
     :input: the result of every biclenaer result
-    :output: a file that contains the path of every biclenaer result
+    :output: a file that contains the path to every biclenaer result
     """
     input:
         lambda wildcards: [
@@ -1383,11 +1387,11 @@ if not BICLEANER:
 
 rule filter:
     """
-    Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentences of bifixer hash
-    :input: either the output of bicleaner (if enabled), or the output of the previous step (what would be the input of bicleaner if it was enabled)
-    :output: plain-text file, marked as temp,
-        removed sentences below biclenaer threshold (if applicable)
-        added new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
+    Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentence pair or bifixer hash
+    :input: either the output of bicleaner (if enabled), or the output of the previous step (i.e. what would be the input of bicleaner if it was enabled)
+    :output: plain-text file, marked as temp, the senteces are sorted by duplicates
+        remove sentences below biclenaer threshold (if applicable)
+        add new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
     """
     input:
         filter_input,
@@ -1414,7 +1418,7 @@ rule aggregate_filter:
     """
     Helper rule to implement until=filter config
     :input: the result of every filter result
-    :output: a file that contains the path of every filter result
+    :output: a file that contains the path to every filter result
     """
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}" for batch in get_postproc_batches()],
@@ -1433,10 +1437,10 @@ if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.s
 rule raw:
     """
     Create {lang1}-{lang2}.raw.gz file by concatenating the output chunks of the last step before filtering
-        maybe segalign, bifixer or biclenaer, depending on what's enabled in the config
-    :input: the output of the corresponding step
+        may be segalign, bifixer or biclenaer, depending on what's enabled in the config
+    :input: the output of the last step
     :output.corpus: the concatenated inputs, columns are the same as the input
-    :output:stats: the corresponding stats file
+    :output:stats: the corresponding stats file in plain text
     """
     input:
         lambda wildcards: [
@@ -1464,7 +1468,7 @@ rule raw:
 
 rule sents:
     """
-    Create {lang1}-{lang2}.sent.gz
+    Create {lang1}-{lang2}.sent.gz by concatenated and merge-sorting the outputs of filters rule
     :input: the outputs of filter step
     :output: the concatenated inputs, sorted, same columns as input
     """
