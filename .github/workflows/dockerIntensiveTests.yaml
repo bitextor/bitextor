@@ -41,7 +41,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x01; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x01; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -106,7 +106,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x02; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x02; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -171,7 +171,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x04; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x04; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -236,7 +236,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x08; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x08; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -301,7 +301,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x10; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x10; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -366,7 +366,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x20; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x20; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
@@ -431,7 +431,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
-                  -c 'bitextor/run-tests.sh -t 0x40; \
+                  -c 'bitextor/tests/run-tests.sh -t 0x40; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
