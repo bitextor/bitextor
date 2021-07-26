@@ -10,6 +10,7 @@ from bitextor.utils.common import (
     snake_no_more_race_get_pgid,
     snake_no_more_race_get,
     snake_no_more_race_set,
+    duration_to_seconds,
 )
 
 valid, config = validate_args(config)
@@ -49,80 +50,50 @@ if "profiling" in config and config["profiling"]:
 #################################################################
 # CRAWLING
 CRAWLTARGET = ""
-TLD_CRAWL = ""
-USERAGENT = ""
+TLD_CRAWL = []
+USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
 CRAWLSIZELIMIT = ""
 CRAWLTIMELIMIT = ""
 CRAWLWAIT = ""
 CRAWLPAGELIMIT = ""
-CRAWLFILETYPES = "-f html,pdf"
-CRAWLJOBS = "-j 2"
-CRAWLTIMEOUT = ""
+CRAWLFILETYPES = ["html", "pdf"]
+CRAWLJOBS = "2"
+CRAWLTIMEOUT = "10"
 CRAWLDUMPARGS = ""
-CONTINUECRAWL = ""
+CONTINUECRAWL = False
 HERITRIXPATH = ""
 HERITRIXURL = "https://localhost:8443"
 HERITRIXUSER = "admin:admin"
-CRAWLMAXFOLDERTREEDEPTH = ""
-CRAWLSCOUTSTEPS = ""
-CRAWLBLACKLISTURL = (
-    "['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']"
-)
-CRAWLPREFIXFILTER = "['mailto:']"
+CRAWLMAXFOLDERTREEDEPTH = "20"
+CRAWLSCOUTSTEPS = "200"
+CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
+CRAWLPREFIXFILTER = ['mailto:']
 
 if "crawler" in config:
     CRAWLTARGET = config["crawler"]
 
     if CRAWLTARGET == "linguacrawl":
-        CRAWLFILETYPES = "(text/html|application/pdf)"
-        CRAWLJOBS = "2"
+        CRAWLFILETYPES = ["text/html", "application/pdf"]
 if "crawlTLD" in config and config["crawlTLD"]:
-    if CRAWLTARGET == "linguacrawl":
-        TLD_CRAWL = config["crawlTLD"]
-    else:
-        TLD_CRAWL = "-D"
+    TLD_CRAWL = config["crawlTLD"]
 if "crawlerUserAgent" in config:
-    if CRAWLTARGET == "linguacrawl":
-        USERAGENT = config["crawlerUserAgent"]
-    else:
-        USERAGENT = f'-a "{config["crawlerUserAgent"]}"'
+    USERAGENT = config["crawlerUserAgent"]
 if "crawlSizeLimit" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLSIZELIMIT = config["crawlSizeLimit"]
-    else:
-        CRAWLSIZELIMIT = f'-s {config["crawlSizeLimit"]}'
+    CRAWLSIZELIMIT = str(config["crawlSizeLimit"])
 if "crawlTimeLimit" in config:
-    if CRAWLTARGET in ("heritrix", "linguacrawl"):
-        CRAWLTIMELIMIT = config["crawlTimeLimit"]
-    else:
-        CRAWLTIMELIMIT = f'-t {config["crawlTimeLimit"]}'
+    CRAWLTIMELIMIT = str(duration_to_seconds(config["crawlTimeLimit"]))
 if "crawlWait" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLWAIT = config["crawlWait"]
-    else:
-        CRAWLWAIT = f'--wait {config["crawlWait"]}'
+    CRAWLWAIT = str(config["crawlWait"])
 if "crawlFileTypes" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLFILETYPES = f'({CRAWLFILETYPES.replace(",", "|")})'
-    else:
-        CRAWLFILETYPES = f'-f {config["crawlFileTypes"]}'
+    CRAWLFILETYPES = config["crawlFileTypes"]
 if "crawlerNumThreads" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLJOBS = config["crawlerNumThreads"]
-    else:
-        CRAWLJOBS = f'-j {config["crawlerNumThreads"]}'
+    CRAWLJOBS = str(config["crawlerNumThreads"])
 if "crawlerConnectionTimeout" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLTIMEOUT = config["crawlerConnectionTimeout"]
-    else:
-        CRAWLTIMEOUT = f'-o {config["crawlerConnectionTimeout"]}'
+    CRAWLTIMEOUT = str(config["crawlerConnectionTimeout"])
 if "dumpCurrentCrawl" in config:
-    if CRAWLTARGET == "linguacrawl":
-        CRAWLDUMPARGS = config["dumpCurrentCrawl"]
-    else:
-        CRAWLDUMPARGS = f'-d {config["dumpCurrentCrawl"]}'
+    CRAWLDUMPARGS = config["dumpCurrentCrawl"]
 if "resumePreviousCrawl" in config:
-    CONTINUECRAWL = f'-l {config["resumePreviousCrawl"]}'
+    CONTINUECRAWL = config["resumePreviousCrawl"]
 if "heritrixPath" in config:
     HERITRIXPATH = config["heritrixPath"]
 if "heritrixUrl" in config:
@@ -134,9 +105,9 @@ if "crawlMaxFolderTreeDepth" in config:
 if "crawlScoutSteps" in config:
     CRAWLSCOUTSTEPS = config["crawlScoutSteps"]
 if "crawlBlackListURL" in config:
-    CRAWLBLACKLISTURL = str(config["crawlBlackListURL"])
+    CRAWLBLACKLISTURL = config["crawlBlackListURL"]
 if "crawlPrefixFilter" in config:
-    CRAWLPREFIXFILTER = str(config["crawlPrefixFilter"])
+    CRAWLPREFIXFILTER = config["crawlPrefixFilter"]
 
 #################################################################
 # PREPROCESS
@@ -299,7 +270,6 @@ BIROAMER = False
 BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
-# TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = None
@@ -504,7 +474,6 @@ include: "rules/dictdocsegalign.smk"
 #################################################################
 ### CRAWLING ####################################################
 
-
 rule wget_download:
     """
     Download {target} with wget
@@ -512,14 +481,17 @@ rule wget_download:
     params:
         url="http://{target}",
         folder=lambda wildcards, output: os.path.dirname(output[0]),
+        time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
+        user_agent=apply_format(USERAGENT, "-a '{}'"),
+        wait=apply_format(CRAWLWAIT, "--wait {}"),
+        file_types=(",".join(CRAWLFILETYPES), "-f {}")
     output:
         f"{DATADIR}/warc/{{target}}/wget.warc.gz",
     shell:
         """
         mkdir -p {params.folder} {TMPDIR}
-        echo hostname=$HOSTNAME
         DIRNAME=$(mktemp -d "{TMPDIR}/downloaded.{wildcards.target}.XXXXXX")
-        {PROFILING} python3 {WORKFLOW}/bitextor_wget.py --url {params.url} --output-path $DIRNAME {CRAWLTIMELIMIT} {USERAGENT} {CRAWLFILETYPES} {CRAWLWAIT} --warc {output}
+        {PROFILING} python3 {WORKFLOW}/bitextor_wget.py --url {params.url} --output-path $DIRNAME {params.time_limit} {params.user_agent} {params.file_types} {params.wait} --warc {output}
         rm -rf $DIRNAME
         """
 
@@ -531,6 +503,7 @@ rule heritrix_download:
     params:
         url="http://{target}",
         folder=lambda wildcards, output: os.path.dirname(output[0]),
+        time_limit=CRAWLTIMELIMIT
     output:
         f"{DATADIR}/warc/{{target}}/heritrix.warc.gz",
     shell:
@@ -544,7 +517,6 @@ rule heritrix_download:
             gzip {DATADIR}/warc/{wildcards.target}/heritrix.warc
         else
             mkdir -p {params.folder} {TMPDIR}
-            echo hostname=$HOSTNAME
             if [ "$(ps aux | grep -i Heritrix | grep -v grep)" == "" ]
                 then {HERITRIXPATH}/bin/heritrix -a {HERITRIXUSER}
             fi
@@ -563,9 +535,9 @@ rule heritrix_download:
             do
                 sleep 5
                 RUNTIME=$((RUNTIME+5))
-                if [ "{CRAWLTIMELIMIT}" != "" ]
+                if [ "{params.time_limit}" != "" ]
                 then
-                    if [ $RUNTIME -gt "{CRAWLTIMELIMIT}" ]
+                    if [ $RUNTIME -gt "{params.time_limit}" ]
                     then
                         echo "Crawling time limit reached"
                         curl -v -d "action=pause" -k -u {HERITRIXUSER} --anyauth --location {HERITRIXURL}/engine/job/{wildcards.target}
@@ -580,62 +552,55 @@ rule heritrix_download:
         """
 
 
-# This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
-#  either join all the warcs (it loses important information like the source of the warcs) or not
-# Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
-checkpoint linguacrawl_download:
+rule linguacrawl_config:
     """
-    Download HOSTS with linguacrawl
+    Create a linguacrawl yaml config file from Bitextor's parameters
     """
-    params:
-        folder=f"{DATADIR}/warc/linguacrawl",
-        yaml_file=f"{TMPDIR}/linguacrawl.yaml",
     output:
-        f"{DATADIR}/warc/linguacrawl.finished",
+        yaml_file=temp(f"{TMPDIR}/linguacrawl.yaml"),
+    params:
+        user_agent=apply_format(USERAGENT, "user_agent: '{}'\n"),
+        output_dir=apply_format(f"{DATADIR}/warc/linguacrawl", "output_dir: '{}'\n"),
+        wait=apply_format(CRAWLWAIT, "crawl_delay: {}\n"),
+        time_limit=apply_format(CRAWLTIMELIMIT, "max_time_per_site: {}\n"),
+        size_limit=apply_format(CRAWLSIZELIMIT, "max_size_per_site: {}\n"),
+        timeout=apply_format(CRAWLTIMEOUT, "connection_timeout: {}\n"),
+        num_threads=apply_format(CRAWLJOBS, "max_jobs: {}\n"),
+        prefix_filter=apply_format(str(CRAWLPREFIXFILTER), "prefix_filter: {}\n"),
+        resume_crawling=apply_format(str(CONTINUECRAWL), "resume_crawling: {}\n"),
+        dump_args=apply_format(str(CRAWLDUMPARGS), "verbose: {}\n"),
+        file_types=apply_format(f"({'|'.join(CRAWLFILETYPES)})", "accepted_content: '{}'\n"),
+        max_folder_depth=apply_format(CRAWLMAXFOLDERTREEDEPTH, "max_folder_tree_depth: {}\n"),
+        scout_steps=apply_format(CRAWLSCOUTSTEPS, "scout_steps: {}\n"),
+        blacklist=apply_format(str(CRAWLBLACKLISTURL), "url_blacklist: {}\n"),
     run:
         global HOSTS
-        shell(
-            """
-            mkdir -p {params.folder} {TMPDIR}
-            echo hostname=$HOSTNAME
-            touch {params.yaml_file}
-            cat < /dev/null > {params.yaml_file}
-            """
-        )
-
         yaml_content = ""
-        useragent = USERAGENT
+
         langs = "','".join(LANGS)
         hosts = "','".join(HOSTS)
 
-        if not useragent:
-            useragent = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
-
         # Mandatory
-        yaml_content += f"user_agent: '{useragent}'\n"
+        yaml_content += params.user_agent
         yaml_content += f"langs_of_interest: ['{langs}']\n"
-        yaml_content += f"output_dir: '{params.folder}'\n"
+        yaml_content += params.output_dir
         # Optional (the argument parser will not complain, but the crawler will crash in some cases)
-        yaml_content += f"crawl_delay: {CRAWLWAIT}\n" if CRAWLWAIT else ""
-        yaml_content += f"max_time_per_site: {CRAWLTIMELIMIT}\n" if CRAWLTIMELIMIT else ""
-        yaml_content += f"max_size_per_site: {CRAWLSIZELIMIT}\n" if CRAWLSIZELIMIT else ""
-        yaml_content += f"connection_timeout: {CRAWLTIMEOUT}\n" if CRAWLTIMEOUT else "connection_timeout: 10\n"
-        yaml_content += f"max_jobs: {CRAWLJOBS}\n" if CRAWLJOBS else ""
-        yaml_content += f"resume_crawling: True\n" if CONTINUECRAWL else ""
+        yaml_content += params.wait
+        yaml_content += params.time_limit
+        yaml_content += params.size_limit
+        yaml_content += params.timeout
+        yaml_content += params.num_threads
+        yaml_content += params.resume_crawling
         yaml_content += f"seed_urls: ['{hosts}']\n"
         # yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
-        yaml_content += f"prefix_filter: {CRAWLPREFIXFILTER}\n"
-        yaml_content += f"verbose: True\n" if CRAWLDUMPARGS else "verbose: False\n"
-        yaml_content += f"accepted_content: '{CRAWLFILETYPES}'\n"
-        yaml_content += (
-            f"max_folder_tree_depth: {CRAWLMAXFOLDERTREEDEPTH}\n"
-            if CRAWLMAXFOLDERTREEDEPTH
-            else "max_folder_tree_depth: 20\n"
-        )
+        yaml_content += params.prefix_filter
+        yaml_content += params.dump_args
+        yaml_content += params.file_types
+        yaml_content += params.max_folder_depth
         yaml_content += f"max_attempts: 3\n"
-        yaml_content += f"scout_steps: {CRAWLSCOUTSTEPS}\n" if CRAWLSCOUTSTEPS else "scout_steps: 200\n"
+        yaml_content += params.scout_steps
         yaml_content += f"min_langs_in_site: 2\n"
-        yaml_content += f"url_blacklist: {CRAWLBLACKLISTURL}\n"
+        yaml_content += params.blacklist
 
         if LANG1 or LANG2:
             yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
@@ -647,14 +612,34 @@ checkpoint linguacrawl_download:
 
         yaml_content += f"accepted_tlds: ['{tld}']\n"
 
-        fdescriptor = open(params.yaml_file, "w")
+        fdescriptor = open(output.yaml_file, "w")
         fdescriptor.write(yaml_content)
         fdescriptor.flush()
         fdescriptor.close()
 
-        sys.stderr.write(f"Configuration file stored: {params.yaml_file}\n")
 
-        shell("{PROFILING} linguacrawl {params.yaml_file}")
+# This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
+#  either join all the warcs (it loses important information like the source of the warcs) or not
+# Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
+checkpoint linguacrawl_download:
+    """
+    Download HOSTS with linguacrawl
+    """
+    input:
+        f"{TMPDIR}/linguacrawl.yaml"
+    params:
+        folder=f"{DATADIR}/warc/linguacrawl",
+        crawl_cat=config["crawlCat"] if "crawlCat" in config else False,
+        crawl_cat_max=config["crawlCatMaxSize"]*1024*1024 if "crawlCatMaxSize" in config else 0
+    output:
+        f"{DATADIR}/warc/linguacrawl.finished",
+    run:
+        shell(
+            """
+            mkdir -p {params.folder} {TMPDIR}
+            {PROFILING} timeout --preserve-status 300 linguacrawl {input}
+            """
+        )
 
         all_files = subprocess.Popen(("ls", params.folder), stdout=subprocess.PIPE)
         try:
@@ -668,11 +653,11 @@ checkpoint linguacrawl_download:
             warcs = list(filter(lambda warc: len(warc) != 0, warcs))
             warcs = list(map(lambda warc: f"{params.folder}/{warc}", warcs))
 
-            if "crawlCat" not in config or not config["crawlCat"]:
+            if not params.crawl_cat:
                 warcs = "\n".join(warcs)
                 shell(f'echo -e "{warcs}" > {{output[0]}}')
             else:
-                if "crawlCatMaxSize" not in config or config["crawlCatMaxSize"] <= 0:
+                if params.crawl_cat_max <= 0:
                     warcs = " ".join(warcs)
                     shell(
                         f"""
@@ -682,13 +667,12 @@ checkpoint linguacrawl_download:
                     )
                 else:
                     # Improve the number of preprocess rules that are executed
-                    max_limit = config["crawlCatMaxSize"]
                     current = 0
                     blocks = 0
                     files = [f"{params.folder}/linguacrawl{blocks}.warc.gz"]
 
                     for warc in warcs:
-                        if current > max_limit:
+                        if current > {params.crawl_cat_max}:
                             current = 0
                             blocks += 1
                             files.append(f"{params.folder}/linguacrawl{blocks}.warc.gz")

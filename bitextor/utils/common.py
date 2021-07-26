@@ -216,3 +216,12 @@ def check_connection(url):
                 sys.stderr.write(str(e) + "\n")
 
     return connection_error, url
+
+
+duration_suffix = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+# expected duration: integer + one-letter suffix
+# allowed suffixes: s (seconds), m (minutes), h (hours), d (days), w (weeks)
+def duration_to_seconds(value):
+    suffix = value[-1]
+    seconds = int(value[:-1]) * duration_suffix[suffix]
+    return seconds
