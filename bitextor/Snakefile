@@ -385,17 +385,20 @@ if "warcsFile" in config:
         for line in f:
             WARCS.add(line.strip())
 
+# group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
-# process WARCs individually
-TARGET_2_WARCS = {f"{k}": v for k, v in enumerate(WARCS)}
-# group crawled hosts by domains
-TARGET_2_WARCS.update(
-    dict([
-        (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
-        for (domain, hosts) in DOMAIN_2_HOSTS.items()
-    ])
-)
 
+# assign an ID to each WARC and check that all WARCs exist
+TARGET_2_PROVIDED_WARCS = create_id_key_2_warc_map(WARCS)
+
+# group crawled WARCs by domains
+TARGET_2_CRAWLED_WARCS = dict([
+    (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
+    for (domain, hosts) in DOMAIN_2_HOSTS.items()
+])
+
+# group all WARCs by target (either domain if crawled, or ID if provided by user)
+TARGET_2_WARCS = {**TARGET_2_PROVIDED_WARCS, **TARGET_2_CRAWLED_WARCS}
 TARGETS = TARGET_2_WARCS.keys()
 
 #################################################################
@@ -791,8 +794,12 @@ checkpoint shard:
         (i.e. each line has a path to a batch folder)
     """
     input:
-        get_shard_input_linguacrawl_prov_warcs,
-        get_shard_input,
+        # this is separated in two functions to make sure that
+        # the preprocessing of the provided WARCS and the crawling
+        # may be executed in parallel
+        # (otherwise the linguacrawl checkpoint might prevent that)
+        get_shard_input_warcs,
+        get_shard_input_crawled,
     output:
         f"{DATADIR}/shards/02.batches.{{lang}}",  # list of batches created for lang
     params:

@@ -3,6 +3,7 @@ Some helper functions used in the main Snakefile,
 as per the recommendation of Snakemake devs
 https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html#best-practices
 """
+import os
 import tldextract
 import validators
 from itertools import product
@@ -33,6 +34,26 @@ def create_domain_key_2_host_map(hosts):
         raise ValueError("ERROR: Some hosts are not valid: \n%s" % ("\n".join(badhosts)))
     return key2hosts
 
+
+"""
+Check the validity of WARCs (i.e. that they exist on disk),
+    and assign an ID to each valid WARC, so that each WARC is processed individually
+:param warcs: a list of warcs provided by the user
+:returns: a dictionary with IDs as keys as a WARCs as values
+"""
+def create_id_key_2_warc_map(warcs):
+    bad_warcs=[]
+    id2warc = {}
+    for i, warc in enumerate(warcs):
+        warc = os.path.expanduser(warc)
+        if not os.path.isfile(warc):
+            bad_warcs.append(warc)
+        else:
+            id2warc[f"{i}"] = warc
+    if bad_warcs:
+        bad_warcs_msg = "\n".join(bad_warcs)
+        raise ValueError(f"ERROR: Some WARCs could not be found:\n{bad_warcs_msg}")
+    return id2warc
 
 """
 Obtains a list of WARCs produced by linguacrawl checkpoint
@@ -99,14 +120,10 @@ def get_pproc_input(wildcards):
     return TARGET_2_WARCS[target]
 
 
-# We split the behaviour in 2 functions in order to make work the linguacrawl checkpoint
-#  because when the exception is thrown with get_warcs_names() due to linguacrawl checkpoint,
-#  we cannot retrieve the defined warcs at the same time (snakemake does not allow to use yield),
-#  so using a separate function allows us to execute in parallel linguacrawl and warcs preprocess
 """
-Obtain the input for the shard rule
+Obtain shard input corresponding to the preprocessed crawled WARCs
 """
-def get_shard_input(lang):
+def get_shard_input_crawled(lang):
     if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
         warcs_path, warcs = get_warcs_names(None)
 
@@ -116,25 +133,31 @@ def get_shard_input(lang):
                 sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
 
         return expand(
-            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=warcs, pproc=PPROC
+            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+            datadir=DATADIR,
+            target=warcs,
+            pproc=PPROC
         )
 
     # crawler != linguacrawl
-    return expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
+    return expand(
+        "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+        datadir=DATADIR,
+        target=list(TARGET_2_CRAWLED_WARCS.keys()),
+        pproc=PPROC
+    )
 
 
 """
-Obtain the input for the shard rule corresponding to the WARCs if the crawler is linguacrawl
+Obtain shard input corresponding to the preprocessed WARCs provided by the user
 """
-def get_shard_input_linguacrawl_prov_warcs(lang):
-    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
-        return expand(
-            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
-            datadir=DATADIR,
-            target=list(range(len(WARCS))),
-            pproc=PPROC,
-        )
-    return []
+def get_shard_input_warcs(lang):
+    return expand(
+        "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+        datadir=DATADIR,
+        target=list(TARGET_2_PROVIDED_WARCS.keys()),
+        pproc=PPROC
+    )
 
 
 """
