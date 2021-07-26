@@ -221,9 +221,9 @@ rule dic_docsegalign_hunaligndic:
                 for inline in inr:
                     columns = inline.strip().split("\t")
                     if inverse:
-                        outw.write(columns[1] + " @ " + columns[0] + "\n")
+                        outw.write(f"{columns[1]} @ {columns[0]}\n")
                     else:
-                        outw.write(columns[0] + " @ " + columns[1] + "\n")
+                        outw.write(f"{columns[0]} @ {columns[1]}\n")
 
 
 rule dic_docsegalign_alignsegments_hunalign:

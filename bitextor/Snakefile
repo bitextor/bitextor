@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import pprint
 
 from bitextor.utils.args import validate_args
 from bitextor.utils.common import (
@@ -10,10 +11,14 @@ from bitextor.utils.common import (
     snake_no_more_race_get,
     snake_no_more_race_set,
 )
-from bitextor.utils.non_generic import *
 
 valid, config = validate_args(config)
 assert valid  # workaround for not being able to exit() in snakemake
+
+
+#################################################################
+include: "rules/common.smk"
+
 
 #################################################################
 # BASIC PARAMETERS
@@ -39,7 +44,7 @@ if "lang2" in config:
 
 PROFILING = ""
 if "profiling" in config and config["profiling"]:
-    PROFILING = "/usr/bin/time -v"
+    PROFILING = "\\time -v"
 
 #################################################################
 # CRAWLING
@@ -171,13 +176,16 @@ if "parser" in config:
 if "boilerpipeCleaning" in config and config["boilerpipeCleaning"] == True:
     BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
-    PDFEXTRACT = "--pdfextract "
+    PDFEXTRACT_CF = ""
+    PDFEXTRACT_SJ = ""
+    PDFEXTRACT_KL = ""
     if "PDFextract_configfile" in config and config["PDFextract_configfile"]:
-        PDFEXTRACT += " --pe_configfile " + config["PDFextract_configfile"]
+        PDFEXTRACT_CF = f" --pe_configfile {config['PDFextract_configfile']}"
     if "PDFextract_sentence_join_path" in config and config["PDFextract_sentence_join_path"]:
-        PDFEXTRACT += " --sentence_join_path " + config["PDFextract_sentence_join_path"]
+        PDFEXTRACT_SJ = f" --sentence_join_path {config['PDFextract_sentence_join_path']}"
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
-        PDFEXTRACT += " --kenlm_path " + config["PDFextract_kenlm_path"]
+        PDFEXTRACT_KL = f" --kenlm_path {config['PDFextract_kenlm_path']}"
+    PDFEXTRACT = f"--pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
 if "html5lib" in config and config["html5lib"]:
     HTML5LIB = "--html5lib"
 
@@ -293,6 +301,7 @@ BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
 # TODO: add rawCorpus option to generate lang1-lang2.raw.gz
 OUTPUT_FILES = ["sent", "raw"]
+STATS_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = None
 
 if "deferred" in config and config["deferred"]:
@@ -324,6 +333,7 @@ if "deduped" in config and config["deduped"]:
     DEDUPED = True
     OUTPUT_FILES.append("deduped.tmx")
     OUTPUT_FILES.append("deduped.txt")
+    STATS_FILES.append("deduped")
 if "biroamer" in config and config["biroamer"]:
     BIROAMER = True
 
@@ -415,10 +425,22 @@ if "until" not in config:
         lang2=LANG2,
         output_file=OUTPUT_FILES,
     )
+    OUTPUT.extend(
+        expand(
+            "{permanent}/{lang1}-{lang2}.stats.{stats_file}",
+            permanent=PERMANENT,
+            lang1=LANG1,
+            lang2=LANG2,
+            stats_file=STATS_FILES,
+        )
+    )
     # this has to be added, because tokenisation rules are the last rules that don't need both shards
     # otherwise snakemake waites for both shards be completed to continue
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
-    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+    if DOCALIGN == "externalMT":
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+    elif DOCALIGN == "DIC":
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
     if CRAWLTARGET == "linguacrawl":
         OUTPUT.append(f"{DATADIR}/warc/linguacrawl.finished")
@@ -481,9 +503,12 @@ include: "rules/dictdocsegalign.smk"
 
 
 rule wget_download:
+    """
+    Download {target} with wget
+    """
     params:
         url="http://{target}",
-        folder=f"{DATADIR}/warc/{{target}}",
+        folder=lambda wildcards, output: os.path.dirname(output[0]),
     output:
         f"{DATADIR}/warc/{{target}}/wget.warc.gz",
     shell:
@@ -497,9 +522,12 @@ rule wget_download:
 
 
 rule heritrix_download:
+    """
+    Download {target} with heritrix
+    """
     params:
         url="http://{target}",
-        folder=f"{DATADIR}/warc/{{target}}",
+        folder=lambda wildcards, output: os.path.dirname(output[0]),
     output:
         f"{DATADIR}/warc/{{target}}/heritrix.warc.gz",
     shell:
@@ -548,10 +576,14 @@ rule heritrix_download:
         fi
         """
 
-# Is needed a checkpoint because we do not know the resulted warcs since we let the user decide if he wants to
+
+# This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
 #  either join all the warcs (it loses important information like the source of the warcs) or not
 # Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
 checkpoint linguacrawl_download:
+    """
+    Download HOSTS with linguacrawl
+    """
     params:
         folder=f"{DATADIR}/warc/linguacrawl",
         yaml_file=f"{TMPDIR}/linguacrawl.yaml",
@@ -683,69 +715,18 @@ checkpoint linguacrawl_download:
 
 #################################################################
 ### PREPROCESS ##################################################
-
-# pproc_output = {}
-# for pproc_file in PPROC_FILES:
-#     name = pproc_file.split('.')[0]
-#     for lang in LANGS:
-#         pproc_output[f"{lang}_{name}"] = f"{DATADIR}/preprocess/{{target}}/{PPROC}/{lang}/{pproc_file}"
-
-
-def get_linguacrawl_warcs():
-    warcs = []
-    with checkpoints.linguacrawl_download.get().output[0].open() as f:
-        for line in f:
-            warcs.append(line.strip())
-    return warcs
-
-
-def get_warcs_names(wildcards):
-    if CRAWLTARGET == "linguacrawl":
-        warcs = get_linguacrawl_warcs()
-        return warcs, list(map(lambda warc: warc.split("/")[-1], warcs))
-
-    return TARGET_2_WARCS[wildcards.target].split("/")[-1]
-
-
-def get_pproc_input(wildcards):
-    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
-        try:
-            # Retrieve warcs names, that in first instance will fail because linguacrawl has not been executed yet
-            warcs, warcs_targets = get_warcs_names(wildcards)
-        except snakemake.exceptions.IncompleteCheckpointException:
-            # We have received a provided warc (likely)
-            try:
-                # Check if the requested pproc input is a provided warc
-                return TARGET_2_WARCS[wildcards.target]
-            except:
-                # Should not happen, but force exception again in case something went wrong (it might continue if linguacrawl finished)
-                warcs, warcs_targets = get_warcs_names(wildcards)
-
-        for warc in warcs:
-            if not os.path.exists(warc):
-                warcs_targets.remove(warc.split("/")[-1])
-                sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
-
-        try:
-            # Check if the requested pproc input is a provided warc
-            return TARGET_2_WARCS[wildcards.target]
-        except:
-            pass
-
-        return warcs[warcs_targets.index(wildcards.target)]
-
-    return TARGET_2_WARCS[wildcards.target]
-
-
 rule warc2preprocess:
-    # input: lambda wildcards: TARGET_2_WARCS[wildcards.target]
+    """
+    Process a list of WARCs (or a single WARC)
+        and produce {plain_text,mime,url,normalized_html,deboilerplate_html}.gz
+    """
     input:
         get_pproc_input,
     output:
         expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES),
     threads: 2
     params:
-        folder=f"{DATADIR}/preprocess/{{target}}/w2p",
+        folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         pproclangs=",".join(LANGS),
     shell:
         """
@@ -767,6 +748,10 @@ rule warc2preprocess:
 
 
 rule warc2text:
+    """
+    Process a list of WARCs (or a single WARC)
+        and produce {text,mime,url}.gz and optinally html.gz
+    """
     input:
         get_pproc_input,
     output:
@@ -777,7 +762,7 @@ rule warc2text:
             pproc_file=PPROC_FILES,
         ),
     params:
-        folder=f"{DATADIR}/preprocess/{{target}}/warc2text",
+        folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
     shell:
         """
@@ -797,41 +782,14 @@ rule warc2text:
         """
 
 
-def get_shard_input(lang):
-    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
-        warcs_path, warcs = get_warcs_names(None)
-
-        for warc in warcs_path:
-            if not os.path.exists(warc):
-                warcs.remove(warc.split("/")[-1])
-                sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
-
-        return expand(
-            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=warcs, pproc=PPROC
-        )
-
-    # crawler != linguacrawl
-    return expand("{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz", datadir=DATADIR, target=TARGETS, pproc=PPROC)
-
-
-# We split the behaviour in 2 functions in order to make work the linguacrawl checkpoint
-#  because when the exception is thrown with get_warcs_names() due to linguacrawl checkpoint,
-#  we cannot retrieve the defined warcs at the same time (snakemake does not allow to use yield),
-#  so using a separate function allows us to execute in parallel linguacrawl and warcs preprocess
-def get_shard_input_linguacrawl_prov_warcs(lang):
-    if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
-        return expand(
-            "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
-            datadir=DATADIR,
-            target=list(range(len(WARCS))),
-            pproc=PPROC,
-        )
-    return []
-
-
 # DAG will be re-evaluated after completing shard rule (because number of batches is dynamic and unknown)
 checkpoint shard:
-    # use url.gz as input to avoid having directories as input
+    """
+    Use giashard to shard of the warc2text/warc2preprocess output to balance jobs
+    :input: output of the preprocessing rules
+    :output: a plain text files that contains the list of every batch generated
+        (i.e. each line has a path to a batch folder)
+    """
     input:
         get_shard_input_linguacrawl_prov_warcs,
         get_shard_input,
@@ -840,7 +798,7 @@ checkpoint shard:
     params:
         n=SHARDS,
         b=BATCHES,
-        o_no_lang=f"{DATADIR}/shards",
+        o_no_lang=lambda wildcards, output: os.path.dirname(output[0]),
         o=f"{DATADIR}/shards/{{lang}}",
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
         empty_shard_batch_folder="EMPTY/1",
@@ -876,23 +834,14 @@ checkpoint shard:
         """
 
 
-# obtain list of batches for lang
-def get_batches(lang):
-    batches = []
-    with checkpoints.shard.get(lang=lang).output[0].open() as f:
-        for line in f:
-            batches.append(line.strip())
-    return batches
-
-
-def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
-    if replace_only_if_true and string or not replace_only_if_true:
-        return replace_format.replace(replace_token, string)
-
-    return string
-
-
 rule split:
+    """
+    Use sentence splitter to obtain sentences from the plain text file
+    :input: gz-compressed file with base64 document per line
+        document is the plain text extract by the preprocess
+    :output: gz-compressed file with base64 document per line
+        output must have the same number of lines as the input (i.e. same number of docs)
+    """
     input:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}",
     params:
@@ -919,25 +868,27 @@ rule split:
 
 
 rule aggregate_split:
+    """
+    Helper rule to implement until=split config
+    :input: the result of every split rule
+    :output: a file that contains the path of the output of every split rule per lang
+    """
     input:
         lambda wildcards: [f"{batch}/sentences.gz" for batch in get_batches(wildcards.lang)],
     output:
         f"{DATADIR}/shards/03.split.{{lang}}",
     shell:
-        """ echo "{input}" | tr ' ' '\n' > {output} """
+        """ echo {input} | tr ' ' '\n' > {output} """
 
 
 #################################################################
 ### DOCALIGN ####################################################
-def get_align_inputs(src_lang, trg_lang):
-    src_batches = get_batches(src_lang)
-    trg_batches = get_batches(trg_lang)
-    # each input -> (shard, (src_batch, trg_batch))
-    inputs = get_mt_docalign_inputs(src_batches, trg_batches)
-    return inputs
-
-
 rule aggregate_matches:
+    """
+    Helper rule to implement until=docalign config
+    :input: the result of every docalign result
+    :output: a file that contains the path of the output of every matches file
+    """
     input:
         lambda wildcards: [
             f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_01.matches"
@@ -950,9 +901,15 @@ rule aggregate_matches:
 
 
 # MT ############################################################
-
-
 rule custom_translate:
+    """
+    Translate source documents into target language (according to translationDirection)
+    :input: gz-compressed file with base64 document per line
+        the documents are the output of sentence splitting
+    :output: gz-compressed file with base64 translated document per line
+        output must have the same number of lines as the input (i.e. same number of docs)
+        each line (document) must have the same number of lines after b64decoding before and after translation
+    """
     input:
         source=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
     output:
@@ -980,24 +937,31 @@ rule custom_translate:
         """
 
 
-if MT_COMMAND is None:
-    translation_output = f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz"
-else:
-    translation_output = rules.custom_translate.output
-
-
 rule aggregate_translate:
+    """
+    Helper rule to implement until=translate config
+    :input: the result of every translate rule
+    :output: a file that contains the path of the output of every translate rule per lang
+    """
     input:
         lambda wildcards: [f"{batch}/sentences_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
     output:
         f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}",
     shell:
-        """ echo "{input}" | tr ' ' '\n' > {output} """
+        """ echo {input} | tr ' ' '\n' > {output} """
 
 
 rule tokenise_translated:
+    """
+    Tokenise the output of translation rule to feed into mt-docalign
+    :input: gz-compressed file with base64 document per line
+        the documents are the output of translation
+    :output: gz-compressed file with base64 translated and tokenised document per line
+        output must have the same number of lines as the input (i.e. same number of docs)
+        each line (document) must have the same number of lines after b64decoding before and after translation
+    """
     input:
-        translation_output,
+        rules.custom_translate.output,
     output:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz",
     params:
@@ -1019,6 +983,14 @@ rule tokenise_translated:
 
 
 rule tokenise_target:
+    """
+    Tokenise the target side documents to feed into mt-docalign or dic-docalign
+    :input: gz-compressed file with base64 document per line
+        the documents are the output of sentence splitting
+    :output: gz-compressed file with base64 tokenised document per line
+        output must have the same number of lines as the input (i.e. same number of docs)
+        each line (document) must have the same number of lines after b64decoding before and after translation
+    """
     input:
         f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
     output:
@@ -1042,6 +1014,14 @@ rule tokenise_target:
 
 
 rule tokenise_source:
+    """
+    Tokenise the source side documents to feed into dic-docalign
+    :input: gz-compressed file with base64 document per line
+        the documents are the output of sentence splitting
+    :output: gz-compressed file with base64 tokenised document per line
+        output must have the same number of lines as the input (i.e. same number of docs)
+        each line (document) must have the same number of lines after b64decoding before and after translation
+    """
     input:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
     output:
@@ -1065,6 +1045,11 @@ rule tokenise_source:
 
 
 rule aggregate_tokenise_target:
+    """
+    Helper rule to implement until=tokenise_trg config
+    :input: the result of every tokenise_target rule
+    :output: a file that contains the path of the output of every tokenise_target rule
+    """
     input:
         lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(TRG_LANG)],
     output:
@@ -1073,7 +1058,12 @@ rule aggregate_tokenise_target:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-rule aggregate_tokenise_source:
+rule aggregate_translate_tokenise_source:
+    """
+    Helper rule to implement until=tokenise_src config
+    :input: the result of every tokenise_translated rule
+    :output: a file that contains the path of the output of every tokenise_translated rule
+    """
     input:
         lambda wildcards: [f"{batch}/tokenised_{TRG_LANG}.gz" for batch in get_batches(SRC_LANG)],
     output:
@@ -1082,14 +1072,39 @@ rule aggregate_tokenise_source:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
+rule aggregate_tokenise_source:
+    """
+    Helper rule to implement until=tokenise_src config when docalign=DIC
+    :input: the result of every tokenise_source rule
+    :output: a file that contains the path of the output of every tokenise_source rule
+    """
+    input:
+        lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(SRC_LANG)],
+    output:
+        f"{DATADIR}/shards/05.tokenise.{SRC_LANG}",
+    shell:
+        """ echo {input} | tr ' ' '\n' > {output} """
+
+
 rule mt_matches:
+    """
+    Align documents using mt document aligner
+    :input.l1: gz-compressed file with base64 document per line
+        source language document translate into target language document, and tokenised
+    :input.l2: gz-compressed file with base64 document per line
+        tokenised target language documents
+    :output: indices file
+        plain text file with 3 tab separated columns: score, src_index, trg_index
+            src_index is the number of the aligned document in source language
+            trg_index is the number of the aligned document in target language
+    """
     input:
         l1=rules.tokenise_translated.output,
         l2=rules.tokenise_target.output,
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches",
     params:
-        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}",
+        folder=lambda wildcards, output: os.path.dirname(output[0]),
     threads: THREADS["docalign"]
     shell:
         """
@@ -1100,6 +1115,11 @@ rule mt_matches:
 
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
+    """
+    Helper rule to implement until=segalign config
+    :input: the result of every segalin result
+    :output: a file that contains the path of every segalign result
+    """
     input:
         lambda wildcards: [
             f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz"
@@ -1113,21 +1133,30 @@ rule aggregate_segalign:
 
 # BLEUALIGN #####################################################
 rule bleualign:
+    """
+    Use bleualign to align sentence withing the document matches
+    :input.indices: output of mt docalign (columns are "score src_index trg_index")
+    :input.plain1: gz-compressed file with base64 sentence-split document per line for source language
+    :input.plain2: gz-compressed file with base64 sentence-split document per line for target language
+    :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
+    :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
+    :input.translated1: gz-compressed file with base64 translated document (source -> target) per line
+    :output: aligned sentences
+        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,score
+    """
     input:
         indices=rules.mt_matches.output,
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
-        translated1=translation_output,
+        translated1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
-        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}",
+        folder=lambda wildcards, output: os.path.dirname(output[0]),
         workers=THREADS["segalign"],
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
-        temp(
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz"
-        ),
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz",
     threads: max(THREADS["segalign"], 2)
     shell:
         """
@@ -1158,6 +1187,13 @@ if SEGALIGN == "hunalign":
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
+    """
+    Join all of the output of segalign and split them again into even chunks this time
+        each batch is a gz-compressed file that has the same format as segalign output
+    :input: the result of every segalin result
+    :output: a plain text files that contains the list of every postprocessing batch generated
+        (i.e. each line has a path to a postprocessing batch file without the extension)
+    """
     input:
         lambda wildcards: [
             f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}"
@@ -1211,15 +1247,14 @@ checkpoint split_segalign:
             )
 
 
-def get_postproc_batches():
-    batches = []
-    with checkpoints.split_segalign.get().output.batches.open() as f:
-        for line in f:
-            batches.append(line.strip().split("/")[-1])  # obtain just the number of the chunks
-    return batches
-
-
 rule bifixer:
+    """
+    Apply bifixer to the segalign output
+    :input: a single chunk of segalign output
+        gz-compressed, columns are: url1 url2 sent1 sent2 score deferred1 deferred2
+        (deferred is optional)
+    :output: plain text, marked as temp, same columns as input with two new columsn: hash and score
+    """
     input:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
     output:
@@ -1239,6 +1274,11 @@ rule bifixer:
 
 
 rule aggregate_bifixer:
+    """
+    Helper rule to implement until=bifixer config
+    :input: the result of every bifixer result
+    :output: a file that contains the path of every bifixer result
+    """
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}" for batch in get_postproc_batches()],
     output:
@@ -1253,6 +1293,9 @@ if not BIFIXER:
 
 
 rule bicleaner_train_model:
+    """
+    Train bicleaner model
+    """
     input:
         corpusl1=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG1),
         corpusl2=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG2),
@@ -1280,6 +1323,12 @@ rule bicleaner_train_model:
 
 
 rule bicleaner:
+    """
+    Compute bicleaner scores of the aligned sentence pairs
+    :input.bifixer: either the output of bifixer rule, or a single chunk of segalign output if bifixer is disabled
+    :input.model: bicleaner model, either provided by the user or generated by train_bicleaer
+    :output: gz-compressed, same columns as input with one new column: score
+    """
     input:
         bifixer=bicleaner_input,
         model=BICLEANER_MODEL,
@@ -1312,6 +1361,11 @@ rule bicleaner:
 
 
 rule aggregate_bicleaner:
+    """
+    Helper rule to implement until=bicleaner config
+    :input: the result of every biclenaer result
+    :output: a file that contains the path of every biclenaer result
+    """
     input:
         lambda wildcards: [
             f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{batch}.gz" for batch in get_postproc_batches()
@@ -1328,6 +1382,13 @@ if not BICLEANER:
 
 
 rule filter:
+    """
+    Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentences of bifixer hash
+    :input: either the output of bicleaner (if enabled), or the output of the previous step (what would be the input of bicleaner if it was enabled)
+    :output: plain-text file, marked as temp,
+        removed sentences below biclenaer threshold (if applicable)
+        added new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
+    """
     input:
         filter_input,
     output:
@@ -1350,6 +1411,11 @@ rule filter:
 
 
 rule aggregate_filter:
+    """
+    Helper rule to implement until=filter config
+    :input: the result of every filter result
+    :output: a file that contains the path of every filter result
+    """
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}" for batch in get_postproc_batches()],
     output:
@@ -1365,6 +1431,13 @@ if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.s
 
 
 rule raw:
+    """
+    Create {lang1}-{lang2}.raw.gz file by concatenating the output chunks of the last step before filtering
+        maybe segalign, bifixer or biclenaer, depending on what's enabled in the config
+    :input: the output of the corresponding step
+    :output.corpus: the concatenated inputs, columns are the same as the input
+    :output:stats: the corresponding stats file
+    """
     input:
         lambda wildcards: [
             f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}" for batch in get_postproc_batches()
@@ -1374,7 +1447,7 @@ rule raw:
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.raw",
     shell:
         """
-        if [[ {input[0]} == *.gz ]]; then
+        if [[ "{extension}" == ".gz" ]]; then
             cat {input} > {output.corpus}
         else
             cat {input} | pigz -c > {output.corpus}
@@ -1390,19 +1463,37 @@ rule raw:
 
 
 rule sents:
+    """
+    Create {lang1}-{lang2}.sent.gz
+    :input: the outputs of filter step
+    :output: the concatenated inputs, sorted, same columns as input
+    """
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
     output:
-        f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
+        corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
+        stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
     threads: THREADS["sents"]
     shell:
         """
         LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --parallel {threads} --compress-program=gzip -T {TMPDIR} --merge {input} \
-            | pigz -c > {output}
+            | pigz -c > {output.corpus}
+        echo "{LANG1}-{LANG2} filtered" > {output.stats}
+        echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
+        WC1=$(zcat {output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | cut -f 4 | wc -w)
+        echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
+        echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
+        echo "{LANG2} words: $WC2" >> {output.stats}
         """
 
 
 rule tmx:
+    """
+    Crate {lang1}-{lang2}.not-deduped.tmx.gz output
+    :input: {lang1}-{lang2}.sent.gz, i.e. corpus after filtering & sorting
+    :output: corpus after filtering in TMX format
+    """
     input:
         rules.sents.output,
     output:
@@ -1416,6 +1507,13 @@ rule tmx:
 
 
 rule deduped_tmx:
+    """
+    Create deduped corpus, TMX and txt versions
+    :input: {lang1}-{lang2}.sent.gz, i.e. corpus after filtering & sorting
+    :output.tmx: TMX deduplicated corpus
+    :output.txt: txt dedpulicated corpus
+    :output.stats: the corresponding stats file (calculated from dedup txt version)
+    """
     input:
         rules.sents.output,
     output:
@@ -1448,6 +1546,12 @@ if DEDUPED:
 
 
 rule roam_tmx:
+    """
+    Use biroamer to created ROAMED version of the corpus
+    :input.tmx: deduped.tmx corpus if dedup is active, not-deduped.tmx corpus if only tmx=true and dedup=false
+    :input.txt: deduped.txt corpus if dedup is active, sents corpus if tmx=true and dedup=false
+    :output: deduped.roamed.tmx corpus if dedup is active, not-deduped.roamed.tmx corpus if tmx=true and dedup=false
+    """
     input:
         tmx=roam_tmx_input,
         txt=roam_txt_input,
