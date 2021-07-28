@@ -637,7 +637,7 @@ checkpoint linguacrawl_download:
         shell(
             """
             mkdir -p {params.folder} {TMPDIR}
-            {PROFILING} timeout --preserve-status 300 linguacrawl {input}
+            {PROFILING} linguacrawl {input}
             """
         )
 
