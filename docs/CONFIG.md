@@ -68,45 +68,84 @@ warcsFile: ~warcs.gz
 
 ## Crawling
 
-Three crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The following are the variables that allow to choose one of them and to configure some aspects of the crawling.
+Three crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The basic options are:
 
 ```yaml
 crawler: wget
-
-crawlTimeLimit: 30s
-
-crawlSizeLimit: 1G
-crawlTLD: false
-crawlerNumThreads: 1
-crawlerConnectionTimeout: 10
+crawlTimeLimit: 1h
 ```
 
 * `crawler`: set which crawler is used (`heritrix`, `wget` or `linguacrawl`)
-* `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
-* `crawlTimeLimit`: time (in seconds) for which a website can be crawled; for example: *3600s* for a crawl of an hour (`linguacrawl` needs only the quantity, without any suffix)
-* `crawlWait`: option that specifies the time that should be waited between the retrievals. It is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
-* `crawlFileTypes`: **wget-specific/linguacrawl-specific option** that allows to specify the files which we want to retrieve. Both `wget` and `linguacrawl` use the Content-Type in order to search a pattern which matches, so either "html" or "text/html" will retrieve those files with Content-Type "text/html". The [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) contains [MIME](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) values
-* `crawlSizeLimit`: **linguacrawl-specific option** that limits the size of the crawl, i.e. when this limit is reached the crawl ends
-* `crawlTLD`: **linguacrawl-specific option** that allows the crawler to jump to a different web domain as far as it is part of the same [top-level domain](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); TLD can be specified as a list (e.g. ['es', 'fr'], ['ca', 'com', 'es'])
-* `crawlerNumThreads`: **linguacrawl-specific option** that allows to specify the number of threads to be be used by the crawler; by default this number is 1
-* `crawlerConnectionTimeout`: **linguacrawl-specific option** that allows to specify the connection timeout to a web server
-* `dumpCurrentCrawl`: **linguacrawl-specific option** that allows to visualize more information about what the crawler is doing, like a 'verbose' option
-* `resumePreviousCrawl`: **linguacrawl-specific option** that allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed. This option might be used for those cases where the crawling was stopped at the same time that the workflow, or after removing those files which makes necessary the crawler to be executed again (this last option might be difficult to achieve)
-* `crawlCat`: **linguacrawl-specific option** that allows to merge all the downloaded WARCs in just one (`linguacrawl` generates one warc per domain/subdomain accordin to the documentation, which does not specify concretely which one). This option will improbe the number of rules of preprocessing to run, but will cause to lose important information like the source of the WARCs. Be aware that this option might be equally as dangerous if enabled in the case of a large crawling since the preprocessing of a very large WARC might even cost more resources (either time or memory) that the processing of thousands of little WARCs
-* `crawlCatMaxSize`: **linguacrawl-specific option** that allows to specify a max. size of the merged WARC. If this option is specified, multiple WARCs will be generated where the retrieved WARCs will be being merged, and new WARCs will be used when the max. size has been reached. The unity being used is the byte, so if we want a max. size of 1 KiB, the value which we should set would be 1024
-* `crawlMaxFolderTreeDepth`: **linguacrawl-specific option** that allows to specify the max. folder depth for a URL to be taken into account
-* `crawlScoutSteps`: **linguacrawl-specific option** that allows to specify the number of documents to be downloaded from a web-site before the scouting criterion is evaluated (one of the most important features of `linguacrawl` is the scout strategy that implements in order to be as efficient as possible)
-* `crawlBlackListURL`: **linguacrawl-specific option** that allows to specify a list of domains which will not be taken into account (i.e. they will not be crawled). The default value is: `['wordpress', 'blogspot', 'facebook', 'google', 'wikipedia', 'youtube', 'perehodi', 'twitter', 'instagram']`
-* `crawlPrefixFilter`: **linguacrawl-specific option** that allows to avoid resources which begins with a concrete pattern and we know, previously, that is not going to give us useful information
+* `crawlTimeLimit`: time for which a website can be crawled; the format of this field is an integer number followed by a suffix indicating the units (accepted units are s(seconds), m(minutes), h(hours), d(days), w(weeks)), for example: `86400s`, or `1440m` or `24h`, or `1d`
 
-If you want to also crawl PDFs (only `wget` support for now), use these settings:
+### wget
+
+`wget` is the most basic of the provided crawling tools, it will launch a crawling job for each specified host, which will be finished either when there is nothing more to download or the specified time limit has been reached. The following parameters may be configured when using this tool:
 
 ```yaml
-crawler: wget
-crawlFileTypes: "html,pdf"
+crawlUserAgent: "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
+crawlWait: 5
+crawlFileTypes: ["html", "pdf"]
 ```
 
-If you want to use `heritrix` crawler, you should provide the installation folder of `heritrix` and optionally the url (default is 'localhost:8443') and the user:password (default is 'admin:admin'):
+* `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
+* `crawlWait`: option that specifies the time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
+* `crawlFileTypes`: allows to specify the files which we want to retrieve; `wget` will check the extension of pages to download
+
+### Linguacrawl
+
+Linguacrawl is a top-level domain crawler, i.e. when crawling it visits and downloads pages outside of the provided hosts.
+Linguacrawl implements a scouting strategy to download the most productive content for the target languages.
+The provided hosts will act a starting point for this process, the more hosts are provided the lower the chances that the crawler will run out of URLs to visit.
+For this reason, the overall time taken to crawl with Linguacrawl will be significatly higher than the `crawlTimeLimit` value (as it represents the maximum time to spend in a single host).
+Linguacrawl runs a single crawling job, as opposed to running a job per host, so it is recommended to use this crawler with multiple threads.
+
+```yaml
+crawlUserAgent: "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
+crawlWait: 5
+crawlFileTypes: ["html", "pdf"]
+crawlTLD: ['es', 'fr', 'org']
+crawlSizeLimit: 1024 # 1GB
+crawlMaxFolderTreeDepth: 20
+crawlScoutSteps: 200
+crawlBlackListURL: ["wordpress", "blogspot", "facebook", "google", "wikipedia", "youtube", "perehodi", "twitter", "instagram"]
+crawlPrefixFilter: ["mailto:"]
+crawlerNumThreads: 1
+crawlerConnectionTimeout: 10
+dumpCurrentCrawl: False
+resumePreviousCrawl: False
+
+crawlCat: True
+crawlCatMaxSize: 1024 # 1GB
+```
+
+* `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
+* `crawlWait`: option that specifies the time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
+* `crawlFileTypes`: allows to specify the files which we want to retrieve; `linguacrawl` will search the provided pattern in the [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) of the document (in this case, either the full MIME type may be specified (`text/html`,`application/pdf`), or only the subtype (`html`,`pdf`))
+* `crawlTLD`: specifies the accepted [top-level domains](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); the TLDs of the specified hosts, as well as the specified languages will always be added
+* `crawlSizeLimit`: limits the size of the crawl, i.e. when this limit is reached the crawl ends, expressed in MB
+* `crawlMaxFolderTreeDepth`: allows to specify the maximum folder depth for a URL to be taken into account
+* `crawlScoutSteps`: allows to specify the number of documents to be downloaded from a web-site before the scouting criterion is evaluated
+* `crawlBlackListURL`: allows to specify a list of domains which will not be crawled, the default values are specified in the example above
+* `crawlPrefixFilter`: allows to exclude documents that begin with the specified patterns, the default value is the one specified in the example above
+* `crawlerNumThreads`: allows to specify the number of threads to be be used by the crawler, default is 1
+* `crawlerConnectionTimeout`: allows to specify the connection timeout to a web server
+* `dumpCurrentCrawl`: allows to visualize more information about what the crawler is doing, like a 'verbose' option
+* `resumePreviousCrawl`: allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed; the use this the crawling step should be re-run, which can be achieved either by removing the files so that running the crawler becomes necessary (tricky), or forcing the crawl to re-run via `--forcerun linguacrawl_download` argument
+* `crawlCat`: allows to merge all the downloaded WARCs in just one (normally `linguacrawl` generates one warc per domain/subdomain) in order to improve the number of rules of preprocessing to run, but will cause to lose important information like the source of the WARCs; this option should be used in conjunction with `crawlCatMaxSize` to avoid generating WARCs that are extremely large
+* `crawlCatMaxSize`: intead of generating a single WARC, generate multiple WARCs of the specified size, expressed in MB
+
+If Linguacrawl is used, a YAML file is created on the fly in order to use it as configuration file, and you can check this file out to be sure that is configured as you want. There are multiple options which are provided with a default value if none was set, so might be interesting to visualize the generated YAML configuration file if you want a concrete behaviour or something is not working as you expected. Those default values are set because are mandatory for Linguacrawl. Other than the parameters explained above, default behaviour which should be taken into account is:
+
+* A maximum of 3 attempts will be made in order to download a resource.
+* The number of minimum languages in a site will be 2, and in the case of not satisfy this condition, the site will be discarted
+* The mandatory lang to be found in a site will be determined by `lang1` or `lang2` if not defined. A minimum of 10% of content has to be present in the mandatory language in order to not discard a resource
+* The accepted TLDs will be those specified in `lang1`, `lang2`, `langs` and `crawlTLD`
+* WARNING: if you use linguacrawl in a cluster, it is highly recommended to use `crawlCat` and `crawlCatMaxSize` in order to balance the work (it is not usual to use a crawler in a cluster)
+
+### Heritrix
+
+Finally, to use **Heritrix**, these parameters must be set:
 
 ```yaml
 crawler: heritrix
@@ -115,38 +154,11 @@ heritrixUrl: "https://localhost:8443"
 heritrixUser: "admin:admin"
 ```
 
+* `heritrixPath` is the installation folder of heritirx
+* `heritrixUrl` is the URL where heritrix service is running, `https://localhost:8443` by default
+* `heritrixUser` provides the necessary credentials to access heritrix service in the format of `login:password` (`admin:admin`) by default
+
 Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and resume from the latest. If crawl takes longer than the crawl time limit, it will automatically create a checkpoint for a future incremental crawl.
-
-Other option might be `linguacrawl`, which shares multiple configuration options with the rest of crawlers, but there are also unique options for its own configuration:
-
-```yaml
-crawler: linguacrawl
-crawlFileTypes: text/html,application/pdf
-crawlTLD: ["fr", "en"]
-crawlSizeLimit: "1024"
-crawlCat: true
-crawlCatMaxSize: 1024
-crawlMaxFolderTreeDepth: "20"
-crawlScoutSteps: "200"
-crawlBlackListURL: ['wordpress', 'blogspot', 'facebook', 'google', 'wikipedia', 'youtube', 'perehodi', 'twitter', 'instagram']
-crawlPrefixFilter: ['mailto:']
-crawlerNumThreads: "12"
-crawlerConnectionTimeout: "3600"
-dumpCurrentCrawl: true
-resumePreviousCrawl: false
-```
-
-If `linguacrawl` is used, a YAML file is created on the fly in order to use it as configuration file, and you can check this file out to be sure that is configured as you want. There are multiple options which are provided with a default value if none was set, so might be interesting to visualize the generated YAML configuration file if you want a concrete behaviour or something is not working as you expected. Those default values are set because are mandatory for `linguacrawl`. Other default behaviour which should be taken into account is:
-
-* Default User Agent is used: Mozilla/5.0 (compatible; Bitextor/8 + <https://github.com/bitextor/bitextor>)
-* Default URL blacklist is used if not specified any (you can specify "[]" if you do not want any element in the blacklist): ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
-* Default prefix filter is used if not specified any (you can specify "[]" if you do not want any element in the prefix filter list): ['mailto:']
-* A maximum of 3 attempts will be made in order to download a resource.
-* The number of minimum languages in a site will be 2, and in the case of not satisfy this condition, the site will be discarted
-* The mandatory lang to be found in a site will be determined by `lang1` or `lang2` if not defined. A minimum of 10% of content has to be present in the mandatory language in order to not discard a resource
-* The accepted TLDs will be those specified in `lang1`, `lang2`, `langs` and `crawlTLD`
-* `linguacrawl` works efficiently when multiple hosts are provided, and due to this, we provide all the hosts which are specified in `hosts` and `hostsFile`. This fact makes that we lose some information, like the main source of the links that are crawled in a concrete host of the ones which were provided in the configuration file, but we make a more efficient crawling. This behaviour is different from the rest the crawlers, where each of them execute a different instance with a host
-* WARNING: if you use linguacrawl in a cluster, it is highly recommended to use `crawlCat` and `crawlCatMaxSize` in order to balance the work (it is not usual to use a crawler in a cluster)
 
 ## Preprocessing and sharding
 
