@@ -89,8 +89,8 @@ crawlFileTypes: ["html", "pdf"]
 ```
 
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
-* `crawlWait`: option that specifies the time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
-* `crawlFileTypes`: allows to specify the files which we want to retrieve; `wget` will check the extension of pages to download
+* `crawlWait`: time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
+* `crawlFileTypes`: filetypes that sould be retrieved; `wget` will check the extension of the document
 
 ### Linguacrawl
 
@@ -120,19 +120,19 @@ crawlCatMaxSize: 1024 # 1GB
 ```
 
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
-* `crawlWait`: option that specifies the time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
-* `crawlFileTypes`: allows to specify the files which we want to retrieve; `linguacrawl` will search the provided pattern in the [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) of the document (in this case, either the full MIME type may be specified (`text/html`,`application/pdf`), or only the subtype (`html`,`pdf`))
-* `crawlTLD`: specifies the accepted [top-level domains](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); the TLDs of the specified hosts, as well as the specified languages will always be added
-* `crawlSizeLimit`: limits the size of the crawl, i.e. when this limit is reached the crawl ends, expressed in MB
-* `crawlMaxFolderTreeDepth`: allows to specify the maximum folder depth for a URL to be taken into account
-* `crawlScoutSteps`: allows to specify the number of documents to be downloaded from a web-site before the scouting criterion is evaluated
-* `crawlBlackListURL`: allows to specify a list of domains which will not be crawled, the default values are specified in the example above
+* `crawlWait`: time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due to too many connections in a low interval of time
+* `crawlFileTypes`: filetypes that should be retrieved; `linguacrawl` will search the provided pattern in the [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) of the document (in this case, either the full MIME type may be specified (`text/html`,`application/pdf`), or only the subtype (`html`,`pdf`))
+* `crawlTLD`: accepted [top-level domains](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); the TLDs of the specified hosts, as well as the specified languages will always be added
+* `crawlSizeLimit`:  maximum size limit, expressed in MB, for a single host; i.e. when this limit is reached the crawler will stop downloading pages from the host
+* `crawlMaxFolderTreeDepth`: the maximum folder depth for a URL to be taken into account
+* `crawlScoutSteps`: the number of documents to be downloaded from a web-site before the scouting criterion is evaluated
+* `crawlBlackListURL`: a list of domains which will not be crawled, the default values are specified in the example above
 * `crawlPrefixFilter`: allows to exclude documents that begin with the specified patterns, the default value is the one specified in the example above
-* `crawlerNumThreads`: allows to specify the number of threads to be be used by the crawler, default is 1
-* `crawlerConnectionTimeout`: allows to specify the connection timeout to a web server
-* `dumpCurrentCrawl`: allows to visualize more information about what the crawler is doing, like a 'verbose' option
-* `resumePreviousCrawl`: allows to resume the crawling, but is not trivial to use since Snakemake executes the workflow based on the files which are needed; the use this the crawling step should be re-run, which can be achieved either by removing the files so that running the crawler becomes necessary (tricky), or forcing the crawl to re-run via `--forcerun linguacrawl_download` argument
-* `crawlCat`: allows to merge all the downloaded WARCs in just one (normally `linguacrawl` generates one warc per domain/subdomain) in order to improve the number of rules of preprocessing to run, but will cause to lose important information like the source of the WARCs; this option should be used in conjunction with `crawlCatMaxSize` to avoid generating WARCs that are extremely large
+* `crawlerNumThreads`: the number of threads to be be used by the crawler, default is 1
+* `crawlerConnectionTimeout`: the connection timeout (in seconds) to a web server
+* `dumpCurrentCrawl`: print progress information (WARNING: *very* verbose)
+* `resumePreviousCrawl`: resume the crawling from a previous run; this option is not trivial to use since Snakemake executes the workflow based on the files which are needed, to the use this the crawling step should be re-run, which can be achieved either by removing the files so that running the crawler becomes necessary (tricky), or forcing the crawl to re-run via `--forcerun linguacrawl_download` argument provided to `bitextor` command
+* `crawlCat`: allows to merge all the downloaded WARCs in just one (normally `linguacrawl` generates one warc per domain/subdomain) in order to improve the number of rules of preprocessing to run, but will result is a loss of important information like the source of the WARCs; this option should be used in conjunction with `crawlCatMaxSize` to avoid generating WARCs that are extremely large
 * `crawlCatMaxSize`: intead of generating a single WARC, generate multiple WARCs of the specified size, expressed in MB
 
 If Linguacrawl is used, a YAML file is created on the fly in order to use it as configuration file, and you can check this file out to be sure that is configured as you want. There are multiple options which are provided with a default value if none was set, so might be interesting to visualize the generated YAML configuration file if you want a concrete behaviour or something is not working as you expected. Those default values are set because are mandatory for Linguacrawl. Other than the parameters explained above, default behaviour which should be taken into account is:
@@ -162,9 +162,14 @@ Heritrix crawler will check if there is a checkpoint in its 'jobs' folder and re
 
 ## Preprocessing and sharding
 
-After crawling, the downloaded webs are processed to extract clean text, detect language, etc. The following set of option define how that process is carried out.
+After crawling, the downloaded webs are processed to extract clean text, detect language, etc.
 
-After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs. Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contains one or more complete domain(s). Shards are split into batches of specified size to keep memory consumption in check. Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
+After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs.
+Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contains one or more complete domain(s).
+Shards in turn are split into batches of specified size to keep memory consumption in check.
+Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
+
+The following set of option define how that process is carried out.
 
 ```yaml
 # preprocessing
@@ -188,12 +193,12 @@ batches: 1024 # batches of up to 1024MB
 
 Options specific to `warc2preprocess`:
 
-* `langID`: specify the model that should be used for language identification, [`cld2`](https://github.com/CLD2Owners/cld2) (default) or [`cld3`](https://github.com/google/cld3); `cld2` is faster, but `cld3` can be more accurate for certain languages
+* `langID`: the model that should be used for language identification, [`cld2`](https://github.com/CLD2Owners/cld2) (default) or [`cld3`](https://github.com/google/cld3); `cld2` is faster, but `cld3` can be more accurate for certain languages
 * `ftfy`: ftfy is a tool that solves encoding errors (disabled by default)
 * `cleanHTML`: attempt to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow, in order to improve overall speed; this has an unwanted side effect of removing too much content if the HTML document is malformed (disabled by default)
 * `html5lib`: extra parsing with [`html5lib`](https://pypi.org/project/html5lib/), which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
 * `boilerpipeCleaning`: enable [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents (disabled by default)
-* `parser`: option that selects HTML parsing library for text extraction, [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
+* `parser`: select HTML parsing library for text extraction; options are: [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
 * `PDFextract`: use [PDFExtraxt](https://github.com/bitextor/python-pdfextract) instead of poppler `pdf2html` converter
 * `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
 * `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
@@ -202,8 +207,8 @@ Options specific to `warc2preprocess`:
 
 Sharding options:
 
-* `shards`: set number of shards, where a value of 'n' will result in 2^n shards; default is 8 (2^8 shards). `shards: 0` will force all domains to be compared for alignment
-* `batches`: batch size in MB; default is 1024. Large batches will increase memory consumption during document alignment, but will reduce time overhead
+* `shards`: set number of shards, where a value of 'n' will result in 2^n shards, default is 8 (2^8 shards); `shards: 0` will force all domains to be compared for alignment
+* `batches`: batch size in MB, default is 1024; large batches will increase memory consumption during document alignment, but will reduce time overhead
 
 ## Sentence splitting
 
@@ -262,8 +267,8 @@ documentAligner: externalMT
 
 The variable `documentAligner` can take two different values, each of them taking a different document-alignment strategy:
 
-* `DIC`: takes the strategy using bilingual lexica and a linear regressor
-* `externalMT`: takes the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
+* `DIC`: selects the strategy using bilingual lexica and a linear regressor
+* `externalMT`: selects the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
 
 ### Using bilingual lexica
 
