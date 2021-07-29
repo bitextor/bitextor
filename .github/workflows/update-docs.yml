@@ -1,0 +1,17 @@
+name: Update readthedocs documentation
+on:
+    push:
+        branches:
+            - master
+        paths:
+            - 'docs/**'
+
+jobs:
+    update_docs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send webhook
+              run: |
+                curl -X POST \
+                -d "token=${{ secrets.GITHUB_TOKEN }}" -d "ref=${GITHUB_REF##*/}" \
+                https://readthedocs.org/api/v2/webhook/bitextor/160313/
