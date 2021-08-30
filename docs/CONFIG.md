@@ -273,12 +273,16 @@ The variable `documentAligner` can take two different values, each of them takin
 ### Using bilingual lexica
 
 ```yaml
+documentAligner: DIC
 dic: /home/user/en-fr.dic
 ```
 
-Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainingPrefix` using `mgiza` tools:
+Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. This dictionary should have words in `lang1` in the first column, and `lang2` in the second one.
+
+If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainingPrefix` using `mgiza` tools:
 
 ```yaml
+documentAligner: DIC
 initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 
@@ -296,6 +300,7 @@ mkcls: true
 ### Using external MT
 
 ```yaml
+documentAligner: externalMT
 alignerCmd: "example/dummy-translate.sh"
 translationDirection: "es2en"
 documentAlignerThreshold: 0.1
