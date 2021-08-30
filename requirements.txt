@@ -1,7 +1,7 @@
 snakemake==6.7.0
 warcio==1.7.4
 ftfy==6.0.3
-tldextract==3.1.1
+tldextract>=3.1.0,<=3.1.1
 mmh3==3.0.0
 tqdm>=4.60.0,<=4.62.2
 toolwrapper>=0.4.1,<=2.1.0
