@@ -1490,7 +1490,7 @@ rule tmx:
     :output: corpus after filtering in TMX format
     """
     input:
-        rules.sents.output,
+        rules.sents.output.corpus,
     output:
         f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz",
     shell:
@@ -1510,7 +1510,7 @@ rule deduped_tmx:
     :output.stats: the corresponding stats file (calculated from dedup txt version)
     """
     input:
-        rules.sents.output,
+        rules.sents.output.corpus,
     output:
         tmx=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz",
         txt=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz",
@@ -1532,7 +1532,7 @@ rule deduped_tmx:
 
 roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.roamed.tmx.gz"
 roam_tmx_input = rules.tmx.output
-roam_txt_input = rules.sents.output
+roam_txt_input = rules.sents.output.corpus
 
 if DEDUPED:
     roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.deduped.roamed.tmx.gz"
