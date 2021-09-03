@@ -115,7 +115,7 @@ Compile and install Bitextor's C++ dependencies:
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
-# other prefix can be used, as long as it is in the PATH
+# other prefix can be used, as long as 'bin' is in the PATH and 'lib' in LD_LIBRARY_PATH
 make -j install
 ```
 
