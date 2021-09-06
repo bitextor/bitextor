@@ -37,9 +37,8 @@ from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
 oparser = argparse.ArgumentParser(
-    description="Script that reads the input of bitextor-ett2lett or bitextor-lett2lettr and uses the information "
-                "about the files in a crawled website to produce an index with all the words in these files and the "
-                "list of documents in which each of them appear")
+    description="Script that reads the tokenised documents and produces an index with all the words "
+                "in these files and the list of documents in which each of them appear")
 oparser.add_argument('--text1', dest='text1',
                      help='File produced by bitextor-tokenize containing the tokenized text of all the records'
                      'in the WARC file encoded as base 64 (each line corresponds to a single record) for SL Language', required=True)

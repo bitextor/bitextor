@@ -30,7 +30,7 @@ def extract_urls(f, docs, fileid):
             # not strings:
             links = re.findall(
                 '''href\s*=\s*['"]\s*([^'"]+)['"]''',
-                base64.b64decode(html_base64enc.strip()).decode("utf-8"),
+                base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore"),
                 re.S)
             docs[fileid] = set(list(links))
             fileid += 1

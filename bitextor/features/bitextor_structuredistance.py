@@ -68,7 +68,7 @@ def extract_structure_representations(f, docs, fileid):
         for html_base64enc in fd:
             p = Parser()
             try:
-                e = base64.b64decode(html_base64enc.strip()).decode("utf8")
+                e = base64.b64decode(html_base64enc.strip()).decode("utf8", errors="ignore")
                 if e != "":
                     p.feed(e)
                     raspa = "".join(p.output)
@@ -98,7 +98,7 @@ def extract_structure_representations(f, docs, fileid):
                     else:
                         docs[fileid] = " "
             except:
-                pass
+                docs[fileid] = " "
             finally:
                 fileid += 1
     return fileid

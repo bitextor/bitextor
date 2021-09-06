@@ -108,11 +108,10 @@ def translate_words(index, dictionary, dictp, translatedindex):
 #
 def feed_dict_with_identical_words(index1, index2, dictionary):
     words_lang1 = set()
-    for key, words in list(index1.items()):
+    for words in index1.values():
         words_lang1 = words_lang1.union(words)
-
     words_lang2 = set()
-    for key, words in list(index2.items()):
+    for words in index2.values():
         words_lang2 = words_lang2.union(words)
 
     for w in words_lang1.intersection(words_lang2):
@@ -154,7 +153,6 @@ ihost = None
 
 # Loading bilingual lexicon
 load_dictionaries(options.dictionary, options.lang1, options.lang2, dic)
-
 if options.idx is None:
     reader = sys.stdin
 else:

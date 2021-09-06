@@ -28,7 +28,7 @@ def extract_urls(html_file, url_file, docs, fileid):
     with open_xz_or_gzip_or_plain(html_file) as hd:
         with open_xz_or_gzip_or_plain(url_file) as ud:
             for url in ud:
-                html_content = base64.b64decode(next(hd, None)).decode("utf-8")
+                html_content = base64.b64decode(next(hd, None)).decode("utf-8", errors="ignore")
 
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
                 rx = re.match('(https?://[^/:]+)', url)

@@ -29,7 +29,7 @@ def extract_images(f, docs, fileid):
             # To compute the edit distance at the level of characters, HTML tags must be encoded as characters and
             # not strings:
             links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''',
-                               base64.b64decode(html_base64enc.strip()).decode("utf-8"), re.S)
+                               base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore"), re.S)
             docs[fileid] = set(list(links))
             fileid += 1
     return fileid
