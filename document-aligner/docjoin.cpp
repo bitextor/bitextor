@@ -11,7 +11,6 @@ using namespace bitextor;
 using namespace std;
 
 struct Join {
-	float score;
 	size_t left_index;
 	size_t right_index;
 };
@@ -21,7 +20,7 @@ struct Row {
 };
 
 ostream &operator<<(ostream &out, Join const &join) {
-	return out << join.score << '\t' << join.left_index << '\t' << join.right_index;
+	return out << join.left_index << '\t' << join.right_index;
 }
 
 ostream &operator<<(ostream &out, Row const &row) {
@@ -71,7 +70,7 @@ enum Source {
 
 int usage(char *progname) {
 	cout << "Usage: " << progname << " [ -l filename | -r filename | -li | -ri ] ...\n"
-	        "Input via stdin: <float> \"\\t\" <left index> \"\\t\" <right index> \"\\n\"\n"
+	        "Input via stdin: <left index> \"\\t\" <right index> \"\\n\"\n"
 	        "\n"
 	        "This program joins rows from two sets of files into tab-separated output.\n"
 	      	"\n"
@@ -118,7 +117,7 @@ int main(int argc, char *argv[]) {
 	while (getline(cin, line)) {
 		istringstream iline(line);
 		Join join;
-		if (iline >> join.score >> join.left_index >> join.right_index)
+		if (iline >> join.left_index >> join.right_index)
 			joins.push_back(join);
 	}
 

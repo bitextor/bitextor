@@ -1159,7 +1159,7 @@ rule bleualign:
         if [ {params.workers} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
-        cat {input.indices} \
+        cut -f 2,3 {input.indices} \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
