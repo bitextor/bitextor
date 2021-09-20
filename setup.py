@@ -50,7 +50,7 @@ if __name__ == "__main__":
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/bitextor/bitextor",
-        packages=["bitextor", "bitextor.utils", "bitextor.features"],
+        packages=["bitextor", "bitextor.utils", "bitextor.docalign", "bitextor.docalign.features"],
         #classifiers=[],
         #project_urls={},
         package_data={
