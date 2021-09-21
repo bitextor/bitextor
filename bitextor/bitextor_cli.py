@@ -95,6 +95,7 @@ def main():
         snakefile=snakefile,
         configfiles=options.configfiles,
         config=options.config,
+        nodes=options.jobs,
         cores=options.jobs,
         keepgoing=options.keep_going,
         notemp=options.notemp,
