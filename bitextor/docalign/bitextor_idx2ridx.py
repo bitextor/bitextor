@@ -119,11 +119,11 @@ def feed_dict_with_identical_words(index1, index2, dictionary):
 
 
 oparser = argparse.ArgumentParser(
-    description="Script that reads the output of bitextor-lett2idx and builds an RIDX file (a list of documents and "
+    description="Script that reads the output of bitextor-buildidx and builds an RIDX file (a list of documents and "
                 "their corresponding n-best canidates to be parallel). To do so, a bag-of-word-overlapping metric is "
                 "used to compare documents in both languages")
 oparser.add_argument('idx', metavar='FILE', nargs='?',
-                     help='File produced by bitextor-lett2idx containing an index of the different words for every '
+                     help='File produced by bitextor-buildidx containing an index of the different words for every '
                           'language in the website and the list of documents in which they appear (if undefined, '
                           'the script will read from the standard input)',
                      default=None)

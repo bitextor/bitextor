@@ -72,9 +72,9 @@ def main():
                 candidateid = int(fields[j].split(":")[0])
                 urls_candidate = documents[candidateid][1]
                 if url_doc in urls_candidate:
-                    candidate += ":1"
+                    candidate += ":1.0"
                 else:
-                    candidate += ":0"
+                    candidate += ":0.0"
                 sys.stdout.write("\t" + candidate)
             sys.stdout.write("\n")
 
