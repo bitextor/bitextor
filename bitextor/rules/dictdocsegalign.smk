@@ -268,7 +268,7 @@ rule aligndocumentsBitextor:
     shell:
         """
         {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \
-            --lines1 $(zcat {input.url_l1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \
+            --lines1 $(zcat {input.url1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \
             -n 1 -i converge {input.rank1} {input.rank2} > {output}
         """
 
