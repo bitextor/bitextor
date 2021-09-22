@@ -63,14 +63,14 @@ def validate_args(config):
         'until': {
             'type': 'string',
             'allowed': [
-                'crawl', 'preprocess', 'shard', 'split', 'translate',
+                'crawl', 'preprocess', 'shard', 'split', 'translate', 'tokenise',
                 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'filter'
             ]
         },
         'parallelWorkers': {
             'type': 'dict',
             'allowed': [
-                'split', 'translate', 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'sents'
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'sents'
             ],
             'valuesrules': {'type': 'integer', 'min': 1}
         },
@@ -181,23 +181,25 @@ def validate_args(config):
         if config['crawler'] == 'heritrix':
             schema['heritrixPath']['required'] = True
 
-    untilPreprocess = False
-    untilCrawling = False
+    monolingual_workflow = False
     if 'until' in config:
-        untilPreprocess = config['until'] == 'preprocess'
-        untilCrawling = config['until'] == 'crawl'
+
+        if config['until'] in ('crawl', 'preprocess', 'shard', 'split', 'tokenise'):
+            monolingual_workflow = True
 
     bothLangsSpecified = "lang1" in config and "lang2" in config
 
-    if not untilCrawling and not untilPreprocess:
+    if not monolingual_workflow:
         schema['lang1']['required'] = True
         schema['lang2']['required'] = True
 
-    elif untilPreprocess and not bothLangsSpecified:
+    elif monolingual_workflow and not bothLangsSpecified:
         schema['langs']['required'] = True
 
     if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
+        if monolingual_workflow and 'alignedCmd' not in config:
+            config["alignerCmd"] = ""
 
         if bothLangsSpecified:
             schema['translationDirection']['allowed'] = [

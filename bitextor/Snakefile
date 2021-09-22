@@ -31,8 +31,12 @@ PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
 
 LANGS = set()
-LANG1 = ""
-LANG2 = ""
+
+# the only scenario where config won't have LANG1 and LANG2 is when the workflow is monolingual,
+# and in that case LANG1/LANG2 and SRC_LANG/TRG_LANG won't be used anywhere, so setting them to 'l1' and 'l2' is fine
+# (if LANG1/LANG2 and SRC_LANG/TRG_LANG are unset or both empty string, Snakemake will give an error, even if they are not used)
+LANG1 = "l1"
+LANG2 = "l2"
 
 if "langs" in config:
     LANGS = set(config["langs"])
@@ -376,8 +380,7 @@ TARGETS = TARGET_2_WARCS.keys()
 THREADS = {
     "split": 1,
     "translate": 1,
-    "tokenise_src": 1,
-    "tokenise_trg": 1,
+    "tokenise": 1,
     "docalign": 1,
     "segalign": 1,
     "bifixer": 1,
@@ -437,10 +440,14 @@ elif UNTIL == "split":
 elif UNTIL == "translate":
     OUTPUT = f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}"
 elif UNTIL == "tokenise_trg":
-    # TODO: decide where to put '0X_step' files (output of aggregate rules)
     OUTPUT = f"{DATADIR}/shards/05.tokenise.{TRG_LANG}"
 elif UNTIL == "tokenise_src":
-    OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
+    if DOCALIGN == "externalMT":
+        OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
+    elif DOCALIGN == "DIC":
+        OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
+elif UNTIL == "tokenise":
+    OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
 else:
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
@@ -958,7 +965,7 @@ rule tokenise_translated:
     params:
         tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
         lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
-    threads: THREADS["tokenise_src"]
+    threads: THREADS["tokenise"]
     shell:
         """
         parallel_cmd=""
@@ -973,7 +980,7 @@ rule tokenise_translated:
         """
 
 
-rule tokenise_target:
+rule tokenise:
     """
     Tokenise the target side documents to feed into mt-docalign or dic-docalign
     :input: gz-compressed file with a base64-encoded document per line
@@ -983,13 +990,13 @@ rule tokenise_target:
         each tokenised document must have the same number of lines as the source
     """
     input:
-        f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/sentences.gz",
     output:
-        f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/tokenised.gz",
     params:
-        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
-        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
-    threads: THREADS["tokenise_trg"]
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, wildcards.lang), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, wildcards.lang), '--morph-analyser "{}"'),
+    threads: THREADS["tokenise"]
     shell:
         """
         parallel_cmd=""
@@ -999,52 +1006,20 @@ rule tokenise_target:
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
-                --langcode {TRG_LANG} \
+                --langcode {wildcards.lang} \
             | pigz -c > {output}
         """
 
-
-rule tokenise_source:
-    """
-    Tokenise the source side documents to feed into dic-docalign
-    :input: gz-compressed file with a base64-encoded document per line
-        the documents are the output of sentence splitting
-    :output: gz-compressed file with a base64-encoded tokenised document per line
-        output must have the same number of lines as the input (i.e. same number of docs)
-        each tokenised document must have the same number of lines as the source
-    """
-    input:
-        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
-    output:
-        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
-    params:
-        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
-        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
-    threads: THREADS["tokenise_src"]
-    shell:
-        """
-        parallel_cmd=""
-        if [ {threads} -gt 1 ]; then
-            parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
-        fi
-        zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
-                {params.tokeniser} {params.lemmatizer} \
-                --langcode {SRC_LANG} \
-            | pigz -c > {output}
-        """
-
-
-rule aggregate_tokenise_target:
+rule aggregate_tokenise:
     """
     Helper rule to implement until=tokenise_trg config
-    :input: the result of every tokenise_target rule
-    :output: a file that contains the path to the output of every tokenise_target rule
+    :input: the result of every tokenise rule
+    :output: a file that contains the path to the output of every tokenise rule
     """
     input:
-        lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(TRG_LANG)],
+        lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(wildcards.lang)],
     output:
-        f"{DATADIR}/shards/05.tokenise.{TRG_LANG}",
+        f"{DATADIR}/shards/05.tokenise.{{lang}}",
     shell:
         """ echo {input} | tr ' ' '\n' > {output} """
 
@@ -1063,20 +1038,6 @@ rule aggregate_translate_tokenise_source:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-rule aggregate_tokenise_source:
-    """
-    Helper rule to implement until=tokenise_src config when docalign=DIC
-    :input: the result of every tokenise_source rule
-    :output: a file that contains the path to the output of every tokenise_source rule
-    """
-    input:
-        lambda wildcards: [f"{batch}/tokenised.gz" for batch in get_batches(SRC_LANG)],
-    output:
-        f"{DATADIR}/shards/05.tokenise.{SRC_LANG}",
-    shell:
-        """ echo {input} | tr ' ' '\n' > {output} """
-
-
 rule mt_matches:
     """
     Align documents using mt document aligner
@@ -1091,7 +1052,7 @@ rule mt_matches:
     """
     input:
         l1=rules.tokenise_translated.output,
-        l2=rules.tokenise_target.output,
+        l2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches",
     params:
