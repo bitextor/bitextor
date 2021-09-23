@@ -111,8 +111,6 @@ def main():
       for k,v in clf.best_params_.items():
           logging.info(f"\t{k}: {v}")
 
-      joblib.dump(clf.best_estimator_, options.model)
-
       clf = clf.best_estimator_
 
   if options.type in ("ExtraTrees", "RandomForest"):
