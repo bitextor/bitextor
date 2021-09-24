@@ -1120,7 +1120,7 @@ rule bleualign:
         if [ {params.workers} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
-        cat {input.indices} \
+        cut -f 2,3 {input.indices} \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
@@ -1133,11 +1133,8 @@ rule bleualign:
 ### FILTERING AND CLEANING ######################################
 
 split_input_filename = "06_02.segalign"
-split_input_extension = ".gz"
-
 if SEGALIGN == "hunalign":
     split_input_filename = "hunalign.06_02.segalign"
-    split_input_extension = ".xz"
 
 
 # split segalign results into balanced chunks
@@ -1152,7 +1149,7 @@ checkpoint split_segalign:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}{split_input_extension}"
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{split_input_filename}.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -1188,8 +1185,6 @@ checkpoint split_segalign:
                 CAT=cat
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
-                elif [[ {input[0]} == *.xz ]]; then
-                    CAT=xzcat
                 fi
                 $CAT {input} \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
