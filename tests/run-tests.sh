@@ -113,7 +113,7 @@ tests-mt()
                 dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
-                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True \
+                bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True \
             &> "${WORK}/reports/10-mt-en-fr.report"
         annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
     ) &
@@ -148,7 +148,7 @@ tests-db()
                 dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
-                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+                bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/20-en-fr.report"
         annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
     ) &
@@ -167,7 +167,7 @@ tests-gendic()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+                bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/30-gendic-en-fr.report"
         annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
         echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))"
@@ -180,7 +180,7 @@ tests-gendic()
                     warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                     documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" sentenceAligner="hunalign" \
                     initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                    bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+                    bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
                 &> "${WORK}/reports/30-gendic-en-fr.report"
             annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
         ) &
@@ -200,7 +200,8 @@ tests-genbicleaner()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleaner=True bicleanerModel="${BICLEANER}/new/new-en-fr.yaml" \
+                bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/40-genbicleaner-en-fr.report"
         annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
@@ -215,7 +216,8 @@ tests-genbicleaner()
                     warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                     documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
                     initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                    bicleaner="${BICLEANER}/new/new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                    bicleaner=True bicleanerModel="${BICLEANER}/new/new-en-fr.yaml" \
+                    bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                     bicleanerThreshold=0.1 deferred=False tmx=True \
                 &> "${WORK}/reports/40-genbicleaner-en-fr.report"
             annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
@@ -238,7 +240,8 @@ tests-gendic-genbicleaner()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleaner=True bicleanerModel="${BICLEANER}/new-new/new-new-en-fr.yaml" \
+                bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"
         annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
@@ -252,7 +255,8 @@ tests-gendic-genbicleaner()
                     warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                     documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" sentenceAligner="hunalign" \
                     initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                    bicleaner="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                    bicleaner=True bicleanerModel="${BICLEANER}/new-new/new-new-en-fr.yaml" \
+                    bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                     bicleanerThreshold=0.1 deferred=False tmx=True \
                 &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"
             annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
@@ -270,7 +274,7 @@ tests-mt-db()
                 preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
-                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+                bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/60-mtdb-en-fr.report"
         annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
     ) &
@@ -296,7 +300,7 @@ tests-others()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
-                bicleaner="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 \
+                bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True \
             &> "${WORK}/reports/101-mto2-en-fr.report"
         annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"

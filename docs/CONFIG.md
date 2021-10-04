@@ -331,11 +331,13 @@ A number of pre-trained models for Bicleaner are available [here](https://github
 The options required to make it work are:
 
 ```yaml
-bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
+bicleaner: True
+bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
 
-* `bicleaner`: path to the YAML configuration file of a pre-trained model
+* `bicleaner`: use Bicleaner to filter out pairs of segments
+* `bicleanerModel`: path to the YAML configuration file of a pre-trained model
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
 If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:

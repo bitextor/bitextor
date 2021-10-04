@@ -165,12 +165,17 @@ def validate_args(config):
         'bifixer': {'type': 'boolean', 'default': False},
         # mark near duplicates as duplicates
         'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
-        'bicleaner': {'type': 'string'},
-        'bicleanerThreshold': {'type': 'float', 'dependencies': 'bicleaner'},
+        # cleaning
+        'bicleaner': {'type': 'boolean', 'default': False},
+        'bicleanerModel': {'type': 'string', 'check_with': isfile, 'dependencies': {'bicleaner': True}},
+        'bicleanerThreshold': {'type': 'float'},
         'bicleanerCorpusTrainingPrefix': {'type': 'list'},
+        # elrc metrics
         'elrc': {'type': 'boolean'},
+        # tmx
         'tmx': {'type': 'boolean'},
         'deduped': {'type': 'boolean'},
+        # roam
         'biroamer': {'type': 'boolean', 'default': False},
         'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
         'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
@@ -232,11 +237,13 @@ def validate_args(config):
     if 'bicleaner' in config:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
+        schema['bicleanerModel']['required'] = True
 
-        if not os.path.isfile(os.path.expanduser(config['bicleaner'])):
-            schema['bicleanerCorpusTrainingPrefix']['required'] = True
-            schema['initCorpusTrainingPrefix']['required'] = True
-            schema['dic']['required'] = True
+        # TODO use a specific config variable for this
+        #if not os.path.isfile(os.path.expanduser(config['bicleaner'])):
+        #    schema['bicleanerCorpusTrainingPrefix']['required'] = True
+        #    schema['initCorpusTrainingPrefix']['required'] = True
+        #    schema['dic']['required'] = True
 
     if 'dic' in config and not os.path.isfile(os.path.expanduser(config['dic'])):
         # if 'dic' in config and does not exist, we need to generate a new dictionary

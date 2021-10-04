@@ -289,9 +289,9 @@ if "bifixer" in config and config["bifixer"]:
 
 if "aggressiveDedup" in config and not config["aggressiveDedup"]:
     AGGRESSIVE_DEDUP = ""
-if "bicleaner" in config:
+if "bicleaner" in config and config["bicleaner"]:
     BICLEANER = True
-    BICLEANER_MODEL = config["bicleaner"]
+    BICLEANER_MODEL = config["bicleanerModel"]
     BICLEANER_FIELDS = ["bicleaner"]
 if "bicleanerThreshold" in config:
     BICLEANER_THRESHOLD = config["bicleanerThreshold"]
