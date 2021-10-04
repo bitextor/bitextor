@@ -112,9 +112,9 @@ If you are using a RPM based system, use these instead:
 
 ```bash
 # mandatory:
-`sudo dnf install git python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++`
+sudo dnf install git python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
 ## warc2text:
-`sudo dnf install uchardet-devel libzip-devel`
+sudo dnf install uchardet-devel libzip-devel
 ```
 
 ### C++ dependencies
