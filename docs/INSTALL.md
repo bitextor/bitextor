@@ -115,6 +115,8 @@ If you are using a RPM based system, use these instead:
 sudo dnf install git python-devel python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
 ## warc2text:
 sudo dnf install uchardet-devel libzip-devel
+## bicleaner:
+sudo dnf install scipy
 ```
 
 ### C++ dependencies
