@@ -165,16 +165,8 @@ rule dic_generation_symmetrise_dic:
         t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
         t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
     output:
-        expand("{dic}", dic=DIC_TRAINING),
+        expand("{dic}", dic=DIC),
     run:
-        if DIC != DIC_TRAINING:
-            sys.stderr.write(
-                f"WARNING: you are going to generate a new dictionary, but you have provided one which exists and is the one that will be used. If you want to use the new dictionary, set 'dic' config option to an existant path but unexistant file\n"
-            )
-            sys.stderr.write(
-                f"WARNING: in order to avoid replacement of {DIC}, the dictionary that is going to be created has been renamed to {DIC_TRAINING}\n"
-            )
-
         svocabulary = {}
         tvocabulary = {}
         svcb = open(input.vcb1, "r")
@@ -230,8 +222,8 @@ rule dic_generation_lex_dic:
         t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
         t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
     output:
-        e2f=f"{DIC_TRAINING}.lex.e2f.gz",
-        f2e=f"{DIC_TRAINING}.lex.f2e.gz",
+        e2f=f"{DIC}.lex.e2f.gz",
+        f2e=f"{DIC}.lex.f2e.gz",
     run:
         svocabulary = {}
         tvocabulary = {}

@@ -46,6 +46,10 @@ def isduration(field, value, error):
         error(field, f"format is an integer followed by a single letter suffix")
 
 
+def istrue(field, value, error):
+    if value != True:
+        error(field, f'{value} is not True')
+
 def validate_args(config):
     schema = {
         # required parameters
@@ -156,6 +160,7 @@ def validate_args(config):
         'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
         # dictionary
         'dic': {'type': 'string', 'dependencies': {}},
+        'generateDic': {'type': 'boolean', 'default': False, 'dependencies': {}},
         'initCorpusTrainingPrefix': {'type': 'list'},
         # sentence alignment
         'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
@@ -167,7 +172,8 @@ def validate_args(config):
         'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
         # cleaning
         'bicleaner': {'type': 'boolean', 'default': False},
-        'bicleanerModel': {'type': 'string', 'check_with': isfile, 'dependencies': {'bicleaner': True}},
+        'bicleanerModel': {'type': 'string', 'dependencies': {'bicleaner': True}},
+        'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},
         'bicleanerCorpusTrainingPrefix': {'type': 'list'},
         # elrc metrics
@@ -214,16 +220,25 @@ def validate_args(config):
         if "sentenceAligner" in config and config["sentenceAligner"] == "hunalign":
             schema['dic']['required'] = True
 
+            if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+                schema['generateDic']['required'] = True
+                schema['generateDic']['check_with'] = istrue
+
     elif config['documentAligner'] == 'DIC':
         schema['dic']['required'] = True
         schema['documentAligner']['dependencies']['preprocessor'] = ['warc2preprocess', 'warc2text']
 
         if config['preprocessor'] == 'warc2text':
             config['writeHTML'] = True
+        if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+                schema['generateDic']['required'] = True
+                schema['generateDic']['check_with'] = istrue
+
+    if "generateDic" in config and config["generateDic"]:
+        schema['dic']['required'] = True
+        schema['initCorpusTrainingPrefix']['required'] = True
 
     if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
-        # schema['sentenceAligner']['dependencies'] = frozenset({'documentAligner': 'externalMT'})
-        # dependencies are not working because of the frozenset
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
 
     if "deferred" in config:
@@ -234,23 +249,21 @@ def validate_args(config):
         schema['until']['allowed'].append('bifixer')
         schema['parallelWorkers']['allowed'].append('bifixer')
 
-    if 'bicleaner' in config:
+    if 'bicleaner' in config and config['bicleaner']:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
         schema['bicleanerModel']['required'] = True
 
-        # TODO use a specific config variable for this
-        #if not os.path.isfile(os.path.expanduser(config['bicleaner'])):
-        #    schema['bicleanerCorpusTrainingPrefix']['required'] = True
-        #    schema['initCorpusTrainingPrefix']['required'] = True
-        #    schema['dic']['required'] = True
+        if 'bicleanerGenerateModel' in config and config['bicleanerGenerateModel']:
+            schema['dic']['required'] = True
+            schema['bicleanerCorpusTrainingPrefix']['required'] = True
+            schema['initCorpusTrainingPrefix']['required'] = True
 
-    if 'dic' in config and not os.path.isfile(os.path.expanduser(config['dic'])):
-        # if 'dic' in config and does not exist, we need to generate a new dictionary
-        schema['initCorpusTrainingPrefix']['required'] = True
-
-    if 'initCorpusTrainingPrefix' in config:
-        schema['dic']['required'] = True
+            if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+                schema['generateDic']['required'] = True
+                schema['generateDic']['check_with'] = istrue
+        else:
+            schema['bicleanerModel']['check_with'] = isfile
 
     if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
         print(
