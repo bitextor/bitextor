@@ -92,7 +92,7 @@ These are some external tools that need to be in the path before installing the 
 
 ```bash
 # mandatory:
-sudo apt install git python3 python3-venv python3-pip golang-go build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
+sudo apt install git time python3 python3-venv python3-pip golang-go build-essential cmake libboost-all-dev liblzma-dev time curl pigz parallel
 
 # optional, feel free to skip dependencies for components that you don't expect to use:
 ## wget crawler:
@@ -112,7 +112,7 @@ If you are using a RPM based system, use these instead:
 
 ```bash
 # mandatory:
-sudo dnf install git python-devel python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
+sudo dnf install git time python-devel python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
 ## warc2text:
 sudo dnf install uchardet-devel libzip-devel
 ## bicleaner:
