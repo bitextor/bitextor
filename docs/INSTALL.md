@@ -116,7 +116,7 @@ sudo dnf install git python-devel python3-pip golang-go cmake pigz parallel boos
 ## warc2text:
 sudo dnf install uchardet-devel libzip-devel
 ## bicleaner:
-sudo dnf install scipy
+sudo dnf install gcc-gfortran python3-devel openblas-devel lapack-devel
 ```
 
 ### C++ dependencies
