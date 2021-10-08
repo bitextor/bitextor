@@ -178,8 +178,8 @@ If you don't want to install all Python requirements in `requirements.txt` becau
 
 ```bash
 # download
-wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
-unzip heritrix-3.4.0-SNAPSHOT-dist.zip
+wget https://repo1.maven.org/maven2/org/archive/heritrix/heritrix/3.4.0-20210923/heritrix-3.4.0-20210923-dist.zip
+unzip heritrix-3.4.0-20210923-dist.zip
 ```
 
 To use heritrix, Java has to be installed and `JAVA_HOME` environment variable must point to Java installation. `HERITRIX_HOME` environment variable must be set to the path where heritrix was unzipped. Make sure that `heritrix` binary is executable.
@@ -187,7 +187,7 @@ To use heritrix, Java has to be installed and `JAVA_HOME` environment variable m
 ```bash
 # configure
 export JAVA_HOME=/path/to/jdk-install-dir
-export HERITRIX_HOME=/path/to/heritrix-3.4.0-SNAPSHOT-dist
+export HERITRIX_HOME=/path/to/heritrix-3.4.0-20210923-dist
 chmod u+x $HERITRIX_HOME/bin/heritrix
 ```
 
@@ -203,12 +203,12 @@ Heritrix Web UI settings (URL and username:password), along with the installatio
 ```yaml
 heritrixUser: "admin:admin"
 heritrixUrl: "https://localhost:8443"
-heritrixPath: "/path/to/heritrix-3.4.0-SNAPSHOT-dist"
+heritrixPath: "/path/to/heritrix-3.4.0-20210923-dist"
 ```
 
 If you experience problems with these steps or want additional information please refer to [this guide](https://heritrix.readthedocs.io/en/latest/getting-started.html).
 
-In Docker it is located at `/home/docker/heritrix-3.4.0-SNAPSHOT` and is not running by default, i.e. it should be launched manually before executing Bitextor crawling with Heritrix.
+In Docker it is located at `/home/docker/heritrix-3.4.0-20210923-dist` and is not running by default, i.e. it should be launched manually before executing Bitextor crawling with Heritrix.
 
 ### [Optional] Protobuf
 
@@ -218,9 +218,9 @@ CLD3 (Compact Language Detector v3), is a language identification model that can
 # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
 # Maybe you need to uninstall any other protobuf installation in your system (from apt or snap) to avoid compilation issues
 sudo apt-get install autoconf automake libtool curl make g++ unzip
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
-tar -zxvf protobuf-all-3.11.4.tar.gz
-cd protobuf-3.11.4
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.18.1/protobuf-all-3.18.1.tar.gz
+tar -zxvf protobuf-all-3.18.1.tar.gz
+cd protobuf-3.18.1
 ./configure
 make
 make check
@@ -235,11 +235,11 @@ Depending on the version of *libboost* that you are using given a certain OS ver
 ```bash
 sudo apt-get remove libboost-all-dev
 sudo apt-get autoremove
-wget https://dl.bintray.com/boostorg/release/1.76.0/source/boost_1_76_0.tar.gz
-tar xvf boost_1_76_0.tar.gz
-cd boost_1_76_0/
+wget https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz
+tar xvf boost_1_77_0.tar.gz
+cd boost_1_77_0/
 ./bootstrap.sh
 ./b2 -j4 --layout=system install || echo FAILURE
 cd ..
-rm -rf boost_1_76_0*
+rm -rf boost_1_77_0*
 ```
