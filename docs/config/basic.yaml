@@ -31,7 +31,8 @@ sentenceAlignerThreshold: 0.1
 
 # CLEANING
 bifixer: true
-bicleaner: ~/bicleaner-model/en-fr/en-fr.yaml
+bicleaner: True
+bicleanerModel: ~/bicleaner-model/en-fr/en-fr.yaml
 bicleanerThreshold: 0.5
 biroamer: false
 

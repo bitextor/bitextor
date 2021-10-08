@@ -279,9 +279,10 @@ dic: /home/user/en-fr.dic
 
 Option `dic` specifies the path to the bilingual lexicon to be used for document alignment. This dictionary should have words in `lang1` in the first column, and `lang2` in the second one.
 
-If the lexicon specified does not exist, the pipeline will try to build it using a parallel corpus provided through the variable `initCorpusTrainingPrefix` using `mgiza` tools:
+If the lexicon specified does not exist, you can specify the option `generateDic` in order to build it using a provided parallel corpus through the variable `initCorpusTrainingPrefix` using `mgiza` tools:
 
 ```yaml
+generateDic: True
 documentAligner: DIC
 initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 ```
@@ -331,21 +332,24 @@ A number of pre-trained models for Bicleaner are available [here](https://github
 The options required to make it work are:
 
 ```yaml
-bicleaner: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
+bicleaner: True
+bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 bicleanerThreshold: 0.6
 ```
 
-* `bicleaner`: path to the YAML configuration file of a pre-trained model
+* `bicleaner`: use Bicleaner to filter out pairs of segments
+* `bicleanerModel`: path to the YAML configuration file of a pre-trained model
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
-If the Bicleaner model is not available, the pipeline will try to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
+If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
 
 ```yaml
+bicleanerGenerateModel: True
 initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
 ```
 
-* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model. If `dic` is provided and does not exist, it will be generated; if `dic` is provided and eixts, it should not be replaced, and '`dic`.generated' will be created. If `hunalign` is used, the provided `dic` will be prioritised instead of the generated one
+* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model. If `dic` is provided and does not exist, you will need to generate one with `generateDic`. Even if `dic` exists because you downloaded it, the whole process of generating it might be carried out since what is really necessary to build the model is the statistical information from the dictionary, what might not be available if you downloaded it
 
 * `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
 

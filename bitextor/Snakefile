@@ -8,8 +8,6 @@ from bitextor.utils.common import (
     open_xz_or_gzip_or_plain,
     get_all_ppids,
     snake_no_more_race_get_pgid,
-    snake_no_more_race_get,
-    snake_no_more_race_set,
     duration_to_seconds,
 )
 
@@ -219,29 +217,9 @@ except:
     pass
 
 DIC = None
-DIC_TRAINING = None
 
 if "dic" in config:
     DIC = config["dic"]
-    DIC_TRAINING = DIC
-    dic_training_file_path = f"{TMPDIR}/dic_training.value"
-    dic_training_file = False
-
-    value = snake_no_more_race_get(dic_training_file_path)
-
-    if value is not None:
-        DIC_TRAINING = value
-        dic_training_file = True
-
-    if (
-        not dic_training_file
-        and os.path.isfile(DIC)
-        and ("bicleanerCorpusTrainingPrefix" in config and "initCorpusTrainingPrefix" in config)
-    ):
-        DIC_TRAINING += ".generated"
-
-    # Create file with DIC_TRAINING value in order to avoid that, when DAG is reevaluated, changes the value of the variable
-    snake_no_more_race_set(dic_training_file_path, DIC_TRAINING)
 
 #################################################################
 # SEGALIGN
@@ -289,9 +267,9 @@ if "bifixer" in config and config["bifixer"]:
 
 if "aggressiveDedup" in config and not config["aggressiveDedup"]:
     AGGRESSIVE_DEDUP = ""
-if "bicleaner" in config:
+if "bicleaner" in config and config["bicleaner"]:
     BICLEANER = True
-    BICLEANER_MODEL = config["bicleaner"]
+    BICLEANER_MODEL = config["bicleanerModel"]
     BICLEANER_FIELDS = ["bicleaner"]
 if "bicleanerThreshold" in config:
     BICLEANER_THRESHOLD = config["bicleanerThreshold"]
@@ -1250,12 +1228,10 @@ rule bicleaner_train_model:
     input:
         corpusl1=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG1),
         corpusl2=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG2),
-        e2f=f"{DIC_TRAINING}.lex.e2f.gz",
-        f2e=f"{DIC_TRAINING}.lex.f2e.gz",
+        e2f=f"{DIC}.lex.e2f.gz",
+        f2e=f"{DIC}.lex.f2e.gz",
         vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
         vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
-        dic=f"{DIC_TRAINING}",  # If DIC != DIC_TRAINING, DIC_TRAINING will be generated but not used because of this input
-        # This input makes the dictionary to be generated (without it, statistical info would be generated but not the dic)
     output:
         model=BICLEANER_MODEL,
     shell:
@@ -1267,7 +1243,6 @@ rule bicleaner_train_model:
         lines=$(cat $training | wc -l)
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
-        # Parameters for good/bad examples have been removed -> now the whole file is being used (https://github.com/bitextor/bicleaner/commit/cdd1bc03928701884cd42ffac4b602220ec3e732)
         {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         rm $training
         """
