@@ -104,6 +104,25 @@ fi
 
 wait
 
+wait-if-envvar-is-true()
+{
+    value="$CI"
+
+    if [[ "$1" != "" ]]; then
+        if [[ "$(eval echo \$$1)" != "" ]]; then
+            value=$(eval echo \$$1)
+        fi
+    fi
+
+    if [[ "$value" == "true" ]]; then
+        wait # wait before starting and finishing a test
+
+        return 0
+    else
+        return 1
+    fi
+}
+
 # MT (id >= 10)
 tests-mt()
 {
@@ -157,7 +176,7 @@ tests-db()
 ### Generate dictionary (id >= 30)
 tests-gendic()
 {
-    wait # wait before starting this test because is very memory-consuming
+    wait-if-envvar-is-true
 
     dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     rm -f "${WORK}/permanent/new-en-fr.dic"
@@ -171,18 +190,18 @@ tests-gendic()
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
                 bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/30-gendic-en-fr.report"
-        annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)" #&& \
-        #echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))" && \
-        #rm -rf "${WORK}/transient-gendic-en-fr"
+        annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
     ) &
 
-    wait # wait before finishing the previous test because is very memory-consuming
+    wait-if-envvar-is-true && \
+    echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))" && \
+    rm -rf "${WORK}/transient-gendic-en-fr"
 }
 
 ### Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
 tests-genbicleaner()
 {
-    wait # wait before starting this test because is very memory-consuming
+    wait-if-envvar-is-true
 
     rm -f "${BICLEANER}/new/new-en-fr.yaml"
 
@@ -198,18 +217,19 @@ tests-genbicleaner()
                 bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/40-genbicleaner-en-fr.report"
         annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
-            dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}') #&& \
-        #echo "Removing '${WORK}/transient-genbicleaner-en-fr' ($(du -sh ${WORK}/transient-genbicleaner-en-fr | awk '{print $1}'))" && \
-        #rm -rf "${WORK}/transient-genbicleaner-en-fr/"
+            dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
-    wait # wait before finishing the previous test because is very memory-consuming
+
+    wait-if-envvar-is-true && \
+    echo "Removing '${WORK}/transient-genbicleaner-en-fr' ($(du -sh ${WORK}/transient-genbicleaner-en-fr | awk '{print $1}'))" && \
+    rm -rf "${WORK}/transient-genbicleaner-en-fr/"
 }
 
 ### Generate dictionary and bicleaner model (id >= 50)
 tests-gendic-genbicleaner()
 {
-    wait # wait before starting this test because is very memory-consuming
+    wait-if-envvar-is-true
 
     rm -f "${WORK}/permanent/new-new-en-fr.dic"
     rm -f "${BICLEANER}/new-new/new-new-en-fr.yaml"
@@ -225,12 +245,12 @@ tests-gendic-genbicleaner()
                 bicleanerCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True \
             &> "${WORK}/reports/50-gendicbicleaner-en-fr.report"
-        annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)" #&& \
-        #echo "Removing '${WORK}/transient-gendicbicleaner-en-fr' ($(du -sh ${WORK}/transient-gendicbicleaner-en-fr | awk '{print $1}'))" && \
-        #rm -rf "${WORK}/transient-gendicbicleaner-en-fr"
+        annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
     ) &
 
-    wait # wait before finishing the previous test because is very memory-consuming
+    wait-if-envvar-is-true && \
+    echo "Removing '${WORK}/transient-gendicbicleaner-en-fr' ($(du -sh ${WORK}/transient-gendicbicleaner-en-fr | awk '{print $1}'))" && \
+    rm -rf "${WORK}/transient-gendicbicleaner-en-fr"
 }
 
 # MT and dictionary-based (id >= 60)
