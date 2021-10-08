@@ -491,7 +491,7 @@ rule wget_download:
         time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
         user_agent=apply_format(USERAGENT, "-a '{}'"),
         wait=apply_format(CRAWLWAIT, "--wait {}"),
-        file_types=(",".join(CRAWLFILETYPES), "-f {}")
+        file_types=apply_format(",".join(CRAWLFILETYPES), "-f {}")
     output:
         f"{DATADIR}/warc/{{target}}/wget.warc.gz",
     shell:

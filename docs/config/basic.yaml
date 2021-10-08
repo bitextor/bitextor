@@ -7,7 +7,7 @@ tempDir: ~/transient
 # DATA SOURCES - CRAWLING
 hostsFile: ~/hosts.gz # contains a domain to crawl per line
 crawler: "wget"
-crawlTimeLimit: "86400" # 24 hours
+crawlTimeLimit: "86400s" # 24 hours
 
 # DATA SOURCES - WARC FILES
 warcsFile: ~/warcs.gz # contains a path to a WARC file per line
