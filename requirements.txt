@@ -8,7 +8,7 @@ warcio==1.7.4
 ftfy==6.0.3
 tldextract>=3.1.0,<=3.1.2
 mmh3==3.0.0
-tqdm>=4.60.0,<=4.62.2
+tqdm>=4.60.0,<=4.62.3
 toolwrapper>=0.4.1,<=2.1.0
 sacrebleu==2.0.0
 func_timeout==4.3.5
@@ -21,7 +21,7 @@ sentence-splitter==1.4
 mosestokenizer==1.1.0
 lxml==4.6.3
 html5lib==1.1
-regex>=2019.08.19,<=2021.9.24
+regex>=2019.08.19,<=2021.10.8
 numpy==1.21.2
-setuptools==58.1.0
+setuptools==58.2.0
 validators==0.18.2
