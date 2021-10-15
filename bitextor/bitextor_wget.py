@@ -34,9 +34,9 @@ def system_check(cmd):
 
 def check_wget_compression(cmd):
     try:
-        subprocess.check_call(cmd, shell=True)
+        subprocess.check_call(cmd, shell=True, stdout=subprocess.DEVNULL)
         return True
-    except BaseException:
+    except subprocess.CalledProcessError:
         return False
 
 

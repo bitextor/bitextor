@@ -75,24 +75,20 @@ def extract_structure_representations(f, docs, fileid):
                     taglist = raspa.split('_')
                     if len(taglist) > 1 \
                             and taglist[1][-2:] == "ml" \
-                            and all(ord(char) < 128 for char in raspa):
-                        # Delete entries without *ml in the first
-                        # tag to avoid things different than HTML or XML as JPGS or PDF, for example. To compute the
-                        # edit distance at the level of characters, HTML tags must be encoded as characters and not
-                        # strings:
-                        tagset = set(taglist)
-                        if '' in tagset:
-                            tagset.remove('')
-                        # Adding new tags in the raspa and the character with which they will be replaced to the
-                        # dictionary
-                        for tag in tagset:
+                            and all(ord(char) < 128 for char in raspa): # Check that all characters are ASCII
+                        # Delete entries without *ml in the first  tag to avoid things different than HTML or XML
+                        # as JPGS or PDF, for example
+                        translated_taglist = []
+                        for tag in taglist:
                             if tag not in dic:
+                                # Adding new tags in the raspa and the character with which they will be replaced to the
+                                # dictionary. To compute the edit distance at the level of characters, HTML tags must be
+                                # encoded as characters and not strings:
                                 dic[tag] = chr(charidx)
                                 charidx += 1
                                 if charidx == 95:
                                     charidx += 1
-                        translated_taglist = []
-                        for tag in taglist:
+
                             translated_taglist.append(dic[tag])
                         docs[fileid] = "".join(translated_taglist)
                     else:
