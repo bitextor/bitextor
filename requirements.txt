@@ -21,7 +21,7 @@ sentence-splitter==1.4
 mosestokenizer==1.1.0
 lxml==4.6.3
 html5lib==1.1
-regex>=2019.08.19,<=2021.10.8
+regex>=2019.08.19
 numpy==1.21.2
 setuptools==58.2.0
 validators==0.18.2
