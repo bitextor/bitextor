@@ -121,11 +121,14 @@ if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
     PPROC_FILES.append("html.gz")
 
-if "preprocessor" in config and config["preprocessor"] == "warc2preprocess":
-    PPROC = "w2p"
-    PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
-    TEXT_FILE = "plain_text.gz"
-    HTML_FILE = "deboilerplate_html.gz"
+if "preprocessor" in config:
+    if config["preprocessor"] == "warc2preprocess":
+        PPROC = "w2p"
+        PPROC_FILES = ["plain_text.gz", "url.gz", "mime.gz", "normalized_html.gz", "deboilerplate_html.gz"]
+        TEXT_FILE = "plain_text.gz"
+        HTML_FILE = "deboilerplate_html.gz"
+    else:
+        PPROC = config["preprocessor"]
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
@@ -740,6 +743,41 @@ rule warc2text:
         """
         mkdir -p {params.folder}
         {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
+        for lang in {LANGS}; do
+            if [ ! -f {params.folder}/$lang/text.gz ]; then
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                mkdir -p {params.folder}/$lang
+                touch {params.folder}/$lang/{{{params.f}}}
+                gzip {params.folder}/$lang/{{{params.f}}}
+
+                # Generate empty file in order to be able to check if is needed to generate empty shards later
+                touch {EMPTY_SHARD_CHECK}
+            fi
+        done
+        """
+
+
+rule prevertical2text:
+    """
+    Process a list of prevertical format files (or a single prevertical format file)
+        and produce {text,mime,url}.gz and optionally html.gz
+    """
+    input:
+        get_pproc_input,
+    output:
+        expand(
+            "{data}/preprocess/{{target}}/prevertical2text/{lang}/{pproc_file}",
+            data=DATADIR,
+            lang=LANGS,
+            pproc_file=PPROC_FILES,
+        ),
+    params:
+        folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
+        f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+    shell:
+        """
+        mkdir -p {params.folder}
+        cat {input} | {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} -
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"

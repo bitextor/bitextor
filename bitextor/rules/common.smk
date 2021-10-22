@@ -18,10 +18,11 @@ def create_domain_key_2_host_map(hosts):
     key2hosts = {}
     badhosts = []
     for host in hosts:
-        # don't merge blog sites
         if not validators.domain(host):
             badhosts.append(host)
             continue
+
+        # don't merge blog sites
         if host.find(".blogspot.") >= 0 or host.find(".wordpress.") >= 0:
             key = host
         else:

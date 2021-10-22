@@ -3,6 +3,7 @@
 -r requirements/requirements-pdfextract.txt
 -r requirements/requirements-w2p.txt
 -r requirements/requirements-linguacrawl.txt
+-r requirements/requirements-prevertical2text.txt
 snakemake==6.9.1
 warcio==1.7.4
 ftfy==6.0.3
