@@ -49,6 +49,14 @@ PROFILING = ""
 if "profiling" in config and config["profiling"]:
     PROFILING = "\\time -v"
 
+# initialize src and trg lang variables soon enough to use them when needed
+SRC_LANG = LANG1
+TRG_LANG = LANG2
+
+if "translationDirection" in config and config["translationDirection"] == f"{LANG2}2{LANG1}":
+    SRC_LANG = LANG2
+    TRG_LANG = LANG1
+
 #################################################################
 # CRAWLING
 CRAWLTARGET = ""
@@ -172,12 +180,12 @@ CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
 WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
 MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
 
-WORDTOK1 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}"
-WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+WORDTOK_SRC = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {SRC_LANG}"
+WORDTOK_TRG = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {TRG_LANG}"
 
 if WORDTOKS:
-    WORDTOK1 = get_lang_or_default(WORDTOKS, LANG1)
-    WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
+    WORDTOK_SRC = get_lang_or_default(WORDTOKS, LANG1)
+    WORDTOK_TRG = get_lang_or_default(WORDTOKS, LANG2)
 
 PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
 PRUNE_TYPE = f"--prune-type {config['pruneType']}"
@@ -193,11 +201,6 @@ if DOCALIGN == "externalMT":
     MT_COMMAND = config["alignerCmd"]
 else:
     MT_COMMAND = None
-SRC_LANG = LANG1
-TRG_LANG = LANG2
-if "translationDirection" in config and config["translationDirection"] == f"{LANG2}2{LANG1}":
-    SRC_LANG = LANG2
-    TRG_LANG = LANG1
 
 DOC_THRESHOLD = 0.1
 if "documentAlignerThreshold" in config:
@@ -1306,7 +1309,7 @@ rule bicleaner_train_model:
         lines=$(cat $training | wc -l)
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
-        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+        {PROFILING} bicleaner-train $training -S "{WORDTOK_SRC}" -T "{WORDTOK_TRG}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         rm $training
         """
 
@@ -1336,13 +1339,13 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK_SRC}" -T "{WORDTOK_TRG}" --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK_SRC}" -T "{WORDTOK_TRG}" --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
