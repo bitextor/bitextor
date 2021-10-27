@@ -84,6 +84,8 @@ def validate_args(config):
         'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
         'warcs': {'type': 'list', 'check_with': isfile},
         'warcsFile': {'type': 'string', 'check_with': isfile},
+        'preverticals': {'type': 'list', 'check_with': isfile},
+        'preverticalsFile': {'type': 'string', 'check_with': isfile},
         # crawling
         'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "linguacrawl"]},
         'crawlTimeLimit': {
@@ -112,7 +114,7 @@ def validate_args(config):
         'heritrixUrl': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
         'heritrixUser': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
         # preprocessing
-        'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'prevertical2text', 'warc2preprocess'], 'default': 'warc2text'},
+        'preprocessor': {'type': 'string', 'allowed': ['warc2text', 'warc2preprocess'], 'default': 'warc2text'},
         'langs': {'type': 'list'},
         'shards': {'type': 'integer', 'min': 0, 'default': 8},
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},

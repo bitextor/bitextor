@@ -188,7 +188,7 @@ shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
 ```
 
-* `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default), `prevertical2text` or `warc2preprocess`. `warc2text` is faster but less flexibile (less options) than `warc2preprocess`. When you select `prevertical2text` is because you have prevertical files, which is the format of the SpiderLing crawler.
+* `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`. `warc2text` is faster but less flexibile (less options) than `warc2preprocess`. There is another preprocessor, but cannot be set, and that is `prevertical2text`. This preprocessor will be used automatically when you have prevertical files, which is the format of the SpiderLing crawler. The reason why cannot be set is because is not a generic preprocessor, but specific for SpiderLing files.
 * `langs`: list of languages that will be processed in addition to `lang1` and `lang2`
 
 Options specific to `warc2preprocess`:

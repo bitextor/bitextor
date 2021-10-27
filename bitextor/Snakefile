@@ -117,6 +117,7 @@ PPROC = "warc2text"
 PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
 TEXT_FILE = "text.gz"
 HTML_FILE = ""
+
 if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
     PPROC_FILES.append("html.gz")
@@ -323,12 +324,16 @@ TMX_FIELDS = ",".join(TMX_FIELDS)
 # DATASOURCES
 HOSTS = set()
 WARCS = set()
+PREVERTICALS = set()
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
 
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
+
+if "preverticals" in config:
+    PREVERTICALS = PREVERTICALS.union(config["preverticals"])
 
 if "hostsFile" in config:
     with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
@@ -340,11 +345,19 @@ if "warcsFile" in config:
         for line in f:
             WARCS.add(line.strip())
 
+if "preverticalsFile" in config:
+    with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
+        for line in f:
+            PREVERTICALS.add(line.strip())
+
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
 # assign an ID to each WARC and check that all WARCs exist
-TARGET_2_PROVIDED_WARCS = create_id_key_2_warc_map(WARCS)
+TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, file_desc="WARCs")
+
+# assign an ID to each prevertical and check that all preverticals exist
+TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS), file_desc="preverticals")
 
 # group crawled WARCs by domains
 TARGET_2_CRAWLED_WARCS = dict([
@@ -352,9 +365,10 @@ TARGET_2_CRAWLED_WARCS = dict([
     for (domain, hosts) in DOMAIN_2_HOSTS.items()
 ])
 
-# group all WARCs by target (either domain if crawled, or ID if provided by user)
-TARGET_2_WARCS = {**TARGET_2_PROVIDED_WARCS, **TARGET_2_CRAWLED_WARCS}
-TARGETS = TARGET_2_WARCS.keys()
+# group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
+TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
+TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
+#TARGETS = [*TARGET_2_WARCS.keys(), *TARGET_2_PREVERTICALS.keys()]
 
 #################################################################
 ### WORKFLOW EXECUTION ##########################################
@@ -409,11 +423,18 @@ elif UNTIL == "preprocess":
     OUTPUT = expand(
         "{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}",
         datadir=DATADIR,
-        target=TARGETS,
+        target=TARGET_2_WARCS,
         pproc=PPROC,
         lang=LANGS,
         pproc_file=PPROC_FILES,
     )
+    OUTPUT.extend(expand(
+        "{datadir}/preprocess/{target}/prevertical2text/{lang}/{pproc_file}",
+        datadir=DATADIR,
+        target=TARGET_2_PREVERTICALS,
+        lang=LANGS,
+        pproc_file=PPROC_FILES,
+    ))
 elif UNTIL == "shard":
     OUTPUT = expand("{datadir}/shards/02.batches.{lang}", datadir=DATADIR, lang=LANGS)
 elif UNTIL == "split":
@@ -763,7 +784,7 @@ rule prevertical2text:
         and produce {text,mime,url}.gz and optionally html.gz
     """
     input:
-        get_pproc_input,
+        lambda wildcards: TARGET_2_PREVERTICALS[wildcards.target],
     output:
         expand(
             "{data}/preprocess/{{target}}/prevertical2text/{lang}/{pproc_file}",
@@ -777,7 +798,9 @@ rule prevertical2text:
     shell:
         """
         mkdir -p {params.folder}
-        cat {input} | {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} -
+        cat {input} | \
+            python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
+            {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} -
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -802,10 +825,10 @@ checkpoint shard:
     """
     input:
         # this is separated in two functions to make sure that
-        # the preprocessing of the provided WARCS and the crawling
+        # the preprocessing of the provided files and the crawling
         # may be executed in parallel
         # (otherwise the linguacrawl checkpoint might prevent that)
-        get_shard_input_warcs,
+        get_shard_input_files,
         get_shard_input_crawled,
     output:
         f"{DATADIR}/shards/02.batches.{{lang}}",  # list of batches created for lang
@@ -827,7 +850,17 @@ checkpoint shard:
             binary=~/go/bin/giashard
         fi
 
-        {PROFILING} $binary -n {params.n} -b {params.b} -o {params.o} -f {params.f} {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang}
+        warcs=$(echo {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang})
+        preverticals=$(echo {DATADIR}/preprocess/*/prevertical2text/{wildcards.lang})
+
+        if [[ "$(echo $warcs | grep \*)" != "" ]]; then
+            warcs=""
+        fi
+        if [[ "$(echo $preverticals | grep \*)" != "" ]]; then
+            preverticals=""
+        fi
+
+        {PROFILING} $binary -n {params.n} -b {params.b} -o {params.o} -f {params.f} $preverticals $warcs
 
         nofiles=$(ls {params.o} | wc -l)
         if [ "$nofiles" == "0" ]; then
