@@ -58,13 +58,18 @@ hosts: ["www.elisabethtea.com","vade-antea.fr"]
 hostsFile: ~/hosts.gz
 
 warcs: ["/path/to/a.warc.gz", "/path/to/b.warc.gz"]
-warcsFile: ~warcs.gz
+warcsFile: ~/warcs.gz
+
+preverticals: ["/path/to/a.prevert.gz", "/path/to/b.prevert.gz"]
+preverticalsFile: ~/preverticals.gz
 ```
 
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
 * `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.
 * `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use; WARC files must contain individually compressed records
 * `warcsFile`: a path to a file that contains a list of WARC files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
+* `preverticals`: specify one or multiple prevertical files to use; prevertical files are the output of the SpiderLing crawler
+* `preverticalsFile`: a path to a file that contains a list of prevertical files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 
 ## Crawling
 
