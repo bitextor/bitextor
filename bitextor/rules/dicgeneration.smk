@@ -7,16 +7,14 @@ import gzip
 mgizaModelDir = f"{TRANSIENT}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
 preprocCorpusDir = f"{TRANSIENT}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
 
+TRAIN_PREFIXES = []
+LOWERCASE = f"{WORKFLOW}/data/moses/tokenizer/lowercase.perl"
+
 if "initCorpusTrainingPrefix" in config:
     TRAIN_PREFIXES = config["initCorpusTrainingPrefix"]
-else:
-    TRAIN_PREFIXES = None
-
-LOWERCASE = f"{WORKFLOW}/data/moses/tokenizer/lowercase.perl"
 
 #################################################################
 ### RULES #######################################################
-
 
 rule dic_generation_tokenize_file_l1:
     input:
@@ -26,7 +24,10 @@ rule dic_generation_tokenize_file_l1:
     shell:
         """
         mkdir -p {preprocCorpusDir}
-        xzcat -T 0 -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK1} | xz -T 0 > {output}
+        xzcat -T 0 -f {input} \
+            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
+            | {WORDTOK1} \
+            | xz -T 0 > {output}
         """
 
 
@@ -38,7 +39,11 @@ rule dic_generation_tokenize_file_l2:
     shell:
         """
         mkdir -p {preprocCorpusDir}
-        xzcat -T 0 -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}
+        #xzcat -T 0 -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}
+        xzcat -T 0 -f {input} \
+            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
+            | {WORDTOK2} \
+            | xz -T 0 > {output}
         """
 
 
