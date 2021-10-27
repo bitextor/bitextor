@@ -283,7 +283,6 @@ If the lexicon specified does not exist, you can specify the option `generateDic
 
 ```yaml
 generateDic: True
-documentAligner: DIC
 initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 ```
 

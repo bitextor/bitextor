@@ -168,18 +168,12 @@ CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
 WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
 MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
 
-# Concrete tokenizers and morph. tokenizers
+WORDTOK1 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}"
+WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
+
 if WORDTOKS:
     WORDTOK1 = get_lang_or_default(WORDTOKS, LANG1)
     WORDTOK2 = get_lang_or_default(WORDTOKS, LANG2)
-else:
-    # TODO: decide where to put this
-    WORDTOK1, WORDTOK2 = (
-        f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}",
-        f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}",
-    )
-MORPHTOK1 = get_lang_or_default(MORPHTOKS, LANG1)
-MORPHTOK2 = get_lang_or_default(MORPHTOKS, LANG2)
 
 PRUNE_THRESHOLD = f"--prune {config['pruneThreshold']}"
 PRUNE_TYPE = f"--prune-type {config['pruneType']}"
@@ -254,7 +248,7 @@ BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
-BICLEANER_TRAIN_PREFIXES = None
+BICLEANER_TRAIN_PREFIXES = []
 
 if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
@@ -703,9 +697,9 @@ rule warc2preprocess:
     shell:
         """
         mkdir -p {params.folder}
-        cat {input} | \
-            {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip | \
-            {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
+        cat {input} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
                 --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
@@ -821,9 +815,7 @@ rule split:
     input:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}",
     params:
-        splitter=lambda wildcards: apply_format(
-            get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'
-        ),
+        splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
     output:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz",
