@@ -25,11 +25,19 @@ import psutil
 import sys
 import os
 import requests
+import shlex
 
 class ExternalTextProcessor(object):
 
     def __init__(self, cmd):
-        self.cmd = cmd
+        if isinstance(cmd, str):
+            # Split the command as bash does
+            #  This adds support to quotes (e.g. "echo 'hi, bye'" -> ["echo", "hi, bye"] -> "hi, bye")
+            #  Without quotes support, if quotes are added, the command might be, and likely will be, incorrect
+            #   (e.g. "echo 'hi, bye'" -> ["echo", "'hi,", "bye'"] -> "'hi, bye'")
+            self.cmd = shlex.split(cmd)
+        else:
+            self.cmd = cmd
 
     def process(self, input_text):
         proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

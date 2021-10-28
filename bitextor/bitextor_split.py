@@ -106,10 +106,11 @@ if not splitter:
         sys.stderr.write(str(e) + "\n")
         splitter = SentenceSplitter(language='en')
 
+# TODO check TODO in bitextor_tokenize.py about ExternalTextProcessor and ToolWrapper
 # use custom sentence splitter via ExternalTextProcessor (inefficient):
 else:
     splitter_func = split_external
-    splitter = ExternalTextProcessor(os.path.expanduser(splitter).split())
+    splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
