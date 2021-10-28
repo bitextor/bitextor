@@ -66,7 +66,7 @@ def extract_encoded_text(encoded, sent_tokeniser, word_tokeniser, morph_analyser
         word_tokeniser.writeline(sent)
         tokenized_text = tokenized_text + word_tokeniser.readline().strip() + "\n"
     if morph_analyser:
-        proc_morph = ExternalTextProcessor(morph_analyser.split())  # Apertium does line buffering
+        proc_morph = ExternalTextProcessor(morph_analyser)  # Apertium does line buffering
         tokenized_text = proc_morph.process(tokenized_text)
 
     b64text = base64.b64encode(tokenized_text.lower().encode("utf-8"))
@@ -140,10 +140,13 @@ for langfolder in os.listdir(folder):
         wordtok = None
         if wordtok_command:
             wordtok = ToolWrapper(wordtok_command.split())
+        # TODO cannot use ToolWrapper since buffering (e.g. Apertium) hangs up the pipeline
+        #  check TODO in bitextor_tokenize.py about ExternalTextProcessor and ToolWrapper
         morphtok_command = get_lang_or_default(options.lemmatizers, lang)
-        morphtok = None
-        if morphtok_command:
-            morphtok = ToolWrapper(morphtok_command.split())
+        morphtok = morphtok_command.split() if morphtok_command else None
+        #morphtok = None
+        #if morphtok_command:
+        #    morphtok = ToolWrapper(morphtok_command.split())
         with open_xz_or_gzip_or_plain(fullname) as text_reader:
             for line in text_reader:
                 encodedtext = line.strip()

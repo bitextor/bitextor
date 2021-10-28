@@ -446,8 +446,8 @@ rule all:
 
 #################################################################
 ### INCLUDE #####################################################
-include: "rules/dicgeneration.smk"
-include: "rules/dictdocsegalign.smk"
+include: "rules/dict_generation.smk"
+include: "rules/dict_doc_seg_align.smk"
 
 
 #################################################################

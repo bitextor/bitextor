@@ -1,1 +1,0 @@
-../../bitextor/rules/dictdocsegalign.smk
