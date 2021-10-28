@@ -117,7 +117,7 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
         #content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
 
         # TODO remove last column since is the paragraph identification which currently have to be disabled
-        content = " ".join(base64.b64decode(doc.strip()).decode("utf-8").split("\t")[:-1]).replace("\t", " ")
+        content = " ".join(base64.b64decode(doc.strip()).decode("utf-8").split("\t")[0]).replace("\t", " ")
 
         sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
         print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
