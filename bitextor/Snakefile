@@ -134,11 +134,12 @@ if "preprocessor" in config:
 SHARDS = config["shards"]
 BATCHES = config["batches"]
 
+BOILERPLATE_CLEANING = config["boilerplateCleaning"]
+
 CLEANHTML = ""
 FTFY = ""
 LANGID = "cld2"
 PARSER = ""
-BOILERPIPE = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
 
@@ -150,8 +151,6 @@ if "langID" in config:
     LANGID = config["langID"]
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-if "boilerpipeCleaning" in config and config["boilerpipeCleaning"] == True:
-    BOILERPIPE = "--boilerpipe"
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
@@ -718,13 +717,14 @@ rule warc2preprocess:
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         pproclangs=",".join(LANGS),
+        boilerplate='--boilerpipe' if BOILERPLATE_CLEANING else '',
     shell:
         """
         mkdir -p {params.folder}
         cat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
-                --compression gz --langid {LANGID} {BOILERPIPE} {HTML5LIB} {PARSER} --output-dir {params.folder}
+                --compression gz --langid {LANGID} {params.boilerplate} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
@@ -789,12 +789,13 @@ rule prevertical2text:
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+        boilerplate='-b' if BOILERPLATE_CLEANING else '',
     shell:
         """
         mkdir -p {params.folder}
         cat {input} | \
             python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
-            {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} -
+            {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} -
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
