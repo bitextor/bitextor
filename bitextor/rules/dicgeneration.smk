@@ -26,7 +26,7 @@ rule dic_generation_tokenize_file_l1:
         mkdir -p {preprocCorpusDir}
         xzcat -T 0 -f {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK_SRC} \
+            | {WORDTOK1} \
             | xz -T 0 > {output}
         """
 
@@ -42,7 +42,7 @@ rule dic_generation_tokenize_file_l2:
         #xzcat -T 0 -f {input} | sed \"s/&apos;/'/g\" | sed 's/&quot;/\"/g' | sed 's/&amp;/\&/g' | {WORDTOK2} | xz -T 0 > {output}
         xzcat -T 0 -f {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK_TRG} \
+            | {WORDTOK2} \
             | xz -T 0 > {output}
         """
 
