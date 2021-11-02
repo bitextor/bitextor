@@ -114,7 +114,11 @@ else:
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
-        content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
+        try:
+            content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
+        except UnicodeDecodeError:
+            content = ""
+
         sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
 
         if sentences.strip() != "":
