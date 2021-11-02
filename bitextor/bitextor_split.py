@@ -41,7 +41,7 @@ def filter_trash(sentence):
 
 
 def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
-    output, error_output, returncode = external_splitter.process(content)
+    output, error_output, returncode = external_splitter.process(text)
     if returncode != 0:
         print(f"External sentence splitter existed with non-zero code: {returncode}", file=sys.stderr)
         print(error_output.strip(), file=sys.stderr)
@@ -61,7 +61,7 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
 
 
 def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
-    segments = moses_splitter.split(content)
+    segments = moses_splitter.split(text)
 
     # prune long sentences
     if prune_threshold and prune_type == "words":
@@ -114,10 +114,8 @@ else:
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
-        #content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-
-        # TODO remove last column since is the paragraph identification which currently have to be disabled
-        content = base64.b64decode(doc.strip()).decode("utf-8").split("\t")[0]
-
+        content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
         sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
-        print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
+
+        if sentences.split() != "":
+            print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))

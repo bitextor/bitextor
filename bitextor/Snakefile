@@ -911,7 +911,7 @@ rule aggregate_split:
     """
     Helper rule to implement until=split config
     :input: the result of every split rule
-    :output: a file that contains the path tp the output of every split rule per lang
+    :output: a file that contains the path to the output of every split rule per lang
     """
     input:
         lambda wildcards: [f"{batch}/sentences.gz" for batch in get_batches(wildcards.lang)],
