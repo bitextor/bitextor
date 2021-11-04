@@ -41,7 +41,7 @@ There are some optional parameters that allow for a finer control of the executi
 ```yaml
 until: preprocess
 parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
-profiling: true
+profiling: True
 ```
 
 * `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`
@@ -177,10 +177,10 @@ preprocessor: warc2text
 langs: [en, es, fr]
 
 ## with warc2preprocess only
-boilerpipeCleaning: true
+boilerpipeCleaning: True
 parser: "bs4"
-ftfy: false
-cleanHTML: false
+ftfy: False
+cleanHTML: False
 langID: cld2
 
 # sharding
@@ -293,7 +293,7 @@ This variable must contain one or more **corpus prefixes**. For a given prefix (
 <!-- If you are running out of memory in the `mkcls` rule, maybe you should activate original `mkcls` binary instead of `clustercat` interface using:
 
 ```yaml
-mkcls: true
+mkcls: True
 ```
 -->
 
@@ -359,24 +359,24 @@ It is important to provide different parallel corpora for these two options as t
 Some other options can be configured to specify the output format of the parallel corpus:
 
 ```yaml
-bifixer: true
-elrc: true
+bifixer: True
+elrc: True
 
-tmx: true
-deduped: false
+tmx: True
+deduped: False
 
-biroamer: true
-biroamerOmitRandomSentences: true
+biroamer: True
+biroamerOmitRandomSentences: True
 biroamerMixFiles: ["/home/user/file-tp-mix1", "/home/user/file-to-mix2"]
 biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
-deferred: false
+deferred: False
 ```
 
-* `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal <!-- When using `bifixer: true` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
+* `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal <!-- When using `bifixer: True` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
 * `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
-* `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this `tmx: true` or `deduped: true` will be necessary
+* `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this `tmx: True` or `deduped: True` will be necessary
 * `biroamerOmitRandomSentences`: omit close to 10% of the tmx corpus
 * `biroamerMixFiles`: use extra sentences to improve anonymization, this option accepts a list of files which will add the stored sentences, the files are expected to be in Moses format
 * `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection; expected to be in Moses format.
