@@ -19,6 +19,8 @@ import argparse
 import subprocess
 import sys
 import requests
+import time
+
 from warcio.archiveiterator import ArchiveIterator
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
@@ -65,11 +67,19 @@ def run(url, out_path, time_limit, agent, filetypes, warcfilename, wait):
 
     cmd += f"wget --mirror {waitoption} {filetypesoption} -q -o /dev/null {url} -P {out_path} {agentoption} {warcoption}"
 
-    # print("cmd", cmd)
+    start_time = time.time()
+
     try:
         system_check(cmd)
     except subprocess.CalledProcessError as grepexc:
-        sys.stderr.write("Warning: Some files could not be downloaded with wget\n")
+        suffix = f" (return code: {grepexc.returncode})"
+
+        if time_limit and grepexc.returncode == 124:
+            suffix = " (timeout)"
+
+        sys.stderr.write(f"WARNING: some files could not be downloaded with wget{suffix}\n")
+
+    print(f"The crawling took {time.time() - start_time:.0f} seconds")
 
     with open(warcfilebasename + ".warc", 'rb') as f_in:
         with open(warcfilebasename + ".warc.gz", 'wb') as f_out:
@@ -139,7 +149,7 @@ if __name__ == "__main__":
                     except ValueError:
                         pass
         except BaseException as e:
-            sys.stderr.write("WARNING: Error downloading robots.txt\n")
+            sys.stderr.write("WARNING: error downloading robots.txt\n")
             sys.stderr.write(str(e) + "\n")
 
         run(args.url, args.outPath, args.timeLimit, args.agent, args.filetypes, args.warcfilename, args.wait)

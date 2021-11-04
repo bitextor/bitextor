@@ -30,11 +30,11 @@ sentenceAligner: 'bleualign'
 sentenceAlignerThreshold: 0.1
 
 # CLEANING
-bifixer: true
+bifixer: True
 bicleaner: True
 bicleanerModel: ~/bicleaner-model/en-fr/en-fr.yaml
 bicleanerThreshold: 0.5
-biroamer: false
+biroamer: False
 
-deduped: true
-tmx: true
+deduped: True
+tmx: True
