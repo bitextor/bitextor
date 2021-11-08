@@ -120,6 +120,4 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
             content = ""
 
         sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
-
-        if sentences.strip() != "":
-            print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
+        print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
