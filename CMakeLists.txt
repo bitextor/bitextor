@@ -25,6 +25,10 @@ if(NOT SKIP_WARC2TEXT)
     add_subdirectory(${PROJECT_SOURCE_DIR}/warc2text warc2text)
 endif()
 
+if(NOT SKIP_PREVERTICAL2TEXT)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/prevertical2text prevertical2text)
+endif()
+
 if(NOT SKIP_BLEUALIGN)
     add_subdirectory(${PROJECT_SOURCE_DIR}/bleualign-cpp bleualign-cpp)
 endif()
