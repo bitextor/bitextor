@@ -4,7 +4,7 @@
 -r requirements/requirements-w2p.txt
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==6.9.1
+snakemake==6.10.0
 warcio==1.7.4
 ftfy==6.0.3
 tldextract>=3.1.0,<=3.1.2
@@ -19,10 +19,10 @@ urllib3>=1.25.8,<=1.26.7
 python-dateutil==2.8.2
 cchardet==2.1.7
 sentence-splitter==1.4
-mosestokenizer==1.1.0
-lxml==4.6.3
+mosestokenizer==1.2.1
+lxml==4.6.4
 html5lib==1.1
-regex>=2019.08.19
-numpy==1.21.2
-setuptools==58.2.0
+regex>=2019.08.19,<=2021.11.10
+numpy==1.21.4
+setuptools==58.5.3
 validators==0.18.2
