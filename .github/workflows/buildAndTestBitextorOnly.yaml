@@ -60,7 +60,7 @@ jobs:
             go-version: 1.14.6
       -  name: Install giashard
          run: |
-            go get github.com/paracrawl/giashard/...
+            go install github.com/paracrawl/giashard/...@latest
       -  name: Compiling bitextor and submodules
          run: |
             mkdir build_cmake && cd build_cmake
