@@ -3,6 +3,7 @@
 bitextor/bin
 bitextor/lib
 bitextor/include
+bitextor/data/moses/
 bitextor/share
 
 ### PYTHON ###

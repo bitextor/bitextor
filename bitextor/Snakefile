@@ -184,6 +184,7 @@ PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 
 # Sharding
 EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
+EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 
 #################################################################
 # DOCALIGN
@@ -728,11 +729,13 @@ rule warc2preprocess:
                 --compression gz --langid {LANGID} {params.boilerplate} {HTML5LIB} {PARSER} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
                 gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
-                touch {EMPTY_SHARD_CHECK}
+
+                # Generate empty file in order to be able to check if is needed to generate empty shards later
+                touch "{EMPTY_SHARD_CHECK}_$lang"
             fi
         done
         """
@@ -761,13 +764,13 @@ rule warc2text:
         {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{{params.f}}}
                 gzip {params.folder}/$lang/{{{params.f}}}
 
                 # Generate empty file in order to be able to check if is needed to generate empty shards later
-                touch {EMPTY_SHARD_CHECK}
+                touch "{EMPTY_SHARD_CHECK}_$lang"
             fi
         done
         """
@@ -835,7 +838,6 @@ checkpoint shard:
         o_no_lang=lambda wildcards, output: os.path.dirname(output[0]),
         o=f"{DATADIR}/shards/{{lang}}",
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
-        empty_shard_batch_folder="EMPTY/1",
     shell:
         """
         ulimit -n 2048
@@ -860,18 +862,17 @@ checkpoint shard:
         {PROFILING} $binary -n {params.n} -b {params.b} -o {params.o} -f {params.f} $preverticals $warcs
 
         nofiles=$(ls {params.o} | wc -l)
-        if [ "$nofiles" == "0" ]; then
+
+        if [[ "$nofiles" == "0" ]] && [[ -f "{EMPTY_SHARD_CHECK}_{wildcards.lang}" ]]; then
             # No files generated
-            >&2 echo "WARNING: no files generated after running giashard (lang '{wildcards.lang}'). Creating empty files instead"
-        fi
+            >&2 echo "WARNING: no files generated after running giashard for lang '{wildcards.lang}': creating empty files instead"
 
-        if [[ -f "{EMPTY_SHARD_CHECK}" ]]; then
             # Generate empty shards if needed in order to avoid the pipeline to break
-            mkdir -p {params.o}/{params.empty_shard_batch_folder}
+            mkdir -p {params.o}/{EMPTY_SHARD_BATCH_DIR}
 
-            touch {params.o}/{params.empty_shard_batch_folder}/empty
-            touch {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
-            gzip {params.o}/{params.empty_shard_batch_folder}/{{{params.f}}}
+            touch {params.o}/{EMPTY_SHARD_BATCH_DIR}/empty
+            touch {params.o}/{EMPTY_SHARD_BATCH_DIR}/{{{params.f}}}
+            gzip {params.o}/{EMPTY_SHARD_BATCH_DIR}/{{{params.f}}}
         fi
 
         ls -d {params.o}/*/* > {output}

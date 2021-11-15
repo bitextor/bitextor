@@ -316,7 +316,7 @@ def validate_args(config):
 
     if not b:
         print("Validation errors. Stopping.", file=sys.stderr)
-        pprint.pprint(v.errors, indent=2, sort_dicts=False, stream=sys.stderr, width=100)
+        pprint.pprint(v.errors, indent=2, stream=sys.stderr, width=100)
         return b, {}
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})
