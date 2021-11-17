@@ -33,7 +33,9 @@ from html.parser import HTMLParser as HTMLTokenizer
 import mmh3
 import sys
 import html5lib
+import lxml
 from lxml import etree
+from lxml import html as _lxml_html
 
 
 def remove_control_characters(html):
@@ -325,7 +327,6 @@ for record in f:
     if url == "unknown":
         logging.info("Skipping page with unknown URL")
         continue
-    url = url.lower()
     url = url.replace('\t', ' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" or url[-4:] == ".css" \
             or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" or url[-4:] == ".ogg" \
@@ -418,15 +419,14 @@ for record in f:
         if tree.body is None:
             logging.info("Body is empty. Ignoring this document")
             continue
+        # TODO should separator='\n' be removed? It splits inline elements inside block elements...
         plaintext = tree.body.text(separator='\n')
 
     # or get text by moving through the lxml tree
     elif options.parser == "lxml":
-        from standoff import deferred_document
         logging.info(url + ": Getting text with lxml")
-        standoff_document, plaintext = deferred_document.getDocumentStandoff(
-            html5lib.parse(text, treebuilder="lxml", namespaceHTMLElements=False))
 
+        plaintext = lxml.html.document_fromstring(deboiled).text_content()
     # or use an HTML tokenizer
     else:
         logging.info(url + ": Getting text with HTML tokenizer")
