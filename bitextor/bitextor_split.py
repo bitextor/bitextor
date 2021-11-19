@@ -151,11 +151,9 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                         if sentences_wo_paragraphs[idx].strip() != "":
                             sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
                 except IndexError as e:
-                    logging.error("could not get the paragraph identification data")
-                    raise e
+                    raise Exception("could not get the paragraph identification data") from e
         else:
             content = content.replace("\t", " ")
             sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold, not options.dont_filter)
 
-        if sentences.strip() != "":
-            print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
+        print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))

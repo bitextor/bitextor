@@ -19,6 +19,11 @@ import pprint
 
 from cerberus import Validator
 
+def genericerror(msg):
+    def f(field, value, error):
+        error(field, msg)
+
+    return f
 
 def isfile(field, value, error):
     if isinstance(value, list):
@@ -84,6 +89,8 @@ def validate_args(config):
         'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
         'warcs': {'type': 'list', 'check_with': isfile},
         'warcsFile': {'type': 'string', 'check_with': isfile},
+        'preverticals': {'type': 'list', 'check_with': isfile},
+        'preverticalsFile': {'type': 'string', 'check_with': isfile},
         # crawling
         'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "linguacrawl"]},
         'crawlTimeLimit': {
@@ -131,13 +138,14 @@ def validate_args(config):
             'allowed': ['bs4', 'modest', 'simple', 'lxml'],
             'dependencies': {'preprocessor': 'warc2preprocess'}
         },
-        'boilerpipeCleaning': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         # pdfEXTRACT
         'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
+        # boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
+        'boilerplateCleaning': {'type': 'boolean', 'default': False},
         # tokenization
         'sentenceSplitters': {'type': 'dict'},
         'customNBPs': {'type': 'dict'},
@@ -188,6 +196,15 @@ def validate_args(config):
         'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
     }
 
+    provided_in_config = {} # contains info about the definition of rules in the configuration file
+
+    # initialize with the default values if no value was provided
+    for key in schema:
+        provided_in_config[key] = True if key in config else False
+
+        if key not in config and 'default' in schema[key]:
+            config[key] = schema[key]['default']
+
     if 'crawler' in config:
         if config['crawler'] == 'heritrix':
             schema['heritrixPath']['required'] = True
@@ -207,7 +224,12 @@ def validate_args(config):
     elif monolingual_workflow and not bothLangsSpecified:
         schema['langs']['required'] = True
 
-    if "documentAligner" not in config or config['documentAligner'] == 'externalMT':
+    if config['boilerplateCleaning'] and config['preprocessor'] != 'warc2preprocess':
+        if not provided_in_config['preverticals'] and not provided_in_config['preverticalsFile']:
+            schema['boilerplateCleaning']['check_with'] = \
+                genericerror("mandatory: preprocessor warc2preprocess or provide prevertical files")
+
+    if config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
         if monolingual_workflow and 'alignedCmd' not in config:
             config["alignerCmd"] = ""
@@ -234,56 +256,56 @@ def validate_args(config):
                 schema['generateDic']['required'] = True
                 schema['generateDic']['check_with'] = istrue
 
-    if "generateDic" in config and config["generateDic"]:
+    if config["generateDic"]:
         schema['dic']['required'] = True
         schema['initCorpusTrainingPrefix']['required'] = True
 
-    if "sentenceAligner" not in config or config['sentenceAligner'] == 'bleualign':
+    if config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
 
-    if "deferred" in config:
+    if provided_in_config['deferred']:
         schema['until']['allowed'].append('deferred')
         schema['parallelWorkers']['allowed'].append('deferred')
 
-    if 'bifixer' in config:
+    if provided_in_config['bifixer']:
         schema['until']['allowed'].append('bifixer')
         schema['parallelWorkers']['allowed'].append('bifixer')
 
-    if 'bicleaner' in config and config['bicleaner']:
+    if config['bicleaner']:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
         schema['bicleanerModel']['required'] = True
 
-        if 'bicleanerGenerateModel' in config and config['bicleanerGenerateModel']:
+        if config['bicleanerGenerateModel']:
             schema['dic']['required'] = True
             schema['bicleanerCorpusTrainingPrefix']['required'] = True
             schema['initCorpusTrainingPrefix']['required'] = True
 
-            if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+            if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
                 schema['generateDic']['required'] = True
                 schema['generateDic']['check_with'] = istrue
         else:
             schema['bicleanerModel']['check_with'] = isfile
 
-    if 'until' in config and (config['until'] == 'filter' or config['until'] == 'bifixer'):
+    if provided_in_config['until'] and (config['until'] == 'filter' or config['until'] == 'bifixer'):
         print(
             "WARNING: your target consists of temporary files. Make sure to use --notemp parameter to preserve your output",
             file=sys.stderr)
 
-    if 'biroamer' in config and config['biroamer']:
-        if ('tmx' not in config or not config['tmx']) and ('deduped' not in config or not config['deduped']):
+    if config['biroamer']:
+        if (not provided_in_config['tmx'] or not config['tmx']) and (not provided_in_config['deduped'] or not config['deduped']):
             print(
                 "ERROR: if you want to use biroamer, you need either 'tmx' or 'deduped' config option set to 'true' (if both, deduped will be used)",
                 file=sys.stderr)
 
-            if 'deduped' not in config:
+            if not provided_in_config['deduped']:
                 # tmx not in config or tmx in config but false
                 schema['biroamer']['dependencies'] = {'tmx': True}
             else:
                 # deduped in config but false and (tmx not in config or tmx in config and false)
                 # debuped as default value in both situations
                 schema['biroamer']['dependencies'] = {'deduped': True}
-        if 'deferred' in config and config['deferred']:
+        if config['deferred']:
             if isinstance(schema['biroamer']['dependencies'], dict):
                 schema['biroamer']['dependencies']['deferred'] = False
             else:
@@ -294,7 +316,7 @@ def validate_args(config):
 
     if not b:
         print("Validation errors. Stopping.", file=sys.stderr)
-        pprint.pprint(v.errors, indent=2, sort_dicts=False, stream=sys.stderr, width=100)
+        pprint.pprint(v.errors, indent=2, stream=sys.stderr, width=100)
         return b, {}
 
     config.update({k: os.path.expanduser(v) if isinstance(v, str) else v for k, v in config.items()})

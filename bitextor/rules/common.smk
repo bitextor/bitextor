@@ -18,10 +18,11 @@ def create_domain_key_2_host_map(hosts):
     key2hosts = {}
     badhosts = []
     for host in hosts:
-        # don't merge blog sites
         if not validators.domain(host):
             badhosts.append(host)
             continue
+
+        # don't merge blog sites
         if host.find(".blogspot.") >= 0 or host.find(".wordpress.") >= 0:
             key = host
         else:
@@ -36,24 +37,24 @@ def create_domain_key_2_host_map(hosts):
 
 
 """
-Check the validity of WARCs (i.e. that they exist on disk),
-    and assign an ID to each valid WARC, so that each WARC is processed individually
-:param warcs: a list of warcs provided by the user
-:returns: a dictionary with IDs as keys as a WARCs as values
+Check the validity of files (i.e. that they exist on disk),
+    and assign an ID to each valid file, so that each file is processed individually
+:param files: a list of files provided by the user
+:returns: a dictionary with IDs as keys and files as values
 """
-def create_id_key_2_warc_map(warcs):
-    bad_warcs=[]
-    id2warc = {}
-    for i, warc in enumerate(warcs):
-        warc = os.path.expanduser(warc)
-        if not os.path.isfile(warc):
-            bad_warcs.append(warc)
+def create_id_key_2_file_map(files, id_offset=0, file_desc=None):
+    bad_files=[]
+    id2file = {}
+    for i, _file in enumerate(files, id_offset):
+        _file = os.path.expanduser(_file)
+        if not os.path.isfile(_file):
+            bad_files.append(_file)
         else:
-            id2warc[f"{i}"] = warc
-    if bad_warcs:
-        bad_warcs_msg = "\n".join(bad_warcs)
-        raise ValueError(f"ERROR: Some WARCs could not be found:\n{bad_warcs_msg}")
-    return id2warc
+            id2file[f"{i}"] = _file
+    if bad_files:
+        bad_files_msg = "\n".join(bad_files)
+        raise ValueError(f"ERROR: Some files ({file_desc if file_desc else '-'}) could not be found:\n{bad_files_msg}")
+    return id2file
 
 """
 Obtains a list of WARCs produced by linguacrawl checkpoint
@@ -91,6 +92,7 @@ Get the input of the preprocessing rules
 """
 def get_pproc_input(wildcards):
     target = wildcards.target
+
     if CRAWLTARGET == "linguacrawl" and len(HOSTS) != 0:
         try:
             # Retrieve warcs names, that in first instance will fail because linguacrawl has not been executed yet
@@ -149,15 +151,26 @@ def get_shard_input_crawled(lang):
 
 
 """
-Obtain shard input corresponding to the preprocessed WARCs provided by the user
+Obtain shard input corresponding to the preprocessed files (e.g. WARCs, prevertical) provided by the user
 """
-def get_shard_input_warcs(lang):
-    return expand(
+def get_shard_input_files(lang):
+    # WARCs
+    result = expand(
         "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
         datadir=DATADIR,
         target=list(TARGET_2_PROVIDED_WARCS.keys()),
         pproc=PPROC
     )
+
+    # preverticals
+    result.extend(expand(
+        "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+        datadir=DATADIR,
+        target=list(TARGET_2_PROVIDED_PREVERTICALS.keys()),
+        pproc="prevertical2text"
+    ))
+
+    return result
 
 
 """

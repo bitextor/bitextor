@@ -216,7 +216,6 @@ for record in f:
                 or "application/x-font-ttf" in record.http_headers.get_header('Content-Type'):
             continue
 
-    url = url.lower()
     url = url.replace('\t', ' ')
     if url[-4:] == ".gif" or url[-4:] == ".jpg" or url[-5:] == ".jpeg" or url[-4:] == ".png" \
             or url[-4:] == ".css" or url[-3:] == ".js" or url[-4:] == ".mp3" or url[-4:] == ".mp4" \

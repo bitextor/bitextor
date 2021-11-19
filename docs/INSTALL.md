@@ -137,7 +137,7 @@ Optionally, it is possible to skip the compilation of the dependencies that are 
 ```bash
 cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local .. # MGIZA is used for dictionary generation
 # other dependencies that can optionally be skipped:
-# WARC2TEXT, DOCALIGN, BLEUALIGN, HUNALIGN, BIROAMER, KENLM
+# WARC2TEXT, PREVERTICAL2TEXT, DOCALIGN, BLEUALIGN, HUNALIGN, BIROAMER, KENLM
 ```
 
 ### Golang packages
@@ -146,7 +146,7 @@ Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) fo
 
 ```bash
 # build and place the necessary tools in $HOME/go/bin
-go get github.com/paracrawl/giashard/...
+go install github.com/paracrawl/giashard/...@latest
 ```
 
 ### Pip dependencies

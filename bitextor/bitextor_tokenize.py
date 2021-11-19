@@ -77,8 +77,6 @@ oparser.add_argument('--morph-analyser', dest='lemmatizer',
                      help="Morphological analyser command line")
 oparser.add_argument('--langcode', dest='langcode', default='en',
                      help="Language code for default sentence splitter and tokenizer")
-oparser.add_argument('--dont-process-base64', action="store_true",
-                     help="Process input and print output without Base64 encoding")
 
 options = oparser.parse_args()
 
@@ -100,15 +98,7 @@ if lemmatizer:
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
     for doc in reader:
-        if options.dont_process_base64:
-            content = doc
-        else:
-            content = base64.b64decode(doc.strip()).decode("utf-8")
-
-        content = content.replace("\t", " ")
+        content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
         tokenized = tokenizer_func(content, tokenizer, lemmatizer).lower()
 
-        if options.dont_process_base64:
-            print(tokenized, end="")
-        else:
-            print(base64.b64encode(tokenized.encode("utf-8")).decode("utf-8"))
+        print(base64.b64encode(tokenized.encode("utf-8")).decode("utf-8"))
