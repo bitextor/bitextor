@@ -809,7 +809,7 @@ rule prevertical2text:
                 gzip {params.folder}/$lang/{{{params.f}}}
 
                 # Generate empty file in order to be able to check if is needed to generate empty shards later
-                touch {EMPTY_SHARD_CHECK}
+                touch "{EMPTY_SHARD_CHECK}_$lang"
             fi
         done
         """
@@ -1209,13 +1209,13 @@ checkpoint split_segalign:
         if len(input) == 0:
             shell(
                 f"""
-                >&2 echo "INFO: no data to work with. Stopping execution"
+                >&2 echo "INFO: no data to work with: stopping execution"
                 touch {output}
                 # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
                 # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
                 pid_to_kill="{snake_no_more_race_get_pgid()}"
                 if [[ "$pid_to_kill" == "" ]]; then
-                    echo "ERROR: could not stop the execution with a normal status. Forcing snakemake to stop"
+                    echo "ERROR: could not stop the execution with a normal status: forcing snakemake to stop"
                     exit 1
                 else
                     kill -TERM "$pid_to_kill" || exit 1
