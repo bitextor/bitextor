@@ -135,7 +135,7 @@ SHARDS = config["shards"]
 BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
-PARAGRAPH_IDENTIFICATION = True # TODO configuration
+PARAGRAPH_IDENTIFICATION = False # TODO configuration
 
 CLEANHTML = ""
 FTFY = ""
