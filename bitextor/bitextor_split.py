@@ -123,35 +123,35 @@ else:
     splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
-    for doc in reader:
+    for doc_idx, doc in enumerate(reader):
         sentences = ""
         content = ""
 
         try:
             content = base64.b64decode(doc.strip()).decode("utf-8").strip()
         except UnicodeDecodeError:
-            pass
+            logging.warning(f"unicode decoding error while processing doc #{doc_idx}")
 
         if options.process_paragraphs:
             content = content.split("\n")
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
-            for sentence in content:
+            for sent_idx, sentence in enumerate(content):
+                if sentence == '':
+                    sentences += f"\ts-1p-1"
+                    logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 's-1p-1'")
+                    continue
+
                 paragraph = sentence.split("\t")
+                paragraph_text = paragraph[0]
+                paragraph_id = paragraph[1]
+                sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
+                                                        options.prune_threshold, not options.dont_filter).split("\n")
 
-                try:
-                    paragraph_text = paragraph[0]
-                    paragraph_id = paragraph[1]
-
-                    sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
-                                                            options.prune_threshold, not options.dont_filter).split("\n")
-
-                    # Add the paragraph data to the splitted sentences
-                    for idx in range(len(sentences_wo_paragraphs)):
-                        if sentences_wo_paragraphs[idx].strip() != "":
-                            sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
-                except IndexError as e:
-                    raise Exception("could not get the paragraph identification data") from e
+                # Add the paragraph data to the splitted sentences
+                for idx in range(len(sentences_wo_paragraphs)):
+                    if sentences_wo_paragraphs[idx].strip() != "":
+                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
         else:
             content = content.replace("\t", " ")
             sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold, not options.dont_filter)
