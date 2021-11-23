@@ -229,6 +229,11 @@ def validate_args(config):
             schema['boilerplateCleaning']['check_with'] = \
                 genericerror("mandatory: preprocessor warc2preprocess or provide prevertical files")
 
+    if config['preprocessor'] == 'warc2preprocess':
+        if provided_in_config['preverticals'] or provided_in_config['preverticalsFile']:
+            schema['preverticals']['dependencies'] = {'preprocessor': ['warc2text']}
+            schema['preverticalsFile']['dependencies'] = {'preprocessor': ['warc2text']}
+
     if config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
         if monolingual_workflow and 'alignedCmd' not in config:
