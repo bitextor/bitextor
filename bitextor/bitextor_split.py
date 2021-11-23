@@ -137,12 +137,13 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
             for sent_idx, sentence in enumerate(content):
-                if sentence == '':
-                    sentences += f"\ts-1p-1"
+                paragraph = sentence.split("\t")
+
+                if len(paragraph) == 1:
+                    sentences += f"{paragraph[0]}\ts-1p-1"
                     logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 's-1p-1'")
                     continue
 
-                paragraph = sentence.split("\t")
                 paragraph_text = paragraph[0]
                 paragraph_id = paragraph[1]
                 sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
