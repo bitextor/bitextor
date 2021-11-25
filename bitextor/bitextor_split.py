@@ -22,6 +22,7 @@ import base64
 import string
 
 from sentence_splitter import SentenceSplitter, SentenceSplitterException
+from loomchild.segmenter import LoomchildSegmenter
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 from bitextor.utils.common import ExternalTextProcessor
@@ -75,6 +76,21 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     return segmented_text
 
 
+def split_loomchild(text, loomchild_splitter, prune_type="words", prune_threshold=0):
+    segments = loomchild_splitter.get_document_segmentation(text)
+    # prune long sentences
+    if prune_threshold and prune_type == "words":
+        segments = [s for s in segments if not len(s.split()) > prune_threshold]
+    elif prune_threshold and prune_type == "chars":
+        segments = [s for s in segments if not len(s) > prune_threshold]
+
+    segments = [s for s in segments if filter_trash(s)]
+
+    segmented_text = "\n".join(segments) + "\n"
+    return segmented_text
+
+
+
 oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")
 oparser.add_argument('--text', dest='text', help='Plain text file', default="-")
 oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. "
@@ -105,6 +121,9 @@ if not splitter:
     except SentenceSplitterException as e:
         sys.stderr.write(str(e) + "\n")
         splitter = SentenceSplitter(language='en')
+elif splitter == "loomchild":
+    splitter_func = split_loomchild
+    splitter = LoomchildSegmenter(options.langcode)
 
 # TODO check TODO in bitextor_tokenize.py about ExternalTextProcessor and ToolWrapper
 # use custom sentence splitter via ExternalTextProcessor (inefficient):
