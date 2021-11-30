@@ -766,10 +766,11 @@ rule warc2text:
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
-        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
+        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -969,7 +970,7 @@ rule custom_translate:
     threads: max(2, THREADS["translate"])
     params:
         threads=THREADS["translate"],
-        paragraphs_file=f"{TMPDIR}/custom_translate.paragraphs"
+        paragraphs_file=temp(f"{TMPDIR}/custom_translate_{{shard}}_{{src_batch}}.paragraphs")
     shell:
         """
         mkdir -p {TMPDIR}
@@ -1005,7 +1006,6 @@ rule custom_translate:
             paste <(zcat "$output") <(cat "{params.paragraphs_file}") \
                 | python3 {WORKFLOW}/utils/join_b64_docs.py \
                 | pigz -c > "{output}"
-            rm "{params.paragraphs_file}"
         fi
         """
 
@@ -1047,7 +1047,12 @@ rule tokenise_translated:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+        fi
         zcat {input} \
+            | eval "$filter_command" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
@@ -1078,7 +1083,12 @@ rule tokenise:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+        fi
         zcat {input} \
+            | eval "$filter_command" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {wildcards.lang} \

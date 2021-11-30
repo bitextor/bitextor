@@ -128,33 +128,35 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
         content = ""
 
         try:
-            content = base64.b64decode(doc.strip()).decode("utf-8").strip()
+            content = base64.b64decode(doc.strip()).decode("utf-8")
         except UnicodeDecodeError:
             logging.warning(f"unicode decoding error while processing doc #{doc_idx}")
 
         if options.process_paragraphs:
-            content = content.split("\n")
+            content = content.rstrip().split("\n")
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
             for sent_idx, sentence in enumerate(content):
                 paragraph = sentence.split("\t")
 
                 if len(paragraph) == 1:
-                    sentences += f"{paragraph[0]}\ts-1p-1"
+                    sentences += f"{paragraph[0]}\ts-1p-1\n"
                     logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 's-1p-1'")
                     continue
 
-                paragraph_text = paragraph[0]
-                paragraph_id = paragraph[1]
+                paragraph_text = ' '.join(paragraph[:-1]).strip() # Replace '\t' with ' '
+                paragraph_id = paragraph[-1]
                 sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
                                                         options.prune_threshold, not options.dont_filter).split("\n")
+                sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs]
 
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):
-                    if sentences_wo_paragraphs[idx].strip() != "":
+                    if sentences_wo_paragraphs[idx] != "":
                         sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
         else:
-            content = content.replace("\t", " ")
+            content = content.strip().replace("\t", " ")
+            content = '\n'.join([c.strip() for c in content.split('\n')])
             sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold, not options.dont_filter)
 
         print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
