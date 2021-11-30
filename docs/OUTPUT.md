@@ -8,28 +8,31 @@ The files that will be always generated (regardless of configuration) are `{lang
 
 * `{lang1}-{lang2}.raw.gz`: parallel corpus that contains every aligned sentences, has **no deduplication** and the sentences are **not filtered**.
 
-    This file contains columns added by different optional modules: **deferred**, **Bifixer** and **Bicleaner**. In case some of these are not enabled, the corresponding columns will be omitted. The possible fields that may appear in this file are (in this order):
+    This file contains columns added by different optional modules/features: **paragraph identification**, **deferred**, **Bifixer** and **Bicleaner**. In case some of these are not enabled, the corresponding columns will be omitted. The possible fields that may appear in this file are (in this order):
 
     1. `url1 url2 sent1 sent2 aligner_score` - default columns
         * `url1` and `url2` are source documents of the sentences
         * `sent1` and `sent2` form a sentence pair in `lang1` and `lang2`
         * `aligner_score` is the score given by the sentence aligner (bleualign or hunalign)
-    2. `checksum1 checksum2` - deferred sentence checksums
+    2. `para1 para2` - paragraph identification data
+        * initial position of the sentence in the paragraph, and initial position of the paragraph in the document
+    3. `checksum1 checksum2` - deferred sentence checksums
         * may be used to reconstruct the original corpus using [Deferred crawling reconstructor](https://github.com/bitextor/deferred-crawling)
-    3. `bifixer_hash bifixer_score` - Bifixer output
+    4. `bifixer_hash bifixer_score` - Bifixer output
         * `bifixer_hash` tags duplicate or near-duplicate sentences
         * `bifixer_score` rates quality of duplicate or near-duplicate sentences
-    4. `bicleaner_score` - Bicleaner classifer output
+    5. `bicleaner_score` - Bicleaner classifer output
 
     This file comes accompanied by the corresponding statistics file `{lang1}-{lang2}.stats.raw`, which provides information the size of the corpus in MB and in number of  tokens.
 
 * `{lang1}-{lang2}.sent.gz`: parallel corpus after running all of the steps described above, plus **filtering** according to the specified Bicleaner threshold, adding **ELRC** metrics, and **sorted** to have the duplicate or (near-duplicate) sentences together. This file will have all of the columns from `raw` files, plus 3 new ones corresponding to ELRC metrics.
 
     1. `url1 url2 sent1 sent2 aligner_score` - default columns
-    2. `checksum1 checksum2` - deferred sentence checksums
-    3. `bifixer_hash bifixer_score` - Bifixer output
-    4. `bicleaner_score` - Bicleaner classifier output
-    5. `length_ratio num_tokens_src num_tokens_trg` - ELRC fields
+    2. `para1 para2` - paragraph identification data
+    3. `checksum1 checksum2` - deferred sentence checksums
+    4. `bifixer_hash bifixer_score` - Bifixer output
+    5. `bicleaner_score` - Bicleaner classifier output
+    6. `length_ratio num_tokens_src num_tokens_trg` - ELRC fields
         * `num_tokens_src` is the number of tokens in source sentence
         * `num_tokens_trg` is the number of tokens in target sentence
         * `length_ratio` is the ratio between the two (source divided by target)
