@@ -22,6 +22,9 @@ import contextlib
 import subprocess
 
 def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
+    if separator == '\n':
+        raise Exception(f"the provided separator is not valid: '{repr(separator)}'")
+
     cm = contextlib.nullcontext(sys.stdin)
     columns = set()
 
@@ -31,7 +34,7 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
     with cm as doc_fd:
         for idx, doc in enumerate(doc_fd):
             try:
-                doc = doc.strip().split(separator)
+                doc = doc.strip('\n').split(separator)
                 segments = []
                 text = []
 
@@ -48,7 +51,10 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
 
                 # Get all the sentences from all the segments
                 for segment in segments:
-                    sentences = segment.strip().split('\n')
+                    if len(segment) > 0 and segment[-1] == '\n':
+                        segment = segment[:-1]
+
+                    sentences = segment.split('\n')
 
                     sentences_from_segments.append(sentences)
                     nosentences.add(len(sentences))
