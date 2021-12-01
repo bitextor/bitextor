@@ -48,7 +48,7 @@ RUN tar -zxvf protobuf-all-3.19.1.tar.gz
 RUN rm protobuf-all-3.19.1.tar.gz
 WORKDIR /home/docker/protobuf-3.19.1
 RUN ./configure
-RUN make -j $j && make check
+RUN make -j $j
 RUN make install
 RUN ldconfig
 
