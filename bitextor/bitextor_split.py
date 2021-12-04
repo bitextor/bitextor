@@ -79,15 +79,16 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0, fil
     return segmented_text
 
 
-def split_loomchild(text, loomchild_splitter, prune_type="words", prune_threshold=0):
+def split_loomchild(text, loomchild_splitter, prune_type="words", prune_threshold=0, filter_bad_sentences=True):
     segments = loomchild_splitter.get_document_segmentation(text)
     # prune long sentences
     if prune_threshold and prune_type == "words":
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
-
-    segments = [s for s in segments if filter_trash(s)]
+    
+    if filter_bad_sentences:
+        segments = [s for s in segments if filter_trash(s)]
 
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
