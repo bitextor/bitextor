@@ -1,7 +1,3 @@
-try:
-    import lzma
-except ImportError:
-    from backports import lzma
 #  This file is part of Bitextor.
 #
 #  Bitextor is free software: you can redistribute it and/or modify
@@ -16,6 +12,11 @@ except ImportError:
 #
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
+
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
 
 import gzip
 from contextlib import contextmanager

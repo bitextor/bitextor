@@ -39,7 +39,7 @@ from xml.sax.saxutils import escape
 from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 
-def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False):
+def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False, paragraph_id=None):
     info_tag = []
     print("    <tuv xml:lang=\"" + lang + "\">")
     if "url1" in seg_columns:
@@ -47,6 +47,8 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
             print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
     if checksum:
         print("     <prop type=\"checksum-seg\">" + checksum + "</prop>")
+    if paragraph_id:
+        print("     <prop type=\"paragraph-id\">" + paragraph_id + "</prop>")
 
     if no_delete_seg or checksum is None:
         print("     <seg>" + escape(seg) + "</seg>")
@@ -76,10 +78,10 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
 
-    if 'checksum1' not in fields_dict:
-        fields_dict['checksum1'] = None
-    if 'checksum2' not in fields_dict:
-        fields_dict['checksum2'] = None
+    # Initialize fields if value was not provided
+    for field in ('checksum1', 'checksum2', 'para1', 'para2'):
+        if field not in fields_dict:
+            fields_dict[field] = None
 
     printseg(
         lang1,
@@ -89,7 +91,8 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         fields_dict,
         mint,
         fields_dict['checksum1'],
-        no_delete_seg)
+        no_delete_seg,
+        fields_dict['para1'])
     printseg(
         lang2,
         tu_columns,
@@ -98,7 +101,8 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         fields_dict,
         mint,
         fields_dict['checksum2'],
-        no_delete_seg)
+        no_delete_seg,
+        fields_dict['para2'])
 
     print("   </tu>")
 
@@ -143,7 +147,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     print("   srclang=\"" + options.lang1 + "\"")
     print("   o-tmf=\"PlainText\"")
     print("   creationtool=\"bitextor\"")
-    print("   creationtoolversion=\"4.0\"")
+    print("   creationtoolversion=\"8.1\"")
     print("   datatype=\"PlainText\"")
     print("   segtype=\"sentence\"")
     print("   creationdate=\"" + time.strftime("%Y%m%dT%H%M%S") + "\"")

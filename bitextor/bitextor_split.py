@@ -20,6 +20,7 @@ import os
 import argparse
 import base64
 import string
+import logging
 
 from sentence_splitter import SentenceSplitter, SentenceSplitterException
 from loomchild.segmenter import LoomchildSegmenter
@@ -41,7 +42,7 @@ def filter_trash(sentence):
     return n < len(sentence) // 2
 
 
-def split_external(text, external_splitter, prune_type="words", prune_threshold=0):
+def split_external(text, external_splitter, prune_type="words", prune_threshold=0, filter_bad_sentences=True):
     output, error_output, returncode = external_splitter.process(text)
     if returncode != 0:
         print(f"External sentence splitter existed with non-zero code: {returncode}", file=sys.stderr)
@@ -55,13 +56,14 @@ def split_external(text, external_splitter, prune_type="words", prune_threshold=
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
 
-    segments = [s for s in segments if filter_trash(s)]
+    if filter_bad_sentences:
+        segments = [s for s in segments if filter_trash(s)]
 
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
 
 
-def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
+def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0, filter_bad_sentences=True):
     segments = moses_splitter.split(text)
 
     # prune long sentences
@@ -70,7 +72,8 @@ def split_moses(text, moses_splitter, prune_type="words", prune_threshold=0):
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
 
-    segments = [s for s in segments if filter_trash(s)]
+    if filter_bad_sentences:
+        segments = [s for s in segments if filter_trash(s)]
 
     segmented_text = "\n".join(segments) + "\n"
     return segmented_text
@@ -92,19 +95,26 @@ def split_loomchild(text, loomchild_splitter, prune_type="words", prune_threshol
 
 
 oparser = argparse.ArgumentParser(description="Tool that does sentence splitting on plain text")
-oparser.add_argument('--text', dest='text', help='Plain text file', default="-")
-oparser.add_argument('--sentence-splitter', dest='splitter', default=None, help="Sentence splitter command line. "
-                     "If not provided, Moses split_sentences Python port will be used.")
-oparser.add_argument('--langcode', dest='langcode', default="en",
+oparser.add_argument('--text', default="-",
+                     help="Plain text file")
+oparser.add_argument('--sentence-splitter', dest='splitter', default=None,
+                     help="Sentence splitter command line. If not provided, Moses split_sentences Python port "
+                          "will be used")
+oparser.add_argument('--langcode', default="en",
                      help="Language code for default sentence splitter and tokenizer")
-oparser.add_argument('--customnbp', dest='customnbp',
+oparser.add_argument('--customnbp',
                      help="Path for custom non breaking prefixes used by Moses Sentence Splitter Python port")
 oparser.add_argument('--sentences-output', default="plain_sentences.xz", dest='sent_output',
                      help="Path of the output file that will contain sentence splitted text")
 oparser.add_argument("--prune", dest="prune_threshold", type=int, default=0,
-                     help="Prune sentences longer than n (words/characters)", required=False)
-oparser.add_argument("--prune-type", dest="prune_type", choices={"words", "chars"}, default="words",
-                     help="Prune sentences either by words or characters", required=False)
+                     help="Prune sentences longer than n (words/characters)")
+oparser.add_argument("--prune-type", choices={"words", "chars"}, default="words",
+                     help="Prune sentences either by words or characters")
+oparser.add_argument('--dont-filter', action='store_true',
+                     help="By default, sentences which are detected to be very noisy or have very bad quality are discarded")
+oparser.add_argument('--process-paragraphs', action='store_true',
+                     help="Once the sentence had been base64-decoded, the second column contains the paragraph "
+                          "identification which will be processed")
 
 options = oparser.parse_args()
 
@@ -132,11 +142,40 @@ else:
     splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
-    for doc in reader:
-        try:
-            content = base64.b64decode(doc.strip()).decode("utf-8").replace("\t", " ")
-        except UnicodeDecodeError:
-            content = ""
+    for doc_idx, doc in enumerate(reader):
+        sentences = ""
+        content = ""
 
-        sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold)
+        try:
+            content = base64.b64decode(doc.strip()).decode("utf-8")
+        except UnicodeDecodeError:
+            logging.warning(f"unicode decoding error while processing doc #{doc_idx}")
+
+        if options.process_paragraphs:
+            content = content.rstrip().split("\n")
+
+            # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
+            for sent_idx, sentence in enumerate(content):
+                paragraph = sentence.split("\t")
+
+                if len(paragraph) == 1:
+                    sentences += f"{paragraph[0]}\ts-1p-1\n"
+                    logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 's-1p-1'")
+                    continue
+
+                paragraph_text = ' '.join(paragraph[:-1]).strip() # Replace '\t' with ' '
+                paragraph_id = paragraph[-1]
+                sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
+                                                        options.prune_threshold, not options.dont_filter).split("\n")
+                sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs]
+
+                # Add the paragraph data to the splitted sentences
+                for idx in range(len(sentences_wo_paragraphs)):
+                    if sentences_wo_paragraphs[idx] != "":
+                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
+        else:
+            content = content.strip().replace("\t", " ")
+            content = '\n'.join([c.strip() for c in content.split('\n')])
+            sentences = splitter_func(content, splitter, options.prune_type, options.prune_threshold, not options.dont_filter)
+
         print(base64.b64encode(sentences.encode("utf-8")).decode("utf-8"))
