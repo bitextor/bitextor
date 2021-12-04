@@ -121,7 +121,7 @@ options = oparser.parse_args()
 splitter = options.splitter
 splitter_func = None
 # no sentence splitter command provided, use moses:
-if not splitter:
+if splitter and splitter == "moses":
     splitter_func = split_moses
     try:
         if options.customnbp:
@@ -131,7 +131,7 @@ if not splitter:
     except SentenceSplitterException as e:
         sys.stderr.write(str(e) + "\n")
         splitter = SentenceSplitter(language='en')
-elif splitter == "loomchild":
+elif not splitter or splitter == "loomchild":
     splitter_func = split_loomchild
     splitter = LoomchildSegmenter(options.langcode)
 
