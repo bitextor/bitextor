@@ -9,7 +9,7 @@ warcs: ["~/host-data/greenpeace.canada-verysmall.warc.gz"]
 
 # PREPROCESSING
 preprocessor: "warc2text"
-shards: 0 # 2^8 = 256 shards
+shards: 0
 batches: 1024 # each shard split into chunks of 1024 MB
 
 lang1: 'en'
