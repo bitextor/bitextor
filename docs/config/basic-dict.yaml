@@ -5,8 +5,7 @@ transientDir: ~/host-data/transient
 tempDir: ~/host-data/transient
 
 # DATA SOURCES - WARC FILES
-#warcs: ["~/host-data/greenpeace.canada-small.warc.gz"] 
-warcs: ["~/host-data/xaa.warc.gz"]
+warcs: ["~/host-data/greenpeace.canada-verysmall.warc.gz"] 
 
 # PREPROCESSING
 preprocessor: "warc2text"
@@ -26,7 +25,7 @@ sentenceAlignerThreshold: 0.1
 # CLEANING
 bifixer: True
 bicleaner: True
-bicleanerModel: ~/host-data/bicleaner-model/en-fr/en-fr.yaml
+bicleanerModel: ~/host-data/en-fr/en-fr.yaml
 bicleanerThreshold: 0.7
 biroamer: False
 
