@@ -20,7 +20,7 @@ python-dateutil==2.8.2
 cchardet==2.1.7
 sentence-splitter==1.4
 mosestokenizer==1.2.1
-lxml>=4.6.3,<=4.7.0
+lxml>=4.6.3,<=4.7.1
 html5lib==1.1
 regex>=2019.08.19,<=2021.11.10
 numpy==1.21.4
