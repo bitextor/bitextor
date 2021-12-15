@@ -42,11 +42,7 @@ def filter_trash(sentence):
 
 
 def split_external(text, external_splitter, prune_type="words", prune_threshold=0, filter_bad_sentences=True):
-    output, error_output, returncode = external_splitter.process(text)
-    if returncode != 0:
-        print(f"External sentence splitter existed with non-zero code: {returncode}", file=sys.stderr)
-        print(error_output.strip(), file=sys.stderr)
-        sys.exit(1)
+    output = external_splitter.process(text)
 
     segments = output.strip().split("\n")
     # prune long sentences
@@ -140,8 +136,8 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 paragraph = sentence.split("\t")
 
                 if len(paragraph) == 1:
-                    sentences += f"{paragraph[0]}\ts-1p-1\n"
-                    logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 's-1p-1'")
+                    sentences += f"{paragraph[0]}\tp-1s-1\n"
+                    logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 'p-1s-1'")
                     continue
 
                 paragraph_text = ' '.join(paragraph[:-1]).strip() # Replace '\t' with ' '

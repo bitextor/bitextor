@@ -21,7 +21,8 @@ import argparse
 import contextlib
 import subprocess
 
-def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
+def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, encode_errors='strict',
+         decode_errors='strict'):
     if separator == '\n':
         raise Exception(f"the provided separator is not valid: '{repr(separator)}'")
 
@@ -41,7 +42,7 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
                 # Get all the segments from the current document
                 for segment in doc:
                     if not is_plaintext:
-                        segment = base64.b64decode(segment).decode('utf-8')
+                        segment = base64.b64decode(segment).decode('utf-8', errors=decode_errors)
 
                     segments.append(segment)
 
@@ -71,9 +72,8 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False):
 
                         text.append(current_sentence)
 
-
-                doc = '\n'.join(text).encode('utf-8')
-                doc = base64.b64encode(doc).decode('utf-8')
+                doc = '\n'.join(text).encode('utf-8', errors=encode_errors)
+                doc = base64.b64encode(doc).decode('utf-8', errors=decode_errors)
 
                 print(doc)
             except Exception as e:
@@ -94,6 +94,10 @@ def parse_args():
                         help="Separator which will be used to split the initial input")
     parser.add_argument('--join-str', default='\t',
                         help="String which will be used to join the BASE64-decoded sentences before encode the document again")
+    parser.add_argument('--encode-errors', default='strict',
+                        help="How encoding errors should be handled. Check 'errors' parameter from 'encode' method")
+    parser.add_argument('--decode-errors', default='strict',
+                        help="How decoding errors should be handled. Check 'errors' parameter from 'decode' method")
     parser.add_argument('--logging-level', type=int, default=logging.INFO,
                         help="Logging level")
 
@@ -106,4 +110,5 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging_level)
 
-    join(input_file=args.input, separator=args.separator, join_str=args.join_str, is_plaintext=args.input_is_not_base64)
+    join(input_file=args.input, separator=args.separator, join_str=args.join_str, is_plaintext=args.input_is_not_base64,
+         encode_errors=args.encode_errors, decode_errors=args.decode_errors)
