@@ -22,7 +22,7 @@ import contextlib
 import subprocess
 
 def execute(command, input_file='-', use_shell=False, remove_empty_docs=False, empty_docs_value='Cg==',
-            is_plaintext=False):
+            is_plaintext=False, encode_errors='strict', decode_errors='strict'):
     command = command if use_shell else shlex.split(command)
     non_empty_docs = 0
     empty_docs = 0
@@ -39,19 +39,19 @@ def execute(command, input_file='-', use_shell=False, remove_empty_docs=False, e
                 doc = doc.strip()
 
                 if is_plaintext:
-                    sentences = doc.encode('utf-8')
+                    sentences = doc.encode('utf-8', errors=encode_errors)
                 else:
                     sentences = base64.b64decode(doc)
 
-                    total_sentences += sentences.decode('utf-8').strip().count('\n') + 1
+                total_sentences += sentences.decode('utf-8', errors=decode_errors).strip().count('\n') + 1
 
                 # Execute command for the sentences of the current document, BASE64-decoded
                 command_result = subprocess.Popen(command, shell=use_shell, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
                 sentences = command_result.communicate(sentences)[0]
 
-                processed_sentences += sentences.decode('utf-8').strip().count('\n') + 1
+                processed_sentences += sentences.decode('utf-8', errors=decode_errors).strip().count('\n') + 1
 
-                sentences = base64.b64encode(sentences).decode("utf-8")
+                sentences = base64.b64encode(sentences).decode('utf-8', errors=decode_errors)
 
                 if sentences.strip() != '':
                     print(sentences)
@@ -86,6 +86,10 @@ def parse_args():
                         help="By default, empty documents, result of the provided command, are kept")
     parser.add_argument('--empty-docs-value', default='Cg==',
                         help="Default value to use when an empty document is produced, result of the provided command. It should be a BASE64 value")
+    parser.add_argument('--encode-errors', default='strict',
+                        help="How encoding errors should be handled. Check 'errors' parameter from 'encode' method")
+    parser.add_argument('--decode-errors', default='strict',
+                        help="How decoding errors should be handled. Check 'errors' parameter from 'decode' method")
     parser.add_argument('--logging-level', type=int, default=logging.INFO,
                         help="Logging level")
 
@@ -99,4 +103,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.logging_level)
 
     execute(args.command, input_file=args.input, use_shell=args.use_shell, remove_empty_docs=args.remove_empty_docs,
-            empty_docs_value=args.empty_docs_value, is_plaintext=args.input_is_not_base64)
+            empty_docs_value=args.empty_docs_value, is_plaintext=args.input_is_not_base64, encode_errors=args.encode_errors,
+            decode_errors=args.decode_errors)
