@@ -42,3 +42,6 @@
 [submodule "prevertical2text"]
 	path = prevertical2text
 	url = https://github.com/bitextor/prevertical2text
+[submodule "bicleaner-ai"]
+	path = bicleaner-ai
+	url = https://github.com/bitextor/bicleaner-ai.git
