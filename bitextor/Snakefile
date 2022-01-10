@@ -1151,9 +1151,9 @@ rule mt_matches:
     shell:
         """
         mkdir -p {params.folder}
-        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
+        echo -e "score\tidx_translated\tidx_trg" > {output}
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} >> {output}
         """
-
 
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
@@ -1212,12 +1212,17 @@ rule bleualign:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
         cut -f 2,3 {input.indices} \
+            | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
+            | sed '1 s/^/src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated\n/' \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
+            | ( [ "{SRC_LANG}" = "{LANG1}" ] \
+                    && cat \
+                    || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
             | pigz -c > {output}
         """
 
@@ -1278,15 +1283,11 @@ checkpoint split_segalign:
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
                 fi
-                format='$2,$1,$4,$3,$5'
-                if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] && [[ ! -z "{DEFERRED}" ]]; then
-                    format='$2,$1,$4,$3,$5,$7,$6,$9,$8'
-                elif [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] || [[ ! -z "{DEFERRED}" ]]; then
-                    format='$2,$1,$4,$3,$5,$7,$6'
-                fi
-                $CAT {input} \
-                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print '$format' }}' OFS='\t' ) \
-                    | python3 {WORKFLOW}/bitextor_split_segalign.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                header=$($CAT {input[0]} | head -1)
+                echo {input} | tr ' ' '\n' \
+                    | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+                    | sed '1 s/^/'"$header"'\n/' \
+                    | python3 {WORKFLOW}/bitextor_split_segalign.py -f src_text,trg_text -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
                 else

@@ -337,6 +337,7 @@ rule matches2hunalign:
     shell:
         """
         cut -f {params.c1},{params.c2} {input.indices} \
+            | tail -n +2 \
             | LC_ALL=C sort -nk1,1 -t $'\t' \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
