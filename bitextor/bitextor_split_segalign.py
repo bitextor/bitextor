@@ -21,7 +21,7 @@ header = next(stdin)
 oparser = argparse.ArgumentParser('split file by size of specified fields')
 oparser.add_argument('-s', '--size', default=1024, help="size in MB")
 oparser.add_argument('-o', '--output', default="", help="output files prefix")
-oparser.add_argument('-f', '--fields', type=lambda c: columns(c, header), default="3,4", help="relevant fields")
+oparser.add_argument('-f', '--fields', type=lambda c: columns(c, header), default="src_text,trg_text", help="relevant fields")
 oparser.add_argument('--gzip', action="store_true", default=False, help="compress the output")
 options = oparser.parse_args()
 

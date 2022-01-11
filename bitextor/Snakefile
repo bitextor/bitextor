@@ -263,10 +263,7 @@ if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
     DEFERRED_FIELDS = ["checksum1", "checksum2"]
-    BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
-
-    if PARAGRAPH_IDENTIFICATION:
-        BIFIXER_DEFERRED_COLS = "--sdeferredcol 8 --tdeferredcol 9"
+    BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash"
 if "bifixer" in config and config["bifixer"]:
     BIFIXER = True
     BIFIXER_FIELDS = ["bifixerhash", "bifixerscore"]
@@ -1217,7 +1214,7 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | sed '1 s/^/src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated\n/' \
+            | sed '1 s/^/src_url\\ttrg_url\\tsrc_text\\ttrg_text\\tsrc_translated\\n/' \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | ( [ "{SRC_LANG}" = "{LANG1}" ] \
@@ -1283,10 +1280,10 @@ checkpoint split_segalign:
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
                 fi
-                header=$($CAT {input[0]} | head -1)
+                header="$(head -1 <($CAT {input[0]}) | sed 's/\\t/\\\\t/g')"
                 echo {input} | tr ' ' '\n' \
                     | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
-                    | sed '1 s/^/'"$header"'\n/' \
+                    | sed '1 s/^/'"$header"'\\n/' \
                     | python3 {WORKFLOW}/bitextor_split_segalign.py -f src_text,trg_text -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
@@ -1319,6 +1316,7 @@ rule bifixer:
         fi
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+                --header --output_header "$(head -1 <($CAT {input.segalign}) | tr '\t' ',' | tr -d '\n')" \
             > {output}
         """
 
