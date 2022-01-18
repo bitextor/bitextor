@@ -266,7 +266,7 @@ if "deferred" in config and config["deferred"]:
     BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash"
 if "bifixer" in config and config["bifixer"]:
     BIFIXER = True
-    BIFIXER_FIELDS = ["bifixerhash", "bifixerscore"]
+    BIFIXER_FIELDS = ["bifixer_hash", "bifixer_score"]
 if "aggressiveDedup" in config and not config["aggressiveDedup"]:
     AGGRESSIVE_DEDUP = ""
 if "bicleaner" in config and config["bicleaner"]:
@@ -279,7 +279,7 @@ if "bicleanerCorpusTrainingPrefix" in config:
     BICLEANER_TRAIN_PREFIXES = config["bicleanerCorpusTrainingPrefix"]
 if "elrc" in config and config["elrc"]:
     ELRC = True
-    ELRC_FIELDS = ["lengthratio", "numTokensSL", "numTokensTL"]
+    ELRC_FIELDS = ["length_ratio", "src_num_tokens", "trg_num_tokens"]
 if "tmx" in config and config["tmx"]:
     TMX = True
     OUTPUT_FILES.append("not-deduped.tmx")
@@ -310,11 +310,11 @@ TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
 
 FILTER_SORT_FIELDS = "-k3,4"
 TMX_DEDUP_FIELDS = "seg1,seg2"
-if "bifixerhash" in BEFORE_ELRC_FIELDS:
-    i = BEFORE_ELRC_FIELDS.index("bifixerhash")
+if "bifixer_hash" in BEFORE_ELRC_FIELDS:
+    i = BEFORE_ELRC_FIELDS.index("bifixer_hash")
     i = i + 1  # sort counts from 1, not 0
     FILTER_SORT_FIELDS = f"-k{i},{i} -k{i+1},{i+1}nr"
-    TMX_DEDUP_FIELDS = "bifixerhash"
+    TMX_DEDUP_FIELDS = "bifixer_hash"
 
 BEFORE_ELRC_FIELDS = ",".join(BEFORE_ELRC_FIELDS)
 TMX_FIELDS = ",".join(TMX_FIELDS)
@@ -1217,9 +1217,6 @@ rule bleualign:
             | sed '1 s/^/src_url\\ttrg_url\\tsrc_text\\ttrg_text\\tsrc_translated\\n/' \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
-            | ( [ "{SRC_LANG}" = "{LANG1}" ] \
-                    && cat \
-                    || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
             | pigz -c > {output}
         """
 
@@ -1284,6 +1281,9 @@ checkpoint split_segalign:
                 echo {input} | tr ' ' '\n' \
                     | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
                     | sed '1 s/^/'"$header"'\\n/' \
+                    | ( [ "{SRC_LANG}" = "{LANG1}" ] \
+                        && cat \
+                        || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
                     | python3 {WORKFLOW}/bitextor_split_segalign.py -f src_text,trg_text -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
@@ -1314,9 +1314,10 @@ rule bifixer:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
+        header=$(head -1 <($CAT {input.segalign}) | tr '\t' ',' | tr -d '\n')
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
-                --header --output_header "$(head -1 <($CAT {input.segalign}) | tr '\t' ',' | tr -d '\n')" \
+            | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
+                {BIFIXER_DEFERRED_COLS} --header --output_header "$header" \
             > {output}
         """
 
@@ -1390,18 +1391,14 @@ rule bicleaner:
         fi
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        if [ "$slang" == "{LANG1}" ]; then
-            $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
-                | paste <($CAT {input.bifixer}) - \
-                | pigz -c > {output}
-        else
-            $CAT {input.bifixer} \
-                | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
-                | paste <($CAT {input.bifixer}) - \
-                | pigz -c > {output}
-        fi
+        $CAT {input.bifixer} \
+            | ( [ "$slang" = "{LANG1}" ] \
+                && cat \
+                || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
+            | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                --score_only --header --output_header -q - - {input.model} \
+            | paste <($CAT {input.bifixer}) - \
+            | pigz -c > {output}
         """
 
 
@@ -1439,20 +1436,26 @@ rule filter:
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
-    run:
-        cat_cmd = "cat"
-        if input[0][-3:] == ".gz":
-            cat_cmd = "zcat"
-        cmd = f""" {cat_cmd} {input} """
-        if BICLEANER:
-            cmd += (
-                f""" | {PROFILING} python3 {WORKFLOW}/bitextor_filterbicleaner.py --threshold {BICLEANER_THRESHOLD} """
-            )
-        if ELRC:
-            cmd += f""" | {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -c "{BEFORE_ELRC_FIELDS}" -s """
-        cmd += f""" | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} """  # sorted by either sentences or bifixer
-        cmd += f""" > {output} """
-        shell(cmd)
+    shell:
+        """
+        CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
+
+        $CAT {input} \
+            | ( [[ "{BICLEANER}" == "True" ]] \
+                && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py --threshold {BICLEANER_THRESHOLD} \
+                || cat ) \
+            | ( [[ "{ELRC}" == "True" ]] \
+                && {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s \
+                || cat ) \
+            > {output}
+
+        header=$(head -1 <(cat {output}) | tr -d '\n')
+
+        # Remove header, sort and add header (in-place) from output file
+        sed -i '1 d' {output} \
+            && LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} -o {output} {output} \
+            && sed -i '1 s/^/'"$header"'\\n/' {output}
+        """
 
 
 rule aggregate_filter:
@@ -1546,7 +1549,7 @@ rule tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         """
 
@@ -1568,7 +1571,7 @@ rule deduped_tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}

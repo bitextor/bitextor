@@ -21,12 +21,12 @@
 # about the expected fields.
 
 # Default input format:
-# url1    url2    seg1    seg2    [hunalign    bicleaner    lengthratio    numTokensSL    numTokensTL]
+# url1    url2    seg1    seg2    [hunalign    bicleaner    length_ratio    src_num_tokens    trg_num_tokens]
 
 # where url1 and url2 are the URLs of the document, seg1 and seg2 are the aligned pair of segments, hunalign and
-# bicleaner are quality metrics (in this case, provided by these two tools), lengthratio is the ratio between the
-# word-length of seg1 and seg2, numTokensSL and numTokensTL is the number of tokens in each segment and is the value
-# to be assigned to each TU id parameter.
+# bicleaner are quality metrics (in this case, provided by these two tools), length_ratio is the ratio between the
+# word-length of seg1 and seg2, src_num_tokens and trg_num_tokens is the number of tokens in each segment and is the
+# value to be assigned to each TU id parameter.
 #
 
 import sys
@@ -54,8 +54,8 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
         print("     <seg>" + escape(seg) + "</seg>")
     else:
         print("     <seg></seg>")
-    if "numTokensSL" in fields_dict and fields_dict["numTokensSL"] != "" \
-            and int(fields_dict["numTokensSL"]) < int(mint):
+    if "src_num_tokens" in fields_dict and fields_dict["src_num_tokens"] != "" \
+            and int(fields_dict["src_num_tokens"]) < int(mint):
         info_tag.append("very short segments, shorter than " + str(options.mint))
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
@@ -125,7 +125,7 @@ oparser.add_argument("-m", "--max-length", help="Maximum length ratio between tw
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
 oparser.add_argument("-c", "--columns",
                      help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other "
-                          "options:hunalign,bifixerhash,bifixerscore,bicleaner,lengthratio,numTokensSL,numTokensTL,"
+                          "options:hunalign,bifixer_hash,bifixer_score,bicleaner,length_ratio,src_num_tokens,trg_num_tokens,"
                           "checksum1,checksum2",
                      default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if standoff annotation checksum is given",
@@ -133,7 +133,7 @@ oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if stan
 oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
                      dest="text_file_deduped")
 oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. "
-                     "Like 'bifixerhash', 'seg1,seg2' , 'checksum1,checksum2'")
+                     "Like 'bifixer_hash', 'seg1,seg2' , 'checksum1,checksum2'")
 
 options = oparser.parse_args()
 
