@@ -79,7 +79,7 @@ def validate_args(config):
         'parallelWorkers': {
             'type': 'dict',
             'allowed': [
-                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'sents'
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
             ],
             'valuesrules': {'type': 'integer', 'min': 1}
         },

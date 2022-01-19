@@ -67,13 +67,13 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
     info_tag = []
     if 'hunalign' in fields_dict and fields_dict['hunalign'] != "":
         print("    <prop type=\"score-aligner\">" + fields_dict['hunalign'] + "</prop>")
-    if 'bicleaner' in fields_dict and fields_dict['bicleaner'] != "":
-        print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner'] + "</prop>")
+    if 'bicleaner_score' in fields_dict and fields_dict['bicleaner_score'] != "":
+        print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
     # Output info data ILSP-FC specification
-    if re.sub("[^0-9]", "", fields_dict["seg1"]) != re.sub("[^0-9]", "", fields_dict["seg2"]):
+    if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):
         info_tag.append("different numbers in TUVs")
     print("    <prop type=\"type\">1:1</prop>")
-    if re.sub(r'\W+', '', fields_dict["seg1"]) == re.sub(r'\W+', '', fields_dict["seg2"]):
+    if re.sub(r'\W+', '', fields_dict["src_text"]) == re.sub(r'\W+', '', fields_dict["trg_text"]):
         info_tag.append("equal TUVs")
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
@@ -87,7 +87,7 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         lang1,
         tu_columns,
         tu_urls1,
-        fields_dict['seg1'],
+        fields_dict['src_text'],
         fields_dict,
         mint,
         fields_dict['checksum1'],
@@ -97,7 +97,7 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         lang2,
         tu_columns,
         tu_urls2,
-        fields_dict['seg2'],
+        fields_dict['trg_text'],
         fields_dict,
         mint,
         fields_dict['checksum2'],
@@ -123,11 +123,6 @@ oparser.add_argument("-q", "--min-length", help="Minimum length ratio between tw
 oparser.add_argument("-m", "--max-length", help="Maximum length ratio between two parts of TU", type=float, dest="maxl",
                      default=1.6)
 oparser.add_argument("-t", "--min-tokens", help="Minimum number of tokens in a TU", type=int, dest="mint", default=3)
-oparser.add_argument("-c", "--columns",
-                     help="Column names of the input tab separated file. Default: url1,url2,seg1,seg2. Other "
-                          "options:hunalign,bifixer_hash,bifixer_score,bicleaner,length_ratio,src_num_tokens,trg_num_tokens,"
-                          "checksum1,checksum2",
-                     default="url1,url2,seg1,seg2")
 oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if standoff annotation checksum is given",
                      dest="no_delete_seg", action='store_true')
 oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
@@ -162,37 +157,37 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     bestseg = dict()
     bestchecksum1 = ""
     bestchecksum2 = ""
-    columns = options.columns.split(',')
+    header = next(reader).strip().split('\t')
     fieldsdict = dict()
 
     for line in reader:
         fields = line.split("\t")
         fields[-1] = fields[-1].strip()
         line_hash = ""
-        for field, column in zip(fields, columns):
+        for field, column in zip(fields, header):
             fieldsdict[column] = field
 
         if options.dedup:
             for part in options.dedup.split(','):
                 line_hash = line_hash + "\t" + fieldsdict[part]
-        if 'seg1' not in fieldsdict:
-            fieldsdict['seg1'] = ""
-        if 'seg2' not in fieldsdict:
-            fieldsdict['seg2'] = ""
+        if 'src_text' not in fieldsdict:
+            fieldsdict['src_text'] = ""
+        if 'trg_text' not in fieldsdict:
+            fieldsdict['trg_text'] = ""
         if prev_hash == "" and options.dedup:
             bestseg = dict(fieldsdict)
-            urls1.add(fieldsdict['url1'])
-            urls2.add(fieldsdict['url2'])
+            urls1.add(fieldsdict['src_url'])
+            urls2.add(fieldsdict['trg_url'])
             prev_hash = line_hash
         elif prev_hash == line_hash and options.dedup:
-            urls1.add(fieldsdict['url1'])
-            urls2.add(fieldsdict['url2'])
+            urls1.add(fieldsdict['src_url'])
+            urls2.add(fieldsdict['trg_url'])
             prev_hash = line_hash
         elif not options.dedup:
-            urls1.add(fieldsdict['url1'])
-            urls2.add(fieldsdict['url2'])
+            urls1.add(fieldsdict['src_url'])
+            urls2.add(fieldsdict['trg_url'])
             idcounter += 1
-            printtu(idcounter, options.lang1, options.lang2, columns, urls1, urls2, fieldsdict, options.mint,
+            printtu(idcounter, options.lang1, options.lang2, header, urls1, urls2, fieldsdict, options.mint,
                     options.no_delete_seg)
             urls1 = set()
             urls2 = set()
@@ -202,7 +197,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 idcounter,
                 options.lang1,
                 options.lang2,
-                columns,
+                header,
                 urls1,
                 urls2,
                 bestseg,
@@ -213,8 +208,8 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             urls1 = set()
             urls2 = set()
             bestseg = dict(fieldsdict)
-            urls1.add(fieldsdict['url1'])
-            urls2.add(fieldsdict['url2'])
+            urls1.add(fieldsdict['src_url'])
+            urls2.add(fieldsdict['trg_url'])
             prev_hash = line_hash
 
     if options.dedup:
@@ -224,7 +219,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 idcounter,
                 options.lang1,
                 options.lang2,
-                columns,
+                header,
                 urls1,
                 urls2,
                 fieldsdict,
