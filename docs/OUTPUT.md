@@ -10,13 +10,13 @@ The files that will be always generated (regardless of configuration) are `{lang
 
     This file contains columns added by different optional modules/features: **paragraph identification**, **deferred**, **Bifixer** and **Bicleaner**. In case some of these are not enabled, the corresponding columns will be omitted. The possible fields that may appear in this file are (in this order):
 
-    1. `url1 url2 sent1 sent2 aligner_score` - default columns
-        * `url1` and `url2` are source documents of the sentences
-        * `sent1` and `sent2` form a sentence pair in `lang1` and `lang2`
+    1. `src_url trg_url src_text trg_text aligner_score` - default columns
+        * `src_url` and `trg_url` are source documents of the sentences
+        * `src_text` and `trg_text` form a sentence pair in `lang1` and `lang2`
         * `aligner_score` is the score given by the sentence aligner (bleualign or hunalign)
-    2. `para1 para2` - paragraph identification data
+    2. `src_paragraph_id trg_paragraph_id` - paragraph identification data
         * initial position of the sentence in the paragraph, and initial position of the paragraph in the document
-    3. `checksum1 checksum2` - deferred sentence checksums
+    3. `src_deferred_hash trg_deferred_hash` - deferred sentence hashes
         * may be used to reconstruct the original corpus using [Deferred crawling reconstructor](https://github.com/bitextor/deferred-crawling)
     4. `bifixer_hash bifixer_score` - Bifixer output
         * `bifixer_hash` tags duplicate or near-duplicate sentences

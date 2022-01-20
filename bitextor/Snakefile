@@ -232,7 +232,7 @@ if "sentenceAlignerThreshold" in config:
 # snakemake/include/dic-docsegalign
 #################################################################
 # CLEANING
-FIELDS = ["url1", "url2", "seg1", "seg2", "aligner"]
+FIELDS = ["src_url", "trg_url", "src_text", "trg_text", "aligner_score"]
 PARAGRAPH_IDENTIFICATION_FIELDS = []
 DEFERRED = ""
 MMHSUM_PATH = ""
@@ -258,7 +258,7 @@ STATS_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = []
 
 if PARAGRAPH_IDENTIFICATION:
-    PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
+    PARAGRAPH_IDENTIFICATION_FIELDS = ["src_paragraph_id", "trg_paragraph_id"]
 if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
@@ -317,7 +317,7 @@ FILTER_SORT_FIELDS = "-k3,4"    # TODO should we change the idxs according to th
                                 #  column is swapped, it probably won't break the tool which takes the
                                 #  file as input, but the pipeline might break because the pipeline
                                 #  expects some inputs in specific columns
-TMX_DEDUP_FIELDS = "seg1,seg2"
+TMX_DEDUP_FIELDS = "src_text,trg_text"
 if "bifixer_hash" in BEFORE_ELRC_FIELDS:
     i = BEFORE_ELRC_FIELDS.index("bifixer_hash")
     i = i + 1  # sort counts from 1, not 0
@@ -1288,7 +1288,6 @@ checkpoint split_segalign:
                     CAT=zcat
                 fi
                 header="$(head -1 <($CAT {input[0]}) | sed 's/\\t/\\\\t/g')"
-                # TODO is sed buffering the whole result? If so, this might be rather inefficient...
                 echo {input} \
                     | tr ' ' '\n' \
                     | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
@@ -1403,9 +1402,6 @@ rule bicleaner:
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         $CAT {input.bifixer} \
-            | ( [ "$slang" = "{LANG1}" ] \
-                && cat \
-                || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
             | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
                 --score_only --header --output_header -q - - {input.model} \
             | paste <($CAT {input.bifixer}) - \
@@ -1508,9 +1504,8 @@ rule raw:
     shell:
         """
         CAT=$([[ "{extension}" == ".gz" ]] && echo "zcat" || echo "cat")
-        header=$(head -1 <(cat {input[0]}) | tr -d '\n')
+        header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
 
-        # TODO is sed buffering the whole result? If so, this might be rather inefficient...
         echo {input} \
             | tr ' ' '\n' \
             | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
@@ -1555,8 +1550,6 @@ rule sents:
             # Use tmp named pipes since --merge does need the file descriptor and we need to get rid of the header
             cmd += f" <(tail -n +2 {filename})"
 
-        # TODO is sed buffering the whole result? If so, this might be rather inefficient...
-        #  possible approach: do not compress, apply sed in-place and compress
         cmd += \
         f""" \\
         | sed '1 s/^/'"$header"'\\n/' \\

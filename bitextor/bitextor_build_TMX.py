@@ -21,11 +21,11 @@
 # about the expected fields.
 
 # Default input format:
-# url1    url2    seg1    seg2    [hunalign    bicleaner    length_ratio    src_num_tokens    trg_num_tokens]
+# src_url    trg_url    src_text    trg_text    [hunalign_score | bleualign_score    bicleaner_score    length_ratio    src_num_tokens    trg_num_tokens]
 
-# where url1 and url2 are the URLs of the document, seg1 and seg2 are the aligned pair of segments, hunalign and
+# where src_url and trg_url are the URLs of the document, src_text and trg_text are the aligned pair of segments, hunalign and
 # bicleaner are quality metrics (in this case, provided by these two tools), length_ratio is the ratio between the
-# word-length of seg1 and seg2, src_num_tokens and trg_num_tokens is the number of tokens in each segment and is the
+# word-length of src_text and trg_text, src_num_tokens and trg_num_tokens is the number of tokens in each segment and is the
 # value to be assigned to each TU id parameter.
 #
 
@@ -41,12 +41,16 @@ from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False, paragraph_id=None):
     info_tag = []
+
     print("    <tuv xml:lang=\"" + lang + "\">")
-    if "url1" in seg_columns:
+
+    if "src_url" in seg_columns:
         for url in urls:
             print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
+
     if checksum:
         print("     <prop type=\"checksum-seg\">" + checksum + "</prop>")
+
     if paragraph_id:
         print("     <prop type=\"paragraph-id\">" + paragraph_id + "</prop>")
 
@@ -54,32 +58,44 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
         print("     <seg>" + escape(seg) + "</seg>")
     else:
         print("     <seg></seg>")
+
     if "src_num_tokens" in fields_dict and fields_dict["src_num_tokens"] != "" \
             and int(fields_dict["src_num_tokens"]) < int(mint):
         info_tag.append("very short segments, shorter than " + str(options.mint))
+
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
+
     print("    </tuv>")
 
 
 def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_dict, mint, no_delete_seg):
-    print("   <tu tuid=\"" + str(tu_idcounter) + "\" datatype=\"Text\">")
     info_tag = []
-    if 'hunalign' in fields_dict and fields_dict['hunalign'] != "":
-        print("    <prop type=\"score-aligner\">" + fields_dict['hunalign'] + "</prop>")
+
+    print("   <tu tuid=\"" + str(tu_idcounter) + "\" datatype=\"Text\">")
+
+    if 'hunalign_score' in fields_dict and fields_dict['hunalign_score'] != "":
+        print("    <prop type=\"score-hunalign\">" + fields_dict['hunalign_score'] + "</prop>")
+    elif 'bleualign_score' in fields_dict and fields_dict['bleualign_score'] != "":
+        print("    <prop type=\"score-bleualign\">" + fields_dict['bleualign_score'] + "</prop>")
+
     if 'bicleaner_score' in fields_dict and fields_dict['bicleaner_score'] != "":
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
+
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):
         info_tag.append("different numbers in TUVs")
+
     print("    <prop type=\"type\">1:1</prop>")
+
     if re.sub(r'\W+', '', fields_dict["src_text"]) == re.sub(r'\W+', '', fields_dict["trg_text"]):
         info_tag.append("equal TUVs")
+
     if len(info_tag) > 0:
         print("    <prop type=\"info\">" + "|".join(info_tag) + "</prop>")
 
     # Initialize fields if value was not provided
-    for field in ('checksum1', 'checksum2', 'para1', 'para2'):
+    for field in ('src_deferred_hash', 'trg_deferred_hash', 'src_paragraph_id', 'trg_paragraph_id'):
         if field not in fields_dict:
             fields_dict[field] = None
 
@@ -90,9 +106,9 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         fields_dict['src_text'],
         fields_dict,
         mint,
-        fields_dict['checksum1'],
+        fields_dict['src_deferred_hash'],
         no_delete_seg,
-        fields_dict['para1'])
+        fields_dict['src_paragraph_id'])
     printseg(
         lang2,
         tu_columns,
@@ -100,9 +116,9 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         fields_dict['trg_text'],
         fields_dict,
         mint,
-        fields_dict['checksum2'],
+        fields_dict['trg_deferred_hash'],
         no_delete_seg,
-        fields_dict['para2'])
+        fields_dict['trg_paragraph_id'])
 
     print("   </tu>")
 
@@ -110,10 +126,11 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
 oparser = argparse.ArgumentParser(
     description="This script reads the output of bitextor-cleantextalign and formats the aligned segments as a TMX "
                 "translation memory.")
-oparser.add_argument('clean_alignments', metavar='FILE', nargs='?',
-                     help='File containing the segment pairs produced by bitextor-cleantextalign (if undefined, '
-                          'the script will read from standard input)',
-                     default=None)
+
+oparser.add_argument('clean_alignments', metavar='FILE', nargs='?', default=None,
+                     help="File containing the segment pairs produced by bitextor-cleantextalign (if undefined, "
+                          "the script will read from standard input)")
+
 oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1",
                      required=True)
 oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2",
@@ -128,12 +145,12 @@ oparser.add_argument("-d", "--no-delete-seg", help="Avoid deleting <seg> if stan
 oparser.add_argument("-f", "--text-file-deduped", help="Filename to write the deduped input file",
                      dest="text_file_deduped")
 oparser.add_argument("--dedup", dest="dedup", help="Dedup entries and group urls using given columns. "
-                     "Like 'bifixer_hash', 'seg1,seg2' , 'checksum1,checksum2'")
+                     "Like 'bifixer_hash', 'src_text,trg_text' , 'src_deferred_hash,trg_deferred_hash'")
 
 options = oparser.parse_args()
 
-with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_alignments else sys.stdin as reader,\
-        open_xz_or_gzip_or_plain(options.text_file_deduped, 'wt') if options.text_file_deduped and options.dedup else dummy_open() as text_writer:
+with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_alignments else sys.stdin as reader, \
+     open_xz_or_gzip_or_plain(options.text_file_deduped, 'wt') if options.text_file_deduped and options.dedup else dummy_open() as text_writer:
 
     print("<?xml version=\"1.0\"?>")
     print("<tmx version=\"1.4\">")
@@ -164,16 +181,20 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
         fields = line.split("\t")
         fields[-1] = fields[-1].strip()
         line_hash = ""
+
         for field, column in zip(fields, header):
             fieldsdict[column] = field
 
         if options.dedup:
             for part in options.dedup.split(','):
                 line_hash = line_hash + "\t" + fieldsdict[part]
+
         if 'src_text' not in fieldsdict:
             fieldsdict['src_text'] = ""
+
         if 'trg_text' not in fieldsdict:
             fieldsdict['trg_text'] = ""
+
         if prev_hash == "" and options.dedup:
             bestseg = dict(fieldsdict)
             urls1.add(fieldsdict['src_url'])
@@ -203,8 +224,10 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 bestseg,
                 options.mint,
                 options.no_delete_seg)
+
             if text_writer:
                 text_writer.write("\t".join([x for x in bestseg.values() if x]) + "\n")
+
             urls1 = set()
             urls2 = set()
             bestseg = dict(fieldsdict)
@@ -214,6 +237,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
 
     if options.dedup:
         idcounter += 1
+
         if fieldsdict != {}:
             printtu(
                 idcounter,
@@ -225,7 +249,9 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 fieldsdict,
                 options.mint,
                 options.no_delete_seg)
+
         if text_writer:
             text_writer.write("\t".join([x for x in fieldsdict.values() if x]) + "\n")
+
     print(" </body>")
     print("</tmx>")
