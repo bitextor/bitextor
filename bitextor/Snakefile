@@ -1542,7 +1542,7 @@ rule tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         """
 
@@ -1564,7 +1564,7 @@ rule deduped_tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}
