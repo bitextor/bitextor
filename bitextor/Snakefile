@@ -1326,10 +1326,9 @@ rule bifixer:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        header=$(head -1 <($CAT {input.segalign}) | tr '\t' ',' | tr -d '\n')
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} \
-                {BIFIXER_DEFERRED_COLS} --header --output_header "$header" \
+                {BIFIXER_DEFERRED_COLS} --header --output_header \
             > {output}
         """
 
