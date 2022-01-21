@@ -204,7 +204,6 @@ Options specific to `warc2preprocess`:
 * `ftfy`: ftfy is a tool that solves encoding errors (disabled by default)
 * `cleanHTML`: attempt to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow, in order to improve overall speed; this has an unwanted side effect of removing too much content if the HTML document is malformed (disabled by default)
 * `html5lib`: extra parsing with [`html5lib`](https://pypi.org/project/html5lib/), which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
-* `boilerplateCleaning`: enable [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents (disabled by default)
 * `parser`: select HTML parsing library for text extraction; options are: [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
 * `PDFextract`: use [PDFExtraxt](https://github.com/bitextor/python-pdfextract) instead of poppler `pdf2html` converter
 * `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
@@ -215,6 +214,7 @@ Options specific to `warc2preprocess`:
 Boilerplate:
 
 * `boilerplateCleaning`: if `preprocessor: warc2preprocess`, enables [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents. If you have provided `preverticals` files, it will discard those entries detected as boilerplate by `prevertical2text` automatically. `warc2text` does not support this option. It is disabled by default
+* `boilerpipeMaxHeapSize`: in order to run `boilerpipe`, we use a library that one of its dependencies is [`jpype`](https://jpype.readthedocs.io/). `jpype` does take the default max. heap size of the JVM and does not take into account the environment variable `JAVA_OPTS` (common envvar to provide options to the JVM). If big documents are being processed, you might like to increase the max. heap size in order to be able to process them with `boilerpipe`
 
 Sharding options:
 

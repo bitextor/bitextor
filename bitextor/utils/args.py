@@ -146,6 +146,7 @@ def validate_args(config):
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
         # boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
         'boilerplateCleaning': {'type': 'boolean', 'default': False},
+        'boilerpipeMaxHeapSize': {'type': 'int', 'default': -1, 'dependencies': {'boilerplateCleaning': True, 'preprocessor': 'warc2preprocess'}},
         # tokenization
         'sentenceSplitters': {'type': 'dict'},
         'customNBPs': {'type': 'dict'},

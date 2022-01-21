@@ -220,8 +220,12 @@ oparser.add_argument("--verbose", action="store_true", default=False,
                      help="Produce additional information about preprocessing through stderr.")
 oparser.add_argument("--boilerpipe", action="store_true", default=False,
                      help="Use boilerpipe bodytext to do the de-boiling")
+oparser.add_argument("--boilerpipe-max-heap-size", type=int, default=-1,
+                     help="Max. heap size for providing to jpype if the JVM is not up. If the value is negative, the "
+                          "default max. heap size will be used instead")
 oparser.add_argument("--parser", dest="parser", default="bs4", choices={'bs4', 'modest', 'lxml', 'simple'},
-                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'lxml' (using html5lib tree) parser to extract relevant text from HTML. By default 'bs4' is used")
+                     help="Use 'HTML tokenizer', 'modest', 'bs4' or 'lxml' (using html5lib tree) parser to extract "
+                          "relevant text from HTML. By default 'bs4' is used")
 oparser.add_argument("--html5lib", action="store_true", default=False, help="Process HTML tree with html5lib")
 oparser.add_argument('--output-dir', dest='outDir', help='Output directory', required=True)
 oparser.add_argument('--output_hash', dest='outputHash', help='Output path for Murmur Hash of plain texts')
@@ -302,16 +306,27 @@ files_dict = dict()
 ExtrB = None
 if options.boilerpipe:
     import jpype
+
     if not jpype.isJVMStarted():
+        max_heap_size = f"-Xmx{str(options.boilerpipe_max_heap_size)}M" if options.boilerpipe_max_heap_size >= 0 else ''
         jars = []
+
         for top, dirs, files in os.walk(
             os.path.dirname(importlib.machinery.PathFinder().find_module("boilerpipe").get_filename()) + '/data'
         ):
             for nm in files:
                 if nm[-4:] == ".jar":
                     jars.append(os.path.join(top, nm))
+
         jpype.addClassPath(os.pathsep.join(jars))
-        jpype.startJVM(jpype.getDefaultJVMPath(), convertStrings=False)
+
+        jargs = [jpype.getDefaultJVMPath()]
+
+        if max_heap_size != '':
+            jargs.append(max_heap_size)
+
+        jpype.startJVM(*jargs, convertStrings=False)
+
     from boilerpipe.extract import Extractor as ExtrB
 
 for record in f:

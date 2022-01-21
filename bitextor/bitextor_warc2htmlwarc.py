@@ -156,7 +156,6 @@ if options.pdfpass is not None:
     po = WARCWriter(open(options.pdfpass, 'wb'), gzip=not options.disable_pdfs_gzip)
 
 if not options.pdfpass and options.pdfextract:
-    import jpype
     from pdfextract.extract import Extractor as ExtrP
     extractor = ExtrP(
         configFile=options.configFile,
