@@ -306,22 +306,11 @@ if "biroamer" in config and config["biroamer"]:
         BIROAMER_OMIT = "-o"
 
 BEFORE_ELRC_FIELDS = FIELDS + PARAGRAPH_IDENTIFICATION_FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
-
-FILTER_SORT_FIELDS = "-k3,4"    # TODO should we change the idxs according to the header of the files?
-                                #  It might increase the robustness of the pipeline and allow to change
-                                #  the columns without worry, but it would increase the complexity of
-                                #  the pipeline itself since we would need to, likely, modify 
-                                #  BEFORE_ELRC_FIELDS, BEFORE_ELRC_FIELDS, TMX_DEDUP_FIELDS and
-                                #  FILTER_SORT_FIELDS (besides other tools and parts of the pipeline)
-                                #  If we don't apply this behaviour, the header will work, but if any
-                                #  column is swapped, it probably won't break the tool which takes the
-                                #  file as input, but the pipeline might break because the pipeline
-                                #  expects some inputs in specific columns
 TMX_DEDUP_FIELDS = "src_text,trg_text"
+
 if "bifixer_hash" in BEFORE_ELRC_FIELDS:
     i = BEFORE_ELRC_FIELDS.index("bifixer_hash")
     i = i + 1  # sort counts from 1, not 0
-    FILTER_SORT_FIELDS = f"-k{i},{i} -k{i+1},{i+1}nr"
     TMX_DEDUP_FIELDS = "bifixer_hash"
 
 BEFORE_ELRC_FIELDS = ",".join(BEFORE_ELRC_FIELDS)
@@ -594,7 +583,6 @@ rule linguacrawl_config:
         scout_steps=apply_format(CRAWLSCOUTSTEPS, "scout_steps: {}\n"),
         blacklist=apply_format(str(CRAWLBLACKLISTURL), "url_blacklist: {}\n"),
     run:
-        global HOSTS
         yaml_content = ""
 
         langs = "','".join(LANGS)
@@ -1429,6 +1417,28 @@ filter_input = rules.bicleaner.output
 if not BICLEANER:
     filter_input = rules.bicleaner.input.bifixer
 
+rule pre_filter:
+    input:
+        filter_input,
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}.sort_flags")
+    run:
+        header = None
+
+        with open_xz_or_gzip_or_plain(str(input)) as f:
+            for header in f:
+                break
+
+        header = header.strip().split('\t')
+
+        sort_flags = f"-k{header.index('src_text') + 1},{header.index('trg_text') + 1}"
+
+        if "bifixer_hash" in header:
+            i = header.index("bifixer_hash")
+            i = i + 1  # sort counts from 1, not 0
+            sort_flags = f"-k{i},{i} -k{i+1},{i+1}nr"
+
+        shell(f"echo '{sort_flags}' > {{output}}")
 
 rule filter:
     """
@@ -1439,15 +1449,17 @@ rule filter:
         add new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
     """
     input:
-        filter_input,
+        f=filter_input,
+        sort_flags=rules.pre_filter.output,
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     threads: THREADS["filter"]
     shell:
         """
-        CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
+        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        CAT=$([[ {input.f} == *.gz ]] && echo "zcat" || echo "cat")
 
-        $CAT {input} \
+        $CAT {input.f} \
             | ( [[ "{BICLEANER}" == "True" ]] \
                 && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py --threshold {BICLEANER_THRESHOLD} \
                 || cat ) \
@@ -1460,7 +1472,7 @@ rule filter:
 
         # Remove header, sort and add header (in-place) from output file
         sed -i '1 d' {output} \
-            && LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --parallel {threads} \
+            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
                 --compress-program=gzip -T {TMPDIR} -o {output} {output} \
             && sed -i '1 s/^/'"$header"'\\n/' {output}
         """
@@ -1536,13 +1548,16 @@ rule sents:
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
+    params:
+        sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags"
     threads: THREADS["sents"]
     run:
         cmd = \
         f"""
+        sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
         header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
 
-        LC_ALL=C sort -t $'\\t' {FILTER_SORT_FIELDS} --parallel {threads} --compress-program=gzip \\
+        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
         """
 
