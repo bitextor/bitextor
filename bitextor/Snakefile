@@ -135,7 +135,7 @@ SHARDS = config["shards"]
 BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
-BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"]
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 PARAGRAPH_IDENTIFICATION = False # TODO configuration
 
 CLEANHTML = ""
