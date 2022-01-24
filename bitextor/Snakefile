@@ -1456,7 +1456,7 @@ rule pre_filter_sort_flags:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags")
     shell:
         """
-        value=""
+        value="/dev/null"
         first="0"
 
         for f in $(echo {input} | tr ' ' '\n'); do
@@ -1476,7 +1476,7 @@ rule pre_filter_sort_flags:
             fi
         done
 
-        cat $f > {output}
+        cat $value > {output}
         """
 
 
