@@ -1417,6 +1417,7 @@ filter_input = rules.bicleaner.output
 if not BICLEANER:
     filter_input = rules.bicleaner.input.bifixer
 
+
 rule pre_filter:
     input:
         filter_input,
@@ -1430,15 +1431,54 @@ rule pre_filter:
                 break
 
         header = header.strip().split('\t')
+        src_text_idx = header.index('src_text') + 1
+        trg_text_idx = header.index('trg_text') + 1
+        src_url_idx = header.index('src_url') + 1
+        trg_url_idx = header.index('trg_url') + 1
 
-        sort_flags = f"-k{header.index('src_text') + 1},{header.index('trg_text') + 1}"
+        sort_flags = f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx} " \
+                     f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx}"
 
         if "bifixer_hash" in header:
-            i = header.index("bifixer_hash")
-            i = i + 1  # sort counts from 1, not 0
-            sort_flags = f"-k{i},{i} -k{i+1},{i+1}nr"
+            i = header.index("bifixer_hash") + 1 # sort counts from 1, not 0
+
+            sort_flags = f"-k{i},{i} -k{i+1},{i+1}nr " \
+                         f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx} " \
+                         f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx}"
 
         shell(f"echo '{sort_flags}' > {{output}}")
+
+
+rule pre_filter_sort_flags:
+    input:
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags")
+    shell:
+        """
+        value=""
+        first="0"
+
+        for f in $(echo {input} | tr ' ' '\n'); do
+            if [[ "$first" == "0" ]]; then
+                value="$f"
+
+                first="1"
+            else
+                current_value="$f"
+                d=$(diff $value $current_value | wc -l)
+
+                if [[ "$d" != "0" ]]; then
+                    >&2 echo "All sort flags have to be the same"
+
+                    false # Trigger exit (it will work since bash is executed in strict mode)
+                fi
+            fi
+        done
+
+        cat $f > {output}
+        """
+
 
 rule filter:
     """
@@ -1450,7 +1490,7 @@ rule filter:
     """
     input:
         f=filter_input,
-        sort_flags=rules.pre_filter.output,
+        sort_flags=rules.pre_filter_sort_flags.output,
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     threads: THREADS["filter"]
@@ -1485,7 +1525,7 @@ rule aggregate_filter:
     :output: a file that contains the path to every filter result
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}" for batch in get_postproc_batches()],
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
     output:
         f"{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}",
     shell:
@@ -1525,9 +1565,8 @@ rule raw:
             | pigz -c > {output.corpus}
 
         # Stats
-        # TODO recalculate idxs according to the header?
-        WC1=$(zcat {output.corpus} | tail -n +2 | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat {output.corpus} | tail -n +2 | cut -f 4 | wc -w)
+        WC1=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f trg_text | tail -n +2 | wc -w)
 
         echo "{LANG1}-{LANG2} raw" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
@@ -1571,9 +1610,8 @@ rule sents:
         | pigz -c > {output.corpus}
 
         # Stats
-        # TODO recalculate idxs according to the header?
-        WC1=$(zcat {output.corpus} | tail -n +2 | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat {output.corpus} | tail -n +2 | cut -f 4 | wc -w)
+        WC1=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f trg_text | tail -n +2 | wc -w)
 
         echo "{LANG1}-{LANG2} filtered" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
