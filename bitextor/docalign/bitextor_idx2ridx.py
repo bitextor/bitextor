@@ -50,19 +50,29 @@ def read_lett(f, docs):
 # Building word indexes as dict files in python for both languages from the input IDX file
 #
 def fill_index(file, lang1, lang2, index1, index2):
+    header = next(file).strip().split("\t")
+    lang_idx = header.index("lang")
+    word_idx = header.index("word")
+    doc_idxs_idx = header.index("doc_idxs")
+
     for i in file:
         fields = i.strip().split("\t")
+
         if len(fields) == 3:
-            if fields[0] == lang1 or fields[0] == lang2:
-                documents = fields[2].split(":")
+            lang = fields[lang_idx]
+            word = fields[word_idx]
+            doc_idxs = fields[doc_idxs_idx]
+
+            if lang == lang1 or lang == lang2:
+                documents = doc_idxs.split(":")
                 acum = 1
 
                 for j in documents:
                     acum += int(j)
-                    if fields[0] == lang1:
-                        index1[acum].add(fields[1])
+                    if lang == lang1:
+                        index1[acum].add(word)
                     else:
-                        index2[acum].add(fields[1])
+                        index2[acum].add(word)
     file.close()
 
 
@@ -199,18 +209,22 @@ for document_index1 in index_text1:
     for document_index2 in similar:
         found[document_index1].append(str(document_index2[0]) + ":" + str(document_index2[1]))
 
+# Print output header
+print("doc_idx\tbest_matches_idx_and_score")
+
 # For each document, we obtain the 10-best candidates with highest score.
 for document_index in found:
     if len(found[document_index]) > 10:
         num_best_candidates = 10
     else:
         num_best_candidates = len(found[document_index])
-    first = True
+
     candidatestring = str(document_index) + "\t"
+
     for document_index2 in range(num_best_candidates):
-        if first:
+        if document_index2 == 0:
             candidatestring += str(found[document_index][document_index2])
-            first = False
         else:
-            candidatestring += "\t" + str(found[document_index][document_index2])
+            candidatestring += "_" + str(found[document_index][document_index2])
+
     print(candidatestring)

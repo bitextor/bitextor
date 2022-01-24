@@ -89,6 +89,9 @@ for file_path, lang in [(options.text1, options.lang1), (options.text2, options.
                     word_map[lang][word].append(docnumber)
             docnumber = docnumber + 1
 
+# Print output header
+print("lang\tword\tdoc_idxs")
+
 for map_lang, map_vocabulary in list(word_map.items()):
     for map_word, map_doc in list(map_vocabulary.items()):
         if options.maxo == -1 or len(word_map[map_lang][map_word]) <= options.maxo:

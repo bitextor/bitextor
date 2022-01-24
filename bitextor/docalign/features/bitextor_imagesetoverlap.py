@@ -58,25 +58,42 @@ def main():
     offset = extract_images(options.html1, documents, offset)
     offset = extract_images(options.html2, documents, offset)
 
+    header = next(reader).strip().split("\t")
+    doc_idx_idx = header.index("doc_idx")
+    best_matches_idx_and_score_idx = header.index("best_matches_idx_and_score")
+
+    # Print output header
+    # TODO are we sure we want to carry on appending values to the same column? We might add padding values with score 0 for a better process...
+    print("doc_idx\tbest_matches_idx_and_score_and_image_score")
+
     for i in reader:
         fields = i.strip().split("\t")
+        doc_idx = fields[doc_idx_idx]
+        best_matches = fields[best_matches_idx_and_score_idx]
+    
         # The document must have at least one candidate
-        if len(fields) > 1:
-            sys.stdout.write(str(fields[0]))
-            urls_doc = documents[int(fields[0])]
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
+        if best_matches != "":
+            urls_doc = documents[int(doc_idx)]
+            matches = best_matches.split("_")
+            candidates = []
+
+            sys.stdout.write(doc_idx + "\t")
+
+            for match in matches:
+                candidate = match
+                candidateid = int(match.split(":")[0])
                 urls_candidate = documents[candidateid]
+
                 if len(urls_doc.union(urls_candidate)) > 0:
-                    bagofurlsoverlap = len(urls_doc.intersection(urls_candidate)) / float(
-                        len(urls_doc.union(urls_candidate)))
+                    bagofurlsoverlap = len(urls_doc.intersection(urls_candidate)) / float(len(urls_doc.union(urls_candidate)))
                 else:
                     bagofurlsoverlap = 0
-                candidate += ":" + str(bagofurlsoverlap)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
 
+                candidate += ":" + str(bagofurlsoverlap)
+
+                candidates.append(candidate)
+
+            sys.stdout.write("_".join(candidate) + "\n")
 
 if __name__ == '__main__':
     main()

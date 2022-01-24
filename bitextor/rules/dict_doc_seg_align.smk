@@ -15,21 +15,22 @@ rule build_idx:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.gz",
     shell:
         """
-        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_buildidx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} -m 15 --text1 {input.text1} --text2 {input.text2} \
-                | gzip -c > {output}
+        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_build_idx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
+            -m 15 --text1 {input.text1} --text2 {input.text2} \
+            | gzip -c > {output}
         """
 
 
 rule idx2ridx_src2trg:
     """
     Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. SRC_LANG docs and their corresponding n-best TRG_LANG canidates to be parallel
+        i.e. SRC_LANG docs and their corresponding n-best TRG_LANG candidates to be parallel
 
         from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
         document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: SRC_LANG-TRG_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id> \\t <doc_id>:<score> [ \\t <doc_id>:<score> ...]
+    :output: gz-compressed ridx file, format is <doc_id> \\t <doc_id>:<score> [ _ <doc_id>:<score> ...]
     """
     input:
         idx=rules.build_idx.output,
@@ -47,13 +48,13 @@ rule idx2ridx_src2trg:
 rule idx2ridx_trg2src:
     """
     Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. TRG_LANG docs and their corresponding n-best SRC_LANG canidates to be parallel
+        i.e. TRG_LANG docs and their corresponding n-best SRC_LANG candidates to be parallel
 
         from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
         document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: TRG_LANG-SRC_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1> [ \\t <doc_id_n>:<f1> ...],
+    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1> [ _ <doc_id_n>:<f1> ...],
         where f1 is the [0.0, 1.0] score corresponding to the metric computed in this step
     """
     input:
