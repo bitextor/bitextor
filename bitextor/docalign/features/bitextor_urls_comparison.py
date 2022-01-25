@@ -61,24 +61,26 @@ def main():
     offset = read_urls(options.url1, documents, offset)
     offset = read_urls(options.url2, documents, offset)
 
+    header = next(reader).strip().split("\t")
+    src_doc_idx_idx = header.index("src_doc_idx")
+    trg_doc_idx_idx = header.index("trg_doc_idx")
+
+    # Print output header
+    print("\t".join(header) + "\turls_distance")
+
     for i in reader:
         fields = i.strip().split("\t")
-        # The document must have at least one candidate
-        if len(fields) > 1:
-            sys.stdout.write(str(fields[0]))
-            url_doc = documents[int(fields[0])]
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
-                url_candidate = documents[candidateid]
-                if len(url_candidate) == 0 or len(url_doc) == 0:
-                    normdist = 0.0
-                else:
-                    dist = Levenshtein.distance(url_doc, url_candidate)
-                    normdist = dist / float(max(len(url_doc), len(url_candidate)))
-                candidate += ":" + str(normdist)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
+        url_doc = documents[src_doc_idx]
+        url_candidate = documents[trg_doc_idx]
+        normdist = "0.0"
+
+        if len(url_candidate) != 0 and len(url_doc) != 0:
+            dist = Levenshtein.distance(url_doc, url_candidate)
+            normdist = dist / max(len(url_doc), len(url_candidate))
+
+        print("\t".join(fields) + "\t" + str(normdist))
 
 
 if __name__ == '__main__':

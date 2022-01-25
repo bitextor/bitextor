@@ -123,21 +123,23 @@ def main():
     offset = extract_structure_representations(options.html1, documents, offset)
     offset = extract_structure_representations(options.html2, documents, offset)
 
+    header = next(reader).strip().split("\t")
+    src_doc_idx_idx = header.index("src_doc_idx")
+    trg_doc_idx_idx = header.index("trg_doc_idx")
+
+    # Print output header
+    print("\t".join(header) + "\tstructure_distance")
+
     for i in reader:
         fields = i.strip().split("\t")
-        # The document must have at least one candidate
-        if len(fields) > 1:
-            len_s = len(documents[int(fields[0])])
-            sys.stdout.write(str(fields[0]))
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
-                len_t = len(documents[candidateid])
-                dist = Levenshtein.distance(documents[int(fields[0])], documents[candidateid])
-                port = 1 - (dist / float(max(len_s, len_t)))
-                candidate += ":" + str(port)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
+        len_s = len(documents[src_doc_idx])
+        len_t = len(documents[trg_doc_idx])
+        dist = Levenshtein.distance(documents[src_doc_idx], documents[trg_doc_idx])
+        port = 1.0 - dist / max(len_s, len_t)
+
+        print("\t".join(fields) + "\t" + str(port))
 
 
 if __name__ == '__main__':

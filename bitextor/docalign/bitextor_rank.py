@@ -19,47 +19,67 @@ def parse_args():
     return oparser.parse_args()
 
 
+def print_scores(model, src_doc_idx, candidate_list, features_list, threshold=0.0):
+    predictions = model.predict_proba(np.array(features_list))
+
+    scores = [
+        (doc, prob1)
+        for doc, (_, prob1) in zip(candidate_list, predictions)
+        if prob1 >= threshold
+    ]
+
+    if len(scores) != 0:
+        scores.sort(key=itemgetter(1), reverse=True)
+
+        for doc, score in scores:
+            print(f"{src_doc_idx}\t{doc}\t{score}")
+
+
 def main():
     options = parse_args()
 
     model = joblib.load(options.model)
 
-    features_desc = ["bag-of-words", "imgoverlap", "structedistance", "urldistance", "mutuallylinked", "urlscomparison", "urlsoverlap"]
+    features_desc = ["bow_overlap_score", "images_overlap_score", "structure_distance", "document_urls_distance",
+                     "src_doc_linked_by_trg_doc", "urls_distance", "urls_overlap_score"]
+
+    header = next(sys.stdin).strip().split("\t")
+    src_doc_idx_idx = header.index("src_doc_idx")
+    trg_doc_idx_idx = header.index("trg_doc_idx")
+
+    # Print output header
+    print("src_doc_idx\ttrg_doc_idx\trank_score")
+
+    last_src_doc_idx = -1
+    candidate_list = []
+    features_list = []
 
     for line in sys.stdin:
         fields = line.strip().split("\t")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
 
+        if last_src_doc_idx < 0:
+            last_src_doc_idx = src_doc_idx
+        if last_src_doc_idx != src_doc_idx:
+            print_scores(model, last_src_doc_idx, candidate_list, features_list, options.threshold)
 
-        if len(fields) < 2:
-            continue
+            candidate_list = []
+            features_list = []
 
-        doc1 = int(fields[0])
+        features = [float(feature) for feature in [fields[header.index(feature_name)] for feature_name in features_desc]]
+
+        candidate_list.append(trg_doc_idx)
+        features_list.append(features)
+
+        last_src_doc_idx = src_doc_idx
+
+    # Print the last elements
+    if len(candidate_list) != 0:
+        print_scores(model, last_src_doc_idx, candidate_list, features_list, options.threshold)
 
         candidate_list = []
         features_list = []
-
-        for candidate in fields[1:]:
-            candidate_fields = candidate.split(":")
-            candidate_list.append(int(candidate_fields[0]))
-            features_list.append([float(feat) for feat in candidate_fields[1:]])
-
-        predictions = model.predict_proba(np.array(features_list))
-
-        scores = [
-            (doc, prob1)
-            for doc, (_, prob1) in zip(candidate_list, predictions)
-            if prob1 >= options.threshold
-        ]
-
-        if len(scores) == 0:
-            continue
-
-        scores.sort(key=itemgetter(1), reverse=True)
-
-        print(f"{doc1}", end="")
-        for doc, score in scores:
-            print(f"\t{doc}:{score}", end="")
-        print()
 
 
 if __name__ == "__main__":

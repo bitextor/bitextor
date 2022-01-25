@@ -89,7 +89,7 @@ rule ridx2imagesetoverlap:
     shell:
         """
         zcat {input.ridx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_imagesetoverlap.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py --html1 {input.html1} --html2 {input.html2} \
             | gzip -c > {output}
         """
 
@@ -113,7 +113,7 @@ rule imagesetoverlap2structuredistance:
     shell:
         """
         zcat {input.imagesetoverlap} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structuredistance.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structure_distance.py --html1 {input.html1} --html2 {input.html2} \
             | gzip -c > {output}
         """
 
@@ -142,7 +142,7 @@ rule structuredistance2urldistance:
     shell:
         """
         zcat {input.structuredistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlsdistance.py \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_distance.py \
                 --html1 {input.html1} --html2 {input.html2} \
                 --url1 {input.url1} --url2 {input.url2} \
             | gzip -c > {output}
@@ -172,7 +172,7 @@ rule urldistance2mutuallylinked:
     shell:
         """
         zcat {input.urldistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutuallylinked.py \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutually_linked.py \
                 --html1 {input.html1} --html2 {input.html2} \
                 --url1 {input.url1} --url2 {input.url2} \
             | gzip -c > {output}
@@ -198,7 +198,7 @@ rule mutuallylinked2urlscomparison:
     shell:
         """
         zcat {input.mutuallylinked} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlscomparison.py --url1 {input.url1} --url2 {input.url2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_comparison.py --url1 {input.url1} --url2 {input.url2} \
             | gzip -c > {output}
         """
 
@@ -223,7 +223,7 @@ rule urlscomparison2urlsoverlap:
     shell:
         """
         zcat {input.urlscomparison} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlsetoverlap.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_url_set_overlap.py --html1 {input.html1} --html2 {input.html2} \
             | gzip -c > {output}
         """
 
