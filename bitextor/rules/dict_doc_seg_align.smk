@@ -4,6 +4,9 @@
 rule build_idx:
     """
     Produce an index of words used in text1 and text2
+
+        the documents are encoded as an index where each of them is calculated sorting all the
+        word occurrences and iterating over them subtracting the current with the following one
     :input.text1: gz-compressed file with a base64-encoded tokenised documents in SRC_LANG per line
     :input.text2: gz-compressed file with a base64-encoded tokenised documents in TRG_LANG per line
     :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id1>[:<increment> ...]
