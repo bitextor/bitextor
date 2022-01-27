@@ -13,7 +13,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
 import argparse
 
 def cut(fd, fields, delimiter='\t', respect_original_sorting=False):
@@ -59,9 +58,6 @@ def parse_args():
     parser.add_argument('--respect-original-sorting', action='store_true',
                         help="Original sorting will be respected instead of the order of the provided fields")
 
-    parser.add_argument('--logging-level', type=int, default=logging.INFO,
-                        help="Logging level")
-
     args = parser.parse_args()
 
     args.fields = args.fields.split(',')
@@ -70,7 +66,5 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-
-    logging.basicConfig(level=args.logging_level)
 
     cut(args.input, args.fields, delimiter=args.delimiter, respect_original_sorting=args.respect_original_sorting)

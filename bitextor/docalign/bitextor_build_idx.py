@@ -57,6 +57,7 @@ options = oparser.parse_args()
 
 word_map = {}
 punctuation = get_unicode_punct()
+doc_idx = 0
 
 for file_path, lang in [(options.text1, options.lang1), (options.text2, options.lang2)]:
     if lang not in word_map:
@@ -64,7 +65,7 @@ for file_path, lang in [(options.text1, options.lang1), (options.text2, options.
 
     with open_xz_or_gzip_or_plain(file_path) as text_reader:
         # Process documents
-        for doc_idx, line in enumerate(text_reader):
+        for line in text_reader:
             # Decode the text (current document)
             tokenized_text = base64.b64decode(line.strip()).decode("utf-8")
 
@@ -80,6 +81,8 @@ for file_path, lang in [(options.text1, options.lang1), (options.text2, options.
                     word_map[lang][word] = []
 
                 word_map[lang][word].append(doc_idx)
+
+        doc_idx += 1
 
 # Print output header
 print("lang\tword\tdoc_idxs")

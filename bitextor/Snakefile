@@ -476,8 +476,8 @@ rule all:
 
 #################################################################
 ### INCLUDE #####################################################
-include: "rules/dict_generation.smk"
-include: "rules/dict_doc_seg_align.smk"
+include: "rules/dic_generation.smk"
+include: "rules/dic_doc_seg_align.smk"
 
 
 #################################################################
@@ -1446,7 +1446,8 @@ rule pre_filter:
                          f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx} " \
                          f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx}"
 
-        shell(f"echo '{sort_flags}' > {{output}}")
+        with open(output, 'w') as f:
+            f.write(f"{sort_flags}\n")
 
 
 rule pre_filter_sort_flags:

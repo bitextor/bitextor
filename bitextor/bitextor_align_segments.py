@@ -96,8 +96,16 @@ def align(file1, file2, file1orig, file2orig, dic, hashprogram):
         thresh = min(max(int(float(thresh) * 100.0), 0), 100)
 
     thresh = str(thresh)
-
     hunalign_output = run_aligner(file1, file2, dic, options.hunalign_bin, thresh)
+
+    # Print output header
+    sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
+
+    if hashprogram:
+        sys.stdout.write("\tsrc_deferred_hash\ttrg_deferred_hash")
+
+    sys.stdout.write('\n')
+
     try:
         prev_hun = next(hunalign_output).strip()
         prev_fields = prev_hun.split(b"\t")
@@ -206,6 +214,14 @@ if options.aligned_docs is None:
 else:
     reader_list = open(options.aligned_docs, "r")
 
+header = next(reader_list).strip().split("\t")
+src_url_idx = header.index("src_url")
+trg_url_idx = header.index("trg_url")
+src_text_idx = header.index("src_text")
+trg_text_idx = header.index("trg_text")
+src_tokenized_idx = header.index("src_tokenized")
+trg_tokenized_idx = header.index("trg_tokenized")
+
 for line in reader_list:
     tmp_file1 = NamedTemporaryFile(delete=False, dir=options.tmpdir)
     tmp_file2 = NamedTemporaryFile(delete=False, dir=options.tmpdir)
@@ -213,12 +229,13 @@ for line in reader_list:
     tmp_file2_origtext = NamedTemporaryFile(delete=False, dir=options.tmpdir)
 
     fields = line.split("\t")
-    filename1 = fields[0]
-    filename2 = fields[1]
-    encodedtext1 = fields[2]
-    encodedtext2 = fields[3]
-    encodedtokenized1 = fields[4]
-    encodedtokenized2 = fields[5]
+    fields[-1] = fields[-1].rstrip('\n')
+    filename1 = fields[src_url_idx]
+    filename2 = fields[trg_url_idx]
+    encodedtext1 = fields[src_text_idx]
+    encodedtext2 = fields[trg_text_idx]
+    encodedtokenized1 = fields[src_tokenized_idx]
+    encodedtokenized2 = fields[trg_tokenized_idx]
 
     tmp_file1_origtext.write(base64.b64decode(encodedtext1))
     tmp_file2_origtext.write(base64.b64decode(encodedtext2))

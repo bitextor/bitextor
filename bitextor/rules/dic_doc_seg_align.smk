@@ -309,6 +309,26 @@ rule hunaligndic:
                         outw.write(f"{columns[0]} @ {columns[1]}\n")
 
 
+rule pre_matches2hunalign:
+    input:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{docalign_str}06_01.matches",
+    output:
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.sort_flags")
+    run:
+        header = None
+
+        with open_xz_or_gzip_or_plain(str(input)) as f:
+            for header in f:
+                break
+
+        header = header.strip().split('\t')
+        src_text_idx = header.index('src_doc_idx') + 1
+
+        sort_flags = f"-nk{src_text_idx},{src_text_idx}"
+
+        with open(output, 'w') as f:
+            f.write(f"{sort_flags}\n")
+
 rule matches2hunalign:
     """
     Use hunalign to align sentences withing the matched documents
@@ -333,19 +353,21 @@ rule matches2hunalign:
         tok1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
         tok2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
         hunaligndic=rules.hunaligndic.output,
+        sort_flags=rules.pre_matches2hunalign.output,
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.gz",
-    params:
-        c1=1 if DOCALIGN == "DIC" else 2,
-        c2=2 if DOCALIGN == "DIC" else 3,
     shell:
         """
-        cut -f {params.c1},{params.c2} {input.indices} \
+        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        header=$(head -1 <($CAT {input.indices}) | tr -d '\n')
+
+        python3 {WORKFLOW}/utils/cut_header.py -f src_doc_idx,trg_doc_idx --input {input.indices} \
             | tail -n +2 \
-            | LC_ALL=C sort -nk1,1 -t $'\t' \
+            | LC_ALL=C sort $sort_flags -t $'\t' \
+            | sed '1 s/^/'"$header"'\\n/' \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
-            | awk -F\'\t\' \'{{print $2,$6,$3,$7,$4,$8}}\' OFS=\'\t\' \
+                --columns1-output-header src_url src_text src_tokenized_idx --columns2-output-header trg_url trg_text trg_tokenized_idx \
             | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
                 --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | gzip -c > {output}
