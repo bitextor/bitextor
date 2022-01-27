@@ -212,7 +212,7 @@ for document_index1 in index_text1:
         found[document_index1].append((str(document_index2[0]), str(document_index2[1])))
 
 # Print output header
-print("src_doc_idx\ttrg_doc_idx\tbow_overlap_score")
+print("src_index\ttrg_index\tbow_overlap_score")
 
 max_candidates = options.max_candidates
 

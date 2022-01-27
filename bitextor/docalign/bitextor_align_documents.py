@@ -106,7 +106,7 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, d
 
     if first_execution and oridx_writer:
         # Print output header
-        oridx_writer.write("src_doc_idx\ttrg_doc_idx\tdocalign_score\n")
+        oridx_writer.write("src_index\ttrg_index\tdocalign_score\n")
 
     if len(new_candidate_list) >= 1:
         candidate_documents.append(len(new_candidate_list))
@@ -180,8 +180,8 @@ if options.ridx2 is None:
     with open_xz_or_gzip_or_plain(options.ridx1) if options.ridx1 else sys.stdin as reader, \
             open_xz_or_gzip_or_plain(options.oridx, 'wt') if options.oridx else dummy_open() as oridx_writer:
         header = next(reader).strip().split('\t')
-        src_doc_idx_idx = header.index("src_doc_idx")
-        trg_doc_idx_idx = header.index("trg_doc_idx")
+        src_doc_idx_idx = header.index("src_index")
+        trg_doc_idx_idx = header.index("trg_index")
         score_idx = header.index("rank_score")
 
         # Print output header
@@ -232,12 +232,12 @@ else:
             reader1.seek(0)
 
             header2 = next(reader2).strip().split('\t')
-            src_doc_idx_idx2 = header2.index("src_doc_idx")
-            trg_doc_idx_idx2 = header2.index("trg_doc_idx")
+            src_doc_idx_idx2 = header2.index("src_index")
+            trg_doc_idx_idx2 = header2.index("trg_index")
             score_idx2 = header2.index("rank_score")
             header1 = next(reader1).strip().split('\t')
-            src_doc_idx_idx1 = header1.index("src_doc_idx")
-            trg_doc_idx_idx1 = header1.index("trg_doc_idx")
+            src_doc_idx_idx1 = header1.index("src_index")
+            trg_doc_idx_idx1 = header1.index("trg_index")
             score_idx1 = header1.index("rank_score")
 
             if converge:
@@ -349,7 +349,7 @@ else:
         current_iteration += 1
 
 # Print output header
-print("src_doc_idx\ttrg_doc_idx")
+print("src_index\ttrg_index")
 
 for k in indices:
     if indices[k] in documents:

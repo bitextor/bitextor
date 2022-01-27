@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
     with open_xz_or_gzip_or_plain(args.indices) if args.indices != '-' else sys.stdin as reader:
         header = next(reader).strip().split("\t")
-        src_doc_idx_idx = header.index("src_doc_idx")
-        trg_doc_idx_idx = header.index("trg_doc_idx")
+        src_doc_idx_idx = header.index("src_index")
+        trg_doc_idx_idx = header.index("trg_index")
 
         for line in reader:
             fields = line.strip().split('\t')

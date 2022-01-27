@@ -44,11 +44,11 @@ def main():
                      "src_doc_linked_by_trg_doc", "urls_distance", "urls_overlap_score"]
 
     header = next(sys.stdin).strip().split("\t")
-    src_doc_idx_idx = header.index("src_doc_idx")
-    trg_doc_idx_idx = header.index("trg_doc_idx")
+    src_doc_idx_idx = header.index("src_index")
+    trg_doc_idx_idx = header.index("trg_index")
 
     # Print output header
-    print("src_doc_idx\ttrg_doc_idx\trank_score")
+    print("src_index\ttrg_index\trank_score")
 
     last_src_doc_idx = -1
     candidate_list = []

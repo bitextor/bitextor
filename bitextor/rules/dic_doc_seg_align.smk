@@ -322,7 +322,7 @@ rule pre_matches2hunalign:
                 break
 
         header = header.strip().split('\t')
-        src_text_idx = header.index('src_doc_idx') + 1
+        src_text_idx = header.index('src_index') + 1
 
         sort_flags = f"-nk{src_text_idx},{src_text_idx}"
 
@@ -361,7 +361,7 @@ rule matches2hunalign:
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
         header=$(head -1 <($CAT {input.indices}) | tr -d '\n')
 
-        python3 {WORKFLOW}/utils/cut_header.py -f src_doc_idx,trg_doc_idx --input {input.indices} \
+        python3 {WORKFLOW}/utils/cut_header.py -f src_index,trg_index --input {input.indices} \
             | tail -n +2 \
             | LC_ALL=C sort $sort_flags -t $'\t' \
             | sed '1 s/^/'"$header"'\\n/' \

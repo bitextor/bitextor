@@ -59,8 +59,8 @@ def main():
     offset = extract_images(options.html2, documents, offset)
 
     header = next(reader).strip().split("\t")
-    src_doc_idx_idx = header.index("src_doc_idx")
-    trg_doc_idx_idx = header.index("trg_doc_idx")
+    src_doc_idx_idx = header.index("src_index")
+    trg_doc_idx_idx = header.index("trg_index")
 
     # Print output header
     print("\t".join(header) + "\timages_overlap_score")
