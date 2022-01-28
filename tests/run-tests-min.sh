@@ -101,27 +101,37 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
 # MT (id >= 10)
 (
+    TRANSIENT_DIR="${WORK}/transient-mt-en-fr"
+
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
-            dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
+            dataDir="${WORK}/data/data-mt-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_10" \
-        &> "${WORK}/reports/10-mt-en-fr.report"
+        &> "${WORK}/reports/10-mt-en-fr.report" && \
+    popd > /dev/null
+
     annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
 ) &
 
 # Dictionary-based (id >= 20)
 (
+    TRANSIENT_DIR="${WORK}/transient-en-fr"
+
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
-            dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" \
+            dataDir="${WORK}/data/data-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_20" \
-        &> "${WORK}/reports/20-en-fr.report"
+        &> "${WORK}/reports/20-en-fr.report" && \
+    popd > /dev/null
+
     annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
 ) &
 
@@ -131,42 +141,54 @@ wait
 
 # MT and dictionary-based (id >= 60)
 (
+    TRANSIENT_DIR="${WORK}/transient-mtdb-en-fr"
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
-            dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" \
+            dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_60" \
-        &> "${WORK}/reports/60-mtdb-en-fr.report"
+        &> "${WORK}/reports/60-mtdb-en-fr.report" && \
+    popd > /dev/null
+
     annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
 ) &
 
 # Other options (id >= 100)
 (
+    TRANSIENT_DIR="${WORK}/transient-mto1-en-fr"
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-fr" \
-            dataDir="${WORK}/data/data-mto1-en-fr" transientDir="${WORK}/transient-mto1-en-fr" \
+            dataDir="${WORK}/data/data-mto1-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=False tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
-            --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_100" \
-        &> "${WORK}/reports/100-mto1-en-fr.report"
+        &> "${WORK}/reports/100-mto1-en-fr.report" && \
+    popd > /dev/null
+
     annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-fr/en-fr.sent.gz)"
 ) &
 
 (
+    TRANSIENT_DIR="${WORK}/transient-mto2-en-fr"
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
-            dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${WORK}/transient-mto2-en-fr" \
+            dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
             bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.0 \
             deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
-            --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_101" \
-        &> "${WORK}/reports/101-mto2-en-fr.report"
+        &> "${WORK}/reports/101-mto2-en-fr.report" && \
+    popd > /dev/null
+
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
 ) &
 

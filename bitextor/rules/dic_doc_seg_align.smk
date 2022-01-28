@@ -364,7 +364,7 @@ rule matches2hunalign:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-        header=$(head -1 <(cat {input.indices}) | tr -d '\n')
+        header="src_index\ttrg_index"
 
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \

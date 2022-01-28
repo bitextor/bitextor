@@ -47,14 +47,18 @@ download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitex
 WARC="${WORK}/data/warc/primeminister.warc.gz"
 
 # MT (id >= 10)
+TRANSIENT_DIR="${WORK}/transient-mt-en-el"
+
+mkdir -p "${TRANSIENT_DIR}" && \
+pushd "${TRANSIENT_DIR}" > /dev/null && \
 ${BITEXTOR} ${FORCE} --notemp \
   --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
-    dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
+    dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
     sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
-    --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_deferred" \
-  &> "${WORK}/reports/10-mt-en-el.report"
+  &> "${WORK}/reports/10-mt-en-el.report" && \
+popd > /dev/null
 
 BITEXTOR_STATUS=$?
 
