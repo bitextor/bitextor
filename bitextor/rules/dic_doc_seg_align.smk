@@ -9,7 +9,7 @@ rule build_idx:
         word occurrences and iterating over them subtracting the current with the following one
     :input.text1: gz-compressed file with a base64-encoded tokenised documents in SRC_LANG per line
     :input.text2: gz-compressed file with a base64-encoded tokenised documents in TRG_LANG per line
-    :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id1>[:<increment> ...]
+    :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id_[src|trg]>
     """
     input:
         text1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
@@ -33,13 +33,13 @@ rule idx2ridx_src2trg:
         document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: SRC_LANG-TRG_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id> \\t <doc_id>:<score> [ _ <doc_id>:<score> ...]
+    :output: gz-compressed ridx file, format is <doc_id_src> \\t <doc_id_trg> \\t <score>
     """
     input:
         idx=rules.build_idx.output,
         dic=expand("{dic}", dic=DIC),
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.ridx.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.src2trg_{SRC_LANG}2{TRG_LANG}.ridx.gz",
     shell:
         """
         zcat {input.idx} \
@@ -57,14 +57,14 @@ rule idx2ridx_trg2src:
         document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: TRG_LANG-SRC_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1> [ _ <doc_id_n>:<f1> ...],
+    :output: gz-compressed ridx file, format is <doc_id_trg> \\t <doc_id_src> \\t <f1>
         where f1 is the [0.0, 1.0] score corresponding to the metric computed in this step
     """
     input:
         idx=rules.build_idx.output,
         dic=expand("{dic}", dic=DIC),
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.ridx.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.trg2src_{TRG_LANG}2{SRC_LANG}.ridx.gz",
     shell:
         """
         zcat {input.idx} \
@@ -79,16 +79,16 @@ rule ridx2imagesetoverlap:
     :input.ridx: gz-compressed {1,2}.ridx, output of idx2ridx step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>:<f2> [ \\t <doc_id_n>:<f1>:<f2> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2>,
         where f1 is the score computed in previous step, and f2 is newly computed images overlap score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        ridx=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.ridx.gz",
+        ridx=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.ridx.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz"),
     shell:
         """
         zcat {input.ridx} \
@@ -103,16 +103,16 @@ rule imagesetoverlap2structuredistance:
     :input.ridx: gz-compressed {1,2}.ridx, output of ridx2imagesetoverlap step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>:<f2>:<f3> [ \\t <doc_id_n>:<f1>:<f2>:<f3> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t <f3>,
         where f1-f2 are the scores computed in previous steps, and f3 is newly computed structuer distance score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        imagesetoverlap=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.gz",
+        imagesetoverlap=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.structuredistance.gz"),
     shell:
         """
         zcat {input.imagesetoverlap} \
@@ -129,18 +129,18 @@ rule structuredistance2urldistance:
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f3>:<f4> [ \\t <doc_id_n>:<f1>...<f3>:<f4> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f4>,
         where f1-f3 are the scores computed in previous steps, and f4 is newly computed url distance score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        structuredistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.gz",
+        structuredistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.structuredistance.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urldistance.gz"),
     priority: 8
     shell:
         """
@@ -160,18 +160,18 @@ rule urldistance2mutuallylinked:
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f4>:<f5> [ \\t <doc_id_n>:<f1>...<f4>:<f5> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f5>,
         where f1-f4 are the scores computed in previous steps, and f5 is newly computed mutually linked score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        urldistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.gz",
+        urldistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urldistance.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.mutuallylinked.gz"),
     shell:
         """
         zcat {input.urldistance} \
@@ -188,16 +188,16 @@ rule mutuallylinked2urlscomparison:
     :input.ridx: gz-compressed {1,2}.ridx, output of urldistance2mutuallylinked step
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f5>:<f6> [ \\t <doc_id_n>:<f1>...<f5>:<f6> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f6>,
         where f1-f5 are the scores computed in previous steps, and f6 is newly urls comparison score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        mutuallylinked=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.gz",
+        mutuallylinked=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.mutuallylinked.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlscomparison.gz"),
     shell:
         """
         zcat {input.mutuallylinked} \
@@ -212,17 +212,17 @@ rule urlscomparison2urlsoverlap:
     :input.ridx: gz-compressed {1,2}.ridx, output of mutuallylinked2urlscomparison step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f6>:<f7> [ \\t <doc_id_n>:<f1>...<f6>:<f7> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f7>,
         where f1-f6 are the scores computed in previous steps, and f7 is newly urls overlapping score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        urlscomparison=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.gz",
+        urlscomparison=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlscomparison.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
         # not marking this as temp because this is the file that contains all the features
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlsoverlap.gz",
     shell:
         """
         zcat {input.urlscomparison} \
@@ -235,13 +235,13 @@ rule urlsoverlap2rank:
     """
     For each candidate pair in the input ridx file predict the probability of the documents being parallel
     :input:  gz-compressed {1,2}.ridx, output of urlscomparison2urlsoverlap step that contains all the features
-    :output: gz-compressed file with ranked pairs, format is <doc_id_1> \\t <doc_id_2>:<score> [ \\t <doc_id_n>:<score> ...],
+    :output: gz-compressed file with ranked pairs, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <score>,
         candidate documents ordered by score
     """
     input:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlsoverlap.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.rank.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.rank.gz",
     shell:
         """
         zcat {input} \
@@ -263,8 +263,8 @@ rule aligndocumentsBitextor:
             trg_index is the number of the aligned document in target language
     """
     input:
-        rank1=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.rank.gz",
-        rank2=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.rank.gz",
+        rank1=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.src2trg_{SRC_LANG}2{TRG_LANG}.rank.gz",
+        rank2=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.trg2src_{TRG_LANG}2{SRC_LANG}.rank.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
