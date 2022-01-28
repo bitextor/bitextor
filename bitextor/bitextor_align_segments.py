@@ -98,14 +98,6 @@ def align(file1, file2, file1orig, file2orig, dic, hashprogram):
     thresh = str(thresh)
     hunalign_output = run_aligner(file1, file2, dic, options.hunalign_bin, thresh)
 
-    # Print output header
-    sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
-
-    if hashprogram:
-        sys.stdout.write("\tsrc_deferred_hash\ttrg_deferred_hash")
-
-    sys.stdout.write('\n')
-
     try:
         prev_hun = next(hunalign_output).strip()
         prev_fields = prev_hun.split(b"\t")
@@ -221,6 +213,14 @@ src_text_idx = header.index("src_text")
 trg_text_idx = header.index("trg_text")
 src_tokenized_idx = header.index("src_tokenized")
 trg_tokenized_idx = header.index("trg_tokenized")
+
+# Print output header
+sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
+
+if options.hashprogram:
+    sys.stdout.write("\tsrc_deferred_hash\ttrg_deferred_hash")
+
+sys.stdout.write('\n')
 
 for line in reader_list:
     tmp_file1 = NamedTemporaryFile(delete=False, dir=options.tmpdir)

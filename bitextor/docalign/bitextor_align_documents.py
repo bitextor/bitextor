@@ -37,9 +37,12 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
     num_candidates = min(len(values), max_candidates)
     max_candidate_iterations = num_candidates
     candidate_iterations_idx = 0
+    doc_id_2 = values[0][0]
 
     while candidate_iterations_idx < max_candidate_iterations:
-        doc_id_2 = values[candidate_iterations_idx][0]
+        if doc_id_2 != values[candidate_iterations_idx][0]:
+            raise Exception("Unexpected different value")
+
         doc_id_1 = values[candidate_iterations_idx][1]
         score = values[candidate_iterations_idx][2]
 
@@ -97,7 +100,7 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, d
                 if doc_id_2 not in new_candidate_list:
                     new_candidate_list[doc_id_2] = score
 
-        elif doc_id_1 in doc_pairs and num_candidates < len(values):
+        elif doc_id_2 in doc_pairs and num_candidates < len(values):
             # Same check to keep iterating and ignoring already paired documents
             max_candidate_iterations += 1
             num_candidates += 1

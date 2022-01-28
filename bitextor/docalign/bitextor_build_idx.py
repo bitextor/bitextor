@@ -82,7 +82,7 @@ for file_path, lang in [(options.text1, options.lang1), (options.text2, options.
 
                 word_map[lang][word].append(doc_idx)
 
-        doc_idx += 1
+            doc_idx += 1
 
 # Print output header
 print("lang\tword\tdoc_idxs")

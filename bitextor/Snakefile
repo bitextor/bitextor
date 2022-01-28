@@ -1446,7 +1446,7 @@ rule pre_filter:
                          f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx} " \
                          f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx}"
 
-        with open(output, 'w') as f:
+        with open(output[0], 'w') as f:
             f.write(f"{sort_flags}\n")
 
 

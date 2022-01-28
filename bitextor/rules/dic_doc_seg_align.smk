@@ -326,7 +326,7 @@ rule pre_matches2hunalign:
 
         sort_flags = f"-nk{src_text_idx},{src_text_idx}"
 
-        with open(output, 'w') as f:
+        with open(output[0], 'w') as f:
             f.write(f"{sort_flags}\n")
 
 rule matches2hunalign:
@@ -359,7 +359,7 @@ rule matches2hunalign:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-        header=$(head -1 <($CAT {input.indices}) | tr -d '\n')
+        header=$(head -1 <(cat {input.indices}) | tr -d '\n')
 
         python3 {WORKFLOW}/utils/cut_header.py -f src_index,trg_index --input {input.indices} \
             | tail -n +2 \
@@ -367,7 +367,7 @@ rule matches2hunalign:
             | sed '1 s/^/'"$header"'\\n/' \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
-                --columns1-output-header src_url src_text src_tokenized_idx --columns2-output-header trg_url trg_text trg_tokenized_idx \
+                --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
             | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
                 --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | gzip -c > {output}
