@@ -314,6 +314,8 @@ rule pre_matches2hunalign:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{docalign_str}06_01.matches",
     output:
         temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.sort_flags")
+    params:
+        c="src_index" if DOCALIGN == "DIC" else "idx_translated"
     run:
         header = None
 
@@ -322,7 +324,7 @@ rule pre_matches2hunalign:
                 break
 
         header = header.strip().split('\t')
-        src_text_idx = header.index('src_index') + 1
+        src_text_idx = header.index(params.c) + 1
 
         sort_flags = f"-nk{src_text_idx},{src_text_idx}"
 
@@ -356,12 +358,15 @@ rule matches2hunalign:
         sort_flags=rules.pre_matches2hunalign.output,
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.gz",
+    params:
+        c1="src_index" if DOCALIGN == "DIC" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "idx_trg",
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
         header=$(head -1 <(cat {input.indices}) | tr -d '\n')
 
-        python3 {WORKFLOW}/utils/cut_header.py -f src_index,trg_index --input {input.indices} \
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
             | LC_ALL=C sort $sort_flags -t $'\t' \
             | sed '1 s/^/'"$header"'\\n/' \

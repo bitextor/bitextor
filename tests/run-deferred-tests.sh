@@ -32,7 +32,8 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="bitextor"
+BITEXTOR="bitextor-full"
+BITEXTOR_EXTRA_ARGS="-j ${THREADS} -c ${THREADS}"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
@@ -51,7 +52,8 @@ ${BITEXTOR} ${FORCE} --notemp \
     dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
-    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True -j ${THREADS} \
+    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
+    --cleanup-shadow --shadow-prefix "${WORK}/.snakemake_test_deferred" \
   &> "${WORK}/reports/10-mt-en-el.report"
 
 BITEXTOR_STATUS=$?
