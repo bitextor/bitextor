@@ -23,16 +23,18 @@ import base64
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
-def extract_images(f, docs, fileid):
+def extract_images(f, docs, offset=1):
     with open_xz_or_gzip_or_plain(f) as fd:
         for html_base64enc in fd:
             # To compute the edit distance at the level of characters, HTML tags must be encoded as characters and
             # not strings:
             links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''',
                                base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore"), re.S)
-            docs[fileid] = set(list(links))
-            fileid += 1
-    return fileid
+            docs[offset] = set(list(links)) # Store imgs just once
+
+            offset += 1
+
+    return offset
 
 
 def main():
@@ -53,10 +55,10 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_images(options.html1, documents, offset)
-    offset = extract_images(options.html2, documents, offset)
+    documents = {"html1": {}, "html2": {}}
+
+    extract_images(options.html1, documents["html1"])
+    extract_images(options.html2, documents["html2"])
 
     header = next(reader).strip().split("\t")
     src_doc_idx_idx = header.index("src_index")
@@ -69,14 +71,14 @@ def main():
         fields = i.strip().split("\t")
         src_doc_idx = int(fields[src_doc_idx_idx])
         trg_doc_idx = int(fields[trg_doc_idx_idx])
-        urls_doc = documents[src_doc_idx]
-        urls_candidate = documents[trg_doc_idx]
-        bagofurlsoverlap = 0
+        urls_doc = documents["html1"][src_doc_idx]
+        urls_candidate = documents["html2"][trg_doc_idx]
+        bag_of_urls_overlap = 0
 
         if len(urls_doc.union(urls_candidate)) > 0:
-            bagofurlsoverlap = len(urls_doc.intersection(urls_candidate)) / float(len(urls_doc.union(urls_candidate)))
+            bag_of_urls_overlap = len(urls_doc.intersection(urls_candidate)) / float(len(urls_doc.union(urls_candidate)))
 
-        print("\t".join(fields) + "\t" + str(bagofurlsoverlap))
+        print("\t".join(fields) + "\t" + str(bag_of_urls_overlap))
 
 
 if __name__ == '__main__':

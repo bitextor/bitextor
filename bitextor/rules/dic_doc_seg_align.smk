@@ -7,9 +7,6 @@
 rule build_idx:
     """
     Produce an index of words used in text1 and text2
-
-        the documents are encoded as an index where each of them is calculated sorting all the
-        word occurrences and iterating over them subtracting the current with the following one
     :input.text1: gz-compressed file with a base64-encoded tokenised documents in SRC_LANG per line
     :input.text2: gz-compressed file with a base64-encoded tokenised documents in TRG_LANG per line
     :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id_[src|trg]>
@@ -94,8 +91,12 @@ rule image_set_overlap:
         temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz"),
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1}")
+
         zcat {input.ridx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py $params \
             | gzip -c > {output}
         """
 
