@@ -57,7 +57,7 @@ options = oparser.parse_args()
 
 word_map = {}
 punctuation = get_unicode_punct()
-doc_idx = 0
+doc_idx = 1
 
 for file_path, lang in [(options.text1, options.lang1), (options.text2, options.lang2)]:
     if lang not in word_map:
@@ -89,17 +89,10 @@ print("lang\tword\tdoc_idxs")
 
 for map_lang, map_vocabulary in list(word_map.items()):
     for map_word, map_doc in list(map_vocabulary.items()):
-        if options.maxo == -1 or len(word_map[map_lang][map_word]) <= options.maxo: # If there are many occurrences, the word might be a stop word
-            sorted_docs = sorted(word_map[map_lang][map_word], reverse=True)
+        doc_idxs = word_map[map_lang][map_word]
 
-            # Encode doc idxs
-            # Example: [500, 300, 299, 5] -> [500 - 300, 300 - 299, 299 - 5, 5] = [200, 1, 294, 5]
-            # TODO why is this encoding being used? Is it really needed?
-            for doc_list_idx in range(0, len(sorted_docs) - 1):
-                sorted_docs[doc_list_idx] = str(sorted_docs[doc_list_idx] - sorted_docs[doc_list_idx + 1])
+        if options.maxo == -1 or len(doc_idxs) <= options.maxo: # If there are many occurrences, the word might be a stop word
+            sorted_docs = map(lambda d: str(d), sorted(doc_idxs))
 
-            sorted_docs[-1] = str(sorted_docs[-1])
-
-            # lang->en word->hello docs->[5, 294, 1, 200]
-            print(map_lang + "\t" + map_word + "\t" + ":".join(reversed(sorted_docs)))
+            print(map_lang + "\t" + map_word + "\t" + ":".join(sorted_docs))
         # else: -> detected as stop word and we want to avoid them

@@ -65,15 +65,12 @@ def fill_index(file, lang1, lang2, index1, index2):
 
             if lang == lang1 or lang == lang2:
                 documents = doc_idxs.split(":")
-                acum = 1
 
                 for j in documents:
-                    acum += int(j) # Decode doc idxs [5, 294, 1, 200] -> [6, 300, 301, 501]
-
                     if lang == lang1:
-                        index1[acum].add(word)
+                        index1[j].add(word)
                     else:
-                        index2[acum].add(word)
+                        index2[j].add(word)
 
     file.close()
 
