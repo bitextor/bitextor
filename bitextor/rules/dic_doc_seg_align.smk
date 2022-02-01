@@ -24,51 +24,27 @@ rule build_idx:
         """
 
 
-rule idx2ridx_src2trg:
+rule idx2ridx:
     """
     Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. SRC_LANG docs and their corresponding n-best TRG_LANG candidates to be parallel
-
-        from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
-        document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
+        i.e. [SRC|TRG]_LANG docs and their corresponding n-best [TRG|SRC]_LANG candidates to be parallel
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: SRC_LANG-TRG_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id_src> \\t <doc_id_trg> \\t <score>
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <score>
     """
     input:
         idx=rules.build_idx.output,
         dic=expand("{dic}", dic=DIC),
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.src2trg_{SRC_LANG}2{TRG_LANG}.ridx.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.ridx.gz",
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--lang1 {SRC_LANG} --lang2 {TRG_LANG}" || \
+                    echo "--lang1 {TRG_LANG} --lang2 {SRC_LANG}")
+
         zcat {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
-            | gzip -c > {output}
-        """
-
-
-rule idx2ridx_trg2src:
-    """
-    Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. TRG_LANG docs and their corresponding n-best SRC_LANG candidates to be parallel
-
-        from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
-        document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
-    :input.idx: gz-compressed index file, output of build_idx rule
-    :input.dic: TRG_LANG-SRC_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id_trg> \\t <doc_id_src> \\t <f1>
-        where f1 is the [0.0, 1.0] score corresponding to the metric computed in this step
-    """
-    input:
-        idx=rules.build_idx.output,
-        dic=expand("{dic}", dic=DIC),
-    output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.trg2src_{TRG_LANG}2{SRC_LANG}.ridx.gz",
-    shell:
-        """
-        zcat {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} --lang1 {TRG_LANG} --lang2 {SRC_LANG} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} $params \
             | gzip -c > {output}
         """
 
@@ -76,7 +52,7 @@ rule idx2ridx_trg2src:
 rule image_set_overlap:
     """
     For each candidate pair in the input ridx file, compute metric corresponding to images overlapping
-    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of idx2ridx_{src2trg,trg2src} step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of idx2ridx step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
     :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2>,
