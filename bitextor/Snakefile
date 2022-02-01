@@ -9,6 +9,7 @@ from bitextor.utils.common import (
     get_all_ppids,
     snake_no_more_race_get_pgid,
     duration_to_seconds,
+    return_dict_value_if_key
 )
 
 valid, config = validate_args(config)
@@ -34,79 +35,47 @@ LANGS = set()
 # the only scenario where config won't have LANG1 and LANG2 is when the workflow is monolingual,
 # and in that case LANG1/LANG2 and SRC_LANG/TRG_LANG won't be used anywhere, so setting them to 'l1' and 'l2' is fine
 # (if LANG1/LANG2 and SRC_LANG/TRG_LANG are unset or both empty string, Snakemake will give an error, even if they are not used)
-LANG1 = "l1"
-LANG2 = "l2"
+LANG1 = return_dict_value_if_key(config, "lang1", "l1", only_check_key=True)
+LANG2 = return_dict_value_if_key(config, "lang2", "l2", only_check_key=True)
 
 if "langs" in config:
     LANGS = set(config["langs"])
 if "lang1" in config:
-    LANG1 = config["lang1"]
     LANGS.add(LANG1)
 if "lang2" in config:
-    LANG2 = config["lang2"]
     LANGS.add(LANG2)
 
-PROFILING = ""
-if "profiling" in config and config["profiling"]:
-    PROFILING = "\\time -v"
+PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 
 #################################################################
 # CRAWLING
-CRAWLTARGET = ""
-TLD_CRAWL = []
-USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
-CRAWLSIZELIMIT = ""
-CRAWLTIMELIMIT = ""
-CRAWLWAIT = ""
-CRAWLFILETYPES = []
-CRAWLJOBS = "2"
-CRAWLTIMEOUT = "10"
-CRAWLDUMPARGS = ""
-CONTINUECRAWL = False
-HERITRIXPATH = ""
-HERITRIXURL = "https://localhost:8443"
-HERITRIXUSER = "admin:admin"
-CRAWLMAXFOLDERTREEDEPTH = "20"
-CRAWLSCOUTSTEPS = "200"
-CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
-CRAWLPREFIXFILTER = ['mailto:']
+CRAWLTARGET = return_dict_value_if_key(config, "crawler", "")
+TLD_CRAWL = return_dict_value_if_key(config, "crawlTLD", [])
+CRAWLSIZELIMIT = return_dict_value_if_key(config, "crawlSizeLimit", "", apply_function=str)
+CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=str)
+CRAWLWAIT = return_dict_value_if_key(config, "crawlWait", "", apply_function=str)
+CRAWLFILETYPES = return_dict_value_if_key(config, "crawlFileTypes", [])
+CRAWLJOBS = return_dict_value_if_key(config, "crawlerNumThreads", 2, only_check_key=True, apply_function=str)
+CRAWLTIMEOUT = return_dict_value_if_key(config, "crawlerConnectionTimeout", 10, only_check_key=True, apply_function=str)
+CRAWLDUMPARGS = return_dict_value_if_key(config, "dumpCurrentCrawl", "")
+CONTINUECRAWL = return_dict_value_if_key(config, "resumePreviousCrawl", False)
+HERITRIXPATH = return_dict_value_if_key(config, "heritrixPath", "")
+HERITRIXURL = return_dict_value_if_key(config, "heritrixUrl", "https://localhost:8443", only_check_key=True)
+HERITRIXUSER = return_dict_value_if_key(config, "heritrixUser", "admin:admin", only_check_key=True)
+CRAWLMAXFOLDERTREEDEPTH = return_dict_value_if_key(config, "crawlMaxFolderTreeDepth", 20, only_check_key=True, apply_function=str)
+CRAWLSCOUTSTEPS = return_dict_value_if_key(config, "crawlScoutSteps", 200, only_check_key=True, apply_function=str)
 
 if "crawler" in config:
-    CRAWLTARGET = config["crawler"]
-
     if CRAWLTARGET == "linguacrawl":
         # TODO should we change this default value, as we have done with wget, as well?
         CRAWLFILETYPES = ["text/html", "application/pdf"]
-if "crawlTLD" in config and config["crawlTLD"]:
-    TLD_CRAWL = config["crawlTLD"]
+
+USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
+CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
+CRAWLPREFIXFILTER = ['mailto:']
+
 if "crawlerUserAgent" in config:
     USERAGENT = config["crawlerUserAgent"]
-if "crawlSizeLimit" in config:
-    CRAWLSIZELIMIT = str(config["crawlSizeLimit"])
-if "crawlTimeLimit" in config:
-    CRAWLTIMELIMIT = str(duration_to_seconds(config["crawlTimeLimit"]))
-if "crawlWait" in config:
-    CRAWLWAIT = str(config["crawlWait"])
-if "crawlFileTypes" in config:
-    CRAWLFILETYPES = config["crawlFileTypes"]
-if "crawlerNumThreads" in config:
-    CRAWLJOBS = str(config["crawlerNumThreads"])
-if "crawlerConnectionTimeout" in config:
-    CRAWLTIMEOUT = str(config["crawlerConnectionTimeout"])
-if "dumpCurrentCrawl" in config:
-    CRAWLDUMPARGS = config["dumpCurrentCrawl"]
-if "resumePreviousCrawl" in config:
-    CONTINUECRAWL = config["resumePreviousCrawl"]
-if "heritrixPath" in config:
-    HERITRIXPATH = config["heritrixPath"]
-if "heritrixUrl" in config:
-    HERITRIXURL = config["heritrixUrl"]
-if "heritrixUser" in config:
-    HERITRIXUSER = config["heritrixUser"]
-if "crawlMaxFolderTreeDepth" in config:
-    CRAWLMAXFOLDERTREEDEPTH = config["crawlMaxFolderTreeDepth"]
-if "crawlScoutSteps" in config:
-    CRAWLSCOUTSTEPS = config["crawlScoutSteps"]
 if "crawlBlackListURL" in config:
     CRAWLBLACKLISTURL = config["crawlBlackListURL"]
 if "crawlPrefixFilter" in config:
@@ -122,7 +91,6 @@ HTML_FILE = ""
 if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
     PPROC_FILES.append("html.gz")
-
 if "preprocessor" in config:
     if config["preprocessor"] == "warc2preprocess":
         PPROC = "w2p"
@@ -138,40 +106,35 @@ BATCHES = config["batches"]
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
 
-CLEANHTML = ""
-FTFY = ""
-LANGID = "cld2"
+CLEANHTML = return_dict_value_if_key(config, "cleanHTML", "", pos_value="--cleanhtml")
+FTFY = return_dict_value_if_key(config, "ftfy", "", pos_value="--ftfy")
+LANGID = return_dict_value_if_key(config, "langID", "cld2", only_check_key=True)
+HTML5LIB = return_dict_value_if_key(config, "html5lib", "", pos_value="--html5lib")
+
 PARSER = ""
 PDFEXTRACT = ""
-HTML5LIB = ""
 
-if "cleanHTML" in config and config["cleanHTML"]:
-    CLEANHTML = "--cleanhtml"
-if "ftfy" in config and config["ftfy"]:
-    FTFY = "--ftfy"
-if "langID" in config:
-    LANGID = config["langID"]
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
     PDFEXTRACT_KL = ""
+
     if "PDFextract_configfile" in config and config["PDFextract_configfile"]:
         PDFEXTRACT_CF = f" --pe_configfile {config['PDFextract_configfile']}"
     if "PDFextract_sentence_join_path" in config and config["PDFextract_sentence_join_path"]:
         PDFEXTRACT_SJ = f" --sentence_join_path {config['PDFextract_sentence_join_path']}"
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
         PDFEXTRACT_KL = f" --kenlm_path {config['PDFextract_kenlm_path']}"
+
     PDFEXTRACT = f"--pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
-if "html5lib" in config and config["html5lib"]:
-    HTML5LIB = "--html5lib"
 
 # sentence splitting and tokenisation
-SENTTOKS = {} if not "sentenceSplitters" in config else config["sentenceSplitters"]
-CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
-WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
-MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
+SENTTOKS = return_dict_value_if_key(config, "sentenceSplitters", {})
+CUSTOMNBPS = return_dict_value_if_key(config, "customNBPs", {})
+WORDTOKS = return_dict_value_if_key(config, "wordTokenizers", {})
+MORPHTOKS = return_dict_value_if_key(config, "morphologicalAnalysers", {})
 
 WORDTOK1 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}"
 WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
@@ -190,20 +153,16 @@ EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 #################################################################
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
+DOC_THRESHOLD = return_dict_value_if_key(config, "documentAlignerThreshold", 0.1, only_check_key=True)
+
 # mt
-if DOCALIGN == "externalMT":
-    MT_COMMAND = config["alignerCmd"]
-else:
-    MT_COMMAND = None
+MT_COMMAND = config["alignerCmd"] if DOCALIGN == "externalMT" else None
 SRC_LANG = LANG1
 TRG_LANG = LANG2
+
 if "translationDirection" in config and config["translationDirection"] == f"{LANG2}2{LANG1}":
     SRC_LANG = LANG2
     TRG_LANG = LANG1
-
-DOC_THRESHOLD = 0.1
-if "documentAlignerThreshold" in config:
-    DOC_THRESHOLD = config["documentAlignerThreshold"]
 
 # dic-based docalign
 # snakemake/include/dic-docsegalign
@@ -216,81 +175,51 @@ try:
 except:
     pass
 
-DIC = None
-
-if "dic" in config:
-    DIC = config["dic"]
+DIC = return_dict_value_if_key(config, "dic", None)
 
 #################################################################
 # SEGALIGN
 SEGALIGN = config["sentenceAligner"]
 # bleualign
-SEGALIGN_THRESHOLD = 0.0
-if "sentenceAlignerThreshold" in config:
-    SEGALIGN_THRESHOLD = config["sentenceAlignerThreshold"]
+SEGALIGN_THRESHOLD = return_dict_value_if_key(config, "sentenceAlignerThreshold", 0.0)
+
 # hunalign
 # snakemake/include/dic-docsegalign
 #################################################################
 # CLEANING
-FIELDS = ["src_url", "trg_url", "src_text", "trg_text", "aligner_score"]
-PARAGRAPH_IDENTIFICATION_FIELDS = []
-DEFERRED = ""
-MMHSUM_PATH = ""
-DEFERRED_FIELDS = []
-BIFIXER = False
-BIFIXER_FIELDS = []
-BIFIXER_DEFERRED_COLS = ""
-AGGRESSIVE_DEDUP = "--aggressive_dedup"
-BICLEANER = False
-BICLEANER_MODEL = ""
-BICLEANER_FIELDS = []
-BICLEANER_THRESHOLD = 0.0
-ELRC = False
-ELRC_FIELDS = []
-TMX = False
-DEDUPED = False
-BIROAMER = False
+DEFERRED = return_dict_value_if_key(config, "deferred", False, pos_value=True)
+DEFERRED_ARGS = "--print-sent-hash" if DEFERRED else ""
+MMHSUM_PATH = "mmhsum" if DEFERRED else ""
+
+BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
+BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
+AGGRESSIVE_DEDUP = return_dict_value_if_key(config, "aggressiveDedup", "", pos_value="--aggressive_dedup")
+
+BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
+BICLEANER_MODEL = config["bicleanerModel"] if BICLEANER else ""
+BICLEANER_THRESHOLD = return_dict_value_if_key(config, "bicleanerThreshold", 0.0)
+BICLEANER_TRAIN_PREFIXES = return_dict_value_if_key(config, "bicleanerCorpusTrainingPrefix", [])
+
+ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
+TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)
+DEDUPED = return_dict_value_if_key(config, "deduped", False, pos_value=True)
+
+BIROAMER = return_dict_value_if_key(config, "biroamer", False, pos_value=True)
 BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
-BIROAMER_OMIT = ""
+BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", "", pos_value="-o")
+
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
-BICLEANER_TRAIN_PREFIXES = []
+TMX_DEDUP_FIELDS = "bifixer_hash" if BIFIXER else "src_text,trg_text"
 
-if PARAGRAPH_IDENTIFICATION:
-    PARAGRAPH_IDENTIFICATION_FIELDS = ["src_paragraph_id", "trg_paragraph_id"]
-if "deferred" in config and config["deferred"]:
-    DEFERRED = "--print-sent-hash"
-    MMHSUM_PATH = f"mmhsum"
-    DEFERRED_FIELDS = ["checksum1", "checksum2"]
-    BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash"
-if "bifixer" in config and config["bifixer"]:
-    BIFIXER = True
-    BIFIXER_FIELDS = ["bifixer_hash", "bifixer_score"]
-if "aggressiveDedup" in config and not config["aggressiveDedup"]:
-    AGGRESSIVE_DEDUP = ""
-if "bicleaner" in config and config["bicleaner"]:
-    BICLEANER = True
-    BICLEANER_MODEL = config["bicleanerModel"]
-    BICLEANER_FIELDS = ["bicleaner"]
-if "bicleanerThreshold" in config:
-    BICLEANER_THRESHOLD = config["bicleanerThreshold"]
-if "bicleanerCorpusTrainingPrefix" in config:
-    BICLEANER_TRAIN_PREFIXES = config["bicleanerCorpusTrainingPrefix"]
-if "elrc" in config and config["elrc"]:
-    ELRC = True
-    ELRC_FIELDS = ["length_ratio", "src_num_tokens", "trg_num_tokens"]
-if "tmx" in config and config["tmx"]:
-    TMX = True
+if TMX:
     OUTPUT_FILES.append("not-deduped.tmx")
-if "deduped" in config and config["deduped"]:
-    DEDUPED = True
+if DEDUPED:
     OUTPUT_FILES.append("deduped.tmx")
     OUTPUT_FILES.append("deduped.txt")
     STATS_FILES.append("deduped")
-if "biroamer" in config and config["biroamer"]:
-    BIROAMER = True
-
+if BIROAMER:
     if "deduped.tmx" in OUTPUT_FILES:
         OUTPUT_FILES.append("deduped.roamed.tmx")
     else:
@@ -302,18 +231,7 @@ if "biroamer" in config and config["biroamer"]:
     if "biroamerImproveAlignmentCorpus" in config:
         BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
 
-    if "biroamerOmitRandomSentences" in config and config["biroamerOmitRandomSentences"]:
-        BIROAMER_OMIT = "-o"
 
-BEFORE_ELRC_FIELDS = FIELDS + PARAGRAPH_IDENTIFICATION_FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
-TMX_DEDUP_FIELDS = "src_text,trg_text"
-
-if "bifixer_hash" in BEFORE_ELRC_FIELDS:
-    i = BEFORE_ELRC_FIELDS.index("bifixer_hash")
-    i = i + 1  # sort counts from 1, not 0
-    TMX_DEDUP_FIELDS = "bifixer_hash"
-
-BEFORE_ELRC_FIELDS = ",".join(BEFORE_ELRC_FIELDS)
 #################################################################
 # DATASOURCES
 HOSTS = set()
@@ -322,23 +240,18 @@ PREVERTICALS = set()
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
-
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
-
 if "preverticals" in config:
     PREVERTICALS = PREVERTICALS.union(config["preverticals"])
-
 if "hostsFile" in config:
     with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
         for line in f:
             HOSTS.add(line.strip())
-
 if "warcsFile" in config:
     with open_xz_or_gzip_or_plain(config["warcsFile"]) as f:
         for line in f:
             WARCS.add(line.strip())
-
 if "preverticalsFile" in config:
     with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
         for line in f:
@@ -367,7 +280,6 @@ TARGET_2_CRAWLED_WARCS = dict([
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
 TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
-#TARGETS = [*TARGET_2_WARCS.keys(), *TARGET_2_PREVERTICALS.keys()]
 
 #################################################################
 ### WORKFLOW EXECUTION ##########################################
@@ -387,7 +299,8 @@ if "parallelWorkers" in config:
         THREADS[k] = config["parallelWorkers"][k]
 
 OUTPUT = []
-UNTIL = config["until"] if "until" in config else ""
+UNTIL = return_dict_value_if_key(config, "until", "")
+
 if "until" not in config:
     OUTPUT = expand(
         "{permanent}/{lang1}-{lang2}.{output_file}.gz",
@@ -1211,7 +1124,7 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
             | sed '1 s/^/src_url\\ttrg_url\\tsrc_text\\ttrg_text\\tsrc_translated\\n/' \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         """
