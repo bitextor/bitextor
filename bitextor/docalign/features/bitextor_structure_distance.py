@@ -57,9 +57,7 @@ class Parser(html.parser.HTMLParser):
             self.output.append("_" + tag + "_")
 
 
-# print("pathname", pathname)
-
-def extract_structure_representations(f, docs, fileid):
+def extract_structure_representations(f, docs, offset=1):
     with open_xz_or_gzip_or_plain(f) as fd:
         dic = {}
         charidx = 32
@@ -90,14 +88,15 @@ def extract_structure_representations(f, docs, fileid):
                                     charidx += 1
 
                             translated_taglist.append(dic[tag])
-                        docs[fileid] = "".join(translated_taglist)
+                        docs[offset] = "".join(translated_taglist)
                     else:
-                        docs[fileid] = " "
+                        docs[offset] = " "
             except:
-                docs[fileid] = " "
+                docs[offset] = " "
             finally:
-                fileid += 1
-    return fileid
+                offset += 1
+
+    return offset
 
 
 def main():
@@ -118,10 +117,9 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_structure_representations(options.html1, documents, offset)
-    offset = extract_structure_representations(options.html2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+    extract_structure_representations(options.html1, documents["l1"])
+    extract_structure_representations(options.html2, documents["l2"])
 
     header = next(reader).strip().split("\t")
     src_doc_idx_idx = header.index("src_index")
@@ -134,9 +132,9 @@ def main():
         fields = i.strip().split("\t")
         src_doc_idx = int(fields[src_doc_idx_idx])
         trg_doc_idx = int(fields[trg_doc_idx_idx])
-        len_s = len(documents[src_doc_idx])
-        len_t = len(documents[trg_doc_idx])
-        dist = Levenshtein.distance(documents[src_doc_idx], documents[trg_doc_idx])
+        len_s = len(documents["l1"][src_doc_idx])
+        len_t = len(documents["l2"][trg_doc_idx])
+        dist = Levenshtein.distance(documents["l1"][src_doc_idx], documents["l2"][trg_doc_idx])
         port = 1.0 - dist / max(len_s, len_t)
 
         print("\t".join(fields) + "\t" + str(port))

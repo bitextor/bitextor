@@ -33,17 +33,17 @@ from operator import itemgetter
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
-def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_ridx_inv, doc_idxs):
+def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_ridx_inv):
     num_candidates = min(len(values), max_candidates)
     max_candidate_iterations = num_candidates
     candidate_iterations_idx = 0
-    doc_id_2 = values[0][0]
+    doc_id_2 = f"d2_{values[0][0]}"
 
     while candidate_iterations_idx < max_candidate_iterations:
-        if doc_id_2 != values[candidate_iterations_idx][0]:
+        if doc_id_2[3:] != str(values[candidate_iterations_idx][0]):
             raise Exception("Unexpected different value")
 
-        doc_id_1 = values[candidate_iterations_idx][1]
+        doc_id_1 = f"d1_{values[candidate_iterations_idx][1]}"
         score = values[candidate_iterations_idx][2]
 
         if doc_id_1 not in doc_pairs and doc_id_2 not in doc_pairs:
@@ -51,7 +51,6 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
             # in case you specified the parameter
             if doc_id_1 not in best_ridx_inv:
                 best_ridx_inv[doc_id_1] = {}
-                doc_idxs.add(doc_id_1)
 
             best_ridx_inv[doc_id_1][doc_id_2] = score
 
@@ -68,25 +67,22 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
 
         candidate_iterations_idx += 1
 
-def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, doc_idxs, new_candidate_list,
-                             candidate_documents, indices, indices_prob, oridx_writer, threshold, non_symmetric,
-                             first_execution):
+def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, new_candidate_list, candidate_documents,
+                             indices, indices_prob, oridx_writer, paired_docs, threshold, non_symmetric):
     num_candidates = min(len(values), max_candidates)
     max_candidate_iterations = num_candidates
     candidate_iterations_idx = 0
-    doc_id_1 = values[0][0]
+    doc_id_1 = f"d1_{values[0][0]}"
 
     while candidate_iterations_idx < max_candidate_iterations:
-        if doc_id_1 != values[candidate_iterations_idx][0]:
+        if doc_id_1[3:] != str(values[candidate_iterations_idx][0]):
             raise Exception("Unexpected different value")
 
-        doc_id_2 = values[candidate_iterations_idx][1]
+        doc_id_2 = f"d2_{values[candidate_iterations_idx][1]}"
         score = values[candidate_iterations_idx][2]
 
         if doc_id_1 not in doc_pairs and doc_id_2 not in doc_pairs:
             # Same check for already paired documents in several iterations
-
-            doc_idxs.add(doc_id_2)
 
             if doc_id_1 in best_ridx_inv and doc_id_2 in best_ridx_inv[doc_id_1]:
                 average = (best_ridx_inv[doc_id_1][doc_id_2] + score) / 2
@@ -107,10 +103,6 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, d
 
         candidate_iterations_idx += 1
 
-    if first_execution and oridx_writer:
-        # Print output header
-        oridx_writer.write("src_index\ttrg_index\tdocalign_score\n")
-
     if len(new_candidate_list) >= 1:
         candidate_documents.append(len(new_candidate_list))
         sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
@@ -120,12 +112,15 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, d
             indices[doc_id_1] = sorted_candidates[0][0]
             indices_prob[doc_id_1] = sorted_candidates[0][1]
 
-        pairedDocsLine.add(doc_id_1)
-        pairedDocsLine.add(sorted_candidates[0][0])
+        paired_docs.add(doc_id_1)
+        paired_docs.add(sorted_candidates[0][0])
 
         if oridx_writer:
             for doc_id, score in sorted_candidates:
-                oridx_writer.write(f"{doc_id_1}\t{doc_id}\t{score}\n")
+                if doc_id_1[:3] != "d1_" or doc_id[:3] != "d2_":
+                    raise Exception(f"Unexpected document idxs: {doc_id_1} and {doc_id}")
+
+                oridx_writer.write(f"{doc_id_1[3:]}\t{doc_id[3:]}\t{score}\n")
 
 oparser = argparse.ArgumentParser(description="usage: %prog [options]\nTool that processes a .ridx (reverse index) "
                                               "file (either from a file or from the standard input) and produces a "
@@ -174,8 +169,8 @@ options = oparser.parse_args()
 
 indices = {}
 indicesProb = {}
-documents = set(range(1, options.ndoc1 + options.ndoc2 + 1))
-documentsFile2 = set()
+documents = set(map(lambda x: f"d1_{x}", range(1, options.ndoc1 + 1))).\
+                union(set(map(lambda x: f"d2_{x}", range(1, options.ndoc2 + 1))))
 file2_start_counter = options.ndoc1
 
 if options.ridx2 is None:
@@ -204,7 +199,7 @@ if options.ridx2 is None:
                 oridx_writer.write(i)
 
             try:
-                indices[src_doc_idx] = trg_doc_idx
+                indices[f"d1_{src_doc_idx}"] = f"d2_{trg_doc_idx}"
             except:
                 pass
 else:
@@ -266,7 +261,7 @@ else:
 
                 if last_doc_id_2 != current_doc_id_2:
                     # Process
-                    process_candidates_ridx2(reader2_values, options.candidate_num, pairedDocs, best_ridx2, best_ridx2_inv, documentsFile2)
+                    process_candidates_ridx2(reader2_values, options.candidate_num, pairedDocs, best_ridx2, best_ridx2_inv)
 
                     reader2_values = []
 
@@ -276,7 +271,7 @@ else:
 
             if len(reader2_values) != 0:
                 # Process
-                process_candidates_ridx2(reader2_values, options.candidate_num, pairedDocs, best_ridx2, best_ridx2_inv, documentsFile2)
+                process_candidates_ridx2(reader2_values, options.candidate_num, pairedDocs, best_ridx2, best_ridx2_inv)
 
                 reader2_values = []
 
@@ -289,7 +284,10 @@ else:
 
             last_doc_id_1 = -1
             reader1_values = []
-            first_execution = current_iteration == 0
+
+            if current_iteration == 0 and oridx_writer:
+                # Print output header
+                oridx_writer.write("src_index\ttrg_index\tdocalign_score\n")
 
             for line_ridx1 in reader1:
                 new_candidate_list = {}
@@ -303,12 +301,11 @@ else:
 
                 if last_doc_id_1 != current_doc_id_1:
                     # Process
-                    process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, documentsFile2, new_candidate_list,
-                                             candidateDocuments, indices, indicesProb, oridx_writer, options.threshold, options.nonsymmetric,
-                                             first_execution)
+                    process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, new_candidate_list,
+                                             candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, options.threshold,
+                                             options.nonsymmetric)
 
                     reader1_values = []
-                    first_execution = False
 
                 reader1_values.append((current_doc_id_1, current_doc_id_2, current_score))
 
@@ -316,9 +313,9 @@ else:
 
             if len(reader1_values) != 0:
                 # Process
-                process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, documentsFile2, new_candidate_list,
-                                         candidateDocuments, indices, indicesProb, oridx_writer, options.threshold, options.nonsymmetric,
-                                         first_execution)
+                process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, new_candidate_list,
+                                         candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, options.threshold,
+                                         options.nonsymmetric)
 
                 reader1_values = []
 
@@ -333,34 +330,39 @@ else:
                         new_candidate_list = best_ridx2[document]
                         candidateDocuments.append(len(new_candidate_list))
                         sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
-                        if int(document) not in indicesProb \
-                                or indicesProb[document] < sorted_candidates[0][1]:
+
+                        if document not in indicesProb or indicesProb[document] < sorted_candidates[0][1]:
                             indices[document] = sorted_candidates[0][0]
                             indicesProb[document] = sorted_candidates[0][1]
+
                         pairedDocs.add(document)
                         pairedDocs.add(sorted_candidates[0][0])
+
                         if oridx_writer:
-                            elements = [f"{doc_id}:{score}" for (doc_id, score) in sorted_candidates]
-                            for (document2, score) in elements:
-                                oridx_writer.write("{0}\t{1}:{2}\n".format(document2, document, score))
+                            for (document2, score) in sorted_candidates:
+                                if document2[:3] != "d1_" or document[:3] != "d2_":
+                                    raise Exception(f"Unexpected document idxs: {document2} and {document}")
+
+                                oridx_writer.write(f"{document2[3:]}\t{document[3:]}\t{score}\n")
 
             # End of the iterations if the result did not change from the previous iteration
             # (exit point of the endless loop)
             if len(candidateDocuments) == 0:
                 break
 
-        current_iteration += 1
+            current_iteration += 1
 
 # Print output header
 print("src_index\ttrg_index")
 
 for k in indices:
     if indices[k] in documents:
-        if indices[k] in documentsFile2:
-            # Write the output keeping the language documents always in the same order
-            # (this is done because of the non-symmetric option that causes swaps in the last algorithm)
-            print(f"{k}\t{indices[k] - file2_start_counter}")
+        if k[:3] == "d1_" and indices[k][:3] == "d2_":
+            print(f"{k[3:]}\t{indices[k][3:]}")
+        elif k[:3] == "d2_" and indices[k][:3] == "d1_":
+            print(f"{indices[k][3:]}\t{k[3:]}")
         else:
-            print(f"{k-file2_start_counter}\t{indices[k]}")
+            raise Exception(f"Unexpected document idxs: {k} and {indices[k]}")
+
         if not options.nonsymmetric:
             documents.remove(k)

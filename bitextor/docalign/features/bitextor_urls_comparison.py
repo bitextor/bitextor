@@ -17,13 +17,13 @@
 
 import sys
 import argparse
-import Levenshtein
 import re
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
+import Levenshtein
 
-def read_urls(f, docs, fileid):
+def read_urls(f, docs, offset=1):
     with open_xz_or_gzip_or_plain(f) as fd:
         for u in fd:
             u = u.strip()
@@ -33,9 +33,10 @@ def read_urls(f, docs, fileid):
                 url = u.replace(url_domain, "")
             else:
                 url = u
-            docs[fileid] = url
-            fileid += 1
-    return fileid
+            docs[offset] = url
+            offset += 1
+
+    return offset
 
 
 def main():
@@ -56,10 +57,9 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = read_urls(options.url1, documents, offset)
-    offset = read_urls(options.url2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+    read_urls(options.url1, documents["l1"])
+    read_urls(options.url2, documents["l2"])
 
     header = next(reader).strip().split("\t")
     src_doc_idx_idx = header.index("src_index")
@@ -72,8 +72,8 @@ def main():
         fields = i.strip().split("\t")
         src_doc_idx = int(fields[src_doc_idx_idx])
         trg_doc_idx = int(fields[trg_doc_idx_idx])
-        url_doc = documents[src_doc_idx]
-        url_candidate = documents[trg_doc_idx]
+        url_doc = documents["l1"][src_doc_idx]
+        url_candidate = documents["l2"][trg_doc_idx]
         normdist = "0.0"
 
         if len(url_candidate) != 0 and len(url_doc) != 0:

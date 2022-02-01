@@ -23,15 +23,16 @@ import base64
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
-def extract_urls(html_file, url_file, docs, fileid):
+def extract_urls(html_file, url_file, docs, offset=1):
     with open_xz_or_gzip_or_plain(html_file) as hd:
         with open_xz_or_gzip_or_plain(url_file) as ud:
             for url in ud:
                 html_content = base64.b64decode(next(hd, None)).decode("utf-8", errors="ignore")
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
-                docs[fileid] = [url, set(list(links))]
-                fileid += 1
-    return fileid
+                docs[offset] = [url, set(list(links))]
+                offset += 1
+
+    return offset
 
 
 def main():
@@ -56,10 +57,9 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_urls(options.html1, options.url1, documents, offset)
-    offset = extract_urls(options.html2, options.url2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+    extract_urls(options.html1, options.url1, documents["l1"])
+    extract_urls(options.html2, options.url2, documents["l2"])
 
     header = next(reader).strip().split("\t")
     src_doc_idx_idx = header.index("src_index")
@@ -72,8 +72,8 @@ def main():
         fields = i.strip().split("\t")
         src_doc_idx = int(fields[src_doc_idx_idx])
         trg_doc_idx = int(fields[trg_doc_idx_idx])
-        url_doc = documents[src_doc_idx][0]
-        urls_candidate = documents[trg_doc_idx][1]
+        url_doc = documents["l1"][src_doc_idx][0]
+        urls_candidate = documents["l2"][trg_doc_idx][1]
         candidate = "0.0"
 
         if url_doc in urls_candidate:

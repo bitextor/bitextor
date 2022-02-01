@@ -28,8 +28,8 @@ def extract_images(f, docs, offset=1):
         for html_base64enc in fd:
             # To compute the edit distance at the level of characters, HTML tags must be encoded as characters and
             # not strings:
-            links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''',
-                               base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore"), re.S)
+            html_content = base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore")
+            links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
             docs[offset] = set(list(links)) # Store imgs just once
 
             offset += 1
@@ -55,10 +55,10 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {"html1": {}, "html2": {}}
+    documents = {"l1": {}, "l2": {}}
 
-    extract_images(options.html1, documents["html1"])
-    extract_images(options.html2, documents["html2"])
+    extract_images(options.html1, documents["l1"])
+    extract_images(options.html2, documents["l2"])
 
     header = next(reader).strip().split("\t")
     src_doc_idx_idx = header.index("src_index")
@@ -71,8 +71,8 @@ def main():
         fields = i.strip().split("\t")
         src_doc_idx = int(fields[src_doc_idx_idx])
         trg_doc_idx = int(fields[trg_doc_idx_idx])
-        urls_doc = documents["html1"][src_doc_idx]
-        urls_candidate = documents["html2"][trg_doc_idx]
+        urls_doc = documents["l1"][src_doc_idx]
+        urls_candidate = documents["l2"][trg_doc_idx]
         bag_of_urls_overlap = 0
 
         if len(urls_doc.union(urls_candidate)) > 0:
