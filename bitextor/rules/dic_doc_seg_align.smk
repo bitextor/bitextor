@@ -345,7 +345,7 @@ rule hunalign:
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
                 --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
-                --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED_ARGS} {MMHSUM_PATH} -d {input.hunaligndic} \
+                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
             | gzip -c > {output}
         """
