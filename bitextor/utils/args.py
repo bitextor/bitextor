@@ -163,10 +163,10 @@ def validate_args(config):
             'default': 'externalMT',
             'dependencies': {}
         },
+        'documentAlignerThreshold': {'type': 'float'},
         # mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
         'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
-        'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
         # dictionary
         'dic': {'type': 'string', 'dependencies': {}},
         'generateDic': {'type': 'boolean', 'default': False, 'dependencies': {}},

@@ -140,6 +140,14 @@ cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local .. # MGIZA is used for
 # WARC2TEXT, PREVERTICAL2TEXT, DOCALIGN, BLEUALIGN, HUNALIGN, BIROAMER, KENLM
 ```
 
+If you are installing Bitextor within a conda environment, you might like to execute the following commands instead of the provided above:
+
+```bash
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" ..
+CPATH="$CONDA_PREFIX/include" LD_LIBRARY_PATH="$CONDA_PREFIX/lib" make -j install
+```
+
 ### Golang packages
 
 Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) for WARC files preprocessing.

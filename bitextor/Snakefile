@@ -1057,7 +1057,8 @@ rule mt_matches:
     shell:
         """
         mkdir -p {params.folder}
-        echo -e "score\tidx_translated\tidx_trg" > {output}
+        # TODO modify docalign in order to print the header?
+        echo -e "mt_doc_aligner_score\tidx_translated\tidx_trg" > {output}
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} >> {output}
         """
 
@@ -1083,7 +1084,7 @@ rule aggregate_segalign:
 rule bleualign:
     """
     Use bleualign to align sentences withing the matched documents
-    :input.indices: output of mt docalign (columns are "score src_index trg_index")
+    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score src_index trg_index")
     :input.plain1: gz-compressed file with a base64-encoded document per line
         sentence-split source documents
     :input.plain1: gz-compressed file with a base64-encoded document per line
@@ -1093,7 +1094,7 @@ rule bleualign:
     :input.translated1: gz-compressed file with a base64-encoded document per line
         source documents translated into target language
     :output: aligned sentences
-        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,score
+        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,bleualign_score
     """
     input:
         indices=rules.mt_matches.output,
@@ -1117,7 +1118,8 @@ rule bleualign:
         if [ {params.workers} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
-        cut -f 2,3 {input.indices} \
+
+        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {} \
             | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
@@ -1132,10 +1134,7 @@ rule bleualign:
 
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = "06_02.segalign"
-if SEGALIGN == "hunalign":
-    split_input_filename = "hunalign.06_02.segalign"
-
+split_input_filename = "hunalign.06_02.segalign" if SEGALIGN == "hunalign" else "06_02.segalign"
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
@@ -1247,11 +1246,6 @@ rule aggregate_bifixer:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-bicleaner_input = rules.bifixer.output
-if not BIFIXER:
-    bicleaner_input = rules.bifixer.input.segalign
-
-
 rule bicleaner_train_model:
     """
     Train bicleaner model
@@ -1268,13 +1262,19 @@ rule bicleaner_train_model:
     shell:
         """
         training=$(mktemp {TMPDIR}/train.XXXXXXXX)
-        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
         DIR=$(dirname {BICLEANER_MODEL})
-        echo $DIR
+
+        echo "Bicleaner model: $DIR"
+        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
+
         lines=$(cat $training | wc -l)
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
-        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+
+        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length \
+            -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} \
+            -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
+
         rm $training
         """
 
@@ -1287,7 +1287,7 @@ rule bicleaner:
     :output: gz-compressed, same columns as input with one new column: score
     """
     input:
-        bifixer=bicleaner_input,
+        bifixer=rules.bifixer.output if BIFIXER else rules.bifixer.input.segalign,
         model=BICLEANER_MODEL,
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
@@ -1300,10 +1300,12 @@ rule bicleaner:
         if [ {params} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
         fi
-        CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
+        CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
+        text_fields=$(python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs | tr -d '\n')
+
         $CAT {input.bifixer} \
-            | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
                 --score_only --header --output_header -q - - {input.model} \
             | paste <($CAT {input.bifixer}) - \
             | pigz -c > {output}
@@ -1326,9 +1328,7 @@ rule aggregate_bicleaner:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-filter_input = rules.bicleaner.output
-if not BICLEANER:
-    filter_input = rules.bicleaner.input.bifixer
+filter_input = rules.bicleaner.output if BICLEANER else rules.bicleaner.input.bifixer
 
 
 rule pre_filter:
@@ -1376,7 +1376,6 @@ rule pre_filter_sort_flags:
         for f in $(echo {input} | tr ' ' '\n'); do
             if [[ "$first" == "0" ]]; then
                 value="$f"
-
                 first="1"
             else
                 current_value="$f"
@@ -1574,8 +1573,10 @@ rule deduped_tmx:
         zcat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --lang1 {LANG1} --lang2 {LANG2} --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
+
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}
+        # TODO change idxs to header field name. Does output.txt have header?
         WC1=$(zcat {output.txt} | cut -f 3 | wc -wl | tr -s ' ')
         WC2=$(zcat {output.txt} | cut -f 4 | wc -w)
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}

@@ -68,7 +68,7 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
         candidate_iterations_idx += 1
 
 def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, new_candidate_list, candidate_documents,
-                             indices, indices_prob, oridx_writer, paired_docs, threshold, non_symmetric):
+                             indices, indices_prob, oridx_writer, paired_docs, paired_docs_score, threshold, non_symmetric):
     num_candidates = min(len(values), max_candidates)
     max_candidate_iterations = num_candidates
     candidate_iterations_idx = 0
@@ -93,7 +93,7 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, n
                     new_candidate_list[doc_id_2] = average
 
             if non_symmetric:
-                if doc_id_2 not in new_candidate_list:
+                if doc_id_2 not in new_candidate_list and score >= threshold:
                     new_candidate_list[doc_id_2] = score
 
         elif doc_id_2 in doc_pairs and num_candidates < len(values):
@@ -114,6 +114,7 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, n
 
         paired_docs.add(doc_id_1)
         paired_docs.add(sorted_candidates[0][0])
+        paired_docs_score[f"{doc_id_1}+{sorted_candidates[0][0]}"] = sorted_candidates[0][1]
 
         if oridx_writer:
             for doc_id, score in sorted_candidates:
@@ -164,6 +165,9 @@ oparser.add_argument("-t", "--threshold", type=float, default=0.0,
                     help="Discard document below a certain threshold. If two .ridx files "
                     "are provided, the threshold is computed by computing the average of "
                     "the individual thresholds")
+
+oparser.add_argument("--print-score", action="store_true",
+                    help="Print score of the paired docs")
 
 options = oparser.parse_args()
 
@@ -222,6 +226,7 @@ else:
         iterations = int(iterations)
         current_iteration = 0
         pairedDocs = set()
+        paired_docs_score = {}
 
         # In each iteration we read the whole file of document relationships and candidates,
         # but we ignore already paired documents
@@ -302,8 +307,8 @@ else:
                 if last_doc_id_1 != current_doc_id_1:
                     # Process
                     process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, new_candidate_list,
-                                             candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, options.threshold,
-                                             options.nonsymmetric)
+                                             candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, paired_docs_score,
+                                             options.threshold, options.nonsymmetric)
 
                     reader1_values = []
 
@@ -314,8 +319,8 @@ else:
             if len(reader1_values) != 0:
                 # Process
                 process_candidates_ridx1(reader1_values, options.candidate_num, pairedDocs, best_ridx2_inv, new_candidate_list,
-                                         candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, options.threshold,
-                                         options.nonsymmetric)
+                                         candidateDocuments, indices, indicesProb, oridx_writer, pairedDocsLine, paired_docs_score,
+                                         options.threshold, options.nonsymmetric)
 
                 reader1_values = []
 
@@ -331,19 +336,21 @@ else:
                         candidateDocuments.append(len(new_candidate_list))
                         sorted_candidates = sorted(iter(new_candidate_list.items()), key=itemgetter(1), reverse=True)
 
-                        if document not in indicesProb or indicesProb[document] < sorted_candidates[0][1]:
-                            indices[document] = sorted_candidates[0][0]
-                            indicesProb[document] = sorted_candidates[0][1]
+                        if sorted_candidates[0][1] >= options.threshold:
+                            if document not in indicesProb or indicesProb[document] < sorted_candidates[0][1]:
+                                indices[document] = sorted_candidates[0][0]
+                                indicesProb[document] = sorted_candidates[0][1]
 
-                        pairedDocs.add(document)
-                        pairedDocs.add(sorted_candidates[0][0])
+                            pairedDocs.add(document)
+                            pairedDocs.add(sorted_candidates[0][0])
+                            paired_docs_score[f"{document}+{sorted_candidates[0][0]}"] = sorted_candidates[0][1] # d2 -> d1
 
-                        if oridx_writer:
-                            for (document2, score) in sorted_candidates:
-                                if document2[:3] != "d1_" or document[:3] != "d2_":
-                                    raise Exception(f"Unexpected document idxs: {document2} and {document}")
+                            if oridx_writer:
+                                for (document2, score) in sorted_candidates:
+                                    if document2[:3] != "d1_" or document[:3] != "d2_":
+                                        raise Exception(f"Unexpected document idxs: {document2} and {document}")
 
-                                oridx_writer.write(f"{document2[3:]}\t{document[3:]}\t{score}\n")
+                                    oridx_writer.write(f"{document2[3:]}\t{document[3:]}\t{score}\n")
 
             # End of the iterations if the result did not change from the previous iteration
             # (exit point of the endless loop)
@@ -353,16 +360,39 @@ else:
             current_iteration += 1
 
 # Print output header
-print("src_index\ttrg_index")
+sys.stdout.write("src_index\ttrg_index")
+
+if options.print_score:
+    sys.stdout.write("\tdic_doc_aligner_score")
+
+sys.stdout.write('\n')
 
 for k in indices:
     if indices[k] in documents:
+        src_idx_doc, trg_idx_doc = None, None
+        score = None
+        score_idx = f"{k}+{indices[k]}"
+
         if k[:3] == "d1_" and indices[k][:3] == "d2_":
-            print(f"{k[3:]}\t{indices[k][3:]}")
+            src_idx_doc = k[3:]
+            trg_idx_doc = indices[k][3:]
         elif k[:3] == "d2_" and indices[k][:3] == "d1_":
-            print(f"{indices[k][3:]}\t{k[3:]}")
+            src_idx_doc = indices[k][3:]
+            trg_idx_doc = k[3:]
         else:
             raise Exception(f"Unexpected document idxs: {k} and {indices[k]}")
+
+        if options.print_score and score_idx not in paired_docs_score:
+            raise Exception(f"Could not find the score for the paired docs {src_idx_doc}-{trg_idx_doc}")
+
+        sys.stdout.write(f"{src_idx_doc}\t{trg_idx_doc}")
+
+        if options.print_score:
+            score = paired_docs_score[score_idx]
+
+            sys.stdout.write(f"\t{score}")
+
+        sys.stdout.write('\n')
 
         if not options.nonsymmetric:
             documents.remove(k)

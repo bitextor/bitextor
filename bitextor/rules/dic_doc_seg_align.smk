@@ -269,7 +269,8 @@ rule align_documents:
         """
         {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \
             --lines1 $(zcat {input.url1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \
-            -n 1 -i converge {input.rank1} {input.rank2} > {output}
+            --threshold {DOC_THRESHOLD} -n 1 -i converge --print-score \
+            {input.rank1} {input.rank2} > {output}
         """
 
 

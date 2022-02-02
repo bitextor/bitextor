@@ -15,7 +15,7 @@
 
 import argparse
 
-def cut(fd, fields, delimiter='\t', respect_original_sorting=False):
+def cut(fd, fields, delimiter='\t', respect_original_sorting=False, only_print_idxs=False):
     header = next(fd).strip().split(delimiter)
     idxs = {}
 
@@ -26,13 +26,20 @@ def cut(fd, fields, delimiter='\t', respect_original_sorting=False):
 
     if respect_original_sorting:
         for h in header:
-            if h in fields:
+            for _ in range(fields.count(h)): # Append n times (useful if repeated fields were provided)
                 sorted_fields.append(h)
     else:
         sorted_fields = fields
 
+    if only_print_idxs:
+        sorted_fields = [str(idxs[field] + 1) for field in sorted_fields]
+        delimiter = ',' # cut format
+
     # Print header
     print(delimiter.join(sorted_fields))
+
+    if only_print_idxs:
+        return
 
     # Print values
     for line in fd:
@@ -57,6 +64,8 @@ def parse_args():
                         help="Delimiter")
     parser.add_argument('--respect-original-sorting', action='store_true',
                         help="Original sorting will be respected instead of the order of the provided fields")
+    parser.add_argument('--only-print-idxs', action='store_true',
+                        help="Only print the necessary idxs of the header. The idxs will be split with commas")
 
     args = parser.parse_args()
 
@@ -67,4 +76,5 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    cut(args.input, args.fields, delimiter=args.delimiter, respect_original_sorting=args.respect_original_sorting)
+    cut(args.input, args.fields, delimiter=args.delimiter, respect_original_sorting=args.respect_original_sorting,
+        only_print_idxs=args.only_print_idxs)
