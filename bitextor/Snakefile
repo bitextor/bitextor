@@ -1119,7 +1119,7 @@ rule bleualign:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
 
-        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {} \
+        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
             | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
@@ -1302,7 +1302,7 @@ rule bicleaner:
         fi
         CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        text_fields=$(python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs | tr -d '\n')
+        text_fields=$($CAT {input.bifixer} | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs | tr -d '\n')
 
         $CAT {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
