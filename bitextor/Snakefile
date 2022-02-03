@@ -1042,9 +1042,9 @@ rule mt_matches:
     :input.l2: gz-compressed file with a base64-encoded document per line
         tokenised target language documents
     :output: indices file
-        plain text file with 3 tab separated columns: score, src_index, trg_index
-            src_index is the number of the aligned document in source language
-            trg_index is the number of the aligned document in target language
+        plain text file with 3 tab separated columns: mt_doc_aligner_score, idx_translated, idx_trg
+            idx_translated is the number of the aligned document in source language
+            idx_trg is the number of the aligned document in target language
     """
     input:
         l1=rules.tokenise_translated.output,
@@ -1056,12 +1056,9 @@ rule mt_matches:
     threads: THREADS["docalign"]
     shell:
         """
-        header="mt_doc_aligner_score\tidx_translated\tidx_trg"
-
         mkdir -p {params.folder}
-        # TODO modify docalign in order to print the header?
-        echo -e "$header" > {output}
-        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} >> {output}
+
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
 
 ### SEGALIGN ####################################################

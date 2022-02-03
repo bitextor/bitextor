@@ -335,6 +335,7 @@ rule hunalign:
     params:
         c1="src_index" if DOCALIGN == "DIC" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "idx_trg",
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         header="src_index\ttrg_index"
@@ -347,6 +348,6 @@ rule hunalign:
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
                 --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
             | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED_ARGS} {MMHSUM_PATH} -d {input.hunaligndic} \
-                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
+                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.paragraphs} \
             | gzip -c > {output}
         """

@@ -32,8 +32,8 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="bitextor-full"
-BITEXTOR_EXTRA_ARGS="-j ${THREADS} -c ${THREADS}"
+BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
+BITEXTOR_EXTRA_ARGS=""
 BICLEANER="${WORK}/bicleaner-model"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
@@ -105,7 +105,7 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
             dataDir="${WORK}/data/data-mt-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
@@ -123,7 +123,7 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
             dataDir="${WORK}/data/data-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
@@ -144,7 +144,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient-mtdb-en-fr"
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
             dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
@@ -162,7 +162,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient-mto1-en-fr"
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-fr" \
             dataDir="${WORK}/data/data-mto1-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
@@ -178,7 +178,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient-mto2-en-fr"
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
             dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \

@@ -32,8 +32,8 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="bitextor-full"
-BITEXTOR_EXTRA_ARGS="-j ${THREADS} -c ${THREADS}"
+BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
+BITEXTOR_EXTRA_ARGS=""
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
@@ -51,7 +51,7 @@ TRANSIENT_DIR="${WORK}/transient-mt-en-el"
 
 mkdir -p "${TRANSIENT_DIR}" && \
 pushd "${TRANSIENT_DIR}" > /dev/null && \
-${BITEXTOR} ${FORCE} --notemp \
+${BITEXTOR} \
   --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
     dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
