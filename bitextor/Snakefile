@@ -1056,9 +1056,11 @@ rule mt_matches:
     threads: THREADS["docalign"]
     shell:
         """
+        header="mt_doc_aligner_score\tidx_translated\tidx_trg"
+
         mkdir -p {params.folder}
         # TODO modify docalign in order to print the header?
-        echo -e "mt_doc_aligner_score\tidx_translated\tidx_trg" > {output}
+        echo -e "$header" > {output}
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} >> {output}
         """
 
@@ -1118,6 +1120,7 @@ rule bleualign:
         if [ {params.workers} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
+        header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
         python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
             | tail -n +2 \
@@ -1125,7 +1128,7 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | sed '1 s/^/src_url\\ttrg_url\\tsrc_text\\ttrg_text\\tsrc_translated\\n/' \
+            | sed '1 s/^/'"$header"'\\n/' \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
@@ -1302,7 +1305,9 @@ rule bicleaner:
         fi
         CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        text_fields=$($CAT {input.bifixer} | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs | tr -d '\n')
+        text_fields=$(head -1 <($CAT {input.bifixer}) \
+            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
+            | tr -d '\n')
 
         $CAT {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" \
