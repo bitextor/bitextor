@@ -177,6 +177,10 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     header = next(reader).strip().split('\t')
     fieldsdict = dict()
 
+    if text_writer:
+        # Print output header
+        text_writer.write('\t'.join(header) + '\n')
+
     for line in reader:
         fields = line.split("\t")
         fields[-1] = fields[-1].strip()
