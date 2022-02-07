@@ -119,29 +119,30 @@ else:
     splitter = ExternalTextProcessor(os.path.expanduser(splitter))
 
 with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader:
-    for doc_idx, doc in enumerate(reader):
+    for doc_idx, doc in enumerate(reader, 1):
         sentences = ""
         content = ""
 
         try:
             content = base64.b64decode(doc.strip()).decode("utf-8")
         except UnicodeDecodeError:
-            logging.warning(f"unicode decoding error while processing doc #{doc_idx}")
+            logging.warning("unicode decoding error while processing doc #%d", doc_idx)
 
         if options.process_paragraphs:
             content = content.rstrip().split("\n")
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
-            for sent_idx, sentence in enumerate(content):
+            for sent_idx, sentence in enumerate(content, 1):
                 paragraph = sentence.split("\t")
 
                 if len(paragraph) == 1:
                     sentences += f"{paragraph[0]}\tp-1s-1\n"
-                    logging.warning(f"could not get the paragraph identification data for the doc #{doc_idx}, sentence #{sent_idx}: using 'p-1s-1'")
+                    logging.warning("could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'",
+                                    doc_idx, sent_idx)
                     continue
 
                 paragraph_text = ' '.join(paragraph[:-1]).strip() # Replace '\t' with ' '
-                paragraph_id = paragraph[-1]
+                paragraph_id = int(paragraph[-1]) + 1 # Start at 1
                 sentences_wo_paragraphs = splitter_func(paragraph_text, splitter, options.prune_type,
                                                         options.prune_threshold, not options.dont_filter).split("\n")
                 sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs]
@@ -149,7 +150,8 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):
                     if sentences_wo_paragraphs[idx] != "":
-                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx}\n"
+                        sentences += f"{sentences_wo_paragraphs[idx]}\t" \
+                                     f"p{paragraph_id}/{len(content)}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
         else:
             content = content.strip().replace("\t", " ")
             content = '\n'.join([c.strip() for c in content.split('\n')])
