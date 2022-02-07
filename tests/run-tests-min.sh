@@ -88,7 +88,7 @@ if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.xz" ]; then
 fi
 ### WARC clipped
 if [ ! -f "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" ]; then
-    ${DIR}/split-warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
+    ${DIR}/utils/split_warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
 fi
 
 wait
@@ -115,6 +115,28 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
     popd > /dev/null
 
     annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
+) &
+(
+    TRANSIENT_DIR="${WORK}/transient-mt-en-fr-p2t"
+
+    warc2text -o "${WORK}/data/prevertical" -s -f "greenpeace.text.gz,greenpeace.url.gz,greenpeace.mime.gz" "${WORK}/data/warc/greenpeace.warc.gz" && \
+    rm "${WORK}/data/prevertical/greenpeace.mime.gz" && \
+    python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/prevertical/greenpeace.text.gz" --url-files "${WORK}/data/prevertical/greenpeace.url.gz" \
+    | pigz -c > "${WORK}/data/prevertical/greenpeace.prevertical.gz" && \
+    rm ${WORK}/data/prevertical/greenpeace.{text,url,mime}.gz
+
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
+    ${BITEXTOR} \
+        --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr-p2t" \
+            dataDir="${WORK}/data/data-mt-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
+            preverticals="['${WORK}/data/prevertical/greenpeace.prevertical.gz']" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
+            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/11-mt-en-fr-p2t.report" && \
+    popd > /dev/null
+
+    annotate_and_echo_info 11 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr-p2t/en-fr.sent.gz)"
 ) &
 
 # Dictionary-based (id >= 20)

@@ -83,7 +83,7 @@ if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.xz" ]; then
 fi
 ### WARC clipped
 if [ ! -f "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" ]; then
-    ${DIR}/split-warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
+    ${DIR}/utils/split_warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
 fi
 
 wait
