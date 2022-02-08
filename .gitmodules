@@ -33,3 +33,9 @@
 [submodule "prevertical2text"]
 	path = prevertical2text
 	url = https://github.com/bitextor/prevertical2text
+[submodule "warc2text"]
+	path = warc2text
+	url = https://github.com/bitextor/warc2text.git
+[submodule "bleualign-cpp"]
+	path = bleualign-cpp
+	url = https://github.com/bitextor/bleualign-cpp.git
