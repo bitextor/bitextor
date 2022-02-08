@@ -14,11 +14,6 @@
 	path = bifixer
 	url = https://github.com/bitextor/bifixer
 	ignore = dirty
-[submodule "bleualign-cpp"]
-	path = bleualign-cpp
-	url = https://github.com/bitextor/bleualign-cpp
-	ignore = dirty
-	branch = paragraph_identification
 [submodule "biroamer"]
 	path = biroamer
 	url = https://github.com/bitextor/biroamer.git
@@ -26,10 +21,6 @@
 [submodule "hunalign"]
 	path = hunalign
 	url = https://github.com/bitextor/hunalign
-	ignore = dirty
-[submodule "warc2text"]
-	path = warc2text
-	url = https://github.com/bitextor/warc2text
 	ignore = dirty
 [submodule "kenlm"]
 	path = kenlm
