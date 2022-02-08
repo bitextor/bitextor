@@ -55,6 +55,7 @@ jobs:
          run: |
             pip3 install .
             pip3 install ./bicleaner
+            pip3 install ./bicleaner-ai
             pip3 install ./kenlm --install-option="--max_order 7"
             pip3 install ./bifixer
             pip3 install ./biroamer
