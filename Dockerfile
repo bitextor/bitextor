@@ -8,7 +8,7 @@ ARG j=1
 ENV RED '\033[0;31m'
 ENV NC '\033[0m'
 RUN echo -e "${RED}Updating Software repository${NC}"
-RUN apt update && apt upgrade -y && apt autoremove -y
+RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
 # Pretend that HOME is /home/docker because having things in / is awkward
 RUN mkdir -p /home/docker
@@ -16,20 +16,20 @@ ENV HOME /home/docker
 
 # Add required dependencies
 RUN echo -e "${RED}Installing core apt dependencies${NC}"
-RUN apt -y install git cmake python3 python3-venv python3-pip libboost-all-dev curl wget pigz unzip time parallel bc
+RUN apt-get -y install git cmake python3 python3-venv python3-pip libboost-all-dev curl wget pigz unzip time parallel bc
 # warc2text
 RUN echo -e "${RED}Installing warc2text apt dependencies${NC}"
-RUN apt -y install libuchardet-dev libzip-dev
+RUN apt-get -y install libuchardet-dev libzip-dev
 # pdf-extract
 RUN echo -e "${RED}Installing pdf-extract apt dependencies${NC}"
-RUN apt -y install openjdk-8-jdk poppler-utils
+RUN apt-get -y install openjdk-8-jdk poppler-utils
 # biroamer
 RUN echo -e "${RED}Installing biroamer apt dependencies${NC}"
-RUN apt -y install libgoogle-perftools-dev libsparsehash-dev
+RUN apt-get -y install libgoogle-perftools-dev libsparsehash-dev
 
 # random utilities:
 # not necessary for bitextor, but users might find this useful:
-RUN apt -y install htop vim
+RUN apt-get -y install htop vim
 
 # symlink python to python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
@@ -42,7 +42,7 @@ RUN ln -sf /usr/bin/pip3 /usr/bin/pip
 # Installing protobuf
 RUN echo -e "${RED}Installing protobuf and CLD3${NC}"
 WORKDIR /home/docker
-RUN apt install -y autoconf automake libtool
+RUN apt-get install -y autoconf automake libtool
 RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.19.1/protobuf-all-3.19.1.tar.gz
 RUN tar -zxvf protobuf-all-3.19.1.tar.gz
 RUN rm protobuf-all-3.19.1.tar.gz

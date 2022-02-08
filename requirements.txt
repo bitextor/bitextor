@@ -4,7 +4,7 @@
 -r requirements/requirements-w2p.txt
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==6.10.0
+snakemake==6.12.3
 warcio==1.7.4
 ftfy==6.0.3
 tldextract>=3.1.0,<=3.1.2
@@ -21,7 +21,7 @@ cchardet==2.1.7
 sentence-splitter==1.4
 loomchild-segment
 mosestokenizer==1.2.1
-lxml>=4.6.3,<=4.6.4
+lxml>=4.6.3,<=4.7.1
 html5lib==1.1
 regex>=2019.08.19,<=2021.11.10
 numpy==1.21.4
