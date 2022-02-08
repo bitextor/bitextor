@@ -342,19 +342,19 @@ sentenceAlignerThreshold: 0.1
 
 ## Parallel data filtering
 
-Parallel data filtering is carried out with [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score.
+Parallel data filtering is carried out with [Bicleaner](https://github.com/bitextor/bicleaner) or [Bicleaner AI](https://github.com/bitextor/bicleaner-ai); these tools use a pre-trained regression model to filter out pairs of segments with a low confidence score.
 
-A number of pre-trained models for Bicleaner are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed.
+A number of pre-trained models for Bicleaner are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed. The pre-trained models for Bicleaner AI are available [here](https://github.com/bitextor/bicleaner-ai-data/releases/latest).
 
 The options required to make it work are:
 
 ```yaml
 bicleaner: True
 bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
-bicleanerThreshold: 0.6
 ```
 
 * `bicleaner`: use Bicleaner to filter out pairs of segments
+* `bicleanerFlavour`: select which version to use. The allowed values are `classic` for Bicleaner and `ai` for Bicleaner AI
 * `bicleanerModel`: path to the YAML configuration file of a pre-trained model
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
