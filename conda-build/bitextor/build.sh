@@ -24,7 +24,7 @@ pip3 install ./kenlm --install-option="--max_order 7"
 pip3 install ./bifixer
 ### Biroamer and model
 pip3 install ./biroamer && \
-python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('ner-english-fast')"
+python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ### CLD3
 pip3 install Cython
 pip3 install pycld3

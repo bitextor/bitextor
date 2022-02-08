@@ -169,7 +169,7 @@ pip3 install ./bicleaner && \
 pip3 install ./kenlm --install-option="--max_order 7"
 pip3 install ./bifixer
 pip3 install ./biroamer && \
-python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('ner-english-fast')"
+python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ```
 
 If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation.
