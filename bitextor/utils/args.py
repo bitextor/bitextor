@@ -181,6 +181,7 @@ def validate_args(config):
         'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
         # cleaning
         'bicleaner': {'type': 'boolean', 'default': False},
+        'bicleanerFlavour': {'type': 'string', 'allowed': ['classic', 'ai'], 'default': 'ai'},
         'bicleanerModel': {'type': 'string', 'dependencies': {'bicleaner': True}},
         'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},

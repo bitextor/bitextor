@@ -242,6 +242,7 @@ BIFIXER_FIELDS = []
 BIFIXER_DEFERRED_COLS = ""
 AGGRESSIVE_DEDUP = "--aggressive_dedup"
 BICLEANER = False
+BICLEANER_FLAVOUR = config["bicleanerFlavour"]
 BICLEANER_MODEL = ""
 BICLEANER_FIELDS = []
 BICLEANER_THRESHOLD = 0.0
@@ -1376,25 +1377,26 @@ rule bicleaner:
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
-        THREADS["bicleaner"],
-    threads: max(2, THREADS["bicleaner"])
+        threads=THREADS["bicleaner"],
+        flavour="bicleaner-classify-lite" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
+    threads: max(2, THREADS["bicleaner"]) # TODO why?
     shell:
         """
         parallel_cmd=""
-        if [ {params} -gt 1 ]; then
-            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
+        if [ {params.threads} -gt 1 ]; then
+            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-ai-classify --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-ai-classify --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
