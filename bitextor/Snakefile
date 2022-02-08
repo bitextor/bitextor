@@ -716,10 +716,13 @@ rule prevertical2text:
         paragraphs='-p' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
+        CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
+
         mkdir -p {params.folder}
-        cat {input} | \
+        $CAT {input} | \
             python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
             {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
+
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"

@@ -119,7 +119,7 @@ def parse_args():
     # Documents
     parser.add_argument('--document-langs', nargs='+', default=['English', 'French'],
                         help="Language of the documents")
-    parser.add_argument('--document-langs-likelihood', nargs='+', default=[0.5, 0.5], type=float,
+    parser.add_argument('--document-langs-likelihood', nargs='*', type=float,
                         help="Likelihood of the languages of the documents. The provided values has to add up to 1")
     # Sentences
     parser.add_argument('--sentence-boilerplate-likelihood', default=0.2, type=float,
@@ -139,6 +139,8 @@ if __name__ == '__main__':
 
     if len(args.text_files) != len(args.url_files):
         raise Exception(f"Different number of arguments provided to --text-files and --url-files")
+    if not args.document_langs_likelihood:
+        args.document_langs_likelihood = [1.0 / len(args.document_langs)] * len(args.document_langs)
     if len(args.document_langs) != len(args.document_langs_likelihood):
         raise Exception(f"Different number of arguments provided to --document-langs and --document-langs-likelihood")
     if not math.isclose(sum(args.document_langs_likelihood), 1.0):

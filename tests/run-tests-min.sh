@@ -44,6 +44,7 @@ mkdir -p "${WORK}/data/warc/clipped"
 mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/parallel-corpus/Europarl"
 mkdir -p "${WORK}/data/parallel-corpus/DGT"
+mkdir -p "${WORK}/data/prevertical"
 rm -f "$FAILS"
 touch "$FAILS"
 
@@ -119,20 +120,25 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 (
     TRANSIENT_DIR="${WORK}/transient-mt-en-fr-p2t"
 
-    warc2text -o "${WORK}/data/prevertical" -s -f "greenpeace.text.gz,greenpeace.url.gz,greenpeace.mime.gz" "${WORK}/data/warc/greenpeace.warc.gz" && \
-    rm "${WORK}/data/prevertical/greenpeace.mime.gz" && \
-    python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/prevertical/greenpeace.text.gz" --url-files "${WORK}/data/prevertical/greenpeace.url.gz" \
-    | pigz -c > "${WORK}/data/prevertical/greenpeace.prevertical.gz" && \
-    rm ${WORK}/data/prevertical/greenpeace.{text,url,mime}.gz
+    mkdir "${WORK}/data/tmp-w2t" && \
+    warc2text -o "${WORK}/data/tmp-w2t" -s -f "text,url" "${WORK}/data/warc/greenpeace.warc.gz" && \
+    python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/en/text.gz" \
+        --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English \
+    | pigz -c > "${WORK}/data/prevertical/greenpeace.en.prevertical.gz" && \
+    python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/fr/text.gz" \
+        --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French \
+    | pigz -c > "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" && \
+    rm -rf "${WORK}/data/tmp-w2t"
 
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr-p2t" \
             dataDir="${WORK}/data/data-mt-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
-            preverticals="['${WORK}/data/prevertical/greenpeace.prevertical.gz']" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
-            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
+            preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
+            shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
+            sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" deferred=True tmx=True \
+            paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/11-mt-en-fr-p2t.report" && \
     popd > /dev/null
 
