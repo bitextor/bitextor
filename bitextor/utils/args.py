@@ -186,6 +186,7 @@ def validate_args(config):
         'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},
         'bicleanerCorpusTrainingPrefix': {'type': 'list'},
+        'bicleanerTargetLangCorpusTraining': {'type': 'list', 'check_with': isfile},
         # elrc metrics
         'elrc': {'type': 'boolean'},
         # tmx
@@ -284,13 +285,17 @@ def validate_args(config):
         schema['bicleanerModel']['required'] = True
 
         if config['bicleanerGenerateModel']:
-            schema['dic']['required'] = True
             schema['bicleanerCorpusTrainingPrefix']['required'] = True
-            schema['initCorpusTrainingPrefix']['required'] = True
 
-            if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
-                schema['generateDic']['required'] = True
-                schema['generateDic']['check_with'] = istrue
+            if config['bicleanerFlavour'] == "classic":
+                schema['dic']['required'] = True
+                schema['initCorpusTrainingPrefix']['required'] = True
+
+                if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
+                    schema['generateDic']['required'] = True
+                    schema['generateDic']['check_with'] = istrue
+            elif config['bicleanerFlavour'] == "ai":
+                schema['bicleanerTargetLangCorpusTraining']['required'] = True
         else:
             schema['bicleanerModel']['check_with'] = isfile
 

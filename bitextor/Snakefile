@@ -257,6 +257,8 @@ BIROAMER_OMIT = ""
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = []
+BICLEANER_AI_MONO_CORPUS = []
+BICLEANER_AI_MONO_CORPUS_FILENAME = []
 
 if PARAGRAPH_IDENTIFICATION:
     PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
@@ -281,6 +283,13 @@ if "bicleanerThreshold" in config:
     BICLEANER_THRESHOLD = config["bicleanerThreshold"]
 if "bicleanerCorpusTrainingPrefix" in config:
     BICLEANER_TRAIN_PREFIXES = config["bicleanerCorpusTrainingPrefix"]
+if "bicleanerTargetLangCorpusTraining" in config:
+    BICLEANER_AI_MONO_CORPUS = config["bicleanerTargetLangCorpusTraining"]
+
+    for corpus in BICLEANER_AI_MONO_CORPUS:
+        filename = corpus.split('/')[-1]
+
+        BICLEANER_AI_MONO_CORPUS_FILENAME.append(filename)
 if "elrc" in config and config["elrc"]:
     ELRC = True
     ELRC_FIELDS = ["lengthratio", "numTokensSL", "numTokensTL"]
@@ -1337,6 +1346,16 @@ if not BIFIXER:
     bicleaner_input = rules.bifixer.input.segalign
 
 
+rule bicleaner_ai_train_freq:
+    input:
+        BICLEANER_AI_MONO_CORPUS
+    output:
+        f"{TMPDIR}/bicleaner-ai/{BICLEANER_AI_MONO_CORPUS_FILENAME}"
+    shell:
+        """
+        """
+
+
 rule bicleaner_train_model:
     """
     Train bicleaner model
@@ -1344,23 +1363,27 @@ rule bicleaner_train_model:
     input:
         corpusl1=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG1),
         corpusl2=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG2),
-        e2f=f"{DIC}.lex.e2f.gz",
-        f2e=f"{DIC}.lex.f2e.gz",
-        vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
-        vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+        # Bicleaner
+        e2f=[f"{DIC}.lex.e2f.gz"] if BICLEANER_FLAVOUR == "classic" else [],
+        f2e=[f"{DIC}.lex.f2e.gz"] if BICLEANER_FLAVOUR == "classic" else [],
+        vcb1=[f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz"] if BICLEANER_FLAVOUR == "classic" else [],
+        vcb2=[f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz"] if BICLEANER_FLAVOUR == "classic" else [],
+        # Bicleaner AI
+        tfreq=expand(f"{TMPDIR}/bicleaner-ai/{{data}}", data=BICLEANER_AI_MONO_CORPUS_FILENAME)
     output:
         model=BICLEANER_MODEL,
+        training=temp(f"{TMPDIR}/training_dataset_bicleaner.{LANG1}-{LANG2}")
     shell:
         """
-        training=$(mktemp {TMPDIR}/train.XXXXXXXX)
-        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
+        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > {output.training}
         DIR=$(dirname {BICLEANER_MODEL})
         echo $DIR
-        lines=$(cat $training | wc -l)
+        lines=$(cat {output.training} | wc -l)
         trainlines=$(echo \"$lines*4/10\" | bc)
         testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
-        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
-        rm $training
+        {PROFILING} bicleaner-train {output.training} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
+            --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
+            -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
         """
 
 
