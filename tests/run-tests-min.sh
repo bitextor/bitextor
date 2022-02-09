@@ -34,10 +34,12 @@ shift $((OPTIND-1))
 
 BITEXTOR="bitextor"
 BICLEANER="${WORK}/bicleaner-model"
+BICLEANER_AI="${WORK}/bicleaner-ai-model"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
 mkdir -p "${BICLEANER}"
+mkdir -p "${BICLEANER_AI}"
 mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/data/warc/clipped"
 mkdir -p "${WORK}/data/parallel-corpus"
@@ -50,7 +52,8 @@ touch "$FAILS"
 # WARCs
 download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
 # Bicleaner models
-download_bicleaner_ai_model "en-fr" "${BICLEANER}" &
+download_bicleaner_model "en-fr" "${BICLEANER}" &
+download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 # Parallel corpus
@@ -105,7 +108,7 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
             dataDir="${WORK}/data/data-mt-en-fr" transientDir="${WORK}/transient-mt-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
-            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/metadata.yaml" deferred=True tmx=True \
+            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" deferred=True tmx=True \
         &> "${WORK}/reports/10-mt-en-fr.report"
     annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
 ) &
@@ -116,8 +119,8 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
             dataDir="${WORK}/data/data-en-fr" transientDir="${WORK}/transient-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
-            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/metadata.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 deferred=False tmx=True \
         &> "${WORK}/reports/20-en-fr.report"
     annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
 ) &
@@ -133,8 +136,8 @@ wait
             dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${WORK}/transient-mtdb-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
-            dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" \
-            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/metadata.yaml" bicleanerThreshold=0.1 deferred=False tmx=True \
+            dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 deferred=False tmx=True \
         &> "${WORK}/reports/60-mtdb-en-fr.report"
     annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
 ) &
@@ -158,10 +161,23 @@ wait
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
-            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/metadata.yaml" bicleanerThreshold=0.0 \
+            bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.0 \
             deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False \
         &> "${WORK}/reports/101-mto2-en-fr.report"
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
+) &
+
+(
+    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+        --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
+            dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${WORK}/transient-mto3-en-fr" \
+            warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
+            sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
+            bicleaner=True bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerThreshold=0.0 \
+            deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False \
+        &> "${WORK}/reports/102-mto3-en-fr.report"
+    annotate_and_echo_info 102 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto3-output-en-fr/en-fr.sent.gz)"
 ) &
 
 wait

@@ -47,11 +47,12 @@ shift $((OPTIND-1))
 
 BITEXTOR="bitextor"
 BICLEANER="${WORK}/bicleaner-model"
+BICLEANER_AI="${WORK}/bicleaner-ai-model"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
 mkdir -p "${BICLEANER}"
-mkdir -p "${BICLEANER}-ai"
+mkdir -p "${BICLEANER_AI}"
 mkdir -p "${BICLEANER}/new"
 mkdir -p "${BICLEANER}/new-new"
 mkdir -p "${WORK}/data/warc"
@@ -68,7 +69,7 @@ download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitex
 download_warc "${WORK}/data/warc/kremlin.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
-download_bicleaner_ai_model "en-fr" "${BICLEANER}-ai" &
+download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 # Parallel corpus
@@ -303,7 +304,7 @@ tests-others()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
-                bicleanerModel="${BICLEANER}-ai/en-fr/metadata.yaml" bicleanerFlavour="ai" bicleanerThreshold=0.0 \
+                bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerFlavour="ai" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True \
             &> "${WORK}/reports/102-mto3-en-fr.report"
         annotate_and_echo_info 102 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto3-output-en-fr/en-fr.sent.gz)"

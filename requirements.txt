@@ -23,7 +23,7 @@ loomchild-segment
 mosestokenizer==1.2.1
 lxml>=4.6.3,<=4.7.1
 html5lib==1.1
-regex>=2019.08.19,<=2021.11.10
+regex>=2019.08.19,<=2022.1.18
 numpy==1.21.4
 setuptools==58.5.3
 validators==0.18.2
