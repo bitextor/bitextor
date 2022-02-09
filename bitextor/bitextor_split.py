@@ -95,7 +95,7 @@ oparser = argparse.ArgumentParser(description="Tool that does sentence splitting
 oparser.add_argument('--text', default="-",
                      help="Plain text file")
 oparser.add_argument('--sentence-splitter', dest='splitter', default=None,
-                     help="Sentence splitter command line. If not provided, Moses split_sentences Python port "
+                     help="Sentence splitter command line. If not provided, loomchild loomchild-segment Python port "
                           "will be used")
 oparser.add_argument('--langcode', default="en",
                      help="Language code for default sentence splitter and tokenizer")
@@ -117,8 +117,11 @@ options = oparser.parse_args()
 
 splitter = options.splitter
 splitter_func = None
-# no sentence splitter command provided, use moses:
-if splitter and splitter == "moses":
+# no sentence splitter command provided, use loomchild:
+if not splitter or splitter == "loomchild":
+    splitter_func = split_loomchild
+    splitter = LoomchildSegmenter(options.langcode)
+elif splitter == "moses":
     splitter_func = split_moses
     try:
         if options.customnbp:
@@ -128,9 +131,6 @@ if splitter and splitter == "moses":
     except SentenceSplitterException as e:
         sys.stderr.write(str(e) + "\n")
         splitter = SentenceSplitter(language='en')
-elif not splitter or splitter == "loomchild":
-    splitter_func = split_loomchild
-    splitter = LoomchildSegmenter(options.langcode)
 
 # TODO check TODO in bitextor_tokenize.py about ExternalTextProcessor and ToolWrapper
 # use custom sentence splitter via ExternalTextProcessor (inefficient):
