@@ -18,42 +18,42 @@ if "initCorpusTrainingPrefix" in config:
 
 rule dic_generation_tokenize_file_l1:
     input:
-        expand("{trainPrefixes}.{src_lang}.xz", trainPrefixes=TRAIN_PREFIXES, src_lang=SRC_LANG),
+        expand("{trainPrefixes}.{src_lang}.gz", trainPrefixes=TRAIN_PREFIXES, src_lang=SRC_LANG),
     output:
-        f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.xz",
+        f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.gz",
     shell:
         """
         mkdir -p {preprocCorpusDir}
-        xzcat -T 0 -f {input} \
+        zcat {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
             | {WORDTOK1} \
-            | xz -T 0 > {output}
+            | pigz -c > {output}
         """
 
 
 rule dic_generation_tokenize_file_l2:
     input:
-        expand("{trainPrefixes}.{trg_lang}.xz", trainPrefixes=TRAIN_PREFIXES, trg_lang=TRG_LANG),
+        expand("{trainPrefixes}.{trg_lang}.gz", trainPrefixes=TRAIN_PREFIXES, trg_lang=TRG_LANG),
     output:
-        f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.xz",
+        f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.gz",
     shell:
         """
         mkdir -p {preprocCorpusDir}
-        xzcat -T 0 -f {input} \
+        zcat {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
             | {WORDTOK2} \
-            | xz -T 0 > {output}
+            | pigz -c > {output}
         """
 
 
 rule dic_generation_lowercase:
     input:
-        "{prefix}.tok.{lang}.xz",
+        "{prefix}.tok.{lang}.gz",
     output:
         "{prefix}.tok.low.{lang}",
     shell:
         """
-        xzcat {input} | {PROFILING} {LOWERCASE} > {output}
+        zcat {input} | {PROFILING} {LOWERCASE} > {output}
         """
 
 
