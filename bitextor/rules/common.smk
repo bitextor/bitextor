@@ -278,4 +278,8 @@ def apply_format(string, replace_format, replace_token="{}", replace_only_if_tru
 Helper function to make optional an input file
 """
 def optional_str_input(str_input, condition, key=None):
-    return [str_input[key] if key is not None else str_input] if condition else []
+    if key is not None:
+        if key in str_input:
+            return [str_input[key]] if condition else []
+        return []
+    return [str_input] if condition else []

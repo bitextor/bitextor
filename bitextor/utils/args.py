@@ -190,10 +190,10 @@ def validate_args(config):
         'bicleanerModel': {'type': 'string', 'dependencies': {'bicleaner': True}},
         'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},
-        'bicleanerParallelCorpusTraining': {'type': 'string', 'check_with': isfile},
+        'bicleanerParallelCorpusTrainingPrefix': {'type': 'list'},
         ### bicleaner AI
-        'bicleanerMonoCorpus': {'type': 'dict', 'check_with': isfile},
-        'bicleanerParallelCorpusDev': {'type': 'string', 'check_with': isfile},
+        'bicleanerMonoCorpusPrefix': {'type': 'list'},
+        'bicleanerParallelCorpusDevPrefix': {'type': 'list'},
         ## elrc metrics
         'elrc': {'type': 'boolean'},
         ## tmx
@@ -292,13 +292,7 @@ def validate_args(config):
         schema['bicleanerModel']['required'] = True
 
         if config['bicleanerGenerateModel']:
-            schema['bicleanerParallelCorpusTraining']['required'] = True
-
-            if provided_in_config['bicleanerMonoCorpus'] and provided_in_config['lang1'] and provided_in_config['lang2']:
-                if config['lang1'] not in config['bicleanerMonoCorpus']:
-                    schema['bicleanerMonoCorpus']['check_with'] = generic_error(f"lang '{config['lang1']}' not provided")
-                elif config['lang2'] not in config['bicleanerMonoCorpus']:
-                    schema['bicleanerMonoCorpus']['check_with'] = generic_error(f"lang '{config['lang2']}' not provided")
+            schema['bicleanerParallelCorpusTrainingPrefix']['required'] = True
 
             if config['bicleanerFlavour'] == "classic":
                 schema['dic']['required'] = True
@@ -308,8 +302,8 @@ def validate_args(config):
                     schema['generateDic']['required'] = True
                     schema['generateDic']['check_with'] = istrue
             elif config['bicleanerFlavour'] == "ai":
-                schema['bicleanerMonoCorpus']['required'] = True
-                schema['bicleanerParallelCorpusDev']['required'] = True
+                schema['bicleanerMonoCorpusPrefix']['required'] = True
+                schema['bicleanerParallelCorpusDevPrefix']['required'] = True
         else:
             schema['bicleanerModel']['check_with'] = isfile
 

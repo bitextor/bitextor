@@ -87,22 +87,26 @@ wait
 
 # Preprocess
 ### Europarl parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.xz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" && \
-        xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en" &
+if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" ]; then
+    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" \
+        | tail -n 100000 \
+        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" &
 fi
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.xz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" && \
-        xz "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr" &
+if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" ]; then
+    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" \
+        | tail -n 100000 \
+        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" &
 fi
 ### DGT parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.xz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" && \
-        xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en" &
+if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" ]; then
+    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" \
+        | tail -n 100000 \
+        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" &
 fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.xz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" | tail -n 100000 > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" && \
-        xz "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr" &
+if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
+    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" \
+        | tail -n 100000 \
+        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" &
 fi
 
 wait
