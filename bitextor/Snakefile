@@ -145,6 +145,7 @@ LANGID = "cld2"
 PARSER = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 
 if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
@@ -358,6 +359,11 @@ if "preverticalsFile" in config:
     with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
         for line in f:
             PREVERTICALS.add(line.strip())
+
+# sort in order to avoid different results across executions
+HOSTS = sorted(list(HOSTS))
+WARCS = sorted(list(WARCS))
+PREVERTICALS = sorted(list(PREVERTICALS))
 
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
