@@ -1,0 +1,33 @@
+# BASIC VARIABLES
+dataDir: ~/host-data/permanent/data
+permanentDir: ~/host-data/permanent
+transientDir: ~/host-data/transient
+tempDir: ~/host-data/transient
+
+# DATA SOURCES - WARC FILES
+warcs: ["~/host-data/greenpeace.canada-verysmall.warc.gz"] 
+
+# PREPROCESSING
+preprocessor: "warc2text"
+shards: 0
+batches: 1024 # each shard split into chunks of 1024 MB
+
+lang1: 'en'
+lang2: 'fr'
+
+# ALIGN
+documentAligner: "DIC"
+dic: ~/host-data/en-fr.dic
+
+sentenceAligner: 'hunalign'
+sentenceAlignerThreshold: 0.1
+
+# CLEANING
+bifixer: True
+bicleaner: True
+bicleanerModel: ~/host-data/en-fr/en-fr.yaml
+bicleanerThreshold: 0.7
+biroamer: False
+
+deduped: True
+tmx: True

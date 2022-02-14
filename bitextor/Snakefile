@@ -137,6 +137,7 @@ BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 
 CLEANHTML = ""
 FTFY = ""
@@ -731,17 +732,18 @@ rule warc2preprocess:
     threads: 2
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
-        pproclangs=",".join(LANGS),
-        boilerplate='--boilerpipe' if BOILERPLATE_CLEANING else '',
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        pproclangs=','.join(LANGS),
+        boilerplate="--boilerpipe" if BOILERPLATE_CLEANING else '',
+        heap_size=f"--boilerpipe-max-heap-size {str(BOILERPIPE_MAX_HEAP_SIZE)}" if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '',
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
         cat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
-                --compression gz --langid {LANGID} {params.boilerplate} {HTML5LIB} {PARSER} {params.paragraphs} \
-                --output-dir {params.folder}
+                --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \
+                {params.paragraphs} --output-dir {params.folder}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
