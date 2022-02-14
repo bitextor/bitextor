@@ -1,7 +1,3 @@
-try:
-    import lzma
-except ImportError:
-    from backports import lzma
 #  This file is part of Bitextor.
 #
 #  Bitextor is free software: you can redistribute it and/or modify
@@ -17,6 +13,11 @@ except ImportError:
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
+
 import gzip
 from contextlib import contextmanager
 
@@ -29,7 +30,10 @@ import shlex
 
 class ExternalTextProcessor(object):
 
-    def __init__(self, cmd):
+    def __init__(self, cmd, raise_exception=True, return_debug_data=False):
+        self.raise_exception = raise_exception
+        self.return_debug_data = return_debug_data
+
         if isinstance(cmd, str):
             # Split the command as bash does
             #  This adds support to quotes (e.g. "echo 'hi, bye'" -> ["echo", "hi, bye"] -> "hi, bye")
@@ -42,8 +46,17 @@ class ExternalTextProcessor(object):
     def process(self, input_text):
         proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         outs, errs = proc.communicate(input=bytes(input_text, encoding='utf-8'))
+        output = outs.decode('utf-8')
+        error_output = errs.decode('utf-8')
+        returncode = proc.returncode
 
-        return outs.decode('utf-8'), errs.decode('utf-8'), proc.returncode
+        if self.raise_exception and returncode != 0:
+            raise Exception(f"External tool exited with the non-zero code {returncode}: {error_output.strip()}")
+
+        if self.return_debug_data:
+            return output, error_output, returncode
+
+        return output
 
 
 @contextmanager

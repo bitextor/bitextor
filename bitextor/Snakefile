@@ -12,8 +12,9 @@ from bitextor.utils.common import (
 )
 
 valid, config = validate_args(config)
-assert valid  # workaround for not being able to exit() in snakemake
 
+if not valid:
+    raise Exception("provided configuration is not valid")
 
 #################################################################
 include: "rules/common.smk"
@@ -57,7 +58,6 @@ USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bi
 CRAWLSIZELIMIT = ""
 CRAWLTIMELIMIT = ""
 CRAWLWAIT = ""
-CRAWLPAGELIMIT = ""
 CRAWLFILETYPES = []
 CRAWLJOBS = "2"
 CRAWLTIMEOUT = "10"
@@ -75,6 +75,7 @@ if "crawler" in config:
     CRAWLTARGET = config["crawler"]
 
     if CRAWLTARGET == "linguacrawl":
+        # TODO should we change this default value, as we have done with wget, as well?
         CRAWLFILETYPES = ["text/html", "application/pdf"]
 if "crawlTLD" in config and config["crawlTLD"]:
     TLD_CRAWL = config["crawlTLD"]
@@ -135,8 +136,7 @@ SHARDS = config["shards"]
 BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
-BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
-PARAGRAPH_IDENTIFICATION = False # TODO configuration
+PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
 
 CLEANHTML = ""
 FTFY = ""
@@ -144,6 +144,7 @@ LANGID = "cld2"
 PARSER = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 
 if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
@@ -233,6 +234,7 @@ if "sentenceAlignerThreshold" in config:
 #################################################################
 # CLEANING
 FIELDS = ["url1", "url2", "seg1", "seg2", "aligner"]
+PARAGRAPH_IDENTIFICATION_FIELDS = []
 DEFERRED = ""
 MMHSUM_PATH = ""
 DEFERRED_FIELDS = []
@@ -256,15 +258,19 @@ OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
 BICLEANER_TRAIN_PREFIXES = []
 
+if PARAGRAPH_IDENTIFICATION:
+    PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
 if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
     DEFERRED_FIELDS = ["checksum1", "checksum2"]
     BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
+
+    if PARAGRAPH_IDENTIFICATION:
+        BIFIXER_DEFERRED_COLS = "--sdeferredcol 8 --tdeferredcol 9"
 if "bifixer" in config and config["bifixer"]:
     BIFIXER = True
     BIFIXER_FIELDS = ["bifixerhash", "bifixerscore"]
-
 if "aggressiveDedup" in config and not config["aggressiveDedup"]:
     AGGRESSIVE_DEDUP = ""
 if "bicleaner" in config and config["bicleaner"]:
@@ -303,7 +309,7 @@ if "biroamer" in config and config["biroamer"]:
     if "biroamerOmitRandomSentences" in config and config["biroamerOmitRandomSentences"]:
         BIROAMER_OMIT = "-o"
 
-BEFORE_ELRC_FIELDS = FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
+BEFORE_ELRC_FIELDS = FIELDS + PARAGRAPH_IDENTIFICATION_FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
 TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
 
 FILTER_SORT_FIELDS = "-k3,4"
@@ -345,6 +351,11 @@ if "preverticalsFile" in config:
     with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
         for line in f:
             PREVERTICALS.add(line.strip())
+
+# sort in order to avoid different results across executions
+HOSTS = sorted(list(HOSTS))
+WARCS = sorted(list(WARCS))
+PREVERTICALS = sorted(list(PREVERTICALS))
 
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
@@ -722,6 +733,7 @@ rule warc2preprocess:
         pproclangs=','.join(LANGS),
         boilerplate="--boilerpipe" if BOILERPLATE_CLEANING else '',
         heap_size=f"--boilerpipe-max-heap-size {str(BOILERPIPE_MAX_HEAP_SIZE)}" if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '',
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
@@ -729,7 +741,7 @@ rule warc2preprocess:
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
                 --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \
-                --output-dir {params.folder}
+                --output-dir {params.folder} {params.paragraphs}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -761,10 +773,11 @@ rule warc2text:
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
-        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {input}
+        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -806,7 +819,7 @@ rule prevertical2text:
             {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}. Creating empty files instead"
+                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{{params.f}}}
                 gzip {params.folder}/$lang/{{{params.f}}}
@@ -895,6 +908,7 @@ rule split:
     params:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
+        paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
     output:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz",
     threads: THREADS["split"]
@@ -908,7 +922,7 @@ rule split:
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
                 --langcode "{wildcards.lang}" \
-                {PRUNE_THRESHOLD} {PRUNE_TYPE} \
+                {PRUNE_THRESHOLD} {PRUNE_TYPE} {params.paragraphs} \
             | pigz -c > {output}
         """
 
@@ -962,23 +976,43 @@ rule custom_translate:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     threads: max(2, THREADS["translate"])
     params:
-        THREADS["translate"],
+        threads=THREADS["translate"],
+        paragraphs_file=temp(f"{TMPDIR}/custom_translate_{{shard}}_{{src_batch}}.paragraphs")
     shell:
         """
+        mkdir -p {TMPDIR}
+        initial_nolines=$(zcat {input.source} | base64 -d | wc -l)
+        output="{output}"
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            zcat {input.source} \
+                | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
+            para_nolines=$(cat "{params.paragraphs_file}" | base64 -d | grep -E "^p[0-9]+s[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+            if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
+                >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
+                exit 1
+            fi
+            output=$(mktemp {TMPDIR}/custom_translate.tmp_output.XXXXX.gz)
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value '' 'cut -f 1'"
+        fi
         parallel_cmd=""
-        if [ {params} -gt 1 ]; then
-            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
+        if [ {params.threads} -gt 1 ]; then
+            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
         zcat {input.source} \
+            | eval "$filter_command" \
             | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \
-            | pigz -c > {output}
-        n_before=$(zcat {input.source} | base64 -d | wc -l)
-        n_after=$(zcat {output} | base64 -d | wc -l)
-        # echo "Check lines count: $n_before -> $n_after for {SRC_LANG}/{wildcards.shard}/{wildcards.src_batch}"
-        if [ $n_before -ne $n_after ]
+            | pigz -c > "$output"
+        n_after=$(zcat "$output" | base64 -d | wc -l)
+        if [ $initial_nolines -ne $n_after ]
         then
-            >&2 echo "Lines count differ: source $n_before, target $n_after"
+            >&2 echo "Lines count differs: source $initial_nolines, target $n_after"
             exit 1
+        fi
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            paste <(zcat "$output") <(cat "{params.paragraphs_file}") \
+                | python3 {WORKFLOW}/utils/join_b64_docs.py \
+                | pigz -c > "{output}"
         fi
         """
 
@@ -1020,7 +1054,12 @@ rule tokenise_translated:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+        fi
         zcat {input} \
+            | eval "$filter_command" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
@@ -1051,7 +1090,12 @@ rule tokenise:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+        fi
         zcat {input} \
+            | eval "$filter_command" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {wildcards.lang} \
@@ -1157,6 +1201,7 @@ rule bleualign:
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
         workers=THREADS["segalign"],
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz",
@@ -1173,7 +1218,8 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} --bleu-threshold {SEGALIGN_THRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
+                --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         """
 
@@ -1234,8 +1280,14 @@ checkpoint split_segalign:
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
                 fi
+                format='$2,$1,$4,$3,$5'
+                if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] && [[ ! -z "{DEFERRED}" ]]; then
+                    format='$2,$1,$4,$3,$5,$7,$6,$9,$8'
+                elif [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] || [[ ! -z "{DEFERRED}" ]]; then
+                    format='$2,$1,$4,$3,$5,$7,$6'
+                fi
                 $CAT {input} \
-                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print $2,$1,$4,$3,$5 }}' OFS='\t' )\
+                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print '$format' }}' OFS='\t' ) \
                     | python3 {WORKFLOW}/bitextor_split_segalign.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}

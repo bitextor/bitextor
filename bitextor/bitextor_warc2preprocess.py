@@ -241,6 +241,8 @@ oparser.add_argument('--langs', dest="langs", default="",
 oparser.add_argument('--langid', dest="langid", default="cld2", help="Model used for language detection: cld2 or cld3")
 oparser.add_argument('--compression', dest='compression', default='gz', choices={'xz', 'gz'},
                      help='Compression type for the output files')
+oparser.add_argument('--paragraph-identification', action='store_true',
+                     help='Add paragraph index in each b64encoded document sentence as tab separated column')
 options = oparser.parse_args()
 
 logging.basicConfig(
@@ -482,6 +484,12 @@ for record in f:
         seen_plain_text.add(plaintext_hash)
         # Guessing MIME of the file (checked on original content)
         logging.info(url + ": Getting mime")
+
+        if options.paragraph_identification:
+            # Add paragraph index
+            plaintext = [f"{element}\t{idx}" for idx, element in enumerate(plaintext.strip().split("\n"))]
+            plaintext = '\n'.join(plaintext)
+
         mime = magic.from_buffer(text, mime=True)
 
         if not options.xzlang:
@@ -498,6 +506,7 @@ for record in f:
 
             b64text = base64.b64encode(html.unescape(plaintext).encode())
             files_dict[lang]["plainTextFile"].write(b64text + b"\n")
+
         # append to language specific file
         else:
             langfile = lzma.open(options.outDir + "/" + lang, mode="a", format=lzma.FORMAT_XZ)

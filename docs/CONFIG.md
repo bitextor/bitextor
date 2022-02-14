@@ -190,6 +190,9 @@ langID: cld2
 ## remove boilerplate, only warc2preprocess in WARC processing and prevertical2text in prevertical files
 boilerplateCleaning: true
 
+## identify paragraphs
+paragraphIdentification: true
+
 # sharding
 shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
@@ -215,6 +218,10 @@ Boilerplate:
 
 * `boilerplateCleaning`: if `preprocessor: warc2preprocess`, enables [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents. If you have provided `preverticals` files, it will discard those entries detected as boilerplate by `prevertical2text` automatically. `warc2text` does not support this option. It is disabled by default
 * `boilerpipeMaxHeapSize`: in order to run `boilerpipe`, we use a library that one of its dependencies is [`jpype`](https://jpype.readthedocs.io/). `jpype` does take the default max. heap size of the JVM and does not take into account the environment variable `JAVA_OPTS` (common envvar to provide options to the JVM). If big documents are being processed, you might like to increase the max. heap size in order to be able to process them with `boilerpipe`
+
+Paragraph identification:
+
+* `paragraphIdentification`: if this option is enabled, the selected `preprocessor` will generate information which will identify the paragraphs. This information will be used to link every sentence to the position which it took in the original paragraph.
 
 Sharding options:
 
