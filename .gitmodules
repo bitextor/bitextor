@@ -18,7 +18,6 @@
 	path = bleualign-cpp
 	url = https://github.com/bitextor/bleualign-cpp
 	ignore = dirty
-	branch = paragraph_identification
 [submodule "biroamer"]
 	path = biroamer
 	url = https://github.com/bitextor/biroamer.git
