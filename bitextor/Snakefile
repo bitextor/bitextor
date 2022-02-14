@@ -749,7 +749,7 @@ rule warc2preprocess:
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
                 --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \
-                {params.paragraphs} --output-dir {params.folder}
+                --output-dir {params.folder} {params.paragraphs}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -1455,13 +1455,15 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
