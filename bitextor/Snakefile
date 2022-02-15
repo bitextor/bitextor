@@ -137,6 +137,7 @@ BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 
 CLEANHTML = ""
 FTFY = ""
@@ -144,6 +145,7 @@ LANGID = "cld2"
 PARSER = ""
 PDFEXTRACT = ""
 HTML5LIB = ""
+BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
 
 if "cleanHTML" in config and config["cleanHTML"]:
     CLEANHTML = "--cleanhtml"
@@ -357,6 +359,11 @@ if "preverticalsFile" in config:
     with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
         for line in f:
             PREVERTICALS.add(line.strip())
+
+# sort in order to avoid different results across executions
+HOSTS = sorted(list(HOSTS))
+WARCS = sorted(list(WARCS))
+PREVERTICALS = sorted(list(PREVERTICALS))
 
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
@@ -731,17 +738,18 @@ rule warc2preprocess:
     threads: 2
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
-        pproclangs=",".join(LANGS),
-        boilerplate='--boilerpipe' if BOILERPLATE_CLEANING else '',
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        pproclangs=','.join(LANGS),
+        boilerplate="--boilerpipe" if BOILERPLATE_CLEANING else '',
+        heap_size=f"--boilerpipe-max-heap-size {str(BOILERPIPE_MAX_HEAP_SIZE)}" if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '',
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
         cat {input} \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
             | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
-                --compression gz --langid {LANGID} {params.boilerplate} {HTML5LIB} {PARSER} {params.paragraphs} \
-                --output-dir {params.folder}
+                --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \
+                --output-dir {params.folder} {params.paragraphs}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -1447,13 +1455,15 @@ rule bicleaner:
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
