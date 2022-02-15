@@ -137,13 +137,12 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 paragraph_id = int(paragraph[-1]) + 1 # Start at 1
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
                                                          options.prune_threshold, not options.dont_filter).split("\n")
-                sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs]
+                sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs if sentence.strip() != '']
 
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):
-                    if sentences_wo_paragraphs[idx] != "":
-                        sentences += f"{sentences_wo_paragraphs[idx]}\t" \
-                                     f"p{paragraph_id}/{len(content)}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
+                    sentences += f"{sentences_wo_paragraphs[idx]}\t" \
+                                 f"p{paragraph_id}/{len(content)}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
         else:
             content = content.strip().replace("\t", " ")
             content = '\n'.join([c.strip() for c in content.split('\n')])
