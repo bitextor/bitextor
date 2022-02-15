@@ -110,11 +110,10 @@ CLEANHTML = return_dict_value_if_key(config, "cleanHTML", "", pos_value="--clean
 FTFY = return_dict_value_if_key(config, "ftfy", "", pos_value="--ftfy")
 LANGID = return_dict_value_if_key(config, "langID", "cld2", only_check_key=True)
 HTML5LIB = return_dict_value_if_key(config, "html5lib", "", pos_value="--html5lib")
-BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
+BOILERPIPE_MAX_HEAP_SIZE = return_dict_value_if_key(config, "boilerpipeMaxHeapSize", -1, only_check_key=True)
 
 PARSER = ""
 PDFEXTRACT = ""
-
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
 if "PDFextract" in config and config["PDFextract"]:
