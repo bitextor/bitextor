@@ -300,8 +300,7 @@ tests-others()
                 deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True \
             &> "${WORK}/reports/101-mto2-en-fr.report"
         annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
-    ) &
-    (
+
         ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
                 dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${WORK}/transient-mto3-en-fr" \

@@ -153,7 +153,7 @@ wait
             dataDir="${WORK}/data/data-mto1-en-fr" transientDir="${WORK}/transient-mto1-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
-            deferred=False tmx=True deduped=True biroamer=False \
+            deferred=False tmx=True deduped=True biroamer=True \
         &> "${WORK}/reports/100-mto1-en-fr.report"
     annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-fr/en-fr.sent.gz)"
 ) &
@@ -169,9 +169,7 @@ wait
             deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False \
         &> "${WORK}/reports/101-mto2-en-fr.report"
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
-) &
 
-(
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
             dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${WORK}/transient-mto3-en-fr" \
