@@ -165,9 +165,10 @@ pip3 install --upgrade pip
 # bitextor:
 pip3 install .
 # additional dependencies:
-pip3 install ./bicleaner && pip3 install ./kenlm --install-option="--max_order 7"
-pip3 install ./bicleaner-ai && pip3 install ./kenlm --install-option="--max_order 7"
 pip3 install ./bifixer
+pip3 install ./bicleaner
+pip3 install ./bicleaner-ai
+pip3 install ./kenlm --install-option="--max_order 7" # Bicleaner and Bicleaner AI dependency
 pip3 install ./biroamer && \
 python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ```
