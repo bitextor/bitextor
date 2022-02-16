@@ -241,6 +241,7 @@ DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
 BIFIXER_DEFERRED_COLS = ""
+BIFIXER_PARAGRAPHS_COLS = ""
 AGGRESSIVE_DEDUP = "--aggressive_dedup"
 BICLEANER = False
 BICLEANER_FLAVOUR = config["bicleanerFlavour"]
@@ -263,6 +264,7 @@ BICLEANER_AI_DEV_CORPUS_PREFIX = []
 
 if PARAGRAPH_IDENTIFICATION:
     PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
+    BIFIXER_PARAGRAPHS_COLS = "--sparagraphid 6 --tparagraphid 7"
 if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
@@ -1326,7 +1328,8 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+            | {PROFILING} ${{parallel_cmd}} bifixer -q {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+                {BIFIXER_PARAGRAPHS_COLS} - - {LANG1} {LANG2} \
             > {output}
         """
 
