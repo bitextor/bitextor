@@ -197,6 +197,7 @@ BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_def
 BIFIXER_PARAGRAPHS_COLS = "--sparagraphid src_paragraph_id --tparagraphid trg_paragraph_id" if PARAGRAPH_IDENTIFICATION else ""
 
 BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
+BICLEANER_FLAVOUR = return_dict_value_if_key(config, "bicleanerFlavour", "classic", only_check_key=True)
 BICLEANER_MODEL = config["bicleanerModel"] if BICLEANER else ""
 BICLEANER_THRESHOLD = return_dict_value_if_key(config, "bicleanerThreshold", 0.0)
 BICLEANER_TRAIN_PREFIXES = return_dict_value_if_key(config, "bicleanerCorpusTrainingPrefix", [])
