@@ -80,7 +80,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -181,7 +181,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -282,7 +282,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -383,7 +383,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -484,7 +484,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -585,7 +585,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
@@ -686,7 +686,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls "${WORK}/reports/*"); do
+            for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
