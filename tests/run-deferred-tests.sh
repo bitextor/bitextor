@@ -72,7 +72,7 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
     > "${WORK}/outputdeferred"
 
   diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null
-  annotate_and_echo_info 10 "$?" "$(wc -l ${WORK}/outputdeferred)"
+  annotate_and_echo_info 10 "$?" "$(cat ${WORK}/outputdeferred | wc -l)"
 else
   annotate_and_echo_info 10 "${BITEXTOR_STATUS}" "0"
 fi

@@ -42,3 +42,7 @@
 	path = bleualign-cpp
 	url = https://github.com/bitextor/bleualign-cpp.git
 	ignore = dirty
+[submodule "bicleaner-ai"]
+	path = bicleaner-ai
+	url = https://github.com/bitextor/bicleaner-ai.git
+	ignore = dirty
