@@ -98,16 +98,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -196,16 +196,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -305,16 +305,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -414,16 +414,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -523,16 +523,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -621,16 +621,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
@@ -719,16 +719,16 @@ jobs:
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(cat "$sent_file") \
-                           && cat "$sent_file" \
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") \
+                           && zcat "$sent_file" \
                               | head -n -5 \
                               | tail -n +7 \
                               | shuf --random-source=<(yes 117 | head -100) \
                               | tail -5 \
-                           && cat "$sent_file" | tail -5)
+                           && zcat "$sent_file" | tail -5)
                   else
-                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$sent_file"
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
                   echo "(warning) No sent file found for test $notest"
