@@ -83,8 +83,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -94,13 +95,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -184,8 +179,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -195,13 +191,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -285,8 +275,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -296,13 +287,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -386,8 +371,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -397,13 +383,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -487,8 +467,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -498,13 +479,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -588,8 +563,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -599,13 +575,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
@@ -689,8 +659,9 @@ jobs:
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
 
-               str="# Test $notest #"
+               str="# Test $notest (md5: $md5) #"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
                echo "$str"
                eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
@@ -700,13 +671,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") \
-                           && zcat "$sent_file" \
-                              | head -n -5 \
-                              | tail -n +7 \
-                              | shuf --random-source=<(yes 117 | head -100) \
-                              | tail -5 \
-                           && zcat "$sent_file" | tail -5)
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
