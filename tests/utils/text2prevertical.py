@@ -40,7 +40,10 @@ def roulette_wheel_selection(values, likelihoods):
 
     return sorted_values[-1][0]
 
-def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate_likelihood, min_lang_diff_likelihood):
+def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate_likelihood, min_lang_diff_likelihood,
+                     seed=-1):
+    random.seed(seed if seed >= 0 else None)
+
     for text_file, url_file in zip(text_files, url_files):
         with open_xz_or_gzip_or_plain(text_file) as text_fd, open_xz_or_gzip_or_plain(url_file) as url_fd:
             for doc_idx, (doc, url) in enumerate(zip(text_fd, url_fd), 1):
@@ -66,10 +69,10 @@ def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate
 
                 # Greedy document header
                 prevertical_content += f"<doc id=\"{doc_idx}\" title=\"{title}\"" \
-                                    f" length=\"{length}\" crawl_date=\"{current_date}\"" \
-                                    f" lang=\"{lang}\" lang_diff=\"{lang_diff}\"" \
-                                    f" ip=\"{ip}\" url=\"{url}\" file_type=\"html\"" \
-                                    f" enc_meta=\"utf-8\" enc_chared=\"utf-8\">\n"
+                                       f" length=\"{length}\" crawl_date=\"{current_date}\"" \
+                                       f" lang=\"{lang}\" lang_diff=\"{lang_diff}\"" \
+                                       f" ip=\"{ip}\" url=\"{url}\" file_type=\"html\"" \
+                                       f" enc_meta=\"utf-8\" enc_chared=\"utf-8\">\n"
 
                 paragraphs = content.strip().replace('\t', ' ').split('\n')
                 printed_paragraphs = 0
@@ -81,10 +84,10 @@ def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate
                         continue
 
                     # Escape HTML entities which might be harmful for XML
-                    #  don't escape '&' since we might double escape previous escaped HTML entities
-                    paragraph = paragraph.replace('<', '&lt;')\
-                                         .replace('>', '&gt;')\
-                                         .replace('\'', '&apos;')\
+                    #  don't escape '&' since we might escape twice previous escaped HTML entities
+                    paragraph = paragraph.replace('<', '&lt;') \
+                                         .replace('>', '&gt;') \
+                                         .replace('\'', '&apos;') \
                                          .replace('"', '&quot;')
 
                     lang_diff = f"{min(random.uniform(min_lang_diff_likelihood, 1.00005), 1.0):.2f}"
@@ -125,6 +128,8 @@ def parse_args():
     parser.add_argument('--sentence-boilerplate-likelihood', default=0.2, type=float,
                         help="Likelihood of a sentence to be set as boilerplate")
 
+    parser.add_argument('--seed', type=int, default=-1,
+                        help="Seed for reproducibility. Has to be >= 0")
     parser.add_argument('-v', '--verbose', action="store_true",
                         help="Verbose logging")
 
@@ -150,4 +155,4 @@ if __name__ == '__main__':
     args.min_lang_diff_likelihood = min(args.min_lang_diff_likelihood, 1.0)
 
     text2prevertical(args.text_files, args.url_files, args.document_langs, args.document_langs_likelihood,
-                     args.sentence_boilerplate_likelihood, args.min_lang_diff_likelihood)
+                     args.sentence_boilerplate_likelihood, args.min_lang_diff_likelihood, seed=args.seed)

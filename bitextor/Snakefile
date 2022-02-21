@@ -1283,7 +1283,7 @@ rule bicleaner_train_model:
     params:
         training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
         # Bicleaner
-        classifier=f"{BICLEANER_MODEL.split('/')[-1]}/{LANG1}-{LANG2}.classifier",
+        classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
         # Bicleaner AI
         tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
         dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),

@@ -123,9 +123,6 @@ if __name__ == "__main__":
 
             sys.stdout.write('\n')
 
-            # so far document aligner doesn't produce repeated indices, so deleting entries is safe
-            del lang2_read_docs[doc2]
-
     for r in readers1:
         r.close()
 
