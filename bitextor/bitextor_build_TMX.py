@@ -21,7 +21,7 @@
 # about the expected fields.
 
 # Default input format:
-# src_url    trg_url    src_text    trg_text    [hunalign_score | bleualign_score    bicleaner_score    length_ratio    src_num_tokens    trg_num_tokens]
+# src_url    trg_url    src_text    trg_text    [hunalign_score | bleualign_score    bicleaner_score | bicleaner_ai_score    length_ratio    src_num_tokens    trg_num_tokens]
 
 # where src_url and trg_url are the URLs of the document, src_text and trg_text are the aligned pair of segments, hunalign and
 # bicleaner are quality metrics (in this case, provided by these two tools), length_ratio is the ratio between the
@@ -81,6 +81,8 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
 
     if 'bicleaner_score' in fields_dict and fields_dict['bicleaner_score'] != "":
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
+    elif 'bicleaner_ai_score' in fields_dict and fields_dict['bicleaner_ai_score'] != "":
+        print("    <prop type=\"score-bicleaner-ai\">" + fields_dict['bicleaner_ai_score'] + "</prop>")
 
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):

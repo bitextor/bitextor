@@ -67,6 +67,8 @@ for i in reader:
         if options.isFiltering:
             if "bicleaner_score" in fieldsdict:
                 fieldsdict["bicleaner_score"] = str(round(float(fieldsdict["bicleaner_score"]), 4))
+            elif "bicleaner_ai_score" in fieldsdict:
+                fieldsdict["bicleaner_ai_score"] = str(round(float(fieldsdict["bicleaner_ai_score"]), 4))
 
             if int(fieldsdict["src_num_tokens"]) >= 200 or int(fieldsdict["trg_num_tokens"]) >= 200:
                 continue

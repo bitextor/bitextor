@@ -1471,6 +1471,8 @@ rule filter:
         sort_flags=rules.pre_filter_sort_flags.output,
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
+    params:
+        bicleaner_header="bicleaner_score" if BICLEANER_FLAVOUR == "classic" else "bicleaner_ai_score",
     threads: THREADS["filter"]
     shell:
         """
@@ -1479,7 +1481,8 @@ rule filter:
 
         $CAT {input.f} \
             | ( [[ "{BICLEANER}" == "True" ]] \
-                && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py --threshold {BICLEANER_THRESHOLD} \
+                && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
+                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header} \
                 || cat ) \
             | ( [[ "{ELRC}" == "True" ]] \
                 && {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s \
