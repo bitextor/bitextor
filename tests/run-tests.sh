@@ -45,7 +45,7 @@ while getopts "hf:w:j:t:n" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
+BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS} --reason"
 BITEXTOR_EXTRA_ARGS=""
 BICLEANER="${WORK}/bicleaner-model"
 BICLEANER_AI="${WORK}/bicleaner-ai-model"
