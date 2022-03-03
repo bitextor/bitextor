@@ -99,7 +99,11 @@ sudo apt install git time python3 python3-venv python3-pip golang-go build-essen
 sudo apt install wget
 ## warc2text:
 sudo apt install uchardet libuchardet-dev libzip-dev
-## biroamer:
+## Bicleaner AI:
+sudo apt install libhunspell-dev
+### Hunspell dictionaries (example)
+sudo apt install hunspell-es
+## Biroamer:
 sudo apt install libgoogle-perftools-dev libsparsehash-dev
 ## Heritrix, PDFExtract and boilerpipe:
 sudo apt install openjdk-8-jdk
