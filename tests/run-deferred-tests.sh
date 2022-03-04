@@ -68,7 +68,7 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
 
   python3 ${RECONSTRUCTOR} ${BITEXTOR_OUTPUT_DEDUPED} en el ${WARC} --header \
     | bifixer -q --sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash \
-      --ignore_duplicates - - en el --header --output_header \
+      --ignore_duplicates - - en el --header \
     > "${WORK}/outputdeferred"
 
   diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null
