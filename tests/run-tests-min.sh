@@ -203,6 +203,7 @@ wait
 # Other options (id >= 100)
 (
     TRANSIENT_DIR="${WORK}/transient-mto1-en-fr"
+
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
@@ -219,6 +220,7 @@ wait
 
 (
     TRANSIENT_DIR="${WORK}/transient-mto2-en-fr"
+
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
@@ -233,7 +235,12 @@ wait
     popd > /dev/null
 
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
+) &
+(
+    TRANSIENT_DIR="${WORK}/transient-mto3-en-fr"
 
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
             dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${WORK}/transient-mto3-en-fr" \

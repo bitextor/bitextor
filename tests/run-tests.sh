@@ -400,7 +400,8 @@ tests-others()
         popd > /dev/null
 
         annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
-
+    ) &
+    (
         TRANSIENT_DIR="${WORK}/transient-mto3-en-fr"
 
         mkdir -p "${TRANSIENT_DIR}" && \
