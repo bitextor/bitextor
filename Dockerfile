@@ -89,7 +89,7 @@ RUN pip3 install ./kenlm --install-option="--max_order=7"
 RUN pip3 install ./bifixer
 ## biroamer
 RUN pip3 install ./biroamer
-RUN python3 -m spacy download en_core_web_sm
+RUN python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ## cld3
 RUN pip3 install Cython
 RUN pip3 install pycld3

@@ -18,11 +18,13 @@ export PIP_IGNORE_INSTALLED="False" # We need to take into account the dependenc
 
 pip3 install .
 ### Bicleaner and KenLM
-pip3 install ./bicleaner && pip install ./kenlm --install-option="--max_order 7"
+pip3 install ./bicleaner && \
+pip3 install ./kenlm --install-option="--max_order 7"
 ### Bifixer
 pip3 install ./bifixer
 ### Biroamer and model
-pip3 install ./biroamer && python3 -m spacy download en_core_web_sm
+pip3 install ./biroamer && \
+python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ### CLD3
 pip3 install Cython
 pip3 install pycld3

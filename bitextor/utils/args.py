@@ -19,7 +19,7 @@ import pprint
 
 from cerberus import Validator
 
-def genericerror(msg):
+def generic_error(msg):
     def f(field, value, error):
         error(field, msg)
 
@@ -30,6 +30,10 @@ def isfile(field, value, error):
         for element in value:
             if not os.path.isfile(os.path.expanduser(element)):
                 error(field, f'{element} does not exist')
+    elif isinstance(value, dict):
+        for element in value:
+            if not os.path.isfile(os.path.expanduser(value[element])):
+                error(field, f'{value[element]} does not exist')
     elif not os.path.isfile(os.path.expanduser(value)):
         error(field, f'{value} does not exist')
 
@@ -124,9 +128,9 @@ def validate_args(config):
         'shards': {'type': 'integer', 'min': 0, 'default': 8},
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},
         'paragraphIdentification': {'type': 'boolean', 'default': False},
-        # specific to warc2text:
+        ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': ['warc2text']}},
-        # specific to warc2preprocess:
+        ## specific to warc2preprocess:
         'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'langID': {
@@ -140,12 +144,12 @@ def validate_args(config):
             'dependencies': {'preprocessor': 'warc2preprocess'}
         },
         'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        # pdfEXTRACT
+        ## pdfEXTRACT
         'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        # boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
+        ## boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
         'boilerplateCleaning': {'type': 'boolean', 'default': False},
         'boilerpipeMaxHeapSize': {'type': 'integer', 'dependencies': {'boilerplateCleaning': True, 'preprocessor': 'warc2preprocess'}},
         # tokenization
@@ -164,11 +168,11 @@ def validate_args(config):
             'default': 'externalMT',
             'dependencies': {}
         },
-        # mt
+        ## mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
         'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
         'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
-        # dictionary
+        ## dictionary
         'dic': {'type': 'string', 'dependencies': {}},
         'generateDic': {'type': 'boolean', 'default': False, 'dependencies': {}},
         'initCorpusTrainingPrefix': {'type': 'list'},
@@ -177,21 +181,26 @@ def validate_args(config):
         'sentenceAlignerThreshold': {'type': 'float'},
         # post processing
         'deferred': {'type': 'boolean', 'default': False},
+        ## fix
         'bifixer': {'type': 'boolean', 'default': False},
-        # mark near duplicates as duplicates
+        ### mark near duplicates as duplicates
         'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
-        # cleaning
+        ## cleaning
         'bicleaner': {'type': 'boolean', 'default': False},
+        'bicleanerFlavour': {'type': 'string', 'allowed': ['classic', 'ai'], 'default': 'ai'},
         'bicleanerModel': {'type': 'string', 'dependencies': {'bicleaner': True}},
         'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},
-        'bicleanerCorpusTrainingPrefix': {'type': 'list'},
-        # elrc metrics
+        'bicleanerParallelCorpusTrainingPrefix': {'type': 'list'},
+        ### bicleaner AI
+        'bicleanerMonoCorpusPrefix': {'type': 'list'},
+        'bicleanerParallelCorpusDevPrefix': {'type': 'list'},
+        ## elrc metrics
         'elrc': {'type': 'boolean'},
-        # tmx
+        ## tmx
         'tmx': {'type': 'boolean'},
         'deduped': {'type': 'boolean'},
-        # roam
+        ## roam
         'biroamer': {'type': 'boolean', 'default': False},
         'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
         'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
@@ -229,7 +238,7 @@ def validate_args(config):
     if config['boilerplateCleaning'] and config['preprocessor'] != 'warc2preprocess':
         if not provided_in_config['preverticals'] and not provided_in_config['preverticalsFile']:
             schema['boilerplateCleaning']['check_with'] = \
-                genericerror("mandatory: preprocessor warc2preprocess or provide prevertical files")
+                generic_error("mandatory: preprocessor warc2preprocess or provide prevertical files")
 
     if config['preprocessor'] == 'warc2preprocess':
         if provided_in_config['preverticals'] or provided_in_config['preverticalsFile']:
@@ -284,13 +293,18 @@ def validate_args(config):
         schema['bicleanerModel']['required'] = True
 
         if config['bicleanerGenerateModel']:
-            schema['dic']['required'] = True
-            schema['bicleanerCorpusTrainingPrefix']['required'] = True
-            schema['initCorpusTrainingPrefix']['required'] = True
+            schema['bicleanerParallelCorpusTrainingPrefix']['required'] = True
 
-            if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
-                schema['generateDic']['required'] = True
-                schema['generateDic']['check_with'] = istrue
+            if config['bicleanerFlavour'] == "classic":
+                schema['dic']['required'] = True
+                schema['initCorpusTrainingPrefix']['required'] = True
+
+                if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
+                    schema['generateDic']['required'] = True
+                    schema['generateDic']['check_with'] = istrue
+            elif config['bicleanerFlavour'] == "ai":
+                schema['bicleanerMonoCorpusPrefix']['required'] = True
+                schema['bicleanerParallelCorpusDevPrefix']['required'] = True
         else:
             schema['bicleanerModel']['check_with'] = isfile
 

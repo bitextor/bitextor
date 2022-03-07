@@ -241,8 +241,10 @@ DEFERRED_FIELDS = []
 BIFIXER = False
 BIFIXER_FIELDS = []
 BIFIXER_DEFERRED_COLS = ""
+BIFIXER_PARAGRAPHS_COLS = ""
 AGGRESSIVE_DEDUP = "--aggressive_dedup"
 BICLEANER = False
+BICLEANER_FLAVOUR = config["bicleanerFlavour"]
 BICLEANER_MODEL = ""
 BICLEANER_FIELDS = []
 BICLEANER_THRESHOLD = 0.0
@@ -256,10 +258,13 @@ BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = ""
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
-BICLEANER_TRAIN_PREFIXES = []
+BICLEANER_TRAINING_CORPUS_PREFIX = []
+BICLEANER_AI_MONO_CORPUS_PREFIX = []
+BICLEANER_AI_DEV_CORPUS_PREFIX = []
 
 if PARAGRAPH_IDENTIFICATION:
     PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
+    BIFIXER_PARAGRAPHS_COLS = "--sparagraphid 6 --tparagraphid 7"
 if "deferred" in config and config["deferred"]:
     DEFERRED = "--print-sent-hash"
     MMHSUM_PATH = f"mmhsum"
@@ -279,8 +284,12 @@ if "bicleaner" in config and config["bicleaner"]:
     BICLEANER_FIELDS = ["bicleaner"]
 if "bicleanerThreshold" in config:
     BICLEANER_THRESHOLD = config["bicleanerThreshold"]
-if "bicleanerCorpusTrainingPrefix" in config:
-    BICLEANER_TRAIN_PREFIXES = config["bicleanerCorpusTrainingPrefix"]
+if "bicleanerParallelCorpusTrainingPrefix" in config:
+    BICLEANER_TRAINING_CORPUS_PREFIX = config["bicleanerParallelCorpusTrainingPrefix"]
+if "bicleanerParallelCorpusDevPrefix" in config:
+    BICLEANER_AI_DEV_CORPUS_PREFIX = config["bicleanerParallelCorpusDevPrefix"]
+if "bicleanerMonoCorpusPrefix" in config:
+    BICLEANER_AI_MONO_CORPUS_PREFIX = config["bicleanerMonoCorpusPrefix"]
 if "elrc" in config and config["elrc"]:
     ELRC = True
     ELRC_FIELDS = ["lengthratio", "numTokensSL", "numTokensTL"]
@@ -732,8 +741,8 @@ rule warc2preprocess:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         pproclangs=','.join(LANGS),
         boilerplate="--boilerpipe" if BOILERPLATE_CLEANING else '',
-        heap_size=f"--boilerpipe-max-heap-size {str(BOILERPIPE_MAX_HEAP_SIZE)}" if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '',
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        heap_size=apply_format(str(BOILERPIPE_MAX_HEAP_SIZE) if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '', "--boilerpipe-max-heap-size {}"),
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
         mkdir -p {params.folder}
@@ -1319,7 +1328,8 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer -q - - {LANG1} {LANG2} {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+            | {PROFILING} ${{parallel_cmd}} bifixer -q {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
+                {BIFIXER_PARAGRAPHS_COLS} - - {LANG1} {LANG2} \
             > {output}
         """
 
@@ -1348,25 +1358,76 @@ rule bicleaner_train_model:
     Train bicleaner model
     """
     input:
-        corpusl1=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG1),
-        corpusl2=expand("{dataset}.{lang}.xz", dataset=BICLEANER_TRAIN_PREFIXES, lang=LANG2),
-        e2f=f"{DIC}.lex.e2f.gz",
-        f2e=f"{DIC}.lex.f2e.gz",
-        vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
-        vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+        corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
+        corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
+        # Bicleaner
+        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_FLAVOUR == "classic"),
+        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_FLAVOUR == "classic"),
+        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_FLAVOUR == "classic"),
+        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_FLAVOUR == "classic"),
+        # Bicleaner AI
+        mono_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
+                                   BICLEANER_FLAVOUR == "ai"),
+        mono_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
+                                   BICLEANER_FLAVOUR == "ai"),
+        dev_corpus_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
+                                         BICLEANER_FLAVOUR == "ai"),
+        dev_corpus_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
+                                         BICLEANER_FLAVOUR == "ai"),
     output:
         model=BICLEANER_MODEL,
+    params:
+        training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
+        # Bicleaner
+        classifier=f"{BICLEANER_MODEL.split('/')[-1]}/{LANG1}-{LANG2}.classifier",
+        # Bicleaner AI
+        tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
+        dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
+        mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
+        metadata_dir='/'.join(BICLEANER_MODEL.split('/')[:-1]),
+        ai_metadata=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/metadata.yaml",
     shell:
         """
-        training=$(mktemp {TMPDIR}/train.XXXXXXXX)
-        paste <(xzcat -f {input.corpusl1}) <(xzcat -f {input.corpusl2}) > $training
-        DIR=$(dirname {BICLEANER_MODEL})
-        echo $DIR
-        lines=$(cat $training | wc -l)
-        trainlines=$(echo \"$lines*4/10\" | bc)
-        testlines=$(echo \"($lines-2*$trainlines)/2\" | bc)
-        {PROFILING} bicleaner-train $training -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} -F {input.vcb2} -c $DIR/{LANG1}-{LANG2}.classifier -m {BICLEANER_MODEL} --classifier_type random_forest
-        rm $training
+        echo "Training corpus: {params.training_corpus}"
+        mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
+        paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
+
+        if [[ "{BICLEANER_FLAVOUR}" == "classic" ]]; then
+            {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
+                --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
+                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest
+        elif [[ "{BICLEANER_FLAVOUR}" == "ai" ]]; then
+            # Target lang frequency
+            echo "Frequency file (lang={LANG2}): {params.tfreq}"
+            zcat {input.mono_l2} \
+                | {WORDTOK2} \
+                | awk '{{print tolower($0)}}' \
+                | tr ' ' '\n' \
+                | LC_ALL=C sort | uniq -c \
+                | LC_ALL=C sort -nr \
+                | grep -v "[[:space:]]*1" \
+                | pigz -c > {params.tfreq}
+
+            # Dev corpus
+            echo "Dev corpus: {params.dev_corpus}"
+            paste <(zcat {input.dev_corpus_l1}) <(zcat {input.dev_corpus_l2}) > {params.dev_corpus}
+
+            # Mono
+            echo "Mono corpus: {params.mono_corpus}"
+
+            mono_l1_nolines=$(zcat {input.mono_l1} | wc -l)
+            mono_l2_nolines=$(zcat {input.mono_l2} | wc -l)
+            mono_min_nolines=$([[ $mono_l1_nolines -gt $mono_l2_nolines ]] && echo "$mono_l2_nolines" || echo "$mono_l1_nolines")
+
+            head -n $mono_min_nolines <(zcat {input.mono_l1}) > {params.mono_corpus}
+            head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
+
+            # Train
+            {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
+                -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
+                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} && \
+                    mv {params.ai_metadata} {output.model}
+        fi
         """
 
 
@@ -1383,25 +1444,28 @@ rule bicleaner:
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
-        THREADS["bicleaner"],
-    threads: max(2, THREADS["bicleaner"])
+        threads=THREADS["bicleaner"],
+        flavour="bicleaner-classify-lite" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
+    threads: max(2, THREADS["bicleaner"]) # TODO why?
     shell:
         """
         parallel_cmd=""
-        if [ {params} -gt 1 ]; then
-            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params} -k"
+        if [ {params.threads} -gt 1 ]; then
+            parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
         CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         if [ "$slang" == "{LANG1}" ]; then
             $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         else
             $CAT {input.bifixer} \
                 | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} bicleaner-classify-lite -S "{WORDTOK1}" -T "{WORDTOK2}" --score_only -q - - {input.model} \
+                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                    --score_only -q - - {input.model} \
                 | paste <($CAT {input.bifixer}) - \
                 | pigz -c > {output}
         fi
@@ -1549,7 +1613,7 @@ rule tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
             | pigz -c > {output}
         """
 
@@ -1571,7 +1635,7 @@ rule deduped_tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
             | pigz -c > {output.tmx}
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}

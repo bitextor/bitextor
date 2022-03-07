@@ -55,10 +55,11 @@ jobs:
          run: |
             pip3 install .
             pip3 install ./bicleaner
+            pip3 install ./bicleaner-ai
             pip3 install ./kenlm --install-option="--max_order 7"
             pip3 install ./bifixer
             pip3 install ./biroamer
-            python -m spacy download en_core_web_sm
+            python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:

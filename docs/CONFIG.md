@@ -342,35 +342,42 @@ sentenceAlignerThreshold: 0.1
 
 ## Parallel data filtering
 
-Parallel data filtering is carried out with [Bicleaner](https://github.com/bitextor/bicleaner); this tool uses a pre-trained regression model to filter out pairs of segments with a low confidence score.
+Parallel data filtering is carried out with [Bicleaner](https://github.com/bitextor/bicleaner) or [Bicleaner AI](https://github.com/bitextor/bicleaner-ai); these tools use a pre-trained regression model to filter out pairs of segments with a low confidence score.
 
-A number of pre-trained models for Bicleaner are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed.
+A number of pre-trained models for Bicleaner are available [here](https://github.com/bitextor/bicleaner-data/releases/latest). They are ready to be downloaded and decompressed. The pre-trained models for Bicleaner AI are available [here](https://github.com/bitextor/bicleaner-ai-data/releases/latest).
 
 The options required to make it work are:
 
 ```yaml
 bicleaner: True
 bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
-bicleanerThreshold: 0.6
 ```
 
 * `bicleaner`: use Bicleaner to filter out pairs of segments
+* `bicleanerFlavour`: select which version to use. The allowed values are `classic` for Bicleaner and `ai` for Bicleaner AI
 * `bicleanerModel`: path to the YAML configuration file of a pre-trained model
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
-If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file options `initCorpusTrainingPrefix` and `bicleanerCorpusTrainingPrefix`:
+If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file option `bicleanerCorpusTrainingPrefix`. If you need to train a Bicleaner model, you will need to specify `initCorpusTrainingPrefix` as well. If you are using Bicleaner AI instead, you will need to specify the config options `bicleanerParallelCorpusDevPrefix` and `bicleanerMonoCorpusPrefix`.
 
 ```yaml
 bicleanerGenerateModel: True
-initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
 bicleanerCorpusTrainingPrefix: ['/home/user/RF.en-fr']
+# Bicleaner
+initCorpusTrainingPrefix: ['/home/user/Europarl.en-fr.train']
+# Bicleaner AI
+bicleanerParallelCorpusDevPrefix: ['/home/user/DGT.en-fr.train']
+bicleanerMonoCorpusPrefix: ['/home/user/en-fr.mono']
 ```
 
-* `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model. If `dic` is provided and does not exist, you will need to generate one with `generateDic`. Even if `dic` exists because you downloaded it, the whole process of generating it might be carried out since what is really necessary to build the model is the statistical information from the dictionary, what might not be available if you downloaded it
+* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner or Bicleaner AI
+* Bicleaner:
+  * `initCorpusTrainingPrefix`: prefix to parallel corpus (see [Variables for bilingual lexica](#using-bilingual-lexica)) that will be used to train statistical dictionaries which are part of the Bicleaner model. If `dic` is provided and does not exist, you will need to generate one with `generateDic`. Even if `dic` exists because you downloaded it, the whole process of generating it might be carried out since what is really necessary to build the model is the statistical information from the dictionary, what might not be available if you downloaded it
+* Bicleaner AI:
+  * `bicleanerParallelCorpusDevPrefix`: prefix to parallel corpus that will be used for evaluation of the trained model
+  * `bicleanerMonoCorpusPrefix`: prefix to mono corpus that will be used in order to obtain noise sentences and train SentencePiece embeddings
 
-* `bicleanerCorpusTrainingPrefix`: prefix to the parallel corpus that will be used to train the regressor that obtains the confidence score in Bicleaner
-
-It is important to provide different parallel corpora for these two options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring.
+For Bicleaner, it is important to provide different parallel corpora for the options as this helps Bicleaner when dealing with unknown words (that do not appear in the statistical dictionaries) during scoring. In the case of Bicleaner AI, this applies to the mono data as well, and the evaluation corpus should be of great quality.
 
 ## Post-processing
 
