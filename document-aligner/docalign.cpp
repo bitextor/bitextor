@@ -372,6 +372,9 @@ int main(int argc, char *argv[])
 				unique_lock<mutex> lock(mark_score_mutex);
 				print_score(score, in_ref, en_ref);
 			};
+
+			// Print output header
+			cout << "mt_doc_aligner_score\tidx_translated\tidx_trg" << endl;
 		}
 
 		vector<thread> score_workers(start(n_score_threads, [&score_queue, &ref_index, &threshold, &mark_score]() {
@@ -435,6 +438,9 @@ int main(int argc, char *argv[])
 			// en_seen is completely filled.
 			size_t cnt = 0;
 			size_t document_cnt = min(in_document_cnt, en_document_cnt);
+
+			// Print output header
+			cout << "mt_doc_aligner_score\tidx_translated\tidx_trg" << endl;
 
 			// For each pair (with score, sorted from good to bad)
 			for (DocumentPair const &pair : scored_pairs) {

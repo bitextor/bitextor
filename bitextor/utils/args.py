@@ -83,7 +83,7 @@ def validate_args(config):
         'parallelWorkers': {
             'type': 'dict',
             'allowed': [
-                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'sents'
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
             ],
             'valuesrules': {'type': 'integer', 'min': 1}
         },
@@ -168,10 +168,10 @@ def validate_args(config):
             'default': 'externalMT',
             'dependencies': {}
         },
+        'documentAlignerThreshold': {'type': 'float'},
         ## mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
         'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
-        'documentAlignerThreshold': {'type': 'float', 'dependencies': {'documentAligner': 'externalMT'}},
         ## dictionary
         'dic': {'type': 'string', 'dependencies': {}},
         'generateDic': {'type': 'boolean', 'default': False, 'dependencies': {}},

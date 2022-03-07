@@ -246,3 +246,16 @@ def duration_to_seconds(value):
     suffix = value[-1]
     seconds = int(value[:-1]) * duration_suffix[suffix]
     return seconds
+
+def return_dict_value_if_key(d, k, else_value, pos_value=None, only_check_key=False, apply_function=None):
+    condition = k in d if only_check_key else k in d and d[k]
+
+    if pos_value:
+        result = pos_value if condition else else_value
+    else:
+        result = d[k] if condition else else_value
+
+    if apply_function:
+        result = apply_function(result)
+
+    return result

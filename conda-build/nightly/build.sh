@@ -18,7 +18,8 @@ export PIP_IGNORE_INSTALLED="False" # We need to take into account the dependenc
 
 pip3 install .
 ### Bicleaner and KenLM
-pip3 install ./bicleaner && \
+pip3 install ./bicleaner
+pip3 install ./bicleaner-ai
 pip3 install ./kenlm --install-option="--max_order 7"
 ### Bifixer
 pip3 install ./bifixer

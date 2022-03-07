@@ -55,45 +55,43 @@ oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the 
 
 options = oparser.parse_args()
 
-docnumber = 0
 word_map = {}
-
 punctuation = get_unicode_punct()
 
-
 for file_path, lang in [(options.text1, options.lang1), (options.text2, options.lang2)]:
-    with open_xz_or_gzip_or_plain(file_path) as text_reader:
+    if lang not in word_map:
+        word_map[lang] = {}
 
-        for line in text_reader:
-            ##################
-            # Parsing the text:
-            ##################
+    with open_xz_or_gzip_or_plain(file_path) as text_reader:
+        # Process documents
+        for doc_idx, line in enumerate(text_reader, 1):
+            # Decode the text (current document)
             tokenized_text = base64.b64decode(line.strip()).decode("utf-8")
 
+            # Get unique words from the current document
             sorted_uniq_wordlist = sorted(set(tokenized_text.split()))
 
-            # Trimming non-aplphanumerics:
-            clean_sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
-            sorted_uniq_wordlist = clean_sorted_uniq_wordlist
+            # Trimming non-aplphanumerics
+            sorted_uniq_wordlist = [_f for _f in [w.strip(punctuation) for w in sorted_uniq_wordlist] if _f]
 
+            # Process every unique word from the current document
             for word in sorted_uniq_wordlist:
-                if lang in word_map:
-                    if word in word_map[lang]:
-                        word_map[lang][word].append(docnumber)
-                    else:
-                        word_map[lang][word] = []
-                        word_map[lang][word].append(docnumber)
-                else:
-                    word_map[lang] = {}
+                if word not in word_map[lang]:
                     word_map[lang][word] = []
-                    word_map[lang][word].append(docnumber)
-            docnumber = docnumber + 1
+
+                word_map[lang][word].append(doc_idx)
+
+            doc_idx += 1
+
+# Print output header
+print("lang\tword\tdoc_idxs")
 
 for map_lang, map_vocabulary in list(word_map.items()):
     for map_word, map_doc in list(map_vocabulary.items()):
-        if options.maxo == -1 or len(word_map[map_lang][map_word]) <= options.maxo:
-            sorted_docs = sorted(word_map[map_lang][map_word], reverse=True)
-            for doc_list_idx in range(0, len(sorted_docs) - 1):
-                sorted_docs[doc_list_idx] = str(sorted_docs[doc_list_idx] - sorted_docs[doc_list_idx + 1])
-            sorted_docs[len(sorted_docs) - 1] = str(sorted_docs[len(sorted_docs) - 1])
-            print(map_lang + "\t" + map_word + "\t" + ":".join(reversed(sorted_docs)))
+        doc_idxs = word_map[map_lang][map_word]
+
+        if options.maxo == -1 or len(doc_idxs) <= options.maxo: # If there are many occurrences, the word might be a stop word
+            sorted_docs = map(lambda d: str(d), sorted(doc_idxs))
+
+            print(map_lang + "\t" + map_word + "\t" + ":".join(sorted_docs))
+        # else: -> detected as stop word and we want to avoid them

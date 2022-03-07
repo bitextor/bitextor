@@ -50,19 +50,28 @@ def read_lett(f, docs):
 # Building word indexes as dict files in python for both languages from the input IDX file
 #
 def fill_index(file, lang1, lang2, index1, index2):
+    header = next(file).strip().split("\t")
+    lang_idx = header.index("lang")
+    word_idx = header.index("word")
+    doc_idxs_idx = header.index("doc_idxs")
+
     for i in file:
         fields = i.strip().split("\t")
+
         if len(fields) == 3:
-            if fields[0] == lang1 or fields[0] == lang2:
-                documents = fields[2].split(":")
-                acum = 1
+            lang = fields[lang_idx]
+            word = fields[word_idx]
+            doc_idxs = fields[doc_idxs_idx]
+
+            if lang == lang1 or lang == lang2:
+                documents = doc_idxs.split(":")
 
                 for j in documents:
-                    acum += int(j)
-                    if fields[0] == lang1:
-                        index1[acum].add(fields[1])
+                    if lang == lang1:
+                        index1[j].add(word)
                     else:
-                        index2[acum].add(fields[1])
+                        index2[j].add(word)
+
     file.close()
 
 
@@ -125,20 +134,20 @@ oparser = argparse.ArgumentParser(
 oparser.add_argument('idx', metavar='FILE', nargs='?',
                      help='File produced by bitextor-buildidx containing an index of the different words for every '
                           'language in the website and the list of documents in which they appear (if undefined, '
-                          'the script will read from the standard input)',
-                     default=None)
-oparser.add_argument('-d',
+                          'the script will read from the standard input)')
+oparser.add_argument('-d', dest="dictionary", required=True,
                      help='Dictionary containing translations of words for the languages of the website; it is used '
-                          'to compute the overlapping scores which allow to relate documents in both languages)',
-                     dest="dictionary", required=True)
-oparser.add_argument('-l',
+                          'to compute the overlapping scores which allow to relate documents in both languages)')
+oparser.add_argument('-l', dest="lett",
                      help='LETT file; if it is provided, document pair candidates are provided only if they belong to '
-                          'the same domain',
-                     dest="lett", required=False, default=None)
-oparser.add_argument("--lang1", help="Two-characters-code for language 1 in the pair of languages", dest="lang1",
-                     required=True)
-oparser.add_argument("--lang2", help="Two-characters-code for language 2 in the pair of languages", dest="lang2",
-                     required=True)
+                          'the same domain')
+oparser.add_argument("--lang1", dest="lang1", required=True,
+                     help="Two-characters-code for language 1 in the pair of languages")
+oparser.add_argument("--lang2", dest="lang2", required=True,
+                     help="Two-characters-code for language 2 in the pair of languages")
+oparser.add_argument("--max-candidates", type=int, default=10,
+                     help="Max. candidates for a document")
+
 options = oparser.parse_args()
 
 index_text1 = defaultdict(set)
@@ -197,20 +206,16 @@ for document_index1 in index_text1:
         similar = sorted(list(similar.items()), key=itemgetter(1), reverse=True)
     found[document_index1] = []
     for document_index2 in similar:
-        found[document_index1].append(str(document_index2[0]) + ":" + str(document_index2[1]))
+        found[document_index1].append((str(document_index2[0]), str(document_index2[1])))
+
+# Print output header
+print("src_index\ttrg_index\tbow_overlap_score")
+
+max_candidates = options.max_candidates
 
 # For each document, we obtain the 10-best candidates with highest score.
-for document_index in found:
-    if len(found[document_index]) > 10:
-        num_best_candidates = 10
-    else:
-        num_best_candidates = len(found[document_index])
-    first = True
-    candidatestring = str(document_index) + "\t"
-    for document_index2 in range(num_best_candidates):
-        if first:
-            candidatestring += str(found[document_index][document_index2])
-            first = False
-        else:
-            candidatestring += "\t" + str(found[document_index][document_index2])
-    print(candidatestring)
+for src_doc_idx in found:
+    num_best_candidates = min(max_candidates, len(found[src_doc_idx]))
+
+    for trg_doc_idx, bow_score in found[src_doc_idx][:num_best_candidates]:
+        print(f"{str(src_doc_idx)}\t{trg_doc_idx}\t{bow_score}")

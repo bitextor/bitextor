@@ -43,8 +43,17 @@ if __name__ == "__main__":
                         help='pairs of document indices, sorted by first column')
     parser.add_argument('--columns1', dest='lang1_column_filename', nargs='+', required=True)
     parser.add_argument('--columns2', dest='lang2_column_filename', nargs='+', required=True)
+    parser.add_argument('--columns1-output-headers', nargs='+', required=True)
+    parser.add_argument('--columns2-output-headers', nargs='+', required=True)
 
     args = parser.parse_args()
+
+    if len(args.lang1_column_filename) != len(args.columns1_output_headers):
+        raise Exception("Different number of elements for --columns1 and --columns1-output-headers "
+                        f"({args.lang1_column_filename} vs {args.columns1_output_headers})")
+    if len(args.lang2_column_filename) != len(args.columns2_output_headers):
+        raise Exception("Different number of elements for --columns2 and --columns2-output-headers "
+                        f"({args.lang2_column_filename} vs {args.columns2_output_headers})")
 
     lang2_docs = set()
     lang2_read_docs = {}
@@ -54,10 +63,17 @@ if __name__ == "__main__":
         args.indices = '-'
 
     with open_xz_or_gzip_or_plain(args.indices) if args.indices != '-' else sys.stdin as reader:
+        header = next(reader).strip().split("\t")
+        src_doc_idx_idx = header.index("src_index")
+        trg_doc_idx_idx = header.index("trg_index")
+
         for line in reader:
             fields = line.strip().split('\t')
-            lang2_docs.add(int(fields[1]))
-            indices.append((int(fields[0]), int(fields[1])))
+            src_doc_idx = int(fields[src_doc_idx_idx])
+            trg_doc_idx = int(fields[trg_doc_idx_idx])
+
+            lang2_docs.add(trg_doc_idx)
+            indices.append((src_doc_idx, trg_doc_idx))
 
     readers1 = [open_xz_or_gzip(filename, 'rt') for filename in args.lang1_column_filename]
     readers2 = [open_xz_or_gzip(filename, 'rt') for filename in args.lang2_column_filename]
@@ -69,23 +85,43 @@ if __name__ == "__main__":
 
     tab = "\t"
 
+    # Print output header
+    sys.stdout.write(f"src_index\ttrg_index")
+
+    for c1, c2 in zip(args.columns1_output_headers, args.columns2_output_headers):
+        sys.stdout.write(f"\t{c1}\t{c2}")
+
+    sys.stdout.write('\n')
+
     for doc1, doc2 in indices:
         while doc1_current_line <= doc1:
             data1 = [next(reader, None).strip() for reader in readers1]
             doc1_current_line = doc1_current_line + 1
+
         if doc2_current_line <= doc2:
             while doc2_current_line <= doc2:
                 data2 = [next(reader, None).strip() for reader in readers2]
+
                 if doc2_current_line == doc2:
-                    print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
+                    sys.stdout.write(f"{doc1}\t{doc2}")
+
+                    for d1, d2 in zip(data1, data2):
+                        sys.stdout.write(f"\t{d1}\t{d2}")
+
+                    sys.stdout.write('\n')
                 elif doc2_current_line in lang2_docs:
                     lang2_read_docs[doc2_current_line] = data2
+
                 doc2_current_line = doc2_current_line + 1
-        elif doc2_current_line > doc2:
+        else:
             data2 = lang2_read_docs[doc2]
-            print(f'{doc1}\t{tab.join(data1)}\t{doc2}\t{tab.join(data2)}')
-            # so far document aligner doesn't produce repeated indices, so deleting entries is safe
-            del lang2_read_docs[doc2]
+
+            sys.stdout.write(f"{doc1}\t{doc2}")
+
+            for d1, d2 in zip(data1, data2):
+                sys.stdout.write(f"\t{d1}\t{d2}")
+
+            sys.stdout.write('\n')
 
     for r in readers1:
         r.close()

@@ -22,18 +22,14 @@ oparser = argparse.ArgumentParser(
     description="Script that reads takes a list of aligned segments, such as that produced by bitextor-alignsegments "
                 "script, and computes the basic ELRC quality metrics: number of tokens in lang1/lang2 and length "
                 "ratio.")
-oparser.add_argument('aligned_seg', metavar='FILE', nargs='?',
-                     help='File containing the set of aliged segments (if undefined, the script reads from the '
-                          'standard input)',
-                     default=None)
-oparser.add_argument("-s", "--stats", help="Print stats or just output the input", action="store_true",
-                     dest="isPrintingStats", default=False)
-oparser.add_argument("-f", "--filtering", help="Filter lines according to ELRC rules (printing stats required)",
-                     action="store_true", dest="isFiltering", default=False)
-oparser.add_argument("-c", "--columns",
-                     help="Name of columns of the input tab separated file split by comma. Default: url1,url2,seg1,"
-                          "seg2,hunalign,bicleaner",
-                     default="url1,url2,seg1,seg2,hunalign,bicleaner")
+
+oparser.add_argument("aligned_seg", metavar="FILE", nargs="?",
+                     help="File containing the set of aliged segments (if undefined, the script reads from the "
+                          "standard input)")
+oparser.add_argument("-s", "--stats", action="store_true", dest="isPrintingStats",
+                     help="Print stats or just output the input")
+oparser.add_argument("-f", "--filtering", action="store_true", dest="isFiltering",
+                     help="Filter lines according to ELRC rules (printing stats required)")
 
 options = oparser.parse_args()
 
@@ -42,37 +38,50 @@ if options.aligned_seg is not None:
 else:
     reader = sys.stdin
 
-columns = options.columns.split(',')
+header = next(reader).strip().split('\t')
+extra_columns = []
+
+if options.isPrintingStats:
+    extra_columns = ["length_ratio", "src_num_tokens", "trg_num_tokens"]
+
+# Print output header
+print('\t'.join(header + extra_columns))
 
 for i in reader:
-    fields = i.split("\t")
-    fields[-1] = fields[-1].strip()
-    fieldsdict = dict()
-    extracolumns = []
-
-    for field, column in zip(fields, columns):
-        fieldsdict[column] = field
     if options.isPrintingStats:
-        extracolumns = ["lengthratio", "numTokensSL", "numTokensTL"]
-        if len(fieldsdict["seg2"]) == 0:
-            lengthRatio = 0
-        else:
-            lengthRatio = len(fieldsdict["seg1"]) * 1.0 / len(fieldsdict["seg2"])
-        numTokensSL = len(fieldsdict["seg1"].split(
-            ' '))  # This is not the way this should be counted, we need to tokenize better first
-        numTokensTL = len(fieldsdict["seg2"].split(
-            ' '))  # This is not the way this should be counted, we need to tokenize better first
-        fieldsdict["lengthratio"] = str(lengthRatio)
-        fieldsdict["numTokensSL"] = str(numTokensSL)
-        fieldsdict["numTokensTL"] = str(numTokensTL)
+        fields = i.split('\t')
+        fields[-1] = fields[-1].strip()
+        fieldsdict = dict()
+
+        # Create dict with the header to work the values easily
+        for field, column in zip(fields, header):
+            fieldsdict[column] = field
+
+        lengthRatio = 0 if fieldsdict["trg_text"] == '' else len(fieldsdict["src_text"]) / len(fieldsdict["trg_text"])
+        numTokensSL = len(fieldsdict["src_text"].split(' ')) # We should tokenize better
+        numTokensTL = len(fieldsdict["trg_text"].split(' ')) # We should tokenize better
+        fieldsdict["length_ratio"] = str(lengthRatio)
+        fieldsdict["src_num_tokens"] = str(numTokensSL)
+        fieldsdict["trg_num_tokens"] = str(numTokensTL)
+
         if options.isFiltering:
-            if "bicleaner" in fieldsdict and fieldsdict["bicleaner"].strip() != '':
-                fieldsdict["bicleaner"] = str(round(float(fieldsdict["bicleaner"]), 4))
-            if int(fieldsdict["numTokensSL"]) >= 200 or int(fieldsdict["numTokensTL"]) >= 200 or fieldsdict[
-                "seg1"].strip() == '' or fieldsdict["seg2"].strip() == '' or float(
-                    fieldsdict["lengthratio"]) >= 6 or float(fieldsdict["lengthratio"]) <= 0.1666:
+            if "bicleaner_score" in fieldsdict:
+                fieldsdict["bicleaner_score"] = str(round(float(fieldsdict["bicleaner_score"]), 4))
+            elif "bicleaner_ai_score" in fieldsdict:
+                fieldsdict["bicleaner_ai_score"] = str(round(float(fieldsdict["bicleaner_ai_score"]), 4))
+
+            if int(fieldsdict["src_num_tokens"]) >= 200 or int(fieldsdict["trg_num_tokens"]) >= 200:
                 continue
-    fieldstoprint = []
-    for column in columns + extracolumns:
-        fieldstoprint.append(fieldsdict[column])
-    print("\t".join(fieldstoprint))
+            if fieldsdict["src_text"].strip() == '' or fieldsdict["trg_text"].strip() == '':
+                continue
+            if float(fieldsdict["length_ratio"]) <= 0.1666 or float(fieldsdict["length_ratio"]) >= 6:
+                continue
+
+        fieldstoprint = []
+
+        for column in header + extra_columns:
+            fieldstoprint.append(fieldsdict[column])
+
+        print('\t'.join(fieldstoprint))
+    else:
+        sys.stdout.write(i)

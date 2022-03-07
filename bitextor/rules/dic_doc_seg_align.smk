@@ -1,3 +1,6 @@
+
+# Notice that: SRC_LANG = LANG1 and TRG_LANG = LANG2
+
 #################################################################
 ### DOCALIGN ####################################################
 # DICTIONARY-BASED ##############################################
@@ -6,7 +9,7 @@ rule build_idx:
     Produce an index of words used in text1 and text2
     :input.text1: gz-compressed file with a base64-encoded tokenised documents in SRC_LANG per line
     :input.text2: gz-compressed file with a base64-encoded tokenised documents in TRG_LANG per line
-    :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id1>[:<increment> ...]
+    :output: gz-commpressed index file, format is <lang> \\t <word> \\t <doc_id_[src|trg]>
     """
     input:
         text1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
@@ -15,229 +18,226 @@ rule build_idx:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.gz",
     shell:
         """
-        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_buildidx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} -m 15 --text1 {input.text1} --text2 {input.text2} \
-                | gzip -c > {output}
+        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_build_idx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
+            -m 15 --text1 {input.text1} --text2 {input.text2} \
+            | gzip -c > {output}
         """
 
 
-rule idx2ridx_src2trg:
+rule idx2ridx:
     """
     Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. SRC_LANG docs and their corresponding n-best TRG_LANG canidates to be parallel
-
-        from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
-        document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
+        i.e. [SRC|TRG]_LANG docs and their corresponding n-best [TRG|SRC]_LANG candidates to be parallel
     :input.idx: gz-compressed index file, output of build_idx rule
     :input.dic: SRC_LANG-TRG_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id> \\t <doc_id>:<score> [ \\t <doc_id>:<score> ...]
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <score>
     """
     input:
         idx=rules.build_idx.output,
         dic=expand("{dic}", dic=DIC),
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.ridx.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.ridx.gz",
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--lang1 {SRC_LANG} --lang2 {TRG_LANG}" || \
+                    echo "--lang1 {TRG_LANG} --lang2 {SRC_LANG}")
+
         zcat {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} $params \
             | gzip -c > {output}
         """
 
 
-rule idx2ridx_trg2src:
-    """
-    Read .idx file and produce an ridx file corresponding to preliminary alignment by computing bag-of-words overlap metric
-        i.e. TRG_LANG docs and their corresponding n-best SRC_LANG canidates to be parallel
-
-        from this point until final alignment step, document indices for SRC_LANG will range from 1 to number of SRC docs,
-        document indices for TRG_LANG will range from (number of SRC docs + 1) to (number of SRC docs + number of TRG docs)
-    :input.idx: gz-compressed index file, output of build_idx rule
-    :input.dic: TRG_LANG-SRC_LANG dictionary provided by user
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1> [ \\t <doc_id_n>:<f1> ...],
-        where f1 is the [0.0, 1.0] score corresponding to the metric computed in this step
-    """
-    input:
-        idx=rules.build_idx.output,
-        dic=expand("{dic}", dic=DIC),
-    output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.ridx.gz",
-    shell:
-        """
-        zcat {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} --lang1 {TRG_LANG} --lang2 {SRC_LANG} \
-            | gzip -c > {output}
-        """
-
-
-rule ridx2imagesetoverlap:
+rule image_set_overlap:
     """
     For each candidate pair in the input ridx file, compute metric corresponding to images overlapping
-    :input.ridx: gz-compressed {1,2}.ridx, output of idx2ridx step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of idx2ridx step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>:<f2> [ \\t <doc_id_n>:<f1>:<f2> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2>,
         where f1 is the score computed in previous step, and f2 is newly computed images overlap score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        ridx=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.ridx.gz",
+        ridx=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.ridx.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz"),
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1}")
+
         zcat {input.ridx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_imagesetoverlap.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py $params \
             | gzip -c > {output}
         """
 
 
-rule imagesetoverlap2structuredistance:
+rule structure_distance:
     """
     For each candidate pair in the input ridx file, compute metric corresponding to HTML structure similarity
-    :input.ridx: gz-compressed {1,2}.ridx, output of ridx2imagesetoverlap step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of image_set_overlap step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>:<f2>:<f3> [ \\t <doc_id_n>:<f1>:<f2>:<f3> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t <f3>,
         where f1-f2 are the scores computed in previous steps, and f3 is newly computed structuer distance score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        imagesetoverlap=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.imgoverlap.gz",
+        imagesetoverlap=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.structuredistance.gz"),
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1}")
+
         zcat {input.imagesetoverlap} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structuredistance.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structure_distance.py $params \
             | gzip -c > {output}
         """
 
 
-rule structuredistance2urldistance:
+rule url_distance:
     """
     For each candidate pair in the input ridx file, compute metric corresponding to the similarity of URLs used in the documents
-    :input.ridx: gz-compressed {1,2}.ridx, output of imagesetoverlap2structuredistance step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of structure_distance step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f3>:<f4> [ \\t <doc_id_n>:<f1>...<f3>:<f4> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f4>,
         where f1-f3 are the scores computed in previous steps, and f4 is newly computed url distance score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        structuredistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.structuredistance.gz",
+        structuredistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.structuredistance.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urldistance.gz"),
     priority: 8
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1} --url1 {input.url2} --url2 {input.url1}")
+
         zcat {input.structuredistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlsdistance.py \
-                --html1 {input.html1} --html2 {input.html2} \
-                --url1 {input.url1} --url2 {input.url2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_distance.py $params \
             | gzip -c > {output}
         """
 
 
-rule urldistance2mutuallylinked:
+rule mutually_linked:
     """
     For each candidate pair in the input ridx file, compute whether a pair of documents link to each other or not
-    :input.ridx: gz-compressed {1,2}.ridx, output of structuredistance2urldistance step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of url_distance step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f4>:<f5> [ \\t <doc_id_n>:<f1>...<f4>:<f5> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f5>,
         where f1-f4 are the scores computed in previous steps, and f5 is newly computed mutually linked score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        urldistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urldistance.gz",
+        urldistance=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urldistance.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.mutuallylinked.gz"),
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1} --url1 {input.url2} --url2 {input.url1}")
+
         zcat {input.urldistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutuallylinked.py \
-                --html1 {input.html1} --html2 {input.html2} \
-                --url1 {input.url1} --url2 {input.url2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutually_linked.py $params \
             | gzip -c > {output}
         """
 
 
-rule mutuallylinked2urlscomparison:
+rule urls_comparison:
     """
     For each candidate pair in the input ridx file, compute editing distance of their urls
-    :input.ridx: gz-compressed {1,2}.ridx, output of urldistance2mutuallylinked step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of mutually_linked step
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f5>:<f6> [ \\t <doc_id_n>:<f1>...<f5>:<f6> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f6>,
         where f1-f5 are the scores computed in previous steps, and f6 is newly urls comparison score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        mutuallylinked=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.mutuallylinked.gz",
+        mutuallylinked=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.mutuallylinked.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.gz"),
+        temp(f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlscomparison.gz"),
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--url1 {input.url1} --url2 {input.url2}" || \
+                    echo "--url1 {input.url2} --url2 {input.url1}")
+
         zcat {input.mutuallylinked} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlscomparison.py --url1 {input.url1} --url2 {input.url2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_comparison.py $params \
             | gzip -c > {output}
         """
 
 
-rule urlscomparison2urlsoverlap:
+rule urls_overlap:
     """
     For each candidate pair in the input ridx file, compute metric corresponding to urls overlapping
-    :input.ridx: gz-compressed {1,2}.ridx, output of mutuallylinked2urlscomparison step
+    :input.ridx: gz-compressed {src2trg,trg2src}.ridx, output of urls_comparison step
     :input.html1: gz-compressed file with a base64-encoded html documents in SRC_LANG per line
     :input.html2: gz-compressed file with a base64-encoded html documents in TRG_LANG per line
-    :output: gz-compressed ridx file, format is <doc_id_1> \\t <doc_id_2>:<f1>...<f6>:<f7> [ \\t <doc_id_n>:<f1>...<f6>:<f7> ...],
+    :output: gz-compressed ridx file, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <f1> \\t <f2> \\t ... \\t <f7>,
         where f1-f6 are the scores computed in previous steps, and f7 is newly urls overlapping score
         all the scores are in [0.0, 1.0] range
     """
     input:
-        urlscomparison=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlscomparison.gz",
+        urlscomparison=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlscomparison.gz",
         html1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{HTML_FILE}",
         html2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{HTML_FILE}",
     output:
         # not marking this as temp because this is the file that contains all the features
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlsoverlap.gz",
     shell:
         """
+        params=$([[ {wildcards.direction} == src2trg* ]] && \
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+                    echo "--html1 {input.html2} --html2 {input.html1}")
+
         zcat {input.urlscomparison} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urlsetoverlap.py --html1 {input.html1} --html2 {input.html2} \
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_url_set_overlap.py $params \
             | gzip -c > {output}
         """
 
 
-rule urlsoverlap2rank:
+rule ranking:
     """
     For each candidate pair in the input ridx file predict the probability of the documents being parallel
-    :input:  gz-compressed {1,2}.ridx, output of urlscomparison2urlsoverlap step that contains all the features
-    :output: gz-compressed file with ranked pairs, format is <doc_id_1> \\t <doc_id_2>:<score> [ \\t <doc_id_n>:<score> ...],
+    :input:  gz-compressed {src2trg,trg2src}.ridx, output of urls_overlap step that contains all the features
+    :output: gz-compressed file with ranked pairs, format is <doc_id_[src|trg]> \\t <doc_id_[trg|src]> \\t <score>,
         candidate documents ordered by score
     """
     input:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.urlsoverlap.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlsoverlap.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{num}}.rank.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.rank.gz",
     shell:
         """
         zcat {input} \
@@ -246,11 +246,11 @@ rule urlsoverlap2rank:
         """
 
 
-rule aligndocumentsBitextor:
+rule align_documents:
     """
     Process bidirectional alignment rankings and produce a list of best matches
-    :input.rank1: gz-compressed ranked pairs files, output of urlsoverlap2rank for SRC_LANG-TRG_LANG direction
-    :input.rank2: gz-compressed ranked pairs files, output of urlsoverlap2rank for TRG_LANG-SRC_LANG direction
+    :input.rank1: gz-compressed ranked pairs files, output of ranking for SRC_LANG-TRG_LANG direction
+    :input.rank2: gz-compressed ranked pairs files, output of ranking for TRG_LANG-SRC_LANG direction
     :input.url1: gz-compressed file with a SRC document URL per line
     :input.url2: gz-compressed file with a TRG document URL per line
     :output: indices file
@@ -259,8 +259,8 @@ rule aligndocumentsBitextor:
             trg_index is the number of the aligned document in target language
     """
     input:
-        rank1=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.1.rank.gz",
-        rank2=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.2.rank.gz",
+        rank1=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.src2trg_{SRC_LANG}2{TRG_LANG}.rank.gz",
+        rank2=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.trg2src_{TRG_LANG}2{SRC_LANG}.rank.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
@@ -269,7 +269,8 @@ rule aligndocumentsBitextor:
         """
         {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \
             --lines1 $(zcat {input.url1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \
-            -n 1 -i converge {input.rank1} {input.rank2} > {output}
+            --threshold {DOC_THRESHOLD} -n 1 -i converge --print-score \
+            {input.rank1} {input.rank2} > {output}
         """
 
 
@@ -283,7 +284,7 @@ if DOCALIGN == "DIC":
     docalign_str = "bitextor."
 
 
-rule hunaligndic:
+rule create_hunalign_dic_format:
     input:
         expand("{dic}", dic=DIC),
     output:
@@ -293,7 +294,7 @@ rule hunaligndic:
             with open(input[0], "rt") as inr:
                 header = inr.readline().strip()
                 langs = header.split("\t")
-                if langs[0] == LANG1 and langs[1] == LANG2:
+                if langs[0] == SRC_LANG and langs[1] == TRG_LANG:
                     inverse = True
                 else:
                     inverse = False
@@ -305,7 +306,7 @@ rule hunaligndic:
                         outw.write(f"{columns[0]} @ {columns[1]}\n")
 
 
-rule matches2hunalign:
+rule hunalign:
     """
     Use hunalign to align sentences withing the matched documents
     :input.indices: output of docalign (columns are "score src_index trg_index" or "src_index trg_index")
@@ -328,20 +329,25 @@ rule matches2hunalign:
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
         tok1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised.gz",
         tok2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
-        hunaligndic=rules.hunaligndic.output,
+        hunaligndic=rules.create_hunalign_dic_format.output,
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.gz",
     params:
-        c1=1 if DOCALIGN == "DIC" else 2,
-        c2=2 if DOCALIGN == "DIC" else 3,
+        c1="src_index" if DOCALIGN == "DIC" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "idx_trg",
+        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
-        cut -f {params.c1},{params.c2} {input.indices} \
+        header="src_index\ttrg_index"
+
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
+            | tail -n +2 \
             | LC_ALL=C sort -nk1,1 -t $'\t' \
+            | sed '1 s/^/'"$header"'\\n/' \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
-            | awk -F\'\t\' \'{{print $2,$6,$3,$7,$4,$8}}\' OFS=\'\t\' \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED} {MMHSUM_PATH} -d {input.hunaligndic} -t {TMPDIR} \
-                --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} \
+                --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED_ARGS} {MMHSUM_PATH} -d {input.hunaligndic} \
+                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.paragraphs} \
             | gzip -c > {output}
         """

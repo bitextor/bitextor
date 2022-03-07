@@ -14,12 +14,10 @@
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
-import shlex
 import base64
 import logging
 import argparse
 import contextlib
-import subprocess
 
 def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, encode_errors='strict',
          decode_errors='strict'):

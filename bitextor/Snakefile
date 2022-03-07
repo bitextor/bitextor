@@ -9,6 +9,7 @@ from bitextor.utils.common import (
     get_all_ppids,
     snake_no_more_race_get_pgid,
     duration_to_seconds,
+    return_dict_value_if_key
 )
 
 valid, config = validate_args(config)
@@ -34,79 +35,47 @@ LANGS = set()
 # the only scenario where config won't have LANG1 and LANG2 is when the workflow is monolingual,
 # and in that case LANG1/LANG2 and SRC_LANG/TRG_LANG won't be used anywhere, so setting them to 'l1' and 'l2' is fine
 # (if LANG1/LANG2 and SRC_LANG/TRG_LANG are unset or both empty string, Snakemake will give an error, even if they are not used)
-LANG1 = "l1"
-LANG2 = "l2"
+LANG1 = return_dict_value_if_key(config, "lang1", "l1", only_check_key=True)
+LANG2 = return_dict_value_if_key(config, "lang2", "l2", only_check_key=True)
 
 if "langs" in config:
     LANGS = set(config["langs"])
 if "lang1" in config:
-    LANG1 = config["lang1"]
     LANGS.add(LANG1)
 if "lang2" in config:
-    LANG2 = config["lang2"]
     LANGS.add(LANG2)
 
-PROFILING = ""
-if "profiling" in config and config["profiling"]:
-    PROFILING = "\\time -v"
+PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 
 #################################################################
 # CRAWLING
-CRAWLTARGET = ""
-TLD_CRAWL = []
-USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
-CRAWLSIZELIMIT = ""
-CRAWLTIMELIMIT = ""
-CRAWLWAIT = ""
-CRAWLFILETYPES = []
-CRAWLJOBS = "2"
-CRAWLTIMEOUT = "10"
-CRAWLDUMPARGS = ""
-CONTINUECRAWL = False
-HERITRIXPATH = ""
-HERITRIXURL = "https://localhost:8443"
-HERITRIXUSER = "admin:admin"
-CRAWLMAXFOLDERTREEDEPTH = "20"
-CRAWLSCOUTSTEPS = "200"
-CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
-CRAWLPREFIXFILTER = ['mailto:']
+CRAWLTARGET = return_dict_value_if_key(config, "crawler", "")
+TLD_CRAWL = return_dict_value_if_key(config, "crawlTLD", [])
+CRAWLSIZELIMIT = return_dict_value_if_key(config, "crawlSizeLimit", "", apply_function=str)
+CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=str)
+CRAWLWAIT = return_dict_value_if_key(config, "crawlWait", "", apply_function=str)
+CRAWLFILETYPES = return_dict_value_if_key(config, "crawlFileTypes", [])
+CRAWLJOBS = return_dict_value_if_key(config, "crawlerNumThreads", 2, only_check_key=True, apply_function=str)
+CRAWLTIMEOUT = return_dict_value_if_key(config, "crawlerConnectionTimeout", 10, only_check_key=True, apply_function=str)
+CRAWLDUMPARGS = return_dict_value_if_key(config, "dumpCurrentCrawl", "")
+CONTINUECRAWL = return_dict_value_if_key(config, "resumePreviousCrawl", False)
+HERITRIXPATH = return_dict_value_if_key(config, "heritrixPath", "")
+HERITRIXURL = return_dict_value_if_key(config, "heritrixUrl", "https://localhost:8443", only_check_key=True)
+HERITRIXUSER = return_dict_value_if_key(config, "heritrixUser", "admin:admin", only_check_key=True)
+CRAWLMAXFOLDERTREEDEPTH = return_dict_value_if_key(config, "crawlMaxFolderTreeDepth", 20, only_check_key=True, apply_function=str)
+CRAWLSCOUTSTEPS = return_dict_value_if_key(config, "crawlScoutSteps", 200, only_check_key=True, apply_function=str)
 
 if "crawler" in config:
-    CRAWLTARGET = config["crawler"]
-
     if CRAWLTARGET == "linguacrawl":
         # TODO should we change this default value, as we have done with wget, as well?
         CRAWLFILETYPES = ["text/html", "application/pdf"]
-if "crawlTLD" in config and config["crawlTLD"]:
-    TLD_CRAWL = config["crawlTLD"]
+
+USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
+CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
+CRAWLPREFIXFILTER = ['mailto:']
+
 if "crawlerUserAgent" in config:
     USERAGENT = config["crawlerUserAgent"]
-if "crawlSizeLimit" in config:
-    CRAWLSIZELIMIT = str(config["crawlSizeLimit"])
-if "crawlTimeLimit" in config:
-    CRAWLTIMELIMIT = str(duration_to_seconds(config["crawlTimeLimit"]))
-if "crawlWait" in config:
-    CRAWLWAIT = str(config["crawlWait"])
-if "crawlFileTypes" in config:
-    CRAWLFILETYPES = config["crawlFileTypes"]
-if "crawlerNumThreads" in config:
-    CRAWLJOBS = str(config["crawlerNumThreads"])
-if "crawlerConnectionTimeout" in config:
-    CRAWLTIMEOUT = str(config["crawlerConnectionTimeout"])
-if "dumpCurrentCrawl" in config:
-    CRAWLDUMPARGS = config["dumpCurrentCrawl"]
-if "resumePreviousCrawl" in config:
-    CONTINUECRAWL = config["resumePreviousCrawl"]
-if "heritrixPath" in config:
-    HERITRIXPATH = config["heritrixPath"]
-if "heritrixUrl" in config:
-    HERITRIXURL = config["heritrixUrl"]
-if "heritrixUser" in config:
-    HERITRIXUSER = config["heritrixUser"]
-if "crawlMaxFolderTreeDepth" in config:
-    CRAWLMAXFOLDERTREEDEPTH = config["crawlMaxFolderTreeDepth"]
-if "crawlScoutSteps" in config:
-    CRAWLSCOUTSTEPS = config["crawlScoutSteps"]
 if "crawlBlackListURL" in config:
     CRAWLBLACKLISTURL = config["crawlBlackListURL"]
 if "crawlPrefixFilter" in config:
@@ -122,7 +91,6 @@ HTML_FILE = ""
 if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
     PPROC_FILES.append("html.gz")
-
 if "preprocessor" in config:
     if config["preprocessor"] == "warc2preprocess":
         PPROC = "w2p"
@@ -138,41 +106,35 @@ BATCHES = config["batches"]
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
 
-CLEANHTML = ""
-FTFY = ""
-LANGID = "cld2"
+CLEANHTML = return_dict_value_if_key(config, "cleanHTML", "", pos_value="--cleanhtml")
+FTFY = return_dict_value_if_key(config, "ftfy", "", pos_value="--ftfy")
+LANGID = return_dict_value_if_key(config, "langID", "cld2", only_check_key=True)
+HTML5LIB = return_dict_value_if_key(config, "html5lib", "", pos_value="--html5lib")
+BOILERPIPE_MAX_HEAP_SIZE = return_dict_value_if_key(config, "boilerpipeMaxHeapSize", -1, only_check_key=True)
+
 PARSER = ""
 PDFEXTRACT = ""
-HTML5LIB = ""
-BOILERPIPE_MAX_HEAP_SIZE = config["boilerpipeMaxHeapSize"] if "boilerpipeMaxHeapSize" in config else -1
-
-if "cleanHTML" in config and config["cleanHTML"]:
-    CLEANHTML = "--cleanhtml"
-if "ftfy" in config and config["ftfy"]:
-    FTFY = "--ftfy"
-if "langID" in config:
-    LANGID = config["langID"]
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
 if "PDFextract" in config and config["PDFextract"]:
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
     PDFEXTRACT_KL = ""
+
     if "PDFextract_configfile" in config and config["PDFextract_configfile"]:
         PDFEXTRACT_CF = f" --pe_configfile {config['PDFextract_configfile']}"
     if "PDFextract_sentence_join_path" in config and config["PDFextract_sentence_join_path"]:
         PDFEXTRACT_SJ = f" --sentence_join_path {config['PDFextract_sentence_join_path']}"
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
         PDFEXTRACT_KL = f" --kenlm_path {config['PDFextract_kenlm_path']}"
+
     PDFEXTRACT = f"--pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
-if "html5lib" in config and config["html5lib"]:
-    HTML5LIB = "--html5lib"
 
 # sentence splitting and tokenisation
-SENTTOKS = {} if not "sentenceSplitters" in config else config["sentenceSplitters"]
-CUSTOMNBPS = {} if not "customNBPs" in config else config["customNBPs"]
-WORDTOKS = {} if not "wordTokenizers" in config else config["wordTokenizers"]
-MORPHTOKS = {} if not "morphologicalAnalysers" in config else config["morphologicalAnalysers"]
+SENTTOKS = return_dict_value_if_key(config, "sentenceSplitters", {})
+CUSTOMNBPS = return_dict_value_if_key(config, "customNBPs", {})
+WORDTOKS = return_dict_value_if_key(config, "wordTokenizers", {})
+MORPHTOKS = return_dict_value_if_key(config, "morphologicalAnalysers", {})
 
 WORDTOK1 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG1}"
 WORDTOK2 = f"{WORKFLOW}/data/moses/tokenizer/tokenizer.perl -q -b -a -l {LANG2}"
@@ -191,20 +153,16 @@ EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 #################################################################
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
+DOC_THRESHOLD = return_dict_value_if_key(config, "documentAlignerThreshold", 0.1, only_check_key=True)
+
 # mt
-if DOCALIGN == "externalMT":
-    MT_COMMAND = config["alignerCmd"]
-else:
-    MT_COMMAND = None
+MT_COMMAND = config["alignerCmd"] if DOCALIGN == "externalMT" else None
 SRC_LANG = LANG1
 TRG_LANG = LANG2
+
 if "translationDirection" in config and config["translationDirection"] == f"{LANG2}2{LANG1}":
     SRC_LANG = LANG2
     TRG_LANG = LANG1
-
-DOC_THRESHOLD = 0.1
-if "documentAlignerThreshold" in config:
-    DOC_THRESHOLD = config["documentAlignerThreshold"]
 
 # dic-based docalign
 # snakemake/include/dic-docsegalign
@@ -217,93 +175,55 @@ try:
 except:
     pass
 
-DIC = None
-
-if "dic" in config:
-    DIC = config["dic"]
+DIC = return_dict_value_if_key(config, "dic", None)
 
 #################################################################
 # SEGALIGN
 SEGALIGN = config["sentenceAligner"]
 # bleualign
-SEGALIGN_THRESHOLD = 0.0
-if "sentenceAlignerThreshold" in config:
-    SEGALIGN_THRESHOLD = config["sentenceAlignerThreshold"]
+SEGALIGN_THRESHOLD = return_dict_value_if_key(config, "sentenceAlignerThreshold", 0.0)
+
 # hunalign
 # snakemake/include/dic-docsegalign
 #################################################################
 # CLEANING
-FIELDS = ["url1", "url2", "seg1", "seg2", "aligner"]
-PARAGRAPH_IDENTIFICATION_FIELDS = []
-DEFERRED = ""
-MMHSUM_PATH = ""
-DEFERRED_FIELDS = []
-BIFIXER = False
-BIFIXER_FIELDS = []
-BIFIXER_DEFERRED_COLS = ""
-BIFIXER_PARAGRAPHS_COLS = ""
-AGGRESSIVE_DEDUP = "--aggressive_dedup"
-BICLEANER = False
-BICLEANER_FLAVOUR = config["bicleanerFlavour"]
-BICLEANER_MODEL = ""
-BICLEANER_FIELDS = []
-BICLEANER_THRESHOLD = 0.0
-ELRC = False
-ELRC_FIELDS = []
-TMX = False
-DEDUPED = False
-BIROAMER = False
+DEFERRED = return_dict_value_if_key(config, "deferred", False, pos_value=True)
+DEFERRED_ARGS = "--print-sent-hash" if DEFERRED else ""
+MMHSUM_PATH = "mmhsum" if DEFERRED else ""
+
+BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
+AGGRESSIVE_DEDUP = return_dict_value_if_key(config, "aggressiveDedup", "", pos_value="--aggressive_dedup")
+BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
+BIFIXER_PARAGRAPHS_COLS = "--sparagraphid src_paragraph_id --tparagraphid trg_paragraph_id" if PARAGRAPH_IDENTIFICATION else ""
+
+BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
+BICLEANER_FLAVOUR = return_dict_value_if_key(config, "bicleanerFlavour", "classic", only_check_key=True)
+BICLEANER_MODEL = config["bicleanerModel"] if BICLEANER else ""
+BICLEANER_THRESHOLD = return_dict_value_if_key(config, "bicleanerThreshold", 0.0)
+BICLEANER_GENERATE_MODEL = return_dict_value_if_key(config, "bicleanerGenerateModel", False)
+BICLEANER_TRAINING_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusTrainingPrefix", [])
+BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMonoCorpusPrefix", [])
+BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
+
+ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
+TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)
+DEDUPED = return_dict_value_if_key(config, "deduped", False, pos_value=True)
+
+BIROAMER = return_dict_value_if_key(config, "biroamer", False, pos_value=True)
 BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
-BIROAMER_OMIT = ""
+BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", "", pos_value="-o")
+
 OUTPUT_FILES = ["sent", "raw"]
 STATS_FILES = ["sent", "raw"]
-BICLEANER_TRAINING_CORPUS_PREFIX = []
-BICLEANER_AI_MONO_CORPUS_PREFIX = []
-BICLEANER_AI_DEV_CORPUS_PREFIX = []
 
-if PARAGRAPH_IDENTIFICATION:
-    PARAGRAPH_IDENTIFICATION_FIELDS = ["para1", "para2"]
-    BIFIXER_PARAGRAPHS_COLS = "--sparagraphid 6 --tparagraphid 7"
-if "deferred" in config and config["deferred"]:
-    DEFERRED = "--print-sent-hash"
-    MMHSUM_PATH = f"mmhsum"
-    DEFERRED_FIELDS = ["checksum1", "checksum2"]
-    BIFIXER_DEFERRED_COLS = "--sdeferredcol 6 --tdeferredcol 7"
-
-    if PARAGRAPH_IDENTIFICATION:
-        BIFIXER_DEFERRED_COLS = "--sdeferredcol 8 --tdeferredcol 9"
-if "bifixer" in config and config["bifixer"]:
-    BIFIXER = True
-    BIFIXER_FIELDS = ["bifixerhash", "bifixerscore"]
-if "aggressiveDedup" in config and not config["aggressiveDedup"]:
-    AGGRESSIVE_DEDUP = ""
-if "bicleaner" in config and config["bicleaner"]:
-    BICLEANER = True
-    BICLEANER_MODEL = config["bicleanerModel"]
-    BICLEANER_FIELDS = ["bicleaner"]
-if "bicleanerThreshold" in config:
-    BICLEANER_THRESHOLD = config["bicleanerThreshold"]
-if "bicleanerParallelCorpusTrainingPrefix" in config:
-    BICLEANER_TRAINING_CORPUS_PREFIX = config["bicleanerParallelCorpusTrainingPrefix"]
-if "bicleanerParallelCorpusDevPrefix" in config:
-    BICLEANER_AI_DEV_CORPUS_PREFIX = config["bicleanerParallelCorpusDevPrefix"]
-if "bicleanerMonoCorpusPrefix" in config:
-    BICLEANER_AI_MONO_CORPUS_PREFIX = config["bicleanerMonoCorpusPrefix"]
-if "elrc" in config and config["elrc"]:
-    ELRC = True
-    ELRC_FIELDS = ["lengthratio", "numTokensSL", "numTokensTL"]
-if "tmx" in config and config["tmx"]:
-    TMX = True
+if TMX:
     OUTPUT_FILES.append("not-deduped.tmx")
-if "deduped" in config and config["deduped"]:
-    DEDUPED = True
+if DEDUPED:
     OUTPUT_FILES.append("deduped.tmx")
     OUTPUT_FILES.append("deduped.txt")
     STATS_FILES.append("deduped")
-if "biroamer" in config and config["biroamer"]:
-    BIROAMER = True
-
+if BIROAMER:
     if "deduped.tmx" in OUTPUT_FILES:
         OUTPUT_FILES.append("deduped.roamed.tmx")
     else:
@@ -314,23 +234,12 @@ if "biroamer" in config and config["biroamer"]:
 
     if "biroamerImproveAlignmentCorpus" in config:
         BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
+if not BICLEANER_GENERATE_MODEL:
+    BICLEANER_TRAINING_CORPUS_PREFIX = []
+    BICLEANER_AI_MONO_CORPUS_PREFIX = []
+    BICLEANER_AI_DEV_CORPUS_PREFIX = []
 
-    if "biroamerOmitRandomSentences" in config and config["biroamerOmitRandomSentences"]:
-        BIROAMER_OMIT = "-o"
 
-BEFORE_ELRC_FIELDS = FIELDS + PARAGRAPH_IDENTIFICATION_FIELDS + DEFERRED_FIELDS + BIFIXER_FIELDS + BICLEANER_FIELDS
-TMX_FIELDS = BEFORE_ELRC_FIELDS + ELRC_FIELDS
-
-FILTER_SORT_FIELDS = "-k3,4"
-TMX_DEDUP_FIELDS = "seg1,seg2"
-if "bifixerhash" in BEFORE_ELRC_FIELDS:
-    i = BEFORE_ELRC_FIELDS.index("bifixerhash")
-    i = i + 1  # sort counts from 1, not 0
-    FILTER_SORT_FIELDS = f"-k{i},{i} -k{i+1},{i+1}nr"
-    TMX_DEDUP_FIELDS = "bifixerhash"
-
-BEFORE_ELRC_FIELDS = ",".join(BEFORE_ELRC_FIELDS)
-TMX_FIELDS = ",".join(TMX_FIELDS)
 #################################################################
 # DATASOURCES
 HOSTS = set()
@@ -339,23 +248,18 @@ PREVERTICALS = set()
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
-
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
-
 if "preverticals" in config:
     PREVERTICALS = PREVERTICALS.union(config["preverticals"])
-
 if "hostsFile" in config:
     with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
         for line in f:
             HOSTS.add(line.strip())
-
 if "warcsFile" in config:
     with open_xz_or_gzip_or_plain(config["warcsFile"]) as f:
         for line in f:
             WARCS.add(line.strip())
-
 if "preverticalsFile" in config:
     with open_xz_or_gzip_or_plain(config["preverticalsFile"]) as f:
         for line in f:
@@ -384,7 +288,6 @@ TARGET_2_CRAWLED_WARCS = dict([
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
 TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
-#TARGETS = [*TARGET_2_WARCS.keys(), *TARGET_2_PREVERTICALS.keys()]
 
 #################################################################
 ### WORKFLOW EXECUTION ##########################################
@@ -396,6 +299,7 @@ THREADS = {
     "segalign": 1,
     "bifixer": 1,
     "bicleaner": 1,
+    "filter": 1,
     "sents": 1,
 }
 if "parallelWorkers" in config:
@@ -403,7 +307,8 @@ if "parallelWorkers" in config:
         THREADS[k] = config["parallelWorkers"][k]
 
 OUTPUT = []
-UNTIL = config["until"] if "until" in config else ""
+UNTIL = return_dict_value_if_key(config, "until", "")
+
 if "until" not in config:
     OUTPUT = expand(
         "{permanent}/{lang1}-{lang2}.{output_file}.gz",
@@ -492,8 +397,8 @@ rule all:
 
 #################################################################
 ### INCLUDE #####################################################
-include: "rules/dict_generation.smk"
-include: "rules/dict_doc_seg_align.smk"
+include: "rules/dic_generation.smk"
+include: "rules/dic_doc_seg_align.smk"
 
 
 #################################################################
@@ -599,7 +504,6 @@ rule linguacrawl_config:
         scout_steps=apply_format(CRAWLSCOUTSTEPS, "scout_steps: {}\n"),
         blacklist=apply_format(str(CRAWLBLACKLISTURL), "url_blacklist: {}\n"),
     run:
-        global HOSTS
         yaml_content = ""
 
         langs = "','".join(LANGS)
@@ -822,10 +726,13 @@ rule prevertical2text:
         paragraphs='-p' if PARAGRAPH_IDENTIFICATION else '',
     shell:
         """
+        CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
+
         mkdir -p {params.folder}
-        cat {input} | \
+        $CAT {input} | \
             python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
             {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
+
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
@@ -996,7 +903,10 @@ rule custom_translate:
         if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
             zcat {input.source} \
                 | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
-            para_nolines=$(cat "{params.paragraphs_file}" | base64 -d | grep -E "^p[0-9]+s[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+
+            para_nolines=$(cat "{params.paragraphs_file}" | base64 -d \
+                | grep -E "^p[0-9]+/[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+
             if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
                 >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
                 exit 1
@@ -1147,9 +1057,9 @@ rule mt_matches:
     :input.l2: gz-compressed file with a base64-encoded document per line
         tokenised target language documents
     :output: indices file
-        plain text file with 3 tab separated columns: score, src_index, trg_index
-            src_index is the number of the aligned document in source language
-            trg_index is the number of the aligned document in target language
+        plain text file with 3 tab separated columns: mt_doc_aligner_score, idx_translated, idx_trg
+            idx_translated is the number of the aligned document in source language
+            idx_trg is the number of the aligned document in target language
     """
     input:
         l1=rules.tokenise_translated.output,
@@ -1162,9 +1072,9 @@ rule mt_matches:
     shell:
         """
         mkdir -p {params.folder}
+
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
-
 
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
@@ -1188,7 +1098,7 @@ rule aggregate_segalign:
 rule bleualign:
     """
     Use bleualign to align sentences withing the matched documents
-    :input.indices: output of mt docalign (columns are "score src_index trg_index")
+    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score src_index trg_index")
     :input.plain1: gz-compressed file with a base64-encoded document per line
         sentence-split source documents
     :input.plain1: gz-compressed file with a base64-encoded document per line
@@ -1198,7 +1108,7 @@ rule bleualign:
     :input.translated1: gz-compressed file with a base64-encoded document per line
         source documents translated into target language
     :output: aligned sentences
-        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,score
+        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,bleualign_score
     """
     input:
         indices=rules.mt_matches.output,
@@ -1222,12 +1132,16 @@ rule bleualign:
         if [ {params.workers} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.workers} -l 1 --group"
         fi
-        cut -f 2,3 {input.indices} \
+        header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
+
+        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
+            | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED} {params.paragraphs} \
+            | sed '1 s/^/'"$header"'\\n/' \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         """
@@ -1235,10 +1149,7 @@ rule bleualign:
 
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = "06_02.segalign"
-if SEGALIGN == "hunalign":
-    split_input_filename = "hunalign.06_02.segalign"
-
+split_input_filename = "hunalign.06_02.segalign" if SEGALIGN == "hunalign" else "06_02.segalign"
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
@@ -1265,6 +1176,8 @@ checkpoint split_segalign:
         # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
         #  running the script, so it fails even before we are able to check if the input is empty in bash script
         if len(input) == 0:
+            # TODO is this really necessary? There can be jobs being executed when we reach this checkpoint? If not, we should raise
+            #  an exception instead of try to get the common PID of the current snakemake execution
             shell(
                 f"""
                 >&2 echo "INFO: no data to work with: stopping execution"
@@ -1289,15 +1202,15 @@ checkpoint split_segalign:
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
                 fi
-                format='$2,$1,$4,$3,$5'
-                if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] && [[ ! -z "{DEFERRED}" ]]; then
-                    format='$2,$1,$4,$3,$5,$7,$6,$9,$8'
-                elif [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]] || [[ ! -z "{DEFERRED}" ]]; then
-                    format='$2,$1,$4,$3,$5,$7,$6'
-                fi
-                $CAT {input} \
-                    | ( [ "{SRC_LANG}" = "{LANG1}" ] && cat || awk -F '\t' '{{ print '$format' }}' OFS='\t' ) \
-                    | python3 {WORKFLOW}/bitextor_split_segalign.py -f 3,4 -s {params.size} --gzip -o "{params.folder}/"
+                header="$(head -1 <($CAT {input[0]}) | sed 's/\\t/\\\\t/g')"
+                echo {input} \
+                    | tr ' ' '\n' \
+                    | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+                    | sed '1 s/^/'"$header"'\\n/' \
+                    | ( [ "{SRC_LANG}" = "{LANG1}" ] \
+                        && cat \
+                        || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
+                    | python3 {WORKFLOW}/bitextor_split_segalign.py -f src_text,trg_text -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
                 else
@@ -1329,7 +1242,7 @@ rule bifixer:
         fi
         $CAT {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
-                {BIFIXER_PARAGRAPHS_COLS} - - {LANG1} {LANG2} \
+                {BIFIXER_PARAGRAPHS_COLS} --header - - {LANG1} {LANG2} \
             > {output}
         """
 
@@ -1348,11 +1261,6 @@ rule aggregate_bifixer:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-bicleaner_input = rules.bifixer.output
-if not BIFIXER:
-    bicleaner_input = rules.bifixer.input.segalign
-
-
 rule bicleaner_train_model:
     """
     Train bicleaner model
@@ -1361,25 +1269,27 @@ rule bicleaner_train_model:
         corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
         corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
         # Bicleaner
-        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_FLAVOUR == "classic"),
-        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_FLAVOUR == "classic"),
-        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_FLAVOUR == "classic"),
-        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_FLAVOUR == "classic"),
+        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
+                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
         # Bicleaner AI
         mono_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
-                                   BICLEANER_FLAVOUR == "ai"),
+                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
         mono_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
-                                   BICLEANER_FLAVOUR == "ai"),
+                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
         dev_corpus_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
-                                         BICLEANER_FLAVOUR == "ai"),
+                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
         dev_corpus_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
-                                         BICLEANER_FLAVOUR == "ai"),
+                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
     output:
         model=BICLEANER_MODEL,
     params:
         training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
         # Bicleaner
-        classifier=f"{BICLEANER_MODEL.split('/')[-1]}/{LANG1}-{LANG2}.classifier",
+        classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
         # Bicleaner AI
         tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
         dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
@@ -1439,7 +1349,7 @@ rule bicleaner:
     :output: gz-compressed, same columns as input with one new column: score
     """
     input:
-        bifixer=bicleaner_input,
+        bifixer=rules.bifixer.output if BIFIXER else rules.bifixer.input.segalign,
         model=BICLEANER_MODEL,
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
@@ -1453,22 +1363,17 @@ rule bicleaner:
         if [ {params.threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
-        CAT=cat; if [[ {input.bifixer} == *.gz ]]; then CAT=zcat; fi
+        CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        if [ "$slang" == "{LANG1}" ]; then
-            $CAT {input.bifixer} \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
-                    --score_only -q - - {input.model} \
-                | paste <($CAT {input.bifixer}) - \
-                | pigz -c > {output}
-        else
-            $CAT {input.bifixer} \
-                | awk ' BEGIN {{FS="\t"; OFS="\t"}} {{ t = $3; $3 = $4; $4 = t; print;}} ' \
-                | {PROFILING} cache -k 3,4 ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
-                    --score_only -q - - {input.model} \
-                | paste <($CAT {input.bifixer}) - \
-                | pigz -c > {output}
-        fi
+        text_fields=$(head -1 <($CAT {input.bifixer}) \
+            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
+            | tr -d '\n')
+
+        $CAT {input.bifixer} \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+                --score_only --header -q - - {input.model} \
+            | paste <($CAT {input.bifixer}) - \
+            | pigz -c > {output}
         """
 
 
@@ -1488,9 +1393,69 @@ rule aggregate_bicleaner:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-filter_input = rules.bicleaner.output
-if not BICLEANER:
-    filter_input = rules.bicleaner.input.bifixer
+filter_input = rules.bicleaner.output if BICLEANER else rules.bicleaner.input.bifixer
+
+
+rule pre_filter:
+    input:
+        filter_input,
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}.sort_flags")
+    run:
+        header = None
+
+        with open_xz_or_gzip_or_plain(str(input)) as f:
+            for header in f:
+                break
+
+        header = header.strip().split('\t')
+        src_text_idx = header.index('src_text') + 1
+        trg_text_idx = header.index('trg_text') + 1
+        src_url_idx = header.index('src_url') + 1
+        trg_url_idx = header.index('trg_url') + 1
+
+        sort_flags = f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx} " \
+                     f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx}"
+
+        if "bifixer_hash" in header:
+            i = header.index("bifixer_hash") + 1 # sort counts from 1, not 0
+
+            sort_flags = f"-k{i},{i} -k{i+1},{i+1}nr " \
+                         f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx} " \
+                         f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx}"
+
+        with open(output[0], 'w') as f:
+            f.write(f"{sort_flags}\n")
+
+
+rule pre_filter_sort_flags:
+    input:
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
+    output:
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags")
+    shell:
+        """
+        value="/dev/null"
+        first="0"
+
+        for f in $(echo {input} | tr ' ' '\n'); do
+            if [[ "$first" == "0" ]]; then
+                value="$f"
+                first="1"
+            else
+                current_value="$f"
+                d=$(diff $value $current_value | wc -l)
+
+                if [[ "$d" != "0" ]]; then
+                    >&2 echo "All sort flags have to be the same"
+
+                    false # Trigger exit (it will work since bash is executed in strict mode)
+                fi
+            fi
+        done
+
+        cat $value > {output}
+        """
 
 
 rule filter:
@@ -1502,24 +1467,36 @@ rule filter:
         add new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
     """
     input:
-        filter_input,
+        f=filter_input,
+        sort_flags=rules.pre_filter_sort_flags.output,
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
-    threads: lambda wildcards: 2 if BICLEANER and ELRC else 1
-    run:
-        cat_cmd = "cat"
-        if input[0][-3:] == ".gz":
-            cat_cmd = "zcat"
-        cmd = f""" {cat_cmd} {input} """
-        if BICLEANER:
-            cmd += (
-                f""" | {PROFILING} python3 {WORKFLOW}/bitextor_filterbicleaner.py --threshold {BICLEANER_THRESHOLD} """
-            )
-        if ELRC:
-            cmd += f""" | {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -c "{BEFORE_ELRC_FIELDS}" -s """
-        cmd += f""" | LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} """  # sorted by either sentences or bifixer
-        cmd += f""" > {output} """
-        shell(cmd)
+    params:
+        bicleaner_header="bicleaner_score" if BICLEANER_FLAVOUR == "classic" else "bicleaner_ai_score",
+    threads: THREADS["filter"]
+    shell:
+        """
+        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        CAT=$([[ {input.f} == *.gz ]] && echo "zcat" || echo "cat")
+
+        $CAT {input.f} \
+            | ( [[ "{BICLEANER}" == "True" ]] \
+                && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
+                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header} \
+                || cat ) \
+            | ( [[ "{ELRC}" == "True" ]] \
+                && {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s \
+                || cat ) \
+            > {output}
+
+        header=$(head -1 <(cat {output}) | tr -d '\n')
+
+        # Remove header, sort and add header (in-place) from output file
+        sed -i '1 d' {output} \
+            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
+                --compress-program=gzip -T {TMPDIR} -o {output} {output} \
+            && sed -i '1 s/^/'"$header"'\\n/' {output}
+        """
 
 
 rule aggregate_filter:
@@ -1529,7 +1506,7 @@ rule aggregate_filter:
     :output: a file that contains the path to every filter result
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}" for batch in get_postproc_batches()],
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
     output:
         f"{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}",
     shell:
@@ -1559,15 +1536,21 @@ rule raw:
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.raw",
     shell:
         """
-        if [[ "{extension}" == ".gz" ]]; then
-            cat {input} > {output.corpus}
-        else
-            cat {input} | pigz -c > {output.corpus}
-        fi
+        CAT=$([[ "{extension}" == ".gz" ]] && echo "zcat" || echo "cat")
+        header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
+
+        echo {input} \
+            | tr ' ' '\n' \
+            | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+            | sed '1 s/^/'"$header"'\\n/' \
+            | pigz -c > {output.corpus}
+
+        # Stats
+        WC1=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f trg_text | tail -n +2 | wc -w)
+
         echo "{LANG1}-{LANG2} raw" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
-        WC1=$(zcat {output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat {output.corpus} | cut -f 4 | wc -w)
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
@@ -1585,19 +1568,40 @@ rule sents:
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
+    params:
+        sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags"
     threads: THREADS["sents"]
-    shell:
+    run:
+        cmd = \
+        f"""
+        sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
+        header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
+
+        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
+            -T {TMPDIR} --merge \\
         """
-        LC_ALL=C sort -t $'\t' {FILTER_SORT_FIELDS} --parallel {threads} --compress-program=gzip -T {TMPDIR} --merge {input} \
-            | pigz -c > {output.corpus}
+
+        for filename in input:
+            # Use tmp named pipes since --merge does need the file descriptor and we need to get rid of the header
+            cmd += f" <(tail -n +2 {filename})"
+
+        cmd += \
+        f""" \\
+        | sed '1 s/^/'"$header"'\\n/' \\
+        | pigz -c > {output.corpus}
+
+        # Stats
+        WC1=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f trg_text | tail -n +2 | wc -w)
+
         echo "{LANG1}-{LANG2} filtered" > {output.stats}
         echo "File size: $(du -h {output.corpus} | cut -f 1)" >> {output.stats}
-        WC1=$(zcat {output.corpus} | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat {output.corpus} | cut -f 4 | wc -w)
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}
         """
+
+        shell(cmd)
 
 
 rule tmx:
@@ -1613,7 +1617,7 @@ rule tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} \
             | pigz -c > {output}
         """
 
@@ -1632,15 +1636,21 @@ rule deduped_tmx:
         tmx=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz",
         txt=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.deduped",
+    params:
+        dedup_fields="bifixer_hash" if BIFIXER else "src_text,trg_text"
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_buildTMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} -c "{TMX_FIELDS}" --dedup "{TMX_DEDUP_FIELDS}" -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {LANG1} --lang2 {LANG2} \
+                --dedup {params.dedup_fields} -f {output.txt} \
             | pigz -c > {output.tmx}
+
+        # Stats
+        WC1=$(zcat {output.txt} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
+        WC2=$(zcat {output.txt} | python3 {WORKFLOW}/utils/cut_header.py -f trg_text | tail -n +2 | wc -w)
+
         echo "{LANG1}-{LANG2} deduped txt" > {output.stats}
         echo "File size: $(du -h {output.txt} | cut -f 1)" >> {output.stats}
-        WC1=$(zcat {output.txt} | cut -f 3 | wc -wl | tr -s ' ')
-        WC2=$(zcat {output.txt} | cut -f 4 | wc -w)
         echo "Sentence pairs: $(echo $WC1 | cut -d ' ' -f 1)" >> {output.stats}
         echo "{LANG1} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{LANG2} words: $WC2" >> {output.stats}

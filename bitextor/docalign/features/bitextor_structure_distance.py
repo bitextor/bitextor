@@ -57,9 +57,7 @@ class Parser(html.parser.HTMLParser):
             self.output.append("_" + tag + "_")
 
 
-# print("pathname", pathname)
-
-def extract_structure_representations(f, docs, fileid):
+def extract_structure_representations(f, docs, offset=1):
     with open_xz_or_gzip_or_plain(f) as fd:
         dic = {}
         charidx = 32
@@ -90,14 +88,15 @@ def extract_structure_representations(f, docs, fileid):
                                     charidx += 1
 
                             translated_taglist.append(dic[tag])
-                        docs[fileid] = "".join(translated_taglist)
+                        docs[offset] = "".join(translated_taglist)
                     else:
-                        docs[fileid] = " "
+                        docs[offset] = " "
             except:
-                docs[fileid] = " "
+                docs[offset] = " "
             finally:
-                fileid += 1
-    return fileid
+                offset += 1
+
+    return offset
 
 
 def main():
@@ -118,26 +117,27 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_structure_representations(options.html1, documents, offset)
-    offset = extract_structure_representations(options.html2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+    extract_structure_representations(options.html1, documents["l1"])
+    extract_structure_representations(options.html2, documents["l2"])
+
+    header = next(reader).strip().split("\t")
+    src_doc_idx_idx = header.index("src_index")
+    trg_doc_idx_idx = header.index("trg_index")
+
+    # Print output header
+    print("\t".join(header) + "\tstructure_distance")
 
     for i in reader:
         fields = i.strip().split("\t")
-        # The document must have at least one candidate
-        if len(fields) > 1:
-            len_s = len(documents[int(fields[0])])
-            sys.stdout.write(str(fields[0]))
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
-                len_t = len(documents[candidateid])
-                dist = Levenshtein.distance(documents[int(fields[0])], documents[candidateid])
-                port = 1 - (dist / float(max(len_s, len_t)))
-                candidate += ":" + str(port)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
+        len_s = len(documents["l1"][src_doc_idx])
+        len_t = len(documents["l2"][trg_doc_idx])
+        dist = Levenshtein.distance(documents["l1"][src_doc_idx], documents["l2"][trg_doc_idx])
+        port = 1.0 - dist / max(len_s, len_t)
+
+        print("\t".join(fields) + "\t" + str(port))
 
 
 if __name__ == '__main__':

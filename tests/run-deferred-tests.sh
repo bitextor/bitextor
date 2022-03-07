@@ -32,7 +32,8 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-BITEXTOR="bitextor"
+BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
+BITEXTOR_EXTRA_ARGS=""
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/reports"
@@ -46,22 +47,28 @@ download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitex
 WARC="${WORK}/data/warc/primeminister.warc.gz"
 
 # MT (id >= 10)
-${BITEXTOR} ${FORCE} --notemp \
+TRANSIENT_DIR="${WORK}/transient-mt-en-el"
+
+mkdir -p "${TRANSIENT_DIR}" && \
+pushd "${TRANSIENT_DIR}" > /dev/null && \
+${BITEXTOR} \
   --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
-    dataDir="${WORK}/data/data-mt-en-el" transientDir="${WORK}/transient-mt-en-el" \
+    dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
-    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True -j ${THREADS} \
-  &> "${WORK}/reports/10-mt-en-el.report"
+    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
+  &> "${WORK}/reports/10-mt-en-el.report" && \
+popd > /dev/null
 
 BITEXTOR_STATUS=$?
 
 if [ ${BITEXTOR_STATUS} -eq 0 ]; then
   BITEXTOR_OUTPUT_DEDUPED="${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz"
-  RECONSTRUCTOR="${DIR}/../deferred-crawling/deferred-annotation-reconstructor.py"
+  RECONSTRUCTOR="${DIR}/../deferred-crawling/deferred-annotation-reconstructor.py --header"
 
-  python3 ${RECONSTRUCTOR} ${BITEXTOR_OUTPUT_DEDUPED} en el ${WARC} \
-    | bifixer -q --sdeferredcol 6 --tdeferredcol 7 --ignore_duplicates - - en el  \
+  python3 ${RECONSTRUCTOR} ${BITEXTOR_OUTPUT_DEDUPED} en el ${WARC} --header \
+    | bifixer -q --sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash \
+      --ignore_duplicates - - en el --header \
     > "${WORK}/outputdeferred"
 
   diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null

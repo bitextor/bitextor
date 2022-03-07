@@ -23,6 +23,7 @@ jobs:
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_mt
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -51,7 +52,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_mt.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -79,12 +80,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_mt.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_db:
       name: Tests dictionary based
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_db
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -113,7 +145,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_db.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -141,12 +173,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_db.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_gendic:
       name: Tests generate dictionary
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_gendic
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -186,7 +249,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_gendic.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -214,12 +277,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_gendic.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_genbicleaner:
       name: Tests generate bicleaner model
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_genbicleaner
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -259,7 +353,7 @@ jobs:
             
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_genbicleaner.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -287,12 +381,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_genbicleaner.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_gendic_genbicleaner:
       name: Tests generate dictionary and bicleaner model
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_gendic_genbicleaner
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -332,7 +457,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_gendic_genbicleaner.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -360,12 +485,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_gendic_genbicleaner.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_mt_db:
       name: Tests combining dictionaries and MT
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_mt_db
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -394,7 +550,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_mt_db.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -422,12 +578,43 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_mt_db.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
    tests_others:
       name: Other tests
       runs-on: ubuntu-20.04
       timeout-minutes: 600
       steps:
       -  name: Run
+         id: tests_others
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -456,7 +643,7 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests_others.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -484,3 +671,33 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests_others.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done

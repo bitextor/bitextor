@@ -99,7 +99,11 @@ sudo apt install git time python3 python3-venv python3-pip golang-go build-essen
 sudo apt install wget
 ## warc2text:
 sudo apt install uchardet libuchardet-dev libzip-dev
-## biroamer:
+## Bicleaner AI:
+sudo apt install libhunspell-dev
+### Hunspell dictionaries (example)
+sudo apt install hunspell-es
+## Biroamer:
 sudo apt install libgoogle-perftools-dev libsparsehash-dev
 ## Heritrix, PDFExtract and boilerpipe:
 sudo apt install openjdk-8-jdk
@@ -138,6 +142,14 @@ Optionally, it is possible to skip the compilation of the dependencies that are 
 cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=$HOME/.local .. # MGIZA is used for dictionary generation
 # other dependencies that can optionally be skipped:
 # WARC2TEXT, PREVERTICAL2TEXT, DOCALIGN, BLEUALIGN, HUNALIGN, BIROAMER, KENLM
+```
+
+If you are installing Bitextor within a conda environment, you might like to execute the following commands instead of the provided above:
+
+```bash
+mkdir build && cd build
+cmake -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" ..
+CPATH="$CONDA_PREFIX/include" LD_LIBRARY_PATH="$CONDA_PREFIX/lib" make -j install
 ```
 
 ### Golang packages

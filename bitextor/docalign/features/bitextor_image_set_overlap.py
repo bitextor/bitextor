@@ -23,16 +23,18 @@ import base64
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
-def extract_images(f, docs, fileid):
+def extract_images(f, docs, offset=1):
     with open_xz_or_gzip_or_plain(f) as fd:
         for html_base64enc in fd:
             # To compute the edit distance at the level of characters, HTML tags must be encoded as characters and
             # not strings:
-            links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''',
-                               base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore"), re.S)
-            docs[fileid] = set(list(links))
-            fileid += 1
-    return fileid
+            html_content = base64.b64decode(html_base64enc.strip()).decode("utf-8", errors="ignore")
+            links = re.findall('''<img [^>]*src\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
+            docs[offset] = set(list(links)) # Store imgs just once
+
+            offset += 1
+
+    return offset
 
 
 def main():
@@ -53,29 +55,30 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_images(options.html1, documents, offset)
-    offset = extract_images(options.html2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+
+    extract_images(options.html1, documents["l1"])
+    extract_images(options.html2, documents["l2"])
+
+    header = next(reader).strip().split("\t")
+    src_doc_idx_idx = header.index("src_index")
+    trg_doc_idx_idx = header.index("trg_index")
+
+    # Print output header
+    print("\t".join(header) + "\timages_overlap_score")
 
     for i in reader:
         fields = i.strip().split("\t")
-        # The document must have at least one candidate
-        if len(fields) > 1:
-            sys.stdout.write(str(fields[0]))
-            urls_doc = documents[int(fields[0])]
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
-                urls_candidate = documents[candidateid]
-                if len(urls_doc.union(urls_candidate)) > 0:
-                    bagofurlsoverlap = len(urls_doc.intersection(urls_candidate)) / float(
-                        len(urls_doc.union(urls_candidate)))
-                else:
-                    bagofurlsoverlap = 0
-                candidate += ":" + str(bagofurlsoverlap)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
+        urls_doc = documents["l1"][src_doc_idx]
+        urls_candidate = documents["l2"][trg_doc_idx]
+        bag_of_urls_overlap = 0
+
+        if len(urls_doc.union(urls_candidate)) > 0:
+            bag_of_urls_overlap = len(urls_doc.intersection(urls_candidate)) / float(len(urls_doc.union(urls_candidate)))
+
+        print("\t".join(fields) + "\t" + str(bag_of_urls_overlap))
 
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ jobs:
             # Docker default user is root, but is not on Github Action (https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#administrative-privileges-of-github-hosted-runners),
             #  so we use sudo and Docker will not complain and Github Actions will work
             apt-get --assume-yes install sudo || true
-            sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev
+            sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
             sudo apt-get --assume-yes --reinstall install build-essential g++
       -  name: Set up Python3
          uses: actions/setup-python@v2
@@ -81,7 +81,7 @@ jobs:
             chmod 775 ./tests/run-deferred-tests.sh
             ./tests/run-deferred-tests.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |

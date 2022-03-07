@@ -24,22 +24,24 @@ import base64
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
 
-def extract_urls(html_file, url_file, docs, fileid):
+def extract_urls(html_file, url_file, docs, offset=1):
     with open_xz_or_gzip_or_plain(html_file) as hd:
         with open_xz_or_gzip_or_plain(url_file) as ud:
             for url in ud:
                 html_content = base64.b64decode(next(hd, None)).decode("utf-8", errors="ignore")
-
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
                 rx = re.match('(https?://[^/:]+)', url)
+
                 if rx is not None:
                     url_domain = rx.group(1)
                     urls = "".join(links).replace(url_domain, "")
                 else:
                     urls = "".join(links)
-                docs[fileid] = urls
-                fileid += 1
-    return fileid
+
+                docs[offset] = urls
+                offset += 1
+
+    return offset
 
 
 def main():
@@ -64,29 +66,30 @@ def main():
     else:
         reader = open(options.ridx, "r")
 
-    documents = {}
-    offset = 1
-    offset = extract_urls(options.html1, options.url1, documents, offset)
-    offset = extract_urls(options.html2, options.url2, documents, offset)
+    documents = {"l1": {}, "l2": {}}
+    extract_urls(options.html1, options.url1, documents["l1"])
+    extract_urls(options.html2, options.url2, documents["l2"])
+
+    header = next(reader).strip().split("\t")
+    src_doc_idx_idx = header.index("src_index")
+    trg_doc_idx_idx = header.index("trg_index")
+
+    # Print output header
+    print("\t".join(header) + "\tdocument_urls_distance")
 
     for i in reader:
         fields = i.strip().split("\t")
-        # The document must have at least one candidate
-        if len(fields) > 1:
-            sys.stdout.write(str(fields[0]))
-            urls_doc = documents[int(fields[0])]
-            for j in range(1, len(fields)):
-                candidate = fields[j]
-                candidateid = int(fields[j].split(":")[0])
-                urls_candidate = documents[candidateid]
-                if len(urls_candidate) == 0 or len(urls_doc) == 0:
-                    normdist = 0.0
-                else:
-                    dist = Levenshtein.distance(urls_doc, urls_candidate)
-                    normdist = dist / float(max(len(urls_doc), len(urls_candidate)))
-                candidate += ":" + str(normdist)
-                sys.stdout.write("\t" + candidate)
-            sys.stdout.write("\n")
+        src_doc_idx = int(fields[src_doc_idx_idx])
+        trg_doc_idx = int(fields[trg_doc_idx_idx])
+        urls_doc = documents["l1"][src_doc_idx]
+        urls_candidate = documents["l2"][trg_doc_idx]
+        normdist = 0.0
+
+        if len(urls_candidate) != 0 and len(urls_doc) != 0:
+            dist = Levenshtein.distance(urls_doc, urls_candidate)
+            normdist = dist / max(len(urls_doc), len(urls_candidate))
+
+        print("\t".join(fields) + "\t" + str(normdist))
 
 
 if __name__ == '__main__':

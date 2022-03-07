@@ -30,7 +30,7 @@ jobs:
             # Docker default user is root, but is not on Github Action (https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#administrative-privileges-of-github-hosted-runners),
             #  so we use sudo and Docker will not complain and Github Actions will work
             apt-get --assume-yes install sudo || true
-            sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev
+            sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
             sudo apt-get --assume-yes --reinstall install build-essential g++
       -  name: Set up Python3
          uses: actions/setup-python@v2
@@ -81,7 +81,7 @@ jobs:
             chmod 775 ./tests/run-tests-min.sh
             ./tests/run-tests-min.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
-         if: ${{ always() }}
+         if: ${{ steps.tests.conclusion != 'success' }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -103,15 +103,46 @@ jobs:
                   else
                      echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
                   fi
+
                   echo ""
                done < "${WORK}/data/fails.log"
             else
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
+      -  name: Print log subsample of tests which succeeded
+         if: ${{ steps.tests.conclusion == 'success' }}
+         env:
+            WORK: ${{ github.workspace }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+               md5=$(md5sum "$sent_file" | awk '{print $1}')
+
+               str="# Test $notest (md5: $md5) #"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+               echo "$str"
+               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+               if [[ -f "$sent_file" ]]; then
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
       -  name: Trigger intensive tests with Docker
          # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         if: ${{ steps.tests.outcome == 'success' && startsWith(github.ref, 'refs/tags/v') }}
+         if: ${{ steps.tests.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
          env:
             BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
             BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
