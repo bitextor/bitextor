@@ -81,7 +81,7 @@ jobs:
             chmod 775 ./tests/run-tests-min.sh
             ./tests/run-tests-min.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
-         if: ${{ steps.tests.conclusion != 'success' }}
+         if: steps.tests.conclusion != 'success'
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -111,7 +111,7 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests.conclusion == 'success' }}
+         if: steps.tests.conclusion == 'success'
          env:
             WORK: ${{ github.workspace }}
          run: |
