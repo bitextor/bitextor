@@ -52,7 +52,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_mt.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_mt.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -81,22 +83,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_mt.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_mt.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -145,7 +149,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_db.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_db.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -174,22 +180,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_db.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_db.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -249,7 +257,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_gendic.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_gendic.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -278,22 +288,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_gendic.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_gendic.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -353,7 +365,9 @@ jobs:
             
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_genbicleaner.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_genbicleaner.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -382,22 +396,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_genbicleaner.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_genbicleaner.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -457,7 +473,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_gendic_genbicleaner.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_gendic_genbicleaner.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -486,22 +504,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_gendic_genbicleaner.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_gendic_genbicleaner.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -550,7 +570,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_mt_db.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_mt_db.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -579,22 +601,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_mt_db.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_mt_db.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-
+               
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -643,7 +667,9 @@ jobs:
 
             "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40 -w "$WORK"
       -  name: Print log of tests which failed
-         if: ${{ steps.tests_others.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_others.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -672,22 +698,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests_others.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests_others.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \

@@ -63,7 +63,9 @@ jobs:
             chmod 775 "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh"
             "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh" -w "$WORK" -j 4
       -  name: Print log of tests which failed
-         if: ${{ steps.tests.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
@@ -92,22 +94,24 @@ jobs:
                exit 1
             fi
       -  name: Print log subsample of tests which succeeded
-         if: ${{ steps.tests.conclusion == 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests.conclusion == 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-               md5=$(md5sum "$sent_file" | awk '{print $1}')
-
-               str="# Test $notest (md5: $md5) #"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-               echo "$str"
-               eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
@@ -124,6 +128,7 @@ jobs:
       -  name: Upload to Anaconda Cloud
          id: deployment
          # Check if tests succeeded and if we have, likely, a release (it is not sure)
+         # https://github.com/actions/runner/issues/1173
          if: ${{ steps.tests.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
          env:
             ANACONDA_CLOUD_TOKEN: ${{ secrets.ANACONDA_CLOUD_TOKEN }}
@@ -137,6 +142,7 @@ jobs:
             anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
       -  name: Trigger intensive tests
          # Check if tests succeeded and if we have, likely, a release (it is not sure)
+         # https://github.com/actions/runner/issues/1173
          if: ${{ steps.deployment.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
          env:
             BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}

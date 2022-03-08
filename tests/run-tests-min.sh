@@ -55,7 +55,7 @@ touch "$FAILS"
 download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
-download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
+download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 # Parallel corpus
