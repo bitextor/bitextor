@@ -203,12 +203,15 @@ BIFIXER_IGNORE_SEGMENTATION = "--ignore_segmentation" if "bifixerIgnoreSegmentat
 
 BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
 BICLEANER_FLAVOUR = return_dict_value_if_key(config, "bicleanerFlavour", "classic", only_check_key=True)
+BICLEANER_MODEL_FLAVOUR = return_dict_value_if_key(config, "bicleanerModelFlavour", "lite", only_check_key=True)
 BICLEANER_MODEL = config["bicleanerModel"] if BICLEANER else ""
 BICLEANER_THRESHOLD = return_dict_value_if_key(config, "bicleanerThreshold", 0.0)
 BICLEANER_GENERATE_MODEL = return_dict_value_if_key(config, "bicleanerGenerateModel", False)
 BICLEANER_TRAINING_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusTrainingPrefix", [])
 BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMonoCorpusPrefix", [])
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
+BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
+BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" else ''
 
 ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
 TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)
@@ -1360,7 +1363,6 @@ rule bicleaner:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         threads=THREADS["bicleaner"],
-        flavour="bicleaner-classify-lite" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
     threads: max(2, THREADS["bicleaner"]) # TODO why?
     shell:
         """
@@ -1375,7 +1377,7 @@ rule bicleaner:
             | tr -d '\n')
 
         $CAT {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {params.flavour} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} -S "{WORDTOK1}" -T "{WORDTOK2}" \
                 --score_only --header -q - - {input.model} \
             | paste <($CAT {input.bifixer}) - \
             | pigz -c > {output}

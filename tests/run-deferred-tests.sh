@@ -56,7 +56,8 @@ ${BITEXTOR} \
     dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
-    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
+    sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True \
+    bifixerIgnoreSegmentation=False ${BITEXTOR_EXTRA_ARGS} \
   &> "${WORK}/reports/10-mt-en-el.report" && \
 popd > /dev/null
 
