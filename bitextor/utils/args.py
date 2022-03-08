@@ -184,7 +184,9 @@ def validate_args(config):
         ## fix
         'bifixer': {'type': 'boolean', 'default': False},
         ### mark near duplicates as duplicates
-        'aggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
+        'bifixerAggressiveDedup': {'type': 'boolean', 'dependencies': {'bifixer': True}},
+        ### do not resplit
+        'bifixerIgnoreSegmentation': {'type': 'boolean', 'dependencies': {'bifixer': True}},
         ## cleaning
         'bicleaner': {'type': 'boolean', 'default': False},
         'bicleanerFlavour': {'type': 'string', 'allowed': ['classic', 'ai'], 'default': 'ai'},

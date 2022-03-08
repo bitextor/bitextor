@@ -230,13 +230,14 @@ wait
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
             bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.0 \
-            deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
+            deferred=False bifixer=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/101-mto2-en-fr.report" && \
     popd > /dev/null
 
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
-) &
-(
+
+    # Remove parallelism because NLTK model installation can't run in parallel
+
     TRANSIENT_DIR="${WORK}/transient-mto3-en-fr"
 
     mkdir -p "${TRANSIENT_DIR}" && \
@@ -248,7 +249,7 @@ wait
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
             bicleaner=True bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerThreshold=0.0 \
-            deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
+            deferred=False bifixer=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/102-mto3-en-fr.report" && \
     popd > /dev/null
 

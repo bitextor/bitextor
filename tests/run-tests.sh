@@ -395,7 +395,7 @@ tests-others()
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.0 \
-                deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
+                deferred=False bifixer=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/101-mto2-en-fr.report" && \
         popd > /dev/null
 
@@ -413,7 +413,7 @@ tests-others()
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
                 bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerFlavour="ai" bicleanerThreshold=0.0 \
-                deferred=False bifixer=True aggressiveDedup=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
+                deferred=False bifixer=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/102-mto3-en-fr.report" && \
         popd > /dev/null
 

@@ -385,6 +385,11 @@ Some other options can be configured to specify the output format of the paralle
 
 ```yaml
 bifixer: True
+bifixerAggressiveDedup: False
+bifixerIgnoreSegmentation: False
+
+deferred: False
+
 elrc: True
 
 tmx: True
@@ -394,10 +399,12 @@ biroamer: True
 biroamerOmitRandomSentences: True
 biroamerMixFiles: ["/home/user/file-tp-mix1", "/home/user/file-to-mix2"]
 biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
-deferred: False
 ```
 
 * `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal <!-- When using `bifixer: True` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
+* `bifixerAggressiveDedup`: it marks near-duplicates sentences as duplicate, so they can be removed in the deduplication step (i.e. `dedup: True`). This step is enabled by default if not specified and `bifixer: True`
+* `bifixerIgnoreSegmentation`: it does not resplit the long sentences. This step is enabled by default if not specified and `bifixer: True`
+* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
 * `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
@@ -405,6 +412,5 @@ deferred: False
 * `biroamerOmitRandomSentences`: omit close to 10% of the tmx corpus
 * `biroamerMixFiles`: use extra sentences to improve anonymization, this option accepts a list of files which will add the stored sentences, the files are expected to be in Moses format
 * `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection; expected to be in Moses format.
-* `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum
 
 NOTE: In case you need to convert a TMX to a tab-separated plain-text file (Moses format), you could use [TMXT](https://github.com/sortiz/tmxt) tool.

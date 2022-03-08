@@ -192,9 +192,14 @@ DEFERRED_ARGS = "--print-sent-hash" if DEFERRED else ""
 MMHSUM_PATH = "mmhsum" if DEFERRED else ""
 
 BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
-AGGRESSIVE_DEDUP = return_dict_value_if_key(config, "aggressiveDedup", "", pos_value="--aggressive_dedup")
 BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
 BIFIXER_PARAGRAPHS_COLS = "--sparagraphid src_paragraph_id --tparagraphid trg_paragraph_id" if PARAGRAPH_IDENTIFICATION else ""
+# Enabled by default
+BIFIXER_AGGRESSIVE_DEDUP = "--aggressive_dedup" if "bifixerAggressiveDedup" not in config else \
+    return_dict_value_if_key(config, "bifixerAggressiveDedup", "", pos_value="--aggressive_dedup")
+# Enabled by default
+BIFIXER_IGNORE_SEGMENTATION = "--ignore_segmentation" if "bifixerIgnoreSegmentation" not in config else \
+    return_dict_value_if_key(config, "bifixerIgnoreSegmentation", "", pos_value="--ignore_segmentation")
 
 BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
 BICLEANER_FLAVOUR = return_dict_value_if_key(config, "bicleanerFlavour", "classic", only_check_key=True)
@@ -1241,8 +1246,8 @@ rule bifixer:
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
         $CAT {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer -q {AGGRESSIVE_DEDUP} {BIFIXER_DEFERRED_COLS} \
-                {BIFIXER_PARAGRAPHS_COLS} --header - - {LANG1} {LANG2} \
+            | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
+                {BIFIXER_DEFERRED_COLS} {BIFIXER_PARAGRAPHS_COLS} --header - - {LANG1} {LANG2} \
             > {output}
         """
 
