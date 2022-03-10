@@ -16,8 +16,14 @@ export PIP_NO_INDEX="False" # We are downloading requisites from PyPi
 export PIP_NO_DEPENDENCIES="False" # We need the dependencies from our defined dependencies
 export PIP_IGNORE_INSTALLED="False" # We need to take into account the dependencies
 
+echo "PREFIX: $(find $PREFIX/lib | grep /libhunspell | wc -l)"
+echo "CONDA_PREFIX: $(find $CONDA_PREFIX/lib | grep /libhunspell | wc -l)"
+
 if [[ ! -f $PREFIX/lib/libhunspell.so ]]; then
   ln -s $PREFIX/lib/libhunspell-1.7.so $PREFIX/lib/libhunspell.so
+fi
+if [[ ! -f $CONDA_PREFIX/lib/libhunspell.so ]]; then
+  ln -s $CONDA_PREFIX/lib/libhunspell-1.7.so $CONDA_PREFIX/lib/libhunspell.so
 fi
 
 pip3 install .
