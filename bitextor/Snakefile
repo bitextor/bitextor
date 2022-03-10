@@ -211,7 +211,7 @@ BICLEANER_TRAINING_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerPa
 BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMonoCorpusPrefix", [])
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
-BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" else ''
+BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
 
 ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
 TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)

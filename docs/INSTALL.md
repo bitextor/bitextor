@@ -121,7 +121,11 @@ sudo dnf install git time python-devel python3-pip golang-go cmake pigz parallel
 sudo dnf install perl-FindBin perl-Time-HiRes perl-Thread
 ## warc2text:
 sudo dnf install uchardet-devel libzip-devel
-## bicleaner:
+## Bicleaner AI
+sudo dnf install lib64hunspell
+### Hunspell dictionaries (example)
+sudo dnf install hunspell-es
+## Bicleaner:
 sudo dnf install gcc-gfortran python3-devel openblas-devel lapack-devel
 ```
 
