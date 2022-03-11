@@ -16,7 +16,7 @@ ENV HOME /home/docker
 
 # Add required dependencies
 RUN echo -e "${RED}Installing core apt dependencies${NC}"
-RUN apt-get -y install git cmake python3 python3-venv python3-pip libboost-all-dev curl wget pigz unzip time parallel bc
+RUN apt-get -y install git cmake python3 python3-venv python3-pip libboost-all-dev curl wget pigz unzip time parallel bc libhunspell-dev
 # warc2text
 RUN echo -e "${RED}Installing warc2text apt dependencies${NC}"
 RUN apt-get -y install libuchardet-dev libzip-dev
@@ -84,6 +84,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install .
 ## bicleaner
 RUN pip3 install ./bicleaner
+RUN pip3 install ./bicleaner-ai
 RUN pip3 install ./kenlm --install-option="--max_order=7"
 ##  bifixer
 RUN pip3 install ./bifixer
