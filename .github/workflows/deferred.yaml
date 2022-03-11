@@ -81,7 +81,9 @@ jobs:
             chmod 775 ./tests/run-deferred-tests.sh
             ./tests/run-deferred-tests.sh -w "$WORK" -j 4
       -  name: Print log of tests which failed
-         if: ${{ steps.tests.conclusion != 'success' }}
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.tests.conclusion != 'success' }}
+         if: ${{ always() }}
          env:
             WORK: ${{ github.workspace }}
          run: |
