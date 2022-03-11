@@ -62,6 +62,7 @@ requirements:
     - google-sparsehash=2.0.3
     - parallel
     - hunspell
+    - hunspell-en
 
 about:
   home: https://github.com/bitextor/bitextor/

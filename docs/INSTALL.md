@@ -52,6 +52,8 @@ If you want a concrete version, you can look in the [Anaconda Repository](https:
 conda search -c bitextor bitextor
 ```
 
+Be aware that you might need Hunspell dictionaries for Bicleaner and Bicleaner AI due to Hunspell. Check [FastSpell](https://github.com/mbanon/fastspell) for more instruction about Hunspell dictionaries.
+
 In order to install Miniconda or Anaconda you can follow the instructions of the [official page](https://conda.io/projects/conda/en/latest/user-guide/install/index.html), but if you want to install Miniconda (Linux x64), you should execute the following (it is an interactive installer, so you will need to follow the steps):
 
 ```bash
@@ -121,8 +123,8 @@ sudo dnf install git time python-devel python3-pip golang-go cmake pigz parallel
 sudo dnf install perl-FindBin perl-Time-HiRes perl-Thread
 ## warc2text:
 sudo dnf install uchardet-devel libzip-devel
-## Bicleaner AI
-sudo dnf install lib64hunspell
+## Bicleaner and Bicleaner AI
+sudo dnf install hunspell hunspell-devel
 ### Hunspell dictionaries (example)
 sudo dnf install hunspell-es
 ## Bicleaner:
