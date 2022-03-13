@@ -4,7 +4,7 @@
 -r requirements/requirements-w2p.txt
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==7.1.1
+snakemake==7.2.0
 warcio==1.7.4
 ftfy==6.1.1
 tldextract>=3.1.0,<=3.2.0
