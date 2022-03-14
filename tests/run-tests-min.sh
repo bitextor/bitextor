@@ -236,7 +236,7 @@ wait
 
     annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
 
-    # Remove parallelism because NLTK model installation can't run in parallel
+    # Remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
 
     TRANSIENT_DIR="${WORK}/transient-mto3-en-fr"
 
