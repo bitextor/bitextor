@@ -221,17 +221,6 @@ jobs:
 
             conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-            echo "Recompiling mkcls in order to replace the version which clustercat uses..."
-            current_path="$(pwd)"
-            cd "${CONDA_PREFIX}/bitextor/clustercat"
-            git clone https://github.com/clab/mkcls.git
-            cd mkcls
-            rm src/mkcls
-            make
-            cp -f src/mkcls ../bin
-            cd "$current_path"
-            echo "Done!"
-
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x04 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
@@ -317,17 +306,6 @@ jobs:
             conda activate bitextor-tests
 
             conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
-
-            echo "Recompiling mkcls in order to replace the version which clustercat uses..."
-            current_path="$(pwd)"
-            cd "${CONDA_PREFIX}/bitextor/clustercat"
-            git clone https://github.com/clab/mkcls.git
-            cd mkcls
-            rm src/mkcls
-            make
-            cp -f src/mkcls ../bin
-            cd "$current_path"
-            echo "Done!"
             
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x08 -w "$WORK"
       -  name: Print log of tests which failed
@@ -414,17 +392,6 @@ jobs:
             conda activate bitextor-tests
 
             conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
-
-            echo "Recompiling mkcls in order to replace the version which clustercat uses..."
-            current_path="$(pwd)"
-            cd "${CONDA_PREFIX}/bitextor/clustercat"
-            git clone https://github.com/clab/mkcls.git
-            cd mkcls
-            rm src/mkcls
-            make
-            cp -f src/mkcls ../bin
-            cd "$current_path"
-            echo "Done!"
 
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x10 -w "$WORK"
       -  name: Print log of tests which failed
