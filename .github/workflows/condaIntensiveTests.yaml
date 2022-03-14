@@ -57,8 +57,6 @@ jobs:
             channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
       -  name: Install Bitextor
          run: |
-            echo "Conda prefix: $CONDA_PREFIX"
-
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
@@ -70,7 +68,7 @@ jobs:
             fi
 
             conda install -y "$v"
-      -  name: Run
+      -  name: Run tests
          id: run_tests
          run: |
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"

@@ -1,4 +1,5 @@
 name: Build, test and upload with conda
+
 on:
    push:
       branches:
@@ -7,11 +8,18 @@ on:
          - '**.md'
          - 'docs/**'
          - 'img/**'
+
+env:
+   WORK: ${{ github.workspace }}
+
 jobs:
    conda_build_testing_and_upload:
       name: Build, test with conda and upload
       runs-on: ubuntu-20.04
       timeout-minutes: 300
+      defaults:
+         run:
+            shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
       steps:
       -  name: Set distrib release version if not set
          env:
@@ -28,46 +36,50 @@ jobs:
             #  so we use sudo and Docker will not complain and Github Actions will work
             apt-get --assume-yes install sudo || true
             sudo apt-get --assume-yes install wget git build-essential coreutils
-      -  name: Install Miniconda3
-         run: |
-            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-            bash Miniconda3-latest-Linux-x86_64.sh -b
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda list
       -  uses: actions/checkout@v2
+      -  name: Set up Miniconda
+         uses: conda-incubator/setup-miniconda@v2.1.1
+         with:
+            miniconda-version: "latest"
+            python-version: 3.8.5
+            activate-environment: bitextor-build
+            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
       -  name: Create Bitextor conda build
          working-directory: ./conda-build/bitextor
          run: |
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda deactivate && ./make_conda_build.sh -r
+            conda install -y -c conda-forge conda-build conda-verify
+
+            # BEGIN tmp solution
+            GIT_DESCRIBE=$(git describe --always 2> /dev/null)
+            OWN_DATE=$(date +"%Y%m%d%H%M")
+
+            if [[ "$GIT_DESCRIBE" != "" ]]; then
+               export OWN_GIT_BUILD_STR="${OWN_DATE}_${GIT_DESCRIBE}"
+            else
+               export OWN_GIT_BUILD_STR="${OWN_DATE}"
+            fi
+            # END tmp solution
+
+            conda build --no-anaconda-upload --no-test $CONDA_CHANNELS_BITEXTOR .
       -  name: Install Bitextor
          run: |
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda deactivate
-            conda create -y -n bitextor-installation
-            conda activate bitextor-installation
+            # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
             bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
             conda install -y "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
             conda update -y --all
-            command -v "bitextor" || command -v "bitextor.sh"
+            command -v "bitextor" || \
+               (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Run tests
          id: tests
-         env:
-            WORK: ${{ github.workspace }}
          run: |
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda activate bitextor-installation
-
             chmod 775 "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh"
             "$CONDA_PREFIX/bitextor/tests/run-tests-min.sh" -w "$WORK" -j 4
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -97,8 +109,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -133,8 +143,6 @@ jobs:
          env:
             ANACONDA_CLOUD_TOKEN: ${{ secrets.ANACONDA_CLOUD_TOKEN }}
          run: |
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda activate bitextor-installation
             conda install -y anaconda-client
 
             bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
