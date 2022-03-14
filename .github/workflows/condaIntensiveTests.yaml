@@ -45,85 +45,85 @@ jobs:
                  test_id: "0x20"
                - name: Other tests
                  test_id: "0x40"
-         steps:
-         -  name: Run
-            id: run_tests
-            run: |
-               v="${{ github.event.inputs.conda_package }}"
+      steps:
+      -  name: Run
+         id: run_tests
+         run: |
+            v="${{ github.event.inputs.conda_package }}"
 
-               if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-                  v="${v}=${{ github.event.inputs.conda_version }}"
+            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
+               v="${v}=${{ github.event.inputs.conda_version }}"
 
-                  if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
-                     v="${v}=${{ github.event.inputs.conda_build }}"
-                  fi
+               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
+                  v="${v}=${{ github.event.inputs.conda_build }}"
                fi
+            fi
 
-               wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-               bash Miniconda3-latest-Linux-x86_64.sh -b
-               . ~/miniconda3/etc/profile.d/conda.sh
-               conda create -y -n bitextor-tests
-               conda activate bitextor-tests
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+            . ~/miniconda3/etc/profile.d/conda.sh
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
 
-               conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-               "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
-         -  name: Print log of tests which failed
-            # https://github.com/actions/runner/issues/1173
-            #if: ${{ steps.run_tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
-            if: ${{ always() }}
-            run: |
-               if [[ -f "${WORK}/data/fails.log" ]]; then
-                  while read line; do
-                     eval "array=($line)"
-                     status=${array[0]}
-                     notest=${array[1]}
-                     exit_code=${array[2]}
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
+      -  name: Print log of tests which failed
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.run_tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
+         if: ${{ always() }}
+         run: |
+            if [[ -f "${WORK}/data/fails.log" ]]; then
+               while read line; do
+                  eval "array=($line)"
+                  status=${array[0]}
+                  notest=${array[1]}
+                  exit_code=${array[2]}
 
-                     str="# Test $notest (exit code / desc.: $exit_code) #"
-                     eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-                     echo "$str"
-                     eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  str="# Test $notest (exit code / desc.: $exit_code) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
-                     if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
-                        report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
-                        awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
-                     else
-                        echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
-                     fi
-                     echo ""
-                  done < "${WORK}/data/fails.log"
-               else
-                  >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
-                  exit 1
-               fi
-         -  name: Print log subsample of tests which succeeded
-            # https://github.com/actions/runner/issues/1173
-            #if: ${{ steps.run_tests.conclusion == 'success' }}
-            if: ${{ always() }}
-            run: |
-               for report_file in $(ls ${WORK}/reports/*); do
-                  notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-                  sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
-
-                  if [[ -f "$sent_file" ]]; then
-                     md5=$(md5sum "$sent_file" | awk '{print $1}')
-                     nolines=$(zcat "$sent_file" | wc -l)
-
-                     str="# Test $notest (md5: $md5) #"
-                     eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-                     echo "$str"
-                     eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-
-                     if [[ "$nolines" -gt "15" ]]; then
-                        awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                           <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
-                     else
-                        awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
-                     fi
+                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
+                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                     awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
                   else
-                     echo "(warning) No sent file found for test $notest"
+                     echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
                   fi
-
                   echo ""
-               done
+               done < "${WORK}/data/fails.log"
+            else
+               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               exit 1
+            fi
+      -  name: Print log subsample of tests which succeeded
+         # https://github.com/actions/runner/issues/1173
+         #if: ${{ steps.run_tests.conclusion == 'success' }}
+         if: ${{ always() }}
+         run: |
+            for report_file in $(ls ${WORK}/reports/*); do
+               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
+               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
+
+               if [[ -f "$sent_file" ]]; then
+                  md5=$(md5sum "$sent_file" | awk '{print $1}')
+                  nolines=$(zcat "$sent_file" | wc -l)
+
+                  str="# Test $notest (md5: $md5) #"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+                  echo "$str"
+                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
+
+                  if [[ "$nolines" -gt "15" ]]; then
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
+                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                  else
+                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
+                  fi
+               else
+                  echo "(warning) No sent file found for test $notest"
+               fi
+
+               echo ""
+            done
