@@ -20,7 +20,6 @@ on:
 
 env:
    WORK: ${{ github.workspace }}
-   CONDA_CHANNELS_BITEXTOR: "-c bitextor -c conda-forge -c bioconda -c dmnapolitano -c esarrias"
 
 jobs:
    tests:
@@ -46,8 +45,14 @@ jobs:
                - name: Other tests
                  test_id: "0x40"
       steps:
-      -  name: Run
-         id: run_tests
+      -  name: Set up Miniconda
+         uses: conda-incubator/setup-miniconda@v2.1.1
+         with:
+            miniconda-version: "latest"
+            python-version: 3.8.5
+            activate-environment: bitextor-tests
+            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
+      -  name: Install Bitextor
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -59,15 +64,10 @@ jobs:
                fi
             fi
 
-            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-            bash Miniconda3-latest-Linux-x86_64.sh -b
-            . ~/miniconda3/etc/profile.d/conda.sh
-            conda create -y -n bitextor-tests
-            conda activate bitextor-tests
-
-            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
-
-            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
+            conda install -y "${v}"
+      -  name: Run tests
+         id: run_tests
+         run: "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.run_tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
