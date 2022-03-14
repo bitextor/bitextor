@@ -44,19 +44,17 @@ jobs:
                  test_id: "0x20"
                - name: Other tests
                  test_id: "0x40"
+      defaults:
+         run:
+            shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
       steps:
-      -  name: Install Miniconda
-         run: |
-            # Download and install Miniconda (background)
-            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-            bash Miniconda3-latest-Linux-x86_64.sh -b
-
-            # Activate conda
-            . ~/miniconda3/etc/profile.d/conda.sh
-
-            # Create and activate conda environment
-            conda create -y -n bitextor-tests
-            conda activate bitextor-tests
+      -  name: Set up Miniconda
+         uses: conda-incubator/setup-miniconda@v2.1.1
+         with:
+            miniconda-version: "latest"
+            python-version: 3.8.5
+            activate-environment: bitextor-tests
+            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
       -  name: Install Bitextor
          run: |
             echo "Conda prefix: $CONDA_PREFIX"
@@ -71,7 +69,7 @@ jobs:
                fi
             fi
 
-            conda install -y -c bitextor -c conda-forge -c bioconda -c dmnapolitano -c esarrias "${v}"
+            conda install -y "$v"
       -  name: Run
          id: run_tests
          run: |
