@@ -45,15 +45,22 @@ jobs:
                - name: Other tests
                  test_id: "0x40"
       steps:
-      -  name: Set up Miniconda
-         uses: conda-incubator/setup-miniconda@v2.1.1
-         with:
-            miniconda-version: "latest"
-            python-version: 3.8.5
-            activate-environment: bitextor-tests
-            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
+      -  name: Install Miniconda
+         run: |
+            # Download and install Miniconda (background)
+            wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+
+            # Activate conda
+            . ~/miniconda3/etc/profile.d/conda.sh
+
+            # Create and activate conda environment
+            conda create -y -n bitextor-tests
+            conda activate bitextor-tests
       -  name: Install Bitextor
          run: |
+            echo "Conda prefix: $CONDA_PREFIX"
+
             v="${{ github.event.inputs.conda_package }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
@@ -64,8 +71,8 @@ jobs:
                fi
             fi
 
-            conda install -y "${v}"
-      -  name: Run tests
+            conda install -y -c bitextor -c conda-forge -c bioconda -c dmnapolitano -c esarrias "${v}"
+      -  name: Run
          id: run_tests
          run: "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
