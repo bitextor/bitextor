@@ -1,4 +1,5 @@
 name: Intensive tests with conda
+
 on:
    schedule:
       - cron: '0 3 * * 0'
@@ -16,6 +17,11 @@ on:
             description: 'Build which will be looked for'
             required: false
             default: ''
+
+env:
+   WORK: ${{ github.workspace }}
+   CONDA_CHANNELS_BITEXTOR: "-c bitextor -c conda-forge -c bioconda -c dmnapolitano -c esarrias"
+
 jobs:
    tests_mt:
       name: Tests MT
@@ -24,8 +30,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_mt
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -43,20 +47,13 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-            conda install -y -c bitextor "${v}"
-
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x01 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x01 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_mt.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -86,8 +83,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_mt.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -121,8 +116,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_db
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -140,20 +133,13 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-            conda install -y -c bitextor "${v}"
-
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x02 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x02 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_db.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -183,8 +169,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_db.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -218,8 +202,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_gendic
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -237,12 +219,7 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
-
-            conda install -y -c bitextor "${v}"
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -255,13 +232,11 @@ jobs:
             cd "$current_path"
             echo "Done!"
 
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x04 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x04 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_gendic.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -291,8 +266,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_gendic.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -326,8 +299,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_genbicleaner
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -345,12 +316,7 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
-
-            conda install -y -c bitextor "${v}"
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -363,13 +329,11 @@ jobs:
             cd "$current_path"
             echo "Done!"
             
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x08 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x08 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_genbicleaner.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -399,8 +363,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_genbicleaner.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -434,8 +396,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_gendic_genbicleaner
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -453,12 +413,7 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
-
-            conda install -y -c bitextor "${v}"
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
             echo "Recompiling mkcls in order to replace the version which clustercat uses..."
             current_path="$(pwd)"
@@ -471,13 +426,11 @@ jobs:
             cd "$current_path"
             echo "Done!"
 
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x10 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x10 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_gendic_genbicleaner.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -507,8 +460,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_gendic_genbicleaner.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -542,8 +493,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_mt_db
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -561,20 +510,13 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-            conda install -y -c bitextor "${v}"
-
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x20 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x20 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_mt_db.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -604,8 +546,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_mt_db.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
@@ -639,8 +579,6 @@ jobs:
       steps:
       -  name: Run
          id: tests_others
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             v="${{ github.event.inputs.conda_package }}"
 
@@ -658,20 +596,13 @@ jobs:
             conda create -y -n bitextor-tests
             conda activate bitextor-tests
 
-            conda config --add channels conda-forge
-            conda config --append channels bioconda
-            conda config --append channels dmnapolitano
-            conda config --append channels esarrias
+            conda install -y $CONDA_CHANNELS_BITEXTOR "${v}"
 
-            conda install -y -c bitextor "${v}"
-
-            "${CONDA_PREFIX}/bitextor/run-tests.sh" -t 0x40 -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t 0x40 -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_others.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -701,8 +632,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests_others.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
