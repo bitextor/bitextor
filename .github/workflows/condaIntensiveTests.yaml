@@ -74,7 +74,8 @@ jobs:
             conda install -y -c bitextor -c conda-forge -c bioconda -c dmnapolitano -c esarrias "${v}"
       -  name: Run
          id: run_tests
-         run: "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
+         run: |
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.run_tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
