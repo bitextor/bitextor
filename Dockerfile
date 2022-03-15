@@ -81,7 +81,7 @@ RUN echo -e "${RED}Installing pip dependencies${NC}"
 WORKDIR /home/docker/bitextor
 RUN pip3 install --upgrade pip
 ## bitextor
-RUN pip3 install .
+RUN pip3 install .[all]
 ## bicleaner
 RUN pip3 install ./bicleaner
 RUN pip3 install ./bicleaner-ai

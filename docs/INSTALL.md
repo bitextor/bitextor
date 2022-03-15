@@ -181,7 +181,7 @@ source /path/to/virtual/environment/bin/activate
 # install dependencies in virtual enviroment
 pip3 install --upgrade pip
 # bitextor:
-pip3 install .
+pip3 install .[all]
 # additional dependencies:
 pip3 install ./bifixer
 pip3 install ./bicleaner
@@ -191,7 +191,21 @@ pip3 install ./biroamer && \
 python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ```
 
-If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation.
+If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation. Also, there are different optional packages that you can choose depending on your needs instead of install all of them:
+
+```bash
+# Install all the optional dependencies
+pip3 install .[all]
+# Install warc2preprocess
+pip3 install .[w2p]
+# Install PDFExtract
+pip3 install .[pdfextract]
+# Install dictionary pipeline dependencies instead of MT
+pip3 install .[dictionary]
+
+# Install a mix (e.g. W2P and PDFExtract)
+pip3 install .[w2p,pdfextract]
+```
 
 ### [Optional] Heritrix
 
