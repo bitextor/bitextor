@@ -139,7 +139,7 @@ jobs:
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
-                  echo "(warning) No sent file found for test $notest"
+                  echo "(warning) No sent file found for test $notest (sent.gz file: $sent_file)"
                fi
 
                echo ""
