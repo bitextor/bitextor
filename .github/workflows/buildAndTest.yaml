@@ -124,7 +124,7 @@ jobs:
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
                if [[ -f "$sent_file" ]]; then
-                  md5=$(md5sum "$sent_file" | awk '{print $1}')
+                  md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
 
                   str="# Test $notest (md5: $md5) #"
