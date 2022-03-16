@@ -70,6 +70,11 @@ jobs:
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
+
+            # Has the execution failed?
+            nolines=$(cat ${WORK}/docker-volume/fails.log | wc -l)
+
+            [[ "$nolines" != "0" ]] && exit "$nolines"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
@@ -108,7 +113,7 @@ jobs:
          env:
             WORK: ${{ github.workspace }}
          run: |
-            for report_file in $(ls ${WORK}/reports/*); do
+            for report_file in $(ls ${WORK}/docker-volume/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/')
 
