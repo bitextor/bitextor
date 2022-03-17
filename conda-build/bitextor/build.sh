@@ -23,7 +23,7 @@ if [[ ! -f $PREFIX/lib/libhunspell.a ]]; then
   ln -s $PREFIX/lib/libhunspell{-1.7,}.a
 fi
 
-pip3 install .
+pip3 install .[all]
 ### FastSpell (bicleaner-hardrules)
 INCLUDE_PATH="$PREFIX/include" pip3 install hunspell
 ### Bicleaner, Bicleaner AI and KenLM

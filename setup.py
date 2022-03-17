@@ -26,6 +26,23 @@ def reqs_from_file(src):
                 requirements.extend(add_req)
     return requirements
 
+def get_extras_require():
+    # W2P
+    w2p = reqs_from_file("requirements/requirements-w2p.txt")
+    boilerpipe = reqs_from_file("requirements/requirements-boilerpipe.txt")
+    pdfextract = reqs_from_file("requirements/requirements-pdfextract.txt")
+
+    w2p.extend(boilerpipe)
+    w2p.extend(pdfextract)
+
+    # Dictionary
+    dictionary = reqs_from_file("requirements/requirements-dict-aligner.txt")
+
+    # All
+    all_reqs = w2p + dictionary
+
+    return {"all": all_reqs, "w2p": w2p, "pdfextract": pdfextract, "dictionary": dictionary}
+
 if __name__ == "__main__":
 
     with open("docs/README.md", "r") as fh:
@@ -36,11 +53,13 @@ if __name__ == "__main__":
 
     copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
     requirements = reqs_from_file("requirements.txt")
+    opt_requirements = get_extras_require()
 
     setuptools.setup(
         name="bitextor",
         version="8.1.0",
         install_requires=requirements,
+        extras_require=opt_requirements,
         license="GNU General Public License v3.0",
         #author=,
         #author_email=,

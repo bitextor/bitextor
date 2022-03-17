@@ -53,7 +53,7 @@ jobs:
          run: git submodule update --init --force --recursive
       -  name: Install additional python requirements
          run: |
-            pip3 install .
+            pip3 install .[all]
             pip3 install ./bifixer
             pip3 install ./bicleaner
             pip3 install ./kenlm --install-option="--max_order 7"
