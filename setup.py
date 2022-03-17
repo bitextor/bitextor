@@ -30,17 +30,16 @@ def get_extras_require():
     # W2P
     w2p = reqs_from_file("requirements/requirements-w2p.txt")
     boilerpipe = reqs_from_file("requirements/requirements-boilerpipe.txt")
+    pdfextract = reqs_from_file("requirements/requirements-pdfextract.txt")
 
     w2p.extend(boilerpipe)
-
-    # PDFExtract
-    pdfextract = reqs_from_file("requirements/requirements-pdfextract.txt")
+    w2p.extend(pdfextract)
 
     # Dictionary
     dictionary = reqs_from_file("requirements/requirements-dict-aligner.txt")
 
     # All
-    all_reqs = w2p + pdfextract + dictionary
+    all_reqs = w2p + dictionary
 
     return {"all": all_reqs, "w2p": w2p, "pdfextract": pdfextract, "dictionary": dictionary}
 

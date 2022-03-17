@@ -198,13 +198,8 @@ If you don't want to install all Python requirements in `requirements.txt` becau
 pip3 install .[all]
 # Install warc2preprocess
 pip3 install .[w2p]
-# Install PDFExtract
-pip3 install .[pdfextract]
 # Install dictionary pipeline dependencies instead of MT
 pip3 install .[dictionary]
-
-# Install a mix (e.g. W2P and PDFExtract)
-pip3 install .[w2p,pdfextract]
 ```
 
 ### [Optional] Heritrix
