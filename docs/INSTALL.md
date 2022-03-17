@@ -180,8 +180,8 @@ source /path/to/virtual/environment/bin/activate
 
 # install dependencies in virtual enviroment
 pip3 install --upgrade pip
-# bitextor:
-pip3 install .[all]
+# bitextor (mandatory dependencies):
+pip3 install .
 # additional dependencies:
 pip3 install ./bifixer
 pip3 install ./bicleaner
