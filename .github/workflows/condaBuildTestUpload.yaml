@@ -44,6 +44,9 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-build
             channels: conda-forge,bioconda,dmnapolitano,esarrias
+      -  uses: actions/checkout@v2
+      -  name: Checkout submodules
+         run: git submodule update --init --force --recursive
       -  name: Create Bitextor conda build
          working-directory: ./conda-build/bitextor
          run: |
