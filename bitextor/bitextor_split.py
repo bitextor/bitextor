@@ -133,8 +133,8 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                                     doc_idx, sent_idx)
                     continue
 
-                paragraph_text = ' '.join(paragraph[:-1]).strip() # Replace '\t' with ' '
-                paragraph_id = int(paragraph[-1]) + 1 # Start at 1
+                paragraph_text = paragraph[0]
+                paragraph_id = int(paragraph[1]) + 1 # Start at 1
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
                                                          options.prune_threshold, not options.dont_filter).split("\n")
                 sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs if sentence.strip() != '']
