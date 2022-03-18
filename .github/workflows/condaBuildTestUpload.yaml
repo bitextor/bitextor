@@ -43,7 +43,7 @@ jobs:
             miniconda-version: "latest"
             python-version: 3.8.5
             activate-environment: bitextor-build
-            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
+            channels: conda-forge,bioconda,dmnapolitano,esarrias
       -  name: Create Bitextor conda build
          working-directory: ./conda-build/bitextor
          run: |
@@ -60,7 +60,7 @@ jobs:
             fi
             # END tmp solution
 
-            conda build --no-anaconda-upload --no-test $CONDA_CHANNELS_BITEXTOR .
+            conda build --no-anaconda-upload --no-test .
       -  name: Install Bitextor
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)

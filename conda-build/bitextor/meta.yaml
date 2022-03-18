@@ -1,13 +1,15 @@
-{% set name = "bitextor" %}
-{% set version = "8.1.1" %}
+
+{% set rdir = "../.." %}
+{% set data = load_setup_py_data(setup_file=''+rdir+'/setup.py', from_recipe_dir=True) %}
 
 package:
-  name: "{{ name }}"
-  version: "{{ version }}"
+  name: bitextor
+  version: "{{ data.get('version') }}"
 
 source:
-  - git_url: https://github.com/bitextor/bitextor/
-    git_branch: master
+  #- git_url: https://github.com/bitextor/bitextor/
+  #  git_branch: master
+  - path: {{ rdir }}
     folder: "bitextor"
   - url: http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.4.0-SNAPSHOT/heritrix-3.4.0-SNAPSHOT-dist.zip
     folder: heritrix-3.4.0-SNAPSHOT

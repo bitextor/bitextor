@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     setuptools.setup(
         name="bitextor",
-        version="8.1.0",
+        version="8.1.1",
         install_requires=requirements,
         extras_require=opt_requirements,
         license="GNU General Public License v3.0",
