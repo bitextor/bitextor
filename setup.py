@@ -41,7 +41,7 @@ def get_extras_require():
     # All
     all_reqs = w2p + dictionary
 
-    return {"all": all_reqs, "w2p": w2p, "pdfextract": pdfextract, "dictionary": dictionary}
+    return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary}
 
 if __name__ == "__main__":
 
