@@ -9,6 +9,10 @@ on:
             description: 'Package which will be installed'
             required: false
             default: 'bitextor'
+            type: choice
+            options:
+            - bitextor
+            - bitextor-nightly
          conda_version:
             description: 'Version which will be looked for'
             required: false
@@ -20,6 +24,7 @@ on:
 
 env:
    WORK: ${{ github.workspace }}
+   CONDA_PACKAGE: bitextor
 
 jobs:
    tests:
@@ -57,7 +62,7 @@ jobs:
             channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
       -  name: Install Bitextor
          run: |
-            v="${{ github.event.inputs.conda_package }}"
+            v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="${v}=${{ github.event.inputs.conda_version }}"
