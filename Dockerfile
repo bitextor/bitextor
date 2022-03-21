@@ -7,7 +7,7 @@ ARG j=1
 # Update Software repository
 ENV RED '\033[0;31m'
 ENV NC '\033[0m'
-RUN echo -e "${RED}Updating Software repository${NC}"
+RUN /bin/echo -e "${RED}Updating Software repository${NC}"
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y
 
 # Pretend that HOME is /home/docker because having things in / is awkward
@@ -15,16 +15,16 @@ RUN mkdir -p /home/docker
 ENV HOME /home/docker
 
 # Add required dependencies
-RUN echo -e "${RED}Installing core apt dependencies${NC}"
+RUN /bin/echo -e "${RED}Installing core apt dependencies${NC}"
 RUN apt-get -y install git cmake python3 python3-venv python3-pip libboost-all-dev curl wget pigz unzip time parallel bc libhunspell-dev
 # warc2text
-RUN echo -e "${RED}Installing warc2text apt dependencies${NC}"
+RUN /bin/echo -e "${RED}Installing warc2text apt dependencies${NC}"
 RUN apt-get -y install libuchardet-dev libzip-dev
 # pdf-extract
-RUN echo -e "${RED}Installing pdf-extract apt dependencies${NC}"
+RUN /bin/echo -e "${RED}Installing pdf-extract apt dependencies${NC}"
 RUN apt-get -y install openjdk-8-jdk poppler-utils
 # biroamer
-RUN echo -e "${RED}Installing biroamer apt dependencies${NC}"
+RUN /bin/echo -e "${RED}Installing biroamer apt dependencies${NC}"
 RUN apt-get -y install libgoogle-perftools-dev libsparsehash-dev
 
 # random utilities:
@@ -40,7 +40,7 @@ RUN ln -sf /usr/bin/pip3 /usr/bin/pip
 # ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
 # Installing protobuf
-RUN echo -e "${RED}Installing protobuf and CLD3${NC}"
+RUN /bin/echo -e "${RED}Installing protobuf and CLD3${NC}"
 WORKDIR /home/docker
 RUN apt-get install -y autoconf automake libtool
 RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.19.1/protobuf-all-3.19.1.tar.gz
@@ -53,7 +53,7 @@ RUN make install
 RUN ldconfig
 
 # Installing giashard
-RUN echo -e "${RED}Installing golang${NC}"
+RUN /bin/echo -e "${RED}Installing golang${NC}"
 WORKDIR /home/docker
 RUN wget -O go.tgz https://dl.google.com/go/go1.17.3.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go.tgz && rm go.tgz
@@ -62,22 +62,22 @@ RUN go version
 ENV GOPATH /home/docker/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-RUN echo -e "${RED}Installing giashard${NC}"
+RUN /bin/echo -e "${RED}Installing giashard${NC}"
 RUN go get github.com/paracrawl/giashard/...
 
 # Download Heritrix
-RUN echo -e "${RED}Downloading heritrix${NC}"
+RUN /bin/echo -e "${RED}Downloading heritrix${NC}"
 WORKDIR /home/docker
 RUN wget https://repo1.maven.org/maven2/org/archive/heritrix/heritrix/3.4.0-20210923/heritrix-3.4.0-20210923-dist.zip
 RUN unzip heritrix-3.4.0-20210923-dist.zip && rm heritrix-3.4.0-20210923-dist.zip
 
 # Cloning bitextor
-RUN echo -e "${RED}Cloning bitextor${NC}"
+RUN /bin/echo -e "${RED}Cloning bitextor${NC}"
 WORKDIR /home/docker
 COPY ./ bitextor/
 
 # Installing bitextor dependencies
-RUN echo -e "${RED}Installing pip dependencies${NC}"
+RUN /bin/echo -e "${RED}Installing pip dependencies${NC}"
 WORKDIR /home/docker/bitextor
 RUN pip3 install --upgrade pip
 ## bitextor
@@ -97,7 +97,7 @@ RUN pip3 install pycld3
 
 
 # Installing bitextor
-RUN echo -e "${RED}Compiling bitextor${NC}"
+RUN /bin/echo -e "${RED}Compiling bitextor${NC}"
 WORKDIR /home/docker/bitextor
 RUN mkdir -p build
 WORKDIR /home/docker/bitextor/build
