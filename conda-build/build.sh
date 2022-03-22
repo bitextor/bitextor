@@ -1,5 +1,5 @@
 
-echo -e "\e[4m\e[1mBuilding Bitextor Nightly...\e[0m"
+echo -e "\e[4m\e[1mBuilding $PKG_NAME...\e[0m"
 
 pushd "bitextor" > /dev/null
 
