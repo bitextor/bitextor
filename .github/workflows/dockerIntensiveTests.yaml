@@ -74,7 +74,7 @@ jobs:
             # Has the execution failed?
             nolines=$(cat ${WORK}/docker-volume/fails.log | wc -l)
 
-            [[ "$nolines" != "0" ]] && exit "$nolines"
+            [[ "$nolines" != "0" ]] && exit "$nolines" || true
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
