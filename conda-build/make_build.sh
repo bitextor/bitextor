@@ -63,9 +63,7 @@ if [[ "$(conda env list | grep ^$CONDA_ENV_NAME[\ +])" != "" ]]; then
   exit 1
 fi
 
-CONDA_CHANNELS_BITEXTOR="-c conda-forge -c bioconda -c dmnapolitano -c esarrias"
-
-conda create -y -n $CONDA_ENV_NAME -c conda-forge python=3.8.5 conda-build conda-verify
+conda create -y -n $CONDA_ENV_NAME -c conda-forge conda-build conda-verify
 conda activate $CONDA_ENV_NAME
 
 echo "git describe --tags:"
@@ -74,5 +72,7 @@ git describe --tags || true
 echo "git describe --always:"
 git describe --always
 
+CONDA_CHANNELS="-c conda-forge -c bioconda -c dmnapolitano -c esarrias"
+
 # Make build
-conda-build --no-anaconda-upload --no-test $CONDA_CHANNELS_BITEXTOR $CONDA_PACKAGE_PATH
+conda-build --no-anaconda-upload --no-test $CONDA_CHANNELS $CONDA_PACKAGE_PATH
