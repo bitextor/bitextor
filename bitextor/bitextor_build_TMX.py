@@ -161,7 +161,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     print("   srclang=\"" + options.lang1 + "\"")
     print("   o-tmf=\"PlainText\"")
     print("   creationtool=\"bitextor\"")
-    print("   creationtoolversion=\"8.1.1\"")
+    print("   creationtoolversion=\"8.2\"")
     print("   datatype=\"PlainText\"")
     print("   segtype=\"sentence\"")
     print("   creationdate=\"" + time.strftime("%Y%m%dT%H%M%S") + "\"")
