@@ -69,7 +69,8 @@ jobs:
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
-                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"''
+                      cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"' && \
+                      cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"''
 
             # Has the execution failed?
             nolines=$(cat ${WORK}/docker-volume/fails.log | wc -l)
@@ -116,7 +117,7 @@ jobs:
             for report_file in $(ls ${WORK}/docker-volume/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
                sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/' | sort -u)
-               sent_file=$(echo "$sent_file" | sed "s/^$(echo $WORK_DOCKER | sed 's/\//\\\//g')/$(echo $WORK | sed 's/\//\\\//g')/") # replace docker prefix
+               sent_file=$(echo "$sent_file" | sed "s/^$(echo $WORK_DOCKER | sed 's/\//\\\//g')/$(echo $WORK | sed 's/\//\\\//g')\/docker-volume/") # replace docker prefix
 
                if [[ -f "$sent_file" ]]; then
                   md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
