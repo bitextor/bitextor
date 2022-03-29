@@ -1,6 +1,6 @@
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==7.3.2
+snakemake==7.3.3
 warcio==1.7.4
 tldextract>=3.1.0,<=3.2.0
 tqdm>=4.60.0,<=4.63.0
