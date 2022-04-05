@@ -45,7 +45,7 @@ requirements:
     - setuptools
     - python {{ python }}
     - libboost>=1.71
-    - java-1.7.0-openjdk-cos6-x86_64
+    - java-jdk=8
     - xz
     - time
     - poppler
