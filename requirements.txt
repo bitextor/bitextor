@@ -1,9 +1,9 @@
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==7.3.6
+snakemake==7.3.7
 warcio==1.7.4
 tldextract>=3.1.0,<=3.2.0
-tqdm>=4.60.0,<=4.63.0
+tqdm>=4.60.0,<=4.64.0
 toolwrapper>=0.4.1,<=2.1.0
 sacrebleu==2.0.0
 func_timeout==4.3.5
