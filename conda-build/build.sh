@@ -41,6 +41,7 @@ find . -type d -or -type l | grep /CMakeFiles$ | xargs -I{} rm -rf {}
 mkdir -p "$PREFIX/bitextor"
 
 cp -r "$SRC_DIR/bitextor/bitextor" "$PREFIX/bitextor" # Scripts and data
+cp -r "$SRC_DIR/bitextor/tests" "$PREFIX/bitextor" # Tests
 cp -r "$SRC_DIR/../gopath" "$PREFIX"
 cp -r "$SRC_DIR/heritrix-3.4.0-SNAPSHOT" "$PREFIX"
 
