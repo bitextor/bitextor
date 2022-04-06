@@ -50,7 +50,7 @@ jobs:
       -  name: Create Bitextor conda build
          working-directory: ./conda-build
          run: |
-            ./make_build.sh -n bitextor-pkg -p 3.8 -s -r
+            ./make_build.sh -n bitextor-pkg -e bitextor-build -p 3.8 -s -r
       -  name: Install Bitextor
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
