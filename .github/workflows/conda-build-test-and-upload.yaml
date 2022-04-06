@@ -43,27 +43,14 @@ jobs:
             miniconda-version: "latest"
             python-version: 3.8.5
             activate-environment: bitextor-build
-            channels: conda-forge,bioconda,dmnapolitano,esarrias
+            channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v2
       -  name: Checkout submodules
          run: git submodule update --init --force --recursive
       -  name: Create Bitextor conda build
-         working-directory: ./conda-build/bitextor
+         working-directory: ./conda-build
          run: |
-            conda install -y -c conda-forge conda-build conda-verify
-
-            # BEGIN tmp solution
-            GIT_DESCRIBE=$(git describe --always 2> /dev/null)
-            OWN_DATE=$(date +"%Y%m%d%H%M")
-
-            if [[ "$GIT_DESCRIBE" != "" ]]; then
-               export OWN_GIT_BUILD_STR="${OWN_DATE}_${GIT_DESCRIBE}"
-            else
-               export OWN_GIT_BUILD_STR="${OWN_DATE}"
-            fi
-            # END tmp solution
-
-            conda build --no-anaconda-upload --no-test .
+            ./make_build.sh -n bitextor-pkg -p 3.8 -s -r
       -  name: Install Bitextor
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
