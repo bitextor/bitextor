@@ -15,16 +15,33 @@ export PIP_NO_INDEX="False" # We are downloading requisites from PyPi
 export PIP_NO_DEPENDENCIES="False" # We need the dependencies from our defined dependencies
 export PIP_IGNORE_INSTALLED="False" # We need to take into account the dependencies
 
+# Hunspell (conda package fix)
+if [[ ! -f $PREFIX/lib/libhunspell.so ]]; then
+  ln -s $PREFIX/lib/libhunspell{-1.7,}.so
+fi
+if [[ ! -f $PREFIX/lib/libhunspell.a ]]; then
+  ln -s $PREFIX/lib/libhunspell{-1.7,}.a
+fi
+
 $PYTHON -m pip install .[all]
+### FastSpell (bicleaner-hardrules)
+INCLUDE_PATH="$PREFIX/include" $PYTHON -m pip install hunspell
+### Bicleaner, Bicleaner AI and KenLM
+$PYTHON -m pip install ./bicleaner
+$PYTHON -m pip install ./bicleaner-ai
+$PYTHON -m pip install ./kenlm --install-option="--max_order 7"
+### Bifixer
+$PYTHON -m pip install ./bifixer
+### Biroamer and model
+$PYTHON -m pip install ./biroamer && \
+$PYTHON -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ## CLD3
 $PYTHON -m pip install Cython
 $PYTHON -m pip install pycld3
 
 echo -e " - \e[4mMake...\e[0m"
 mkdir -p build && cd build
-CPATH="$PREFIX/include:$CPATH" cmake \
-  "-DCMAKE_INSTALL_PREFIX=$PREFIX" -DSKIP_BIROAMER=ON -DSKIP_KENLM=ON \
-  ..
+CPATH="$PREFIX/include:$CPATH" cmake "-DCMAKE_INSTALL_PREFIX=$PREFIX" ..
 CPATH="$PREFIX/include:$CPATH" LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH" make -j install
 
 popd > /dev/null
@@ -45,6 +62,8 @@ cp -r "$SRC_DIR/bitextor/bitextor" "$PREFIX/bitextor" # Scripts and data
 cp -r "$SRC_DIR/bitextor/tests" "$PREFIX/bitextor" # Tests
 cp -r "$SRC_DIR/bitextor/requirements" "$PREFIX/bitextor" # Requirements
 cp "$SRC_DIR/bitextor/requirements.txt" "$PREFIX/bitextor" # Requirements
+## Biroamer
+cp -r "$SRC_DIR/bitextor/biroamer" "$PREFIX/bitextor" # Fast Align binaries are not correctly placed
 
 # 3rd party
 cp -r "$SRC_DIR/../gopath" "$PREFIX"

@@ -40,6 +40,9 @@ requirements:
     - libmagic
     - libzip
     - uchardet
+    - gperftools
+    - google-sparsehash
+    - hunspell
   run:
     - pip
     - setuptools
@@ -58,13 +61,11 @@ requirements:
     - libmagic
     - libzip
     - uchardet
+    - gperftools
+    - google-sparsehash
     - parallel
-    # Optional dependencies (they might break our environment due to python dependencies upgrade/downgrade)
-    - kenlm
-    - bifixer
-    - bicleaner
-    - bicleaner-ai
-    - biroamer
+    - hunspell
+    - hunspell-en
 
 about:
   home: https://github.com/bitextor/bitextor/
