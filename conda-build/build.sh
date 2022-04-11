@@ -40,8 +40,13 @@ find . -type d -or -type l | grep /CMakeFiles$ | xargs -I{} rm -rf {}
 # Copy python scripts, necessary data and 3rd packages
 mkdir -p "$PREFIX/bitextor"
 
+# Bitextor files
 cp -r "$SRC_DIR/bitextor/bitextor" "$PREFIX/bitextor" # Scripts and data
 cp -r "$SRC_DIR/bitextor/tests" "$PREFIX/bitextor" # Tests
+cp -r "$SRC_DIR/bitextor/requirements" "$PREFIX/bitextor" # Requirements
+cp "$SRC_DIR/bitextor/requirements.txt" "$PREFIX/bitextor" # Requirements
+
+# 3rd party
 cp -r "$SRC_DIR/../gopath" "$PREFIX"
 cp -r "$SRC_DIR/heritrix-3.4.0-SNAPSHOT" "$PREFIX"
 

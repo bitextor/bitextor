@@ -59,6 +59,7 @@ requirements:
     - libzip
     - uchardet
     - parallel
+    # Optional dependencies (they might break our environment due to python dependencies upgrade/downgrade)
     - kenlm
     - bifixer
     - bicleaner
