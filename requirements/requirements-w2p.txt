@@ -1,4 +1,4 @@
-beautifulsoup4==4.10.0
+beautifulsoup4==4.11.1
 pycld2>=0.31,<=0.41
 python-magic>=0.4.22,<=0.4.25
 selectolax>=0.2.11,<=0.3.7
