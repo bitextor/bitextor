@@ -54,6 +54,12 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
     if paragraph_id:
         print("     <prop type=\"paragraph-id\">" + paragraph_id + "</prop>")
 
+    if lang == "en":
+        if 'en_document_level_variant' in fields_dict and fields_dict['en_document_level_variant'] != "":
+            print("    <prop type=\"english-variant-document\">" + fields_dict['en_document_level_variant'] + "</prop>")
+        if 'en_domain_level_variant' in fields_dict and fields_dict['en_domain_level_variant'] != "":
+            print("    <prop type=\"english-variant-domain\">" + fields_dict['en_domain_level_variant'] + "</prop>")
+
     if no_delete_seg or checksum is None:
         print("     <seg>" + escape(seg) + "</seg>")
     else:
@@ -83,6 +89,8 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
     elif 'bicleaner_ai_score' in fields_dict and fields_dict['bicleaner_ai_score'] != "":
         print("    <prop type=\"score-bicleaner-ai\">" + fields_dict['bicleaner_ai_score'] + "</prop>")
+    if 'biroamer_entities_detected' in fields_dict and fields_dict['biroamer_entities_detected'] != "":
+        print("    <prop type=\"biroamer-entities\">" + fields_dict['biroamer_entities_detected'] + "</prop>")
 
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):
