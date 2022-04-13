@@ -59,7 +59,7 @@ jobs:
             miniconda-version: "latest"
             python-version: 3.8.5
             activate-environment: bitextor-tests
-            channels: bitextor,conda-forge,bioconda,dmnapolitano,esarrias
+            channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  name: Install Bitextor
          run: |
             v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
