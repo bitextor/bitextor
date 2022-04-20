@@ -5,6 +5,7 @@ transientDir: ~/host-data/transient
 tempDir: ~/host-data/transient
 
 # DATA SOURCES - WARC FILES
+# download this example from https://github.com/bitextor/bitextor-data/releases/tag/bitextor-warc-v1.1 
 warcs: ["~/host-data/greenpeace.canada-verysmall.warc.gz"] 
 
 # PREPROCESSING
@@ -17,6 +18,7 @@ lang2: 'fr'
 
 # ALIGN
 documentAligner: "DIC"
+# download this example from https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0 
 dic: ~/host-data/en-fr.dic
 
 sentenceAligner: 'hunalign'
@@ -26,6 +28,7 @@ sentenceAlignerThreshold: 0.1
 bifixer: True
 bicleaner: True
 bicleanerFlavour: classic
+# download this example from https://github.com/bitextor/bicleaner-data/releases/tag/v1.4 
 bicleanerModel: ~/host-data/en-fr/en-fr.yaml
 bicleanerThreshold: 0.5
 biroamer: False
