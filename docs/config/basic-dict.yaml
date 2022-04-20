@@ -1,3 +1,4 @@
+# Check all configuration variables here: https://github.com/bitextor/bitextor/blob/master/docs/CONFIG.md 
 # BASIC VARIABLES
 dataDir: ~/host-data/permanent/data
 permanentDir: ~/host-data/permanent
