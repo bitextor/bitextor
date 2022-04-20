@@ -46,5 +46,5 @@ else:
 for line in reader:
     parts = line.split('\t')
     parts[-1] = parts[-1].strip()
-    if float(parts[-1]) >= float(options.threshold):
+    if float(parts[11]) >= float(options.threshold):
         sys.stdout.write(line)

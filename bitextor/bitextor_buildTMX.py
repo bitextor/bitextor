@@ -89,8 +89,11 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
     elif 'bicleaner_ai_score' in fields_dict and fields_dict['bicleaner_ai_score'] != "":
         print("    <prop type=\"score-bicleaner-ai\">" + fields_dict['bicleaner_ai_score'] + "</prop>")
+
     if 'biroamer_entities_detected' in fields_dict and fields_dict['biroamer_entities_detected'] != "":
         print("    <prop type=\"biroamer-entities\">" + fields_dict['biroamer_entities_detected'] + "</prop>")
+    if "translation_direction" in fields_dict and fields_dict["translation_direction"] != "":
+        print("    <prop type=\"translation-direction\">" + fields_dict['translation_direction'] + "</prop>")
 
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):
@@ -184,7 +187,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     bestseg = dict()
     bestchecksum1 = ""
     bestchecksum2 = ""
-    header = next(reader).strip().split('\t')
+    header = "src_url,trg_url,src_text,trg_text,aligner,src_paragraph_id,trg_paragraph_id,src_deferred_hash,trg_deferred_hash,bifixer_hash,bifixer_score,bicleaner_ai_score,biroamer_entities_detected,en_document_level_variant,en_domain_level_variant,translation_direction".split(',')
     fieldsdict = dict()
 
     if text_writer:
