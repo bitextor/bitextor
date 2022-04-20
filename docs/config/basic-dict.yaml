@@ -27,7 +27,7 @@ bifixer: True
 bicleaner: True
 bicleanerFlavour: classic
 bicleanerModel: ~/host-data/en-fr/en-fr.yaml
-bicleanerThreshold: 0.7
+bicleanerThreshold: 0.5
 biroamer: False
 
 deduped: True
