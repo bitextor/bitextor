@@ -1407,7 +1407,7 @@ rule pre_filter:
     input:
         filter_input,
     output:
-        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}.sort_flags")
+        f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}.sort_flags"
     run:
         header = None
 
@@ -1439,7 +1439,7 @@ rule pre_filter_sort_flags:
     input:
         lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
     output:
-        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags")
+        f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags"
     shell:
         """
         value="/dev/null"
