@@ -1148,7 +1148,7 @@ rule bleualign:
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
-            | sed '1 s/^/'"$header"'\\n/' \
+            | cat <(echo "$header") - \
             | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
@@ -1210,11 +1210,11 @@ checkpoint split_segalign:
                 if [[ {input[0]} == *.gz ]]; then
                     CAT=zcat
                 fi
-                header="$(head -1 <($CAT {input[0]}) | sed 's/\\t/\\\\t/g')"
+                header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
                 echo {input} \
                     | tr ' ' '\n' \
                     | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
-                    | sed '1 s/^/'"$header"'\\n/' \
+                    | cat <(echo "$header") - \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] \
                         && cat \
                         || sed -e '1 s/src_/swap_/g' -e '1 s/trg_/src_/g' -e '1 s/swap_/trg_/g' ) \
@@ -1222,7 +1222,7 @@ checkpoint split_segalign:
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
                 else
-                    ls {params.folder}/* | sed 's/.gz$//g' > {output.batches}
+                    ls {params.folder}/* | sed 's/[.]gz$//g' > {output.batches}
                 fi
                 """
             )
@@ -1503,6 +1503,10 @@ rule filter:
             && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
                 --compress-program=gzip -T {TMPDIR} -o {output} {output} \
             && sed -i '1 s/^/'"$header"'\\n/' {output}
+
+        if [[ ! -s "{output}" ]]; then
+            echo "$header" > {output}
+        fi
         """
 
 
@@ -1549,7 +1553,7 @@ rule raw:
         echo {input} \
             | tr ' ' '\n' \
             | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
-            | sed '1 s/^/'"$header"'\\n/' \
+            | cat <(echo "$header") - \
             | pigz -c > {output.corpus}
 
         # Stats
@@ -1594,7 +1598,7 @@ rule sents:
 
         cmd += \
         f""" \\
-        | sed '1 s/^/'"$header"'\\n/' \\
+        | cat <(echo "$header") - \\
         | pigz -c > {output.corpus}
 
         # Stats
