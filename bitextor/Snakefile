@@ -1377,7 +1377,7 @@ rule bicleaner:
             | tr -d '\n')
 
         $CAT {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} -S "{WORDTOK1}" -T "{WORDTOK2}" \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} -S \\"{WORDTOK1}\\" -T \\"{WORDTOK2}\\" \
                 --score_only --header -q - - {input.model} \
             | paste <($CAT {input.bifixer}) - \
             | pigz -c > {output}
