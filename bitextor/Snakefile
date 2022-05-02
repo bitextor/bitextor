@@ -845,7 +845,7 @@ rule split:
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
-                --langcode "{wildcards.lang}" \
+                --langcode {wildcards.lang} \
                 {PRUNE_THRESHOLD} {PRUNE_TYPE} {params.paragraphs} \
             | pigz -c > {output}
         """
@@ -1363,6 +1363,7 @@ rule bicleaner:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         threads=THREADS["bicleaner"],
+        parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
     threads: max(2, THREADS["bicleaner"]) # TODO why?
     shell:
         """
@@ -1377,7 +1378,8 @@ rule bicleaner:
             | tr -d '\n')
 
         $CAT {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} -S \\"{WORDTOK1}\\" -T \\"{WORDTOK2}\\" \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
+                -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
                 --score_only --header -q - - {input.model} \
             | paste <($CAT {input.bifixer}) - \
             | pigz -c > {output}
