@@ -29,6 +29,7 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
+THIRD_PARTY = f"{WORKFLOW}/.."
 
 LANGS = set()
 
@@ -149,6 +150,10 @@ PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 # Sharding
 EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
 EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
+
+#################################################################
+# EMBEDDINGS
+EMBEDDINGS_BATCH_SIZE_GPU = config["embeddingsBatchSizeGPU"]
 
 #################################################################
 # DOCALIGN
@@ -1084,6 +1089,52 @@ rule mt_matches:
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
 
+
+rule doc_emb_matches:
+    """
+    Align documents using neural-document-aligner
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split source documents
+    :input.plain2: gz-compressed file with a base64-encoded document per line
+        sentence-split target documents
+    # TODO is :output: correct?
+    :output: indices file
+        plain text file with 3 tab separated columns: emb_doc_aligner_score, idx_translated, idx_trg
+            idx_translated is the number of the aligned document in source language
+            idx_trg is the number of the aligned document in target language
+    """
+    input:
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+    output:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.nda.06_01.matches",
+    params:
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{{src_batch}}_{{trg_batch}}/nda",
+        src_emb_name="emb.src",
+        trg_emb_name="emb.trg"
+    threads: THREADS["docalign"]
+    shell:
+        """
+        mkdir -p {params.folder}
+
+        filter_command="cat"
+        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+        fi
+
+        cat <(zcat {input.plain1} | eval "$filter_command" | sed "s:$:	-	src:") \
+            <(zcat {input.plain2} | eval "$filter_command" | sed "s:$:	-	trg:") \
+            | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
+                {params.folder}/{params.trg_emb_name} \
+                --docalign-strategy 'faiss' --weights-strategy 0 \
+                --merging-strategy 3 --results-strategy 0 \
+                --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
+                --output-with-idxs --paths-to-docs-are-base64-values \
+                --threshold {DOC_THRESHOLD} --logging-level 30 \
+                --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} > {output}
+        """
+
+
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
     """
@@ -1106,10 +1157,10 @@ rule aggregate_segalign:
 rule bleualign:
     """
     Use bleualign to align sentences withing the matched documents
-    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score src_index trg_index")
+    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score idx_translated idx_trg")
     :input.plain1: gz-compressed file with a base64-encoded document per line
         sentence-split source documents
-    :input.plain1: gz-compressed file with a base64-encoded document per line
+    :input.plain2: gz-compressed file with a base64-encoded document per line
         sentence-split target documents
     :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
     :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
@@ -1155,9 +1206,63 @@ rule bleualign:
         """
 
 
+# VECALIGN #####################################################
+rule vecalign:
+    """
+    Use vecalign to align sentences withing the matched documents
+    :input.indices: output of embeddings docalign (columns are "emb_doc_aligner_score src_index trg_index")
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split source documents
+    :input.plain2: gz-compressed file with a base64-encoded document per line
+        sentence-split target documents
+    :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
+    :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
+    # TODO update :output:
+    :output: aligned sentences
+        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,bleualign_score
+    """
+    input:
+        indices=rules.doc_emb_matches.output,
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+        url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
+        url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
+    params:
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign",
+        vecalign_dir=f"{THIRD_PARTY}/vecalign",
+        src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
+        trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
+    output:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
+    threads: max(THREADS["segalign"], 2)
+    shell:
+        """
+        mkdir -p "{params.folder}"
+
+        cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
+            <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
+                | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
+                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
+                    "{params.vecalign_dir}" --tmp-dir "{params.folder}" --nda-input-is-base64 --threshold {SEGALIGN_THRESHOLD} \
+                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
+                    --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
+                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
+                    --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
+                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
+                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
+                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
+                | pigz -c > "{output}"
+        """
+
+
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = "hunalign.06_02.segalign" if SEGALIGN == "hunalign" else "06_02.segalign"
+split_input_filename = "06_02.segalign"
+
+if SEGALIGN == "hunalign":
+    split_input_filename = "hunalign.06_02.segalign"
+elif SEGALIGN == "vecalign":
+    split_input_filename = "vecalign.06_02.segalign"
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:

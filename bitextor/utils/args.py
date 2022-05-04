@@ -159,6 +159,8 @@ def validate_args(config):
         'morphologicalAnalysers': {'type': 'dict'},
         'pruneThreshold': {'type': 'integer', 'min': 0, 'default': 0},
         'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},
+        # embeddings
+        'embeddingsBatchSizeGPU': {'type': 'integer', 'min': 1, 'default': 32},
         # document alignment
         'lang1': {'type': 'string'},
         'lang2': {'type': 'string'},
@@ -177,7 +179,7 @@ def validate_args(config):
         'generateDic': {'type': 'boolean', 'default': False, 'dependencies': {}},
         'initCorpusTrainingPrefix': {'type': 'list'},
         # sentence alignment
-        'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign'], 'default': 'bleualign'},
+        'sentenceAligner': {'type': 'string', 'allowed': ['bleualign', 'hunalign', 'vecalign'], 'default': 'bleualign'},
         'sentenceAlignerThreshold': {'type': 'float'},
         # post processing
         'deferred': {'type': 'boolean', 'default': False},
