@@ -1495,7 +1495,7 @@ rule aggregate_bicleaner:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-filter_input = rules.bicleaner.output if BICLEANER else rules.bicleaner.input.bifixer
+filter_input = rules.bicleaner.output[0] if BICLEANER else rules.bicleaner.input.bifixer
 
 
 rule pre_filter:
@@ -1618,7 +1618,7 @@ rule aggregate_filter:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-raw_input_filename = filter_input[0].split("/")[-2] # {bleualign,hunalign,vecalign}.06_02.segalign / 07_01.bifixer / 07_02.bicleaner
+raw_input_filename = filter_input.split("/")[-2] # {bleualign,hunalign,vecalign}.06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 
 
 rule raw:
