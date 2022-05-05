@@ -303,6 +303,13 @@ TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
+# OTHER
+BASE64_FILTER_CMD = "cat"
+
+if PARAGRAPH_IDENTIFICATION:
+    BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+
+#################################################################
 ### WORKFLOW EXECUTION ##########################################
 THREADS = {
     "split": 1,
@@ -344,7 +351,7 @@ if "until" not in config:
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
     if DOCALIGN == "externalMT":
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
-    elif DOCALIGN == "DIC":
+    elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
     if CRAWLTARGET == "linguacrawl":
@@ -380,7 +387,7 @@ elif UNTIL == "tokenise_trg":
 elif UNTIL == "tokenise_src":
     if DOCALIGN == "externalMT":
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
-    elif DOCALIGN == "DIC":
+    elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
 elif UNTIL == "tokenise":
     OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
@@ -880,7 +887,7 @@ rule aggregate_matches:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_01.matches"
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{DOCALIGN}.06_01.matches"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -986,12 +993,8 @@ rule tokenise_translated:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        filter_command="cat"
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-        fi
         zcat {input} \
-            | eval "$filter_command" \
+            | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
@@ -1022,12 +1025,8 @@ rule tokenise:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        filter_command="cat"
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-        fi
         zcat {input} \
-            | eval "$filter_command" \
+            | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {wildcards.lang} \
@@ -1078,7 +1077,7 @@ rule mt_matches:
         l1=rules.tokenise_translated.output,
         l2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.externalMT.06_01.matches",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
     threads: THREADS["docalign"]
@@ -1107,7 +1106,7 @@ rule doc_emb_matches:
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.nda.06_01.matches",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.NDA.06_01.matches",
     params:
         folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{{src_batch}}_{{trg_batch}}/nda",
         src_emb_name="emb.src",
@@ -1116,14 +1115,8 @@ rule doc_emb_matches:
     shell:
         """
         mkdir -p {params.folder}
-
-        filter_command="cat"
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-        fi
-
-        cat <(zcat {input.plain1} | eval "$filter_command" | sed "s:$:	-	src:") \
-            <(zcat {input.plain2} | eval "$filter_command" | sed "s:$:	-	trg:") \
+        cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
+            <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
             | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
                 {params.folder}/{params.trg_emb_name} \
                 --docalign-strategy 'faiss' --weights-strategy 0 \
@@ -1144,7 +1137,7 @@ rule aggregate_segalign:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz"
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{SEGALIGN}.06_02.segalign.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -1182,7 +1175,7 @@ rule bleualign:
         paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
     threads: max(THREADS["segalign"], 2)
     shell:
         """
@@ -1257,7 +1250,7 @@ rule vecalign:
 
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = "06_02.segalign"
+split_input_filename = "bleualign.06_02.segalign"
 
 if SEGALIGN == "hunalign":
     split_input_filename = "hunalign.06_02.segalign"
@@ -1311,14 +1304,11 @@ checkpoint split_segalign:
                 """
                 mkdir -p {params.folder}
                 rm -f {params.folder}/* # remove anything that might be left after a previous run
-                CAT=cat
-                if [[ {input[0]} == *.gz ]]; then
-                    CAT=zcat
-                fi
-                header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
+                header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
+
                 echo {input} \
                     | tr ' ' '\n' \
-                    | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+                    | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
                     | cat <(echo "$header") - \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] \
                         && cat \
@@ -1344,19 +1334,18 @@ rule bifixer:
     input:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
     output:
-        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}"),
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}.gz"),
     threads: THREADS["bifixer"]
     shell:
         """
-        CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        $CAT {input.segalign} \
+        zcat {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
                 {BIFIXER_DEFERRED_COLS} {BIFIXER_PARAGRAPHS_COLS} --header - - {LANG1} {LANG2} \
-            > {output}
+            | pigz -c > {output}
         """
 
 
@@ -1367,7 +1356,7 @@ rule aggregate_bifixer:
     :output: a file that contains the path to every bifixer result
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}" for batch in get_postproc_batches()],
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}.gz" for batch in get_postproc_batches()],
     output:
         f"{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}",
     shell:
@@ -1476,17 +1465,16 @@ rule bicleaner:
         if [ {params.threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
-        CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        text_fields=$(head -1 <($CAT {input.bifixer}) \
+        text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
             | tr -d '\n')
 
-        $CAT {input.bifixer} \
+        zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
                 -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
                 --score_only --header -q - - {input.model} \
-            | paste <($CAT {input.bifixer}) - \
+            | paste <(zcat {input.bifixer}) - \
             | pigz -c > {output}
         """
 
@@ -1591,9 +1579,8 @@ rule filter:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-        CAT=$([[ {input.f} == *.gz ]] && echo "zcat" || echo "cat")
 
-        $CAT {input.f} \
+        zcat {input.f} \
             | ( [[ "{BICLEANER}" == "True" ]] \
                 && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
                     --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header} \
@@ -1630,11 +1617,7 @@ rule aggregate_filter:
     shell:
         """ echo {input} | tr ' ' '\n' > {output} """
 
-
-raw_input_filename = rules.filter.input[0].split("/")[-2]  # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
-extension = ""
-if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.segalign"]:
-    extension = ".gz"
+raw_input_filename = filter_input[0].split("/")[-2] # {bleualign,hunalign,vecalign}.06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 
 
 rule raw:
@@ -1647,19 +1630,18 @@ rule raw:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}" for batch in get_postproc_batches()
+            f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}.gz" for batch in get_postproc_batches()
         ],
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.raw.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.raw",
     shell:
         """
-        CAT=$([[ "{extension}" == ".gz" ]] && echo "zcat" || echo "cat")
-        header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
+        header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
         echo {input} \
             | tr ' ' '\n' \
-            | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+            | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
             | cat <(echo "$header") - \
             | pigz -c > {output.corpus}
 
@@ -1812,8 +1794,7 @@ rule roam_tmx:
             mix_files=""
         fi
 
-        CAT=cat; if [[ {input.txt} == *.gz ]]; then CAT=zcat; fi
-        nolines_txt=$($CAT {input.txt} | wc -l)
+        nolines_txt=$(zcat {input.txt} | wc -l)
         total_nolines=$(echo $nolines + $nolines_txt | bc)
 
         if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then

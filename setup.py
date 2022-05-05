@@ -38,13 +38,15 @@ def get_extras_require():
     # Dictionary
     dictionary = reqs_from_file("requirements/requirements-dict-aligner.txt")
 
-    # All
-    all_reqs = w2p + dictionary
+    # Vecalign
+    vecalign = reqs_from_file("requirements/requirements-vecalign.txt")
 
-    return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary}
+    # All
+    all_reqs = w2p + dictionary + vecalign
+
+    return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary, "vecalign": vecalign}
 
 if __name__ == "__main__":
-
     with open("docs/README.md", "r") as fh:
         long_description = fh.read()
 

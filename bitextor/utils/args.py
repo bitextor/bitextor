@@ -166,7 +166,7 @@ def validate_args(config):
         'lang2': {'type': 'string'},
         'documentAligner': {
             'type': 'string',
-            'allowed': ['DIC', 'externalMT'],
+            'allowed': ['DIC', 'externalMT', 'NDA'],
             'default': 'externalMT',
             'dependencies': {}
         },

@@ -52,7 +52,7 @@ touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
+download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
@@ -94,18 +94,8 @@ if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
         | tail -n 10000 \
         | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" &
 fi
-### WARC clipped
-if [ ! -f "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" ]; then
-    ${DIR}/utils/split_warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
-fi
 
 wait
-
-# Remove unnecessary clipped WARCs
-ls "${WORK}/data/warc/clipped/" | grep -v "^greenpeaceaa[.]" | xargs -I{} rm "${WORK}/data/warc/clipped/{}"
-# Rename and link
-mv "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/greenpeace.original.warc.gz"
-ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenpeace.warc.gz"
 
 # MT (id >= 10)
 (
