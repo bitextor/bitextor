@@ -46,3 +46,11 @@
 	path = bicleaner-ai
 	url = https://github.com/bitextor/bicleaner-ai.git
 	ignore = dirty
+[submodule "neural-document-aligner"]
+	path = neural-document-aligner
+	url = https://github.com/bitextor/neural-document-aligner
+	ignore = dirty
+[submodule "vecalign"]
+	path = vecalign
+	url = https://github.com/bitextor/vecalign
+	ignore = dirty
