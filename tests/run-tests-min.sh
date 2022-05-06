@@ -167,8 +167,6 @@ wait
     annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
 ) &
 
-
-
 wait
 
 # MT and dictionary-based (id >= 60)
@@ -243,6 +241,26 @@ wait
     popd > /dev/null
 
     annotate_and_echo_info 102 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto3-output-en-fr/en-fr.sent.gz)"
+) &
+
+wait
+
+# Neural (id >= 70)
+(
+    TRANSIENT_DIR="${WORK}/transient-neural-en-fr"
+
+    mkdir -p "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
+    ${BITEXTOR} \
+        --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr" \
+            dataDir="${WORK}/data/data-neural-en-fr" transientDir="${TRANSIENT_DIR}" \
+            warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
+            bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/70-neural-en-fr.report" && \
+    popd > /dev/null
+
+    annotate_and_echo_info 70 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr/en-fr.sent.gz)"
 ) &
 
 wait
