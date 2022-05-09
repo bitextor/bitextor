@@ -247,6 +247,7 @@ def duration_to_seconds(value):
     seconds = int(value[:-1]) * duration_suffix[suffix]
     return seconds
 
+
 def return_dict_value_if_key(d, k, else_value, pos_value=None, only_check_key=False, apply_function=None):
     condition = k in d if only_check_key else k in d and d[k]
 
@@ -259,3 +260,41 @@ def return_dict_value_if_key(d, k, else_value, pos_value=None, only_check_key=Fa
         result = apply_function(result)
 
     return result
+
+
+def print_alternatively_lines(input_file="-", blocks=2):
+    input_fd = sys.stdin if input_file == "-" else open(input_file)
+    lines = []
+
+    for line in input_fd:
+        lines.append(line.strip())
+
+    offset = len(lines) // blocks
+
+    if len(lines) % blocks != 0:
+        raise Exception(f"Provided lines mod blocks did not pass: {len(lines)} mod {blocks} != 0")
+
+    for idx in range(len(lines)):
+        if idx >= offset:
+            break
+
+        for i in range(blocks):
+            print(lines[idx + offset * i])
+
+    if input_file == "-":
+        input_fd.close()
+
+
+def get_all_idxs_from_list(l, element):
+    idxs = []
+    find_idx = 0
+
+    while find_idx < len(l):
+        try:
+            idxs.append(l.index(element, find_idx))
+
+            find_idx = idxs[-1] + 1
+        except ValueError:
+            find_idx = len(l)
+
+    return idxs
