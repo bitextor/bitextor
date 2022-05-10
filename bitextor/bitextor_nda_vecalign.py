@@ -233,6 +233,10 @@ def main(args):
     # Check vecalign necessary files
     check_vecalign_files(vecalign_dir)
 
+    # Print header
+    print("src_url\ttrg_url\tsrc_text\ttrg_text\tvecalign_score")
+    sys.stdout.flush() # we need to flush since subprocess prints the output before flushing buffered data
+
     # Process output from NDA. Returned sentences are Base64 values where each Base64 entry is a document
     src_sentences, trg_sentences, src_urls, trg_urls = process_nda_output(nda_input_path, nda_output_path, nda_input_is_base64,
                                                                           first_match_offset=first_match_offset)

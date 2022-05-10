@@ -277,6 +277,10 @@ def validate_args(config):
                 schema['generateDic']['required'] = True
                 schema['generateDic']['check_with'] = istrue
 
+    if config['documentAligner'] == 'NDA' or config['sentenceAligner'] == 'vecalign':
+        schema['documentAligner']['dependencies'] = {'sentenceAligner': 'vecalign'}
+        schema['sentenceAligner']['dependencies'] = {'documentAligner': 'NDA'}
+
     if config["generateDic"]:
         schema['dic']['required'] = True
         schema['initCorpusTrainingPrefix']['required'] = True

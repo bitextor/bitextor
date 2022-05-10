@@ -1097,6 +1097,7 @@ rule doc_emb_matches:
     :input.plain2: gz-compressed file with a base64-encoded document per line
         sentence-split target documents
     # TODO is :output: correct?
+    # TODO add headers to neural-document-aligner
     :output: indices file
         plain text file with 3 tab separated columns: emb_doc_aligner_score, idx_translated, idx_trg
             idx_translated is the number of the aligned document in source language
@@ -1200,6 +1201,7 @@ rule bleualign:
 
 
 # VECALIGN #####################################################
+# TODO add paragraph id and mmhash process
 rule vecalign:
     """
     Use vecalign to align sentences withing the matched documents
@@ -1210,7 +1212,6 @@ rule vecalign:
         sentence-split target documents
     :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
     :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
-    # TODO update :output:
     :output: aligned sentences
         gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,vecalign_score
     """
@@ -1245,6 +1246,7 @@ rule vecalign:
                     --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
                     --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
                     --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
+                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
                 | pigz -c > "{output}"
         """
 
