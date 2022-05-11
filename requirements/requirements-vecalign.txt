@@ -1,3 +1,0 @@
--r vecalign/requirements.txt
-Cython
-numpy

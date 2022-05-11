@@ -29,15 +29,6 @@ from utils.common import get_all_idxs_from_list
 def get_full_path(path):
     return os.path.realpath(os.path.expanduser(path))
 
-def check_vecalign_files(vecalign_dir):
-    necessary_files = ["overlap.py", "vecalign.py"]
-
-    for file in necessary_files:
-        path_to_file = f"{vecalign_dir}/{file}"
-
-        if not os.path.isfile(path_to_file):
-            raise Exception(f"necessary vecalign file not found: {path_to_file}")
-
 def preprocess_file_content(content, return_list=False):
     result = filter(lambda line: line != "", map(lambda line: line.strip(), content.split("\n") if isinstance(content, str) else content))
 
@@ -182,13 +173,13 @@ def process_nda_output(input_file, output_file, input_is_base64=False, first_mat
 
     return src_sentences, trg_sentences, src_urls, trg_urls
 
-def vecalign_overlap(vecalign_dir, base64_input_list, overlaps_output_path, num_overlaps):
+def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps):
     if os.path.isfile(overlaps_output_path):
         # Do not generate overlapping file because already exists
         return
 
     # Generate overlapping file
-    result = subprocess.Popen([f"{vecalign_dir}/overlap.py", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps)],
+    result = subprocess.Popen(["vecalign-overlap", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps)],
                               stdin=subprocess.PIPE, stdout=None, stderr=None)
 
     result.communicate(input=("\n".join(base64_input_list)).encode("utf-8"))
@@ -202,7 +193,6 @@ def vecalign_overlap(vecalign_dir, base64_input_list, overlaps_output_path, num_
 def main(args):
     nda_input_path = get_full_path(args.nda_input_path) if args.nda_input_path != "-" else args.nda_input_path
     nda_output_path = get_full_path(args.nda_output_path) if args.nda_output_path != "-" else args.nda_output_path
-    vecalign_dir = get_full_path(args.vecalign_dir)
     tmp_dir = args.tmp_dir
     nda_input_is_base64 = args.nda_input_is_base64
     vecalign_num_overlaps = args.vecalign_num_overlaps
@@ -227,13 +217,8 @@ def main(args):
         raise Exception(f"file {nda_output_path} must exist")
     if (nda_output_path != "-" and not os.path.isfile(nda_output_path)):
         raise Exception(f"file {nda_output_path} must exist")
-    if not os.path.isdir(vecalign_dir):
-        raise Exception(f"directory {vecalign_dir} must exist")
     if not os.path.isdir(tmp_dir):
         raise Exception(f"temporal directory does not exist: {tmp_dir}")
-
-    # Check vecalign necessary files
-    check_vecalign_files(vecalign_dir)
 
     # Print header
     print("src_url\ttrg_url\tsrc_text\ttrg_text\tvecalign_score")
@@ -248,8 +233,8 @@ def main(args):
                         f"{len(src_sentences)} vs {len(trg_sentences)} vs {len(src_urls)} vs {len(trg_urls)}")
 
     # Generate overlapping files
-    vecalign_overlap(vecalign_dir, src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps)
-    vecalign_overlap(vecalign_dir, trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps)
+    vecalign_overlap(src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps)
+    vecalign_overlap(trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps)
 
     # Execute vecalign (it will generate the embeddings and/or overlapping files if they do not exist)
     threshold = ["--threshold", str(args.threshold)] if args.threshold is not None else []
@@ -283,7 +268,7 @@ def main(args):
                           "--src_storage_embeddings_optimization_strategy", str(args.src_storage_embeddings_optimization_strategy),
                           "--tgt_storage_embeddings_optimization_strategy", str(args.trg_storage_embeddings_optimization_strategy)])
 
-    result = subprocess.Popen([f"{vecalign_dir}/vecalign.py", "--alignment_max_size", str(alignment_max_size),
+    result = subprocess.Popen(["vecalign", "--alignment_max_size", str(alignment_max_size),
                                "--src", "-", "--tgt", "-", "--src_urls", "-", "--tgt_urls", "-",
                                "--src_embed", vecalign_overlaps_src_path, vecalign_overlaps_src_embeddings_path,
                                "--tgt_embed", vecalign_overlaps_trg_path, vecalign_overlaps_trg_embeddings_path,
@@ -305,8 +290,6 @@ def parse_args():
                         help='Path to the input file of NDA. \'-\' for reading from stdin')
     parser.add_argument('nda_output_path', metavar='nda-output-path',
                         help='Path to the output file of NDA with the results. \'-\' for reading from stdin')
-    parser.add_argument('vecalign_dir', metavar='vecalign-dir',
-                        help='Path to vecalign directory')
 
     # Other options
     parser.add_argument('--tmp-dir', metavar='PATH', required=True,

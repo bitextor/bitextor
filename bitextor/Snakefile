@@ -1223,7 +1223,6 @@ rule vecalign:
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     params:
         folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign",
-        vecalign_dir=f"{THIRD_PARTY}/vecalign",
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
     output:
@@ -1237,7 +1236,7 @@ rule vecalign:
             <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
                 | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                    "{params.vecalign_dir}" --tmp-dir "{params.folder}" --nda-input-is-base64 --threshold {SEGALIGN_THRESHOLD} \
+                    --tmp-dir "{params.folder}" --nda-input-is-base64 --threshold {SEGALIGN_THRESHOLD} \
                     --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
                     --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
                     --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \

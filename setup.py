@@ -38,13 +38,10 @@ def get_extras_require():
     # Dictionary
     dictionary = reqs_from_file("requirements/requirements-dict-aligner.txt")
 
-    # Vecalign
-    vecalign = reqs_from_file("requirements/requirements-vecalign.txt")
-
     # All
-    all_reqs = w2p + dictionary + vecalign
+    all_reqs = w2p + dictionary
 
-    return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary, "vecalign": vecalign}
+    return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary}
 
 if __name__ == "__main__":
     with open("docs/README.md", "r") as fh:
@@ -53,7 +50,7 @@ if __name__ == "__main__":
     requirements=[]
     wd = os.path.dirname(os.path.abspath(__file__))
 
-    copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
+    #copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
     requirements = reqs_from_file("requirements.txt")
     opt_requirements = get_extras_require()
 
