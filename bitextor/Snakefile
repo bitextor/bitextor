@@ -29,7 +29,6 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
-THIRD_PARTY = f"{WORKFLOW}/.."
 
 LANGS = set()
 
