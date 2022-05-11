@@ -33,8 +33,10 @@ def check_vecalign_files(vecalign_dir):
     necessary_files = ["overlap.py", "vecalign.py"]
 
     for file in necessary_files:
-        if not os.path.isfile(f"{vecalign_dir}/{file}"):
-            raise Exception(f"necessary vecalign file not found: {file}")
+        path_to_file = f"{vecalign_dir}/{file}"
+
+        if not os.path.isfile(path_to_file):
+            raise Exception(f"necessary vecalign file not found: {path_to_file}")
 
 def preprocess_file_content(content, return_list=False):
     result = filter(lambda line: line != "", map(lambda line: line.strip(), content.split("\n") if isinstance(content, str) else content))

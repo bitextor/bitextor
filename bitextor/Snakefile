@@ -1232,7 +1232,6 @@ rule vecalign:
     shell:
         """
         mkdir -p "{params.folder}"
-        mkdir -p "{params.vecalign_dir}"
 
         cat <(zcat "{input.plain1}" | eval "{BASE64_FILTER_CMD}") <(zcat "{input.plain2}" | eval "{BASE64_FILTER_CMD}") \
             <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
