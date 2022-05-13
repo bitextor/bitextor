@@ -1095,12 +1095,10 @@ rule doc_emb_matches:
         sentence-split source documents
     :input.plain2: gz-compressed file with a base64-encoded document per line
         sentence-split target documents
-    # TODO is :output: correct?
-    # TODO add headers to neural-document-aligner
     :output: indices file
-        plain text file with 3 tab separated columns: emb_doc_aligner_score, idx_translated, idx_trg
-            idx_translated is the number of the aligned document in source language
-            idx_trg is the number of the aligned document in target language
+        plain text file with 3 tab separated columns: src_idx, trg_idx, nda_score
+            src_idx is the number of the aligned document in source language
+            trg_idx is the number of the aligned document in target language
     """
     input:
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
@@ -1231,7 +1229,7 @@ rule vecalign:
         """
         mkdir -p "{params.folder}"
 
-        cat <(zcat "{input.plain1}" | eval "{BASE64_FILTER_CMD}") <(zcat "{input.plain2}" | eval "{BASE64_FILTER_CMD}") \
+        cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
             <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
                 | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \

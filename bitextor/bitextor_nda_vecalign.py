@@ -38,29 +38,26 @@ def preprocess_file_content(content, return_list=False):
     return result
 
 def process_nda_output(input_file, output_file, input_is_base64=False, first_match_offset=0):
-    output = []
     src_sentences, trg_sentences = [], []
     src_urls, trg_urls = [], []
     src_idxs, trg_idxs = [], []
 
     # Read the output file
-    if output_file == "-":
-        # Read from stdin
-        for line in sys.stdin:
-            output.append(line.strip())
-    else:
-        with open(output_file) as file:
-            output.extend(preprocess_file_content(file.readlines()))
+    output_header = next(output_file).strip().split('\t')
+    output = preprocess_file_content([l for l in output_file])
+
+    if len(output_header) not in (2, 3):
+        raise Exception(f"unexpected NDA output format. Expected columns was 3|2, got {len(values)}")
+
+    src_idx_idx = output_header.index("src_idx")
+    trg_idx_idx = output_header.index("trg_idx")
 
     # Process the output
     for row in output:
         values = row.split("\t")
 
-        if len(values) not in (2, 3):
-            raise Exception(f"unexpected NDA output format. Expected columns was 3|2, got {len(values)}")
-
         try:
-            src_idx, trg_idx = int(values[0]) - first_match_offset, int(values[1]) - first_match_offset
+            src_idx, trg_idx = int(values[src_idx_idx]) - first_match_offset, int(values[trg_idx_idx]) - first_match_offset
 
             src_idxs.append(src_idx)
             trg_idxs.append(trg_idx)
@@ -71,8 +68,6 @@ def process_nda_output(input_file, output_file, input_is_base64=False, first_mat
         raise Exception("different number of src and trg documents while processing NDA output")
 
     # Get the documents
-    filein = sys.stdin
-    file_open = False
     total_src_files, total_trg_files = 0, 0
     index = {"src_sentences": [], "trg_sentences": [],
              "src_urls": [], "trg_urls": [],
@@ -80,11 +75,7 @@ def process_nda_output(input_file, output_file, input_is_base64=False, first_mat
              "src_matches_index": {}, "trg_matches_index": {},
              "matches": set()}
 
-    if input_file != "-":
-        filein = open(input_file)
-        file_open = True
-
-    for line in filein:
+    for line in input_file:
         line = line.strip().split("\t")
         sentences = None
 
@@ -137,9 +128,6 @@ def process_nda_output(input_file, output_file, input_is_base64=False, first_mat
         else:
             raise Exception(f"unexpected NDA input format: expected 3rd column was src|trg, got {line[2]}")
 
-    if file_open:
-        file.close()
-
     # Process index in order to obtain the sentences and URLs sorted
     for src_idx, trg_idx in index["matches"]:
         src_sentence_idx = index["src_matches_index"][src_idx]
@@ -191,8 +179,8 @@ def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps):
         raise Exception(f"overlap file {overlaps_output_path} should exist, but it does not exist")
 
 def main(args):
-    nda_input_path = get_full_path(args.nda_input_path) if args.nda_input_path != "-" else args.nda_input_path
-    nda_output_path = get_full_path(args.nda_output_path) if args.nda_output_path != "-" else args.nda_output_path
+    nda_input_path = args.nda_input_path
+    nda_output_path = args.nda_output_path
     tmp_dir = args.tmp_dir
     nda_input_is_base64 = args.nda_input_is_base64
     vecalign_num_overlaps = args.vecalign_num_overlaps
@@ -205,7 +193,7 @@ def main(args):
     trg_embedding = args.trg_embedding
     first_match_offset = args.first_match_offset
 
-    if (nda_input_path == "-" and nda_output_path == "-"):
+    if (nda_input_path == sys.stdin and nda_output_path == sys.stdin):
         raise Exception("you can only pipe either nda input or nda output, not both of them")
 
     vecalign_overlaps_src_path = f"{tmp_dir}/overlaps.src" if src_overlapping is None else src_overlapping
@@ -213,10 +201,6 @@ def main(args):
     vecalign_overlaps_src_embeddings_path = f"{tmp_dir}/overlaps.emb.src" if src_embedding is None else src_embedding
     vecalign_overlaps_trg_embeddings_path = f"{tmp_dir}/overlaps.emb.trg" if trg_embedding is None else trg_embedding
 
-    if (nda_input_path != "-" and not os.path.isfile(nda_input_path)):
-        raise Exception(f"file {nda_output_path} must exist")
-    if (nda_output_path != "-" and not os.path.isfile(nda_output_path)):
-        raise Exception(f"file {nda_output_path} must exist")
     if not os.path.isdir(tmp_dir):
         raise Exception(f"temporal directory does not exist: {tmp_dir}")
 
@@ -286,10 +270,10 @@ def main(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='NDA output process for Vecalign')
 
-    parser.add_argument('nda_input_path', metavar='nda-input-path',
-                        help='Path to the input file of NDA. \'-\' for reading from stdin')
-    parser.add_argument('nda_output_path', metavar='nda-output-path',
-                        help='Path to the output file of NDA with the results. \'-\' for reading from stdin')
+    parser.add_argument('nda_input_path', metavar='nda-input-path', type=argparse.FileType('rt'),
+                        help='Path to the input file of NDA')
+    parser.add_argument('nda_output_path', metavar='nda-output-path', type=argparse.FileType('rt'),
+                        help='Path to the output file of NDA with the results')
 
     # Other options
     parser.add_argument('--tmp-dir', metavar='PATH', required=True,
