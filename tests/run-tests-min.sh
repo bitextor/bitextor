@@ -256,7 +256,7 @@ wait
             dataDir="${WORK}/data/data-neural-en-fr" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
-            bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            bicleanerFlavour="classic" deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/70-neural-en-fr.report" && \
     popd > /dev/null
 
