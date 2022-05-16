@@ -192,6 +192,7 @@ def main(args):
     src_embedding = args.src_embedding
     trg_embedding = args.trg_embedding
     first_match_offset = args.first_match_offset
+    paragraph_identification = args.paragraph_identification
 
     if (nda_input_path == sys.stdin and nda_output_path == sys.stdin):
         raise Exception("you can only pipe either nda input or nda output, not both of them")
@@ -203,10 +204,6 @@ def main(args):
 
     if not os.path.isdir(tmp_dir):
         raise Exception(f"temporal directory does not exist: {tmp_dir}")
-
-    # Print header
-    print("src_url\ttrg_url\tsrc_text\ttrg_text\tvecalign_score")
-    sys.stdout.flush() # we need to flush since subprocess prints the output before flushing buffered data
 
     # Process output from NDA. Returned sentences are Base64 values where each Base64 entry is a document
     src_sentences, trg_sentences, src_urls, trg_urls = process_nda_output(nda_input_path, nda_output_path, nda_input_is_base64,
@@ -251,13 +248,15 @@ def main(args):
                           "--tgt_embeddings_optimization_strategy", str(args.trg_embeddings_optimization_strategy),
                           "--src_storage_embeddings_optimization_strategy", str(args.src_storage_embeddings_optimization_strategy),
                           "--tgt_storage_embeddings_optimization_strategy", str(args.trg_storage_embeddings_optimization_strategy)])
+    paragraphs = ["--paragraph_identification"] if paragraph_identification else []
 
     result = subprocess.Popen(["vecalign", "--alignment_max_size", str(alignment_max_size),
                                "--src", "-", "--tgt", "-", "--src_urls", "-", "--tgt_urls", "-",
                                "--src_embed", vecalign_overlaps_src_path, vecalign_overlaps_src_embeddings_path,
                                "--tgt_embed", vecalign_overlaps_trg_path, vecalign_overlaps_trg_embeddings_path,
                                *threshold, "--embeddings_dim", str(dim), "--urls_format",
-                               "--embeddings_batch_size", str(embeddings_batch_size), *storage_flags],
+                               "--embeddings_batch_size", str(embeddings_batch_size), *storage_flags,
+                               *paragraphs],
                                stdin=subprocess.PIPE, stdout=None, stderr=None)
 
     # Pipe input and get output
@@ -330,6 +329,8 @@ def parse_args():
                         help='Source embedding file. If does not exist, it will be generated')
     parser.add_argument('--trg-embedding', type=str,
                         help='Target embedding file. If does not exist, it will be generated')
+    parser.add_argument('--paragraph-identification', action='store_true',
+                        help='Enable paragraph identification')
 
     args = parser.parse_args()
 
