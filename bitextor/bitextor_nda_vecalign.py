@@ -161,13 +161,15 @@ def process_nda_output(input_file, output_file, input_is_base64=False, first_mat
 
     return src_sentences, trg_sentences, src_urls, trg_urls
 
-def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps):
+def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps, paragraphs=False):
     if os.path.isfile(overlaps_output_path):
         # Do not generate overlapping file because already exists
         return
 
+    paragraphs = ["--paragraph_identification"] if paragraphs else []
+
     # Generate overlapping file
-    result = subprocess.Popen(["vecalign-overlap", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps)],
+    result = subprocess.Popen(["vecalign-overlap", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps), *paragraphs],
                               stdin=subprocess.PIPE, stdout=None, stderr=None)
 
     result.communicate(input=("\n".join(base64_input_list)).encode("utf-8"))
@@ -214,8 +216,8 @@ def main(args):
                         f"{len(src_sentences)} vs {len(trg_sentences)} vs {len(src_urls)} vs {len(trg_urls)}")
 
     # Generate overlapping files
-    vecalign_overlap(src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps)
-    vecalign_overlap(trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps)
+    vecalign_overlap(src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps, paragraphs=paragraph_identification)
+    vecalign_overlap(trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps, paragraphs=paragraph_identification)
 
     # Execute vecalign (it will generate the embeddings and/or overlapping files if they do not exist)
     threshold = ["--threshold", str(args.threshold)] if args.threshold is not None else []
