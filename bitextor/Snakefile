@@ -7,7 +7,6 @@ from bitextor.utils.args import validate_args
 from bitextor.utils.common import (
     open_xz_or_gzip_or_plain,
     get_all_ppids,
-    snake_no_more_race_get_pgid,
     duration_to_seconds,
     return_dict_value_if_key
 )
@@ -1282,23 +1281,7 @@ checkpoint split_segalign:
         # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
         #  running the script, so it fails even before we are able to check if the input is empty in bash script
         if len(input) == 0:
-            # TODO is this really necessary? There can be jobs being executed when we reach this checkpoint? If not, we should raise
-            #  an exception instead of try to get the common PID of the current snakemake execution
-            shell(
-                f"""
-                >&2 echo "INFO: no data to work with: stopping execution"
-                touch {output}
-                # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
-                # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
-                pid_to_kill="{snake_no_more_race_get_pgid()}"
-                if [[ "$pid_to_kill" == "" ]]; then
-                    echo "ERROR: could not stop the execution with a normal status: forcing snakemake to stop"
-                    exit 1
-                else
-                    kill -TERM "$pid_to_kill" || exit 1
-                fi
-                """
-            )
+            raise Exception("Didn't get any input file")
         else:
             shell(
                 """
