@@ -192,8 +192,7 @@ SEGALIGN_THRESHOLD = return_dict_value_if_key(config, "sentenceAlignerThreshold"
 #################################################################
 # CLEANING
 DEFERRED = return_dict_value_if_key(config, "deferred", False, pos_value=True)
-DEFERRED_ARGS = "--print-sent-hash" if DEFERRED else ""
-MMHSUM_PATH = "mmhsum" if DEFERRED else ""
+DEFERRED_CMD = "mmhsum" if DEFERRED else ''
 
 BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
 BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
@@ -1170,7 +1169,8 @@ rule bleualign:
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
         workers=THREADS["segalign"],
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
+        deferred="--print-sent-hash" if DEFERRED else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
@@ -1191,14 +1191,13 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
             | cat <(echo "$header") - \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         """
 
 
 # VECALIGN #####################################################
-# TODO add paragraph id and mmhash process
 rule vecalign:
     """
     Use vecalign to align sentences withing the matched documents
@@ -1222,7 +1221,8 @@ rule vecalign:
         folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign",
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
+        deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: max(THREADS["segalign"], 2)
@@ -1234,7 +1234,7 @@ rule vecalign:
             <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
                 | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} \
+                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} \
                     --tmp-dir "{params.folder}" --nda-input-is-base64 \
                     --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
                     --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \

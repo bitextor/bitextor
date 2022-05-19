@@ -19,6 +19,7 @@
 
 import os
 import sys
+import shlex
 import base64
 import logging
 import argparse
@@ -195,6 +196,7 @@ def main(args):
     trg_embedding = args.trg_embedding
     first_match_offset = args.first_match_offset
     paragraph_identification = args.paragraph_identification
+    sent_hash_cmd = args.print_sent_hash
 
     if (nda_input_path == sys.stdin and nda_output_path == sys.stdin):
         raise Exception("you can only pipe either nda input or nda output, not both of them")
@@ -259,14 +261,43 @@ def main(args):
                                *threshold, "--embeddings_dim", str(dim), "--urls_format",
                                "--embeddings_batch_size", str(embeddings_batch_size), *storage_flags,
                                *paragraphs],
-                               stdin=subprocess.PIPE, stdout=None, stderr=None)
+                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
 
     # Pipe input and get output
     input_base64 = "\n".join([f"{a}\t{b}\t{c}\t{d}" for a, b, c, d in zip(src_sentences, trg_sentences, src_urls, trg_urls)])
-    result.communicate(input=input_base64.encode("utf-8"))
+    stdout, _ = result.communicate(input=input_base64.encode("utf-8"))
 
     if result.returncode != 0:
         raise Exception(f"something went wrong while running vecalign: return code is {result.returncode}")
+
+    stdout = stdout.decode("utf-8", errors="ignore").split('\n')
+    header = stdout[0].rstrip()
+    src_text_idx = header.index("src_text")
+    trg_text_idx = header.index("trg_text")
+
+    if sent_hash_cmd:
+        # Print deferred hashes
+        sent_hash_cmd = shlex.split(sent_hash_cmd)
+
+        header += "\tsrc_deferred_hash\ttrg_deferred_hash"
+
+        print(header)
+
+        for s in stdout:
+            s = s.rstrip('\n').split('\t')
+            src_text = s[src_text_idx]
+            trg_text = s[trg_text_idx]
+            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore" stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+                                        .communicate(src_text).rstrip('\n')
+            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore" stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+                                        .communicate(trg_text).rstrip('\n')
+
+            s.append(src_deferred)
+            s.append(trg_deferred)
+
+            print('\t'.join(s))
+    else:
+        sys.stdout.write(stdout)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='NDA output process for Vecalign')
@@ -283,6 +314,8 @@ def parse_args():
                         help='If the nda input file contains the first row with Base64 instead of paths to documents')
     parser.add_argument('--first-match-offset', type=int, default=0,
                         help='The matches are expected to begin with zero, but if they begin with other value, the offset can be set with this flag')
+    parser.add_argument('--print-sent-hash',
+                        help='Provide command for a shasum like program to print MurmurHash hashes of the src and trg sentences')
     ## Storage
     parser.add_argument('--embedding-src-storage-input', type=str,
                         help='Path to the src storage file which contains sentences. You will need to provide --embedding-src-storage-path as well')
