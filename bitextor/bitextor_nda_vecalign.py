@@ -287,9 +287,9 @@ def main(args):
             s = s.rstrip('\n').split('\t')
             src_text = s[src_text_idx]
             trg_text = s[trg_text_idx]
-            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore" stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
                                         .communicate(src_text).rstrip('\n')
-            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore" stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
                                         .communicate(trg_text).rstrip('\n')
 
             s.append(src_deferred)
