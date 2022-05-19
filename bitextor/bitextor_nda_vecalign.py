@@ -270,8 +270,8 @@ def main(args):
     if result.returncode != 0:
         raise Exception(f"something went wrong while running vecalign: return code is {result.returncode}")
 
-    stdout = stdout.decode("utf-8", errors="ignore").split('\n')
-    header = stdout[0].rstrip()
+    stdout = stdout.decode("utf-8").split('\n')
+    header = stdout[0].rstrip('\n').split('\t')
     src_text_idx = header.index("src_text")
     trg_text_idx = header.index("trg_text")
 
@@ -279,17 +279,18 @@ def main(args):
         # Print deferred hashes
         sent_hash_cmd = shlex.split(sent_hash_cmd)
 
-        header += "\tsrc_deferred_hash\ttrg_deferred_hash"
+        header.append("src_deferred_hash")
+        header.append("trg_deferred_hash")
 
-        print(header)
+        print('\t'.join(header))
 
         for s in stdout:
             s = s.rstrip('\n').split('\t')
             src_text = s[src_text_idx]
             trg_text = s[trg_text_idx]
-            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
                                         .communicate(src_text).rstrip('\n')
-            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", errors="ignore", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
                                         .communicate(trg_text).rstrip('\n')
 
             s.append(src_deferred)
