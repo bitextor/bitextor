@@ -27,6 +27,8 @@ import subprocess
 
 from utils.common import get_all_idxs_from_list
 
+logger = logging
+
 def get_full_path(path):
     return os.path.realpath(os.path.expanduser(path))
 
@@ -233,7 +235,7 @@ def main(args):
         if args.embedding_src_storage_input_base64:
             storage_flags.append("--embeddings_src_storage_input_base64")
 
-        logging.info("using embeddings storage (src)")
+        logger.info("using embeddings storage (src)")
     if (args.embedding_trg_storage_input is not None and args.embedding_trg_storage_path is not None):
         storage_flags.extend(["--embeddings_tgt_storage_input", args.embedding_trg_storage_input,
                               "--embeddings_tgt_storage_path", args.embedding_trg_storage_path])
@@ -241,7 +243,7 @@ def main(args):
         if args.embedding_trg_storage_input_base64:
             storage_flags.append("--embeddings_tgt_storage_input_base64")
 
-        logging.info("using embeddings storage (trg)")
+        logger.info("using embeddings storage (trg)")
 
     if args.embedding_src_storage_not_uniq:
         storage_flags.append("--embeddings_src_storage_are_not_uniq")
@@ -270,14 +272,17 @@ def main(args):
     if result.returncode != 0:
         raise Exception(f"something went wrong while running vecalign: return code is {result.returncode}")
 
-    stdout = stdout.decode("utf-8").split('\n')
-    header = stdout[0].rstrip('\n').split('\t')
+    stdout = stdout.decode("utf-8").rstrip('\n')
+    header = stdout[:stdout.find('\n')].split('\t')
     src_text_idx = header.index("src_text")
     trg_text_idx = header.index("trg_text")
+
+    logger.debug("src and trg text idxs: %d %d", src_text_idx, trg_text_idx)
 
     if sent_hash_cmd:
         # Print deferred hashes
         sent_hash_cmd = shlex.split(sent_hash_cmd)
+        stdout = stdout.split('\n')[1:]
 
         header.append("src_deferred_hash")
         header.append("trg_deferred_hash")
@@ -298,7 +303,7 @@ def main(args):
 
             print('\t'.join(s))
     else:
-        sys.stdout.write(stdout)
+        print(stdout)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='NDA output process for Vecalign')
@@ -317,6 +322,8 @@ def parse_args():
                         help='The matches are expected to begin with zero, but if they begin with other value, the offset can be set with this flag')
     parser.add_argument('--print-sent-hash',
                         help='Provide command for a shasum like program to print MurmurHash hashes of the src and trg sentences')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Verbose logging output')
     ## Storage
     parser.add_argument('--embedding-src-storage-input', type=str,
                         help='Path to the src storage file which contains sentences. You will need to provide --embedding-src-storage-path as well')
@@ -372,8 +379,13 @@ def parse_args():
 
     return args
 
+# This function should only be invoked when running as script and not as module
 def main_wrapper():
     args = parse_args()
+
+    logger = logging.getLogger("nda_vecalign")
+
+    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
     main(args)
 
