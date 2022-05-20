@@ -288,10 +288,10 @@ def main(args):
             s = s.rstrip('\n').split('\t')
             src_text = s[src_text_idx]
             trg_text = s[trg_text_idx]
-            src_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
-                                        .communicate(src_text).rstrip('\n')
-            trg_deferred, _ = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
-                                        .communicate(trg_text).rstrip('\n')
+            src_deferred = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+                                     .communicate(src_text)[0].rstrip('\n')
+            trg_deferred = subprocess.Popen(sent_hash_cmd, encoding="utf-8", stdin=subprocess.PIPE, stdout=subprocess.PIPE)\
+                                     .communicate(trg_text)[0].rstrip('\n')
 
             s.append(src_deferred)
             s.append(trg_deferred)
