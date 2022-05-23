@@ -146,15 +146,3 @@ jobs:
 
                echo ""
             done
-      -  name: Trigger intensive tests with Docker
-         # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         # https://github.com/actions/runner/issues/1173
-         if: ${{ steps.tests.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
-         env:
-            BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
-            BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
-         run: |
-            curl -u "${BITEXTOR_BOT_EMAIL}:${BITEXTOR_BOT_PAT_DOCKER_CD}" \
-                 -X POST   -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/repos/bitextor/bitextor/actions/workflows/dockerIntensiveTests.yaml/dispatches \
-                 -d '{"ref":"master","inputs":{"docker_tag":"edge"}}'

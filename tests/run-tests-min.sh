@@ -43,8 +43,6 @@ mkdir -p "${BICLEANER}"
 mkdir -p "${BICLEANER_AI}"
 mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/data/parallel-corpus"
-mkdir -p "${WORK}/data/parallel-corpus/Europarl"
-mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/data/prevertical"
 rm -f "$FAILS"
 touch "$FAILS"
@@ -57,42 +55,6 @@ download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
-# Parallel corpus
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then
-    # ~2000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-Europarl/v8/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/Europarl" && \
-    unzip -qq "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/Europarl" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" ]; then
-    # ~5000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/DGT" && \
-    unzip -qq "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/DGT" &
-fi
-wait
-
-# Preprocess
-### Europarl parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" &
-fi
-### DGT parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" &
-fi
 
 wait
 
