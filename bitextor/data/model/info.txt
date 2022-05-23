@@ -1,0 +1,1 @@
+These models have been created by using bitextor/docalign/bitextor_train_docalign.py script and WMT16 data.

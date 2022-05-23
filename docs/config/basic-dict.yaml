@@ -29,9 +29,9 @@ sentenceAlignerThreshold: 0.1
 bifixer: True
 bicleaner: True
 bicleanerFlavour: classic
-# download this example from https://github.com/bitextor/bicleaner-data/releases/tag/v1.4 
+# download this example from https://github.com/bitextor/bicleaner-data/releases/tag/v1.5
 bicleanerModel: ~/host-data/en-fr/en-fr.yaml
-bicleanerThreshold: 0.5
+bicleanerThreshold: 0.7
 biroamer: False
 
 deduped: True
