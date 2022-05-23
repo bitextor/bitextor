@@ -83,13 +83,13 @@ RUN pip3 install --upgrade pip
 ## bitextor
 RUN pip3 install .[all]
 ## bicleaner
-RUN pip3 install ./bicleaner
-RUN pip3 install ./bicleaner-ai
-RUN pip3 install ./kenlm --install-option="--max_order=7"
+RUN pip3 install ./third_party/bicleaner
+RUN pip3 install ./third_party/bicleaner-ai
+RUN pip3 install ./third_party/kenlm --install-option="--max_order=7"
 ##  bifixer
-RUN pip3 install ./bifixer
+RUN pip3 install ./third_party/bifixer
 ## biroamer
-RUN pip3 install ./biroamer
+RUN pip3 install ./third_party/biroamer
 RUN python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ## cld3
 RUN pip3 install Cython

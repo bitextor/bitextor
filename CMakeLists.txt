@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 project(bitextor)
 
-set(PREPROCESS_PATH "${PROJECT_SOURCE_DIR}/preprocess")
+set(PREPROCESS_PATH "${PROJECT_SOURCE_DIR}/third_party/preprocess")
 set(SKIP_PREPROCESS_BUILD ON) # avoid compiling preprocess a million times
 set(CMAKE_BUILD_TYPE "Release")
 include(GNUInstallDirs)
@@ -15,26 +15,26 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 if(NOT SKIP_PREPROCESS)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/preprocess preprocess)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/preprocess preprocess)
     install(TARGETS b64filter cache docenc foldfilter mmhsum
         DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 endif()
 
 if(NOT SKIP_WARC2TEXT)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/warc2text warc2text)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/warc2text warc2text)
 endif()
 
 if(NOT SKIP_PREVERTICAL2TEXT)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/prevertical2text prevertical2text)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/prevertical2text prevertical2text)
 endif()
 
 if(NOT SKIP_BLEUALIGN)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/bleualign-cpp bleualign-cpp)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/bleualign-cpp bleualign-cpp)
 endif()
 
 if (NOT SKIP_HUNALIGN)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/hunalign/src)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/hunalign/src)
     install(PROGRAMS ${PROJECT_BINARY_DIR}/bin/hunalign
         DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
@@ -46,14 +46,14 @@ if (NOT SKIP_DOCALIGN)
 endif()
 
 if (NOT SKIP_BIROAMER)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/biroamer fast_align)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/biroamer fast_align)
 endif()
 
 if (NOT SKIP_MGIZA)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/mgiza/mgizapp mgizapp)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/mgiza/mgizapp mgizapp)
 endif()
 
 if (NOT SKIP_KENLM)
     set(KENLM_MAX_ORDER 7)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/kenlm kenlm)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/kenlm kenlm)
 endif()

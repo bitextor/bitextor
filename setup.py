@@ -52,7 +52,7 @@ if __name__ == "__main__":
     opt_requirements = get_extras_require()
 
     # Copy necessary files so they will be available when the package is built
-    copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
+    copytree("third_party/preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
 
     setuptools.setup(
         name="bitextor",

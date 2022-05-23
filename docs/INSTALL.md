@@ -169,15 +169,15 @@ pip3 install --upgrade pip
 # bitextor (mandatory dependencies):
 pip3 install .
 # additional dependencies:
-pip3 install ./bifixer
-pip3 install ./bicleaner
-pip3 install ./bicleaner-ai
-pip3 install ./kenlm --install-option="--max_order 7" # Bicleaner and Bicleaner AI dependency
-pip3 install ./biroamer && \
+pip3 install ./third_party/bifixer
+pip3 install ./third_party/bicleaner
+pip3 install ./third_party/bicleaner-ai
+pip3 install ./third_party/kenlm --install-option="--max_order 7" # Bicleaner and Bicleaner AI dependency
+pip3 install ./third_party/biroamer && \
 python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
 ## neural
-pip3 install ./neural-document-aligner
-pip3 install ./vecalign
+pip3 install ./third_party/neural-document-aligner
+pip3 install ./third_party/vecalign
 ```
 
 If you don't want to install all Python requirements in `requirements.txt` because you don't expect to run some of Bitextor modules, you can comment those `*.txt` in `requirements.txt` and rerun Bitextor installation. Also, there are different optional packages that you can choose depending on your needs instead of install all of them:

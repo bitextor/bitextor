@@ -54,12 +54,12 @@ jobs:
       -  name: Install additional python requirements
          run: |
             pip3 install .[all]
-            pip3 install ./bifixer
-            pip3 install ./bicleaner
-            pip3 install ./kenlm --install-option="--max_order 7"
-            pip3 install ./biroamer
+            pip3 install ./third_party/bifixer
+            pip3 install ./third_party/bicleaner
+            pip3 install ./third_party/kenlm --install-option="--max_order 7"
+            pip3 install ./third_party/biroamer
             python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
-            pip3 install -r deferred-crawling/requirements.txt
+            pip3 install -r ./third_party/deferred-crawling/requirements.txt
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:
