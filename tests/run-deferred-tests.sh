@@ -65,7 +65,7 @@ BITEXTOR_STATUS=$?
 
 if [ ${BITEXTOR_STATUS} -eq 0 ]; then
   BITEXTOR_OUTPUT_DEDUPED="${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz"
-  RECONSTRUCTOR="${DIR}/../deferred-crawling/deferred-annotation-reconstructor.py --header"
+  RECONSTRUCTOR="${DIR}/../third_party/deferred-crawling/deferred-annotation-reconstructor.py --header"
 
   python3 ${RECONSTRUCTOR} ${BITEXTOR_OUTPUT_DEDUPED} en el ${WARC} --header \
     | bifixer -q --sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash \
