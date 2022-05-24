@@ -77,10 +77,7 @@ def extract_structure_representations(f, docs, offset=1):
                         # Delete entries without *ml in the first  tag to avoid things different than HTML or XML
                         # as JPGS or PDF, for example
                         translated_taglist = []
-                        tagset = set(taglist)
-                        if '' in tagset:
-                            tagset.remove('')
-                        for tag in tagset:
+                        for tag in taglist:
                             if tag not in dic:
                                 # Adding new tags in the raspa and the character with which they will be replaced to the
                                 # dictionary. To compute the edit distance at the level of characters, HTML tags must be
