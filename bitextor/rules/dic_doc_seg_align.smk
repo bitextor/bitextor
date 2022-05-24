@@ -339,7 +339,7 @@ rule hunalign:
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
             | LC_ALL=C sort -nk1,1 -t $'\t' \
-            | sed '1 s/^/'"$header"'\\n/' \
+            | cat <(echo "$header") - \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
                 --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \

@@ -39,6 +39,9 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
     candidate_iterations_idx = 0
     doc_id_2 = f"d2_{values[0][0]}"
 
+    if len(values) < 2:
+        return
+
     while candidate_iterations_idx < max_candidate_iterations:
         if doc_id_2[3:] != str(values[candidate_iterations_idx][0]):
             raise Exception("Unexpected different value")
@@ -73,6 +76,9 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, n
     max_candidate_iterations = num_candidates
     candidate_iterations_idx = 0
     doc_id_1 = f"d1_{values[0][0]}"
+
+    if len(values) < 2:
+        return
 
     while candidate_iterations_idx < max_candidate_iterations:
         if doc_id_1[3:] != str(values[candidate_iterations_idx][0]):
