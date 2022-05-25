@@ -291,7 +291,7 @@ else:
             # and combining this information with the previous one
             pairedDocsLine = set()
             candidateDocuments = []
-
+            new_candidate_list = {}
             last_doc_id_1 = -1
             reader1_values = []
 
@@ -300,7 +300,6 @@ else:
                 oridx_writer.write("src_index\ttrg_index\tdocalign_score\n")
 
             for line_ridx1 in reader1:
-                new_candidate_list = {}
                 fields = line_ridx1.strip().split("\t")
                 current_doc_id_1 = int(fields[src_doc_idx_idx1])
                 current_doc_id_2 = int(fields[trg_doc_idx_idx1])
@@ -320,6 +319,7 @@ else:
                 reader1_values.append((current_doc_id_1, current_doc_id_2, current_score))
 
                 last_doc_id_1 = current_doc_id_1
+                new_candidate_list = {}
 
             if len(reader1_values) != 0:
                 # Process
