@@ -39,7 +39,7 @@ def process_candidates_ridx2(values, max_candidates, doc_pairs, best_ridx, best_
     candidate_iterations_idx = 0
     doc_id_2 = f"d2_{values[0][0]}"
 
-    if len(values) < 2:
+    if len(values) == 0:
         return
 
     while candidate_iterations_idx < max_candidate_iterations:
@@ -77,7 +77,7 @@ def process_candidates_ridx1(values, max_candidates, doc_pairs, best_ridx_inv, n
     candidate_iterations_idx = 0
     doc_id_1 = f"d1_{values[0][0]}"
 
-    if len(values) < 2:
+    if len(values) == 0:
         return
 
     while candidate_iterations_idx < max_candidate_iterations:
@@ -181,7 +181,6 @@ indices = {}
 indicesProb = {}
 documents = set(map(lambda x: f"d1_{x}", range(1, options.ndoc1 + 1))).\
                 union(set(map(lambda x: f"d2_{x}", range(1, options.ndoc2 + 1))))
-file2_start_counter = options.ndoc1
 
 if options.ridx2 is None:
     # Reading the .ridx file with the preliminary alignment
