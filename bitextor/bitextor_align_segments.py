@@ -91,9 +91,8 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
             filereader2.readline()
 
     except StopIteration:
-        # We could not read the first match in both files (likely, the provided files and matches are not related)
-        # Remeber that hunalign is monotonic!
-        raise Exception("Could not get the documents for the first match: likely the provided files are not correct")
+        # Hunalign couldn't find matches (the loop will not be executed since there are no lines)
+        pass
 
     # Process hunalign output
     for line_h in hunalign_output:
