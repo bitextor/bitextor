@@ -53,7 +53,7 @@ jobs:
          run: git submodule update --init --force --recursive
       -  name: Install additional python requirements
          run: |
-            pip3 install .
+            pip3 install .[all]
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:
