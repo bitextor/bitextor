@@ -328,8 +328,8 @@ rule hunalign:
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.gz",
     params:
-        c1="src_index" if DOCALIGN == "DIC" else "idx_translated", # TODO TBD add NDA support?
-        c2="trg_index" if DOCALIGN == "DIC" else "idx_trg", # TODO TBD add NDA support?
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
     shell:

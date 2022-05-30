@@ -213,6 +213,7 @@ def validate_args(config):
     }
 
     provided_in_config = {} # contains info about the definition of rules in the configuration file
+    monolingual_workflow = False
 
     # initialize with the default values if no value was provided
     for key in schema:
@@ -221,23 +222,22 @@ def validate_args(config):
         if key not in config and 'default' in schema[key]:
             config[key] = schema[key]['default']
 
-    if 'crawler' in config:
+    both_langs_specified = provided_in_config["lang1"] and provided_in_config["lang2"]
+
+    if provided_in_config['crawler']:
         if config['crawler'] == 'heritrix':
             schema['heritrixPath']['required'] = True
 
-    monolingual_workflow = False
-    if 'until' in config:
+    if provided_in_config['until']:
 
         if config['until'] in ('crawl', 'preprocess', 'shard', 'split', 'tokenise'):
             monolingual_workflow = True
-
-    bothLangsSpecified = "lang1" in config and "lang2" in config
 
     if not monolingual_workflow:
         schema['lang1']['required'] = True
         schema['lang2']['required'] = True
 
-    elif monolingual_workflow and not bothLangsSpecified:
+    elif monolingual_workflow and not both_langs_specified:
         schema['langs']['required'] = True
 
     if config['boilerplateCleaning'] and config['preprocessor'] != 'warc2preprocess':
@@ -252,18 +252,18 @@ def validate_args(config):
 
     if config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
-        if monolingual_workflow and 'alignedCmd' not in config:
+        if monolingual_workflow and not provided_in_config['alignedCmd']:
             config["alignerCmd"] = ""
 
-        if bothLangsSpecified:
+        if both_langs_specified:
             schema['translationDirection']['allowed'] = [
                 f'{config["lang1"]}2{config["lang2"]}',
                 f'{config["lang2"]}2{config["lang1"]}']
 
-        if "sentenceAligner" in config and config["sentenceAligner"] == "hunalign":
+        if config["sentenceAligner"] == "hunalign":
             schema['dic']['required'] = True
 
-            if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+            if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
                 schema['generateDic']['required'] = True
                 schema['generateDic']['check_with'] = istrue
 
@@ -273,13 +273,9 @@ def validate_args(config):
 
         if config['preprocessor'] == 'warc2text':
             config['writeHTML'] = True
-        if ('dic' in config and not os.path.isfile(os.path.expanduser(config['dic']))):
+        if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
                 schema['generateDic']['required'] = True
                 schema['generateDic']['check_with'] = istrue
-
-    if config['documentAligner'] == 'NDA' or config['sentenceAligner'] == 'vecalign':
-        schema['documentAligner']['dependencies'] = {'sentenceAligner': 'vecalign'}
-        schema['sentenceAligner']['dependencies'] = {'documentAligner': 'NDA'}
 
     if config["generateDic"]:
         schema['dic']['required'] = True
@@ -287,6 +283,9 @@ def validate_args(config):
 
     if config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
+
+    elif config['sentenceAligner'] == 'vecalign':
+        schema['sentenceAligner']['dependencies'] = {'documentAligner': 'NDA'}
 
     if provided_in_config['deferred']:
         schema['until']['allowed'].append('deferred')
