@@ -109,7 +109,9 @@ if __name__ == "__main__":
                         sys.stdout.write(f"\t{d1}\t{d2}")
 
                     sys.stdout.write('\n')
-                elif doc2_current_line in lang2_docs:
+
+                # Cache data
+                if doc2_current_line in lang2_docs:
                     lang2_read_docs[doc2_current_line] = data2
 
                 doc2_current_line = doc2_current_line + 1
