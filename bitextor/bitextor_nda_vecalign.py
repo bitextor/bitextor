@@ -199,6 +199,7 @@ def main(args):
     first_match_offset = args.first_match_offset
     paragraph_identification = args.paragraph_identification
     sent_hash_cmd = args.print_sent_hash
+    model = args.model
 
     if (nda_input_path == sys.stdin and nda_output_path == sys.stdin):
         raise Exception("you can only pipe either nda input or nda output, not both of them")
@@ -255,6 +256,7 @@ def main(args):
                           "--src_storage_embeddings_optimization_strategy", str(args.src_storage_embeddings_optimization_strategy),
                           "--tgt_storage_embeddings_optimization_strategy", str(args.trg_storage_embeddings_optimization_strategy)])
     paragraphs = ["--paragraph_identification"] if paragraph_identification else []
+    model_param = ["--embeddings_model", model] if model else []
 
     result = subprocess.Popen(["vecalign", "--alignment_max_size", str(alignment_max_size),
                                "--src", "-", "--tgt", "-", "--src_urls", "-", "--tgt_urls", "-",
@@ -262,7 +264,7 @@ def main(args):
                                "--tgt_embed", vecalign_overlaps_trg_path, vecalign_overlaps_trg_embeddings_path,
                                *threshold, "--embeddings_dim", str(dim), "--urls_format",
                                "--embeddings_batch_size", str(embeddings_batch_size), *storage_flags,
-                               *paragraphs],
+                               *paragraphs, *model_param],
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
 
     # Pipe input and get output
@@ -374,6 +376,8 @@ def parse_args():
                         help='Target embedding file. If does not exist, it will be generated')
     parser.add_argument('--paragraph-identification', action='store_true',
                         help='Enable paragraph identification')
+    parser.add_argument('--model',
+                        help='Model from SentenceTransformers to use in order to generate/load the embeddings')
 
     args = parser.parse_args()
 

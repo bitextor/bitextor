@@ -152,6 +152,7 @@ EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 #################################################################
 # EMBEDDINGS
 EMBEDDINGS_BATCH_SIZE_GPU = config["embeddingsBatchSizeGPU"]
+EMBEDDINGS_MODEL = return_dict_value_if_key(config, "embeddingsModel", "", only_check_key=True)
 
 #################################################################
 # DOCALIGN
@@ -1106,7 +1107,8 @@ rule doc_emb_matches:
     params:
         folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{{src_batch}}_{{trg_batch}}/nda",
         src_emb_name="emb.src",
-        trg_emb_name="emb.trg"
+        trg_emb_name="emb.trg",
+        model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
     threads: THREADS["docalign"]
     shell:
         """
@@ -1114,7 +1116,7 @@ rule doc_emb_matches:
         cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
             <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
             | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
-                {params.folder}/{params.trg_emb_name} \
+                {params.folder}/{params.trg_emb_name} {params.model} \
                 --docalign-strategy 'faiss' --weights-strategy 0 \
                 --merging-strategy 3 --results-strategy 0 \
                 --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
@@ -1222,6 +1224,7 @@ rule vecalign:
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
+        model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: max(THREADS["segalign"], 2)
@@ -1233,7 +1236,7 @@ rule vecalign:
             <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
                 | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} \
+                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
                     --tmp-dir "{params.folder}" --nda-input-is-base64 \
                     --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
                     --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \

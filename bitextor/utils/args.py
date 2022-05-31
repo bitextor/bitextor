@@ -159,8 +159,6 @@ def validate_args(config):
         'morphologicalAnalysers': {'type': 'dict'},
         'pruneThreshold': {'type': 'integer', 'min': 0, 'default': 0},
         'pruneType': {'type': 'string', 'allowed': ['words', 'chars'], 'default': 'words'},
-        # embeddings
-        'embeddingsBatchSizeGPU': {'type': 'integer', 'min': 1, 'default': 32},
         # document alignment
         'lang1': {'type': 'string'},
         'lang2': {'type': 'string'},
@@ -171,6 +169,9 @@ def validate_args(config):
             'dependencies': {}
         },
         'documentAlignerThreshold': {'type': 'float'},
+        # embeddings
+        'embeddingsBatchSizeGPU': {'type': 'integer', 'min': 1, 'default': 32},
+        'embeddingsModel': {'type': 'string', 'dependencies': {}},
         ## mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
         'translationDirection': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
@@ -286,6 +287,12 @@ def validate_args(config):
 
     elif config['sentenceAligner'] == 'vecalign':
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'NDA'}
+
+    if config['sentenceAligner'] != 'vecalign':
+        schema['embeddingsModel']['dependencies']['sentenceAligner'] = 'vecalign'
+
+    if config['documentAligner'] != 'NDA':
+        schema['embeddingsModel']['dependencies']['documentAligner'] = 'NDA'
 
     if provided_in_config['deferred']:
         schema['until']['allowed'].append('deferred')

@@ -277,16 +277,21 @@ lang1: es
 lang2: en
 ```
 
-Two strategies are implemented in Bitextor for document alignment. The first one uses bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score. The second one uses an external machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in one of the languages, and the translation of the documents of the other language.
+Different strategies are implemented in Bitextor for document alignment:
+
+1. It uses a bilingual lexica to compute word-overlapping-based similarity metrics; these metrics are combined with other features that are extracted from HTML files and used by a linear regressor to obtain a similarity score.
+2. It uses an external machine translation (MT) and a [TF/IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) similarity metric computed on the original documents in one of the languages, and the translation of the documents of the other language.
+3. [Neural Document Aligner](https://github.com/bitextor/neural-document-aligner) or NDA: it embeds each sentence from each document to an embedding space and merge them in order to have a semantic representation of the document in the resulted embedding.
 
 ```yaml
 documentAligner: externalMT
 ```
 
-The variable `documentAligner` can take two different values, each of them taking a different document-alignment strategy:
+The variable `documentAligner` can take different values, each of them taking a different document-alignment strategy:
 
 * `DIC`: selects the strategy using bilingual lexica and a linear regressor
 * `externalMT`: selects the strategy using MT, in this case using an external MT script (provided by the user) that reads source-language text from the standard input and writes the translations to the standard output
+* `NDA`: selects the strategy using embeddings from [SentenceTransformers](https://www.sbert.net/)
 
 ### Using bilingual lexica
 
@@ -328,16 +333,30 @@ documentAlignerThreshold: 0.1
 * `translationDirection`: the direction of the translation system, specified as '`srcLang`2`trgLang`'; default is lang1->lang2
 * `documentAlignerThreshold`: threshold for discarding document pairs with a very low TF/IDF similarity score; this option takes values in [0,1] and is 0.1 by default
 
+### Using embeddings
+
+```yaml
+documentAligner: NDA
+embeddingsBatchSizeGPU: 64
+embeddingsModel: LaBSE
+```
+
+* `embeddingsBatchSizeGPU`: specify the batch size of the embeddings when processing them. This may allow you to control the total amount of size used in your device, what may be very useful for GPUs.
+* `embeddingsModel`: model which will be used in order to generate the embeddings. There are different models available from SentenceTransformers, but there should be used a [multilingual model](https://www.sbert.net/docs/pretrained_models.html#multi-lingual-models). This option affects to the `vecalign` segment aligner as well.
+
 ## Segment alignment
 
-After document alignment, the next step in the pipeline is segment alignment. This can be carried out by using [hunalign](https://github.com/bitextor/hunalign) or [bleualign](https://github.com/bitextor/bleualign-cpp). The first one uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`; the second one uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
+After document alignment, the next step in the pipeline is segment alignment. There are different tools available:
+1. [hunalign](https://github.com/bitextor/hunalign): it uses a bilingual lexicon and is best suited for the `DIC` option of `documentAligner`.
+2. [bleualign](https://github.com/bitextor/bleualign-cpp): it uses MT and is only available if one of the options based on MT has been specified in `documentAligner`.
+3. [vecalign](https://github.com/bitextor/vecalign/): it uses an embedding space in order to look for the closest semantic related sentences (it is only available if NDA has been specified in `documentAligner`).
 
 ```yaml
 sentenceAligner: bleualign
 sentenceAlignerThreshold: 0.1
 ```
 
-* `sentenceAligner`: segment aligner tool, `bleualign` or `hunalign`
+* `sentenceAligner`: segment aligner tool, `bleualign`, `hunalign` or `vecalign`.
 * `sentenceAlignerThreshold`: threshold for filtering pairs of sentences with a score too low, values in [0,1] range; default is 0.0
 
 ## Parallel data filtering
