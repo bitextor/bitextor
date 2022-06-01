@@ -13,8 +13,8 @@ env:
    WORK: ${{ github.workspace }}
 
 jobs:
-   conda_build_testing_and_upload:
-      name: Build, test with conda and upload
+   conda_build_testing:
+      name: Build and test conda environment
       runs-on: ubuntu-20.04
       timeout-minutes: 300
       defaults:
@@ -125,29 +125,3 @@ jobs:
 
                echo ""
             done
-      -  name: Upload to Anaconda Cloud
-         id: deployment
-         # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         # https://github.com/actions/runner/issues/1173
-         if: ${{ steps.tests.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
-         env:
-            ANACONDA_CLOUD_TOKEN: ${{ secrets.ANACONDA_CLOUD_TOKEN }}
-         run: |
-            conda install -y anaconda-client
-
-            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
-
-            anaconda -t "$ANACONDA_CLOUD_TOKEN" upload --force "$CONDA_PREFIX/../../envs/bitextor-build/conda-bld/linux-64/$bitextor_package"
-      -  name: Trigger intensive tests
-         # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         # https://github.com/actions/runner/issues/1173
-         if: ${{ steps.deployment.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
-         env:
-            BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
-            BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
-         run: |
-            curl -u "${BITEXTOR_BOT_EMAIL}:${BITEXTOR_BOT_PAT_DOCKER_CD}" \
-                 -X POST   -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/repos/bitextor/bitextor/actions/workflows/condaIntensiveTests.yaml/dispatches \
-                 -d '{"ref":"master"}'
-                 #-d '{"ref":"master","inputs":{"conda_version":"SPECIFIC_VERSION","conda_build":"SPECIFIC_BUILD"}}'

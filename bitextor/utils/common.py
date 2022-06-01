@@ -146,78 +146,6 @@ def get_all_ppids(pid, append_pid=False):
 
     return result
 
-
-def snake_no_more_race_get_pgid():
-    command = f"ps axo pid,pgid,comm | grep -E \"snakemake$|python3[.]8$\""
-    pgid = subprocess.getoutput(
-        f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
-
-    all_ppids = get_all_ppids(os.getpid())
-    all_pgids = list(map(lambda pid: os.getpgid(pid), all_ppids))
-
-    if len(pgid) == 0:
-        for pid in all_ppids:
-            pgid = subprocess.getoutput(f"{command} | grep \\ {os.getpgid(pid)}\\ | awk '{{print $1}}' | grep {pid}")
-
-            if len(pgid) != 0:
-                break
-    elif all_ppids[0] != all_pgids[0]:
-        idx = 0
-        while idx < len(all_ppids):
-            if all_ppids[idx] == all_pgids[idx]:
-                pgid = str(all_pgids[0])
-                break
-            idx += 1
-
-        if idx == len(all_ppids):
-            pgid = subprocess.getoutput(
-                f"{command} | grep \\ {os.getpgid(os.getpid())}\\ | awk '{{print $1}}' | grep {os.getpid()}")
-            sys.stderr.write(
-                f"WARNIGN: could not get the process group leader of {os.getpid()}. The PID gathering might be incorrect")
-
-    return pgid
-
-
-def snake_no_more_race_get(file_path):
-    value = None
-
-    if os.path.isfile(file_path):
-        f = open(file_path)
-        file_pgid = f.readline().strip()
-        pgid = snake_no_more_race_get_pgid()
-
-        if len(pgid) == 0:
-            sys.stderr.write("WARNING: could not get the PGID. Using 4321 as default value\n")
-            pgid = "4321"
-
-        if file_pgid == pgid:
-            value = f.readline().strip()
-        else:
-            os.unlink(file_path)
-
-        f.close()
-
-    return value
-
-
-def snake_no_more_race_set(file_path, value):
-    if not os.path.isfile(file_path):
-        f = open(file_path, "w")
-        pgid = snake_no_more_race_get_pgid()
-
-        if len(pgid) == 0:
-            sys.stderr.write("WARNING: could not get the PGID. Using 1234 as default value\n")
-            pgid = "1234"
-
-        f.write(f"{pgid}\n")
-        f.write(f"{value}\n")
-
-        f.close()
-
-        return True
-    return False
-
-
 def check_connection(url):
     connection_error = False
     connection = None
@@ -247,6 +175,7 @@ def duration_to_seconds(value):
     seconds = int(value[:-1]) * duration_suffix[suffix]
     return seconds
 
+
 def return_dict_value_if_key(d, k, else_value, pos_value=None, only_check_key=False, apply_function=None):
     condition = k in d if only_check_key else k in d and d[k]
 
@@ -259,3 +188,41 @@ def return_dict_value_if_key(d, k, else_value, pos_value=None, only_check_key=Fa
         result = apply_function(result)
 
     return result
+
+
+def print_alternatively_lines(input_file="-", blocks=2):
+    input_fd = sys.stdin if input_file == "-" else open(input_file)
+    lines = []
+
+    for line in input_fd:
+        lines.append(line.strip())
+
+    offset = len(lines) // blocks
+
+    if len(lines) % blocks != 0:
+        raise Exception(f"Provided lines mod blocks did not pass: {len(lines)} mod {blocks} != 0")
+
+    for idx in range(len(lines)):
+        if idx >= offset:
+            break
+
+        for i in range(blocks):
+            print(lines[idx + offset * i])
+
+    if input_file == "-":
+        input_fd.close()
+
+
+def get_all_idxs_from_list(l, element):
+    idxs = []
+    find_idx = 0
+
+    while find_idx < len(l):
+        try:
+            idxs.append(l.index(element, find_idx))
+
+            find_idx = idxs[-1] + 1
+        except ValueError:
+            find_idx = len(l)
+
+    return idxs

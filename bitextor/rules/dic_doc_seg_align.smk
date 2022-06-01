@@ -264,7 +264,7 @@ rule align_documents:
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bitextor.06_01.matches",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.DIC.06_01.matches",
     shell:
         """
         {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \
@@ -277,11 +277,6 @@ rule align_documents:
 #################################################################
 ### SEGALIGN ####################################################
 # HUNALIGN ######################################################
-
-docalign_str = ""  # Default: externalMT as docalign
-
-if DOCALIGN == "DIC":
-    docalign_str = "bitextor."
 
 
 rule create_hunalign_dic_format:
@@ -309,7 +304,7 @@ rule create_hunalign_dic_format:
 rule hunalign:
     """
     Use hunalign to align sentences withing the matched documents
-    :input.indices: output of docalign (columns are "score src_index trg_index" or "src_index trg_index")
+    :input.indices: output of docalign (columns are "mt_doc_aligner_score idx_translated idx_trg" or "src_index trg_index")
     :input.plain1: gz-compressed file with a base64-encoded document per line
         sentence-split source documents
     :input.plain1: gz-compressed file with a base64-encoded document per line
@@ -322,7 +317,7 @@ rule hunalign:
         gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,score
     """
     input:
-        indices=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{docalign_str}06_01.matches",
+        indices=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{DOCALIGN}.06_01.matches",
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
@@ -333,9 +328,10 @@ rule hunalign:
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.hunalign.06_02.segalign.gz",
     params:
-        c1="src_index" if DOCALIGN == "DIC" else "idx_translated",
-        c2="trg_index" if DOCALIGN == "DIC" else "idx_trg",
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
+        deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
     shell:
         """
         header="src_index\ttrg_index"
@@ -343,11 +339,11 @@ rule hunalign:
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
             | LC_ALL=C sort -nk1,1 -t $'\t' \
-            | sed '1 s/^/'"$header"'\\n/' \
+            | cat <(echo "$header") - \
             | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
                 --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
                 --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {DEFERRED_ARGS} {MMHSUM_PATH} -d {input.hunaligndic} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {params.deferred} -d {input.hunaligndic} \
                 -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.paragraphs} \
             | gzip -c > {output}
         """

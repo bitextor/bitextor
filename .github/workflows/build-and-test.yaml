@@ -54,12 +54,14 @@ jobs:
       -  name: Install additional python requirements
          run: |
             pip3 install .[all]
-            pip3 install ./bicleaner
-            pip3 install ./bicleaner-ai
-            pip3 install ./kenlm --install-option="--max_order 7"
-            pip3 install ./bifixer
-            pip3 install ./biroamer
+            pip3 install ./third_party/bicleaner
+            pip3 install ./third_party/bicleaner-ai
+            pip3 install ./third_party/kenlm --install-option="--max_order 7"
+            pip3 install ./third_party/bifixer
+            pip3 install ./third_party/biroamer
             python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
+            pip3 install ./third_party/neural-document-aligner
+            pip3 install ./third_party/vecalign
       -  name: Setup golang
          uses: actions/setup-go@v2
          with:
@@ -144,15 +146,3 @@ jobs:
 
                echo ""
             done
-      -  name: Trigger intensive tests with Docker
-         # Check if tests succeeded and if we have, likely, a release (it is not sure)
-         # https://github.com/actions/runner/issues/1173
-         if: ${{ steps.tests.conclusion == 'success' && startsWith(github.ref, 'refs/tags/v') }}
-         env:
-            BITEXTOR_BOT_EMAIL: ${{ secrets.BITEXTOR_BOT_EMAIL }}
-            BITEXTOR_BOT_PAT_DOCKER_CD: ${{ secrets.BITEXTOR_BOT_PAT_DOCKER_CD }}
-         run: |
-            curl -u "${BITEXTOR_BOT_EMAIL}:${BITEXTOR_BOT_PAT_DOCKER_CD}" \
-                 -X POST   -H "Accept: application/vnd.github.v3+json" \
-                 https://api.github.com/repos/bitextor/bitextor/actions/workflows/dockerIntensiveTests.yaml/dispatches \
-                 -d '{"ref":"master","inputs":{"docker_tag":"edge"}}'

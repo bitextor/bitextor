@@ -7,7 +7,6 @@ from bitextor.utils.args import validate_args
 from bitextor.utils.common import (
     open_xz_or_gzip_or_plain,
     get_all_ppids,
-    snake_no_more_race_get_pgid,
     duration_to_seconds,
     return_dict_value_if_key
 )
@@ -151,6 +150,11 @@ EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
 EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 
 #################################################################
+# EMBEDDINGS
+EMBEDDINGS_BATCH_SIZE_GPU = config["embeddingsBatchSizeGPU"]
+EMBEDDINGS_MODEL = return_dict_value_if_key(config, "embeddingsModel", "", only_check_key=True)
+
+#################################################################
 # DOCALIGN
 DOCALIGN = config["documentAligner"]
 DOC_THRESHOLD = return_dict_value_if_key(config, "documentAlignerThreshold", 0.1, only_check_key=True)
@@ -188,8 +192,7 @@ SEGALIGN_THRESHOLD = return_dict_value_if_key(config, "sentenceAlignerThreshold"
 #################################################################
 # CLEANING
 DEFERRED = return_dict_value_if_key(config, "deferred", False, pos_value=True)
-DEFERRED_ARGS = "--print-sent-hash" if DEFERRED else ""
-MMHSUM_PATH = "mmhsum" if DEFERRED else ""
+DEFERRED_CMD = "mmhsum" if DEFERRED else ''
 
 BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
 BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
@@ -298,6 +301,13 @@ TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
+# OTHER
+BASE64_FILTER_CMD = "cat"
+
+if PARAGRAPH_IDENTIFICATION:
+    BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+
+#################################################################
 ### WORKFLOW EXECUTION ##########################################
 THREADS = {
     "split": 1,
@@ -339,7 +349,7 @@ if "until" not in config:
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
     if DOCALIGN == "externalMT":
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
-    elif DOCALIGN == "DIC":
+    elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
     if CRAWLTARGET == "linguacrawl":
@@ -375,7 +385,7 @@ elif UNTIL == "tokenise_trg":
 elif UNTIL == "tokenise_src":
     if DOCALIGN == "externalMT":
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
-    elif DOCALIGN == "DIC":
+    elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
 elif UNTIL == "tokenise":
     OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
@@ -875,7 +885,7 @@ rule aggregate_matches:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_01.matches"
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{DOCALIGN}.06_01.matches"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -981,12 +991,8 @@ rule tokenise_translated:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        filter_command="cat"
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-        fi
         zcat {input} \
-            | eval "$filter_command" \
+            | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {TRG_LANG} \
@@ -1017,12 +1023,8 @@ rule tokenise:
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        filter_command="cat"
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-        fi
         zcat {input} \
-            | eval "$filter_command" \
+            | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
                 {params.tokeniser} {params.lemmatizer} \
                 --langcode {wildcards.lang} \
@@ -1073,7 +1075,7 @@ rule mt_matches:
         l1=rules.tokenise_translated.output,
         l2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_01.matches",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.externalMT.06_01.matches",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
     threads: THREADS["docalign"]
@@ -1084,6 +1086,46 @@ rule mt_matches:
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
 
+
+rule doc_emb_matches:
+    """
+    Align documents using neural-document-aligner
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split source documents
+    :input.plain2: gz-compressed file with a base64-encoded document per line
+        sentence-split target documents
+    :output: indices file
+        plain text file with 3 tab separated columns: src_idx, trg_idx, nda_score
+            src_idx is the number of the aligned document in source language
+            trg_idx is the number of the aligned document in target language
+    """
+    input:
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+    output:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.NDA.06_01.matches",
+    params:
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{{src_batch}}_{{trg_batch}}/nda",
+        src_emb_name="emb.src",
+        trg_emb_name="emb.trg",
+        model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
+    threads: THREADS["docalign"]
+    shell:
+        """
+        mkdir -p {params.folder}
+        cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
+            <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
+            | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
+                {params.folder}/{params.trg_emb_name} {params.model} \
+                --docalign-strategy 'faiss' --weights-strategy 0 \
+                --merging-strategy 3 --results-strategy 0 \
+                --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
+                --output-with-idxs --paths-to-docs-are-base64-values \
+                --threshold {DOC_THRESHOLD} --logging-level 30 \
+                --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} > {output}
+        """
+
+
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
     """
@@ -1093,7 +1135,7 @@ rule aggregate_segalign:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.06_02.segalign.gz"
+            f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{SEGALIGN}.06_02.segalign.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -1106,10 +1148,10 @@ rule aggregate_segalign:
 rule bleualign:
     """
     Use bleualign to align sentences withing the matched documents
-    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score src_index trg_index")
+    :input.indices: output of mt docalign (columns are "mt_doc_aligner_score idx_translated idx_trg")
     :input.plain1: gz-compressed file with a base64-encoded document per line
         sentence-split source documents
-    :input.plain1: gz-compressed file with a base64-encoded document per line
+    :input.plain2: gz-compressed file with a base64-encoded document per line
         sentence-split target documents
     :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
     :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
@@ -1128,10 +1170,11 @@ rule bleualign:
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
         workers=THREADS["segalign"],
-        paragraphs='--paragraph-identification' if PARAGRAPH_IDENTIFICATION else '',
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
+        deferred="--print-sent-hash" if DEFERRED else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
-        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.06_02.segalign.gz",
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
     threads: max(THREADS["segalign"], 2)
     shell:
         """
@@ -1149,15 +1192,72 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} \
             | cat <(echo "$header") - \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {DEFERRED_ARGS} {params.paragraphs} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} {params.paragraphs} \
                 --bleu-threshold {SEGALIGN_THRESHOLD} \
             | pigz -c > {output}
         """
 
 
+# VECALIGN #####################################################
+rule vecalign:
+    """
+    Use vecalign to align sentences withing the matched documents
+    :input.indices: output of embeddings docalign (columns are "emb_doc_aligner_score src_index trg_index")
+    :input.plain1: gz-compressed file with a base64-encoded document per line
+        sentence-split source documents
+    :input.plain2: gz-compressed file with a base64-encoded document per line
+        sentence-split target documents
+    :input.url1: gz-compressed file with a URL per line for source (source of the corresponding documents)
+    :input.url2: gz-compressed file with a URL per line for target (source of the corresponding documents)
+    :output: aligned sentences
+        gz-compressed file with 5 tab-separated columns: url1,url2,sentence1,sentence2,vecalign_score
+    """
+    input:
+        indices=rules.doc_emb_matches.output,
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
+        url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
+        url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
+    params:
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign",
+        src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
+        trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
+        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
+        deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
+        model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
+    output:
+        f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
+    threads: max(THREADS["segalign"], 2)
+    shell:
+        """
+        mkdir -p "{params.folder}"
+
+        cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
+            <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
+                | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
+                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
+                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
+                    --tmp-dir "{params.folder}" --nda-input-is-base64 \
+                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
+                    --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
+                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
+                    --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
+                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
+                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
+                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
+                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
+                | pigz -c > "{output}"
+        """
+
+
 ### FILTERING AND CLEANING ######################################
 
-split_input_filename = "hunalign.06_02.segalign" if SEGALIGN == "hunalign" else "06_02.segalign"
+split_input_filename = "bleualign.06_02.segalign"
+
+if SEGALIGN == "hunalign":
+    split_input_filename = "hunalign.06_02.segalign"
+elif SEGALIGN == "vecalign":
+    split_input_filename = "vecalign.06_02.segalign"
 
 # split segalign results into balanced chunks
 checkpoint split_segalign:
@@ -1184,36 +1284,17 @@ checkpoint split_segalign:
         # It is needed to run this piece of code directly in Python and not in bash because Snakemake attempts to replace {input[0]} before
         #  running the script, so it fails even before we are able to check if the input is empty in bash script
         if len(input) == 0:
-            # TODO is this really necessary? There can be jobs being executed when we reach this checkpoint? If not, we should raise
-            #  an exception instead of try to get the common PID of the current snakemake execution
-            shell(
-                f"""
-                >&2 echo "INFO: no data to work with: stopping execution"
-                touch {output}
-                # Kill only the current Snakemake, not all of them (might be running multiple instances, and we only want to stop this one)
-                # https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-exit-a-running-snakemake-workflow
-                pid_to_kill="{snake_no_more_race_get_pgid()}"
-                if [[ "$pid_to_kill" == "" ]]; then
-                    echo "ERROR: could not stop the execution with a normal status: forcing snakemake to stop"
-                    exit 1
-                else
-                    kill -TERM "$pid_to_kill" || exit 1
-                fi
-                """
-            )
+            raise Exception("Didn't get any input file")
         else:
             shell(
                 """
                 mkdir -p {params.folder}
                 rm -f {params.folder}/* # remove anything that might be left after a previous run
-                CAT=cat
-                if [[ {input[0]} == *.gz ]]; then
-                    CAT=zcat
-                fi
-                header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
+                header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
+
                 echo {input} \
                     | tr ' ' '\n' \
-                    | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+                    | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
                     | cat <(echo "$header") - \
                     | ( [ "{SRC_LANG}" = "{LANG1}" ] \
                         && cat \
@@ -1239,19 +1320,18 @@ rule bifixer:
     input:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
     output:
-        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}"),
+        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}.gz"),
     threads: THREADS["bifixer"]
     shell:
         """
-        CAT=cat; if [[ {input.segalign} == *.gz ]]; then CAT=zcat; fi
         parallel_cmd=""
         if [ {threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {threads} -k"
         fi
-        $CAT {input.segalign} \
+        zcat {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
                 {BIFIXER_DEFERRED_COLS} {BIFIXER_PARAGRAPHS_COLS} --header - - {LANG1} {LANG2} \
-            > {output}
+            | pigz -c > {output}
         """
 
 
@@ -1262,7 +1342,7 @@ rule aggregate_bifixer:
     :output: a file that contains the path to every bifixer result
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}" for batch in get_postproc_batches()],
+        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{batch}.gz" for batch in get_postproc_batches()],
     output:
         f"{TRANSIENT}/07_01.bifixer.{LANG1}_{LANG2}",
     shell:
@@ -1371,17 +1451,16 @@ rule bicleaner:
         if [ {params.threads} -gt 1 ]; then
             parallel_cmd="parallel --gnu --halt 2 --pipe --j {params.threads} -k"
         fi
-        CAT=$([[ {input.bifixer} == *.gz ]] && echo "zcat" || echo "cat")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
-        text_fields=$(head -1 <($CAT {input.bifixer}) \
+        text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
             | tr -d '\n')
 
-        $CAT {input.bifixer} \
+        zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
                 -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
                 --score_only --header -q - - {input.model} \
-            | paste <($CAT {input.bifixer}) - \
+            | paste <(zcat {input.bifixer}) - \
             | pigz -c > {output}
         """
 
@@ -1486,9 +1565,8 @@ rule filter:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-        CAT=$([[ {input.f} == *.gz ]] && echo "zcat" || echo "cat")
 
-        $CAT {input.f} \
+        zcat {input.f} \
             | ( [[ "{BICLEANER}" == "True" ]] \
                 && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
                     --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header} \
@@ -1526,10 +1604,7 @@ rule aggregate_filter:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-raw_input_filename = rules.filter.input[0].split("/")[-2]  # 06_02.segalign / 07_01.bifixer / 07_02.bicleaner
-extension = ""
-if raw_input_filename in ["07_02.bicleaner", "06_02.segalign", "hunalign.06_02.segalign"]:
-    extension = ".gz"
+raw_input_filename = rules.filter.input[0].split("/")[-2] # {bleualign,hunalign,vecalign}.06_02.segalign / 07_01.bifixer / 07_02.bicleaner
 
 
 rule raw:
@@ -1542,19 +1617,18 @@ rule raw:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}{extension}" for batch in get_postproc_batches()
+            f"{TRANSIENT}/{LANG1}_{LANG2}/{raw_input_filename}/{batch}.gz" for batch in get_postproc_batches()
         ],
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.raw.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.raw",
     shell:
         """
-        CAT=$([[ "{extension}" == ".gz" ]] && echo "zcat" || echo "cat")
-        header=$(head -1 <($CAT {input[0]}) | tr -d '\n')
+        header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
         echo {input} \
             | tr ' ' '\n' \
-            | xargs -I[] bash -c ''$CAT' "[]" | tail -n +2' \
+            | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
             | cat <(echo "$header") - \
             | pigz -c > {output.corpus}
 
@@ -1707,8 +1781,7 @@ rule roam_tmx:
             mix_files=""
         fi
 
-        CAT=cat; if [[ {input.txt} == *.gz ]]; then CAT=zcat; fi
-        nolines_txt=$($CAT {input.txt} | wc -l)
+        nolines_txt=$(zcat {input.txt} | wc -l)
         total_nolines=$(echo $nolines + $nolines_txt | bc)
 
         if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then

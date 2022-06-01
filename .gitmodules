@@ -1,48 +1,56 @@
 [submodule "mgiza"]
-	path = mgiza
+	path = third_party/mgiza
 	url = https://github.com/moses-smt/mgiza
 	ignore = dirty
 [submodule "bicleaner"]
-	path = bicleaner
+	path = third_party/bicleaner
 	url = https://github.com/bitextor/bicleaner
 	ignore = dirty
 [submodule "preprocess"]
-	path = preprocess
+	path = third_party/preprocess
 	url = https://github.com/kpu/preprocess
 	ignore = dirty
 [submodule "bifixer"]
-	path = bifixer
+	path = third_party/bifixer
 	url = https://github.com/bitextor/bifixer
 	ignore = dirty
 [submodule "biroamer"]
-	path = biroamer
+	path = third_party/biroamer
 	url = https://github.com/bitextor/biroamer.git
 	ignore = dirty
 [submodule "hunalign"]
-	path = hunalign
+	path = third_party/hunalign
 	url = https://github.com/bitextor/hunalign
 	ignore = dirty
 [submodule "kenlm"]
-	path = kenlm
+	path = third_party/kenlm
 	url = https://github.com/kpu/kenlm
 	ignore = dirty
 [submodule "deferred-crawling"]
-	path = deferred-crawling
+	path = third_party/deferred-crawling
 	url = https://github.com/bitextor/deferred-crawling
 	ignore = dirty
 [submodule "prevertical2text"]
-	path = prevertical2text
+	path = third_party/prevertical2text
 	url = https://github.com/bitextor/prevertical2text
 	ignore = dirty
 [submodule "warc2text"]
-	path = warc2text
+	path = third_party/warc2text
 	url = https://github.com/bitextor/warc2text.git
 	ignore = dirty
 [submodule "bleualign-cpp"]
-	path = bleualign-cpp
+	path = third_party/bleualign-cpp
 	url = https://github.com/bitextor/bleualign-cpp.git
 	ignore = dirty
 [submodule "bicleaner-ai"]
-	path = bicleaner-ai
+	path = third_party/bicleaner-ai
 	url = https://github.com/bitextor/bicleaner-ai.git
+	ignore = dirty
+[submodule "neural-document-aligner"]
+	path = third_party/neural-document-aligner
+	url = https://github.com/bitextor/neural-document-aligner
+	ignore = dirty
+[submodule "vecalign"]
+	path = third_party/vecalign
+	url = https://github.com/bitextor/vecalign
 	ignore = dirty

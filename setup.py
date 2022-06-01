@@ -44,16 +44,15 @@ def get_extras_require():
     return {"all": all_reqs, "w2p": w2p, "dictionary": dictionary}
 
 if __name__ == "__main__":
-
     with open("docs/README.md", "r") as fh:
         long_description = fh.read()
 
-    requirements=[]
     wd = os.path.dirname(os.path.abspath(__file__))
-
-    copytree("preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
     requirements = reqs_from_file("requirements.txt")
     opt_requirements = get_extras_require()
+
+    # Copy necessary files so they will be available when the package is built
+    copytree("third_party/preprocess/moses", os.path.join(wd, "bitextor/data/moses"))
 
     setuptools.setup(
         name="bitextor",
@@ -72,7 +71,7 @@ if __name__ == "__main__":
         packages=["bitextor", "bitextor.utils", "bitextor.docalign", "bitextor.docalign.features"],
         #classifiers=[],
         #project_urls={},
-        package_data={
+        package_data={  # Not available in the built package but just when building binaries!
             "bitextor": [
                 "Snakefile",
                 "rules/*",

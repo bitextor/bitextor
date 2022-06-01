@@ -42,70 +42,21 @@ mkdir -p "${WORK}/reports"
 mkdir -p "${BICLEANER}"
 mkdir -p "${BICLEANER_AI}"
 mkdir -p "${WORK}/data/warc"
-mkdir -p "${WORK}/data/warc/clipped"
 mkdir -p "${WORK}/data/parallel-corpus"
-mkdir -p "${WORK}/data/parallel-corpus/Europarl"
-mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/data/prevertical"
 rm -f "$FAILS"
 touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
+download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
-# Parallel corpus
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then
-    # ~2000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-Europarl/v8/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/Europarl" && \
-    unzip -qq "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/Europarl" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" ]; then
-    # ~5000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/DGT" && \
-    unzip -qq "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/DGT" &
-fi
-wait
-
-# Preprocess
-### Europarl parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" &
-fi
-### DGT parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" &
-fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
-    cat "${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr" \
-        | tail -n 10000 \
-        | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" &
-fi
-### WARC clipped
-if [ ! -f "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" ]; then
-    ${DIR}/utils/split_warc.py -r 1000 "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/clipped/greenpeace" &
-fi
 
 wait
-
-# Remove unnecessary clipped WARCs
-ls "${WORK}/data/warc/clipped/" | grep -v "^greenpeaceaa[.]" | xargs -I{} rm "${WORK}/data/warc/clipped/{}"
-# Rename and link
-mv "${WORK}/data/warc/greenpeace.warc.gz" "${WORK}/data/warc/greenpeace.original.warc.gz"
-ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenpeace.warc.gz"
 
 # MT (id >= 10)
 (
@@ -177,8 +128,6 @@ ln -s "${WORK}/data/warc/clipped/greenpeaceaa.warc.gz" "${WORK}/data/warc/greenp
 
     annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
 ) &
-
-
 
 wait
 

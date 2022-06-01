@@ -27,14 +27,17 @@ $PYTHON -m pip install .[all]
 ### FastSpell (bicleaner-hardrules)
 INCLUDE_PATH="$PREFIX/include" $PYTHON -m pip install hunspell
 ### Bicleaner, Bicleaner AI and KenLM
-$PYTHON -m pip install ./bicleaner
-$PYTHON -m pip install ./bicleaner-ai
-$PYTHON -m pip install ./kenlm --install-option="--max_order 7"
+$PYTHON -m pip install ./third_party/bicleaner
+$PYTHON -m pip install ./third_party/bicleaner-ai
+$PYTHON -m pip install ./third_party/kenlm --install-option="--max_order 7"
 ### Bifixer
-$PYTHON -m pip install ./bifixer
+$PYTHON -m pip install ./third_party/bifixer
 ### Biroamer and model
-$PYTHON -m pip install ./biroamer && \
+$PYTHON -m pip install ./third_party/biroamer && \
 $PYTHON -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
+### Neural Document Aligner
+$PYTHON -m pip install ./third_party/neural-document-aligner
+$PYTHON -m pip install ./third_party/vecalign
 ## CLD3
 $PYTHON -m pip install Cython
 $PYTHON -m pip install pycld3

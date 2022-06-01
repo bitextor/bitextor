@@ -132,6 +132,26 @@ wait-if-envvar-is-true()
     fi
 }
 
+create-p2t-from-warc()
+{
+    if [[ ! -f "${WORK}/data/prevertical/greenpeace.en.prevertical.gz" ]] || \
+       [[ ! -f "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" ]]; then
+        mkdir -p "${WORK}/data/tmp-w2t"
+
+        warc2text -o "${WORK}/data/tmp-w2t" -s -f "text,url" "${WORK}/data/warc/greenpeace.warc.gz" && \
+        (
+            python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/en/text.gz" \
+                --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --seed 1 \
+            | pigz -c > "${WORK}/data/prevertical/greenpeace.en.prevertical.gz"
+            python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/fr/text.gz" \
+                --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --seed 2 \
+            | pigz -c > "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" \
+        )
+
+        rm -rf "${WORK}/data/tmp-w2t"
+    fi
+}
+
 # MT (id >= 10)
 tests-mt()
 {
@@ -184,25 +204,9 @@ tests-mt()
 
         annotate_and_echo_info 12 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz)"
     ) &
+    create-p2t-from-warc && \
     (
         TRANSIENT_DIR="${WORK}/transient-mt-en-fr-p2t"
-
-        if [[ ! -f "${WORK}/data/prevertical/greenpeace.en.prevertical.gz" ]] || \
-           [[ ! -f "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" ]]; then
-            mkdir -p "${WORK}/data/tmp-w2t"
-
-            warc2text -o "${WORK}/data/tmp-w2t" -s -f "text,url" "${WORK}/data/warc/greenpeace.warc.gz" && \
-            (
-                python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/en/text.gz" \
-                    --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --seed 1 \
-                | pigz -c > "${WORK}/data/prevertical/greenpeace.en.prevertical.gz"
-                python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/fr/text.gz" \
-                    --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --seed 2 \
-                | pigz -c > "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" \
-            )
-
-            rm -rf "${WORK}/data/tmp-w2t"
-        fi
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
@@ -364,6 +368,75 @@ tests-mt-db()
     ) &
 }
 
+# Neural (id >= 70)
+tests-neural()
+{
+    (
+        TRANSIENT_DIR="${WORK}/transient-neural-en-fr"
+
+        mkdir -p "${TRANSIENT_DIR}" && \
+        pushd "${TRANSIENT_DIR}" > /dev/null && \
+        ${BITEXTOR} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr" \
+                dataDir="${WORK}/data/data-neural-en-fr" transientDir="${TRANSIENT_DIR}" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
+                bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/70-neural-en-fr.report" && \
+        popd > /dev/null
+
+        annotate_and_echo_info 70 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr/en-fr.sent.gz)"
+    ) &
+    (
+        TRANSIENT_DIR="${WORK}/transient-neural-en-el"
+
+        mkdir -p "${TRANSIENT_DIR}" && \
+        pushd "${TRANSIENT_DIR}" > /dev/null && \
+        ${BITEXTOR} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-el" \
+                dataDir="${WORK}/data/data-neural-en-el" transientDir="${TRANSIENT_DIR}" \
+                warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
+                lang1=en lang2=el documentAligner="NDA" sentenceAligner="vecalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/71-neural-en-el.report" && \
+        popd > /dev/null
+
+        annotate_and_echo_info 71 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-el/en-el.sent.gz)"
+    ) &
+    (
+        TRANSIENT_DIR="${WORK}/transient-neural-en-ru"
+
+        mkdir -p "${TRANSIENT_DIR}" && \
+        pushd "${TRANSIENT_DIR}" > /dev/null && \
+        ${BITEXTOR} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-ru" \
+                dataDir="${WORK}/data/data-neural-en-ru" transientDir="${TRANSIENT_DIR}" \
+                warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
+                documentAligner="NDA" sentenceAligner="vecalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/72-neural-en-ru.report" && \
+        popd > /dev/null
+
+        annotate_and_echo_info 72 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-ru/en-ru.sent.gz)"
+    ) &
+    create-p2t-from-warc && \
+    (
+        TRANSIENT_DIR="${WORK}/transient-neural-en-fr-p2t"
+
+        mkdir -p "${TRANSIENT_DIR}" && \
+        pushd "${TRANSIENT_DIR}" > /dev/null && \
+        ${BITEXTOR} \
+            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr-p2t" \
+                dataDir="${WORK}/data/data-neural-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
+                preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
+                shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True
+                bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
+                deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/73-neural-en-fr-p2t.report" && \
+        popd > /dev/null
+
+        annotate_and_echo_info 73 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr-p2t/en-fr.sent.gz)"
+    ) &
+}
+
 # Other options (id >= 100)
 tests-others()
 {
@@ -432,10 +505,10 @@ run-tests()
     fi
 
     tests=(tests-mt tests-db tests-gendic tests-genbicleaner \
-           tests-gendic-genbicleaner tests-mt-db tests-others)
-    notests=$(echo "${#arr[@]}-1" | bc)
+           tests-gendic-genbicleaner tests-mt-db tests-neural \
+           tests-others)
 
-    for i in `seq 0 "$(echo ${#tests[@]}-1 | bc)"`; do
+    for i in $(seq 0 "$(echo ${#tests[@]}-1 | bc)"); do
         # (flag & 2^notest) >> notest # will behaviour like chmod's mode
         # if we want to run the 1st and 2nd test, our flag must be 3, and would be like
         #  (3 & 2^0) >> 0 = (0b11 & 0b01) >> 0 = 0b01 >> 0 = 0b01 = 1 == 1
