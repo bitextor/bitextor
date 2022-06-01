@@ -204,10 +204,10 @@ tests-mt()
 
         annotate_and_echo_info 12 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz)"
     ) &
+    create-p2t-from-warc && \
     (
         TRANSIENT_DIR="${WORK}/transient-mt-en-fr-p2t"
 
-        create-p2t-from-warc && \
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
@@ -417,10 +417,10 @@ tests-neural()
 
         annotate_and_echo_info 72 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-ru/en-ru.sent.gz)"
     ) &
+    create-p2t-from-warc && \
     (
         TRANSIENT_DIR="${WORK}/transient-neural-en-fr-p2t"
 
-        create-p2t-from-warc && \
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
@@ -430,7 +430,7 @@ tests-neural()
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
                 deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/13-neural-en-fr-p2t.report" && \
+            &> "${WORK}/reports/73-neural-en-fr-p2t.report" && \
         popd > /dev/null
 
         annotate_and_echo_info 73 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr-p2t/en-fr.sent.gz)"
@@ -508,7 +508,7 @@ run-tests()
            tests-gendic-genbicleaner tests-mt-db tests-neural \
            tests-others)
 
-    for i in `seq 0 "$(echo ${#tests[@]}-1 | bc)"`; do
+    for i in $(seq 0 "$(echo ${#tests[@]}-1 | bc)"); do
         # (flag & 2^notest) >> notest # will behaviour like chmod's mode
         # if we want to run the 1st and 2nd test, our flag must be 3, and would be like
         #  (3 & 2^0) >> 0 = (0b11 & 0b01) >> 0 = 0b01 >> 0 = 0b01 = 1 == 1
