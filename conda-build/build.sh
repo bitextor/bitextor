@@ -67,7 +67,7 @@ cp -r "$SRC_DIR/bitextor/tests" "$PREFIX/bitextor" # Tests
 cp -r "$SRC_DIR/bitextor/requirements" "$PREFIX/bitextor" # Requirements
 cp "$SRC_DIR/bitextor/requirements.txt" "$PREFIX/bitextor" # Requirements
 ## Biroamer
-cp -r "$SRC_DIR/bitextor/third_party/biroamer" "$PREFIX/third_party/bitextor" # Fast Align binaries are not correctly placed
+cp -r "$SRC_DIR/bitextor/third_party/biroamer" "$PREFIX/bitextor/third_party" # Fast Align binaries are not correctly placed
 
 # 3rd party
 cp -r "$SRC_DIR/../gopath" "$PREFIX"
