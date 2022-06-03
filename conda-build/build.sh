@@ -59,6 +59,7 @@ find . -type d -or -type l | grep /CMakeFiles$ | xargs -I{} rm -rf {}
 
 # Copy python scripts, necessary data and 3rd packages
 mkdir -p "$PREFIX/bitextor"
+mkdir -p "$PREFIX/bitextor/third_party"
 
 # Bitextor files
 cp -r "$SRC_DIR/bitextor/bitextor" "$PREFIX/bitextor" # Scripts and data
@@ -66,7 +67,7 @@ cp -r "$SRC_DIR/bitextor/tests" "$PREFIX/bitextor" # Tests
 cp -r "$SRC_DIR/bitextor/requirements" "$PREFIX/bitextor" # Requirements
 cp "$SRC_DIR/bitextor/requirements.txt" "$PREFIX/bitextor" # Requirements
 ## Biroamer
-cp -r "$SRC_DIR/bitextor/biroamer" "$PREFIX/bitextor" # Fast Align binaries are not correctly placed
+cp -r "$SRC_DIR/bitextor/third_party/biroamer" "$PREFIX/third_party/bitextor" # Fast Align binaries are not correctly placed
 
 # 3rd party
 cp -r "$SRC_DIR/../gopath" "$PREFIX"
