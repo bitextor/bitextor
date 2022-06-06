@@ -160,7 +160,6 @@ rule dic_generation_gzip_freq_dic:
         """
 
 
-# It returns a new dictionary (it might smash a provided dictionary!)
 # Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
 rule dic_generation_symmetrise_dic:
     input:

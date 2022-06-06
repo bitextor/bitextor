@@ -16,6 +16,11 @@ valid, config = validate_args(config)
 if not valid:
     raise Exception("provided configuration is not valid")
 
+if config["verbose"]:
+    sys.stderr.write("Config: \n")
+    pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
+    sys.stderr.write('\n')
+
 #################################################################
 include: "rules/common.smk"
 
@@ -568,6 +573,7 @@ rule linguacrawl_config:
 # This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
 #  either join all the warcs (it loses important information like the source of the warcs) or not
 # Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
+# TODO move code to a single python script and call it
 checkpoint linguacrawl_download:
     """
     Download HOSTS with linguacrawl
@@ -634,7 +640,7 @@ checkpoint linguacrawl_download:
 
                             current += int(du_warc)
                         except:
-                            sys.stderr.write(f"WARNING: could not retrieve the size of {warc}")
+                            sys.stderr.write(f"WARNING: could not retrieve the size of {warc}\n")
 
                     files = "\n".join(files)
                     shell(f'echo -e "{files}" > {{output[0]}}')

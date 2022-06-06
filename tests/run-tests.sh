@@ -74,6 +74,7 @@ download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
+download_dictionary "en-el" "${WORK}/permanent" &
 # Parallel corpus
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then
     # ~2000000 lines
@@ -381,7 +382,7 @@ tests-neural()
                 dataDir="${WORK}/data/data-neural-en-fr" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
-                bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+                bicleanerFlavour="classic" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/70-neural-en-fr.report" && \
         popd > /dev/null
 
@@ -396,7 +397,7 @@ tests-neural()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-el" \
                 dataDir="${WORK}/data/data-neural-en-el" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
-                lang1=en lang2=el documentAligner="NDA" sentenceAligner="vecalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+                lang1=en lang2=el documentAligner="NDA" dic="${WORK}/permanent/en-el.dic" sentenceAligner="hunalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/71-neural-en-el.report" && \
         popd > /dev/null
 

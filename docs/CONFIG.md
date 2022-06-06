@@ -42,11 +42,13 @@ There are some optional parameters that allow for a finer control of the executi
 until: preprocess
 parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
 profiling: True
+verbose: True
 ```
 
 * `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`
 * `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter` and `sents`.
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
+* `verbose`: output more details about the pipeline execution.
 
 ## Data sources
 
@@ -422,7 +424,7 @@ biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
 ```
 
 * `bifixer`: use [Bifixer](https://github.com/bitextor/bifixer) to fix parallel sentences and tag near-duplicates for removal <!-- When using `bifixer: True` it is possible to specify additional arguments using `bifixerOptions` variable. More information about these arguments in [Bifixer](https://github.com/bitextor/bifixer) repository. -->
-* `bifixerAggressiveDedup`: it marks near-duplicates sentences as duplicate, so they can be removed in the deduplication step (i.e. `dedup: True`). This step is enabled by default if not specified and `bifixer: True`
+* `bifixerAggressiveDedup`: it marks near-duplicates sentences as duplicate, so they can be removed in the deduplication step (i.e. `deduped: True`). This step is enabled by default if not specified and `bifixer: True`
 * `bifixerIgnoreSegmentation`: it does not resplit the long sentences. This step is enabled by default if not specified and `bifixer: True`
 * `deferred`: if this option is set, segment contents (plain text or TMX) are deferred to the original location given a Murmurhash2 64bit checksum
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually

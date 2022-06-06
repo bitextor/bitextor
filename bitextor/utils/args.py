@@ -61,7 +61,6 @@ def istrue(field, value, error):
 
 def validate_args(config):
     schema = {
-        # required parameters
         # output folders
         'dataDir': {'type': 'string', 'required': True},
         'permanentDir': {'type': 'string', 'required': True},
@@ -87,6 +86,8 @@ def validate_args(config):
             ],
             'valuesrules': {'type': 'integer', 'min': 1}
         },
+        # verbose
+        'verbose': {'type': 'boolean', 'default': False},
         # data definition
         # TODO: check that one of these is specified?
         'hosts': {'type': 'list', 'dependencies': 'crawler'},
@@ -210,7 +211,7 @@ def validate_args(config):
         'biroamer': {'type': 'boolean', 'default': False},
         'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
         'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
-        'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}}
+        'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}},
     }
 
     provided_in_config = {} # contains info about the definition of rules in the configuration file
