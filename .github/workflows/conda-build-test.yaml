@@ -21,21 +21,11 @@ jobs:
          run:
             shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
       steps:
-      -  name: Set distrib release version if not set
-         env:
-            DR_VERSION: 20.04
-         run: |
-            # Hack to get setup-python to work on act (https://github.com/nektos/act/issues/213)
-            if [ ! -f "/etc/lsb-release" ] ; then
-               echo "DISTRIB_RELEASE=$DR_VERSION" > /etc/lsb-release
-            fi
       -  name: Install required linux packages
          run: |
-            apt-get --assume-yes update || sudo apt-get --assume-yes update || true
-            # Docker default user is root, but is not on Github Action (https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#administrative-privileges-of-github-hosted-runners),
-            #  so we use sudo and Docker will not complain and Github Actions will work
-            apt-get --assume-yes install sudo || true
-            sudo apt-get --assume-yes install wget git build-essential coreutils
+            apt-get --assume-yes update
+            # sponge utility (just for CI)
+            apt-get --assume-yes moreutils
       -  uses: actions/checkout@v2
       -  name: Set up Miniconda
          uses: conda-incubator/setup-miniconda@v2.1.1
@@ -115,7 +105,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                        <(zcat "$sent_file" | sponge | head -6) <(zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi

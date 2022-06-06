@@ -41,6 +41,11 @@ jobs:
          run:
             shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
       steps:
+      -  name: Install required linux packages
+         run: |
+            apt-get --assume-yes update
+            # sponge utility (just for CI)
+            apt-get --assume-yes moreutils
       -  name: Run
          id: tests_mt
          run: |
@@ -130,7 +135,7 @@ jobs:
 
                   if [[ "$nolines" -gt "15" ]]; then
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(head -6 <(zcat "$sent_file") && zcat "$sent_file" | tail -5)
+                        <(zcat "$sent_file" | sponge | head -6) <(zcat "$sent_file" | tail -5)
                   else
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
