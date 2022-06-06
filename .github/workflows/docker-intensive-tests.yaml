@@ -45,7 +45,7 @@ jobs:
          run: |
             apt-get --assume-yes update
             # sponge utility (just for CI)
-            apt-get --assume-yes moreutils
+            apt-get --assume-yes install moreutils
       -  name: Run
          id: tests_mt
          run: |

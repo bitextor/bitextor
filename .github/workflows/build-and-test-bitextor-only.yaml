@@ -21,7 +21,7 @@ jobs:
             apt-get --assume-yes update
             apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev
             # sponge utility (just for CI)
-            apt-get --assume-yes moreutils
+            apt-get --assume-yes install moreutils
       -  name: Set up Python3
          uses: actions/setup-python@v2
          with:

@@ -25,7 +25,7 @@ jobs:
          run: |
             apt-get --assume-yes update
             # sponge utility (just for CI)
-            apt-get --assume-yes moreutils
+            apt-get --assume-yes install moreutils
       -  uses: actions/checkout@v2
       -  name: Set up Miniconda
          uses: conda-incubator/setup-miniconda@v2.1.1
