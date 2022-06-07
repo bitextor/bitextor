@@ -428,7 +428,7 @@ tests-neural()
             --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr-p2t" \
                 dataDir="${WORK}/data/data-neural-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
-                shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True
+                shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
                 deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/73-neural-en-fr-p2t.report" && \

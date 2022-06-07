@@ -40,13 +40,15 @@ There are some optional parameters that allow for a finer control of the executi
 
 ```yaml
 until: preprocess
-parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2}
+parallelJobs: {translate: 1, docaling: 2, segaling: 2, bicleaner: 1}
+parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2, mgiza: 2}
 profiling: True
 verbose: True
 ```
 
 * `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`
-* `parallelWorkers`: a dictionary specifying the number of cores that should be used for a job. Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter` and `sents`.
+* `parallelJobs`: a dictionary specifying the number of cores or threads that should be used for a job (check `-c` and `-j` from [snakemake CLI arguments](https://snakemake.readthedocs.io/en/stable/executing/cli.html)). Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter` and `sents`.
+* `parallelWorkers`: a dictionary specifying the number of cores or threads that should be used for a tool (this might be done throught `parallel` or native configuration of the specific tool). Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`, `sents` and `mgiza`. Be aware that, if the provided value to `mgiza` is greater than 1, the result will not be deterministic (check out [this issue](https://github.com/moses-smt/mgiza/issues/26) for more information).
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 * `verbose`: output more details about the pipeline execution.
 

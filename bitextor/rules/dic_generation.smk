@@ -127,9 +127,11 @@ rule dic_generation_mgiza:
         cooc="{prefix}.{l2}-{l1}.cooc",
     output:
         "{prefix}.{l2}-{l1}.t3.final",
+    params:
+        threads=THREADS["mgiza"],
     shell:
         """
-        {PROFILING} mgiza -ncpus 8 -CoocurrenceFile {input.cooc} -c {input.snt} \
+        {PROFILING} mgiza -ncpus {params.threads} -CoocurrenceFile {input.cooc} -c {input.snt} \
             -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} \
             -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
         """

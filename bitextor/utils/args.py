@@ -82,6 +82,13 @@ def validate_args(config):
         'parallelWorkers': {
             'type': 'dict',
             'allowed': [
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents', 'mgiza'
+            ],
+            'valuesrules': {'type': 'integer', 'min': 1}
+        },
+        'parallelJobs': {
+            'type': 'dict',
+            'allowed': [
                 'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
             ],
             'valuesrules': {'type': 'integer', 'min': 1}
@@ -297,15 +304,16 @@ def validate_args(config):
 
     if provided_in_config['deferred']:
         schema['until']['allowed'].append('deferred')
-        schema['parallelWorkers']['allowed'].append('deferred')
 
     if provided_in_config['bifixer']:
         schema['until']['allowed'].append('bifixer')
         schema['parallelWorkers']['allowed'].append('bifixer')
+        schema['parallelJobs']['allowed'].append('bifixer')
 
     if config['bicleaner']:
         schema['until']['allowed'].append('bicleaner')
         schema['parallelWorkers']['allowed'].append('bicleaner')
+        schema['parallelJobs']['allowed'].append('bicleaner')
         schema['bicleanerModel']['required'] = True
 
         if config['bicleanerGenerateModel']:

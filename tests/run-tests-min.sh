@@ -191,7 +191,7 @@ wait
 
     mkdir -p "${TRANSIENT_DIR}" && \
     pushd "${TRANSIENT_DIR}" > /dev/null && \
-    ${BITEXTOR} ${FORCE} --notemp -j ${THREADS} \
+    ${BITEXTOR} \
         --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
             dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${WORK}/transient-mto3-en-fr" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
