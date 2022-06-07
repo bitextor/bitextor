@@ -35,8 +35,10 @@ jobs:
                  test_id: "0x10"
                - name: Tests combining dictionaries and MT
                  test_id: "0x20"
-               - name: Other tests
+               - name: Tests neural
                  test_id: "0x40"
+               - name: Other tests
+                 test_id: "0x80"
       defaults:
          run:
             shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda

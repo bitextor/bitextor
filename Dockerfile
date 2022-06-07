@@ -91,6 +91,9 @@ RUN pip3 install ./third_party/bifixer
 ## biroamer
 RUN pip3 install ./third_party/biroamer
 RUN python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
+## neural
+RUN pip3 install ./third_party/neural-document-aligner
+RUN pip3 install ./third_party/vecalign
 ## cld3
 RUN pip3 install Cython
 RUN pip3 install pycld3

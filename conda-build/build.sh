@@ -35,7 +35,7 @@ $PYTHON -m pip install ./third_party/bifixer
 ### Biroamer and model
 $PYTHON -m pip install ./third_party/biroamer && \
 $PYTHON -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
-### Neural Document Aligner
+### Neural Document Aligner and Vecalign
 $PYTHON -m pip install ./third_party/neural-document-aligner
 $PYTHON -m pip install ./third_party/vecalign
 ## CLD3
