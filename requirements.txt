@@ -15,5 +15,6 @@ cchardet==2.1.7
 sentence-splitter==1.4
 loomchild-segment==2.0.4.1
 mosestokenizer==1.2.1
-regex>=2019.08.19,<=2022.4.24
-nump20validators==0.20.0
+regex>=2019.08.19,<=2022.6.2
+numpy
+validators==0.20.0
