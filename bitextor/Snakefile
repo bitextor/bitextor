@@ -1202,7 +1202,7 @@ rule bleualign:
         """
         mkdir -p {params.folder}
 
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -l 1 --group" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
         python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
@@ -1346,7 +1346,7 @@ rule bifixer:
     threads: JOB_THREADS["bifixer"]
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
 
         zcat {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
@@ -1467,7 +1467,7 @@ rule bicleaner:
     threads: JOB_THREADS["bicleaner"]
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
         slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
