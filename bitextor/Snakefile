@@ -197,7 +197,7 @@ SEGALIGN_THRESHOLD = return_dict_value_if_key(config, "sentenceAlignerThreshold"
 #################################################################
 # CLEANING
 DEFERRED = return_dict_value_if_key(config, "deferred", False, pos_value=True)
-DEFERRED_CMD = "mmhsum" if DEFERRED else ''
+DEFERRED_CMD = "mmhsum" if DEFERRED else '' # Do NOT use double quote in the command
 
 BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
 BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
@@ -1243,7 +1243,7 @@ rule vecalign:
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
-        deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
+        deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",

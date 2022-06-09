@@ -331,7 +331,7 @@ rule hunalign:
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
-        deferred=f"--print-sent-hash {DEFERRED_CMD}" if DEFERRED else '',
+        deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
     shell:
         """
         header="src_index\ttrg_index"

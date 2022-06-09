@@ -41,6 +41,7 @@ import base64
 import subprocess
 import math
 from tempfile import NamedTemporaryFile
+import shlex
 
 
 def run_aligner(filename_s, filename_t, dic, hunalign_bin, threshold=0):
@@ -113,13 +114,15 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
             line2 = line2[0].strip()
 
         if hashprogram:
+            hashprogram = shlex.split(hashprogram)
+
             hash1 = subprocess.run(
-                [hashprogram],
+                hashprogram,
                 stdout=subprocess.PIPE,
                 input=line1,
                 encoding='utf8').stdout.rstrip('\n')
             hash2 = subprocess.run(
-                [hashprogram],
+                hashprogram,
                 stdout=subprocess.PIPE,
                 input=line2,
                 encoding='utf8').stdout.rstrip('\n')
@@ -154,7 +157,7 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
                     tmp = tmp[0].strip()
 
                 if hashprogram:
-                    hash1 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE,
+                    hash1 += "+" + subprocess.run(hashprogram, stdout=subprocess.PIPE,
                                                   input=tmp, encoding='utf8').stdout.rstrip('\n')
 
                 line1 += " " + tmp
@@ -169,7 +172,7 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
                     tmp = tmp[0].strip()
 
                 if hashprogram:
-                    hash2 += "+" + subprocess.run([hashprogram], stdout=subprocess.PIPE,
+                    hash2 += "+" + subprocess.run(hashprogram, stdout=subprocess.PIPE,
                                                   input=tmp, encoding='utf8').stdout.rstrip('\n')
 
                 line2 += " " + tmp
