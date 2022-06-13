@@ -26,7 +26,7 @@ requirements:
     - cmake
     - gcc_linux-64
     - gxx_linux-64
-    - go-cgo 1.13.5 h77d97cf_0
+    - go-cgo 1.17.8 hc2a3312_0
   host:
     - libboost 1.71 h97c9712_0
     - pip
