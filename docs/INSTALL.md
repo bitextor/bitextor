@@ -150,7 +150,15 @@ Additionally, Bitextor uses [giashard](https://github.com/paracrawl/giashard) fo
 
 ```bash
 # build and place the necessary tools in $HOME/go/bin
-go get github.com/paracrawl/giashard/...
+
+# mandatory
+tools="giashard"
+# all tools (optional)
+#tools="giashard giashardid giamerge giastat"
+
+for tool in $(echo "$tools"); do
+  go install github.com/paracrawl/giashard/cmd/${tool}@latest
+done
 ```
 
 ### Pip dependencies

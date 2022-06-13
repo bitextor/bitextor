@@ -7,7 +7,7 @@ pushd "bitextor" > /dev/null
 echo -e " - \e[4mInstalling Go dependencies...\e[0m"
 mkdir "$SRC_DIR/../gopath"
 export GOPATH="$SRC_DIR/../gopath"
-go get github.com/paracrawl/giashard/...
+go install github.com/paracrawl/giashard/cmd/giashard@latest
 
 # Pip dependencies
 echo -e " - \e[4mInstalling python dependencies...\e[0m"

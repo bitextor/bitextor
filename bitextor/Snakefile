@@ -1586,11 +1586,11 @@ rule filter:
 
         zcat {input.f} \
             | ( [[ "{BICLEANER}" == "True" ]] \
-                && {PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
-                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header} \
+                && ({PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
+                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header}; true) \
                 || cat ) \
             | ( [[ "{ELRC}" == "True" ]] \
-                && {PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s \
+                && ({PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s; true) \
                 || cat ) \
             > {output}
 

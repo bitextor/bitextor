@@ -63,7 +63,7 @@ ENV GOPATH /home/docker/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 RUN /bin/echo -e "${RED}Installing giashard${NC}"
-RUN go get github.com/paracrawl/giashard/...
+RUN go install github.com/paracrawl/giashard/cmd/giashard@latest
 
 # Download Heritrix
 RUN /bin/echo -e "${RED}Downloading heritrix${NC}"
