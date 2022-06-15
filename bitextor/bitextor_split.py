@@ -42,7 +42,7 @@ def filter_trash(sentence):
     return n < len(sentence) // 2
 
 
-def split_segments(text, splitter_unary_func, prune_type="words", prune_threshold=0, filter_bad_sentences=True):
+def split_segments(text, splitter_unary_func, prune_type="words", prune_threshold=0, filter_bad_sentences=True, return_list=False):
     segments = splitter_unary_func(text)
 
     # prune long sentences
@@ -53,6 +53,11 @@ def split_segments(text, splitter_unary_func, prune_type="words", prune_threshol
     
     if filter_bad_sentences:
         segments = [s for s in segments if filter_trash(s)]
+
+    segments = '\n'.join([segment.strip() for segment in segments if segment.strip() != ''])
+
+    if return_list:
+        return segments
 
     segmented_text = "\n".join(segments) + "\n"
 
@@ -136,8 +141,7 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 paragraph_text = paragraph[0]
                 paragraph_id = int(paragraph[1]) + 1 # Start at 1
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                         options.prune_threshold, not options.dont_filter).split("\n")
-                sentences_wo_paragraphs = [sentence.strip() for sentence in sentences_wo_paragraphs if sentence.strip() != '']
+                                                         options.prune_threshold, not options.dont_filter, return_list=True)
 
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):
