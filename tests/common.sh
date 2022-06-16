@@ -53,15 +53,16 @@ annotate_and_echo_info()
   test_id=$1
   status=$2
   nolines=$3
+  desc=$([[ "$4" != "" ]] && echo " / $4" || echo "")
   error_file="$FAILS"
 
   if [[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]; then
-    echo "Ok ${test_id} (nolines: ${nolines})"
+    echo "Ok ${test_id} (nolines / desc: ${nolines}${desc})"
   elif [[ "$status" != "0" ]]; then
-    echo "Failed ${test_id} (status: ${status})"
-    echo -e "fail\t${test_id}\t${status}" >> "$error_file"
+    echo "Failed ${test_id} (status / desc: ${status}${desc})"
+    echo -e "fail\t${test_id}\t${status}${desc}" >> "$error_file"
   elif [[ "$nolines" == "0" ]]; then
-    echo "Failed ${test_id} (nolines: ${nolines})"
-    echo -e "fail\t${test_id}\t0 no. lines" >> "$error_file"
+    echo "Failed ${test_id} (nolines / desc: ${nolines}${desc})"
+    echo -e "fail\t${test_id}\t0 no. lines${desc}" >> "$error_file"
   fi
 }

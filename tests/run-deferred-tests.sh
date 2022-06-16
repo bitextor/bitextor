@@ -74,7 +74,7 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
 
   d=$(diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) | wc -l)
   exit_code=$([[ "$d" != "0" ]] && echo 1 || echo 0)
-  annotate_and_echo_info 10 "$exit_code / diff wc -l: $d" "$(cat ${WORK}/outputdeferred | wc -l)"
+  annotate_and_echo_info 10 "${exit_code}" "$(cat ${WORK}/outputdeferred | wc -l)" "diff wc -l: ${d}"
 else
   annotate_and_echo_info 10 "${BITEXTOR_STATUS}" "0"
 fi
