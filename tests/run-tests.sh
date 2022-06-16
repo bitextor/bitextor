@@ -51,16 +51,18 @@ BICLEANER="${WORK}/bicleaner-model"
 BICLEANER_AI="${WORK}/bicleaner-ai-model"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
-mkdir -p "${WORK}/reports"
-mkdir -p "${BICLEANER}"
-mkdir -p "${BICLEANER_AI}"
-mkdir -p "${BICLEANER}/new"
-mkdir -p "${BICLEANER}/new-new"
+mkdir -p "${WORK}/permanent"
+mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/parallel-corpus/Europarl"
 mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/data/prevertical"
+mkdir -p "${WORK}/reports"
+mkdir -p "${BICLEANER}"
+mkdir -p "${BICLEANER}/new"
+mkdir -p "${BICLEANER}/new-new"
+mkdir -p "${BICLEANER_AI}"
 rm -f "$FAILS"
 touch "$FAILS"
 
@@ -156,98 +158,108 @@ create-p2t-from-warc()
 # MT (id >= 10)
 tests-mt()
 {
+    ## MT (en-fr)
     (
-        TRANSIENT_DIR="${WORK}/transient-mt-en-fr"
+        TEST_ID="10"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr" \
-                dataDir="${WORK}/data/data-mt-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
                 bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/10-mt-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 10 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
+    ## MT (en-el)
     (
-        TRANSIENT_DIR="${WORK}/transient-mt-en-el"
+        TEST_ID="11"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
-                dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
                 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/11-mt-en-el.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 11 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-el/en-el.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
     ) &
+    ## MT (en-ru)
     (
-        TRANSIENT_DIR="${WORK}/transient-mt-en-ru"
+        TEST_ID="12"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-ru" \
-                dataDir="${WORK}/data/data-mt-en-ru" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/12-mt-en-ru.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 12 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-ru/en-ru.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
     ) &
+    ## MT and P2T where prevertical is converted to WARC (en-fr)
     create-p2t-from-warc && \
     (
-        TRANSIENT_DIR="${WORK}/transient-mt-en-fr-p2t"
+        TEST_ID="13"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-fr-p2t" \
-                dataDir="${WORK}/data/data-mt-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
                 deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/13-mt-en-fr-p2t.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 13 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mt-output-en-fr-p2t/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 }
 
 # Dictionary-based (id >= 20)
 tests-db()
 {
+    ## Use dictionary pipeline (en-fr)
     (
-        TRANSIENT_DIR="${WORK}/transient-en-fr"
+        TEST_ID="20"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-output-en-fr" \
-                dataDir="${WORK}/data/data-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
                 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/20-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 20 "$?" "$(get_nolines ${WORK}/permanent/bitextor-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 }
 
-### Generate dictionary (id >= 30)
+# Generate dictionary (id >= 30)
 tests-gendic()
 {
     wait-if-envvar-is-true
@@ -255,244 +267,266 @@ tests-gendic()
     dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     rm -f "${WORK}/permanent/new-en-fr.dic"
 
-    (
-        TRANSIENT_DIR="${WORK}/transient-gendic-en-fr"
+    TEST_ID="30"
+    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
-        mkdir -p "${TRANSIENT_DIR}" && \
+    mkdir -p "${TRANSIENT_DIR}"
+
+    (
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendic-output-en-fr" \
-                dataDir="${WORK}/data/data-gendic-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
                 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/30-gendic-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 30 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendic-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 
     wait-if-envvar-is-true && \
-    echo "Removing '${WORK}/transient-gendic-en-fr' ($(du -sh ${WORK}/transient-gendic-en-fr | awk '{print $1}'))" && \
-    rm -rf "${WORK}/transient-gendic-en-fr"
+    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
+    rm -rf "${TRANSIENT_DIR}"
 }
 
-### Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
+# Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
 tests-genbicleaner()
 {
     wait-if-envvar-is-true
 
     rm -f "${BICLEANER}/new/new-en-fr.yaml"
 
-    (
-        TRANSIENT_DIR="${WORK}/transient-genbicleaner-en-fr"
+    TEST_ID="40"
+    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
-        mkdir -p "${TRANSIENT_DIR}" && \
+    mkdir -p "${TRANSIENT_DIR}"
+
+    (
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-genbicleaner-output-en-fr" \
-                dataDir="${WORK}/data/data-genbicleaner-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" generateDic=False sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
                 bicleaner=True bicleanerModel="${BICLEANER}/new/new-en-fr.yaml" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/40-genbicleaner-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 40 "$?" "$(get_nolines ${WORK}/permanent/bitextor-genbicleaner-output-en-fr/en-fr.sent.gz)" && \
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)" && \
             dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
 
     wait-if-envvar-is-true && \
-    echo "Removing '${WORK}/transient-genbicleaner-en-fr' ($(du -sh ${WORK}/transient-genbicleaner-en-fr | awk '{print $1}'))" && \
-    rm -rf "${WORK}/transient-genbicleaner-en-fr/"
+    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
+    rm -rf "${TRANSIENT_DIR}"
 }
 
-### Generate dictionary and bicleaner model (id >= 50)
+# Generate dictionary and bicleaner model (id >= 50)
 tests-gendic-genbicleaner()
 {
     wait-if-envvar-is-true
 
     rm -f "${WORK}/permanent/new-new-en-fr.dic"
     rm -f "${BICLEANER}/new-new/new-new-en-fr.yaml"
+    
+    TEST_ID="50"
+    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+
+    mkdir -p "${TRANSIENT_DIR}"
 
     (
-        TRANSIENT_DIR="${WORK}/transient-gendicbicleaner-en-fr"
-
-        mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr" \
-                dataDir="${WORK}/data/data-gendicbicleaner-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
                 bicleaner=True bicleanerModel="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/50-gendicbicleaner-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 50 "$?" "$(get_nolines ${WORK}/permanent/bitextor-gendicbicleaner-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 
     wait-if-envvar-is-true && \
-    echo "Removing '${WORK}/transient-gendicbicleaner-en-fr' ($(du -sh ${WORK}/transient-gendicbicleaner-en-fr | awk '{print $1}'))" && \
-    rm -rf "${WORK}/transient-gendicbicleaner-en-fr"
+    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
+    rm -rf "${TRANSIENT_DIR}"
 }
 
 # MT and dictionary-based (id >= 60)
 tests-mt-db()
 {
+    ## Combine MT and dictionary (en-fr)
     (
-        TRANSIENT_DIR="${WORK}/transient-mtdb-en-fr"
+        TEST_ID="60"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mtdb-output-en-fr" \
-                dataDir="${WORK}/data/data-mtdb-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
                 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/60-mtdb-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 60 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mtdb-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 }
 
 # Neural (id >= 70)
 tests-neural()
 {
+    ## Neural pipeline (en-fr)
     (
-        TRANSIENT_DIR="${WORK}/transient-neural-en-fr"
+        TEST_ID="70"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr" \
-                dataDir="${WORK}/data/data-neural-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
                 bicleanerFlavour="classic" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/70-neural-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 70 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
+    ## NDA and hunalign (en-el)
     (
-        TRANSIENT_DIR="${WORK}/transient-neural-en-el"
+        TEST_ID="71"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-el" \
-                dataDir="${WORK}/data/data-neural-en-el" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
-                lang1=en lang2=el documentAligner="NDA" dic="${WORK}/permanent/en-el.dic" sentenceAligner="hunalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/71-neural-en-el.report" && \
+                lang1=en lang2=el documentAligner="NDA" dic="${WORK}/permanent/en-el.dic" sentenceAligner="hunalign" \
+                deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 71 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-el/en-el.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
     ) &
+    ## Neural pipeline and deferred (en-ru)
     (
-        TRANSIENT_DIR="${WORK}/transient-neural-en-ru"
+        TEST_ID="72"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-ru" \
-                dataDir="${WORK}/data/data-neural-en-ru" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="NDA" sentenceAligner="vecalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/72-neural-en-ru.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 72 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-ru/en-ru.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
     ) &
+    ## Neural pipeline and P2T and deferred and paragraph identification (en-fr)
     create-p2t-from-warc && \
     (
-        TRANSIENT_DIR="${WORK}/transient-neural-en-fr-p2t"
+        TEST_ID="73"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-neural-output-en-fr-p2t" \
-                dataDir="${WORK}/data/data-neural-en-fr-p2t" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
                 deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/73-neural-en-fr-p2t.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 73 "$?" "$(get_nolines ${WORK}/permanent/bitextor-neural-output-en-fr-p2t/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 }
 
 # Other options (id >= 100)
 tests-others()
 {
+    ## MT and Biroamer (en-fr)
     (
-        TRANSIENT_DIR="${WORK}/transient-mto1-en-ru"
+        TEST_ID="100"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto1-output-en-ru" \
-                dataDir="${WORK}/data/data-mto1-en-ru" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
                 deferred=False tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/100-mto1-en-ru.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 100 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto1-output-en-ru/en-ru.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
     ) &
+    ## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
     (
-        TRANSIENT_DIR="${WORK}/transient-mto2-en-fr"
+        ### MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
+        TEST_ID="101"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto2-output-en-fr" \
-                dataDir="${WORK}/data/data-mto2-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/101-mto2-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 101 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto2-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 
-        # Remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
-
-        TRANSIENT_DIR="${WORK}/transient-mto3-en-fr"
+        ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+        TEST_ID="102"
+        TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/bitextor-mto3-output-en-fr" \
-                dataDir="${WORK}/data/data-mto3-en-fr" transientDir="${TRANSIENT_DIR}" \
+            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
                 bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerFlavour="ai" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/102-mto3-en-fr.report" && \
+            &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info 102 "$?" "$(get_nolines ${WORK}/permanent/bitextor-mto3-output-en-fr/en-fr.sent.gz)"
+        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
 }
 

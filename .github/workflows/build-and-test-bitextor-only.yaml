@@ -83,12 +83,14 @@ jobs:
                   echo "$str"
                   eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
-                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
-                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                  report_file="${WORK}/reports/${notest}.report"
+
+                  if [[ -f "$report_file" ]]; then
                      awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
                   else
                      echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
                   fi
+
                   echo ""
                done < "${WORK}/data/fails.log"
             else

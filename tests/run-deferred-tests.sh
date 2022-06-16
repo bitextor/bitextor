@@ -36,8 +36,10 @@ BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
 BITEXTOR_EXTRA_ARGS=""
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
-mkdir -p "${WORK}/reports"
+mkdir -p "${WORK}/permanent"
+mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
+mkdir -p "${WORK}/reports"
 rm -f "$FAILS"
 touch "$FAILS"
 
@@ -47,36 +49,38 @@ download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitex
 WARC="${WORK}/data/warc/primeminister.warc.gz"
 
 # MT (id >= 10)
-TRANSIENT_DIR="${WORK}/transient-mt-en-el"
+## MT (en-el)
+TEST_ID="10"
+TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
 mkdir -p "${TRANSIENT_DIR}" && \
 pushd "${TRANSIENT_DIR}" > /dev/null && \
 ${BITEXTOR} \
-  --config profiling=True permanentDir="${WORK}/permanent/bitextor-mt-output-en-el" \
-    dataDir="${WORK}/data/data-mt-en-el" transientDir="${TRANSIENT_DIR}" \
+  --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+    dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
     sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True \
     bifixerIgnoreSegmentation=False ${BITEXTOR_EXTRA_ARGS} \
-  &> "${WORK}/reports/10-mt-en-el.report" && \
+  &> "${WORK}/reports/${TEST_ID}.report" && \
 popd > /dev/null
 
 BITEXTOR_STATUS=$?
 
 if [ ${BITEXTOR_STATUS} -eq 0 ]; then
-  BITEXTOR_OUTPUT_DEDUPED="${WORK}/permanent/bitextor-mt-output-en-el/en-el.deduped.txt.gz"
+  BITEXTOR_OUTPUT_DEDUPED="${WORK}/permanent/${TEST_ID}/en-el.deduped.txt.gz"
   RECONSTRUCTOR="${DIR}/../third_party/deferred-crawling/deferred-annotation-reconstructor.py --header"
 
   python3 ${RECONSTRUCTOR} ${BITEXTOR_OUTPUT_DEDUPED} en el ${WARC} --header \
     | bifixer -q --sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash \
       --ignore_duplicates - - en el --header \
-    > "${WORK}/outputdeferred"
+    > "${WORK}/${TEST_ID}.output_deferred"
 
-  d=$(diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) | wc -l)
+  d=$(diff ${WORK}/${TEST_ID}.output_deferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) | wc -l)
   exit_code=$([[ "$d" != "0" ]] && echo 1 || echo 0)
-  annotate_and_echo_info 10 "${exit_code}" "$(cat ${WORK}/outputdeferred | wc -l)" "diff wc -l: ${d}"
+  annotate_and_echo_info "${TEST_ID}" "${exit_code}" "$(cat ${WORK}/${TEST_ID}.output_deferred | wc -l)" "diff wc -l: ${d}"
 else
-  annotate_and_echo_info 10 "${BITEXTOR_STATUS}" "0"
+  annotate_and_echo_info "${TEST_ID}" "${BITEXTOR_STATUS}" "0"
 fi
 
 # Results

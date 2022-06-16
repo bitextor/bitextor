@@ -87,12 +87,23 @@ jobs:
                   echo "$str"
                   eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
 
-                  if [[ "$(ls ${WORK}/reports/ | grep ${notest}- || true)" != "" ]]; then
-                     report_file="$(ls ${WORK}/reports/${notest}-* | head -n 1)"
+                  report_file="${WORK}/reports/${notest}.report"
+
+                  if [[ -f "$report_file" ]]; then
                      awk -v prefix="(log test $notest)" '{print prefix" "$0}' "$report_file"
                   else
                      echo "(warning) No report file found for test $notest (this might be normal depending on the test; check the description)"
                   fi
+
+                  deferred_output="${WORK}/${notest}.output_deferred"
+
+                  if [[ -f "$deferred_output" ]]; then
+                     awk -v prefix="(log test $notest: deferred output diff)" '{print prefix" "$0}' \
+                        <(diff "$deferred_output" <(zcat "${WORK}/permanent/${notest}/en-el.deduped.txt.gz"))
+                  else
+                     echo "(warning) No deferred output found for test $notest (this might be normal depending on the test; check the description)"
+                  fi
+
                   echo ""
                done < "${WORK}/data/fails.log"
             else
