@@ -54,12 +54,12 @@ def split_segments(text, splitter_unary_func, prune_type="words", prune_threshol
     if filter_bad_sentences:
         segments = [s for s in segments if filter_trash(s)]
 
-    segments = '\n'.join([segment.strip() for segment in segments if segment.strip() != ''])
+    segments = [s.strip() for s in segments if s.strip() != '']
 
     if return_list:
         return segments
 
-    segmented_text = "\n".join(segments) + "\n"
+    segmented_text = '\n'.join(segments) + '\n'
 
     return segmented_text
 
