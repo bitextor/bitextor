@@ -210,10 +210,10 @@ wait
 # Results
 failed=$(cat "$FAILS" | wc -l)
 
-echo "------------------------------------"
-echo "           Fails Summary            "
-echo "------------------------------------"
-echo "status | test-id | exit code / desc."
+echo "-------------------------------------"
+echo "            Fails Summary            "
+echo "-------------------------------------"
+echo -e "status\ttest-id\texit code / desc."
 cat "$FAILS"
 
 exit "$failed"

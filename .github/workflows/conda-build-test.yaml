@@ -63,7 +63,7 @@ jobs:
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
-                  eval "array=($line)"
+                  IFS=$'\t' read -r -a array <<< "$line"
                   status=${array[0]}
                   notest=${array[1]}
                   exit_code=${array[2]}

@@ -72,8 +72,9 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
       --ignore_duplicates - - en el --header \
     > "${WORK}/outputdeferred"
 
-  diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) -q > /dev/null
-  annotate_and_echo_info 10 "$?" "$(cat ${WORK}/outputdeferred | wc -l)"
+  d=$(diff ${WORK}/outputdeferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) | wc -l)
+  exit_code=$([[ "$d" != "0" ]] && echo 1 || echo 0)
+  annotate_and_echo_info 10 "$exit_code / diff wc -l: $d" "$(cat ${WORK}/outputdeferred | wc -l)"
 else
   annotate_and_echo_info 10 "${BITEXTOR_STATUS}" "0"
 fi
@@ -81,10 +82,10 @@ fi
 # Results
 failed=$(cat "$FAILS" | wc -l)
 
-echo "------------------------------------"
-echo "           Fails Summary            "
-echo "------------------------------------"
-echo "status | test-id | exit code / desc."
+echo "-------------------------------------"
+echo "            Fails Summary            "
+echo "-------------------------------------"
+echo -e "status\ttest-id\texit code / desc."
 cat "$FAILS"
 
 exit "$failed"
