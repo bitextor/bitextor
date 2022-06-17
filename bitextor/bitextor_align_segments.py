@@ -114,8 +114,6 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
             line2 = line2[0].strip()
 
         if hashprogram:
-            hashprogram = shlex.split(hashprogram)
-
             hash1 = subprocess.run(
                 hashprogram,
                 stdout=subprocess.PIPE,
@@ -229,6 +227,7 @@ src_text_idx = header.index("src_text")
 trg_text_idx = header.index("trg_text")
 src_tokenized_idx = header.index("src_tokenized")
 trg_tokenized_idx = header.index("trg_tokenized")
+hashprogram = options.hashprogram
 
 # Print output header
 sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
@@ -236,8 +235,10 @@ sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
 if options.paragraph_identification:
     sys.stdout.write("\tsrc_paragraph_id\ttrg_paragraph_id")
 
-if options.hashprogram:
+if hashprogram:
     sys.stdout.write("\tsrc_deferred_hash\ttrg_deferred_hash")
+
+    hashprogram = shlex.split(hashprogram)
 
 sys.stdout.write('\n')
 
@@ -273,7 +274,7 @@ for line in reader_list:
     tmp_file2_origtext.close()
 
     align(doc_id_1, doc_id_2, tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name,
-          options.dic, options.hashprogram, options.paragraph_identification, threshold=options.hunalignthresh)
+          options.dic, hashprogram, options.paragraph_identification, threshold=options.hunalignthresh)
 
     os.remove(tmp_file1.name)
     os.remove(tmp_file1_origtext.name)
