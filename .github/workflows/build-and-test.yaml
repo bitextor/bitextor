@@ -139,5 +139,5 @@ jobs:
       -  name: Upload sent.gz files (artifacts)
          uses: actions/upload-artifact@v3
          with:
-            name: sent.gz files
-            path: ${WORK}/permanent/**/*.sent.gz
+            name: all-sent.gz
+            path: ${WORK}/permanent/*/*.sent.gz
