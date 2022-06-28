@@ -94,7 +94,7 @@ jobs:
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/' | sort -u)
+               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz)
 
                if [[ -f "$sent_file" ]]; then
                   md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')

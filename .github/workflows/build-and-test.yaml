@@ -1,4 +1,5 @@
 name: Build and execute Bitextor tests
+
 on:
    push:
       paths-ignore:
@@ -10,6 +11,10 @@ on:
          - '**.md'
          - 'docs/**'
          - 'img/**'
+
+env:
+   WORK: ${{ github.workspace }}
+
 jobs:
    build_and_testing:
       name: Build and testing
@@ -67,8 +72,6 @@ jobs:
             sudo make install
       -  name: Run tests
          id: tests
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             chmod 775 ./tests/run-tests-min.sh
             ./tests/run-tests-min.sh -w "$WORK" -j 4
@@ -76,8 +79,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
                while read line; do
@@ -109,12 +110,10 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-               sent_file=$(cat "$report_file" | grep "output:.*.sent.gz" | sed -E 's/.*output:\ (\/.*[.]sent[.]gz).*$/\1/' | sort -u)
+               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz)
 
                if [[ -f "$sent_file" ]]; then
                   md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
@@ -137,3 +136,8 @@ jobs:
 
                echo ""
             done
+      -  name: Upload sent.gz files (artifacts)
+         uses: actions/upload-artifact@v3
+         with:
+            name: sent.gz files
+            path: ${WORK}/permanent/[0-9]+/*.sent.gz
