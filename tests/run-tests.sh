@@ -46,7 +46,7 @@ done
 shift $((OPTIND-1))
 
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS} --reason"
-BITEXTOR_EXTRA_ARGS=""
+BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 BICLEANER="${WORK}/bicleaner-model"
 BICLEANER_AI="${WORK}/bicleaner-ai-model"
 FAILS="${WORK}/data/fails.log"
@@ -166,7 +166,7 @@ tests-mt()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -185,7 +185,7 @@ tests-mt()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
                 lang1=en lang2=el documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -203,7 +203,7 @@ tests-mt()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -222,7 +222,7 @@ tests-mt()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -246,7 +246,7 @@ tests-db()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
@@ -275,7 +275,7 @@ tests-gendic()
     (
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
@@ -308,7 +308,7 @@ tests-genbicleaner()
     (
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" generateDic=False sentenceAligner="hunalign" \
@@ -345,7 +345,7 @@ tests-gendic-genbicleaner()
     (
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
@@ -375,7 +375,7 @@ tests-mt-db()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -392,6 +392,8 @@ tests-mt-db()
 # Neural (id >= 70)
 tests-neural()
 {
+    wait-if-envvar-is-true
+
     ## Neural pipeline (en-fr)
     (
         TEST_ID="70"
@@ -400,7 +402,7 @@ tests-neural()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
@@ -410,6 +412,9 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
+
+    wait-if-envvar-is-true
+
     ## NDA and hunalign (en-el)
     (
         TEST_ID="71"
@@ -418,7 +423,7 @@ tests-neural()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/primeminister.warc.gz']" preprocessor="warc2text" shards=1 batches=512 \
                 lang1=en lang2=el documentAligner="NDA" dic="${WORK}/permanent/en-el.dic" sentenceAligner="hunalign" \
@@ -428,6 +433,9 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
     ) &
+
+    wait-if-envvar-is-true
+
     ## Neural pipeline and deferred (en-ru)
     (
         TEST_ID="72"
@@ -436,7 +444,7 @@ tests-neural()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="NDA" sentenceAligner="vecalign" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
@@ -445,6 +453,9 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
     ) &
+
+    wait-if-envvar-is-true
+
     ## Neural pipeline and P2T and deferred and paragraph identification (en-fr)
     create-p2t-from-warc && \
     (
@@ -454,7 +465,7 @@ tests-neural()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True \
@@ -465,6 +476,8 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
+
+    wait-if-envvar-is-true
 }
 
 # Other options (id >= 100)
@@ -478,7 +491,7 @@ tests-others()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/kremlin.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=ru \
                 documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
@@ -497,7 +510,7 @@ tests-others()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
@@ -516,7 +529,7 @@ tests-others()
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
         ${BITEXTOR} \
-            --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \

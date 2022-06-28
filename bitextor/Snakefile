@@ -16,10 +16,19 @@ valid, config = validate_args(config)
 if not valid:
     raise Exception("provided configuration is not valid")
 
-if config["verbose"]:
+VERBOSE = config["verbose"]
+
+if VERBOSE:
+    # provided config
     sys.stderr.write("Config: \n")
     pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
     sys.stderr.write('\n')
+    # locale
+    sys.stderr.write("Locale: \n")
+    sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+    sys.stderr.write('\n')
+
+# TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
 #################################################################
 include: "rules/common.smk"
@@ -202,10 +211,10 @@ DEFERRED_CMD = "mmhsum" if DEFERRED else '' # Do NOT use double quote in the com
 BIFIXER = return_dict_value_if_key(config, "bifixer", False, pos_value=True)
 BIFIXER_DEFERRED_COLS = "--sdeferredcol src_deferred_hash --tdeferredcol trg_deferred_hash" if DEFERRED else ""
 BIFIXER_PARAGRAPHS_COLS = "--sparagraphid src_paragraph_id --tparagraphid trg_paragraph_id" if PARAGRAPH_IDENTIFICATION else ""
-# Enabled by default
+# Enabled by default if not provided
 BIFIXER_AGGRESSIVE_DEDUP = "--aggressive_dedup" if "bifixerAggressiveDedup" not in config else \
     return_dict_value_if_key(config, "bifixerAggressiveDedup", "", pos_value="--aggressive_dedup")
-# Enabled by default
+# Enabled by default if not provided
 BIFIXER_IGNORE_SEGMENTATION = "--ignore_segmentation" if "bifixerIgnoreSegmentation" not in config else \
     return_dict_value_if_key(config, "bifixerIgnoreSegmentation", "", pos_value="--ignore_segmentation")
 
@@ -811,28 +820,19 @@ checkpoint shard:
         o_no_lang=lambda wildcards, output: os.path.dirname(output[0]),
         o=f"{DATADIR}/shards/{{lang}}",
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
+        l=temp(f"{TMPDIR}/shard_list_files.{{lang}}"),
     shell:
         """
         ulimit -n 2048
         mkdir -p {params.o}
         rm -rf {params.o}/* # remove anything that might be left after a previous run
+        rm -f {params.l}
+        find {DATADIR}/preprocess/*/prevertical2text/{wildcards.lang} -type d >> {params.l} 2> /dev/null || true
+        find {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang} -type d >> {params.l} 2> /dev/null || true
 
-        binary=giashard
-        if [[ "$(command -v $binary)" == "" ]]; then
-            binary=~/go/bin/giashard
-        fi
+        giashard_bin=$([[ "$(command -v giashard)" == "" ]] && echo "$HOME/go/bin/giashard" || echo "giashard")
 
-        warcs=$(echo {DATADIR}/preprocess/*/{PPROC}/{wildcards.lang})
-        preverticals=$(echo {DATADIR}/preprocess/*/prevertical2text/{wildcards.lang})
-
-        if [[ "$(echo $warcs | grep \*)" != "" ]]; then
-            warcs=""
-        fi
-        if [[ "$(echo $preverticals | grep \*)" != "" ]]; then
-            preverticals=""
-        fi
-
-        {PROFILING} $binary -n {params.n} -b {params.b} -o {params.o} -f {params.f} $preverticals $warcs
+        {PROFILING} $giashard_bin -n {params.n} -b {params.b} -o {params.o} -f {params.f} -l {params.l}
 
         nofiles=$(ls {params.o} | wc -l)
 

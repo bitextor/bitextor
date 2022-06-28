@@ -33,7 +33,7 @@ done
 shift $((OPTIND-1))
 
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
-BITEXTOR_EXTRA_ARGS=""
+BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
@@ -56,7 +56,7 @@ TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 mkdir -p "${TRANSIENT_DIR}" && \
 pushd "${TRANSIENT_DIR}" > /dev/null && \
 ${BITEXTOR} \
-  --config profiling=True permanentDir="${WORK}/permanent/${TEST_ID}" \
+  --config permanentDir="${WORK}/permanent/${TEST_ID}" \
     dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
     warcs="['${WARC}']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=el \
     documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
