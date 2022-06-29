@@ -87,8 +87,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             if [[ -f "${WORK}/docker-volume/fails.log" ]]; then
                while read line; do
@@ -120,8 +118,6 @@ jobs:
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion == 'success' }}
          if: ${{ always() }}
-         env:
-            WORK: ${{ github.workspace }}
          run: |
             for report_file in $(ls ${WORK}/docker-volume/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
