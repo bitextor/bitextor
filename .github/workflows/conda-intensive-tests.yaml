@@ -145,3 +145,8 @@ jobs:
 
                echo ""
             done
+      -  name: Upload sent.gz files (artifacts)
+         uses: actions/upload-artifact@v3
+         with:
+            name: all-sent.gz
+            path: ${{ env.WORK }}/permanent/**/*.sent.gz

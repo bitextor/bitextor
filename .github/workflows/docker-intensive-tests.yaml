@@ -125,8 +125,7 @@ jobs:
          run: |
             for report_file in $(ls ${WORK}/docker-volume/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz)
-               sent_file=$(echo "$sent_file" | sed "s/^$(echo $WORK_DOCKER | sed 's/\//\\\//g')/$(echo $WORK | sed 's/\//\\\//g')\/docker-volume/") # replace docker prefix
+               sent_file=$(ls ${WORK}/docker-volume/permanent/${notest}/*.sent.gz)
 
                if [[ -f "$sent_file" ]]; then
                   md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
@@ -149,3 +148,8 @@ jobs:
 
                echo ""
             done
+      -  name: Upload sent.gz files (artifacts)
+         uses: actions/upload-artifact@v3
+         with:
+            name: all-sent.gz
+            path: ${{ env.WORK }}/docker-volume/permanent/**/*.sent.gz
