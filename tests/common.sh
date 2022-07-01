@@ -29,9 +29,11 @@ download_bicleaner_model()
     base="https://github.com/bitextor/bicleaner-data/releases/latest/download"
     langs=$1
     output=$2
-    if [ ! -f "${output}/${langs}.tar.gz" ]; then
+    output_file="${output}/${langs}.tar.gz"
+    if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
-        tar xzf "${output}/${langs}.tar.gz" -C "${output}"
+        tar xzf "${output_file}" -C "${output}"
+        rm -f "${output_file}"
     fi
 }
 
@@ -40,10 +42,12 @@ download_bicleaner_ai_model()
     base="https://github.com/bitextor/bicleaner-ai-data/releases/latest/download"
     langs=$1
     output=$2
+    output_file="${output}/${flavour}-${langs}.tgz"
     flavour=$([[ "$3" == "" ]] && echo "full" || echo "$3")
-    if [ ! -f "${output}/${flavour}-${langs}.tgz" ]; then
+    if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
-        tar xzf "${output}/${flavour}-${langs}.tgz" -C "${output}"
+        tar xzf "${output_file}" -C "${output}"
+        rm -f "${output_file}"
     fi
 }
 

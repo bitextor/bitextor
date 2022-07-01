@@ -73,9 +73,6 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
 
-            # Do we have enough storage?
-            df -h
-
             # Run tests with docker
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \

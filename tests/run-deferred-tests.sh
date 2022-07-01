@@ -32,6 +32,9 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
+alias pushd="pushd > /dev/null"
+alias popd="popd > /dev/null"
+
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
 BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 FAILS="${WORK}/data/fails.log"
@@ -54,7 +57,7 @@ TEST_ID="10"
 TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
 mkdir -p "${TRANSIENT_DIR}" && \
-pushd "${TRANSIENT_DIR}" > /dev/null && \
+pushd "${TRANSIENT_DIR}" && \
 ${BITEXTOR} \
   --config permanentDir="${WORK}/permanent/${TEST_ID}" \
     dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -63,7 +66,7 @@ ${BITEXTOR} \
     sentenceAligner="bleualign" deferred=True tmx=True bifixer=True deduped=True \
     bifixerIgnoreSegmentation=False ${BITEXTOR_EXTRA_ARGS} \
   &> "${WORK}/reports/${TEST_ID}.report" && \
-popd > /dev/null
+popd
 
 BITEXTOR_STATUS=$?
 
