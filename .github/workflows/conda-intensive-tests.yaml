@@ -71,6 +71,11 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
+      -  uses: actions/checkout@v2
+         if: ${{ github.event.inputs.create_build }}
+      -  name: Checkout submodules
+         if: ${{ github.event.inputs.create_build }}
+         run: git submodule update --init --force --recursive
       -  name: Create Bitextor conda build
          if: ${{ github.event.inputs.create_build }}
          working-directory: ./conda-build
