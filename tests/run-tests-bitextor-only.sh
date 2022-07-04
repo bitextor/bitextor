@@ -31,9 +31,6 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-alias pushd="pushd > /dev/null"
-alias popd="popd > /dev/null"
-
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS}"
 BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 FAILS="${WORK}/data/fails.log"
@@ -99,7 +96,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -107,7 +104,7 @@ wait
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -119,14 +116,14 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" dataDir="${WORK}/data/${TEST_ID}" \
             transientDir="${TRANSIENT_DIR}" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" \
             shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" \
             sentenceAligner="hunalign" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -140,7 +137,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -148,7 +145,7 @@ wait
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -160,7 +157,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -168,7 +165,7 @@ wait
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=False ftfy=True tmx=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -178,7 +175,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -186,7 +183,7 @@ wait
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 deferred=False tmx=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &

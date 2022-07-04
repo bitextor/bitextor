@@ -42,8 +42,8 @@ download_bicleaner_ai_model()
     base="https://github.com/bitextor/bicleaner-ai-data/releases/latest/download"
     langs=$1
     output=$2
-    output_file="${output}/${flavour}-${langs}.tgz"
     flavour=$([[ "$3" == "" ]] && echo "full" || echo "$3")
+    output_file="${output}/${flavour}-${langs}.tgz"
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"

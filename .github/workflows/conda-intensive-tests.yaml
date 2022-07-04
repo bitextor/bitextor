@@ -21,6 +21,10 @@ on:
             description: 'Build which will be looked for'
             required: false
             default: ''
+         create_build:
+            type: boolean
+            description: 'Create build instead of downloading last package available'
+            default: true
 
 env:
    WORK: ${{ github.workspace }}
@@ -67,7 +71,23 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
-      -  name: Install Bitextor
+      -  name: Create Bitextor conda build
+         if: ${{ github.event.inputs.create_build }}
+         working-directory: ./conda-build
+         run: |
+            ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
+      -  name: Install Bitextor locally
+         run: |
+            # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
+
+            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+
+            conda install -y "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64/$bitextor_package"
+            conda update -y --all
+            command -v "bitextor" || \
+               (>&2 echo "Binary 'bitextor' not available"; exit 1)
+      -  name: Install Bitextor from repo
+         if: ${{ !github.event.inputs.create_build }}
          run: |
             v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
 

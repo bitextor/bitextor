@@ -32,9 +32,6 @@ while getopts "hf:w:j:" i; do
 done
 shift $((OPTIND-1))
 
-alias pushd="pushd > /dev/null"
-alias popd="popd > /dev/null"
-
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS} --reason"
 BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 BICLEANER="${WORK}/bicleaner-model"
@@ -70,7 +67,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -79,7 +76,7 @@ wait
             sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
             bicleanerFlavour="classic" deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -106,7 +103,7 @@ wait
     fi
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -115,7 +112,7 @@ wait
             sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
             deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -127,7 +124,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -135,7 +132,7 @@ wait
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -149,7 +146,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -158,7 +155,7 @@ wait
             dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -170,7 +167,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -178,7 +175,7 @@ wait
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=False tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
@@ -189,7 +186,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -199,7 +196,7 @@ wait
             bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.0 \
             deferred=False bifixer=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 
@@ -208,7 +205,7 @@ wait
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
 
     mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" && \
+    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
@@ -218,7 +215,7 @@ wait
             bicleaner=True bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerThreshold=0.0 \
             deferred=False bifixer=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd
+    popd > /dev/null
 
     annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
 ) &
