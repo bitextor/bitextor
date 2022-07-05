@@ -6,29 +6,16 @@ import pprint
 from bitextor.utils.args import validate_args
 from bitextor.utils.common import (
     open_xz_or_gzip_or_plain,
-    get_all_ppids,
     duration_to_seconds,
-    return_dict_value_if_key
+    return_dict_value_if_key,
+    get_snakemake_execution_mark,
+    is_first_snakemake_execution,
 )
 
 valid, config = validate_args(config)
 
 if not valid:
     raise Exception("provided configuration is not valid")
-
-VERBOSE = config["verbose"]
-
-if VERBOSE:
-    # provided config
-    sys.stderr.write("Config: \n")
-    pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
-    sys.stderr.write('\n')
-    # locale
-    sys.stderr.write("Locale: \n")
-    sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-    sys.stderr.write('\n')
-
-# TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
 #################################################################
 include: "rules/common.smk"
@@ -59,6 +46,23 @@ if "lang2" in config:
     LANGS.add(LANG2)
 
 PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
+VERBOSE = config["verbose"]
+
+if VERBOSE and is_first_snakemake_execution(TMPDIR):
+    # provided config
+    sys.stderr.write("Config: \n")
+    pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
+    sys.stderr.write('\n')
+    # locale
+    sys.stderr.write("Locale: \n")
+    sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+    sys.stderr.write('\n')
+    # free storage
+    sys.stderr.write("Free storage: \n")
+    sys.stderr.write(subprocess.run(["df", "-h"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+    sys.stderr.write('\n')
+
+# TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
 #################################################################
 # CRAWLING
@@ -315,13 +319,6 @@ TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
-# OTHER
-BASE64_FILTER_CMD = "cat"
-
-if PARAGRAPH_IDENTIFICATION:
-    BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-
-#################################################################
 ### WORKFLOW EXECUTION ##########################################
 THREADS = {
     "split": 1,
@@ -433,6 +430,17 @@ else:
         OUTPUT.append(f"{TRANSIENT}/07_02.bicleaner.{LANG1}_{LANG2}")
     elif UNTIL == "filter":
         OUTPUT.append(f"{TRANSIENT}/07_03.filter.{LANG1}_{LANG2}")
+
+#################################################################
+# OTHER
+BASE64_FILTER_CMD = "cat"
+
+if PARAGRAPH_IDENTIFICATION:
+    BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
+
+# Create mark
+with open(get_snakemake_execution_mark(TMPDIR), "w"):
+    pass
 
 shell.prefix("set -euo pipefail;")
 
