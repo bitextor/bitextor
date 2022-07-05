@@ -211,8 +211,7 @@ def get_all_idxs_from_list(l, element):
 
 
 def get_snakemake_execution_mark(tmp_path):
-    pid = os.getpid()
-    mark_path = f"{tmp_path}/mark_{pid}"
+    mark_path = f"{tmp_path}/mark_first_execution"
 
     return mark_path
 
