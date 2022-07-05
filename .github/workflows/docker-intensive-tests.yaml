@@ -9,6 +9,21 @@ on:
             description: 'Tag which will be looked for'
             required: false
             default: 'edge'
+         test_id:
+            description: 'Run specific test ID'
+            required: false
+            default: 'all'
+            type: choice
+            options:
+               - 'all'
+               - '0x01'
+               - '0x02'
+               - '0x04'
+               - '0x08'
+               - '0x10'
+               - '0x20'
+               - '0x40'
+               - '0x80'
 
 env:
    WORK: ${{ github.workspace }}
@@ -50,6 +65,7 @@ jobs:
             sudo apt-get --assume-yes install moreutils
       -  name: Run
          id: tests_mt
+         if: ${{ github.event.inputs.test_id != "all" && github.event.inputs.test_id != matrix.test_id }}
          run: |
             tag=":edge"
             if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
@@ -73,6 +89,13 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
 
+            # Monitor available storage
+            echo "      date     time $(free -m | grep total | sed -E 's/^    (.*)/\1/g')"
+            while true; do
+               echo "$(date '+%Y-%m-%d %H:%M:%S') $(LC_ALL="en_US.UTF-8" free -m | grep Mem: | sed 's/Mem://g')"
+               sleep 1
+            done
+
             # Run tests with docker
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \
@@ -80,6 +103,9 @@ jobs:
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"' && \
                       cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"''
+
+            # Stop monitoring available disk
+            kill %1
 
             # Has the execution failed?
             nolines=$(cat ${WORK}/docker-volume/fails.log | wc -l)
