@@ -92,12 +92,12 @@ jobs:
          if: ${{ github.event.inputs.create_build }}
          run: git submodule update --init --force --recursive
       -  name: Create Bitextor conda build
-         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id != 'all' && github.event.inputs.test_id != matrix.test_id) }}
+         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
             ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
       -  name: Install Bitextor locally
-         if: ${{ github.event.inputs.test_id != 'all' && github.event.inputs.test_id != matrix.test_id }}
+         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
@@ -108,7 +108,7 @@ jobs:
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
-         if: ${{ !github.event.inputs.create_build && (github.event.inputs.test_id != 'all' && github.event.inputs.test_id != matrix.test_id) }}
+         if: ${{ !github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          run: |
             v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
 
@@ -123,7 +123,7 @@ jobs:
             conda install -y "$v"
       -  name: Run tests
          id: run_tests
-         if: ${{ github.event.inputs.test_id != 'all' && github.event.inputs.test_id != matrix.test_id }}
+         if: ${{ github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id }}
          run: |
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
@@ -155,7 +155,6 @@ jobs:
                done < "${WORK}/data/fails.log"
             else
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
-               exit 1
             fi
       -  name: Print log subsample of tests which succeeded
          # https://github.com/actions/runner/issues/1173
