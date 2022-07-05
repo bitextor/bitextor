@@ -65,7 +65,7 @@ jobs:
             sudo apt-get --assume-yes install moreutils
       -  name: Run
          id: tests_mt
-         if: ${{ github.event.inputs.test_id != "all" && github.event.inputs.test_id != matrix.test_id }}
+         if: ${{ github.event.inputs.test_id != 'all' && github.event.inputs.test_id != matrix.test_id }}
          run: |
             tag=":edge"
             if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
