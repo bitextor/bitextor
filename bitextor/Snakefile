@@ -169,7 +169,7 @@ EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 
 #################################################################
 # EMBEDDINGS
-EMBEDDINGS_BATCH_SIZE_GPU = config["embeddingsBatchSizeGPU"]
+EMBEDDINGS_BATCH_SIZE_NEURAL = config["embeddingsBatchSize"]
 EMBEDDINGS_MODEL = return_dict_value_if_key(config, "embeddingsModel", "", only_check_key=True)
 
 #################################################################

@@ -341,11 +341,11 @@ documentAlignerThreshold: 0.1
 
 ```yaml
 documentAligner: NDA
-embeddingsBatchSizeGPU: 64
+embeddingsBatchSize: 64
 embeddingsModel: LaBSE
 ```
 
-* `embeddingsBatchSizeGPU`: specify the batch size of the embeddings when processing them. This may allow you to control the total amount of size used in your device, what may be very useful for GPUs.
+* `embeddingsBatchSize`: specify the batch size of the embeddings when processing them. This may allow you to control the total amount of size used in your device, what may be very useful for GPUs.
 * `embeddingsModel`: model which will be used in order to generate the embeddings. There are different models available from SentenceTransformers, but there should be used a [multilingual model](https://www.sbert.net/docs/pretrained_models.html#multi-lingual-models). This option affects to the `vecalign` segment aligner as well.
 
 ## Segment alignment
