@@ -1152,7 +1152,7 @@ rule doc_emb_matches:
                 --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
                 --output-with-idxs --paths-to-docs-are-base64-values \
                 --threshold {DOC_THRESHOLD} --logging-level 30 \
-                --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} > {output}
+                --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
         """
 
 
@@ -1266,7 +1266,7 @@ rule vecalign:
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
                     --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
                     --tmp-dir "{params.folder}" --nda-input-is-base64 \
-                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_GPU} --first-match-offset 1 \
+                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} --first-match-offset 1 \
                     --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
                     --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
                     --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \

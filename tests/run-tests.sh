@@ -410,7 +410,7 @@ tests-neural()
     (
         TEST_ID="70"
         TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
-        NDA_BATCH_SIZE=$([[ "$CI" == "true" ]] && "embeddingsBatchSize=28" || echo "") # tests fail in CI due to OOM error
+        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && "embeddingsBatchSize=28" || echo "") # tests fail in CI due to OOM error
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
@@ -419,7 +419,7 @@ tests-neural()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
-                bicleanerFlavour="classic" deferred=False tmx=True ${NDA_BATCH_SIZE} ${BITEXTOR_EXTRA_ARGS} \
+                bicleanerFlavour="classic" deferred=False tmx=True ${EMBEDDINGS_BATCH_SIZE} ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
