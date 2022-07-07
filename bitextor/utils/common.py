@@ -22,7 +22,6 @@ import gzip
 from contextlib import contextmanager
 
 import subprocess
-import psutil
 import sys
 import os
 import requests
@@ -129,23 +128,6 @@ def check_lengths(file_path_from, file_path_to, throw=True):
     return f1_lines == f2_lines
 
 
-def get_all_ppids(pid, append_pid=False):
-    result = []
-
-    if append_pid:
-        result.append(pid)
-
-    if not isinstance(pid, int):
-        raise Exception("PID must be an integer")
-
-    p = pid
-
-    while p != 1:
-        p = psutil.Process(p).ppid()
-        result.append(p)
-
-    return result
-
 def check_connection(url):
     connection_error = False
     connection = None
@@ -226,3 +208,23 @@ def get_all_idxs_from_list(l, element):
             find_idx = len(l)
 
     return idxs
+
+
+def get_snakemake_execution_mark(tmp_path):
+    mark_path = f"{tmp_path}/mark_first_execution"
+
+    return mark_path
+
+
+def is_first_snakemake_execution(tmp_path, create_mark=False):
+    mark_path = get_snakemake_execution_mark(tmp_path)
+
+    if os.path.isfile(mark_path):
+        return False
+
+    # Create mark?
+    if create_mark:
+        with open(mark_path, "w"):
+            pass
+
+    return True

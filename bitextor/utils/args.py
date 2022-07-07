@@ -178,7 +178,7 @@ def validate_args(config):
         },
         'documentAlignerThreshold': {'type': 'float'},
         # embeddings
-        'embeddingsBatchSizeGPU': {'type': 'integer', 'min': 1, 'default': 32},
+        'embeddingsBatchSize': {'type': 'integer', 'min': 1, 'default': 32},
         'embeddingsModel': {'type': 'string', 'dependencies': {}},
         ## mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},

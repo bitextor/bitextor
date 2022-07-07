@@ -9,6 +9,21 @@ on:
             description: 'Tag which will be looked for'
             required: false
             default: 'edge'
+         test_id:
+            description: 'Run specific test ID'
+            required: false
+            default: 'all'
+            type: choice
+            options:
+               - 'all'
+               - '0x01'
+               - '0x02'
+               - '0x04'
+               - '0x08'
+               - '0x10'
+               - '0x20'
+               - '0x40'
+               - '0x80'
 
 env:
    WORK: ${{ github.workspace }}
@@ -18,7 +33,7 @@ jobs:
    tests:
       name: ${{ matrix.name }}
       runs-on: ubuntu-20.04
-      timeout-minutes: 600
+      timeout-minutes: 1440
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
          matrix:
@@ -50,6 +65,7 @@ jobs:
             sudo apt-get --assume-yes install moreutils
       -  name: Run
          id: tests_mt
+         if: ${{ github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id }}
          run: |
             tag=":edge"
             if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
@@ -73,13 +89,25 @@ jobs:
             mkdir "${WORK}/docker-volume"
             sudo docker pull "bitextor/bitextor${tag}"
 
+            # Monitor available storage
+            echo "      date     time $(free -m | grep total | sed -E 's/^    (.*)/\1/g')"
+            while true; do
+               echo "$(date '+%Y-%m-%d %H:%M:%S') $(LC_ALL="en_US.UTF-8" free -m | grep Mem: | sed 's/Mem://g')"
+               sleep 1
+            done &
+
             # Run tests with docker
             sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                       cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"' && \
-                      cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"''
+                      cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"'' &> ./tests_output
+
+            # Stop monitoring available disk
+            kill %1
+
+            cat ./tests_output
 
             # Has the execution failed?
             nolines=$(cat ${WORK}/docker-volume/fails.log | wc -l)
@@ -114,7 +142,6 @@ jobs:
                done < "${WORK}/docker-volume/fails.log"
             else
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
-               exit 1
             fi
       -  name: Print log subsample of tests which succeeded
          # https://github.com/actions/runner/issues/1173

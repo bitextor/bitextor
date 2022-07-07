@@ -410,6 +410,7 @@ tests-neural()
     (
         TEST_ID="70"
         TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && "embeddingsBatchSize=28" || echo "") # tests fail in CI due to OOM error
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
@@ -418,7 +419,7 @@ tests-neural()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
-                bicleanerFlavour="classic" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+                bicleanerFlavour="classic" deferred=False tmx=True ${EMBEDDINGS_BATCH_SIZE} ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
@@ -426,6 +427,11 @@ tests-neural()
     ) &
 
     wait-if-envvar-is-true
+
+    if [[ "$CI" == "true" ]]; then
+        # Neural tests are very time-consuming
+        return
+    fi
 
     ## NDA and hunalign (en-el)
     (
@@ -446,8 +452,6 @@ tests-neural()
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
     ) &
 
-    wait-if-envvar-is-true
-
     ## Neural pipeline and deferred (en-ru)
     (
         TEST_ID="72"
@@ -465,8 +469,6 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
     ) &
-
-    wait-if-envvar-is-true
 
     ## Neural pipeline and P2T and deferred and paragraph identification (en-fr)
     create-p2t-from-warc && \
@@ -488,8 +490,6 @@ tests-neural()
 
         annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
     ) &
-
-    wait-if-envvar-is-true
 }
 
 # Other options (id >= 100)

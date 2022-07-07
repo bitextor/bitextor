@@ -11,8 +11,8 @@ on:
             default: 'bitextor-nightly'
             type: choice
             options:
-            - bitextor
-            - bitextor-nightly
+               - 'bitextor'
+               - 'bitextor-nightly'
          conda_version:
             description: 'Version which will be looked for'
             required: false
@@ -25,6 +25,21 @@ on:
             type: boolean
             description: 'Create build instead of downloading last package available'
             default: true
+         test_id:
+            description: 'Run specific test ID'
+            required: false
+            default: 'all'
+            type: choice
+            options:
+               - 'all'
+               - '0x01'
+               - '0x02'
+               - '0x04'
+               - '0x08'
+               - '0x10'
+               - '0x20'
+               - '0x40'
+               - '0x80'
 
 env:
    WORK: ${{ github.workspace }}
@@ -34,7 +49,7 @@ jobs:
    tests:
       name: ${{ matrix.name }}
       runs-on: ubuntu-20.04
-      timeout-minutes: 600
+      timeout-minutes: 1440
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
          matrix:
@@ -71,12 +86,18 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
-      -  name: Create Bitextor conda build
+      -  uses: actions/checkout@v2
          if: ${{ github.event.inputs.create_build }}
+      -  name: Checkout submodules
+         if: ${{ github.event.inputs.create_build }}
+         run: git submodule update --init --force --recursive
+      -  name: Create Bitextor conda build
+         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
             ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
       -  name: Install Bitextor locally
+         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
@@ -87,7 +108,7 @@ jobs:
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
-         if: ${{ !github.event.inputs.create_build }}
+         if: ${{ !github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
          run: |
             v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
 
@@ -102,6 +123,7 @@ jobs:
             conda install -y "$v"
       -  name: Run tests
          id: run_tests
+         if: ${{ github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id }}
          run: |
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
@@ -133,7 +155,6 @@ jobs:
                done < "${WORK}/data/fails.log"
             else
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
-               exit 1
             fi
       -  name: Print log subsample of tests which succeeded
          # https://github.com/actions/runner/issues/1173
