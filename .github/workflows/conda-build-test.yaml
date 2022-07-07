@@ -94,9 +94,9 @@ jobs:
          run: |
             for report_file in $(ls ${WORK}/reports/*); do
                notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz)
+               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz 2> /dev/null || true)
 
-               if [[ -f "$sent_file" ]]; then
+               if [[ "$sent_file" != "" ]] && [[ -f "$sent_file" ]]; then
                   md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
                   nolines=$(zcat "$sent_file" | wc -l)
 
@@ -112,7 +112,7 @@ jobs:
                      awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
                   fi
                else
-                  echo "(warning) No sent file found for test $notest (sent.gz file: $sent_file)"
+                  >&2 echo "(warning) No sent file found for test $notest (sent.gz file: $sent_file)"
                fi
 
                echo ""
