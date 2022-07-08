@@ -17,6 +17,9 @@ import os
 import argparse
 import logging
 import gzip
+import stat
+import sys
+import contextlib
 
 from tldextract import extract
 
@@ -28,7 +31,7 @@ def main(args):
     output_prefix = args.output_prefix
     preprocess_tool = args.preprocess_tool
 
-    if not os.path.isfile(lett_file):
+    if lett_file != '-' and not os.path.isfile(lett_file) and not stat.S_ISFIFO(os.stat(lett_file).st_mode):
         raise Exception("LETT file is not a file")
     if not os.path.isdir(output_prefix):
         raise Exception("Output prefix is not a dir")
@@ -36,8 +39,9 @@ def main(args):
     output_files = {}
     number_output_files_open = {}
     preprocess_files = ("text", "url", "mime", "html")
+    lett_context = open_xz_or_gzip_or_plain(lett_file) if lett_file != '-' else contextlib.nullcontext(enter_result=sys.stdin)
 
-    with open_xz_or_gzip_or_plain(lett_file) as lett:
+    with lett_context as lett:
         for idx, line in enumerate(lett, 1):
             line = line.rstrip('\n').split('\t')
 
@@ -62,7 +66,7 @@ def main(args):
                     open_files = True
 
                 if open_files:
-                    prefix = f"{output_prefix}/{number_output_files_open[lang][td]}/{preprocess_tool}"
+                    prefix = f"{output_prefix}/{number_output_files_open[lang][td]}/{preprocess_tool}/{lang}"
 
                     if not os.path.isdir(prefix):
                         os.makedirs(prefix)
