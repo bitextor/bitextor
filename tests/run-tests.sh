@@ -410,7 +410,7 @@ tests-neural()
     (
         TEST_ID="70"
         TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
-        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && echo "embeddingsBatchSize=28" || echo "") # tests fail in CI due to OOM error
+        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && echo "embeddingsBatchSize=20" || echo "") # tests fail in CI due to OOM error
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
