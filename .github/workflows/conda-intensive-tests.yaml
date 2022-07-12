@@ -8,7 +8,7 @@ on:
          conda_package:
             description: 'Package which will be installed'
             required: false
-            default: 'bitextor-nightly'
+            default: 'bitextor'
             type: choice
             options:
                - 'bitextor'
@@ -43,7 +43,9 @@ on:
 
 env:
    WORK: ${{ github.workspace }}
-   CONDA_PACKAGE: bitextor
+   CONDA_PACKAGE: ${{ github.event.inputs.conda_package || 'bitextor' }}
+   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
+   TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
 
 jobs:
    tests:
@@ -87,17 +89,17 @@ jobs:
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v2
-         if: ${{ github.event.inputs.create_build }}
+         if: ${{ env.CREATE_BUILD }}
       -  name: Checkout submodules
-         if: ${{ github.event.inputs.create_build }}
+         if: ${{ env.CREATE_BUILD }}
          run: git submodule update --init --force --recursive
       -  name: Create Bitextor conda build
-         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
             ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
       -  name: Install Bitextor locally
-         if: ${{ github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
@@ -108,9 +110,9 @@ jobs:
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
-         if: ${{ !github.event.inputs.create_build && (github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id) }}
+         if: ${{ !env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
-            v="${{ github.event.inputs.conda_package || env.CONDA_PACKAGE }}"
+            v="${{ env.CONDA_PACKAGE }}"
 
             if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
                v="${v}=${{ github.event.inputs.conda_version }}"
@@ -123,7 +125,7 @@ jobs:
             conda install -y "$v"
       -  name: Run tests
          id: run_tests
-         if: ${{ github.event.inputs.test_id == 'all' || github.event.inputs.test_id == matrix.test_id }}
+         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
