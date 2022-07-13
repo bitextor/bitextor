@@ -66,6 +66,8 @@ mkdir -p "${BICLEANER_AI}"
 rm -f "$FAILS"
 touch "$FAILS"
 
+echo "CI: $CI"
+
 # Download necessary files
 # WARCs
 download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
@@ -410,7 +412,9 @@ tests-neural()
     (
         TEST_ID="70"
         TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
-        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && echo "embeddingsBatchSize=20" || echo "") # tests fail in CI due to OOM error
+        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && echo "embeddingsBatchSize=10" || echo "") # tests fail in CI due to OOM error
+
+        echo "EMBEDDINGS_BATCH_SIZE: $EMBEDDINGS_BATCH_SIZE"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
