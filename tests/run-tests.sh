@@ -346,6 +346,14 @@ tests-genbicleaner()
 # Generate dictionary and bicleaner model (id >= 50)
 tests-gendic-genbicleaner()
 {
+    if [[ "$CI" == "true" ]]; then
+        # Disable these tests since they are very time-consuming and exceed the time limits of the CI
+        for TEST_ID in $(echo "50"); do
+            annotate_and_echo_info "${TEST_ID}" "0" "test canceled to avoid exceed the time limits"
+        done
+        return
+    fi
+
     wait-if-envvar-is-true
 
     rm -f "${WORK}/permanent/new-new-en-fr.dic"
@@ -406,15 +414,20 @@ tests-mt-db()
 # Neural (id >= 70)
 tests-neural()
 {
+    if [[ "$CI" == "true" ]]; then
+        # Disable these tests since they are very time-consuming and exceed the time limits of the CI
+        for TEST_ID in $(echo "70 71 72 73"); do
+            annotate_and_echo_info "${TEST_ID}" "0" "test canceled to avoid exceed the time limits"
+        done
+        return
+    fi
+
     wait-if-envvar-is-true
 
     ## Neural pipeline (en-fr)
     (
         TEST_ID="70"
         TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
-        EMBEDDINGS_BATCH_SIZE=$([[ "$CI" == "true" ]] && echo "embeddingsBatchSize=10" || echo "") # tests fail in CI due to OOM error
-
-        echo "EMBEDDINGS_BATCH_SIZE: $EMBEDDINGS_BATCH_SIZE"
 
         mkdir -p "${TRANSIENT_DIR}" && \
         pushd "${TRANSIENT_DIR}" > /dev/null && \
@@ -423,7 +436,7 @@ tests-neural()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="NDA" sentenceAligner="vecalign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" \
-                bicleanerFlavour="classic" deferred=False tmx=True ${EMBEDDINGS_BATCH_SIZE} ${BITEXTOR_EXTRA_ARGS} \
+                bicleanerFlavour="classic" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
@@ -431,11 +444,6 @@ tests-neural()
     ) &
 
     wait-if-envvar-is-true
-
-    if [[ "$CI" == "true" ]]; then
-        # Neural tests are very time-consuming
-        return
-    fi
 
     ## NDA and hunalign (en-el)
     (
