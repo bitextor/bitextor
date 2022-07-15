@@ -98,7 +98,12 @@ jobs:
             done &
 
             # Run tests with docker
-            sudo docker run -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" --name bitextor --entrypoint /bin/bash --rm "bitextor/bitextor${tag}" \
+            sudo docker run \
+                  -e CI="$CI" \
+                  -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" \
+                  --name bitextor \
+                  --entrypoint /bin/bash \
+                  --rm "bitextor/bitextor${tag}" \
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \

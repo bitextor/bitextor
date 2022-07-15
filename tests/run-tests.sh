@@ -66,8 +66,6 @@ mkdir -p "${BICLEANER_AI}"
 rm -f "$FAILS"
 touch "$FAILS"
 
-echo "CI: $CI"
-
 # Download necessary files
 # WARCs
 download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
