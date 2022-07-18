@@ -91,11 +91,11 @@ jobs:
             sudo docker pull "bitextor/bitextor${tag}"
 
             # Monitor available storage
-            echo "      date     time $(free -m | grep total | sed -E 's/^    (.*)/\1/g')"
-            while true; do
-               echo "$(date '+%Y-%m-%d %H:%M:%S') $(LC_ALL="en_US.UTF-8" free -m | grep Mem: | sed 's/Mem://g')"
-               sleep 1
-            done &
+            #echo "      date     time $(free -m | grep total | sed -E 's/^    (.*)/\1/g')"
+            #while true; do
+            #   echo "$(date '+%Y-%m-%d %H:%M:%S') $(LC_ALL="en_US.UTF-8" free -m | grep Mem: | sed 's/Mem://g')"
+            #   sleep 1
+            #done &
 
             # Run tests with docker
             sudo docker run \

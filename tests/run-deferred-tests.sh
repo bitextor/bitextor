@@ -40,13 +40,23 @@ mkdir -p "${WORK}/permanent"
 mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/reports"
+mkdir -p "${WORK}/output_reference"
 rm -f "$FAILS"
 touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz
+download_file "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz &
+# Output reference
+download_file "${WORK}/output_reference/run-deferred-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-deferred-tests.tgz &
+
+wait
+
 WARC="${WORK}/data/warc/primeminister.warc.gz"
+
+# Process downloaded files if necessary
+tar -xzf "${WORK}/output_reference/run-deferred-tests.tgz" -C "${WORK}/output_reference/" && \
+rm -f "${WORK}/output_reference/run-deferred-tests.tgz"
 
 # MT (id >= 10)
 ## MT (en-el)
@@ -78,9 +88,9 @@ if [ ${BITEXTOR_STATUS} -eq 0 ]; then
 
   d=$(diff ${WORK}/${TEST_ID}.output_deferred <(zcat ${BITEXTOR_OUTPUT_DEDUPED}) | wc -l)
   exit_code=$([[ "$d" != "0" ]] && echo 1 || echo 0)
-  annotate_and_echo_info "${TEST_ID}" "${exit_code}" "$(cat ${WORK}/${TEST_ID}.output_deferred | wc -l)" "diff wc -l: ${d}"
+  annotate_and_echo_info_wrapper
 else
-  annotate_and_echo_info "${TEST_ID}" "${BITEXTOR_STATUS}" "0"
+  annotate_and_echo_info_wrapper
 fi
 
 # Results

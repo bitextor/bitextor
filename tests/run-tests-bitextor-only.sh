@@ -42,14 +42,18 @@ mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/parallel-corpus/Europarl"
 mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/reports"
+mkdir -p "${WORK}/output_reference"
 rm -f "$FAILS"
 touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
+download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
+# Output reference
+download_file "${WORK}/output_reference/run-tests-bitextor-only.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests-bitextor-only.tgz &
+
 # Parallel corpus
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then
     # ~2000000 lines
@@ -61,7 +65,11 @@ if [ ! -f "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" ]; then
     wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/DGT" && \
     unzip -qq "${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip" -d "${WORK}/data/parallel-corpus/DGT" &
 fi
+
 wait
+
+tar -xzf "${WORK}/output_reference/run-tests-bitextor-only.tgz" -C "${WORK}/output_reference/" && \
+rm -f "${WORK}/output_reference/run-tests-bitextor-only.tgz"
 
 # Preprocess
 ### Europarl parallel corpus clipped
@@ -106,7 +114,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 # Dictionary-based (id >= 20)
@@ -125,7 +133,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 wait
@@ -147,7 +155,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 # Other options (id >= 100)
@@ -167,7 +175,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 ## MT and docalign / segalign threshold and deduped (en-fr)
 (
@@ -185,7 +193,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 wait

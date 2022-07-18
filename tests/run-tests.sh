@@ -59,6 +59,7 @@ mkdir -p "${WORK}/data/parallel-corpus/Europarl"
 mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
+mkdir -p "${WORK}/output_reference"
 mkdir -p "${BICLEANER}"
 mkdir -p "${BICLEANER}/new"
 mkdir -p "${BICLEANER}/new-new"
@@ -68,15 +69,18 @@ touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
-download_warc "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz &
-download_warc "${WORK}/data/warc/kremlin.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz &
+download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada.warc.gz &
+download_file "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz &
+download_file "${WORK}/data/warc/kremlin.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/kremlin.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 download_dictionary "en-el" "${WORK}/permanent" &
+# Output reference
+download_file "${WORK}/output_reference/run-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests.tgz &
+
 # Parallel corpus
 europarl_corpus_file="${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip"
 dgt_corpus_file="${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip"
@@ -92,6 +96,7 @@ if [ ! -f "${dgt_corpus_file}" ]; then
     unzip -qq "${dgt_corpus_file}" -d "${WORK}/data/parallel-corpus/DGT" &
     rm -f "${dgt_corpus_file}"
 fi
+
 wait
 
 # Preprocess
@@ -127,6 +132,9 @@ if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
 fi
 
 wait
+
+tar -xzf "${WORK}/output_reference/run-tests.tgz" -C "${WORK}/output_reference/" && \
+rm -f "${WORK}/output_reference/run-tests.tgz"
 
 wait-if-envvar-is-true()
 {
@@ -187,7 +195,7 @@ tests-mt()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
     ## MT (en-el)
     (
@@ -205,7 +213,7 @@ tests-mt()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
     ## MT (en-ru)
     (
@@ -223,7 +231,7 @@ tests-mt()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
     ## MT and P2T where prevertical is converted to WARC (en-fr)
     create-p2t-from-warc && \
@@ -243,7 +251,7 @@ tests-mt()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 }
 
@@ -267,7 +275,7 @@ tests-db()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 }
 
@@ -297,7 +305,7 @@ tests-gendic()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 
     wait-if-envvar-is-true && \
@@ -331,7 +339,7 @@ tests-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)" && \
+        annotate_and_echo_info_wrapper
             dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
@@ -347,7 +355,7 @@ tests-gendic-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "50"); do
-            annotate_and_echo_info "${TEST_ID}" "0" "test canceled to avoid exceed the time limits"
+            annotate_and_echo_info_wrapper
         done
         return
     fi
@@ -376,7 +384,7 @@ tests-gendic-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 
     wait-if-envvar-is-true && \
@@ -405,7 +413,7 @@ tests-mt-db()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 }
 
@@ -415,7 +423,7 @@ tests-neural()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "70 71 72 73"); do
-            annotate_and_echo_info "${TEST_ID}" "0" "test canceled to avoid exceed the time limits"
+            annotate_and_echo_info_wrapper
         done
         return
     fi
@@ -438,7 +446,7 @@ tests-neural()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 
     wait-if-envvar-is-true
@@ -459,7 +467,7 @@ tests-neural()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-el.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 
     ## Neural pipeline and deferred (en-ru)
@@ -477,7 +485,7 @@ tests-neural()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 
     ## Neural pipeline and P2T and deferred and paragraph identification (en-fr)
@@ -498,7 +506,7 @@ tests-neural()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 }
 
@@ -521,7 +529,7 @@ tests-others()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-ru.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
     ## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
     (
@@ -542,7 +550,7 @@ tests-others()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
 
         ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
         TEST_ID="102"
@@ -561,7 +569,7 @@ tests-others()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+        annotate_and_echo_info_wrapper
     ) &
 }
 

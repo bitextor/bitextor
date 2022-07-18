@@ -44,6 +44,7 @@ mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
+mkdir -p "${WORK}/output_reference"
 mkdir -p "${BICLEANER}"
 mkdir -p "${BICLEANER_AI}"
 rm -f "$FAILS"
@@ -51,14 +52,20 @@ touch "$FAILS"
 
 # Download necessary files
 # WARCs
-download_warc "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
+download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
+# Output reference
+download_file "${WORK}/output_reference/run-tests-min.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests-min.tgz &
 
 wait
+
+# Process downloaded files if necessary
+tar -xzf "${WORK}/output_reference/run-tests-min.tgz" -C "${WORK}/output_reference/" && \
+rm -f "${WORK}/output_reference/run-tests-min.tgz"
 
 # MT (id >= 10)
 ## MT (en-fr)
@@ -78,7 +85,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 ## MT and P2T where prevertical is converted to WARC (en-fr)
 (
@@ -114,7 +121,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 # Dictionary-based (id >= 20)
@@ -134,7 +141,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 wait
@@ -157,7 +164,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 # Other options (id >= 100)
@@ -177,7 +184,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 ## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
 (
@@ -198,7 +205,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 
     ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
     TEST_ID="102"
@@ -217,7 +224,7 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report" && \
     popd > /dev/null
 
-    annotate_and_echo_info "${TEST_ID}" "$?" "$(get_nolines ${WORK}/permanent/${TEST_ID}/en-fr.sent.gz)"
+    annotate_and_echo_info_wrapper
 ) &
 
 wait
