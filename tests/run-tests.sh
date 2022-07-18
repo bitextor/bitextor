@@ -316,6 +316,14 @@ tests-gendic()
 # Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
 tests-genbicleaner()
 {
+    if [[ "$CI" == "true" ]]; then
+        # Disable these tests since they are very time-consuming and exceed the time limits of the CI
+        for TEST_ID in $(echo "40"); do
+            annotate_and_echo_info_wrapper
+        done
+        return
+    fi
+
     wait-if-envvar-is-true
 
     rm -f "${BICLEANER}/new/new-en-fr.yaml"

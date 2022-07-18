@@ -25,8 +25,6 @@ jobs:
          run: |
             sudo apt-get --assume-yes update
             sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
-            # sponge utility (just for CI)
-            sudo apt-get --assume-yes install moreutils
       -  name: Set up Python3
          uses: actions/setup-python@v2
          with:
@@ -106,36 +104,6 @@ jobs:
                >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
                exit 1
             fi
-      -  name: Print log subsample of tests which succeeded
-         # https://github.com/actions/runner/issues/1173
-         #if: ${{ steps.tests.conclusion == 'success' }}
-         if: ${{ always() }}
-         run: |
-            for report_file in $(ls ${WORK}/reports/*); do
-               notest=$(basename "$report_file" | sed -E 's/([0-9]+).*/\1/')
-               sent_file=$(ls ${WORK}/permanent/${notest}/*.sent.gz 2> /dev/null || true)
-
-               if [[ "$sent_file" != "" ]] && [[ -f "$sent_file" ]]; then
-                  md5=$(zcat "$sent_file" | md5sum | awk '{print $1}')
-                  nolines=$(zcat "$sent_file" | wc -l)
-
-                  str="# Test $notest (md5: $md5) #"
-                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-                  echo "$str"
-                  eval $(echo printf '"#%0.s"' {1..${#str}}) && printf "\n"
-
-                  if [[ "$nolines" -gt "15" ]]; then
-                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' \
-                        <(zcat "$sent_file" | sponge | head -6) <(zcat "$sent_file" | tail -5)
-                  else
-                     awk -v prefix="(sent.gz test $notest)" '{print prefix" "$0}' <(zcat "$sent_file")
-                  fi
-               else
-                  >&2 echo "(warning) No sent file found for test $notest (sent.gz file: $sent_file)"
-               fi
-
-               echo ""
-            done
       -  name: Upload sent.gz files (artifacts)
          uses: actions/upload-artifact@v3
          with:
