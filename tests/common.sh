@@ -94,9 +94,10 @@ annotate_and_echo_info()
 annotate_and_echo_info_wrapper()
 {
   status="$?"
-  sent_file="${WORK}/permanent/${TEST_ID}/en-fr.sent.gz"
+  sent_file="$(ls ${WORK}/permanent/${TEST_ID}/*.sent.gz)"
+  reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.sent.gz)"
   sent_file_hash="$(get_hash ${sent_file})"
-  reference_hash="$(get_hash ${WORK}/output_reference/${TEST_ID}/en-fr.sent.gz)"
+  reference_hash="$(get_hash ${reference_file})"
   compared_hashes="$(compare_hashes ${sent_file_hash} ${reference_hash})"
   desc="test status: ${status} | ${compared_hashes}"
   status="$([[ "${sent_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
