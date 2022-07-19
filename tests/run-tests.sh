@@ -319,7 +319,7 @@ tests-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "40"); do
-            annotate_and_echo_info_wrapper
+            annotate_and_echo_info_wrapper "true"
         done
         return
     fi
@@ -363,7 +363,7 @@ tests-gendic-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "50"); do
-            annotate_and_echo_info_wrapper
+            annotate_and_echo_info_wrapper "true"
         done
         return
     fi
@@ -431,7 +431,7 @@ tests-neural()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "70 71 72 73"); do
-            annotate_and_echo_info_wrapper
+            annotate_and_echo_info_wrapper "true"
         done
         return
     fi

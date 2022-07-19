@@ -94,6 +94,12 @@ annotate_and_echo_info()
 annotate_and_echo_info_wrapper()
 {
   status="$?"
+  skip="$1"
+
+  if [[ "$skip" == "true" ]]; then
+    annotate_and_echo_info "${TEST_ID}" "${status}" "0" "skipped test"
+  fi
+
   sent_file="$(ls ${WORK}/permanent/${TEST_ID}/*.sent.gz)"
   reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.sent.gz)"
   sent_file_hash="$(get_hash ${sent_file})"
