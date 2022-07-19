@@ -47,8 +47,8 @@ shift $((OPTIND-1))
 
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS} --reason"
 BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
-BICLEANER="${WORK}/bicleaner-model"
-BICLEANER_AI="${WORK}/bicleaner-ai-model"
+BICLEANER="${WORK}/data/bicleaner-models"
+BICLEANER_AI="${WORK}/data/bicleaner-ai-models"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
@@ -61,8 +61,6 @@ mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
 mkdir -p "${WORK}/output_reference"
 mkdir -p "${BICLEANER}"
-mkdir -p "${BICLEANER}/new"
-mkdir -p "${BICLEANER}/new-new"
 mkdir -p "${BICLEANER_AI}"
 rm -f "$FAILS"
 touch "$FAILS"
@@ -284,12 +282,12 @@ tests-gendic()
 {
     wait-if-envvar-is-true
 
-    dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
-    rm -f "${WORK}/permanent/new-en-fr.dic"
-
     TEST_ID="30"
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
 
+    dic_md5sum_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+    rm -f "${DIC_PATH}"
     mkdir -p "${TRANSIENT_DIR}"
 
     (
@@ -298,7 +296,7 @@ tests-gendic()
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-                documentAligner="DIC" dic="${WORK}/permanent/new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
+                documentAligner="DIC" dic="${DIC_PATH}" generateDic=True sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
                 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
@@ -326,11 +324,12 @@ tests-genbicleaner()
 
     wait-if-envvar-is-true
 
-    rm -f "${BICLEANER}/new/new-en-fr.yaml"
-
     TEST_ID="40"
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
+    rm -f "${BICLEANER_MODEL_PATH}"
+    mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
     mkdir -p "${TRANSIENT_DIR}"
 
     (
@@ -341,7 +340,7 @@ tests-genbicleaner()
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" generateDic=False sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                bicleaner=True bicleanerModel="${BICLEANER}/new/new-en-fr.yaml" bicleanerGenerateModel=True \
+                bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
@@ -369,13 +368,15 @@ tests-gendic-genbicleaner()
     fi
 
     wait-if-envvar-is-true
-
-    rm -f "${WORK}/permanent/new-new-en-fr.dic"
-    rm -f "${BICLEANER}/new-new/new-new-en-fr.yaml"
     
     TEST_ID="50"
     TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
+    BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
+    rm -f "${DIC_PATH}"
+    rm -f "${BICLEANER_MODEL_PATH}"
+    mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
     mkdir -p "${TRANSIENT_DIR}"
 
     (
@@ -384,9 +385,9 @@ tests-gendic-genbicleaner()
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
-                documentAligner="DIC" dic="${WORK}/permanent/new-new-en-fr.dic" generateDic=True sentenceAligner="hunalign" \
+                documentAligner="DIC" dic="${DIC_PATH}" generateDic=True sentenceAligner="hunalign" \
                 initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
-                bicleaner=True bicleanerModel="${BICLEANER}/new-new/new-new-en-fr.yaml" bicleanerGenerateModel=True \
+                bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \

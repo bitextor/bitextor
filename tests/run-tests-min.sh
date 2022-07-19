@@ -34,8 +34,8 @@ shift $((OPTIND-1))
 
 BITEXTOR="bitextor-full ${FORCE} --notemp -j ${THREADS} -c ${THREADS} --reason"
 BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
-BICLEANER="${WORK}/bicleaner-model"
-BICLEANER_AI="${WORK}/bicleaner-ai-model"
+BICLEANER="${WORK}/data/bicleaner-models"
+BICLEANER_AI="${WORK}/data/bicleaner-ai-models"
 FAILS="${WORK}/data/fails.log"
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
