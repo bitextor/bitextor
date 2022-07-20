@@ -347,7 +347,7 @@ tests-genbicleaner()
         popd > /dev/null
 
         annotate_and_echo_info_wrapper
-            dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+        dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
 

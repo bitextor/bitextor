@@ -109,3 +109,8 @@ jobs:
          with:
             name: all-sent.gz
             path: ${{ env.WORK }}/permanent/**/*.sent.gz
+      -  name: Upload report files (artifacts)
+         uses: actions/upload-artifact@v3
+         with:
+            name: reports
+            path: ${{ env.WORK }}/reports/*.report

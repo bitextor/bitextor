@@ -1421,7 +1421,8 @@ rule bicleaner_train_model:
         if [[ "{BICLEANER_FLAVOUR}" == "classic" ]]; then
             {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
                 --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
-                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest
+                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
+                --seed 71213
         elif [[ "{BICLEANER_FLAVOUR}" == "ai" ]]; then
             # Target lang frequency
             echo "Frequency file (lang={LANG2}): {params.tfreq}"
@@ -1451,7 +1452,7 @@ rule bicleaner_train_model:
             # Train
             {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
                 -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
-                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} && \
+                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
                     mv {params.ai_metadata} {output.model}
         fi
         """

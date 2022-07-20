@@ -53,7 +53,6 @@ download_bicleaner_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
-        rm -f "${output_file}"
     fi
 }
 
@@ -67,7 +66,6 @@ download_bicleaner_ai_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
-        rm -f "${output_file}"
     fi
 }
 
@@ -78,9 +76,10 @@ annotate_and_echo_info()
   status=$2
   nolines=$3
   desc=$([[ "$4" != "" ]] && echo " / $4" || echo "")
+  force_ok=$5
   error_file="$FAILS"
 
-  if [[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]; then
+  if [[ "$force_ok" == "true" ]] || ([[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]); then
     echo "Ok ${test_id} (nolines / desc: ${nolines}${desc})"
   elif [[ "$status" != "0" ]]; then
     echo "Failed ${test_id} (status / desc: ${status}${desc})"
@@ -97,7 +96,7 @@ annotate_and_echo_info_wrapper()
   skip="$1"
 
   if [[ "$skip" == "true" ]]; then
-    annotate_and_echo_info "${TEST_ID}" "${status}" "0" "skipped test"
+    annotate_and_echo_info "${TEST_ID}" "${status}" "0" "skipped test" "true"
     return
   fi
 
