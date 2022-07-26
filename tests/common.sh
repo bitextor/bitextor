@@ -2,33 +2,37 @@
 
 get_nolines()
 {
-  zcat $1 2> /dev/null | wc -l
+    zcat $1 2> /dev/null | wc -l
 }
 
 get_hash()
 {
-  if [ ! -f "$1" ]; then
-    echo "file_not_found"
-  fi
+    if [ ! -f "$1" ]; then
+        echo "file_not_found"
+    else
+        local CAT=$([[ "$1" == *.gz ]] && echo "zcat" || echo "cat")
 
-  zcat "$1" | md5sum | awk '{print $1}'
+        $CAT "$1" | md5sum | awk '{print $1}'
+    fi
 }
 
 compare_hashes()
 {
-  sent_file_hash="$1"
-  reference_hash="$2"
-  if [ "$sent_file_hash" != "$reference_hash" ]; then
-    echo "output hash != reference hash: ${sent_file_hash} != ${reference_hash}"
-  else
-    echo "output and reference hash values are the same: ${sent_file_hash}"
-  fi
+    local sent_file_hash="$1"
+    local reference_hash="$2"
+
+    if [ "$sent_file_hash" != "$reference_hash" ]; then
+        echo "output hash != reference hash: ${sent_file_hash} != ${reference_hash}"
+    else
+        echo "output and reference hash values are the same: ${sent_file_hash}"
+    fi
 }
 
 download_file()
 {
-    path=$1
-    remote=$2
+    local path=$1
+    local remote=$2
+
     if [ ! -f "${path}" ]; then
         wget -q "${remote}" -O "${path}"
     fi
@@ -36,9 +40,10 @@ download_file()
 
 download_dictionary()
 {
-    base="https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0"
-    langs=$1
-    output=$2
+    local base="https://github.com/bitextor/bitextor-data/releases/download/bitextor-v1.0"
+    local langs=$1
+    local output=$2
+
     if [ ! -f "${output}/${langs}.dic" ]; then
         wget -q "${base}/${langs}.dic" -P "${output}"
     fi
@@ -46,10 +51,11 @@ download_dictionary()
 
 download_bicleaner_model()
 {
-    base="https://github.com/bitextor/bicleaner-data/releases/latest/download"
-    langs=$1
-    output=$2
-    output_file="${output}/${langs}.tar.gz"
+    local base="https://github.com/bitextor/bicleaner-data/releases/latest/download"
+    local langs=$1
+    local output=$2
+    local output_file="${output}/${langs}.tar.gz"
+
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
@@ -58,11 +64,12 @@ download_bicleaner_model()
 
 download_bicleaner_ai_model()
 {
-    base="https://github.com/bitextor/bicleaner-ai-data/releases/latest/download"
-    langs=$1
-    output=$2
-    flavour=$([[ "$3" == "" ]] && echo "full" || echo "$3")
-    output_file="${output}/${flavour}-${langs}.tgz"
+    local base="https://github.com/bitextor/bicleaner-ai-data/releases/latest/download"
+    local langs=$1
+    local output=$2
+    local flavour=$([[ "$3" == "" ]] && echo "full" || echo "$3")
+    local output_file="${output}/${flavour}-${langs}.tgz"
+
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
@@ -72,12 +79,12 @@ download_bicleaner_ai_model()
 # Run tests
 annotate_and_echo_info()
 {
-  test_id=$1
-  status=$2
-  nolines=$3
-  desc=$([[ "$4" != "" ]] && echo " / $4" || echo "")
-  force_ok=$5
-  error_file="$FAILS"
+  local test_id=$1
+  local status=$2
+  local nolines=$3
+  local desc=$([[ "$4" != "" ]] && echo " / $4" || echo "")
+  local force_ok=$5
+  local error_file="$FAILS"
 
   if [[ "$force_ok" == "true" ]] || ([[ "$status" == "0" ]] && [[ "$nolines" != "0" ]]); then
     echo "Ok ${test_id} (nolines / desc: ${nolines}${desc})"
@@ -92,21 +99,43 @@ annotate_and_echo_info()
 
 annotate_and_echo_info_wrapper()
 {
-  status="$?"
-  skip="$1"
+    local status="$?"
+    local skip="$1"
 
-  if [[ "$skip" == "true" ]]; then
-    annotate_and_echo_info "${TEST_ID}" "${status}" "0" "skipped test" "true"
-    return
-  fi
+    if [[ "$skip" == "true" ]]; then
+        annotate_and_echo_info "${TEST_ID}" "${status}" "0" "skipped test" "true"
+        return
+    fi
 
-  sent_file="$(ls ${WORK}/permanent/${TEST_ID}/*.sent.gz)"
-  reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.sent.gz)"
-  sent_file_hash="$(get_hash ${sent_file})"
-  reference_hash="$(get_hash ${reference_file})"
-  compared_hashes="$(compare_hashes ${sent_file_hash} ${reference_hash})"
-  desc="test status: ${status} | ${compared_hashes}"
-  status="$([[ "${sent_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
+    local sent_file="$(ls ${WORK}/permanent/${TEST_ID}/*.sent.gz 2> /dev/null)"
+    local reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.sent.gz 2> /dev/null)"
+    local sent_file_hash="$(get_hash ${sent_file})"
+    local reference_hash="$(get_hash ${reference_file})"
+    local compared_hashes="$(compare_hashes ${sent_file_hash} ${reference_hash})"
+    local desc="test status: ${status} | ${compared_hashes}"
+    local status="$([[ "${sent_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
 
-  annotate_and_echo_info "${TEST_ID}" "${status}" "$(get_nolines ${sent_file})" "${desc}"
+    annotate_and_echo_info "${TEST_ID}" "${status}" "$(get_nolines ${sent_file})" "${desc}"
+}
+
+create_integrity_report()
+{
+    local WORK="$1"
+    local INTEGRITY_REPORT="$2"
+    local DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+    if [[ -f "$INTEGRITY_REPORT" ]]; then
+        local random=$(echo "$(echo $RANDOM)+$(date)" | md5sum | head -c 20)
+        local new_name=$(echo "${INTEGRITY_REPORT}.${random}.report")
+
+        >&2 echo "Integrity file already exists: moving '${INTEGRITY_REPORT}' to '${new_name}'"
+
+        mv "$INTEGRITY_REPORT" "$new_name"
+    fi
+
+    for f in $(echo "${WORK}/permanent ${WORK}/transient ${WORK}/data"); do
+        find "$f" -type f \
+            | grep -E -v "/[.]snakemake($|/)" \
+            | xargs -I{} bash -c 'source "'${DIR}'/common.sh"; h=$(get_hash "{}"); echo "{}: ${h}"' >> "${INTEGRITY_REPORT}"
+    done
 }

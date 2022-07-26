@@ -1772,46 +1772,33 @@ rule deduped_tmx:
         """
 
 
-roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.roamed.tmx.gz"
-roam_tmx_input = rules.tmx.output
-roam_txt_input = rules.sents.output.corpus
-
-if DEDUPED:
-    roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.deduped.roamed.tmx.gz"
-    roam_tmx_input = rules.deduped_tmx.output.tmx
-    roam_txt_input = rules.deduped_tmx.output.txt
-
-
+# TODO apply ROAMing to both non-deduped and deduped (documentation: update output files)
 rule roam_tmx:
     """
     Use biroamer to created ROAMED version of the corpus
     :input.tmx: deduped.tmx corpus if dedup is active, not-deduped.tmx corpus if only tmx=true and dedup=false
-    :input.txt: deduped.txt corpus if dedup is active, sents corpus if tmx=true and dedup=false
     :output: deduped.roamed.tmx corpus if dedup is active, not-deduped.roamed.tmx corpus if tmx=true and dedup=false
     """
     input:
-        tmx=roam_tmx_input,
-        txt=roam_txt_input,
+        rules.deduped_tmx.output.tmx if DEDUPED else rules.tmx.output,
     output:
-        roam_tmx_output,
+        f"{PERMANENT}/{LANG1}-{LANG2}.{'deduped' if DEDUPED else 'not-deduped'}.roamed.tmx.gz",
     params:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), '-t "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), '-T "{}"'),
+        mix_files=temp(f"{TMPDIR}/biroamer_mix_files.txt"),
     shell:
         """
-        mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
-        cat {BIROAMER_MIX_FILES} > $mix_files
-        nolines=$(cat $mix_files | wc -l)
-        mix_files=$([[ "$nolines" != "0" ]] && echo "-m $mix_files" || echo "")
-        nolines_txt=$(zcat {input.txt} | wc -l)
-        total_nolines=$(echo $nolines + $nolines_txt | bc)
+        mix_files=""
+        nolines=$(cat {BIROAMER_MIX_FILES} | wc -l)
 
-        if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then
-            >&2 echo "WARNING: biroamer suggests, at least, 100k lines in order to have a good alignment (current nolines: $total_nolines)."\
-                     "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
+        if [[ "$nolines" != "0" ]]; then
+            cat {BIROAMER_MIX_FILES} > {params.mix_files}
+
+            mix_files="-m {params.mix_files}"
         fi
 
-        zcat {input.tmx} \
+        zcat {input} \
             | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}

@@ -198,6 +198,9 @@ wait
 
 wait
 
+# Get hashes from all files
+create_integrity_report "$WORK" "${WORK}/reports/hash_values.report"
+
 # Results
 failed=$(cat "$FAILS" | wc -l)
 

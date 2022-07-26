@@ -1,19 +1,19 @@
 #!/bin/bash
 
 DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-source $DIR/common.sh
+source "$DIR/common.sh"
 
 exit_program()
 {
-  >&2 echo "$1 [-w workdir] [-f force_command] [-j threads]"
-  >&2 echo ""
-  >&2 echo "Runs several tests to check Bitextor is working"
-  >&2 echo ""
-  >&2 echo "OPTIONS:"
-  >&2 echo "  -w <workdir>            Working directory. By default: \$HOME"
-  >&2 echo "  -f <force_command>      Options which will be provided to snakemake"
-  >&2 echo "  -j <threads>            Threads to use when running the tests"
-  exit 1
+    >&2 echo "$1 [-w workdir] [-f force_command] [-j threads]"
+    >&2 echo ""
+    >&2 echo "Runs several tests to check Bitextor is working"
+    >&2 echo ""
+    >&2 echo "OPTIONS:"
+    >&2 echo "  -w <workdir>            Working directory. By default: \$HOME"
+    >&2 echo "  -f <force_command>      Options which will be provided to snakemake"
+    >&2 echo "  -j <threads>            Threads to use when running the tests"
+    exit 1
 }
 
 WORK="${HOME}"
@@ -228,6 +228,9 @@ wait
 ) &
 
 wait
+
+# Get hashes from all files
+create_integrity_report "$WORK" "${WORK}/reports/hash_values.report"
 
 # Results
 failed=$(cat "$FAILS" | wc -l)

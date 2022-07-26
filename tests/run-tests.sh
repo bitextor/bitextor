@@ -622,6 +622,9 @@ elif [ $DRYRUN = false ] && [[ "$(( ($flags & (2**3)) >> 3 ))" == "1" ]]; then
     echo "Ok 40.1"
 fi
 
+# Get hashes from all files
+create_integrity_report "$WORK" "${WORK}/reports/hash_values.report"
+
 # Results
 failed=$(cat "$FAILS" | wc -l)
 
