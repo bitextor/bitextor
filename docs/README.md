@@ -63,11 +63,10 @@ Bitextor generates the final parallel corpora in multiple formats. These files w
 * `{lang1}-{lang2}.raw.gz` - default (always generated)
 * `{lang1}-{lang2}.sent.gz` - default
 * `{lang1}-{lang2}.not-deduped.tmx.gz` - generated if `tmx: true`
-* `{lang1}-{lang2}.deduped.tmx.gz` - generated if `dedup: true`
-* `{lang1}-{lang2}.deduped.txt.gz` - generated if `dedup: true`
-* `{lang1}-{lang2}.deduped.roamed.tmx.gz` - generated if `biroamer: true` and `dedup: true`
-* `{lang1}-{lang2}.not-deduped.roamed.tmx.gz` - generated `biroamer: true`, `tmx: true`
-and `dedup: false`
+* `{lang1}-{lang2}.deduped.tmx.gz` - generated if `deduped: true`
+* `{lang1}-{lang2}.deduped.txt.gz` - generated if `deduped: true`
+* `{lang1}-{lang2}.not-deduped.roamed.tmx.gz` - generated if `biroamer: true` and `tmx: true`
+* `{lang1}-{lang2}.deduped.roamed.tmx.gz` - generated if `biroamer: true` and `deduped: true`
 
 See [detailed description](OUTPUT.md) of the output files.
 

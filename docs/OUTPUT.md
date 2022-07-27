@@ -45,7 +45,7 @@ Bitextor may also generate a [TMX](https://en.wikipedia.org/wiki/Translation_Mem
 
 ## Deduplication
 
-Bitextor may also perform the deduplication of the generated corpus (enabled via `dedup: true`), and generate the following files that will contain only unique sentence pairs:
+Bitextor may also perform the deduplication of the generated corpus (enabled via `deduped: true`), and generate the following files that will contain only unique sentence pairs:
 
 * `{lang1}-{lang2}.deduped.tmx.gz`: **deduplicated TMX** corpus, which will contain a list of URLs for the sentence pairs that were found in multiple websites.
 
@@ -55,7 +55,7 @@ Bitextor may also perform the deduplication of the generated corpus (enabled via
 
 ## Biroamer
 
-If Biroamer is enabled `biroamer: true`, Bitextor will also produce a ROAMed version of the corpus, according to Biroamer [config](CONFIG.md#post-processing). Biroamer will produce either of these files, depending on `tmx` and `dedup` parameters:
+If Biroamer is enabled `biroamer: true`, Bitextor will also produce a ROAMed version of the corpus, according to Biroamer [config](CONFIG.md#post-processing). Biroamer will produce either of these files, depending on `tmx` and `deduped` parameters:
 
-* `{lang1}-{lang2}.deduped.roamed.tmx.gz`: **ROAMed** version of the **deduplicated** corpus in **TMX** format, that will be generated if `dedup` is true
-* `{lang1}-{lang2}.not-deduped.roamed.tmx.gz`: **ROAMed** version of the corpus without deduplication in **TMX** format, that will be generated if `tmx` is enabled, but not `dedup`
+* `{lang1}-{lang2}.not-deduped.roamed.tmx.gz`: **ROAMed** version of the corpus deduplicated in **TMX** format, that will be generated if `tmx: true`
+* `{lang1}-{lang2}.deduped.roamed.tmx.gz`: **ROAMed** version of the **deduplicated** corpus in **TMX** format, that will be generated if `deduped: true`

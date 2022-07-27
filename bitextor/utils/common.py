@@ -219,7 +219,7 @@ def get_snakemake_execution_mark(tmp_path):
 def is_first_snakemake_execution(tmp_path, create_mark=False):
     mark_path = get_snakemake_execution_mark(tmp_path)
 
-    if os.path.isfile(mark_path):
+    if path_exists(mark_path):
         return False
 
     # Create mark?
@@ -228,3 +228,12 @@ def is_first_snakemake_execution(tmp_path, create_mark=False):
             pass
 
     return True
+
+
+def path_exists(path, expand=True, f=os.path.isfile):
+    _path = path
+
+    if expand:
+        _path = os.path.expanduser(path)
+
+    return f(_path)

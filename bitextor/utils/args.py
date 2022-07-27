@@ -19,6 +19,8 @@ import pprint
 
 from cerberus import Validator
 
+from utils.common import path_exists
+
 def generic_error(msg):
     def f(field, value, error):
         error(field, msg)
@@ -28,13 +30,13 @@ def generic_error(msg):
 def isfile(field, value, error):
     if isinstance(value, list):
         for element in value:
-            if not os.path.isfile(os.path.expanduser(element)):
+            if not path_exists(element):
                 error(field, f'{element} does not exist')
     elif isinstance(value, dict):
         for element in value:
-            if not os.path.isfile(os.path.expanduser(value[element])):
+            if not path_exists(value[element]):
                 error(field, f'{value[element]} does not exist')
-    elif not os.path.isfile(os.path.expanduser(value)):
+    elif not path_exists(value):
         error(field, f'{value} does not exist')
 
 
@@ -59,6 +61,14 @@ def istrue(field, value, error):
     if value != True:
         error(field, f'{value} is not True')
 
+def check_generate_dic(schema, provided_in_config, config, dic_required=True):
+    if dic_required:
+        schema['dic']['required'] = True
+
+    if provided_in_config['dic'] and not path_exists(config['dic']):
+        schema['generateDic']['required'] = True
+        schema['generateDic']['check_with'] = istrue
+
 def validate_args(config):
     schema = {
         # output folders
@@ -77,21 +87,24 @@ def validate_args(config):
             'allowed': [
                 'crawl', 'preprocess', 'shard', 'split', 'translate', 'tokenise',
                 'tokenise_src', 'tokenise_trg', 'docalign', 'segalign', 'filter'
-            ]
+            ],
+            'meta': 'Stop the workflow at some specific point instead of waiting to finish'
         },
         'parallelWorkers': {
             'type': 'dict',
             'allowed': [
                 'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents', 'mgiza'
             ],
-            'valuesrules': {'type': 'integer', 'min': 1}
+            'valuesrules': {'type': 'integer', 'min': 1},
+            'meta': 'Parallelization configuration of the tools used in the pipeline (e.g. threads)',
         },
         'parallelJobs': {
             'type': 'dict',
             'allowed': [
                 'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
             ],
-            'valuesrules': {'type': 'integer', 'min': 1}
+            'valuesrules': {'type': 'integer', 'min': 1},
+            'meta': 'Snakemake parallel jobs running at once',
         },
         # verbose
         'verbose': {'type': 'boolean', 'default': False},
@@ -110,22 +123,22 @@ def validate_args(config):
             'check_with': isduration
         },
         ## wget or linguacrawl:
-        'crawlerUserAgent': {'type': 'string', 'dependencies': {'cralwer': ['wget', 'linguacrawl']}},
+        'crawlerUserAgent': {'type': 'string', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
         'crawlWait': {'type': 'integer', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
         'crawlFileTypes': {'type': 'list', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
         ## only linguacrawl:
-        'crawlTLD': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': ['linguacrawl']}},
-        'crawlSizeLimit': {'type': 'integer', 'dependencies': {'crawler': ['linguacrawl']}},
+        'crawlTLD': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
+        'crawlSizeLimit': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
         'crawlCat': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
         'crawlCatMaxSize': {'type': 'integer', 'dependencies': {'crawlCat': True}},
         'crawlMaxFolderTreeDepth': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
         'crawlScoutSteps': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
         'crawlBlackListURL': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
         'crawlPrefixFilter': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlerNumThreads': {'type': 'integer', 'dependencies': {'crawler': ['linguacrawl']}},
-        'crawlerConnectionTimeout': {'type': 'integer', 'dependencies': {'crawler': ['linguacrawl']}},
-        'dumpCurrentCrawl': {'type': 'boolean', 'dependencies': {'crawler': ['linguacrawl']}},
-        'resumePreviousCrawl': {'type': 'boolean', 'dependencies': {'crawler': ['linguacrawl']}},
+        'crawlerNumThreads': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
+        'crawlerConnectionTimeout': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
+        'dumpCurrentCrawl': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
+        'resumePreviousCrawl': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
         ## only heritrix
         'heritrixPath': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
         'heritrixUrl': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
@@ -137,7 +150,7 @@ def validate_args(config):
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},
         'paragraphIdentification': {'type': 'boolean', 'default': False},
         ## specific to warc2text:
-        'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': ['warc2text']}},
+        'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
         ## specific to warc2preprocess:
         'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
@@ -210,12 +223,12 @@ def validate_args(config):
         'bicleanerMonoCorpusPrefix': {'type': 'list'},
         'bicleanerParallelCorpusDevPrefix': {'type': 'list'},
         ## elrc metrics
-        'elrc': {'type': 'boolean'},
+        'elrc': {'type': 'boolean', 'default': False},
         ## tmx
-        'tmx': {'type': 'boolean'},
-        'deduped': {'type': 'boolean'},
+        'tmx': {'type': 'boolean', 'default': False},
+        'deduped': {'type': 'boolean', 'default': False},
         ## roam
-        'biroamer': {'type': 'boolean', 'default': False},
+        'biroamer': {'type': 'boolean', 'dependencies': {'tmx': True}},
         'biroamerOmitRandomSentences': {'type': 'boolean', 'dependencies': {'biroamer': True}},
         'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
         'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}},
@@ -233,14 +246,11 @@ def validate_args(config):
 
     both_langs_specified = provided_in_config["lang1"] and provided_in_config["lang2"]
 
-    if provided_in_config['crawler']:
-        if config['crawler'] == 'heritrix':
-            schema['heritrixPath']['required'] = True
+    if provided_in_config['crawler'] and config['crawler'] == 'heritrix':
+        schema['heritrixPath']['required'] = True
 
-    if provided_in_config['until']:
-
-        if config['until'] in ('crawl', 'preprocess', 'shard', 'split', 'tokenise'):
-            monolingual_workflow = True
+    if provided_in_config['until'] and config['until'] in ('crawl', 'preprocess', 'shard', 'split', 'tokenise'):
+        monolingual_workflow = True
 
     if not monolingual_workflow:
         schema['lang1']['required'] = True
@@ -252,7 +262,7 @@ def validate_args(config):
     if config['boilerplateCleaning'] and config['preprocessor'] != 'warc2preprocess':
         if not provided_in_config['preverticals'] and not provided_in_config['preverticalsFile']:
             schema['boilerplateCleaning']['check_with'] = \
-                generic_error("mandatory: preprocessor warc2preprocess or provide prevertical files")
+                generic_error("mandatory: preprocessor 'warc2preprocess' or provide prevertical files")
 
     if config['preprocessor'] == 'warc2preprocess':
         if provided_in_config['preverticals'] or provided_in_config['preverticalsFile']:
@@ -261,7 +271,9 @@ def validate_args(config):
 
     if config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
+
         if monolingual_workflow and not provided_in_config['alignedCmd']:
+            # document aligner is not going to be used, so fake value is provided
             config["alignerCmd"] = ""
 
         if both_langs_specified:
@@ -270,25 +282,24 @@ def validate_args(config):
                 f'{config["lang2"]}2{config["lang1"]}']
 
         if config["sentenceAligner"] == "hunalign":
-            schema['dic']['required'] = True
-
-            if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
-                schema['generateDic']['required'] = True
-                schema['generateDic']['check_with'] = istrue
+            check_generate_dic(schema, provided_in_config, config)
 
     elif config['documentAligner'] == 'DIC':
-        schema['dic']['required'] = True
         schema['documentAligner']['dependencies']['preprocessor'] = ['warc2preprocess', 'warc2text']
 
         if config['preprocessor'] == 'warc2text':
             config['writeHTML'] = True
-        if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
-                schema['generateDic']['required'] = True
-                schema['generateDic']['check_with'] = istrue
 
-    if config["generateDic"]:
+        check_generate_dic(schema, provided_in_config, config)
+
+    if config['generateDic']:
         schema['dic']['required'] = True
         schema['initCorpusTrainingPrefix']['required'] = True
+
+        if provided_in_config['dic'] and path_exists(config['dic']):
+            schema['dic']['check_with'] = \
+                generic_error("the provided 'dic' already exists and 'generateDic' was set to True:"
+                              " change the 'dic' path to a different path or set 'generateDic' to False")
 
     if config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
@@ -320,12 +331,9 @@ def validate_args(config):
             schema['bicleanerParallelCorpusTrainingPrefix']['required'] = True
 
             if config['bicleanerFlavour'] == "classic":
-                schema['dic']['required'] = True
                 schema['initCorpusTrainingPrefix']['required'] = True
 
-                if provided_in_config['dic'] and not os.path.isfile(os.path.expanduser(config['dic'])):
-                    schema['generateDic']['required'] = True
-                    schema['generateDic']['check_with'] = istrue
+                check_generate_dic(schema, provided_in_config, config)
             elif config['bicleanerFlavour'] == "ai":
                 schema['bicleanerMonoCorpusPrefix']['required'] = True
                 schema['bicleanerParallelCorpusDevPrefix']['required'] = True
@@ -336,25 +344,6 @@ def validate_args(config):
         print(
             "WARNING: your target consists of temporary files. Make sure to use --notemp parameter to preserve your output",
             file=sys.stderr)
-
-    if config['biroamer']:
-        if (not provided_in_config['tmx'] or not config['tmx']) and (not provided_in_config['deduped'] or not config['deduped']):
-            print(
-                "ERROR: if you want to use biroamer, you need either 'tmx' or 'deduped' config option set to 'true' (if both, deduped will be used)",
-                file=sys.stderr)
-
-            if not provided_in_config['deduped']:
-                # tmx not in config or tmx in config but false
-                schema['biroamer']['dependencies'] = {'tmx': True}
-            else:
-                # deduped in config but false and (tmx not in config or tmx in config and false)
-                # debuped as default value in both situations
-                schema['biroamer']['dependencies'] = {'deduped': True}
-        if config['deferred']:
-            if isinstance(schema['biroamer']['dependencies'], dict):
-                schema['biroamer']['dependencies']['deferred'] = False
-            else:
-                schema['biroamer']['dependencies'] = {'deferred': False}
 
     v = Validator(schema)
     b = v.validate(config)

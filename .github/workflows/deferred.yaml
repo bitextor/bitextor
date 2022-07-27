@@ -72,11 +72,13 @@ jobs:
             chmod 775 ./tests/run-deferred-tests.sh
             ./tests/run-deferred-tests.sh -w "$WORK" -j 4
       -  name: Upload sent.gz files (artifacts)
+         if: ${{ always() }}
          uses: actions/upload-artifact@v3
          with:
             name: all-sent.gz
             path: ${{ env.WORK }}/permanent/**/*.sent.gz
       -  name: Upload report files (artifacts)
+         if: ${{ always() }}
          uses: actions/upload-artifact@v3
          with:
             name: reports

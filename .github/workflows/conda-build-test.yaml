@@ -82,11 +82,13 @@ jobs:
                exit 1
             fi
       -  name: Upload sent.gz files (artifacts)
+         if: ${{ always() }}
          uses: actions/upload-artifact@v3
          with:
             name: all-sent.gz
             path: ${{ env.WORK }}/permanent/**/*.sent.gz
       -  name: Upload report files (artifacts)
+         if: ${{ always() }}
          uses: actions/upload-artifact@v3
          with:
             name: reports

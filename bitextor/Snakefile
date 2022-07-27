@@ -253,10 +253,11 @@ if DEDUPED:
     OUTPUT_FILES.append("deduped.txt")
     STATS_FILES.append("deduped")
 if BIROAMER:
-    if "deduped.tmx" in OUTPUT_FILES:
-        OUTPUT_FILES.append("deduped.roamed.tmx")
-    else:
+    if TMX:
         OUTPUT_FILES.append("not-deduped.roamed.tmx")
+
+    if DEDUPED:
+        OUTPUT_FILES.append("deduped.roamed.tmx")
 
     if "biroamerMixFiles" in config and len(config["biroamerMixFiles"]) > 0:
         BIROAMER_MIX_FILES = " ".join(config["biroamerMixFiles"])
@@ -1772,17 +1773,16 @@ rule deduped_tmx:
         """
 
 
-# TODO apply ROAMing to both non-deduped and deduped (documentation: update output files)
 rule roam_tmx:
     """
-    Use biroamer to created ROAMED version of the corpus
-    :input.tmx: deduped.tmx corpus if dedup is active, not-deduped.tmx corpus if only tmx=true and dedup=false
-    :output: deduped.roamed.tmx corpus if dedup is active, not-deduped.roamed.tmx corpus if tmx=true and dedup=false
+    Use biroamer to created ROAMed version of the corpus
+    :input.tmx: TMX file, both non-deduped and deduped if dedup=true
+    :output: ROAMed TMX file, both non-deduped and deduped if dedup=true
     """
     input:
-        rules.deduped_tmx.output.tmx if DEDUPED else rules.tmx.output,
+        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.tmx.gz",
     output:
-        f"{PERMANENT}/{LANG1}-{LANG2}.{'deduped' if DEDUPED else 'not-deduped'}.roamed.tmx.gz",
+        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.roamed.tmx.gz",
     params:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), '-t "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), '-T "{}"'),
