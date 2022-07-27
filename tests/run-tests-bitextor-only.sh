@@ -199,7 +199,9 @@ wait
 wait
 
 # Get hashes from all files
-create_integrity_report "$WORK" "${WORK}/reports/hash_values.report"
+for TEST_ID in $(echo "10 20 60 100 101"); do
+    create_integrity_report "$WORK" "${WORK}/reports/hash_values_${TEST_ID}.report" "$TEST_ID"
+done
 
 # Results
 failed=$(cat "$FAILS" | wc -l)

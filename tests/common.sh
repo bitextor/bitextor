@@ -5,6 +5,25 @@ get_nolines()
     zcat $1 2> /dev/null | wc -l
 }
 
+test_finished_successfully()
+{
+    local report_file="$1"
+
+    if [[ ! -f "$report_file" ]]; then
+        echo "false"
+        return
+    fi
+
+    local rule_all=$(cat "$report_file" | grep "^localrule all:$" | wc -l)
+    local steps=$(cat "$report_file" | grep -E "^[0-9]+ of [0-9]+ steps \(100%\) done$" | wc -l)
+
+    if [[ "$rule_all" != "0" ]] && [[ "$steps" != "0" ]]; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 get_hash()
 {
     if [ ! -f "$1" ]; then
@@ -122,7 +141,13 @@ create_integrity_report()
 {
     local WORK="$1"
     local INTEGRITY_REPORT="$2"
+    local TEST_ID="$3"
     local DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+    local TEST_OK=$(test_finished_successfully "${WORK}/reports/${TEST_ID}.report")
+
+    if [[ "$TEST_OK" == "false" ]]; then
+        return
+    fi
 
     if [[ -f "$INTEGRITY_REPORT" ]]; then
         local random=$(echo "$(echo $RANDOM)+$(date)" | md5sum | head -c 20)
@@ -133,9 +158,14 @@ create_integrity_report()
         mv "$INTEGRITY_REPORT" "$new_name"
     fi
 
-    for f in $(echo "${WORK}/permanent ${WORK}/transient ${WORK}/data"); do
+    for f in $(echo "${WORK}/permanent/${TEST_ID} ${WORK}/transient/${TEST_ID} ${WORK}/data/${TEST_ID}"); do
+        if [[ ! -d "$f" ]]; then
+            >&2 echo "Directory '$f' does not exist"
+            continue
+        fi
+
         find "$f" -type f \
-            | grep -E -v "/[.]snakemake($|/)" \
+            | grep -E -v "/[.]snakemake(/|$)" \
             | xargs -I{} bash -c 'source "'${DIR}'/common.sh"; h=$(get_hash "{}"); echo "{}: ${h}"' >> "${INTEGRITY_REPORT}"
     done
 }
