@@ -62,6 +62,10 @@ jobs:
                - name: Other tests
                  test_id: "0x80"
       steps:
+      -  uses: actions/checkout@v3
+         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
+         with:
+            submodules: 'recursive'
       -  name: Set up Docker Buildx
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          uses: docker/setup-buildx-action@v2
