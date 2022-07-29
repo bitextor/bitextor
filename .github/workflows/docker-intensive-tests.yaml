@@ -29,6 +29,7 @@ env:
    WORK: ${{ github.workspace }}
    WORK_DOCKER: '/home/docker'
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
+   DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
 
 jobs:
    tests:
@@ -55,19 +56,18 @@ jobs:
                  test_id: "0x40"
                - name: Other tests
                  test_id: "0x80"
-      defaults:
-         run:
-            shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
       steps:
-      -  name: Run
-         id: tests_mt
+      -  name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v2
+      -  name: Build and export to Docker
+         uses: docker/build-push-action@v3
+         with:
+            context: .
+            load: true
+            tags: ${{ env.TEST_TAG }} # TODO change
+      -  name: Install and test docker
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
-            tag=":edge"
-            if [[ "${{ github.event.inputs.docker_tag }}" != "" ]]; then
-               tag=":${{ github.event.inputs.docker_tag }}"
-            fi
-
             sudo apt-get --assume-yes update
             sudo apt-get --assume-yes install apt-transport-https ca-certificates curl gnupg lsb-release
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -80,10 +80,12 @@ jobs:
             # Test docker installation
             sudo docker pull hello-world > /dev/null
             sudo docker run --rm hello-world > /dev/null
-
+      -  name: Run
+         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
+         run: |
             # Download docker image
             mkdir "${WORK}/docker-volume"
-            sudo docker pull "bitextor/bitextor${tag}"
+            sudo docker pull "${DOCKER_IMAGE_TAG}"
 
             # Monitor available storage
             #echo "      date     time $(free -m | grep total | sed -E 's/^    (.*)/\1/g')"
@@ -97,8 +99,7 @@ jobs:
                   -e CI="$CI" \
                   -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" \
                   --name bitextor \
-                  --entrypoint /bin/bash \
-                  --rm "bitextor/bitextor${tag}" \
+                  --entrypoint /bin/bash --rm \
                   -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }}; \
                       cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                       rm -rf '"${WORK_DOCKER}/volume/reports"' && \
@@ -106,7 +107,7 @@ jobs:
                       cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"'' &> ./tests_output
 
             # Stop monitoring available disk
-            kill %1
+            #kill %1
 
             cat ./tests_output
 

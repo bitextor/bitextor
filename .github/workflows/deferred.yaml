@@ -41,9 +41,9 @@ jobs:
             java-version: 8
             java-package: jdk
             architecture: x64
-      -  uses: actions/checkout@v2
-      -  name: Checkout submodules
-         run: git submodule update --init --force --recursive
+      -  uses: actions/checkout@v3
+         with:
+            submodules: 'recursive'
       -  name: Install additional python requirements
          run: |
             pip3 install .[all]
@@ -67,7 +67,6 @@ jobs:
             make -j
             sudo make install
       -  name: Run tests
-         id: tests
          run: |
             chmod 775 ./tests/run-deferred-tests.sh
             ./tests/run-deferred-tests.sh -w "$WORK" -j 4

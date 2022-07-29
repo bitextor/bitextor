@@ -9,7 +9,7 @@ on:
 
 jobs:
     update_docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-20.04
         steps:
             - name: Send webhook
               run: |

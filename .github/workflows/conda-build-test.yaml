@@ -1,4 +1,4 @@
-name: Build, test and upload with conda
+name: Build and test conda environment
 
 on:
    push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
    conda_build_testing:
-      name: Build and test conda environment
+      name: Build and testing
       runs-on: ubuntu-20.04
       timeout-minutes: 300
       defaults:
@@ -28,9 +28,9 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-build
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
-      -  uses: actions/checkout@v2
-      -  name: Checkout submodules
-         run: git submodule update --init --force --recursive
+      -  uses: actions/checkout@v3
+         with:
+            submodules: 'recursive'
       -  name: Create Bitextor conda build
          working-directory: ./conda-build
          run: |

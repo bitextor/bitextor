@@ -25,6 +25,9 @@ on:
             type: boolean
             description: 'Create build instead of downloading last package available'
             default: true
+         build_ref:
+            description: 'Ref to use for local build (i.e. branch, tag or commit)'
+            default: 'master'
          test_id:
             description: 'Run specific test ID'
             required: false
@@ -46,6 +49,7 @@ env:
    CONDA_PACKAGE: ${{ github.event.inputs.conda_package || 'bitextor' }}
    CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
+   BUILD_REF: ${{ github.event.inputs.build_ref || 'master' }}
 
 jobs:
    tests:
@@ -83,11 +87,11 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
-      -  uses: actions/checkout@v2
+      -  uses: actions/checkout@v3
          if: ${{ env.CREATE_BUILD }}
-      -  name: Checkout submodules
-         if: ${{ env.CREATE_BUILD }}
-         run: git submodule update --init --force --recursive
+         with:
+            submodules: 'recursive'
+            ref: ${{ env.BUILD_REF }}
       -  name: Create Bitextor conda build
          if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          working-directory: ./conda-build
@@ -119,13 +123,13 @@ jobs:
 
             conda install -y "$v"
       -  name: Run tests
-         id: run_tests
+         id: tests
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
-         #if: ${{ steps.run_tests.conclusion != 'success' }} # Will this work with matrix as expected (i.e. affect just the specific job and not the rest)?
+         #if: ${{ steps.tests.conclusion != 'success' }}
          if: ${{ always() }}
          run: |
             if [[ -f "${WORK}/data/fails.log" ]]; then
