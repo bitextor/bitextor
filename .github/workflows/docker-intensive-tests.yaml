@@ -57,14 +57,6 @@ jobs:
                - name: Other tests
                  test_id: "0x80"
       steps:
-      -  name: Set up Docker Buildx
-         uses: docker/setup-buildx-action@v2
-      -  name: Build and export to Docker
-         uses: docker/build-push-action@v3
-         with:
-            context: .
-            load: true
-            tags: ${{ env.TEST_TAG }} # TODO change
       -  name: Install and test docker
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
