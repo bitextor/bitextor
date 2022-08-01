@@ -296,11 +296,6 @@ def validate_args(config):
         schema['dic']['required'] = True
         schema['initCorpusTrainingPrefix']['required'] = True
 
-        if provided_in_config['dic'] and path_exists(config['dic']):
-            schema['dic']['check_with'] = \
-                generic_error("the provided 'dic' already exists and 'generateDic' was set to True:"
-                              " change the 'dic' path to a different path or set 'generateDic' to False")
-
     if config['sentenceAligner'] == 'bleualign':
         schema['sentenceAligner']['dependencies'] = {'documentAligner': 'externalMT'}
 

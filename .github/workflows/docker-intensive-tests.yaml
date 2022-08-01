@@ -38,6 +38,7 @@ env:
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
    CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
+   DOCKER_IMAGE_PULL: ${{ !env.CREATE_BUILD }}
 
 jobs:
    tests:
@@ -79,7 +80,7 @@ jobs:
          with:
             context: .
             load: true # If true, once the image has been pulled or built, it will be available from docker
-            pull: ${{ !env.CREATE_BUILD }}
+            pull: ${{ env.DOCKER_IMAGE_PULL }}
             push: false
             tags: ${{ env.DOCKER_IMAGE_TAG }}
       -  name: Test docker
