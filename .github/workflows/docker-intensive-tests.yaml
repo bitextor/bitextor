@@ -96,6 +96,7 @@ jobs:
             mkdir "${WORK}/docker-volume"
 
             # Run tests with docker
+            docker_exit_code=$(
             docker run \
                -e CI="$CI" \
                -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" \
@@ -106,7 +107,13 @@ jobs:
                    cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                    rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                    cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"' && \
-                   cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"'' &> ./tests_output
+                   cp -r '"${WORK_DOCKER}/permanent"' '"${WORK_DOCKER}/volume"'' \
+               &> ./tests_output \
+               && echo $? || echo $?)
+
+            if [[ "$docker_exit_code" != "0" ]]; then
+               >&2 echo "WARNING: something went wrong while tests were running"
+            fi
 
             cat ./tests_output
 
