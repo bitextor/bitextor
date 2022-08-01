@@ -37,8 +37,7 @@ env:
    WORK_DOCKER: '/home/docker'
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
-   CREATE_BUILD: ${{ github.event.inputs.create_build || true }}
-   DOCKER_IMAGE_PULL: ${{ (github.event.inputs.create_build == false) || false }}
+   CREATE_BUILD: ${{ fromJSON(github.event.inputs.create_build || 'true') }}
 
 jobs:
    tests:
@@ -88,7 +87,7 @@ jobs:
             push: false
             tags: ${{ env.DOCKER_IMAGE_TAG }}
       -  name: Pull image
-         if: ${{ env.DOCKER_IMAGE_PULL && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ !env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             docker pull "$DOCKER_IMAGE_TAG"
       -  name: Run
