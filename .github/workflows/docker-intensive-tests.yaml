@@ -37,7 +37,7 @@ env:
    WORK_DOCKER: '/home/docker'
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
-   CREATE_BUILD: ${{ (github.event.inputs.create_build == 'true') || 'true' }}
+   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
    DOCKER_IMAGE_PULL: ${{ (github.event.inputs.create_build == 'false') || 'false' }}
 
 jobs:
