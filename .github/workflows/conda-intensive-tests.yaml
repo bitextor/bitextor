@@ -47,7 +47,7 @@ on:
 env:
    WORK: ${{ github.workspace }}
    CONDA_PACKAGE: ${{ github.event.inputs.conda_package || 'bitextor' }}
-   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
+   CREATE_BUILD: ${{ github.event.inputs.create_build || true }}
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    BUILD_REF: ${{ github.event.inputs.build_ref || 'master' }}
 
