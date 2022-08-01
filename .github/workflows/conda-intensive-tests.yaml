@@ -47,7 +47,7 @@ on:
 env:
    WORK: ${{ github.workspace }}
    CONDA_PACKAGE: ${{ github.event.inputs.conda_package || 'bitextor' }}
-   CREATE_BUILD: ${{ fromJSON(github.event.inputs.create_build || 'true') }}
+   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    BUILD_REF: ${{ github.event.inputs.build_ref || 'master' }}
 
@@ -88,17 +88,17 @@ jobs:
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v3
-         if: ${{ env.CREATE_BUILD }}
+         if: ${{ env.CREATE_BUILD == 'true' }}
          with:
             submodules: 'recursive'
             ref: ${{ env.BUILD_REF }}
       -  name: Create Bitextor conda build
-         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
             ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
       -  name: Install Bitextor locally
-         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
@@ -109,7 +109,7 @@ jobs:
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
-         if: ${{ !env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'false' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             v="${{ env.CONDA_PACKAGE }}"
 

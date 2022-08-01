@@ -37,7 +37,7 @@ env:
    WORK_DOCKER: '/home/docker'
    TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
    DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
-   CREATE_BUILD: ${{ fromJSON(github.event.inputs.create_build || 'true') }}
+   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
 
 jobs:
    tests:
@@ -79,7 +79,7 @@ jobs:
             docker pull hello-world > /dev/null
             docker run --rm hello-world > /dev/null
       -  name: Build and export to Docker
-         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          uses: docker/build-push-action@v3
          with:
             context: .
@@ -87,7 +87,7 @@ jobs:
             push: false
             tags: ${{ env.DOCKER_IMAGE_TAG }}
       -  name: Pull image
-         if: ${{ !env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'false' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             docker pull "$DOCKER_IMAGE_TAG"
       -  name: Run
