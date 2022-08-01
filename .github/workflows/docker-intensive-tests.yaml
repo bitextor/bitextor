@@ -74,20 +74,23 @@ jobs:
       -  name: Set up Docker Buildx
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          uses: docker/setup-buildx-action@v2
-      -  name: Build and export to Docker
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
-         uses: docker/build-push-action@v3
-         with:
-            context: .
-            load: true # If true, once the image has been pulled or built, it will be available from docker
-            pull: ${{ env.DOCKER_IMAGE_PULL }}
-            push: false
-            tags: ${{ env.DOCKER_IMAGE_TAG }}
       -  name: Test docker
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             docker pull hello-world > /dev/null
             docker run --rm hello-world > /dev/null
+      -  name: Build and export to Docker
+         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         uses: docker/build-push-action@v3
+         with:
+            context: .
+            load: true # If true, once the image has been pulled or built, it will be available from docker
+            push: false
+            tags: ${{ env.DOCKER_IMAGE_TAG }}
+      -  name: Pull image
+         if: ${{ env.DOCKER_IMAGE_PULL && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         run: |
+            docker pull "$DOCKER_IMAGE_TAG"
       -  name: Run
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
