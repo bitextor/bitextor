@@ -59,7 +59,7 @@ download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 # Output reference
-download_file "${WORK}/output_reference/run-tests-min.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests-min.tgz &
+download_file "${WORK}/output_reference/run-tests-min.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-tests-min.tgz &
 
 wait
 

@@ -152,7 +152,7 @@ annotate_and_echo_info_wrapper()
     local sent_file_hash="$(get_hash ${sent_file})"
     local reference_hash="$(get_hash ${reference_file})"
     local compared_hashes="$(compare_hashes ${sent_file_hash} ${reference_hash})"
-    local compared_nolines="$(compare_nolines ${sent_file_nolines} ${reference_nolines})"
+    local compared_nolines="$(compare_nolines ${sent_file_nolines} ${reference_file_nolines})"
     local desc="test status: ${status} | ${compared_nolines} | ${compared_hashes}"
     local status="$([[ "${sent_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
 
