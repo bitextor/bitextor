@@ -87,7 +87,7 @@ jobs:
             python-version: 3.8.5
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
-      -  uses: actions/checkout@v3
+      -  uses: actions/checkout@v3.0.2
          if: ${{ env.CREATE_BUILD == 'true' }}
          with:
             submodules: 'recursive'
