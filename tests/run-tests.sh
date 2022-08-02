@@ -55,8 +55,6 @@ mkdir -p "${WORK}/permanent"
 mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
 mkdir -p "${WORK}/data/parallel-corpus"
-mkdir -p "${WORK}/data/parallel-corpus/Europarl"
-mkdir -p "${WORK}/data/parallel-corpus/DGT"
 mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
 mkdir -p "${WORK}/output_reference"
@@ -77,21 +75,27 @@ download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" &
 download_dictionary "en-fr" "${WORK}/permanent" &
 download_dictionary "en-el" "${WORK}/permanent" &
 # Output reference
-download_file "${WORK}/output_reference/run-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests.tgz &
+download_file "${WORK}/output_reference/run-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-tests.tgz &
 
 # Parallel corpus
 europarl_corpus_file="${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip"
+dn_europarl_corpus_file=$(dirname "$europarl_corpus_file")
 dgt_corpus_file="${WORK}/data/parallel-corpus/DGT/en-fr.txt.zip"
-if [ ! -f "${europarl_corpus_file}" ]; then
+dn_dgt_corpus_file=$(dirname "$dgt_corpus_file")
+
+mkdir -p "$dn_europarl_corpus_file"
+mkdir -p "$dn_dgt_corpus_file"
+
+if [ ! -f "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.en.gz" ] || [ ! -f "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.fr.gz" ]; then
     # ~2000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-Europarl/v8/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/Europarl" && \
-    unzip -qq "${europarl_corpus_file}" -d "${WORK}/data/parallel-corpus/Europarl" &
-    rm -f "${europarl_corpus_file}"
+    wget -q https://object.pouta.csc.fi/OPUS-Europarl/v8/moses/en-fr.txt.zip -P "$dn_europarl_corpus_file" && \
+    unzip -qq "${europarl_corpus_file}" -d "$dn_europarl_corpus_file" && \
+    rm -f "${europarl_corpus_file}" &
 fi
-if [ ! -f "${dgt_corpus_file}" ]; then
+if [ ! -f "${dn_dgt_corpus_file}/DGT.clipped.en-fr.en.gz" ] || [ ! -f "${dn_dgt_corpus_file}/DGT.clipped.en-fr.fr.gz" ]; then
     # ~5000000 lines
-    wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "${WORK}/data/parallel-corpus/DGT" && \
-    unzip -qq "${dgt_corpus_file}" -d "${WORK}/data/parallel-corpus/DGT" &
+    wget -q https://object.pouta.csc.fi/OPUS-DGT/v2019/moses/en-fr.txt.zip -P "$dn_dgt_corpus_file" && \
+    unzip -qq "${dgt_corpus_file}" -d "$dn_dgt_corpus_file" && \
     rm -f "${dgt_corpus_file}"
 fi
 
@@ -99,33 +103,33 @@ wait
 
 # Preprocess
 ### Europarl parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" ]; then
-    (corpus="${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.en"; \
+if [ ! -f "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.en.gz" ]; then
+    (corpus="${dn_europarl_corpus_file}/Europarl.en-fr.en"; \
         cat "${corpus}" \
             | tail -n 100000 \
-            | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.en.gz" && \
+            | pigz -c > "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.en.gz" && \
         rm -f "${corpus}") &
 fi
-if [ ! -f "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" ]; then
-    (corpus="${WORK}/data/parallel-corpus/Europarl/Europarl.en-fr.fr"; \
+if [ ! -f "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.fr.gz" ]; then
+    (corpus="${dn_europarl_corpus_file}/Europarl.en-fr.fr"; \
         cat "${corpus}" \
             | tail -n 100000 \
-            | pigz -c > "${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr.fr.gz" && \
+            | pigz -c > "${dn_europarl_corpus_file}/Europarl.clipped.en-fr.fr.gz" && \
         rm -f "${corpus}") &
 fi
 ### DGT parallel corpus clipped
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" ]; then
-    (corpus="${WORK}/data/parallel-corpus/DGT/DGT.en-fr.en"; \
+if [ ! -f "${dn_dgt_corpus_file}/DGT.clipped.en-fr.en.gz" ]; then
+    (corpus="${dn_dgt_corpus_file}/DGT.en-fr.en"; \
         cat "${corpus}" \
             | tail -n 100000 \
-            | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.en.gz" && \
+            | pigz -c > "${dn_dgt_corpus_file}/DGT.clipped.en-fr.en.gz" && \
         rm -f "${corpus}") &
 fi
-if [ ! -f "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" ]; then
-    (corpus="${WORK}/data/parallel-corpus/DGT/DGT.en-fr.fr"; \
+if [ ! -f "${dn_dgt_corpus_file}/DGT.clipped.en-fr.fr.gz" ]; then
+    (corpus="${dn_dgt_corpus_file}/DGT.en-fr.fr"; \
         cat "${corpus}" \
             | tail -n 100000 \
-            | pigz -c > "${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr.fr.gz" && \
+            | pigz -c > "${dn_dgt_corpus_file}/DGT.clipped.en-fr.fr.gz" && \
         rm -f "${corpus}") &
 fi
 
@@ -297,7 +301,7 @@ tests-gendic()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${DIC_PATH}" generateDic=True sentenceAligner="hunalign" \
-                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" bicleaner=True \
+                initCorpusTrainingPrefix="['${dn_europarl_corpus_file}/Europarl.clipped.en-fr']" bicleaner=True \
                 bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
                 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
@@ -306,9 +310,7 @@ tests-gendic()
         annotate_and_echo_info_wrapper
     ) &
 
-    wait-if-envvar-is-true && \
-    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
-    rm -rf "${TRANSIENT_DIR}"
+    wait-if-envvar-is-true
 }
 
 # Generate bicleaner model but use existant dictionary (a new dictionary will be generated anyways) (id >= 40)
@@ -317,7 +319,7 @@ tests-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "40"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi
@@ -339,21 +341,19 @@ tests-genbicleaner()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" generateDic=False sentenceAligner="hunalign" \
-                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                initCorpusTrainingPrefix="['${dn_europarl_corpus_file}/Europarl.clipped.en-fr']" \
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
-                bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper
+        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
         dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
 
-    wait-if-envvar-is-true && \
-    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
-    rm -rf "${TRANSIENT_DIR}"
+    wait-if-envvar-is-true
 }
 
 # Generate dictionary and bicleaner model (id >= 50)
@@ -362,7 +362,7 @@ tests-gendic-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "50"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi
@@ -386,19 +386,17 @@ tests-gendic-genbicleaner()
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="DIC" dic="${DIC_PATH}" generateDic=True sentenceAligner="hunalign" \
-                initCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/Europarl/Europarl.clipped.en-fr']" \
+                initCorpusTrainingPrefix="['${dn_europarl_corpus_file}/Europarl.clipped.en-fr']" \
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
-                bicleanerParallelCorpusTrainingPrefix="['${WORK}/data/parallel-corpus/DGT/DGT.clipped.en-fr']" \
+                bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper
+        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
     ) &
 
-    wait-if-envvar-is-true && \
-    echo "Removing '${TRANSIENT_DIR}' ($(du -sh ${TRANSIENT_DIR} | awk '{print $1}'))" && \
-    rm -rf "${TRANSIENT_DIR}"
+    wait-if-envvar-is-true
 }
 
 # MT and dictionary-based (id >= 60)
@@ -432,7 +430,7 @@ tests-neural()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "70 71 72 73"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi

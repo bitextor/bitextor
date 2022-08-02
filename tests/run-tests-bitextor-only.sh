@@ -52,7 +52,7 @@ download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor
 # Dictionaries
 download_dictionary "en-fr" "${WORK}/permanent" &
 # Output reference
-download_file "${WORK}/output_reference/run-tests-bitextor-only.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-tests-bitextor-only.tgz &
+download_file "${WORK}/output_reference/run-tests-bitextor-only.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-tests-bitextor-only.tgz &
 
 # Parallel corpus
 if [ ! -f "${WORK}/data/parallel-corpus/Europarl/en-fr.txt.zip" ]; then

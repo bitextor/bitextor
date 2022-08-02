@@ -48,7 +48,7 @@ touch "$FAILS"
 # WARCs
 download_file "${WORK}/data/warc/primeminister.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/primeminister.warc.gz &
 # Output reference
-download_file "${WORK}/output_reference/run-deferred-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/download/v1/run-deferred-tests.tgz &
+download_file "${WORK}/output_reference/run-deferred-tests.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-deferred-tests.tgz &
 
 wait
 
