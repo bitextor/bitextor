@@ -317,7 +317,7 @@ tests-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "40"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi
@@ -346,7 +346,7 @@ tests-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper
+        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
         dic_md5sum_after=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
     ) &
 
@@ -362,7 +362,7 @@ tests-gendic-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "50"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi
@@ -393,7 +393,7 @@ tests-gendic-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper
+        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
     ) &
 
     wait-if-envvar-is-true && \
@@ -432,7 +432,7 @@ tests-neural()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "70 71 72 73"); do
-            annotate_and_echo_info_wrapper "true"
+            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
         return
     fi
