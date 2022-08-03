@@ -65,7 +65,7 @@ jobs:
                - name: Other tests
                  test_id: "0x80"
       steps:
-      -  uses: actions/checkout@v3.0.2
+      -  uses: actions/checkout@v2
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          with:
             submodules: 'recursive'
