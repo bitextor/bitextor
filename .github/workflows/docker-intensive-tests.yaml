@@ -80,7 +80,7 @@ jobs:
             docker run --rm hello-world > /dev/null
       -  name: Build and export to Docker
          if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
-         uses: docker/build-push-action@master
+         uses: docker/build-push-action@2.10.0
          with:
             context: .
             load: true # If true, once the image has been pulled or built, it will be available from docker
