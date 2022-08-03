@@ -90,6 +90,12 @@ jobs:
          if: ${{ env.CREATE_BUILD == 'false' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             docker pull "$DOCKER_IMAGE_TAG"
+      -  name: Docker info
+         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
+         run: |
+            docker image ls -a --digests
+            docker buildx du --verbose
+            df -h
       -  name: Run
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
