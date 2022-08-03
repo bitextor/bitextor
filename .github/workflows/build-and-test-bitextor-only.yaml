@@ -5,12 +5,10 @@ on:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
    pull_request:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
 
 env:
    WORK: ${{ github.workspace }}

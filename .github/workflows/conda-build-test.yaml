@@ -5,12 +5,10 @@ on:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
    pull_request:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
 
 env:
    WORK: ${{ github.workspace }}
@@ -42,10 +40,22 @@ jobs:
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
-            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+            bitextor_pkg_prefix="$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64"
+            bitextor_pkg=$(ls "$bitextor_pkg_prefix" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            conda install -y "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64/$bitextor_package"
-            conda update -y --all
+            if [[ -z "$bitextor_pkg" ]]; then
+               >&2 echo "ERROR: could not find the package"
+
+               if [[ ! -d "$bitextor_pkg_prefix" ]]; then
+                  >&2 echo "ERROR: dir '$bitextor_pkg_prefix' does not exist"
+               else
+                  ls "$bitextor_pkg_prefix"
+               fi
+
+               exit 1
+            fi
+
+            conda install -y "${bitextor_pkg_prefix}/$bitextor_pkg"
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Run tests
