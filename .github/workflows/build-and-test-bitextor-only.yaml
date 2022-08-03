@@ -57,7 +57,7 @@ jobs:
       -  name: Compiling bitextor and submodules
          run: |
             mkdir build_cmake && cd build_cmake
-            cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/usr ..
+            cmake -DCMAKE_INSTALL_PREFIX=/usr ..
             make -j
             sudo make install
       -  name: Run tests
