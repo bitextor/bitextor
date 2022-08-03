@@ -65,11 +65,6 @@ jobs:
                - name: Other tests
                  test_id: "0x80"
       steps:
-      -  uses: actions/checkout@v2
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
-         with:
-            submodules: 'recursive'
-            ref: ${{ env.BUILD_REF }}
       -  name: Set up Docker Buildx
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          uses: docker/setup-buildx-action@v2
@@ -78,9 +73,14 @@ jobs:
          run: |
             docker pull hello-world > /dev/null
             docker run --rm hello-world > /dev/null
+      -  uses: actions/checkout@v3.0.2
+         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
+         with:
+            submodules: 'recursive'
+            ref: ${{ env.BUILD_REF }}
       -  name: Build and export to Docker
          if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
-         uses: docker/build-push-action@v2.10.0
+         uses: docker/build-push-action@v3
          with:
             context: .
             load: true # If true, once the image has been pulled or built, it will be available from docker

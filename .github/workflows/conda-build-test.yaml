@@ -2,8 +2,11 @@ name: Build and test conda environment
 
 on:
    push:
-      branches:
-         - master
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
+         - 'img/**'
+   pull_request:
       paths-ignore:
          - '**.md'
          - 'docs/**'
