@@ -41,7 +41,7 @@ jobs:
             java-version: 8
             java-package: jdk
             architecture: x64
-      -  uses: actions/checkout@v3.0.2
+      -  uses: actions/checkout@v3
          with:
             submodules: 'recursive'
       -  name: Install additional python requirements
