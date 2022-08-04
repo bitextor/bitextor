@@ -43,7 +43,7 @@ jobs:
    tests:
       name: ${{ matrix.name }}
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 360
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
          matrix:
@@ -117,7 +117,7 @@ jobs:
          id: tests
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
-            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK" -j 4
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }}
@@ -146,7 +146,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
             fi
       -  name: Upload sent.gz files (artifacts)
          if: ${{ always() }}

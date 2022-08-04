@@ -17,7 +17,7 @@ jobs:
    conda_build_testing:
       name: Build and testing
       runs-on: ubuntu-20.04
-      timeout-minutes: 300
+      timeout-minutes: 360
       defaults:
          run:
             shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
@@ -92,7 +92,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
                exit 1
             fi
       -  name: Upload sent.gz files (artifacts)

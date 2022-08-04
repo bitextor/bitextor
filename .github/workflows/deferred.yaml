@@ -17,7 +17,7 @@ jobs:
    build_and_testing:
       name: Deferred crawling testing
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 360
       steps:
       -  name: Install required linux packages
          run: |

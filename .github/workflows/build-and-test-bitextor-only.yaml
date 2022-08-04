@@ -17,7 +17,7 @@ jobs:
    build_and_testing:
       name: Build and testing Bitextor only
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 360
       steps:
       -  name: Install required linux packages
          run: |
@@ -91,7 +91,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
                exit 1
             fi
       -  name: Upload sent.gz files (artifacts)
