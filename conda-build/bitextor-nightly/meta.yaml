@@ -28,7 +28,7 @@ requirements:
     - gxx_linux-64
     - go-cgo 1.13.5 h77d97cf_0
   host:
-    - boost
+    - boost-cpp 1.71.0 h8e57a91_1
     - pip
     - setuptools
     - python {{ python }}
@@ -47,7 +47,7 @@ requirements:
     - pip
     - setuptools
     - python {{ python }}
-    - boost
+    - boost-cpp 1.71.0 h8e57a91_1
     - java-jdk 8
     - xz
     - time
