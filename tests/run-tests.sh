@@ -177,23 +177,6 @@ create-p2t-from-warc()
     fi
 }
 
-init_test()
-{
-    # Export these variables to the global scope
-    TEST_ID="$1"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
-
-    mkdir -p "${TRANSIENT_DIR}"
-    pushd "${TRANSIENT_DIR}" > /dev/null
-}
-
-finish_test()
-{
-    annotate_and_echo_info_wrapper
-
-    popd > /dev/null
-}
-
 # Specific test values
 test40_dic_hash_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
 
@@ -578,7 +561,7 @@ if [[ "$DRYRUN" == "false" ]]; then
     # Tests with id >= 40 has been executed?
     if [[ "$(( ($flags & (2**3)) >> 3 ))" == "1" ]]; then
         # Check if the dictionary has been replaced
-        if [[ ! -z "$test40_dic_hash_before" != "" ]] || [[ ! -z "$test40_dic_hash_after" ]] || \
+        if [[ -z "$test40_dic_hash_before" ]] || [[ -z "$test40_dic_hash_after" ]] || \
            [[ "$test40_dic_hash_before" != "$test40_dic_hash_after" ]]; then
             echo "Failed 40.1 (dictionary has been replaced: '$test40_dic_hash_before' -> '$test40_dic_hash_after')"
             echo "fail 40.1 \"dictionary replaced\"" >> "$FAILS"

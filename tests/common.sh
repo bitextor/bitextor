@@ -191,3 +191,20 @@ create_integrity_report()
             | xargs -I{} bash -c 'source "'${DIR}'/common.sh"; h=$(get_hash "{}"); echo "{}: ${h}"' >> "${INTEGRITY_REPORT}"
     done
 }
+
+init_test()
+{
+    # Export these variables to the global scope
+    TEST_ID="$1"
+    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+
+    mkdir -p "${TRANSIENT_DIR}"
+    pushd "${TRANSIENT_DIR}" > /dev/null
+}
+
+finish_test()
+{
+    annotate_and_echo_info_wrapper
+
+    popd > /dev/null
+}
