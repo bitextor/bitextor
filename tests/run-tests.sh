@@ -189,9 +189,9 @@ init_test()
 
 finish_test()
 {
-    popd > /dev/null
-
     annotate_and_echo_info_wrapper
+
+    popd > /dev/null
 }
 
 # Specific test values
