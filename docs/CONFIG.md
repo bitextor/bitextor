@@ -234,7 +234,7 @@ Sharding options:
 
 ## Sentence splitting
 
-By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/project/sentence-splitter/) will be used for sentence splitting. This is recommened even without language support, since it is possible to provide custom non-breaking prefixes. External sentence splitter can by used via `sentence-splitters` parameter (less efficient).
+By default a Python wrapper of [Loomchild Segment](https://github.com/bitextor/loomchild-segment-py) will be used for sentence splitting.. This is recommened even without language support, since it is possible to provide custom non-breaking prefixes. External sentence splitter can by used via `sentence-splitters` parameter (less efficient).
 
 Custom sentence splitters must read plain text documents from standard input and write one sentence per line to standard output.
 
