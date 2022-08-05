@@ -300,6 +300,9 @@ tests-genbicleaner()
         for TEST_ID in $(echo "40"); do
             annotate_and_echo_info_wrapper "skipped test: very time-consuming"
         done
+
+        test40_dic_hash_after="$test40_dic_hash_before"
+
         return
     fi
 
