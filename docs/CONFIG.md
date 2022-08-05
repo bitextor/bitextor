@@ -176,7 +176,7 @@ After crawling, the downloaded webs are processed to extract clean text, detect 
 After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs.
 Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contains one or more complete domain(s).
 Shards in turn are split into batches of specified size to keep memory consumption in check.
-Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
+Document alignment works within shards, i.e. all documents in a shard will be compared for document alignment.
 
 The following set of option define how that process is carried out.
 
