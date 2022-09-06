@@ -25,7 +25,7 @@ import logging
 import argparse
 import subprocess
 
-from utils.common import get_all_idxs_from_list
+from bitextor.utils.common import get_all_idxs_from_list
 
 logger = logging
 
