@@ -19,7 +19,7 @@ import pprint
 
 from cerberus import Validator
 
-from utils.common import path_exists
+from bitextor.utils.common import path_exists
 
 def generic_error(msg):
     def f(field, value, error):
