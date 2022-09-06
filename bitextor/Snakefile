@@ -10,6 +10,7 @@ from bitextor.utils.common import (
     return_dict_value_if_key,
     get_snakemake_execution_mark,
     is_first_snakemake_execution,
+    path_exists,
 )
 
 valid, config = validate_args(config)
@@ -233,6 +234,20 @@ BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMon
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
 BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
+
+if BICLEANER:
+    is_flavour_ai = BICLEANER_FLAVOUR == "ai"
+    path_exists_f=os.path.isdir if is_flavour_ai else os.path.isfile
+
+    # Create soft links based on the flavour if necessary
+    if is_flavour_ai:
+        # Get directory path from bicleaner model path
+        BICLEANER_MODEL = '/'.join(BICLEANER_MODEL.split('/')[:-1])
+
+    if path_exists(BICLEANER_MODEL, f=path_exists_f) and not path_exists(f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}", f=path_exists_f):
+        os.symlink(f"{BICLEANER_MODEL}", f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}")
+
+    # BICLEANER_MODEL will be a directory if is_flavour_ai else will be a file
 
 ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
 TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)
@@ -1432,14 +1447,11 @@ rule bicleaner_train_model_ai:
         model=f"{BICLEANER_MODEL}.ai",
     params:
         training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
-        # Bicleaner
-        classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
-        # Bicleaner AI
         tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
         dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
         mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
-        metadata_dir='/'.join(BICLEANER_MODEL.split('/')[:-1]),
-        ai_metadata=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/metadata.yaml",
+        metadata_dir=BICLEANER_MODEL,
+        ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
         model=BICLEANER_MODEL,
     shell:
         """
@@ -1476,7 +1488,7 @@ rule bicleaner_train_model_ai:
         {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
             -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
             --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
-                mv {params.ai_metadata} {params.model}
+                mv {params.metadata_dir} {params.model}
 
         ln -s "{params.model}" "{output.model}"
         """
@@ -1497,11 +1509,12 @@ rule bicleaner:
     params:
         threads=THREADS["bicleaner"],
         parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
+        metadata_file=f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}"
     threads: JOB_THREADS["bicleaner"]
     shell:
         """
         parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
-        slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
+        slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
             | tr -d '\n')

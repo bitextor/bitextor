@@ -192,7 +192,7 @@ wait
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 \
-            bicleaner=True bicleanerModel="${BICLEANER_AI}/en-fr" bicleanerThreshold=0.0 \
+            bicleaner=True bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerThreshold=0.0 \
             deferred=False bifixer=True tmx=True deduped=True biroamer=False ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report"
 
