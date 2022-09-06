@@ -1400,12 +1400,10 @@ rule bicleaner_train_model_classic:
     input:
         corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
         corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
-        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
-        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
-                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
-        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
-                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        e2f=f"{DIC}.lex.e2f.gz",
+        f2e=f"{DIC}.lex.f2e.gz",
+        vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
+        vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
     output:
         model=f"{BICLEANER_MODEL}.classic",
     params:
@@ -1435,14 +1433,10 @@ rule bicleaner_train_model_ai:
     input:
         corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
         corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-        mono_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
-                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
-        mono_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
-                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
-        dev_corpus_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
-                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
-        dev_corpus_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
-                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
+        mono_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
+        mono_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
+        dev_corpus_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
+        dev_corpus_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
     output:
         model=f"{BICLEANER_MODEL}.ai",
     params:

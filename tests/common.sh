@@ -90,6 +90,7 @@ download_bicleaner_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
+        ln -s "${output}/${langs}/${langs}.yaml" "${output}/${langs}/${langs}.yaml.classic" # Models are shared and parallel instances might break
     fi
 }
 
@@ -104,6 +105,7 @@ download_bicleaner_ai_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
+        ln -s "${output}/${langs}" "${output}/${langs}.ai" # Models are shared and parallel instances might break
     fi
 }
 
