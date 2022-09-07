@@ -50,6 +50,9 @@ BITEXTOR_EXTRA_ARGS="profiling=True verbose=True"
 BICLEANER="${WORK}/data/bicleaner-models"
 BICLEANER_AI="${WORK}/data/bicleaner-ai-models"
 FAILS="${WORK}/data/fails.log"
+
+if [[ "$DRYRUN" == "false" ]]; then
+
 mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
 mkdir -p "${WORK}/transient"
@@ -138,6 +141,11 @@ wait
 tar -xzf "${WORK}/output_reference/run-tests.tgz" -C "${WORK}/output_reference/" && \
 rm -f "${WORK}/output_reference/run-tests.tgz"
 
+# Specific test values
+test40_dic_hash_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
+
+fi
+
 wait-if-envvar-is-true()
 {
     value="$CI"
@@ -176,9 +184,6 @@ create-p2t-from-warc()
         rm -rf "${WORK}/data/tmp-w2t"
     fi
 }
-
-# Specific test values
-test40_dic_hash_before=$(md5sum "${WORK}/permanent/en-fr.dic" | awk '{print $1}')
 
 # MT (id >= 10)
 tests-mt()
@@ -546,10 +551,10 @@ run-tests()
         #  (3 & 2^0) >> 0 = (0b11 & 0b01) >> 0 = 0b01 >> 0 = 0b01 = 1 == 1
         #  (3 & 2^1) >> 1 = (0b11 & 0b10) >> 1 = 0b10 >> 1 = 0b01 = 1 == 1
         if [[ "$(( ($flags & (2**$i)) >> $i ))" == "1" ]]; then
-            if [ $DRYRUN = true ] ; then
-                echo "${tests[$i]}"
-            else
+            if [[ "$DRYRUN" == "false" ]] ; then
                 ${tests[$i]}
+            else
+                echo "${tests[$i]}"
             fi
         fi
     done
@@ -580,12 +585,16 @@ for TEST_ID in $(echo "10 11 12 13 20 30 40 50 60 70 71 72 73 100 101 102"); do
 done
 
 # Results
-failed=$(cat "$FAILS" | wc -l)
+if [[ "$DRYRUN" == "false" ]]; then
+    failed=$(cat "$FAILS" | wc -l)
+else
+    failed="0"
+fi
 
 echo "-------------------------------------"
 echo "            Fails Summary            "
 echo "-------------------------------------"
 echo -e "status\ttest-id\texit code / desc."
-cat "$FAILS"
+[[ "$DRYRUN" == "false" ]] && cat "$FAILS"
 
 exit "$failed"
