@@ -106,7 +106,7 @@ jobs:
             fi
 
             conda install --offline -y "${bitextor_pkg_prefix}/$bitextor_pkg"
-            conda update -y --only-deps # Necessary in order to install dependencies from local builds
+            conda update -y --only-deps bitextor # Necessary in order to install dependencies from local builds
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
