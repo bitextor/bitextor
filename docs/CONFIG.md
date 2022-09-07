@@ -176,7 +176,7 @@ After crawling, the downloaded webs are processed to extract clean text, detect 
 After plain text extracion, the extracted data is sharded via [giashard](https://github.com/paracrawl/giashard) in order to create balanced jobs.
 Crawled websites and WARCs are distributed in shards for a more balanced processing, where each shard contains one or more complete domain(s).
 Shards in turn are split into batches of specified size to keep memory consumption in check.
-Document alignemnt works within shards, i.e. all documents in a shard will be compared for document alignment.
+Document alignment works within shards, i.e. all documents in a shard will be compared for document alignment.
 
 The following set of option define how that process is carried out.
 
@@ -234,7 +234,7 @@ Sharding options:
 
 ## Sentence splitting
 
-By default a Python port of [Moses `split-sentences.perl`](https://pypi.org/project/sentence-splitter/) will be used for sentence splitting. This is recommened even without language support, since it is possible to provide custom non-breaking prefixes. External sentence splitter can by used via `sentence-splitters` parameter (less efficient).
+By default a Python wrapper of [Loomchild Segment](https://github.com/bitextor/loomchild-segment-py) will be used for sentence splitting.. This is recommened even without language support, since it is possible to provide custom non-breaking prefixes. External sentence splitter can by used via `sentence-splitters` parameter (less efficient).
 
 Custom sentence splitters must read plain text documents from standard input and write one sentence per line to standard output.
 

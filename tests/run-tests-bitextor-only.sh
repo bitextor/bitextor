@@ -100,40 +100,32 @@ wait
 # MT (id >= 10)
 ## MT (en-fr)
 (
-    TEST_ID="10"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    init_test "10"
 
-    mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=True tmx=True ${BITEXTOR_EXTRA_ARGS} \
-        &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd > /dev/null
+        &> "${WORK}/reports/${TEST_ID}.report"
 
-    annotate_and_echo_info_wrapper
+    finish_test
 ) &
 
 # Dictionary-based (id >= 20)
 ## Use dictionary pipeline (en-fr)
 (
-    TEST_ID="20"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    init_test "20"
 
-    mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" dataDir="${WORK}/data/${TEST_ID}" \
             transientDir="${TRANSIENT_DIR}" warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" \
             shards=1 batches=512 lang1=en lang2=fr documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" \
             sentenceAligner="hunalign" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-        &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd > /dev/null
+        &> "${WORK}/reports/${TEST_ID}.report"
 
-    annotate_and_echo_info_wrapper
+    finish_test
 ) &
 
 wait
@@ -141,59 +133,47 @@ wait
 # MT and dictionary-based (id >= 60)
 ## Combine MT and dictionary (en-fr)
 (
-    TEST_ID="60"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    init_test "60"
 
-    mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
-        &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd > /dev/null
+        &> "${WORK}/reports/${TEST_ID}.report"
 
-    annotate_and_echo_info_wrapper
+    finish_test
 ) &
 
 # Other options (id >= 100)
 ## MT and W2P with FTFY (en-fr)
 (
-    TEST_ID="100"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    init_test "100"
 
-    mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" sentenceAligner="bleualign" \
             deferred=False ftfy=True tmx=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
-        &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd > /dev/null
+        &> "${WORK}/reports/${TEST_ID}.report"
 
-    annotate_and_echo_info_wrapper
+    finish_test
 ) &
 ## MT and docalign / segalign threshold and deduped (en-fr)
 (
-    TEST_ID="101"
-    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+    init_test "101"
 
-    mkdir -p "${TRANSIENT_DIR}" && \
-    pushd "${TRANSIENT_DIR}" > /dev/null && \
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 deferred=False tmx=True deduped=True ${BITEXTOR_EXTRA_ARGS} \
-        &> "${WORK}/reports/${TEST_ID}.report" && \
-    popd > /dev/null
+        &> "${WORK}/reports/${TEST_ID}.report"
 
-    annotate_and_echo_info_wrapper
+    finish_test
 ) &
 
 wait

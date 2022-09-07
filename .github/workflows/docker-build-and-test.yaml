@@ -1,99 +1,52 @@
-name: Intensive tests with docker
+name: Build and test docker environment
 
 on:
-   schedule:
-      - cron: '0 3 * * 0'
-   workflow_dispatch:
-      inputs:
-         docker_tag:
-            description: 'Tag which will be looked for'
-            required: false
-            default: 'edge'
-         create_build:
-            type: boolean
-            description: 'Create build instead of downloading an image'
-            default: true
-         build_ref:
-            description: 'Ref to use when local build is created (i.e. branch, tag or commit)'
-            default: 'master'
-         test_id:
-            description: 'Run specific test ID'
-            required: false
-            default: 'all'
-            type: choice
-            options:
-               - 'all'
-               - '0x01'
-               - '0x02'
-               - '0x04'
-               - '0x08'
-               - '0x10'
-               - '0x20'
-               - '0x40'
-               - '0x80'
+   push:
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
+   pull_request:
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
 
 env:
    WORK: ${{ github.workspace }}
    WORK_DOCKER: '/home/docker'
-   TEST_ID: ${{ github.event.inputs.test_id || 'all' }}
-   DOCKER_IMAGE_TAG: ${{ format('bitextor/bitextor:{0}', github.event.inputs.docker_tag || 'edge') }}
-   CREATE_BUILD: ${{ github.event.inputs.create_build || 'true' }}
+   DOCKER_IMAGE_NAME: 'bitextor/bitextor'
 
 jobs:
-   tests:
-      name: ${{ matrix.name }}
+   docker_build_testing:
+      name: Build and testing
       runs-on: ubuntu-20.04
       timeout-minutes: 360
-      strategy:
-         fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
-         matrix:
-            include:
-               - name: Tests MT
-                 test_id: "0x01"
-               - name: Tests dictionary based
-                 test_id: "0x02"
-               - name: Tests generate dictionary
-                 test_id: "0x04"
-               - name: Tests generate bicleaner model
-                 test_id: "0x08"
-               - name: Tests generate dictionary and bicleaner model
-                 test_id: "0x10"
-               - name: Tests combining dictionaries and MT
-                 test_id: "0x20"
-               - name: Tests neural
-                 test_id: "0x40"
-               - name: Other tests
-                 test_id: "0x80"
       steps:
       -  uses: actions/checkout@v3
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          with:
             submodules: 'recursive'
-            ref: ${{ env.BUILD_REF }}
+      -  name: Docker image tag
+         id: image_tag
+         run: |
+            # Provided name and short SHA
+            tag="${{ env.DOCKER_IMAGE_NAME }}:${GITHUB_SHA:0:7}"
+
+            echo "Tag: $tag"
+            echo "::set-output name=tag::$tag"
       -  name: Set up Docker Buildx
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          uses: docker/setup-buildx-action@v2
       -  name: Test docker
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             docker pull hello-world > /dev/null
             docker run --rm hello-world > /dev/null
       -  name: Build image
-         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
-            docker build --rm --tag "$DOCKER_IMAGE_TAG" .
-      -  name: Pull image
-         if: ${{ env.CREATE_BUILD == 'false' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
-         run: |
-            docker pull "$DOCKER_IMAGE_TAG"
+            docker build --rm --tag "${{ steps.image_tag.outputs.tag }}" .
       -  name: Info
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             df -h
             docker image ls -a --digests || >&2 echo "WARNING: could not run 'docker image ls'"
             docker buildx du --verbose || >&2 echo "WARNING: could not run 'docker buildx du'"
       -  name: Run
-         if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
             mkdir "${WORK}/docker-volume"
 
@@ -104,8 +57,8 @@ jobs:
                -v "${WORK}/docker-volume:${WORK_DOCKER}/volume" \
                --name bitextor \
                --entrypoint /bin/bash --rm \
-               "${DOCKER_IMAGE_TAG}" \
-               -c 'bitextor/tests/run-tests.sh -t ${{ matrix.test_id }} -j 4; \
+               "${{ steps.image_tag.outputs.tag }}" \
+               -c 'bitextor/tests/run-tests-min.sh -j 4; \
                    cp -f '"${WORK_DOCKER}/data/fails.log"' '"${WORK_DOCKER}/volume"' && \
                    rm -rf '"${WORK_DOCKER}/volume/reports"' && \
                    cp -r '"${WORK_DOCKER}/reports"' '"${WORK_DOCKER}/volume"' && \

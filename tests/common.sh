@@ -90,6 +90,7 @@ download_bicleaner_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${langs}.tar.gz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
+        ln -s "${output}/${langs}/${langs}.yaml" "${output}/${langs}/${langs}.yaml.classic" # Models are shared and parallel instances might break
     fi
 }
 
@@ -104,6 +105,7 @@ download_bicleaner_ai_model()
     if [ ! -f "${output_file}" ]; then
         wget -q "${base}/${flavour}-${langs}.tgz" -P "${output}"
         tar xzf "${output_file}" -C "${output}"
+        ln -s "${output}/${langs}" "${output}/${langs}.ai" # Models are shared and parallel instances might break
     fi
 }
 
@@ -190,4 +192,21 @@ create_integrity_report()
             | grep -E -v "/[.]snakemake(/|$)" \
             | xargs -I{} bash -c 'source "'${DIR}'/common.sh"; h=$(get_hash "{}"); echo "{}: ${h}"' >> "${INTEGRITY_REPORT}"
     done
+}
+
+init_test()
+{
+    # Export these variables to the global scope
+    TEST_ID="$1"
+    TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+
+    mkdir -p "${TRANSIENT_DIR}"
+    pushd "${TRANSIENT_DIR}" > /dev/null
+}
+
+finish_test()
+{
+    annotate_and_echo_info_wrapper
+
+    popd > /dev/null
 }

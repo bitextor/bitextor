@@ -60,11 +60,8 @@ rm -f "${WORK}/output_reference/run-deferred-tests.tgz"
 
 # MT (id >= 10)
 ## MT (en-el)
-TEST_ID="10"
-TRANSIENT_DIR="${WORK}/transient/${TEST_ID}"
+init_test "10"
 
-mkdir -p "${TRANSIENT_DIR}" && \
-pushd "${TRANSIENT_DIR}" > /dev/null && \
 ${BITEXTOR} \
   --config permanentDir="${WORK}/permanent/${TEST_ID}" \
     dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \

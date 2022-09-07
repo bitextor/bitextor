@@ -6,24 +6,12 @@ on:
    workflow_dispatch:
       inputs:
          conda_package:
-            description: 'Package which will be installed'
+            description: 'Package from repo. Syntax: pkg[==version[=build]]'
             required: false
             default: 'bitextor'
-            type: choice
-            options:
-               - 'bitextor'
-               - 'bitextor-nightly'
-         conda_version:
-            description: 'Version which will be looked for'
-            required: false
-            default: ''
-         conda_build:
-            description: 'Build which will be looked for'
-            required: false
-            default: ''
          create_build:
             type: boolean
-            description: 'Create build instead of downloading last package available'
+            description: 'Create build (i.e. do not pull pkg from repo)'
             default: true
          build_ref:
             description: 'Ref to use for local build (i.e. branch, tag or commit)'
@@ -55,7 +43,7 @@ jobs:
    tests:
       name: ${{ matrix.name }}
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 360
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
          matrix:
@@ -88,45 +76,48 @@ jobs:
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v3
-         if: ${{ env.CREATE_BUILD }}
+         if: ${{ env.CREATE_BUILD == 'true' }}
          with:
             submodules: 'recursive'
             ref: ${{ env.BUILD_REF }}
       -  name: Create Bitextor conda build
-         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
             ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
       -  name: Install Bitextor locally
-         if: ${{ env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
-            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+            bitextor_pkg_prefix="$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64"
+            bitextor_pkg=$(ls "$bitextor_pkg_prefix" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            conda install -y "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64/$bitextor_package"
-            conda update -y --all
+            if [[ -z "$bitextor_pkg" ]]; then
+               >&2 echo "ERROR: could not find the package"
+
+               if [[ ! -d "$bitextor_pkg_prefix" ]]; then
+                  >&2 echo "ERROR: dir '$bitextor_pkg_prefix' does not exist"
+               else
+                  ls "$bitextor_pkg_prefix"
+               fi
+
+               exit 1
+            fi
+
+            conda install --offline -y "${bitextor_pkg_prefix}/$bitextor_pkg"
+            conda update -y --only-deps bitextor # Necessary in order to install dependencies from local builds
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Install Bitextor from repo
-         if: ${{ !env.CREATE_BUILD && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
+         if: ${{ env.CREATE_BUILD == 'false' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |
-            v="${{ env.CONDA_PACKAGE }}"
-
-            if [[ "${{ github.event.inputs.conda_version }}" != "" ]]; then
-               v="${v}=${{ github.event.inputs.conda_version }}"
-
-               if [[ "${{ github.event.inputs.conda_build }}" != "" ]]; then
-                  v="${v}=${{ github.event.inputs.conda_build }}"
-               fi
-            fi
-
-            conda install -y "$v"
+            conda install -y "${{ env.CONDA_PACKAGE }}"
       -  name: Run tests
          id: tests
          if: ${{ env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id }}
          run: |
-            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK"
+            "${CONDA_PREFIX}/bitextor/tests/run-tests.sh" -t ${{ matrix.test_id }} -w "$WORK" -j 4
       -  name: Print log of tests which failed
          # https://github.com/actions/runner/issues/1173
          #if: ${{ steps.tests.conclusion != 'success' }}
@@ -155,7 +146,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
             fi
       -  name: Upload sent.gz files (artifacts)
          if: ${{ always() }}

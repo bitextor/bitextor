@@ -5,12 +5,10 @@ on:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
    pull_request:
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
 
 env:
    WORK: ${{ github.workspace }}
@@ -19,7 +17,7 @@ jobs:
    build_and_testing:
       name: Build and testing Bitextor only
       runs-on: ubuntu-20.04
-      timeout-minutes: 1440
+      timeout-minutes: 360
       steps:
       -  name: Install required linux packages
          run: |
@@ -57,7 +55,7 @@ jobs:
       -  name: Compiling bitextor and submodules
          run: |
             mkdir build_cmake && cd build_cmake
-            cmake -DSKIP_MGIZA=ON -DCMAKE_INSTALL_PREFIX=/usr ..
+            cmake -DCMAKE_INSTALL_PREFIX=/usr ..
             make -j
             sudo make install
       -  name: Run tests
@@ -93,7 +91,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
                exit 1
             fi
       -  name: Upload sent.gz files (artifacts)

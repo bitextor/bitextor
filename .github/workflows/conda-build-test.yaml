@@ -2,12 +2,13 @@ name: Build and test conda environment
 
 on:
    push:
-      branches:
-         - master
       paths-ignore:
          - '**.md'
          - 'docs/**'
-         - 'img/**'
+   pull_request:
+      paths-ignore:
+         - '**.md'
+         - 'docs/**'
 
 env:
    WORK: ${{ github.workspace }}
@@ -16,7 +17,7 @@ jobs:
    conda_build_testing:
       name: Build and testing
       runs-on: ubuntu-20.04
-      timeout-minutes: 300
+      timeout-minutes: 360
       defaults:
          run:
             shell: bash -l {0} # Necessary for https://github.com/conda-incubator/setup-miniconda
@@ -39,10 +40,23 @@ jobs:
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
 
-            bitextor_package=$(ls "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
+            bitextor_pkg_prefix="$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64"
+            bitextor_pkg=$(ls "$bitextor_pkg_prefix" | grep ^bitextor.*[.]tar[.]bz2$ | sort -r | head -n 1)
 
-            conda install -y "$CONDA_PREFIX/../../envs/bitextor-pkg-build/conda-bld/linux-64/$bitextor_package"
-            conda update -y --all
+            if [[ -z "$bitextor_pkg" ]]; then
+               >&2 echo "ERROR: could not find the package"
+
+               if [[ ! -d "$bitextor_pkg_prefix" ]]; then
+                  >&2 echo "ERROR: dir '$bitextor_pkg_prefix' does not exist"
+               else
+                  ls "$bitextor_pkg_prefix"
+               fi
+
+               exit 1
+            fi
+
+            conda install --offline -y "${bitextor_pkg_prefix}/$bitextor_pkg"
+            conda update -y --only-deps bitextor # Necessary in order to install dependencies from local builds
             command -v "bitextor" || \
                (>&2 echo "Binary 'bitextor' not available"; exit 1)
       -  name: Run tests
@@ -78,7 +92,7 @@ jobs:
                   echo ""
                done < "${WORK}/data/fails.log"
             else
-               >&2 echo "ERROR: could not find the file which contain the fails, and should exist"
+               >&2 echo "ERROR: could not find the file with the detailed fails"
                exit 1
             fi
       -  name: Upload sent.gz files (artifacts)
