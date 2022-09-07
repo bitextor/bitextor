@@ -199,6 +199,7 @@ except:
     pass
 
 DIC = return_dict_value_if_key(config, "dic", None)
+DIC_GENERATE = return_dict_value_if_key(config, "generateDic", False)
 
 #################################################################
 # SEGALIGN
@@ -279,7 +280,7 @@ if BIROAMER:
 
     if "biroamerImproveAlignmentCorpus" in config:
         BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
-if not BICLEANER_GENERATE_MODEL:
+if not BICLEANER_GENERATE_MODEL and not DIC_GENERATE:
     BICLEANER_TRAINING_CORPUS_PREFIX = []
     BICLEANER_AI_MONO_CORPUS_PREFIX = []
     BICLEANER_AI_DEV_CORPUS_PREFIX = []
