@@ -280,7 +280,7 @@ if BIROAMER:
 
     if "biroamerImproveAlignmentCorpus" in config:
         BIROAMER_ALIGNMENT_CORPUS = f"-a {config['biroamerImproveAlignmentCorpus']}"
-if not BICLEANER_GENERATE_MODEL and not DIC_GENERATE:
+if not BICLEANER_GENERATE_MODEL:
     BICLEANER_TRAINING_CORPUS_PREFIX = []
     BICLEANER_AI_MONO_CORPUS_PREFIX = []
     BICLEANER_AI_DEV_CORPUS_PREFIX = []
@@ -1401,10 +1401,12 @@ rule bicleaner_train_model_classic:
     input:
         corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
         corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-        e2f=f"{DIC}.lex.e2f.gz",
-        f2e=f"{DIC}.lex.f2e.gz",
-        vcb1=f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
-        vcb2=f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+        # 'optional_str_input' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
+        #   will trigger this rule ("reason: Input files updated by another job") even if the output already exists
+        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL),
+        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL),
+        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
+        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
     output:
         model=f"{BICLEANER_MODEL}.classic",
     params:
