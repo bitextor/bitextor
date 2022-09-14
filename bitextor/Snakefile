@@ -235,6 +235,7 @@ BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMon
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
 BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
+BICLEANER_MODEL_FINAL = f"{TMPDIR}/{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}"
 
 if BICLEANER:
     is_flavour_ai = BICLEANER_FLAVOUR == "ai"
@@ -245,8 +246,8 @@ if BICLEANER:
         # Get directory path from bicleaner model path
         BICLEANER_MODEL = '/'.join(BICLEANER_MODEL.split('/')[:-1])
 
-    if path_exists(BICLEANER_MODEL, f=path_exists_f) and not path_exists(f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}", f=path_exists_f):
-        os.symlink(f"{BICLEANER_MODEL}", f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}")
+    if path_exists(BICLEANER_MODEL, f=path_exists_f) and not path_exists(BICLEANER_MODEL_FINAL", f=path_exists_f):
+        os.symlink(BICLEANER_MODEL, BICLEANER_MODEL_FINAL)
 
     # BICLEANER_MODEL will be a directory if is_flavour_ai else will be a file
 
@@ -1500,13 +1501,13 @@ rule bicleaner:
     """
     input:
         bifixer=rules.bifixer.output if BIFIXER else rules.bifixer.input.segalign,
-        model=f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}",
+        model=BICLEANER_MODEL_FINAL,
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         threads=THREADS["bicleaner"],
         parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
-        metadata_file=f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else f"{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}"
+        metadata_file=f"{BICLEANER_MODEL_FINAL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL_FINAL
     threads: JOB_THREADS["bicleaner"]
     shell:
         """
