@@ -146,7 +146,7 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):
                     sentences += f"{sentences_wo_paragraphs[idx]}\t" \
-                                 f"p{paragraph_id}/{len(content)}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
+                                 f"p{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
         else:
             content = content.strip().replace("\t", " ")
             content = '\n'.join([c.strip() for c in content.split('\n')])

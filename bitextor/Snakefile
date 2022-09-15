@@ -235,7 +235,7 @@ BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMon
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
 BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
-BICLEANER_MODEL_FINAL = f"{TMPDIR}/{BICLEANER_MODEL}.{BICLEANER_FLAVOUR}"
+BICLEANER_MODEL_FINAL = f"{TMPDIR}/{os.path.dirname(os.path.abspath(os.path.expanduser(BICLEANER_MODEL)))[1:]}.{BICLEANER_FLAVOUR}"
 
 if BICLEANER:
     is_flavour_ai = BICLEANER_FLAVOUR == "ai"
