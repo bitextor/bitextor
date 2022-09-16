@@ -82,12 +82,18 @@ oparser.add_argument("--prune-type", choices={"words", "chars"}, default="words"
                      help="Prune sentences either by words or characters")
 oparser.add_argument("--dont-filter", action="store_true",
                      help="By default, sentences which are detected to be very noisy or have very bad quality are discarded")
-oparser.add_argument("--paragraph-col", type=int, default=-1,
-                     help="Paragraph identification column. The provided value has to be >= 1 in order to be processed")
+oparser.add_argument("--process-paragraphs", action="store_true",
+                     help="Paragraph identification, starting in 0, is expected to be in the second column of the input file")
+oparser.add_argument("--propagate-metadata", action="store_true",
+                     help="All columns, starting from 2nd, will be propagated. If --process-paragraphs is set, columns starting"
+                          " from 3rd column will be propagated")
 
 options = oparser.parse_args()
 
 splitter = options.splitter
+process_paragraphs = options.process_paragraphs
+propagate_metadata = options.propagate_metadata
+
 splitter_func = lambda s: s.split('\n')
 
 # Get splitter
@@ -130,17 +136,12 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
             skip = True
 
         if not skip:
-            paragraph_col = options.paragraph_col
-            process_paragraphs = paragraph_col > 0
             content = content.split("\n")
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
             for sent_idx, sentence in enumerate(content, 1):
                 column = sentence.split('\t')
                 paragraph_text = column[0].strip()
-
-                # TODO only paragraph column is taken into account. The other optional columns are ignored and not included in the results
-                #  but we might want to propagate these columns in the future
 
                 if process_paragraphs and len(column) == 1:
                     sentences += f"{paragraph_text}\tp-1s-1\n"
@@ -150,17 +151,19 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                     continue
 
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                         options.prune_threshold, not options.dont_filter, return_list=process_paragraphs)
+                                                         options.prune_threshold, not options.dont_filter, return_list=False)
+                suffix_offset = 2 if process_paragraphs else 1
+                suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
 
                 if process_paragraphs:
-                    paragraph_id = int(column[paragraph_col]) + 1 # Start at 1
+                    paragraph_id = int(column[1]) + 1 # Start at 1
 
                     # Add the paragraph data to the splitted sentences
                     for idx in range(len(sentences_wo_paragraphs)):
-                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
+                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}{suffix}"
                 else:
-                    if sentences_wo_paragraphs.strip() != '':
-                        sentences += sentences_wo_paragraphs
+                    for idx in range(len(sentences_wo_paragraphs)):
+                        sentences += f"{sentences_wo_paragraphs[idx]}{suffix}"
 
             sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
 

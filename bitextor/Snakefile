@@ -891,7 +891,7 @@ rule split:
     params:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
-        paragraphs='--paragraph-col 1' if PARAGRAPH_IDENTIFICATION else '',
+        paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
         threads=THREADS["split"],
     threads: JOB_THREADS["split"]
     shell:
