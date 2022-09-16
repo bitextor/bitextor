@@ -31,6 +31,13 @@ TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
 
+# Create directories
+for f in (DATADIR, TRANSIENT, PERMANENT, TMPDIR):
+    try:
+        os.makedirs(f)
+    except FileExistsError:
+        pass
+
 LANGS = set()
 
 # the only scenario where config won't have LANG1 and LANG2 is when the workflow is monolingual,
@@ -193,11 +200,6 @@ if "translationDirection" in config and config["translationDirection"] == f"{LAN
 # dic
 # snakemake/include/dic-generation
 
-try:
-    os.makedirs(TMPDIR)
-except:
-    pass
-
 DIC = return_dict_value_if_key(config, "dic", None)
 DIC_GENERATE = return_dict_value_if_key(config, "generateDic", False)
 
@@ -235,7 +237,6 @@ BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMon
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
 BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
-BICLEANER_MODEL_FINAL = f"{TMPDIR}/{os.path.dirname(os.path.abspath(os.path.expanduser(BICLEANER_MODEL)))[1:]}.{BICLEANER_FLAVOUR}"
 
 if BICLEANER:
     is_flavour_ai = BICLEANER_FLAVOUR == "ai"
@@ -245,9 +246,6 @@ if BICLEANER:
     if is_flavour_ai:
         # Get directory path from bicleaner model path
         BICLEANER_MODEL = '/'.join(BICLEANER_MODEL.split('/')[:-1])
-
-    if path_exists(BICLEANER_MODEL, f=path_exists_f) and not path_exists(BICLEANER_MODEL_FINAL, f=path_exists_f):
-        os.symlink(BICLEANER_MODEL, BICLEANER_MODEL_FINAL)
 
     # BICLEANER_MODEL will be a directory if is_flavour_ai else will be a file
 
@@ -893,7 +891,7 @@ rule split:
     params:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
-        paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
+        paragraphs='--paragraph-col 1' if PARAGRAPH_IDENTIFICATION else '',
         threads=THREADS["split"],
     threads: JOB_THREADS["split"]
     shell:
@@ -972,7 +970,7 @@ rule custom_translate:
                 | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
 
             para_nolines=$(cat "{params.paragraphs_file}" | base64 -d \
-                | grep -E "^p[0-9]+/[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+                | grep -E "^p[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
 
             if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
                 >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
@@ -1395,101 +1393,96 @@ rule aggregate_bifixer:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-rule bicleaner_train_model_classic:
-    """
-    Train bicleaner model (flavour: classic)
-    """
-    input:
-        corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
-        corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-        # 'optional_str_input' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
-        #   will trigger this rule ("reason: Input files updated by another job") even if the output already exists
-        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL),
-        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL),
-        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
-        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
-    output:
-        model=f"{BICLEANER_MODEL}.classic",
-    params:
-        training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
-        # Bicleaner
-        classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
-        model=BICLEANER_MODEL,
-    shell:
+if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
+    rule bicleaner_train_model:
         """
-        echo "Training corpus: {params.training_corpus}"
-        mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
-        paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
-
-        {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
-            --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
-            -F {input.vcb2} -c {params.classifier} -m {params.model} --classifier_type random_forest \
-            --seed 71213
-
-        ln -s "{params.model}" "{output.model}"
+        Train bicleaner model (flavour: classic)
         """
+        input:
+            corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
+            corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
+            # 'optional_str_input' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
+            #   will trigger this rule ("reason: Input files updated by another job") even if the output already exists
+            e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL),
+            f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL),
+            vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
+            vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
+        output:
+            model=BICLEANER_MODEL,
+        params:
+            training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
+            classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
+        shell:
+            """
+            echo "Training corpus: {params.training_corpus}"
+            mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
+            paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
 
+            {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
+                --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
+                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
+                --seed 71213
+            """
 
-rule bicleaner_train_model_ai:
-    """
-    Train bicleaner model (flavour: ai)
-    """
-    input:
-        corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
-        corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-        mono_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
-        mono_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
-        dev_corpus_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
-        dev_corpus_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
-    output:
-        model=f"{BICLEANER_MODEL}.ai",
-    params:
-        training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
-        tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
-        dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
-        mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
-        metadata_dir=BICLEANER_MODEL,
-        ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
-        model=BICLEANER_MODEL,
-    shell:
+if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
+    rule bicleaner_train_model:
         """
-        echo "Training corpus: {params.training_corpus}"
-        mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
-        paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
-
-        # Target lang frequency
-        echo "Frequency file (lang={LANG2}): {params.tfreq}"
-        zcat {input.mono_l2} \
-            | {WORDTOK2} \
-            | awk '{{print tolower($0)}}' \
-            | tr ' ' '\n' \
-            | LC_ALL=C sort | uniq -c \
-            | LC_ALL=C sort -nr \
-            | grep -v "[[:space:]]*1" \
-            | pigz -c > {params.tfreq}
-
-        # Dev corpus
-        echo "Dev corpus: {params.dev_corpus}"
-        paste <(zcat {input.dev_corpus_l1}) <(zcat {input.dev_corpus_l2}) > {params.dev_corpus}
-
-        # Mono
-        echo "Mono corpus: {params.mono_corpus}"
-
-        mono_l1_nolines=$(zcat {input.mono_l1} | wc -l)
-        mono_l2_nolines=$(zcat {input.mono_l2} | wc -l)
-        mono_min_nolines=$([[ $mono_l1_nolines -gt $mono_l2_nolines ]] && echo "$mono_l2_nolines" || echo "$mono_l1_nolines")
-
-        head -n $mono_min_nolines <(zcat {input.mono_l1}) > {params.mono_corpus}
-        head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
-
-        # Train
-        {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
-            -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
-            --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
-                mv {params.metadata_dir} {params.model}
-
-        ln -s "{params.model}" "{output.model}"
+        Train bicleaner model (flavour: ai)
         """
+        input:
+            corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
+            corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
+            mono_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
+            mono_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
+            dev_corpus_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
+            dev_corpus_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
+        output:
+            model=BICLEANER_MODEL,
+        params:
+            training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
+            tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
+            dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
+            mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
+            metadata_dir=BICLEANER_MODEL,
+            ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
+            model=BICLEANER_MODEL,
+        shell:
+            """
+            echo "Training corpus: {params.training_corpus}"
+            mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
+            paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
+
+            # Target lang frequency
+            echo "Frequency file (lang={LANG2}): {params.tfreq}"
+            zcat {input.mono_l2} \
+                | {WORDTOK2} \
+                | awk '{{print tolower($0)}}' \
+                | tr ' ' '\n' \
+                | LC_ALL=C sort | uniq -c \
+                | LC_ALL=C sort -nr \
+                | grep -v "[[:space:]]*1" \
+                | pigz -c > {params.tfreq}
+
+            # Dev corpus
+            echo "Dev corpus: {params.dev_corpus}"
+            paste <(zcat {input.dev_corpus_l1}) <(zcat {input.dev_corpus_l2}) > {params.dev_corpus}
+
+            # Mono
+            echo "Mono corpus: {params.mono_corpus}"
+
+            mono_l1_nolines=$(zcat {input.mono_l1} | wc -l)
+            mono_l2_nolines=$(zcat {input.mono_l2} | wc -l)
+            mono_min_nolines=$([[ $mono_l1_nolines -gt $mono_l2_nolines ]] && echo "$mono_l2_nolines" || echo "$mono_l1_nolines")
+
+            head -n $mono_min_nolines <(zcat {input.mono_l1}) > {params.mono_corpus}
+            head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
+
+            # Train
+            {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
+                -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
+                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
+                    mv {params.metadata_dir} {output.model}
+            """
 
 
 rule bicleaner:
@@ -1501,13 +1494,13 @@ rule bicleaner:
     """
     input:
         bifixer=rules.bifixer.output if BIFIXER else rules.bifixer.input.segalign,
-        model=BICLEANER_MODEL_FINAL,
+        model=BICLEANER_MODEL,
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         threads=THREADS["bicleaner"],
         parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
-        metadata_file=f"{BICLEANER_MODEL_FINAL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL_FINAL
+        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL
     threads: JOB_THREADS["bicleaner"]
     shell:
         """

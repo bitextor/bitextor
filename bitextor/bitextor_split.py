@@ -82,9 +82,8 @@ oparser.add_argument("--prune-type", choices={"words", "chars"}, default="words"
                      help="Prune sentences either by words or characters")
 oparser.add_argument("--dont-filter", action="store_true",
                      help="By default, sentences which are detected to be very noisy or have very bad quality are discarded")
-oparser.add_argument("--process-paragraphs", action="store_true",
-                     help="Once the sentence had been base64-decoded, the second column contains the paragraph "
-                          "identification which will be processed")
+oparser.add_argument("--paragraph-col", type=int, default=-1,
+                     help="Paragraph identification column. The provided value has to be >= 1 in order to be processed")
 
 options = oparser.parse_args()
 
@@ -119,39 +118,50 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
     for doc_idx, doc in enumerate(reader, 1):
         sentences = ""
         content = ""
+        doc = doc.strip()
+        skip = False
 
         try:
-            content = base64.b64decode(doc.strip()).decode("utf-8")
+            content = base64.b64decode(doc).decode("utf-8").strip(' \n')
         except UnicodeDecodeError:
-            logging.warning("unicode decoding error while processing doc #%d", doc_idx)
+            logging.error("Unicode decoding error: skipping document #%d", doc_idx)
 
-        if options.process_paragraphs:
-            content = content.rstrip().split("\n")
+            sentences = doc
+            skip = True
+
+        if not skip:
+            paragraph_col = options.paragraph_col
+            process_paragraphs = paragraph_col > 0
+            content = content.split("\n")
 
             # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
             for sent_idx, sentence in enumerate(content, 1):
-                paragraph = sentence.split("\t")
+                column = sentence.split('\t')
+                paragraph_text = column[0].strip()
 
-                if len(paragraph) == 1:
-                    sentences += f"{paragraph[0]}\tp-1s-1\n"
-                    logging.warning("could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'",
-                                    doc_idx, sent_idx)
+                # TODO only paragraph column is taken into account. The other optional columns are ignored and not included in the results
+                #  but we might want to propagate these columns in the future
+
+                if process_paragraphs and len(column) == 1:
+                    sentences += f"{paragraph_text}\tp-1s-1\n"
+
+                    logging.error("Could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'", doc_idx, sent_idx)
+
                     continue
 
-                paragraph_text = paragraph[0]
-                paragraph_id = int(paragraph[1]) + 1 # Start at 1
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                         options.prune_threshold, not options.dont_filter, return_list=True)
+                                                         options.prune_threshold, not options.dont_filter, return_list=process_paragraphs)
 
-                # Add the paragraph data to the splitted sentences
-                for idx in range(len(sentences_wo_paragraphs)):
-                    sentences += f"{sentences_wo_paragraphs[idx]}\t" \
-                                 f"p{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
-        else:
-            content = content.strip().replace("\t", " ")
-            content = '\n'.join([c.strip() for c in content.split('\n')])
-            sentences = split_segments(content, splitter_func, options.prune_type, options.prune_threshold, not options.dont_filter)
+                if process_paragraphs:
+                    paragraph_id = int(column[paragraph_col]) + 1 # Start at 1
 
-        sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
+                    # Add the paragraph data to the splitted sentences
+                    for idx in range(len(sentences_wo_paragraphs)):
+                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}\n"
+                else:
+                    if sentences_wo_paragraphs.strip() != '':
+                        sentences += sentences_wo_paragraphs
+
+            sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
 
         writer.write(f"{sentences}\n")
