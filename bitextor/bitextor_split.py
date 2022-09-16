@@ -151,7 +151,7 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                     continue
 
                 sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                         options.prune_threshold, not options.dont_filter, return_list=False)
+                                                         options.prune_threshold, not options.dont_filter, return_list=True)
                 suffix_offset = 2 if process_paragraphs else 1
                 suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
 
