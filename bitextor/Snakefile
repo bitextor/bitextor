@@ -1507,7 +1507,7 @@ rule bicleaner:
         parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
         slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
-            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
+            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
             | tr -d '\n')
 
         zcat {input.bifixer} \
