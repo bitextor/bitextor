@@ -244,6 +244,17 @@ def validate_args(config):
         if key not in config and 'default' in schema[key]:
             config[key] = schema[key]['default']
 
+    # cast dict values str to int
+    for key in ("parallelWorkers", "parallelJobs"):
+        if key not in config:
+            continue
+
+        try:
+            for k, v in config[key].items():
+                config[key][k] = int(v)
+        except ValueError as e:
+            generic_error(f"could not cast str to int: {key}")
+
     both_langs_specified = provided_in_config["lang1"] and provided_in_config["lang2"]
 
     if provided_in_config['crawler'] and config['crawler'] == 'heritrix':
