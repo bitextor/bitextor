@@ -101,10 +101,10 @@ def validate_args(config):
         'parallelJobs': {
             'type': 'dict',
             'allowed': [
-                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'bifixer', 'bicleaner'
             ],
             'valuesrules': {'type': 'integer', 'min': 1},
-            'meta': 'Snakemake parallel jobs running at once',
+            'meta': 'Max. snakemake parallel jobs running at once',
         },
         # verbose
         'verbose': {'type': 'boolean', 'default': False},
