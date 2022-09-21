@@ -253,7 +253,7 @@ def validate_args(config):
             for k, v in config[key].items():
                 config[key][k] = int(v)
         except ValueError as e:
-            generic_error(f"could not cast str to int: {key}")
+            generic_error(f"could not cast str to int: '{key}': {e}")
 
     both_langs_specified = provided_in_config["lang1"] and provided_in_config["lang2"]
 
