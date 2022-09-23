@@ -50,7 +50,7 @@ def split_segments(text, splitter_unary_func, prune_type="words", prune_threshol
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
-    
+
     if filter_bad_sentences:
         segments = [s for s in segments if filter_trash(s)]
 
@@ -161,7 +161,10 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
             suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
 
             if process_paragraphs:
-                paragraph_id = int(column[1]) + 1 # Start at 1
+                try:
+                    paragraph_id = int(column[1]) + 1 # Start at 1
+                except ValueError as e:
+                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}") from e
 
                 # Add the paragraph data to the splitted sentences
                 for idx in range(len(sentences_wo_paragraphs)):

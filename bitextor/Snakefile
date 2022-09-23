@@ -380,8 +380,21 @@ if "parallelJobs" in config:
 
 OUTPUT = []
 UNTIL = return_dict_value_if_key(config, "until", "")
+UNTIL_RULES_ALL_LANGS = ("crawl", "preprocess", "shard", "split", "tokenise") # All languages from LANGS
 
-if "until" not in config:
+if UNTIL not in UNTIL_RULES_ALL_LANGS:
+    # At some point, not all languages from LANGS will be taken into account but only LANG1 and LANG2
+
+    if len(LANGS) > 2:
+        # There are different languages to process, not only LANG1 and LANG2
+
+        # Warn about the fact that not all languages will be processed at some point
+        if not UNTIL:
+            snakemake.logger.logger.warning("Not all languages will be processed until the end of the pipeline")
+        else:
+            snakemake.logger.logger.warning(f"Not all languages will be processed until '{UNTIL}'")
+
+if not UNTIL: # config["until"] not provided -> run the whole pipeline
     OUTPUT = expand(
         "{permanent}/{lang1}-{lang2}.{output_file}.gz",
         permanent=PERMANENT,
@@ -432,6 +445,11 @@ elif UNTIL == "shard":
     OUTPUT = expand("{datadir}/shards/02.batches.{lang}", datadir=DATADIR, lang=LANGS)
 elif UNTIL == "split":
     OUTPUT = expand("{datadir}/shards/03.split.{lang}", datadir=DATADIR, lang=LANGS)
+elif UNTIL == "tokenise":
+    OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
+
+# TODO should we implement all languages provided in LANGS?
+# SRC_LANG and TRG_LANG dependent
 elif UNTIL == "translate":
     OUTPUT = f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}"
 elif UNTIL == "tokenise_trg":
@@ -441,8 +459,6 @@ elif UNTIL == "tokenise_src":
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}"
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
-elif UNTIL == "tokenise":
-    OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
 else:
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
@@ -1638,15 +1654,19 @@ rule filter:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-
-        zcat {input.f} \
-            | ( [[ "{BICLEANER}" == "True" ]] \
+        FILTER_BICLEANER_CMD="\
+            [[ '{BICLEANER}' == 'True' ]] \
                 && ({PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
                     --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header}; true) \
-                || cat ) \
-            | ( [[ "{ELRC}" == "True" ]] \
+                || cat"
+        ELRC_CMD="\
+            [[ '{ELRC}' == 'True' ]] \
                 && ({PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s; true) \
-                || cat ) \
+                || cat"
+
+        zcat {input.f} \
+            | eval "$FILTER_BICLEANER_CMD" \
+            | eval "$ELRC_CMD" \
             > {output}
 
         header=$(head -1 <(cat {output}) | tr -d '\n')
