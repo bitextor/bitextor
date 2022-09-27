@@ -113,6 +113,99 @@ def main_full():
     options.append(snakefile)
     snakemake.main(options)
 
+def wizard_configfile():
+    from bitextor.utils.args import validate_args
+    import json
+
+    config = {}
+
+    configfilename = ""
+
+    if len(argv) > 1:
+        configfilename = argv[1]
+    else:
+        while not configfilename:
+             configfilename = input("Enter the output config file path: ")
+    config["hosts"] = []
+    host = "123"
+    while host:
+        host=input("Enter a host to crawl; p.e. example.com, not http://example.com (press the Enter key if you don't want to crawl any more hosts): ")
+        if host:
+            if len(host)>4 and (host[:5] == "http:" or host[:6] == "https:"):
+                print("ERROR: that is a URL, not a host")
+                continue
+            else:
+                config["hosts"].append(host)
+        print("Queued hosts: " + str(config["hosts"]))
+
+    config["crawler"] = "wget"
+    config["permanentDir"]=input("Enter a path to store final data (permanent folder) [~/permanent]: ")
+    if not config["permanentDir"]:
+        config["permanentDir"]="~/permanent"
+
+    config["transientDir"]=input("Enter a path to store intermediate data (transient folder) [~/transient]: ")
+    if not config["transientDir"]:
+        config["transientDir"]="~/transient"
+
+    config["dataDir"]=input("Enter a path to store WARC data (data folder) [~/data]: ")
+    if not config["dataDir"]:
+        config["dataDir"]="~/data"
+
+    pair = ""
+    while "-" not in pair:
+        pair = input("Which language pair do you want to generate? [en-fr]: ")
+    if not pair:
+        pair = "en-fr"
+    config["lang1"] = pair.split('-')[0].lower()
+    config["lang2"] = pair.split('-')[1].lower()
+
+    config["documentAligner"] = ""
+    while not config["documentAligner"]:
+        config["documentAligner"] = input("Do you want to use the dictionary based document aligner or the translation based document aligner? Write 'dic' or 'mt': ")
+        if config["documentAligner"] == "dic":
+            config["documentAligner"] = "DIC"
+            config["dic"] = ""
+            while not config["dic"]:
+                config["dic"] = input("Enter the dictionary file path (there are some already available for download here https://github.com/bitextor/bitextor-data/releases/tag/bitextor-v1.0 ): ")
+            if not path.isfile(config["dic"]):
+                config["generateDic"] = True
+                config["initCorpusTrainingPrefix"] = [input("WARNING: provided dictionary file does not exist. Please, enter a corpus to train one: ")]
+                answer = "yes"
+                while answer.lower() == "yes" or answer.lower() == "y":
+                    answer = input("Do you want to use more corpora to train the dictionary?: ")
+                    if answer.lower() == "yes" or answer.lower() == "y":
+                        config["initCorpusTrainingPrefix"].append(input("Please, enter an additional training corpus: "))
+
+
+            config["sentenceAligner"] = "hunalign"
+
+        elif config["documentAligner"] == "mt":
+            config["documentAligner"] = "externalMT"
+            config["alignerCmd"] = input("Enter command line to translate documents for its alignment [cat -]: ")
+            if not config["alignerCmd"]:
+                config["alignerCmd"] = "cat -"
+            config["sentenceAligner"] = "bleualign"
+        else:
+            config["documentAligner"] = ""
+
+    config["bicleaner"] = False
+    answer = ""
+    while not answer:
+        answer = input("Do you want to use Bicleaner?: ")
+        answer = answer.lower()
+    if answer == "yes" or answer == "y":
+        config["bicleaner"] = True
+        config["bicleanerModel"] = ""
+        while config["bicleanerModel"] == "":
+            config["bicleanerModel"] = input("Provide a valid Bicleaner model path (you can download a pretrained one here https://github.com/bitextor/bicleaner-ai-data/releases/tag/v1.0 ): ")
+
+
+    valid, config = validate_args(config)
+
+    with open(configfilename, 'w') as fp:
+        json.dump(config, fp, indent=0, ensure_ascii=False)
+    print("File generated. Please, check https://github.com/bitextor/bitextor/blob/master/docs/CONFIG.md to add more advanced options and settings manually to the config file.")
+
 
 if __name__ == '__main__':
     main()
