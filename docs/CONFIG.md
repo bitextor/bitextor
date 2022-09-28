@@ -40,8 +40,8 @@ There are some optional parameters that allow for a finer control of the executi
 
 ```yaml
 until: preprocess
-parallelJobs: {translate: 1, docaling: 2, segaling: 2, bicleaner: 1}
-parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2, mgiza: 2}
+parallelJobs: {translate: 1, docaling: 2, segalign: 2, bicleaner: 1}
+parallelWorkers: {translate: 4, docaling: 8, segalign: 8, bicleaner: 2, mgiza: 2}
 profiling: True
 verbose: True
 ```

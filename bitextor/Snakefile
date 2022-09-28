@@ -11,6 +11,10 @@ from bitextor.utils.common import (
     get_snakemake_execution_mark,
     is_first_snakemake_execution,
     path_exists,
+    # TODO move cuda device functions to a separate file from common.py
+    allocate_cuda_visible_device,
+    initialize_persistent_dict,
+    allocate_cuda_devices_teardown,
 )
 
 valid, config = validate_args(config)
@@ -55,22 +59,6 @@ if "lang2" in config:
 
 PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 VERBOSE = config["verbose"]
-
-if VERBOSE and is_first_snakemake_execution(TMPDIR):
-    # provided config
-    sys.stderr.write("Config: \n")
-    pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
-    sys.stderr.write('\n')
-    # locale
-    sys.stderr.write("Locale: \n")
-    sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-    sys.stderr.write('\n')
-    # free storage
-    sys.stderr.write("Free storage: \n")
-    sys.stderr.write(subprocess.run(["df", "-h"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-    sys.stderr.write('\n')
-
-# TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
 #################################################################
 # CRAWLING
@@ -362,9 +350,19 @@ if "parallelWorkers" in config:
     for k in config["parallelWorkers"]:
         THREADS[k] = config["parallelWorkers"][k]
 
+        if THREADS[k] < 1:
+            snakemake.logger.logger.warning(f"Negative value in parallelWorkers['{k}']: value resets to 1")
+
+            THREADS[k] = 1
+
 if "parallelJobs" in config:
     for k in config["parallelJobs"]:
         JOB_THREADS[k] = config["parallelJobs"][k]
+
+        if JOB_THREADS[k] < 0:
+            snakemake.logger.logger.warning(f"Negative value in parallelJobs['{k}']: value resets to 0")
+
+            JOB_THREADS[k] = 0
 
         # Modify the snakemake resources if they were not provided
         job_resource_name = f"job_{k}"
@@ -411,9 +409,11 @@ if not UNTIL: # config["until"] not provided -> run the whole pipeline
             stats_file=STATS_FILES,
         )
     )
-    # this has to be added, because tokenisation rules are the last rules that don't need both shards
-    # otherwise snakemake waites for both shards be completed to continue
+
+    # We need to add these output files because tokenisation rules are the last rules that don't
+    # need both shards. Otherwise snakemake waites for both shards to be completed to continue
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
+
     if DOCALIGN == "externalMT":
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
     elif DOCALIGN in ("DIC", "NDA"):
@@ -448,7 +448,7 @@ elif UNTIL == "split":
 elif UNTIL == "tokenise":
     OUTPUT = expand("{datadir}/shards/05.tokenise.{lang}", datadir=DATADIR, lang=LANGS)
 
-# TODO should we implement all languages provided in LANGS?
+# TODO should we implement all languages provided in LANGS? They're not from this point forward
 # SRC_LANG and TRG_LANG dependent
 elif UNTIL == "translate":
     OUTPUT = f"{DATADIR}/shards/04.translate.{SRC_LANG}2{TRG_LANG}"
@@ -460,8 +460,16 @@ elif UNTIL == "tokenise_src":
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
 else:
+    # We need to add these output files because tokenisation rules are the last rules that don't
+    # need both shards. Otherwise snakemake waites for both shards to be completed to continue
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
-    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+
+    if DOCALIGN == "externalMT":
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+    elif DOCALIGN in ("DIC", "NDA"):
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
+
+
     if UNTIL == "docalign":
         OUTPUT.append(f"{TRANSIENT}/06_01.docalign.{SRC_LANG}_{TRG_LANG}")
     elif UNTIL == "segalign":
@@ -476,6 +484,7 @@ else:
 #################################################################
 # OTHER
 BASE64_FILTER_CMD = "cat"
+GPU_TOKENS_DIR = f"{TMPDIR}/gpu_tokens"
 
 if PARAGRAPH_IDENTIFICATION:
     BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
@@ -486,6 +495,38 @@ with open(get_snakemake_execution_mark(TMPDIR), "w"):
 
 shell.prefix("set -euo pipefail;")
 
+#################################################################
+### HANDLERS ####################################################
+
+onstart:
+    if VERBOSE:
+        # provided config
+        sys.stderr.write("Config: \n")
+        pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
+        sys.stderr.write('\n')
+        # locale
+        sys.stderr.write("Locale: \n")
+        sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+        sys.stderr.write('\n')
+        # environment variables
+        sys.stderr.write("Environment variables: \n")
+        sys.stderr.write(subprocess.run(["printenv"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+        sys.stderr.write('\n')
+        # free storage
+        sys.stderr.write("Free storage: \n")
+        sys.stderr.write(subprocess.run(["df", "-h"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
+        sys.stderr.write('\n')
+
+    # TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
+
+    # Initialize persistent dict
+    initialize_persistent_dict()
+
+onerror:
+    allocate_cuda_devices_teardown()
+
+onsuccess:
+    allocate_cuda_devices_teardown()
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -1164,6 +1205,8 @@ rule mt_matches:
         """
 
 
+doc_emb_matches_gpu_token = f"{GPU_TOKENS_DIR}/doc_emb_matches_{{shard}}_{{src_batch}}_{{trg_batch}}"
+
 rule doc_emb_matches:
     """
     Align documents using neural-document-aligner
@@ -1186,21 +1229,34 @@ rule doc_emb_matches:
         src_emb_name="emb.src",
         trg_emb_name="emb.trg",
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
+        gpu_ofile_token=temp(doc_emb_matches_gpu_token),
     threads: THREADS["docalign"]
-    shell:
-        """
-        mkdir -p {params.folder}
-        cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
-            <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
-            | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
-                {params.folder}/{params.trg_emb_name} {params.model} \
-                --docalign-strategy 'faiss' --weights-strategy 0 \
-                --merging-strategy 3 --results-strategy 0 \
-                --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
-                --output-with-idxs --paths-to-docs-are-base64-values \
-                --threshold {DOC_THRESHOLD} --logging-level 30 \
-                --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
-        """
+    resources:
+        job_docalign=JOB_THREADS["docalign"],
+    run:
+        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["docalign"])
+
+        shell(
+            f"""
+            mkdir -p {params.folder}
+            mkdir -p "$(dirname {params.gpu_ofile_token})"
+
+            export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
+
+            cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
+                <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
+                | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
+                    {params.folder}/{params.trg_emb_name} {params.model} \
+                    --docalign-strategy 'faiss' --weights-strategy 0 \
+                    --merging-strategy 3 --results-strategy 0 \
+                    --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
+                    --output-with-idxs --paths-to-docs-are-base64-values \
+                    --threshold {DOC_THRESHOLD} --logging-level 30 \
+                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
+
+            touch "{params.gpu_ofile_token}"
+            """
+        )
 
 
 ### SEGALIGN ####################################################
@@ -1275,6 +1331,8 @@ rule bleualign:
 
 
 # VECALIGN #####################################################
+vecalign_gpu_token = f"{GPU_TOKENS_DIR}/vecalign_{{shard}}_{{src_batch}}_{{trg_batch}}"
+
 rule vecalign:
     """
     Use vecalign to align sentences withing the matched documents
@@ -1301,31 +1359,41 @@ rule vecalign:
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
+        gpu_ofile_token=temp(vecalign_gpu_token),
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: THREADS["segalign"]
     resources:
         job_segalign=JOB_THREADS["segalign"],
-    shell:
-        """
-        mkdir -p "{params.folder}"
+    run:
+        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["segalign"])
 
-        cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
-            <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
-                | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
-                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
-                    --tmp-dir "{params.folder}" --nda-input-is-base64 \
-                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} --first-match-offset 1 \
-                    --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
-                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
-                    --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
-                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
-                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
-                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
-                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
-                | pigz -c > "{output}"
-        """
+        shell(
+            f"""
+            mkdir -p "{params.folder}"
+            mkdir -p "$(dirname {params.gpu_ofile_token})"
+
+            export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
+
+            cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
+                <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
+                    | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
+                    | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
+                        --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
+                        --tmp-dir "{params.folder}" --nda-input-is-base64 \
+                        --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} --first-match-offset 1 \
+                        --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
+                        --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
+                        --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
+                        --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
+                        --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
+                        --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
+                        --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
+                    | pigz -c > "{output}"
+
+            touch "{params.gpu_ofile_token}"
+            """
+        )
 
 
 ### FILTERING AND CLEANING ######################################
@@ -1519,6 +1587,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             """
 
 
+bicleaner_gpu_token = f"{GPU_TOKENS_DIR}/bicleaner_{{batch}}"
+
 rule bicleaner:
     """
     Compute bicleaner scores of the aligned sentence pairs
@@ -1533,25 +1603,36 @@ rule bicleaner:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
-        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL
+        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL,
+        gpu_ofile_token=temp(bicleaner_gpu_token),
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
-    shell:
-        """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
-        slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
-        text_fields=$(head -1 <(zcat {input.bifixer}) \
-            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
-            | tr -d '\n')
+    run:
+        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["bicleaner"])
 
-        zcat {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
-                -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
-                --score_only --header -q - - {input.model} \
-            | paste <(zcat {input.bifixer}) - \
-            | pigz -c > {output}
-        """
+        shell(
+            f"""
+            mkdir -p "$(dirname {params.gpu_ofile_token})"
+
+            export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
+
+            parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
+            slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
+            text_fields=$(head -1 <(zcat {input.bifixer}) \
+                | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
+                | tr -d '\n')
+
+            zcat {input.bifixer} \
+                | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
+                    -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
+                    --score_only --header -q - - {input.model} \
+                | paste <(zcat {input.bifixer}) - \
+                | pigz -c > {output}
+
+            touch "{params.gpu_ofile_token}"
+            """
+        )
 
 
 rule aggregate_bicleaner:
