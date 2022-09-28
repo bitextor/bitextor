@@ -311,7 +311,7 @@ PREVERTICALS = sorted(list(PREVERTICALS))
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
 # assign an ID to each directory and check their validity
-TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, file_desc="directories")
+TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, id_offset=len(DOMAIN_2_HOSTS), file_desc="directories")
 
 # assign an ID to each WARC and check that all WARCs exist
 TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
@@ -327,7 +327,7 @@ TARGET_2_CRAWLED_WARCS = dict([
 
 # group generated WARCs by directories
 TARGET_2_FROMDIR_WARCS = dict([
-    (dir_id, [f"{DATADIR}/warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
+    (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
 ])
 
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
@@ -711,7 +711,7 @@ rule dir2warc:
         and produce WARCs with the content of each directory
     """
     output:
-        f"{DATADIR}/warc/{{target}}.warc.gz",
+        f"{DATADIR}/generated_warc/{{target}}.warc.gz",
     params:
         directory=lambda wildcards: TARGET_2_DIRECTORIES[wildcards.target],
         output_warc=lambda wildcards: TARGET_2_FROMDIR_WARCS[wildcards.target],
