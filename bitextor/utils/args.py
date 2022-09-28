@@ -39,6 +39,17 @@ def isfile(field, value, error):
     elif not path_exists(value):
         error(field, f'{value} does not exist')
 
+def isdir(field, value, error):
+    if isinstance(value, list):
+        for element in value:
+            if not path_exists(element, True, os.path.isdir):
+                error(field, f'{element} path does not exist')
+    elif isinstance(value, dict):
+        for element in value:
+            if not path_exists(value[element], True,  os.path.isdir):
+                error(field, f'{value[element]} does not exist')
+    elif not path_exists(value, True,  os.path.isdir):
+        error(field, f'{value} does not exist')
 
 def isstrlist(field, value, error):
     if not isinstance(value, list):
@@ -101,10 +112,10 @@ def validate_args(config):
         'parallelJobs': {
             'type': 'dict',
             'allowed': [
-                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'bifixer', 'bicleaner'
+                'split', 'translate', 'tokenise', 'docalign', 'segalign', 'filter', 'sents'
             ],
             'valuesrules': {'type': 'integer', 'min': 1},
-            'meta': 'Max. snakemake parallel jobs running at once',
+            'meta': 'Snakemake parallel jobs running at once',
         },
         # verbose
         'verbose': {'type': 'boolean', 'default': False},
@@ -112,6 +123,8 @@ def validate_args(config):
         # TODO: check that one of these is specified?
         'hosts': {'type': 'list', 'dependencies': 'crawler'},
         'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
+        'directories': {'type': 'list', 'check_with': isdir},
+        'directoriesFile': {'type': 'string', 'check_with': isdir},
         'warcs': {'type': 'list', 'check_with': isfile},
         'warcsFile': {'type': 'string', 'check_with': isfile},
         'preverticals': {'type': 'list', 'check_with': isfile},
@@ -243,17 +256,6 @@ def validate_args(config):
 
         if key not in config and 'default' in schema[key]:
             config[key] = schema[key]['default']
-
-    # cast dict values str to int
-    for key in ("parallelWorkers", "parallelJobs"):
-        if key not in config:
-            continue
-
-        try:
-            for k, v in config[key].items():
-                config[key][k] = int(v)
-        except ValueError as e:
-            generic_error(f"could not cast str to int: {key}")
 
     both_langs_specified = provided_in_config["lang1"] and provided_in_config["lang2"]
 

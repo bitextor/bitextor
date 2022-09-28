@@ -9,8 +9,7 @@ from bitextor.utils.common import (
     duration_to_seconds,
     return_dict_value_if_key,
     get_snakemake_execution_mark,
-    is_first_snakemake_execution,
-    path_exists,
+    is_first_snakemake_execution
 )
 
 valid, config = validate_args(config)
@@ -30,13 +29,6 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
-
-# Create directories
-for f in (DATADIR, TRANSIENT, PERMANENT, TMPDIR):
-    try:
-        os.makedirs(f)
-    except FileExistsError:
-        pass
 
 LANGS = set()
 
@@ -200,8 +192,12 @@ if "translationDirection" in config and config["translationDirection"] == f"{LAN
 # dic
 # snakemake/include/dic-generation
 
+try:
+    os.makedirs(TMPDIR)
+except:
+    pass
+
 DIC = return_dict_value_if_key(config, "dic", None)
-DIC_GENERATE = return_dict_value_if_key(config, "generateDic", False)
 
 #################################################################
 # SEGALIGN
@@ -238,17 +234,6 @@ BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerPara
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
 BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
 
-if BICLEANER:
-    is_flavour_ai = BICLEANER_FLAVOUR == "ai"
-    path_exists_f=os.path.isdir if is_flavour_ai else os.path.isfile
-
-    # Create soft links based on the flavour if necessary
-    if is_flavour_ai:
-        # Get directory path from bicleaner model path
-        BICLEANER_MODEL = '/'.join(BICLEANER_MODEL.split('/')[:-1])
-
-    # BICLEANER_MODEL will be a directory if is_flavour_ai else will be a file
-
 ELRC = return_dict_value_if_key(config, "elrc", False, pos_value=True)
 TMX = return_dict_value_if_key(config, "tmx", False, pos_value=True)
 DEDUPED = return_dict_value_if_key(config, "deduped", False, pos_value=True)
@@ -268,11 +253,10 @@ if DEDUPED:
     OUTPUT_FILES.append("deduped.txt")
     STATS_FILES.append("deduped")
 if BIROAMER:
-    if TMX:
-        OUTPUT_FILES.append("not-deduped.roamed.tmx")
-
-    if DEDUPED:
+    if "deduped.tmx" in OUTPUT_FILES:
         OUTPUT_FILES.append("deduped.roamed.tmx")
+    else:
+        OUTPUT_FILES.append("not-deduped.roamed.tmx")
 
     if "biroamerMixFiles" in config and len(config["biroamerMixFiles"]) > 0:
         BIROAMER_MIX_FILES = " ".join(config["biroamerMixFiles"])
@@ -288,11 +272,14 @@ if not BICLEANER_GENERATE_MODEL:
 #################################################################
 # DATASOURCES
 HOSTS = set()
+DIRECTORIES = set()
 WARCS = set()
 PREVERTICALS = set()
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
+if "directories" in config:
+    DIRECTORIES = DIRECTORIES.union(config["directories"])
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
 if "preverticals" in config:
@@ -301,6 +288,10 @@ if "hostsFile" in config:
     with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
         for line in f:
             HOSTS.add(line.strip())
+if "directoriesFile" in config:
+    with open_xz_or_gzip_or_plain(config["directoriesFile"]) as f:
+        for line in f:
+            DIRECTORIES.add(line.strip())
 if "warcsFile" in config:
     with open_xz_or_gzip_or_plain(config["warcsFile"]) as f:
         for line in f:
@@ -312,17 +303,21 @@ if "preverticalsFile" in config:
 
 # sort in order to avoid different results across executions
 HOSTS = sorted(list(HOSTS))
+DIRECTORIES = sorted(list(DIRECTORIES))
 WARCS = sorted(list(WARCS))
 PREVERTICALS = sorted(list(PREVERTICALS))
 
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
+# assign an ID to each directory and check their validity
+TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, file_desc="directories")
+
 # assign an ID to each WARC and check that all WARCs exist
-TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, file_desc="WARCs")
+TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
 
 # assign an ID to each prevertical and check that all preverticals exist
-TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS), file_desc="preverticals")
+TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS)+len(TARGET_2_DIRECTORIES), file_desc="preverticals")
 
 # group crawled WARCs by domains
 TARGET_2_CRAWLED_WARCS = dict([
@@ -330,8 +325,13 @@ TARGET_2_CRAWLED_WARCS = dict([
     for (domain, hosts) in DOMAIN_2_HOSTS.items()
 ])
 
+# group generated WARCs by directories
+TARGET_2_FROMDIR_WARCS = dict([
+    (dir_id, [f"{DATADIR}/warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
+])
+
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
-TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
+TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS, **TARGET_2_FROMDIR_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
@@ -349,13 +349,15 @@ THREADS = {
     "mgiza": 1,
 }
 JOB_THREADS = {
-    "split": 0,
-    "translate": 0,
-    "tokenise": 0,
-    "docalign": 0,
-    "segalign": 0,
-    "bifixer": 0,
-    "bicleaner": 0,
+    "split": 1,
+    "translate": 2,
+    "tokenise": 1,
+    "docalign": 1,
+    "segalign": 2,
+    "bifixer": 1,
+    "bicleaner": 1,
+    "filter": 1,
+    "sents": 1,
 }
 
 if "parallelWorkers" in config:
@@ -365,18 +367,6 @@ if "parallelWorkers" in config:
 if "parallelJobs" in config:
     for k in config["parallelJobs"]:
         JOB_THREADS[k] = config["parallelJobs"][k]
-
-        # Modify the snakemake resources if they were not provided
-        job_resource_name = f"job_{k}"
-
-        if job_resource_name not in workflow.global_resources:
-            # Since we want to run as parallel jobs as configured, the resources
-            #  are squared in order to leave available the exact number of resources
-            #  for each job.
-            # E.g., if parallelJobs["bicleaner"] = 4, we want 4 jobs at max. to run
-            #  in parallel, so we need 4 "job_bicleaner" resources to be free for each
-            #  "bicleaner" job, so 4 * 4 = 16 necessary "job_bicleaner" resources
-            workflow.global_resources[job_resource_name] = JOB_THREADS[k] ** 2
 
 OUTPUT = []
 UNTIL = return_dict_value_if_key(config, "until", "")
@@ -713,6 +703,23 @@ checkpoint linguacrawl_download:
             shell(f"touch {output}")
 
 
+
+
+rule dir2warc:
+    """
+    Process a list of directories (or a single directory)
+        and produce WARCs with the content of each directory
+    """
+    output:
+        f"{DATADIR}/warc/{{target}}.warc.gz",
+    params:
+        directory=lambda wildcards: TARGET_2_DIRECTORIES[wildcards.target],
+        output_warc=lambda wildcards: TARGET_2_FROMDIR_WARCS[wildcards.target],
+    shell:
+        """
+        echo {params.directory} | python3 {WORKFLOW}/bitextor_dir2warc.py > {params.output_warc}
+        """
+
 #################################################################
 ### PREPROCESS ##################################################
 rule warc2preprocess:
@@ -902,12 +909,11 @@ rule split:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
-    threads: THREADS["split"]
-    resources:
-        job_split=JOB_THREADS["split"],
+        threads=THREADS["split"],
+    threads: JOB_THREADS["split"]
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
 
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
@@ -966,10 +972,9 @@ rule custom_translate:
     output:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
+        threads=THREADS["translate"],
         paragraphs_file=temp(f"{TMPDIR}/custom_translate_{{shard}}_{{src_batch}}.paragraphs"),
-    threads: THREADS["translate"]
-    resources:
-        job_translate=JOB_THREADS["translate"],
+    threads: JOB_THREADS["translate"]
     shell:
         """
         mkdir -p {TMPDIR}
@@ -982,7 +987,7 @@ rule custom_translate:
                 | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
 
             para_nolines=$(cat "{params.paragraphs_file}" | base64 -d \
-                | grep -E "^p[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+                | grep -E "^p[0-9]+/[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
 
             if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
                 >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
@@ -992,7 +997,7 @@ rule custom_translate:
             filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value '' 'cut -f 1'"
         fi
 
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
 
         zcat {input.source} \
             | eval "$filter_command" \
@@ -1043,12 +1048,11 @@ rule tokenise_translated:
     params:
         tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
         lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
-    threads: THREADS["tokenise"]
-    resources:
-        job_tokenise=JOB_THREADS["tokenise"],
+        threads=THREADS["tokenise"],
+    threads: JOB_THREADS["tokenise"]
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
 
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
@@ -1075,12 +1079,11 @@ rule tokenise:
     params:
         tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, wildcards.lang), '--word-tokenizer "{}"'),
         lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, wildcards.lang), '--morph-analyser "{}"'),
-    threads: THREADS["tokenise"]
-    resources:
-        job_tokenise=JOB_THREADS["tokenise"],
+        threads=THREADS["tokenise"],
+    threads: JOB_THREADS["tokenise"]
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
 
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
@@ -1137,14 +1140,13 @@ rule mt_matches:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.externalMT.06_01.matches",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-    threads: THREADS["docalign"]
-    resources:
-        job_docalign=JOB_THREADS["docalign"],
+        threads=THREADS["docalign"]
+    threads: JOB_THREADS["docalign"]
     shell:
         """
         mkdir -p {params.folder}
 
-        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {params.threads} > {output}
         """
 
 
@@ -1170,7 +1172,7 @@ rule doc_emb_matches:
         src_emb_name="emb.src",
         trg_emb_name="emb.trg",
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
-    threads: THREADS["docalign"]
+    threads: JOB_THREADS["docalign"]
     shell:
         """
         mkdir -p {params.folder}
@@ -1230,19 +1232,18 @@ rule bleualign:
         translated1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
+        threads=THREADS["segalign"],
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred="--print-sent-hash" if DEFERRED else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
-    threads: THREADS["segalign"]
-    resources:
-        job_segalign=JOB_THREADS["segalign"],
+    threads: JOB_THREADS["segalign"]
     shell:
         """
         mkdir -p {params.folder}
 
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
         python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
@@ -1279,7 +1280,7 @@ rule vecalign:
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     params:
-        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign/{{src_batch}}_{{trg_batch}}",
+        folder=f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/vecalign",
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
@@ -1287,9 +1288,7 @@ rule vecalign:
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
     output:
         f"{TRANSIENT}/{SRC_LANG}_{TRG_LANG}/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
-    threads: THREADS["segalign"]
-    resources:
-        job_segalign=JOB_THREADS["segalign"],
+    threads: JOB_THREADS["segalign"]
     shell:
         """
         mkdir -p "{params.folder}"
@@ -1383,12 +1382,12 @@ rule bifixer:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}.gz"),
-    threads: THREADS["bifixer"]
-    resources:
-        job_bifixer=JOB_THREADS["bifixer"],
+    params:
+        threads=THREADS["bifixer"],
+    threads: JOB_THREADS["bifixer"]
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
 
         zcat {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
@@ -1411,65 +1410,53 @@ rule aggregate_bifixer:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
-if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
-    rule bicleaner_train_model:
+rule bicleaner_train_model:
+    """
+    Train bicleaner model
+    """
+    input:
+        corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
+        corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
+        # Bicleaner
+        e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz",
+                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz",
+                                BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic"),
+        # Bicleaner AI
+        mono_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
+                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
+        mono_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
+                                   BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
+        dev_corpus_l1=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
+                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
+        dev_corpus_l2=optional_str_input(' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
+                                         BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai"),
+    output:
+        model=BICLEANER_MODEL,
+    params:
+        training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
+        # Bicleaner
+        classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
+        # Bicleaner AI
+        tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
+        dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
+        mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
+        metadata_dir='/'.join(BICLEANER_MODEL.split('/')[:-1]),
+        ai_metadata=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/metadata.yaml",
+    shell:
         """
-        Train bicleaner model (flavour: classic)
-        """
-        input:
-            corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
-            corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-            # 'optional_str_input' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
-            #   will trigger this rule ("reason: Input files updated by another job") even if the output already exists
-            e2f=optional_str_input(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL),
-            f2e=optional_str_input(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL),
-            vcb1=optional_str_input(f"{mgizaModelDir}/corpus.{LANG1}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
-            vcb2=optional_str_input(f"{mgizaModelDir}/corpus.{LANG2}.filtered.vcb.gz", BICLEANER_GENERATE_MODEL),
-        output:
-            model=BICLEANER_MODEL,
-        params:
-            training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
-            classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{LANG1}-{LANG2}.classifier",
-        shell:
-            """
-            echo "Training corpus: {params.training_corpus}"
-            mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
-            paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
+        echo "Training corpus: {params.training_corpus}"
+        mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
+        paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
 
+        if [[ "{BICLEANER_FLAVOUR}" == "classic" ]]; then
             {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
                 --normalize_by_length -s {LANG1} -t {LANG2} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
                 -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
                 --seed 71213
-            """
-
-if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
-    rule bicleaner_train_model:
-        """
-        Train bicleaner model (flavour: ai)
-        """
-        input:
-            corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG1),
-            corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=LANG2),
-            mono_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG1)),
-            mono_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_MONO_CORPUS_PREFIX, lang=LANG2)),
-            dev_corpus_l1=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG1)),
-            dev_corpus_l2=' '.join(expand("{dataset}.{lang}.gz", dataset=BICLEANER_AI_DEV_CORPUS_PREFIX, lang=LANG2)),
-        output:
-            model=BICLEANER_MODEL,
-        params:
-            training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{LANG1}_{LANG2}"),
-            tfreq=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/wordfreq_{LANG2}.gz"),
-            dev_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/dev_parallel_corpus.{LANG1}_{LANG2}"),
-            mono_corpus=temp(f"{TMPDIR}/bicleaner_train/bicleaner-ai/mono_corpus.{LANG1}_{LANG2}"),
-            metadata_dir=BICLEANER_MODEL,
-            ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
-            model=BICLEANER_MODEL,
-        shell:
-            """
-            echo "Training corpus: {params.training_corpus}"
-            mkdir -p "{TMPDIR}/bicleaner_train/bicleaner-ai"
-            paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
-
+        elif [[ "{BICLEANER_FLAVOUR}" == "ai" ]]; then
             # Target lang frequency
             echo "Frequency file (lang={LANG2}): {params.tfreq}"
             zcat {input.mono_l2} \
@@ -1499,8 +1486,9 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {LANG1} -t {LANG2} -F {params.tfreq} \
                 -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
                 --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
-                    mv {params.metadata_dir} {output.model}
-            """
+                    mv {params.ai_metadata} {output.model}
+        fi
+        """
 
 
 rule bicleaner:
@@ -1516,17 +1504,15 @@ rule bicleaner:
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
+        threads=THREADS["bicleaner"],
         parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
-        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL
-    threads: THREADS["bicleaner"]
-    resources:
-        job_bicleaner=JOB_THREADS["bicleaner"],
+    threads: JOB_THREADS["bicleaner"]
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
-        slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
+        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
+        slang=$(egrep "source_lang" {input.model} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
-            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
+            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
             | tr -d '\n')
 
         zcat {input.bifixer} \
@@ -1634,7 +1620,8 @@ rule filter:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     params:
         bicleaner_header="bicleaner_score" if BICLEANER_FLAVOUR == "classic" else "bicleaner_ai_score",
-    threads: THREADS["filter"]
+        threads=THREADS["filter"]
+    threads: JOB_THREADS["filter"]
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
@@ -1653,7 +1640,7 @@ rule filter:
 
         # Remove header, sort and add header (in-place) from output file
         sed -i '1 d' {output} \
-            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
+            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {params.threads} \
                 --compress-program=gzip -T {TMPDIR} -o {output} {output} \
             && sed -i '1 s/^/'"$header"'\\n/' {output}
 
@@ -1699,7 +1686,6 @@ rule raw:
         """
         header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
-        # Remove header from all input files and only print header once
         echo {input} \
             | tr ' ' '\n' \
             | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
@@ -1731,14 +1717,15 @@ rule sents:
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
     params:
         sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags",
-    threads: THREADS["sents"]
+        threads=THREADS["sents"],
+    threads: JOB_THREADS["sents"]
     run:
         cmd = \
         f"""
         sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
         header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
 
-        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
+        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {params.threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
         """
 
@@ -1818,32 +1805,46 @@ rule deduped_tmx:
         """
 
 
+roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.roamed.tmx.gz"
+roam_tmx_input = rules.tmx.output
+roam_txt_input = rules.sents.output.corpus
+
+if DEDUPED:
+    roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.deduped.roamed.tmx.gz"
+    roam_tmx_input = rules.deduped_tmx.output.tmx
+    roam_txt_input = rules.deduped_tmx.output.txt
+
+
 rule roam_tmx:
     """
-    Use biroamer to created ROAMed version of the corpus
-    :input.tmx: TMX file, both non-deduped and deduped if dedup=true
-    :output: ROAMed TMX file, both non-deduped and deduped if dedup=true
+    Use biroamer to created ROAMED version of the corpus
+    :input.tmx: deduped.tmx corpus if dedup is active, not-deduped.tmx corpus if only tmx=true and dedup=false
+    :input.txt: deduped.txt corpus if dedup is active, sents corpus if tmx=true and dedup=false
+    :output: deduped.roamed.tmx corpus if dedup is active, not-deduped.roamed.tmx corpus if tmx=true and dedup=false
     """
     input:
-        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.tmx.gz",
+        tmx=roam_tmx_input,
+        txt=roam_txt_input,
     output:
-        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.roamed.tmx.gz",
+        roam_tmx_output,
     params:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG1), '-t "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, LANG2), '-T "{}"'),
-        mix_files=temp(f"{TMPDIR}/biroamer_mix_files.txt"),
     shell:
         """
-        mix_files=""
-        nolines=$(cat {BIROAMER_MIX_FILES} | wc -l)
+        mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
+        cat {BIROAMER_MIX_FILES} > $mix_files
+        nolines=$(cat $mix_files | wc -l)
+        mix_files=$([[ "$nolines" != "0" ]] && echo "-m $mix_files" || echo "")
+        nolines_txt=$(zcat {input.txt} | wc -l)
+        total_nolines=$(echo $nolines + $nolines_txt | bc)
 
-        if [[ "$nolines" != "0" ]]; then
-            cat {BIROAMER_MIX_FILES} > {params.mix_files}
-
-            mix_files="-m {params.mix_files}"
+        if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then
+            >&2 echo "WARNING: biroamer suggests, at least, 100k lines in order to have a good alignment (current nolines: $total_nolines)."\
+                     "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
         fi
 
-        zcat {input} \
+        zcat {input.tmx} \
             | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {LANG1} {LANG2} \
             | pigz -c > {output}

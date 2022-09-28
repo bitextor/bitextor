@@ -25,28 +25,28 @@ from warcio.warcwriter import WARCWriter
 from dateutil.parser import parse
 from datetime import datetime
 
-oparser = argparse.ArgumentParser(description="Script that takes a list of file paths from HTTrack crawled folder")
-options = oparser.parse_args()
+
+parser = argparse.ArgumentParser(description="Script that takes a list of directories and creates a WARC with content of each directory",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+def get_files(dir_path):
+    for element in os.listdir(dir_path):
+        if os.path.isfile(os.path.join(dir_path, element)):
+            files.append(os.path.join(dir_path, element))
+        elif os.path.isdir(os.path.join(dir_path, element)) and not os.path.islink(os.path.join(dir_path, element)):
+            get_files(os.path.join(dir_path, element))
 
 reader = sys.stdin
 writer = WARCWriter(sys.stdout.buffer, gzip=True)
 
-for fline in reader:
-    filepath = fline.strip()
-    if os.path.isfile(filepath):  # protect again extraneous 'Binary file (standard input) matches' at the end of stream  
+for dline in reader:
+    files = []
+    get_files(dline.strip())
+    
+    for filepath in files:
         url = filepath.split("/")[-1]
-        date = None
-        with open(filepath, 'rb') as content_file:
-            content = content_file.read()
+        date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        if date is None:
-            dvalue = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-        else:
-            try:
-                dvalue = parse(date.decode("utf8")).strftime('%Y-%m-%dT%H:%M:%SZ')
-            except ValueError:
-                dvalue = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
-   
         with open(filepath, 'rb') as content_file:
             record = writer.create_warc_record(uri=url, record_type="response", warc_content_type="application/http; msgtype=response", payload=content_file, http_headers="")
 
