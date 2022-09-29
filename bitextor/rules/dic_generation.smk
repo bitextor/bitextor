@@ -22,7 +22,7 @@ rule dic_generation_tokenize_file:
     output:
         f"{preprocCorpusDir}/corpus.tok.{{lang}}.gz",
     params:
-        wordtok: WORDTOK1 if lang == SRC_LANG else WORDTOK2
+        wordtok=lambda wildcards: WORDTOK1 if wildcards.lang == SRC_LANG else WORDTOK2
     shell:
         """
         mkdir -p {preprocCorpusDir}
