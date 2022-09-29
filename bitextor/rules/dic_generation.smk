@@ -4,8 +4,8 @@ import gzip
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
 # Temporal directories for generated data
-mgizaModelDir = f"{TRANSIENT}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
-preprocCorpusDir = f"{TRANSIENT}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
+mgizaModelDir = f"{TRANSIENT}/{LANG1}_{LANG2}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
+preprocCorpusDir = f"{TRANSIENT}/{LANG1}_{LANG2}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
 
 TRAIN_PREFIXES = []
 LOWERCASE = f"{WORKFLOW}/data/moses/tokenizer/lowercase.perl"
@@ -16,32 +16,19 @@ if "initCorpusTrainingPrefix" in config:
 #################################################################
 ### RULES #######################################################
 
-rule dic_generation_tokenize_file_l1:
+rule dic_generation_tokenize_file:
     input:
-        expand("{trainPrefixes}.{src_lang}.gz", trainPrefixes=TRAIN_PREFIXES, src_lang=SRC_LANG),
+        expand("{trainPrefixes}.{{lang}}.gz", trainPrefixes=TRAIN_PREFIXES),
     output:
-        f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.gz",
+        f"{preprocCorpusDir}/corpus.tok.{{lang}}.gz",
+    params:
+        wordtok: WORDTOK1 if lang == SRC_LANG else WORDTOK2
     shell:
         """
         mkdir -p {preprocCorpusDir}
         zcat {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK1} \
-            | pigz -c > {output}
-        """
-
-
-rule dic_generation_tokenize_file_l2:
-    input:
-        expand("{trainPrefixes}.{trg_lang}.gz", trainPrefixes=TRAIN_PREFIXES, trg_lang=TRG_LANG),
-    output:
-        f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.gz",
-    shell:
-        """
-        mkdir -p {preprocCorpusDir}
-        zcat {input} \
-            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK2} \
+            | {params.wordtok} \
             | pigz -c > {output}
         """
 
