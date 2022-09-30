@@ -1518,7 +1518,6 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             """
 
 
-# TODO is --score_only + paste needed? We should get the same result if we remove --score_only + paste
 rule bicleaner:
     """
     Compute bicleaner scores of the aligned sentence pairs
@@ -1545,11 +1544,30 @@ rule bicleaner:
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
             | tr -d '\n')
 
+        bicleaner_src_lang=$(cat "{params.metadata_file}" | grep "^source_lang: " | awk '{{print $2}}')
+        bicleaner_trg_lang=$(cat "{params.metadata_file}" | grep "^target_lang: " | awk '{{print $2}}')
+        bicleaner_text_fields="--scol src_text --tcol trg_text"
+
+        if [[ -z "$bicleaner_src_lang" ]] || [[ -z "$bicleaner_trg_lang" ]]; then
+            >&2 echo "ERROR: could not gather the languages from the bicleaner configuration file"
+
+            false # Trigger exit (it will work since bash is executed in strict mode)
+        else
+            if [[ "$bicleaner_src_lang" == "{SRC_LANG}" ]] && [[ "$bicleaner_trg_lang" == "{TRG_LANG}" ]]; then
+                # Ok
+                true
+            elif [[ "$bicleaner_src_lang" == "{TRG_LANG}" ]] && [[ "$bicleaner_trg_lang" == "{SRC_LANG}" ]]; then
+                # Change src and trg
+                bicleaner_text_fields="--scol trg_text --tcol src_text"
+            else
+                >&2 echo "WARNING: the provided Bicleaner model seems to don't expect the provided languages: {SRC_LANG}-{TRG_LANG} was provided, ${{bicleaner_src_lang}}-${{bicleaner_trg_lang}} was expected by Bicleaner ({BICLEANER_FLAVOUR})"
+            fi
+        fi
+
         zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
                 -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
-                --score_only --header -q - - {input.model} \
-            | paste <(zcat {input.bifixer}) - \
+                --header -q - - {input.model} \
             | pigz -c > {output}
         """
 
@@ -1586,7 +1604,7 @@ rule pre_filter:
                 break
 
         header = header.strip().split('\t')
-        src_text_idx = header.index('src_text') + 1
+        src_text_idx = header.index('src_text') + 1 # sort counts from 1, not 0
         trg_text_idx = header.index('trg_text') + 1
         src_url_idx = header.index('src_url') + 1
         trg_url_idx = header.index('trg_url') + 1
@@ -1595,11 +1613,14 @@ rule pre_filter:
                      f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx}"
 
         if "bifixer_hash" in header:
-            i = header.index("bifixer_hash") + 1 # sort counts from 1, not 0
+            i = header.index("bifixer_hash") + 1
+            j = ""
 
-            sort_flags = f"-k{i},{i} -k{i+1},{i+1}nr " \
-                         f"-k{src_url_idx},{src_url_idx} -k{trg_url_idx},{trg_url_idx} " \
-                         f"-k{src_text_idx},{src_text_idx} -k{trg_text_idx},{trg_text_idx}"
+            if "bifixer_score" in header:
+                j = header.index('bifixer_score') + 1
+                j = f"-k{j},{j}nr "
+
+            sort_flags = f"-k{i},{i} {j}" + sort_flags
 
         with open(output[0], 'w') as f:
             f.write(f"{sort_flags}\n")
@@ -1624,7 +1645,7 @@ rule pre_filter_sort_flags:
                 d=$(diff $value $current_value | wc -l)
 
                 if [[ "$d" != "0" ]]; then
-                    >&2 echo "All sort flags have to be the same"
+                    >&2 echo "ERROR: all sort flags have to be the same"
 
                     false # Trigger exit (it will work since bash is executed in strict mode)
                 fi
