@@ -48,7 +48,7 @@ def isdir(field, value, error):
         for element in value:
             if not path_exists(value[element], True,  os.path.isdir):
                 error(field, f'{value[element]} does not exist')
-    elif not path_exists(value, True,  os.path.isdir):
+    elif not path_exists(value):
         error(field, f'{value} does not exist')
 
 def isstrlist(field, value, error):

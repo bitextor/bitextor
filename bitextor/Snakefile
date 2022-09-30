@@ -69,7 +69,7 @@ if VERBOSE and is_first_snakemake_execution(TMPDIR):
 CRAWLTARGET = return_dict_value_if_key(config, "crawler", "")
 TLD_CRAWL = return_dict_value_if_key(config, "crawlTLD", [])
 CRAWLSIZELIMIT = return_dict_value_if_key(config, "crawlSizeLimit", "", apply_function=str)
-CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=str)
+CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=lambda t: str(duration_to_seconds(t)) if t else str(t))
 CRAWLWAIT = return_dict_value_if_key(config, "crawlWait", "", apply_function=str)
 CRAWLFILETYPES = return_dict_value_if_key(config, "crawlFileTypes", [])
 CRAWLJOBS = return_dict_value_if_key(config, "crawlerNumThreads", 2, only_check_key=True, apply_function=str)
@@ -315,6 +315,7 @@ TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, id_offset=len(DOMAIN
 
 # assign an ID to each WARC and check that all WARCs exist
 TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
+#TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, file_desc="WARCs")
 
 # assign an ID to each prevertical and check that all preverticals exist
 TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS)+len(TARGET_2_DIRECTORIES), file_desc="preverticals")
@@ -484,7 +485,8 @@ rule wget_download:
     params:
         url="http://{target}",
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-        time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
+        #time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
+        time_limit=apply_format(CRAWLTIMELIMIT, "-t {}"),
         user_agent=apply_format(USERAGENT, "-a '{}'"),
         wait=apply_format(CRAWLWAIT, "--wait {}"),
         file_types=apply_format(",".join(CRAWLFILETYPES), "-f {}")

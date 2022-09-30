@@ -183,12 +183,12 @@ def get_shard_input_files(lang):
     )
 
     # FromDirectories
-    result = expand(
+    result.extend(expand(
         "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
         datadir=DATADIR,
         target=list(TARGET_2_FROMDIR_WARCS.keys()),
         pproc=PPROC
-    )
+    ))
 
     # preverticals
     result.extend(expand(
