@@ -1565,7 +1565,7 @@ rule bicleaner:
         fi
 
         zcat {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} \
+            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} $bicleaner_text_fields \
                 -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
                 --header -q - - {input.model} \
             | pigz -c > {output}
