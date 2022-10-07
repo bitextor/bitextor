@@ -2,7 +2,7 @@
 
 Bitextor uses a configuration file to define the variables required by the pipeline. Depending on the options defined in this configuration file the pipeline can behave differently, running alternative tools and functionalities. The following is an exhaustive overview of all the options that can be set in the configuration file and how they affect to the pipeline.
 
-**Suggestion**: A minimalist [configuration file sample](config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
+**Suggestion**: A configuration wizard called `bitextor-config` gets installed with Bitextor to help with this task. Furthermore, a minimalist [configuration file sample](config/basic.yaml) is provided in this repository. You can take it as an starting point by changing all the paths to match your environment.
 
 Current pipeline constists of the following steps:
 
@@ -382,7 +382,7 @@ bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 * `bicleanerModelFlavour`: select which model version to use. The allowed values are `lite` (default value) and `full`
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
-If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file option `bicleanerCorpusTrainingPrefix`. If you need to train a Bicleaner model, you will need to specify `initCorpusTrainingPrefix` as well. If you are using Bicleaner AI instead, you will need to specify the config options `bicleanerParallelCorpusDevPrefix` and `bicleanerMonoCorpusPrefix`.
+If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file option `bicleanerCorpusTrainingPrefix`. If you need to train a Bicleaner model, you will need to specify `initCorpusTrainingPrefix` as well. If you are using Bicleaner AI instead, you will need to specify the config options `bicleanerParallelCorpusDevPrefix` and `bicleanerMonoCorpusPrefix`. Be aware that the direction of the generated model will be the same that the one specified in `translationDirection`, if specified, or `lang1` to `lang2`.
 
 ```yaml
 bicleanerGenerateModel: True
@@ -432,7 +432,7 @@ biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
 * `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
-* `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this `tmx: True` or `deduped: True` will be necessary
+* `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this feature, `tmx: True` or `deduped: True` will be necessary
 * `biroamerOmitRandomSentences`: omit close to 10% of the tmx corpus
 * `biroamerMixFiles`: use extra sentences to improve anonymization, this option accepts a list of files which will add the stored sentences, the files are expected to be in Moses format
 * `biroamerImproveAlignmentCorpus`: an alignment corpus can be provided in order to improve the entities detection; expected to be in Moses format.

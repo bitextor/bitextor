@@ -50,7 +50,7 @@ def split_segments(text, splitter_unary_func, prune_type="words", prune_threshol
         segments = [s for s in segments if not len(s.split()) > prune_threshold]
     elif prune_threshold and prune_type == "chars":
         segments = [s for s in segments if not len(s) > prune_threshold]
-    
+
     if filter_bad_sentences:
         segments = [s for s in segments if filter_trash(s)]
 
@@ -132,39 +132,47 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
         except UnicodeDecodeError:
             logging.error("Unicode decoding error: skipping document #%d", doc_idx)
 
-            sentences = doc
             skip = True
 
-        if not skip:
-            content = content.split("\n")
+        if skip:
+            # TODO should we try to get the content of the file? We shouldn't write the content directly
+            #  since the previous error for which we skip the sentence splitting can't handle correctly
+            #  the metadata, what might lead to unexpected results in further stages. Furthermore, the
+            #  malformed BASE64 content might lead to further stages to fail as well
+            continue
 
-            # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
-            for sent_idx, sentence in enumerate(content, 1):
-                column = sentence.split('\t')
-                paragraph_text = column[0].strip()
+        content = content.split("\n")
 
-                if process_paragraphs and len(column) == 1:
-                    sentences += f"{paragraph_text}\tp-1s-1\n"
+        # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
+        for sent_idx, sentence in enumerate(content, 1):
+            column = sentence.split('\t')
+            paragraph_text = column[0].strip()
 
-                    logging.error("Could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'", doc_idx, sent_idx)
+            if process_paragraphs and len(column) == 1:
+                sentences += f"{paragraph_text}\tp-1s-1\n"
 
-                    continue
+                logging.error("Could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'", doc_idx, sent_idx)
 
-                sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                         options.prune_threshold, not options.dont_filter, return_list=True)
-                suffix_offset = 2 if process_paragraphs else 1
-                suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
+                continue
 
-                if process_paragraphs:
+            sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
+                                                        options.prune_threshold, not options.dont_filter, return_list=True)
+            suffix_offset = 2 if process_paragraphs else 1
+            suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
+
+            if process_paragraphs:
+                try:
                     paragraph_id = int(column[1]) + 1 # Start at 1
+                except ValueError as e:
+                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}") from e
 
-                    # Add the paragraph data to the splitted sentences
-                    for idx in range(len(sentences_wo_paragraphs)):
-                        sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}{suffix}"
-                else:
-                    for idx in range(len(sentences_wo_paragraphs)):
-                        sentences += f"{sentences_wo_paragraphs[idx]}{suffix}"
+                # Add the paragraph data to the splitted sentences
+                for idx in range(len(sentences_wo_paragraphs)):
+                    sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}{suffix}"
+            else:
+                for idx in range(len(sentences_wo_paragraphs)):
+                    sentences += f"{sentences_wo_paragraphs[idx]}{suffix}"
 
-            sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
+        sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
 
         writer.write(f"{sentences}\n")
