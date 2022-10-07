@@ -1,1 +1,0 @@
-../../bitextor/rules/dict_generation.smk
