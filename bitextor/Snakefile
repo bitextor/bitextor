@@ -1538,8 +1538,7 @@ rule bicleaner:
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
-        parallel_args_sep="\\\"" if THREADS["bicleaner"] > 1 else "\"",
-        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL
+        metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL,
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
@@ -1571,9 +1570,9 @@ rule bicleaner:
             fi
         fi
 
+        # Bicleaner doesn't need word tokenizer since it'll be defined in the model metadata if any was used
         zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} $bicleaner_text_fields \
-                -S {params.parallel_args_sep}{WORDTOK1}{params.parallel_args_sep} -T {params.parallel_args_sep}{WORDTOK2}{params.parallel_args_sep} \
                 --header -q - - {input.model} \
             | pigz -c > {output}
         """
