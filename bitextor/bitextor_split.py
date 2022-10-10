@@ -162,7 +162,7 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
 
             if process_paragraphs:
                 try:
-                    paragraph_id = int(column[1]) + 1 # Start at 1
+                    paragraph_id = column[1] # Starts at 1 and includes total number of paragraphs
                 except ValueError as e:
                     raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}") from e
 
