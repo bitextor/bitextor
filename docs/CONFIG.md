@@ -379,7 +379,6 @@ bicleanerModel: /home/user/bicleaner-model/en-fr/training.en-fr.yaml
 * `bicleaner`: use Bicleaner to filter out pairs of segments
 * `bicleanerFlavour`: select which version to use. The allowed values are `classic` for Bicleaner and `ai` for Bicleaner AI (default value)
 * `bicleanerModel`: path to the YAML configuration file of a pre-trained model
-* `bicleanerModelFlavour`: select which model version to use. The allowed values are `lite` (default value) and `full`
 * `bicleanerThreshold`: threshold to filter low-confidence segment pairs, accepts values in [0,1] range; default is 0.0 (no filtering). It is recommended to set it to values in [0.5,0.7]
 
 If the Bicleaner model is not available, you can specify the option `bicleanerGenerateModel` in order to train one automatically from the data provided through the config file option `bicleanerCorpusTrainingPrefix`. If you need to train a Bicleaner model, you will need to specify `initCorpusTrainingPrefix` as well. If you are using Bicleaner AI instead, you will need to specify the config options `bicleanerParallelCorpusDevPrefix` and `bicleanerMonoCorpusPrefix`. Be aware that the direction of the generated model will be the same that the one specified in `translationDirection`, if specified, or `lang1` to `lang2`.

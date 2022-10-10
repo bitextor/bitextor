@@ -229,7 +229,6 @@ BIFIXER_IGNORE_SEGMENTATION = "--ignore_segmentation" if "bifixerIgnoreSegmentat
 
 BICLEANER = return_dict_value_if_key(config, "bicleaner", False, pos_value=True)
 BICLEANER_FLAVOUR = return_dict_value_if_key(config, "bicleanerFlavour", "classic", only_check_key=True)
-BICLEANER_MODEL_FLAVOUR = return_dict_value_if_key(config, "bicleanerModelFlavour", "lite", only_check_key=True)
 BICLEANER_MODEL = config["bicleanerModel"] if BICLEANER else ""
 BICLEANER_THRESHOLD = return_dict_value_if_key(config, "bicleanerThreshold", 0.0)
 BICLEANER_GENERATE_MODEL = return_dict_value_if_key(config, "bicleanerGenerateModel", False)
@@ -237,7 +236,6 @@ BICLEANER_TRAINING_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerPa
 BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMonoCorpusPrefix", [])
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
-BICLEANER_BIN += "-lite" if BICLEANER_MODEL_FLAVOUR == "lite" and BICLEANER_FLAVOUR == "classic" else ''
 
 if BICLEANER:
     is_flavour_ai = BICLEANER_FLAVOUR == "ai"
