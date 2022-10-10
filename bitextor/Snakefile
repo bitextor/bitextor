@@ -1660,6 +1660,8 @@ rule pre_filter_sort_flags:
         """
 
 
+# TODO TBD move sorting to deduped step?
+# TODO are we sorting twice in rule filter and sent?
 rule filter:
     """
     Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentence pair or bifixer hash
