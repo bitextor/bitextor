@@ -1450,13 +1450,15 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
         params:
             training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{SRC_LANG}_{TRG_LANG}"),
             classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{SRC_LANG}-{TRG_LANG}.classifier",
+            tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+            tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         shell:
             """
             echo "Training corpus: {params.training_corpus}"
             mkdir -p "{TMPDIR}/bicleaner_train"
             paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
 
-            {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
+            {PROFILING} bicleaner-train {params.training_corpus} {params.tokenizer_l1} {params.tokenizer_l2} --treat_oovs \
                 --normalize_by_length -s {SRC_LANG} -t {TRG_LANG} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
                 -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
                 --seed 71213
@@ -1484,6 +1486,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             metadata_dir=BICLEANER_MODEL,
             ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
             model=BICLEANER_MODEL,
+            tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+            tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         shell:
             """
             echo "Training corpus: {params.training_corpus}"
@@ -1516,9 +1520,9 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
 
             # Train
-            {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {SRC_LANG} -t {TRG_LANG} -F {params.tfreq} \
+            {PROFILING} bicleaner-ai-train {params.tokenizer_l1} {params.tokenizer_l2} -s {SRC_LANG} -t {TRG_LANG} \
                 -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
-                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
+                -F {params.tfreq} --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
                     mv {params.metadata_dir} {output.model}
             """
 
