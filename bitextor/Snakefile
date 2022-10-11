@@ -1523,6 +1523,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             """
 
 
+ # TODO is --score_only + paste needed? We should get the same result if we remove --score_only + paste
+ #  Tmp workaround (?) for https://github.com/bitextor/bicleaner-ai/issues/23
 rule bicleaner:
     """
     Compute bicleaner scores of the aligned sentence pairs
@@ -1537,6 +1539,8 @@ rule bicleaner:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL,
+        tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+        tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
@@ -1570,7 +1574,9 @@ rule bicleaner:
         # Bicleaner doesn't need word tokenizer since it'll be defined in the model metadata if any was used
         zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \
-                --header -q -p {threads} - - {input.model} \
+                --header {params.tokenizer_l1} {params.tokenizer_l2} \
+                --score_only -q -p {threads} - - {input.model} \
+            | paste <(zcat {input.bifixer}) - \
             | pigz -c > {output}
         """
 
@@ -1620,6 +1626,9 @@ rule pre_filter:
             j = ""
 
             if "bifixer_score" in header:
+                # We sort using bifixer score as second criteria and not bicleaner score
+                #  because in the case of duplicated we prefer bifixer, which uses
+                #  rules and indicates which aligned content is more "correct".
                 j = header.index('bifixer_score') + 1
                 j = f"-k{j},{j}nr "
 
@@ -1659,7 +1668,7 @@ rule pre_filter_sort_flags:
         """
 
 
-# TODO TBD move sorting to deduped step?
+# TODO TBD move sorting to deduped step on the fly?
 # TODO are we sorting twice in rule filter and sent?
 rule filter:
     """
