@@ -1542,7 +1542,6 @@ rule bicleaner:
         job_bicleaner=JOB_THREADS["bicleaner"],
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
         slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
@@ -1570,8 +1569,8 @@ rule bicleaner:
 
         # Bicleaner doesn't need word tokenizer since it'll be defined in the model metadata if any was used
         zcat {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} $bicleaner_text_fields \
-                --header -q - - {input.model} \
+            | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \
+                --header -q -p {threads} - - {input.model} \
             | pigz -c > {output}
         """
 
