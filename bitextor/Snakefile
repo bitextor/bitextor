@@ -1527,8 +1527,6 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             """
 
 
- # TODO is --score_only + paste needed? We should get the same result if we remove --score_only + paste
- #  Tmp workaround (?) for https://github.com/bitextor/bicleaner-ai/issues/23
 rule bicleaner:
     """
     Compute bicleaner scores of the aligned sentence pairs
@@ -1575,7 +1573,7 @@ rule bicleaner:
             fi
         fi
 
-        # Bicleaner doesn't need word tokenizer since it'll be defined in the model metadata if any was used
+        # We apply --score_only + paste because not all the data are dependant of the text fields! Check out: https://github.com/bitextor/bicleaner-ai/issues/23
         zcat {input.bifixer} \
             | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \
                 --header {params.tokenizer_l1} {params.tokenizer_l2} \
