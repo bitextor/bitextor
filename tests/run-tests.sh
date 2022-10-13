@@ -333,7 +333,7 @@ tests-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
+        finish_test
     ) &
 
     wait "$!" # Wait for this specific test to finish
@@ -377,7 +377,7 @@ tests-gendic-genbicleaner()
             &> "${WORK}/reports/${TEST_ID}.report" && \
         popd > /dev/null
 
-        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
+        finish_test
     ) &
 
     wait-if-envvar-is-true
@@ -518,6 +518,7 @@ tests-others()
         ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
         init_test "102"
 
+        # TODO change WARC and use greenpeace.canada-small.warc.gz in order to let Bicleaner AI finish in CI
         ${BITEXTOR} \
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \

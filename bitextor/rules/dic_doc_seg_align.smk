@@ -301,6 +301,8 @@ rule create_hunalign_dic_format:
                         outw.write(f"{columns[0]} @ {columns[1]}\n")
 
 
+# TODO rule not deterministic (our scripts or hunalign itself?). It seems to be deterministic if the
+#  the execution is in the same machine, but the results are different among machines (e.g. ours vs GitHub's)
 rule hunalign:
     """
     Use hunalign to align sentences withing the matched documents
