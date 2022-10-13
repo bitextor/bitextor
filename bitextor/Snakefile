@@ -1450,13 +1450,15 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
         params:
             training_corpus=temp(f"{TMPDIR}/bicleaner_train/training_parallel_corpus.{SRC_LANG}_{TRG_LANG}"),
             classifier=f"{'/'.join(BICLEANER_MODEL.split('/')[:-1])}/{SRC_LANG}-{TRG_LANG}.classifier",
+            tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+            tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         shell:
             """
             echo "Training corpus: {params.training_corpus}"
             mkdir -p "{TMPDIR}/bicleaner_train"
             paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
 
-            {PROFILING} bicleaner-train {params.training_corpus} -S "{WORDTOK1}" -T "{WORDTOK2}" --treat_oovs \
+            {PROFILING} bicleaner-train {params.training_corpus} {params.tokenizer_l1} {params.tokenizer_l2} --treat_oovs \
                 --normalize_by_length -s {SRC_LANG} -t {TRG_LANG} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
                 -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
                 --seed 71213
@@ -1484,6 +1486,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             metadata_dir=BICLEANER_MODEL,
             ai_metadata=f"{BICLEANER_MODEL}/metadata.yaml",
             model=BICLEANER_MODEL,
+            tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+            tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         shell:
             """
             echo "Training corpus: {params.training_corpus}"
@@ -1516,9 +1520,9 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
 
             # Train
-            {PROFILING} bicleaner-ai-train -S "{WORDTOK1}" -T "{WORDTOK2}" -s {SRC_LANG} -t {TRG_LANG} -F {params.tfreq} \
+            {PROFILING} bicleaner-ai-train {params.tokenizer_l1} {params.tokenizer_l2} -s {SRC_LANG} -t {TRG_LANG} \
                 -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
-                --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
+                -F {params.tfreq} --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
                     mv {params.metadata_dir} {output.model}
             """
 
@@ -1537,12 +1541,13 @@ rule bicleaner:
         f"{TRANSIENT}/{LANG1}_{LANG2}/07_02.bicleaner/{{batch}}.gz",
     params:
         metadata_file=f"{BICLEANER_MODEL}/metadata.yaml" if BICLEANER_FLAVOUR == "ai" else BICLEANER_MODEL,
+        tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
+        tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
     shell:
         """
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
         slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
             | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
@@ -1568,10 +1573,12 @@ rule bicleaner:
             fi
         fi
 
-        # Bicleaner doesn't need word tokenizer since it'll be defined in the model metadata if any was used
+        # We apply --score_only + paste because not all the data are dependant of the text fields! Check out: https://github.com/bitextor/bicleaner-ai/issues/23
         zcat {input.bifixer} \
-            | {PROFILING} cache -k $text_fields ${{parallel_cmd}} {BICLEANER_BIN} $bicleaner_text_fields \
-                --header -q - - {input.model} \
+            | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \
+                --header {params.tokenizer_l1} {params.tokenizer_l2} \
+                --score_only -q -p {threads} - - {input.model} \
+            | paste <(zcat {input.bifixer}) - \
             | pigz -c > {output}
         """
 
@@ -1621,6 +1628,9 @@ rule pre_filter:
             j = ""
 
             if "bifixer_score" in header:
+                # We sort using bifixer score as second criteria and not bicleaner score
+                #  because in the case of duplicated we prefer bifixer, which uses
+                #  rules and indicates which aligned content is more "correct".
                 j = header.index('bifixer_score') + 1
                 j = f"-k{j},{j}nr "
 
@@ -1660,7 +1670,7 @@ rule pre_filter_sort_flags:
         """
 
 
-# TODO TBD move sorting to deduped step?
+# TODO TBD move sorting to deduped step on the fly?
 # TODO are we sorting twice in rule filter and sent?
 rule filter:
     """
