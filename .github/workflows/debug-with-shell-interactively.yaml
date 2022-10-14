@@ -5,6 +5,7 @@ on:
    workflow_dispatch:
       inputs:
          timeout:
+            type: number
             description: 'Time (min) which the session will be available'
             required: false
             default: 60
@@ -19,6 +20,9 @@ on:
          ref:
             description: 'Ref to use when Bitextor is built (i.e. branch, tag or commit)'
             default: 'master'
+
+env:
+   WORK: ${{ github.workspace }}
 
 jobs:
    interactive_shell:
@@ -90,4 +94,4 @@ jobs:
       -  name: Setup tmate session
          if: ${{ always() }}
          uses: mxschmitt/action-tmate@v3
-         timeout-minutes: ${{ github.event.inputs.timeout }}
+         timeout-minutes: ${{ fromJSON(github.event.inputs.timeout) }}
