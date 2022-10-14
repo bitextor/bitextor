@@ -21,7 +21,7 @@ on:
             default: 'master'
 
 jobs:
-   build:
+   interactive_shell:
       runs-on: ubuntu-20.04
       steps:
       -  name: Install required linux packages
@@ -88,5 +88,6 @@ jobs:
             chmod 775 ./tests/run-tests-min.sh
             ./tests/run-tests-min.sh -w "$WORK" -j 4
       -  name: Setup tmate session
+         if: ${{ always() }}
          uses: mxschmitt/action-tmate@v3
          timeout-minutes: ${{ github.event.inputs.timeout }}
