@@ -87,6 +87,6 @@ jobs:
          run: |
             chmod 775 ./tests/run-tests-min.sh
             ./tests/run-tests-min.sh -w "$WORK" -j 4
-      - name: Setup tmate session
+      -  name: Setup tmate session
          uses: mxschmitt/action-tmate@v3
          timeout-minutes: ${{ github.event.timeout }}
