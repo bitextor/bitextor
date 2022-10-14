@@ -279,7 +279,6 @@ tests-gendic()
 
         DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
 
-        rm -f "${DIC_PATH}"
         [[ -f "${DIC_PATH}" ]] && \
             >&2 echo "WARNING: ${TEST_ID}: dic file already exists: $DIC_PATH"
 
