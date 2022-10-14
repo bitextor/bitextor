@@ -999,7 +999,7 @@ rule custom_translate:
                 | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
 
             para_nolines=$(cat "{params.paragraphs_file}" | base64 -d \
-                | grep -E "^p[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
+                | grep -E "^p[0-9]+:[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
 
             if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
                 >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
