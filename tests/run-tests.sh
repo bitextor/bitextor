@@ -280,6 +280,8 @@ tests-gendic()
         DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
 
         rm -f "${DIC_PATH}"
+        [[ -f "${DIC_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: dic file already exists: $DIC_PATH"
 
         ${BITEXTOR} \
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
@@ -318,7 +320,9 @@ tests-genbicleaner()
 
         BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
-        rm -f "${BICLEANER_MODEL_PATH}"
+        [[ -f "${BICLEANER_MODEL_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: bicleaner model already exists: $BICLEANER_MODEL_PATH"
+
         mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
 
         ${BITEXTOR} \
@@ -361,8 +365,11 @@ tests-gendic-genbicleaner()
         DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
         BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
-        rm -f "${DIC_PATH}"
-        rm -f "${BICLEANER_MODEL_PATH}"
+        [[ -f "${DIC_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: dic file already exists: $DIC_PATH"
+        [[ -f "${BICLEANER_MODEL_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: bicleaner model already exists: $BICLEANER_MODEL_PATH"
+
         mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
 
         ${BITEXTOR} \
