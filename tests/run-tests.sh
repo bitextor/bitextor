@@ -333,8 +333,7 @@ tests-genbicleaner()
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/${TEST_ID}.report" && \
-        popd > /dev/null
+            &> "${WORK}/reports/${TEST_ID}.report"
 
         finish_test
     ) &
@@ -380,8 +379,7 @@ tests-gendic-genbicleaner()
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/${TEST_ID}.report" && \
-        popd > /dev/null
+            &> "${WORK}/reports/${TEST_ID}.report"
 
         finish_test
     ) &
