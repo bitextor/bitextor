@@ -166,12 +166,9 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
                 except ValueError as e:
                     raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}") from e
 
-                # Add the paragraph data to the splitted sentences
-                for idx in range(len(sentences_wo_paragraphs)):
-                    sentences += f"{sentences_wo_paragraphs[idx]}\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}{suffix}"
-            else:
-                for idx in range(len(sentences_wo_paragraphs)):
-                    sentences += f"{sentences_wo_paragraphs[idx]}{suffix}"
+            for idx in range(len(sentences_wo_paragraphs)):
+                infix = f"\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else '' # Paragraph data
+                sentences += f"{sentences_wo_paragraphs[idx]}{infix}{suffix}"
 
         sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
 
