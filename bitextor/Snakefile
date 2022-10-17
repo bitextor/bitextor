@@ -1215,8 +1215,8 @@ rule doc_emb_matches:
 rule make_documents_output_file:
     input:
         indices=rules.mt_matches.output,
-        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/text.gz",
-        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/text.gz",
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{TEXT_FILE}",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{TEXT_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
     params:
