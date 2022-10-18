@@ -79,6 +79,8 @@ def validate_args(config):
             'type': 'string',
             'default_setter': lambda doc: doc["transientDir"] if "transientDir" in doc else ""
         },
+        # output files
+        'granularity': {'type': 'string', 'allowed': ["sentences", "documents"], 'default': "sentences"},
         # profiling
         'profiling': {'type': 'boolean', 'default': False},
         # execute until X:

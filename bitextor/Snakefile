@@ -257,7 +257,10 @@ BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", "", pos_value="-o")
 
-OUTPUT_FILES = ["sent", "raw", "documents"]
+OUTPUT_FILES = ["sent", "raw"]
+if "granularity" in config:
+    if config["granularity"] == "documents":
+        OUTPUT_FILES.append("documents")
 STATS_FILES = ["sent", "raw"]
 
 if TMX:
@@ -415,7 +418,6 @@ if not UNTIL: # config["until"] not provided -> run the whole pipeline
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
     if DOCALIGN == "externalMT":
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
-        OUTPUT.append(f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",)
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
