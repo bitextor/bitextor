@@ -257,7 +257,7 @@ BIROAMER_MIX_FILES = "/dev/null"
 BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", "", pos_value="-o")
 
-OUTPUT_FILES = ["sent", "raw"]
+OUTPUT_FILES = ["sent", "raw", "documents"]
 STATS_FILES = ["sent", "raw"]
 
 if TMX:
@@ -1214,7 +1214,7 @@ rule doc_emb_matches:
 ### DOCUMENTS OUTPUT ####################################################
 rule make_documents_output_file:
     input:
-        indices=rules.mt_matches.output,
+        indices=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{DOCALIGN}.06_01.matches",
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{TEXT_FILE}",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{TEXT_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
@@ -1222,6 +1222,9 @@ rule make_documents_output_file:
     output:
         document_pairs=temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}/tempDocumentsOutput.gz"),
     threads: THREADS["segalign"]
+    params:
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
     resources:
         job_segalign=JOB_THREADS["segalign"],
     shell:
@@ -1229,7 +1232,7 @@ rule make_documents_output_file:
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_doc\ttrg_doc"
 
-        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
