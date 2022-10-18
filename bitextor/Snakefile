@@ -1219,20 +1219,13 @@ rule make_documents_output_file:
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{TEXT_FILE}",
         url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
         url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
-    params:
-        folder=lambda wildcards, output: os.path.dirname(output[0]),
-        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
-        deferred="--print-sent-hash" if DEFERRED else '',
-    # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
-        document_pairs=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}/tempDocumentsOutput.gz",
+        document_pairs=temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}/tempDocumentsOutput.gz"),
     threads: THREADS["segalign"]
     resources:
         job_segalign=JOB_THREADS["segalign"],
     shell:
         """
-        mkdir -p {params.folder}
-
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_doc\ttrg_doc"
 
@@ -1859,11 +1852,10 @@ rule sents:
 rule documents:
     input:
         documents=lambda wildcards: [
-            f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}/tempDocumentsOutput.gz"
+            f"{TMPDIR}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}/tempDocumentsOutput.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
         sents=rules.sents.output.corpus,
-        #rules.make_documents_output_file.output.document_pairs,
     output:
         f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
     shell:
