@@ -11,12 +11,15 @@ from bitextor.utils.common import (
     get_snakemake_execution_mark,
     is_first_snakemake_execution,
     path_exists,
-    # TODO move cuda device functions to a separate file from common.py
-    allocate_cuda_visible_device,
     initialize_persistent_dict,
-    allocate_cuda_devices_teardown,
 )
 import bitextor.utils.check_nltk_model as check_nltk_model
+from bitextor.utils.allocate_cuda_gpus import (
+    allocate_cuda_visible_device,
+    allocate_cuda_devices_teardown,
+)
+
+from pytools.persistent_dict import PersistentDict
 
 valid, config = validate_args(config)
 
@@ -485,6 +488,8 @@ else:
 # OTHER
 BASE64_FILTER_CMD = "cat"
 GPU_TOKENS_DIR = f"{TMPDIR}/gpu_tokens"
+PERSISTENT_STORAGE = PersistentDict(f"gpu") # Global dictionary (shared in all processes)
+                                            # thread-safe -> it handles concurrency
 
 if PARAGRAPH_IDENTIFICATION:
     BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
@@ -526,7 +531,7 @@ onstart:
     # TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
     # Initialize persistent dict
-    initialize_persistent_dict()
+    initialize_persistent_dict(PERSISTENT_STORAGE)
 
 onerror:
     allocate_cuda_devices_teardown()
@@ -1248,7 +1253,7 @@ rule doc_emb_matches:
     resources:
         job_docalign=JOB_THREADS["docalign"],
     run:
-        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["docalign"])
+        gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["docalign"])
 
         shell(
             f"""
@@ -1380,7 +1385,7 @@ rule vecalign:
     resources:
         job_segalign=JOB_THREADS["segalign"],
     run:
-        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["segalign"])
+        gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["segalign"])
 
         shell(
             f"""
@@ -1625,7 +1630,7 @@ rule bicleaner:
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
     run:
-        gpu_cuda_device = allocate_cuda_visible_device(params.gpu_ofile_token, max_devices=JOB_THREADS["bicleaner"])
+        gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["bicleaner"])
 
         shell(
             f"""
