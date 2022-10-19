@@ -210,3 +210,14 @@ finish_test()
 
     popd > /dev/null
 }
+
+check_nltk_models()
+{
+    # NLTK models can't be downloaded in parallel since the operation is not thread-safe
+    local DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+    # Bifixer
+    python3 "${DIR}/utils/check_nltk_model.py" tokenizers/punkt punkt True
+    # Biroamer
+    python3 "${DIR}/utils/check_nltk_model.py" misc/perluniprops perluniprops True
+}

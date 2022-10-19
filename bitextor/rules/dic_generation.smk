@@ -4,8 +4,8 @@ import gzip
 #################### TRAIN BILINGUAL DICTIONARIES #############################
 
 # Temporal directories for generated data
-mgizaModelDir = f"{TRANSIENT}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
-preprocCorpusDir = f"{TRANSIENT}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
+mgizaModelDir = f"{TRANSIENT}/{LANG1}_{LANG2}/tempgizamodel.{SRC_LANG}-{TRG_LANG}"
+preprocCorpusDir = f"{TRANSIENT}/{LANG1}_{LANG2}/tempcorpuspreproc.{SRC_LANG}-{TRG_LANG}"
 
 TRAIN_PREFIXES = []
 LOWERCASE = f"{WORKFLOW}/data/moses/tokenizer/lowercase.perl"
@@ -16,32 +16,19 @@ if "initCorpusTrainingPrefix" in config:
 #################################################################
 ### RULES #######################################################
 
-rule dic_generation_tokenize_file_l1:
+rule dic_generation_tokenize_file:
     input:
-        expand("{trainPrefixes}.{src_lang}.gz", trainPrefixes=TRAIN_PREFIXES, src_lang=SRC_LANG),
+        expand("{trainPrefixes}.{{lang}}.gz", trainPrefixes=TRAIN_PREFIXES),
     output:
-        f"{preprocCorpusDir}/corpus.tok.{SRC_LANG}.gz",
+        f"{preprocCorpusDir}/corpus.tok.{{lang}}.gz",
+    params:
+        wordtok=lambda wildcards: WORDTOK1 if wildcards.lang == SRC_LANG else WORDTOK2
     shell:
         """
         mkdir -p {preprocCorpusDir}
         zcat {input} \
             | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK1} \
-            | pigz -c > {output}
-        """
-
-
-rule dic_generation_tokenize_file_l2:
-    input:
-        expand("{trainPrefixes}.{trg_lang}.gz", trainPrefixes=TRAIN_PREFIXES, trg_lang=TRG_LANG),
-    output:
-        f"{preprocCorpusDir}/corpus.tok.{TRG_LANG}.gz",
-    shell:
-        """
-        mkdir -p {preprocCorpusDir}
-        zcat {input} \
-            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {WORDTOK2} \
+            | {params.wordtok} \
             | pigz -c > {output}
         """
 
@@ -161,61 +148,62 @@ rule dic_generation_gzip_freq_dic:
         """
 
 
-# Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
-rule dic_generation_symmetrise_dic:
-    input:
-        vcb1=f"{mgizaModelDir}/corpus.{SRC_LANG}.filtered.vcb",
-        vcb2=f"{mgizaModelDir}/corpus.{TRG_LANG}.filtered.vcb",
-        t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
-        t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
-    output:
-        expand("{dic}", dic=DIC),
-    run:
-        svocabulary = {}
-        tvocabulary = {}
-        svcb = open(input.vcb1, "r")
-        tvcb = open(input.vcb2, "r")
-        for line in svcb:
-            item = line.strip().split(" ")
-            svocabulary[item[0]] = item[1]
+if DIC_GENERATE:
+    # Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
+    rule dic_generation_symmetrise_dic:
+        input:
+            vcb1=f"{mgizaModelDir}/corpus.{SRC_LANG}.filtered.vcb",
+            vcb2=f"{mgizaModelDir}/corpus.{TRG_LANG}.filtered.vcb",
+            t3_1=f"{mgizaModelDir}/corpus.{SRC_LANG}-{TRG_LANG}.t3.final",
+            t3_2=f"{mgizaModelDir}/corpus.{TRG_LANG}-{SRC_LANG}.t3.final",
+        output:
+            expand("{dic}", dic=DIC),
+        run:
+            svocabulary = {}
+            tvocabulary = {}
+            svcb = open(input.vcb1, "r")
+            tvcb = open(input.vcb2, "r")
+            for line in svcb:
+                item = line.strip().split(" ")
+                svocabulary[item[0]] = item[1]
 
-        for line in tvcb:
-            item = line.strip().split(" ")
-            tvocabulary[item[0]] = item[1]
+            for line in tvcb:
+                item = line.strip().split(" ")
+                tvocabulary[item[0]] = item[1]
 
-        t3dic = {}
-        t3s = open(input.t3_1, "r")
-        t3t = open(input.t3_2, "r")
-        for line in t3t:
-            item = line.strip().split(" ")
-            if item[1] in t3dic:
-                t3dic[item[1]][item[0]] = item[2]
-            else:
-                t3dic[item[1]] = {}
-                t3dic[item[1]][item[0]] = item[2]
+            t3dic = {}
+            t3s = open(input.t3_1, "r")
+            t3t = open(input.t3_2, "r")
+            for line in t3t:
+                item = line.strip().split(" ")
+                if item[1] in t3dic:
+                    t3dic[item[1]][item[0]] = item[2]
+                else:
+                    t3dic[item[1]] = {}
+                    t3dic[item[1]][item[0]] = item[2]
 
-        dic = open(output[0], "wt")
-        dic.write(f"{SRC_LANG}\t{TRG_LANG}\n")
-        for line in t3s:
-            item = line.strip().split(" ")
-            if item[0] in t3dic:
-                if item[1] in t3dic[item[0]]:
-                    value1 = float(t3dic[item[0]][item[1]])
-                    value2 = float(item[2])
-                    hmean = 2 / ((1 / value1) + (1 / value2))
+            dic = open(output[0], "wt")
+            dic.write(f"{SRC_LANG}\t{TRG_LANG}\n")
+            for line in t3s:
+                item = line.strip().split(" ")
+                if item[0] in t3dic:
+                    if item[1] in t3dic[item[0]]:
+                        value1 = float(t3dic[item[0]][item[1]])
+                        value2 = float(item[2])
+                        hmean = 2 / ((1 / value1) + (1 / value2))
 
-                    if hmean > 0.1:
-                        if item[1] in svocabulary and item[0] in tvocabulary:
-                            word1 = svocabulary[item[1]]
-                            word2 = tvocabulary[item[0]]
-                            if word1.isalpha() or word2.isalpha():
-                                dic.write("{0}\t{1}\n".format(word1, word2))
-        svcb.close()
-        tvcb.close()
-        t3s.close()
-        t3t.close()
-        dic.close()
-        os.sync()
+                        if hmean > 0.1:
+                            if item[1] in svocabulary and item[0] in tvocabulary:
+                                word1 = svocabulary[item[1]]
+                                word2 = tvocabulary[item[0]]
+                                if word1.isalpha() or word2.isalpha():
+                                    dic.write("{0}\t{1}\n".format(word1, word2))
+            svcb.close()
+            tvcb.close()
+            t3s.close()
+            t3t.close()
+            dic.close()
+            os.sync()
 
 
 # Obtaining the harmonic probability of each pair of words in both directions and filtering out those with less than p=0.2; printing the dictionary
