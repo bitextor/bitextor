@@ -259,7 +259,7 @@ BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", 
 
 OUTPUT_FILES = ["sent", "raw"]
 if "granularity" in config:
-    if config["granularity"] == "documents":
+    if  "documents" in config["granularity"]:
         OUTPUT_FILES.append("documents")
 STATS_FILES = ["sent", "raw"]
 

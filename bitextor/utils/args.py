@@ -69,6 +69,12 @@ def check_generate_dic(schema, provided_in_config, config, dic_required=True):
         schema['generateDic']['required'] = True
         schema['generateDic']['check_with'] = istrue
 
+def check_granularity(field, value, error):
+    if not isinstance(value, list):
+        error(field, f'{value} should be a list')
+    if len(value)==1 and value[0]=="documents":
+        error(field, "The option 'documents' requires the option 'sentences'")
+
 def validate_args(config):
     schema = {
         # output folders
@@ -80,7 +86,8 @@ def validate_args(config):
             'default_setter': lambda doc: doc["transientDir"] if "transientDir" in doc else ""
         },
         # output files
-        'granularity': {'type': 'string', 'allowed': ["sentences", "documents"], 'default': "sentences"},
+        #'granularity': {'type': 'string', 'allowed': ["sentences", "documents"], 'default': "sentences"},
+        'granularity': {'type': 'list', 'check_with': check_granularity, 'default': ["sentences"]},
         # profiling
         'profiling': {'type': 'boolean', 'default': False},
         # execute until X:
