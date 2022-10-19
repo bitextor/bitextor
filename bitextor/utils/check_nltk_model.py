@@ -16,9 +16,9 @@
 import sys
 import logging
 
-import nltk
-
 def check(model_path, model, download=True, quiet=False):
+    import nltk
+
     try:
         nltk.data.find(model_path)
     except LookupError:
