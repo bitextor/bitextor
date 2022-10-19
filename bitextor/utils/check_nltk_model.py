@@ -32,7 +32,7 @@ def check(model_path, model, download=True, quiet=False):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        # E.g. corpus/reader/wordlist/perluniprops perluniprops
+        # E.g. misc/perluniprops perluniprops True
         logging.error("Syntax: <model_path> <path> [quiet]")
 
         sys.exit(1)
