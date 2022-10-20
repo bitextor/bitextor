@@ -12,6 +12,7 @@ from bitextor.utils.common import (
     is_first_snakemake_execution,
     path_exists,
 )
+import bitextor.utils.check_nltk_model as check_nltk_model
 
 valid, config = validate_args(config)
 
@@ -482,6 +483,12 @@ if PARAGRAPH_IDENTIFICATION:
 # Create mark
 with open(get_snakemake_execution_mark(TMPDIR), "w"):
     pass
+
+# Check NLTK models (they need to be downloaded now because the download is not thread-safe)
+if BIFIXER:
+    check_nltk_model.check("tokenizers/punkt", "punkt")
+if BIROAMER:
+    check_nltk_model.check("misc/perluniprops", "perluniprops")
 
 shell.prefix("set -euo pipefail;")
 

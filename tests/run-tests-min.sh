@@ -67,6 +67,9 @@ wait
 tar -xzf "${WORK}/output_reference/run-tests-min.tgz" -C "${WORK}/output_reference/" && \
 rm -f "${WORK}/output_reference/run-tests-min.tgz"
 
+# Check NLTK models and download them if they hasn't been downloaded yet
+check_nltk_models
+
 # MT (id >= 10)
 ## MT (en-fr)
 (
@@ -166,9 +169,8 @@ wait
 
     finish_test
 ) &
-## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
+## MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
 (
-    ### MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
     init_test "101"
 
     ${BITEXTOR} \
@@ -182,8 +184,9 @@ wait
         &> "${WORK}/reports/${TEST_ID}.report"
 
     finish_test
-
-    ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+) &
+## MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+(
     init_test "102"
 
     ${BITEXTOR} \

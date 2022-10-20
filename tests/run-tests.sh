@@ -185,6 +185,9 @@ create-p2t-from-warc()
     fi
 }
 
+# Check NLTK models and download them if they hasn't been downloaded yet
+check_nltk_models
+
 # MT (id >= 10)
 tests-mt()
 {
@@ -502,9 +505,8 @@ tests-others()
 
         finish_test
     ) &
-    ## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
+    ## MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
     (
-        ### MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
         init_test "101"
 
         ${BITEXTOR} \
@@ -518,8 +520,9 @@ tests-others()
             &> "${WORK}/reports/${TEST_ID}.report"
 
         finish_test
-
-        ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+    ) &
+    ## MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+    (
         init_test "102"
 
         # TODO change WARC and use greenpeace.canada-small.warc.gz in order to let Bicleaner AI finish in CI
