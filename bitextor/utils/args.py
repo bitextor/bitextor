@@ -65,14 +65,14 @@ def check_generate_dic(schema, provided_in_config, config, dic_required=True):
     if dic_required:
         schema['dic']['required'] = True
 
-    elif provided_in_config['dic'] and not path_exists(config['dic']):
+    if provided_in_config['dic'] and not path_exists(config['dic']):
         schema['generateDic']['required'] = True
         schema['generateDic']['check_with'] = istrue
 
 def check_granularity(field, value, error):
     if not isinstance(value, list):
         error(field, f'{value} should be a list')
-    if len(value)==1 and value[0]=="documents":
+    elif len(value)==1 and value[0]=="documents":
         error(field, "The option 'documents' requires the option 'sentences'")
 
 def validate_args(config):
