@@ -185,6 +185,9 @@ create-p2t-from-warc()
     fi
 }
 
+# Check NLTK models and download them if they hasn't been downloaded yet
+check_nltk_models
+
 # MT (id >= 10)
 tests-mt()
 {
@@ -279,7 +282,8 @@ tests-gendic()
 
         DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
 
-        rm -f "${DIC_PATH}"
+        [[ -f "${DIC_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: dic file already exists: $DIC_PATH"
 
         ${BITEXTOR} \
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
@@ -318,7 +322,9 @@ tests-genbicleaner()
 
         BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
-        rm -f "${BICLEANER_MODEL_PATH}"
+        [[ -f "${BICLEANER_MODEL_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: bicleaner model already exists: $BICLEANER_MODEL_PATH"
+
         mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
 
         ${BITEXTOR} \
@@ -330,10 +336,9 @@ tests-genbicleaner()
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/${TEST_ID}.report" && \
-        popd > /dev/null
+            &> "${WORK}/reports/${TEST_ID}.report"
 
-        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
+        finish_test
     ) &
 
     wait "$!" # Wait for this specific test to finish
@@ -361,8 +366,11 @@ tests-gendic-genbicleaner()
         DIC_PATH="${WORK}/permanent/${TEST_ID}-generated-en-fr.dic"
         BICLEANER_MODEL_PATH="${BICLEANER}/${TEST_ID}/generated-en-fr.yaml"
 
-        rm -f "${DIC_PATH}"
-        rm -f "${BICLEANER_MODEL_PATH}"
+        [[ -f "${DIC_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: dic file already exists: $DIC_PATH"
+        [[ -f "${BICLEANER_MODEL_PATH}" ]] && \
+            >&2 echo "WARNING: ${TEST_ID}: bicleaner model already exists: $BICLEANER_MODEL_PATH"
+
         mkdir -p "$(dirname ${BICLEANER_MODEL_PATH})"
 
         ${BITEXTOR} \
@@ -374,10 +382,9 @@ tests-gendic-genbicleaner()
                 bicleaner=True bicleanerModel="${BICLEANER_MODEL_PATH}" bicleanerGenerateModel=True \
                 bicleanerParallelCorpusTrainingPrefix="['${dn_dgt_corpus_file}/DGT.clipped.en-fr']" \
                 bicleanerThreshold=0.1 deferred=False tmx=True bicleanerFlavour="classic" ${BITEXTOR_EXTRA_ARGS} \
-            &> "${WORK}/reports/${TEST_ID}.report" && \
-        popd > /dev/null
+            &> "${WORK}/reports/${TEST_ID}.report"
 
-        annotate_and_echo_info_wrapper "reference checking skipped: non-deterministic results: https://github.com/bitextor/bicleaner/issues/72" "false"
+        finish_test
     ) &
 
     wait-if-envvar-is-true
@@ -498,9 +505,8 @@ tests-others()
 
         finish_test
     ) &
-    ## 2 tests in the same scope: remove parallelism because NLTK model installation can't run in parallel (bifixer=True)
+    ## MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
     (
-        ### MT and docalign / segalign threshold and Bifixer and Bicleaner (en-fr)
         init_test "101"
 
         ${BITEXTOR} \
@@ -514,16 +520,18 @@ tests-others()
             &> "${WORK}/reports/${TEST_ID}.report"
 
         finish_test
-
-        ### MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+    ) &
+    ## MT and docalign / segalign threshold and Bifixer and Bicleaner AI (en-fr)
+    (
         init_test "102"
 
+        # TODO change WARC and use greenpeace.canada-small.warc.gz in order to let Bicleaner AI finish in CI
         ${BITEXTOR} \
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
                 dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
                 warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
                 documentAligner="externalMT" documentAlignerThreshold=0.1 alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
-                sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True bicleanerModelFlavour="full" \
+                sentenceAligner="bleualign" sentenceAlignerThreshold=0.1 bicleaner=True \
                 bicleanerModel="${BICLEANER_AI}/en-fr/metadata.yaml" bicleanerFlavour="ai" bicleanerThreshold=0.0 \
                 deferred=False bifixer=True tmx=True deduped=True biroamer=True ${BITEXTOR_EXTRA_ARGS} \
             &> "${WORK}/reports/${TEST_ID}.report"
