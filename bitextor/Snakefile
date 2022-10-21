@@ -259,6 +259,9 @@ BIROAMER_ALIGNMENT_CORPUS = ""
 BIROAMER_OMIT = return_dict_value_if_key(config, "biroamerOmitRandomSentences", "", pos_value="-o")
 
 OUTPUT_FILES = ["sent", "raw"]
+if "granularity" in config:
+    if  "documents" in config["granularity"]:
+        OUTPUT_FILES.append("documents")
 STATS_FILES = ["sent", "raw"]
 
 if TMX:
@@ -1217,6 +1220,32 @@ rule doc_emb_matches:
         """
 
 
+### DOCUMENTS OUTPUT ####################################################
+rule make_documents_output_file:
+    input:
+        indices=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{DOCALIGN}.06_01.matches",
+        plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/{TEXT_FILE}",
+        plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/{TEXT_FILE}",
+        url1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/url.gz",
+        url2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/url.gz",
+    output:
+        document_pairs=temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}/tempDocumentsOutput.gz"),
+    params:
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
+    shell:
+        """
+        header="src_url\ttrg_url\tsrc_doc\ttrg_doc"
+
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
+            | tail -n +2 \
+            | docjoin \
+                -l {input.url1} -r {input.url2} \
+                -l {input.plain1} -r {input.plain2} \
+            | cat <(echo "$header") - \
+            | pigz -c > {output}
+        """
+
 ### SEGALIGN ####################################################
 rule aggregate_segalign:
     """
@@ -1827,6 +1856,27 @@ rule sents:
         """
 
         shell(cmd)
+
+rule documents:
+    input:
+        documents=lambda wildcards: [
+            f"{TMPDIR}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}/tempDocumentsOutput.gz"
+            for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
+        ],
+        sents=rules.sents.output.corpus,
+    output:
+        f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
+    shell:
+        """
+	sent_file={input.sents}
+	document_file={input.documents}
+	header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
+        awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
+		<(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
+		<(zcat $document_file | tail -n +2) | \\
+		cat <(echo "$header") - | pigz -c > {output}
+        """
+
 
 
 rule tmx:
