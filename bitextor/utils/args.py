@@ -65,7 +65,7 @@ def check_generate_dic(schema, provided_in_config, config, dic_required=True):
     if dic_required:
         schema['dic']['required'] = True
 
-    if provided_in_config['dic'] and not path_exists(config['dic']):
+    elif provided_in_config['dic'] and not path_exists(config['dic']):
         schema['generateDic']['required'] = True
         schema['generateDic']['check_with'] = istrue
 
