@@ -487,7 +487,8 @@ for record in f:
 
         if options.paragraph_identification:
             # Add paragraph index
-            plaintext = [f"{element}\t{idx}" for idx, element in enumerate(plaintext.strip().split("\n"))]
+            paragraphs = enumerate(plaintext.strip().split("\n"))
+            plaintext = [f"{element}\t{idx+1}:"+str(len(paragraphs)) for idx, element in paragraphs]
             plaintext = '\n'.join(plaintext)
 
         mime = magic.from_buffer(text, mime=True)
