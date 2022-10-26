@@ -25,7 +25,7 @@ from bitextor.utils.common import (
     path_exists,
 )
 
-def get_available_cuda_devices(allocated_cuda_devices, max_devices=0):
+def get_available_cuda_devices(allocated_cuda_devices, max_devices=0, update_allocated_devices=True):
     # WARNING: call this function with mutex acquired
 
     available_cuda_devices = list(range(max_devices)) # All devices available by default -> we have to check which ones are not
@@ -33,20 +33,21 @@ def get_available_cuda_devices(allocated_cuda_devices, max_devices=0):
     if "CUDA_VISIBLE_DEVICES" in os.environ:
         available_cuda_devices = list(map(lambda d: int(d), os.environ["CUDA_VISIBLE_DEVICES"].split(',')))
 
-    allocated = dict({(d, 0) for d in available_cuda_devices})
+    if update_allocated_devices:
+        allocated = dict({(d, 0) for d in available_cuda_devices})
 
-    for gpu_token, cuda_device in allocated_cuda_devices.items():
-        allocated[cuda_device] += 1
+        for gpu_token, cuda_device in allocated_cuda_devices.items():
+            allocated[cuda_device] += 1
 
-        if allocated[cuda_device] != 1:
-            raise Exception("Bug: same device was allocated twice or more")
+            if allocated[cuda_device] != 1:
+                raise Exception("Bug: same device was allocated twice or more")
 
-        try:
-            idx = available_cuda_devices.index(cuda_device)
+            try:
+                idx = available_cuda_devices.index(cuda_device)
 
-            del available_cuda_devices[idx]
-        except ValueError as e:
-            raise Exception("Different values of 'max_devices' have been provided") from e
+                del available_cuda_devices[idx]
+            except ValueError as e:
+                raise Exception("Different values of 'max_devices' have been provided") from e
 
     return available_cuda_devices
 
@@ -70,13 +71,19 @@ def clean_and_update_cuda_devices(persistent_storage, allocated_cuda_devices, gp
     aux_allocated_cuda_devices = persistent_storage.fetch("gpu")
 
     if allocated_cuda_devices != aux_allocated_cuda_devices:
-        raise Exception(f"Bug: the content should be the same but it's not: '{str(allocated_cuda_devices)}' vs '{str(aux_allocated_cuda_devices)}'")
+        raise Exception("Bug: the content should be the same but it's not: "
+                        f"'{str(allocated_cuda_devices)}' vs '{str(aux_allocated_cuda_devices)}'")
 
     # The returned instance is already cleaned
     return allocated_cuda_devices
 
-# TODO fix when max_devices is 0
 def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_devices=0, debug=False):
+    _available_cuda_devices = get_available_cuda_devices(None, max_devices=max_devices, update_allocated_devices=False)
+
+    if len(_available_cuda_devices) == 0:
+        # GPU not allocated (i.e. not handled) or CPU execution
+        return -1
+
     try:
         #debug_if_true(f"process stats: {os.getpid()} {os.getppid()} {os.getgid()} {os.getpgrp()} {os.getpgid(os.getppid())}", debug)
         debug_if_true(f"{gpu_ofile_token}: max_devices: {max_devices}", debug)
@@ -103,7 +110,8 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
             # Check if we were able to allocate a candidate device
             if len(available_cuda_devices) == 0:
-                sys.stderr.write("WARNING: no device available (this shouldn't happen if the resources have been correctly configured): waiting...\n")
+                sys.stderr.write("WARNING: no device available "
+                                 "(this shouldn't happen if the resources have been correctly configured): waiting...\n")
 
                 if warning_message:
                     # Since we have acquired the mutex, this message should've been showed only once, but this is the second time...
@@ -128,7 +136,8 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
             persistent_storage.store("gpu", allocated_cuda_devices) # Mutex is acquired, so there shouldn't be any problem
 
-            time.sleep(1 + random.random()) # Wait [1, 2)s before proceed in order to check if there were collisions allocating the same device (there shouldn't)
+            time.sleep(1 + random.random()) # Wait [1, 2)s before proceed in order to check if there were collisions
+                                            #  allocating the same device (there shouldn't)
 
             # Check if there were collisions
             allocated_cuda_devices = persistent_storage.fetch("gpu")
@@ -146,7 +155,8 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
             if candidate_device_count > 1 or check_collision:
                 # Collision -> deallocate device and wait random time in order to avoid further collisions and re-try
-                sys.stderr.write("WARNING: collision detected while mutex acquired (likely a bug: please, report): trying to solve\n")
+                sys.stderr.write("WARNING: collision detected while mutex acquired (likely a bug: please, report): "
+                                 "trying to solve\n")
 
                 del allocated_cuda_devices[gpu_ofile_token]
 
@@ -172,9 +182,21 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
         raise
 
-def allocate_cuda_devices_teardown(persistent_storage, debug=False):
+def allocate_cuda_devices_teardown(persistent_storage, ofile_token, debug=False):
     # WARNING: call only in teardown
 
-    # TODO touch all output files and update in order to avoid error with other instances
+    mutex.acquire_mutex(persistent_storage, ofile_token, debug=debug)
 
-    pass
+    # Touch all GPU token files
+    allocated_cuda_devices = persistent_storage.fetch("gpu")
+
+    for gpu_token, cuda_device in allocated_cuda_devices.items():
+        if not path_exists(gpu_token):
+            # Touch token file
+            with open(gpu_token, 'w'):
+                pass
+
+    # Update persistent storage in order to avoid errors with other instances
+    clean_and_update_cuda_devices(persistent_storage, allocated_cuda_devices, ofile_token, debug=debug)
+
+    mutex.release_mutex(persistent_storage, ofile_token, debug=debug)

@@ -13,6 +13,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
+# Global mutex mechanism through persistent files
+
 import time
 import random
 

@@ -213,26 +213,6 @@ def get_all_idxs_from_list(l, element):
     return idxs
 
 
-def get_snakemake_execution_mark(tmp_path):
-    mark_path = f"{tmp_path}/mark_first_execution"
-
-    return mark_path
-
-
-def is_first_snakemake_execution(tmp_path, create_mark=False):
-    mark_path = get_snakemake_execution_mark(tmp_path)
-
-    if path_exists(mark_path):
-        return False
-
-    # Create mark?
-    if create_mark:
-        with open(mark_path, "w"):
-            pass
-
-    return True
-
-
 def path_exists(path, expand=True, f=os.path.isfile):
     _path = path
 
@@ -269,4 +249,5 @@ def initialize_persistent_dict(persistent_storage):
     if err:
         sys.stderr.write(f"WARNING: there were values in the dictionary: if you're not running parallel instances, "
                          "this is not expected: waiting 20s before proceed")
+        sys.stderr.flush()
         time.sleep(20)

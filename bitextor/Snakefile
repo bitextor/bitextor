@@ -8,8 +8,6 @@ from bitextor.utils.common import (
     open_xz_or_gzip_or_plain,
     duration_to_seconds,
     return_dict_value_if_key,
-    get_snakemake_execution_mark,
-    is_first_snakemake_execution,
     path_exists,
     initialize_persistent_dict,
 )
@@ -415,6 +413,7 @@ if not UNTIL: # config["until"] not provided -> run the whole pipeline
 
     # We need to add these output files because tokenisation rules are the last rules that don't
     # need both shards. Otherwise snakemake waites for both shards to be completed to continue
+    # TODO if we don't have the MT docalign set, then tokenization is not the last step but sentence aligner -> are we doing extra work?
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
 
     if DOCALIGN == "externalMT":
@@ -465,6 +464,7 @@ elif UNTIL == "tokenise_src":
 else:
     # We need to add these output files because tokenisation rules are the last rules that don't
     # need both shards. Otherwise snakemake waites for both shards to be completed to continue
+    # TODO if we don't have the MT docalign set, then tokenization is not the last step but sentence aligner -> are we doing extra work?
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
 
     if DOCALIGN == "externalMT":
@@ -488,15 +488,11 @@ else:
 # OTHER
 BASE64_FILTER_CMD = "cat"
 GPU_TOKENS_DIR = f"{TMPDIR}/gpu_tokens"
-PERSISTENT_STORAGE = PersistentDict(f"gpu") # Global dictionary (shared in all processes)
-                                            # thread-safe -> it handles concurrency
+PERSISTENT_STORAGE = PersistentDict("bitextor") # Global dictionary (shared in all processes)
+                                                # thread-safe -> it handles concurrency
 
 if PARAGRAPH_IDENTIFICATION:
     BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
-
-# Create mark
-with open(get_snakemake_execution_mark(TMPDIR), "w"):
-    pass
 
 # Check NLTK models (they need to be downloaded now because the download is not thread-safe)
 if BIFIXER:
@@ -534,10 +530,20 @@ onstart:
     initialize_persistent_dict(PERSISTENT_STORAGE)
 
 onerror:
-    allocate_cuda_devices_teardown()
+    sys.stderr.write("Executing teardown...\n")
+    sys.stderr.flush()
+
+    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, "cuda_teardown_onerror")
+
+    sys.stderr.write("The execution finished with errors...\n")
 
 onsuccess:
-    allocate_cuda_devices_teardown()
+    sys.stderr.write("Executing teardown...\n")
+    sys.stderr.flush()
+
+    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, "cuda_teardown_onsuccess")
+
+    sys.stderr.write("The execution finished without errors!\n")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -1260,6 +1266,7 @@ rule doc_emb_matches:
             mkdir -p {params.folder}
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
             cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
@@ -1392,6 +1399,7 @@ rule vecalign:
             mkdir -p "{params.folder}"
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
             cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
@@ -1636,6 +1644,7 @@ rule bicleaner:
             f"""
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
             slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
