@@ -18,12 +18,15 @@ import sys
 import time
 import random
 import traceback
+import logging
 
 import bitextor.utils.mutex as mutex
 from bitextor.utils.common import (
     debug_if_true,
     path_exists,
 )
+
+LOGGER = logging.getLogger("bitextor")
 
 def get_available_cuda_devices(allocated_cuda_devices, max_devices=0, update_allocated_devices=True):
     # WARNING: call this function with mutex acquired
@@ -110,8 +113,7 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
             # Check if we were able to allocate a candidate device
             if len(available_cuda_devices) == 0:
-                sys.stderr.write("WARNING: no device available "
-                                 "(this shouldn't happen if the resources have been correctly configured): waiting...\n")
+                LOGGER.warning("No device available (this shouldn't happen if the resources have been correctly configured): waiting...")
 
                 if warning_message:
                     # Since we have acquired the mutex, this message should've been showed only once, but this is the second time...
@@ -128,7 +130,7 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
                 available_cuda_devices = get_available_cuda_devices(allocated_cuda_devices, max_devices=max_devices)
 
             if warning_message:
-                sys.stderr.write("INFO: it seems that some device has been released\n")
+                LOGGER.info("It seems that some device has been released")
 
             # We have our candidate device -> communicate our intention about allocate the resource
             candidate_device = available_cuda_devices[0]
@@ -155,8 +157,7 @@ def allocate_cuda_visible_device(persistent_storage, gpu_ofile_token, max_device
 
             if candidate_device_count > 1 or check_collision:
                 # Collision -> deallocate device and wait random time in order to avoid further collisions and re-try
-                sys.stderr.write("WARNING: collision detected while mutex acquired (likely a bug: please, report): "
-                                 "trying to solve\n")
+                LOGGER.warning("Collision detected while mutex acquired (likely a bug: please, report): trying to solve")
 
                 del allocated_cuda_devices[gpu_ofile_token]
 

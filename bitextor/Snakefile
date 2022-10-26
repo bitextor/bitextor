@@ -10,6 +10,8 @@ from bitextor.utils.common import (
     return_dict_value_if_key,
     path_exists,
     initialize_persistent_dict,
+    set_up_logging_logger,
+    flush_logger,
 )
 import bitextor.utils.check_nltk_model as check_nltk_model
 from bitextor.utils.allocate_cuda_gpus import (
@@ -61,6 +63,7 @@ if "lang2" in config:
 
 PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 VERBOSE = config["verbose"]
+LOGGER = set_up_logging_logger(logging.getLogger("bitextor"), level=logging.DEBUG if VERBOSE else logging.INFO)
 
 #################################################################
 # CRAWLING
@@ -352,7 +355,7 @@ if "parallelWorkers" in config:
         THREADS[k] = config["parallelWorkers"][k]
 
         if THREADS[k] < 1:
-            snakemake.logger.logger.warning(f"Negative value in parallelWorkers['{k}']: value resets to 1")
+            LOGGER.warning("Negative value in parallelWorkers['%d']: value resets to 1", k)
 
             THREADS[k] = 1
 
@@ -361,7 +364,7 @@ if "parallelJobs" in config:
         JOB_THREADS[k] = config["parallelJobs"][k]
 
         if JOB_THREADS[k] < 0:
-            snakemake.logger.logger.warning(f"Negative value in parallelJobs['{k}']: value resets to 0")
+            LOGGER.warning("Negative value in parallelJobs['%d']: value resets to 0", k)
 
             JOB_THREADS[k] = 0
 
@@ -389,9 +392,9 @@ if UNTIL not in UNTIL_RULES_ALL_LANGS:
 
         # Warn about the fact that not all languages will be processed at some point
         if not UNTIL:
-            snakemake.logger.logger.warning("Not all languages will be processed until the end of the pipeline")
+            LOGGER.warning("Not all languages will be processed until the end of the pipeline")
         else:
-            snakemake.logger.logger.warning(f"Not all languages will be processed until '{UNTIL}'")
+            LOGGER.warning("Not all languages will be processed until '%s'", UNTIL)
 
 if not UNTIL: # config["until"] not provided -> run the whole pipeline
     OUTPUT = expand(
@@ -487,7 +490,9 @@ else:
 #################################################################
 # OTHER
 BASE64_FILTER_CMD = "cat"
-GPU_TOKENS_DIR = f"{TMPDIR}/gpu_tokens"
+GPU_TOKENS_DIR = f"{TRANSIENT}/gpu_tokens" # We use TRANSIENT instead of TMPDIR since TRANSIENT have to be unique,
+                                           #  but TMPDIR might be the same directory for different instances
+                                           #  (taking into account the semantic of the variable names of the directories)
 PERSISTENT_STORAGE = PersistentDict("bitextor") # Global dictionary (shared in all processes)
                                                 # thread-safe -> it handles concurrency
 
@@ -506,23 +511,25 @@ shell.prefix("set -euo pipefail;")
 ### HANDLERS ####################################################
 
 onstart:
-    if VERBOSE:
-        # provided config
-        sys.stderr.write("Config: \n")
-        pprint.pprint(config, indent=2, stream=sys.stderr, width=100)
-        sys.stderr.write('\n')
-        # locale
-        sys.stderr.write("Locale: \n")
-        sys.stderr.write(subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-        sys.stderr.write('\n')
-        # environment variables
-        sys.stderr.write("Environment variables: \n")
-        sys.stderr.write(subprocess.run(["printenv"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-        sys.stderr.write('\n')
-        # free storage
-        sys.stderr.write("Free storage: \n")
-        sys.stderr.write(subprocess.run(["df", "-h"], stdout=subprocess.PIPE).stdout.decode("utf-8"))
-        sys.stderr.write('\n')
+    for line in pprint.pformat(config, indent=2, width=100).strip().split('\n'):
+        LOGGER.debug("Config: %s", line)
+
+    LOGGER.debug("-----------------------------------------------")
+
+    for line in subprocess.run(["locale"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip().split('\n'):
+        LOGGER.debug("Locale: %s", line)
+
+    LOGGER.debug("-----------------------------------------------")
+
+    for line in subprocess.run(["printenv"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip().split('\n'):
+        LOGGER.debug("Envvar: %s", line)
+
+    LOGGER.debug("-----------------------------------------------")
+
+    for line in subprocess.run(["df", "-h"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip().split('\n'):
+        LOGGER.debug("Storage: %s", line)
+
+    LOGGER.debug("-----------------------------------------------")
 
     # TODO log variables which might not be defined in the config variable if VERBOSE? (e.g. BIFIXER_AGGRESSIVE_DEDUP)
 
@@ -530,18 +537,20 @@ onstart:
     initialize_persistent_dict(PERSISTENT_STORAGE)
 
 onerror:
-    sys.stderr.write("Executing teardown...\n")
+    LOGGER.info("Executing teardown...")
+    flush_logger(LOGGER) # Teardown might take a while, so at least inform about it
 
     allocate_cuda_devices_teardown(PERSISTENT_STORAGE, f"{GPU_TOKENS_DIR}/cuda_teardown_onerror")
 
-    sys.stderr.write("The execution finished with errors...\n")
+    LOGGER.warning("The execution finished with errors...")
 
 onsuccess:
-    sys.stderr.write("Executing teardown...")
+    LOGGER.info("Executing teardown...")
+    flush_logger(LOGGER) # Teardown might take a while, so at least inform about it
 
     allocate_cuda_devices_teardown(PERSISTENT_STORAGE, f"{GPU_TOKENS_DIR}/cuda_teardown_onsuccess")
 
-    sys.stderr.write("The execution finished without errors!")
+    LOGGER.info("The execution finished without errors!")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -773,16 +782,16 @@ checkpoint linguacrawl_download:
 
                             current += int(du_warc)
                         except:
-                            sys.stderr.write(f"WARNING: could not retrieve the size of {warc}\n")
+                            LOGGER.warning("Could not retrieve the size of %s", warc)
 
                     files = "\n".join(files)
                     shell(f'echo -e "{files}" > {{output[0]}}')
         except:
             # No warcs were downloaded: error or warning
             if len(WARCS) == 0:
-                sys.stderr.write("ERROR: could not find any file after crawling\n")
+                LOGGER.error("Could not find any file after crawling")
                 sys.exit(1)
-            sys.stderr.write("WARNING: could not find any file after crawling\n")
+            LOGGER.warning("Could not find any file after crawling")
             shell(f"touch {output}")
 
 

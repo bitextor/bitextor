@@ -27,8 +27,11 @@ import os
 import requests
 import shlex
 import time
+import logging
 
 from pytools.persistent_dict import NoSuchEntryError
+
+LOGGER = logging.getLogger("bitextor")
 
 class ExternalTextProcessor(object):
 
@@ -146,8 +149,9 @@ def check_connection(url):
         except BaseException as e:
             if check:
                 connection_error = True
-                sys.stderr.write(f"WARNING: error connecting to {url}\n")
-                sys.stderr.write(str(e) + "\n")
+
+                LOGGER.warning("Error connecting to URL: %s", url)
+                LOGGER.warning("Message: %s", str(e))
 
     return connection_error, url
 
@@ -223,10 +227,10 @@ def path_exists(path, expand=True, f=os.path.isfile):
 
 def debug_if_true(msg, debug, flush=True):
     if debug:
-        sys.stderr.write(f"--- DEBUG [{time.time()}]: {msg}\n")
+        LOGGER.debug("%s", msg)
 
         if flush:
-            sys.stderr.flush()
+            flush_logger(LOGGER)
 
 def initialize_persistent_dict(persistent_storage):
     # WARNING: call only once! Remember that Snakemake resets the WHOLE workflow a few times...
@@ -239,15 +243,44 @@ def initialize_persistent_dict(persistent_storage):
         try:
             persistent_storage.fetch(k)
 
-            sys.stderr.write("WARNING: the dictionary is expected to be empty if this is the only instance running: "
-                             f"found key '{k}' (if this is unexpected, check out ~/.cache/pytools)\n")
+            LOGGER.warning("The dictionary is expected to be empty if this is the only instance running: "
+                           "found key '%s' (if this is unexpected, check out ~/.cache/pytools)", k)
 
             err = True
         except NoSuchEntryError:
             persistent_storage.store(k, v)
 
     if err:
-        sys.stderr.write(f"WARNING: there were values in the dictionary: if you're not running parallel instances, "
-                         "this is not expected: waiting 20s before proceed")
-        sys.stderr.flush()
+        LOGGER.warning("There were values in the dictionary: if you're not running parallel instances, "
+                       "this is not expected: waiting 20s before proceed")
+        flush_logger(LOGGER)
         time.sleep(20)
+
+def set_up_logging_logger(logger, filename=None, level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] [%(module)s:%(lineno)d] %(message)s",
+                          display_when_file=False):
+    handlers = [
+        logging.StreamHandler()
+    ]
+
+    if filename is not None:
+        if display_when_file:
+            # Logging messages will be stored and displayed
+            handlers.append(logging.FileHandler(filename))
+        else:
+            # Logging messages will be stored and not displayed
+            handlers[0] = logging.FileHandler(filename)
+
+    formatter = logging.Formatter(format)
+
+    for h in handlers:
+        h.setFormatter(formatter)
+
+        logger.addHandler(h)
+
+    logger.setLevel(level)
+
+    return logger
+
+def flush_logger(logger):
+    for handler in logger.handlers:
+        handler.flush()

@@ -7,7 +7,9 @@ import os
 import tldextract
 import validators
 from itertools import product
+import logging
 
+LOGGER = logging.getLogger("bitextor")
 
 """
 Group hosts by domain
@@ -109,7 +111,7 @@ def get_pproc_input(wildcards):
         for warc in warcs:
             if not os.path.exists(warc):
                 warcs_targets.remove(warc.split("/")[-1])
-                sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
+                LOGGER.warning("Non-existent WARC detected and fixed: %s", warc)
 
         try:
             # Check if the requested pproc input is a provided warc
@@ -132,7 +134,7 @@ def get_shard_input_crawled(lang):
         for warc in warcs_path:
             if not os.path.exists(warc):
                 warcs.remove(warc.split("/")[-1])
-                sys.stderr.write(f"WARNING: non-existent WARC ({warc}) detected and fixed\n")
+                LOGGER.warning("Non-existent WARC detected and fixed: %s", warc)
 
         return expand(
             "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
