@@ -240,7 +240,7 @@ def initialize_persistent_dict(persistent_storage):
             persistent_storage.fetch(k)
 
             sys.stderr.write("WARNING: the dictionary is expected to be empty if this is the only instance running: "
-                             f"found key '{k}'\n")
+                             f"found key '{k}' (if this is unexpected, check out ~/.cache/pytools)\n")
 
             err = True
         except NoSuchEntryError:

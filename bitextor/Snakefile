@@ -531,19 +531,17 @@ onstart:
 
 onerror:
     sys.stderr.write("Executing teardown...\n")
-    sys.stderr.flush()
 
-    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, "cuda_teardown_onerror")
+    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, f"{GPU_TOKENS_DIR}/cuda_teardown_onerror")
 
     sys.stderr.write("The execution finished with errors...\n")
 
 onsuccess:
-    sys.stderr.write("Executing teardown...\n")
-    sys.stderr.flush()
+    sys.stderr.write("Executing teardown...")
 
-    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, "cuda_teardown_onsuccess")
+    allocate_cuda_devices_teardown(PERSISTENT_STORAGE, f"{GPU_TOKENS_DIR}/cuda_teardown_onsuccess")
 
-    sys.stderr.write("The execution finished without errors!\n")
+    sys.stderr.write("The execution finished without errors!")
 
 #################################################################
 ### FINAL OUTPUTS ###############################################
@@ -748,7 +746,7 @@ checkpoint linguacrawl_download:
                 if params.crawl_cat_max <= 0:
                     warcs = " ".join(warcs)
                     shell(
-                        f"""
+                        """
                         cat {warcs} > {params.folder}/linguacrawl.warc.gz
                         echo "{params.folder}/linguacrawl.warc.gz" > {{output[0]}}
                         """
@@ -1262,7 +1260,7 @@ rule doc_emb_matches:
         gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["docalign"])
 
         shell(
-            f"""
+            """
             mkdir -p {params.folder}
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
@@ -1395,7 +1393,7 @@ rule vecalign:
         gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["segalign"])
 
         shell(
-            f"""
+            """
             mkdir -p "{params.folder}"
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
@@ -1641,7 +1639,7 @@ rule bicleaner:
         gpu_cuda_device = allocate_cuda_visible_device(PERSISTENT_STORAGE, params.gpu_ofile_token, max_devices=JOB_THREADS["bicleaner"])
 
         shell(
-            f"""
+            """
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
             [[ "{gpu_cuda_device}" -ge "0" ]] && \
@@ -1893,7 +1891,7 @@ rule sents:
     threads: THREADS["sents"]
     run:
         cmd = \
-        f"""
+        """
         sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
         header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
 
@@ -1906,7 +1904,7 @@ rule sents:
             cmd += f" <(tail -n +2 {filename})"
 
         cmd += \
-        f""" \\
+        """ \\
         | cat <(echo "$header") - \\
         | pigz -c > {output.corpus}
 

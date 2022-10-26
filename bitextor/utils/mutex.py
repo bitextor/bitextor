@@ -34,7 +34,8 @@ def acquire_mutex(persistent_dict, ofile_token, debug=False):
 
                 break
             elif _mutex == ofile_token:
-                raise Exception("Bug: impersonation?")
+                raise Exception("Mutex token impersonation: have you provided the same token across "
+                                f"instances (if not, it might be a bug)? Token: {ofile_token}")
             else:
                 # Wait [1, 2) until we can get the mutex
                 time.sleep(1 + random.random())
