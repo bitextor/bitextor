@@ -334,15 +334,15 @@ rule hunalign:
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
     shell:
         """
-        header="src_index\ttrg_index"
+        header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_tokenized\ttrg_tokenized"
 
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
-            | LC_ALL=C sort -nk1,1 -t $'\t' \
+            | docjoin \
+                -l {input.url1} -r {input.url2} \
+                -l {input.plain1} -r {input.plain2} \
+                -l {input.tok1} -r {input.tok2} \
             | cat <(echo "$header") - \
-            | python3 {WORKFLOW}/docalign/bitextor_build_docalign.py \
-                --columns1 {input.url1} {input.plain1} {input.tok1} --columns2 {input.url2} {input.plain2} {input.tok2} \
-                --columns1-output-header src_url src_text src_tokenized --columns2-output-header trg_url trg_text trg_tokenized \
             | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {params.deferred} -d {input.hunaligndic} \
                 -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.paragraphs} \
             | gzip -c > {output}

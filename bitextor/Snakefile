@@ -1319,6 +1319,7 @@ rule aggregate_segalign:
         """ echo {input} | tr ' ' '\n' > {output} """
 
 
+# TODO can we use docjoin for the rest of segaligners?
 # BLEUALIGN #####################################################
 rule bleualign:
     """
@@ -1418,21 +1419,24 @@ rule vecalign:
             [[ "{gpu_cuda_device}" -ge "0" ]] && \
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
-            cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
-                <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
-                    | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
-                    | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                        --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
-                        --tmp-dir "{params.folder}" --nda-input-is-base64 \
-                        --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} --first-match-offset 1 \
-                        --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
-                        --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
-                        --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
-                        --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
-                        --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
-                        --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
-                        --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
-                    | pigz -c > "{output}"
+            header="src_url\ttrg_url\tsrc_text\ttrg_text"
+
+            python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
+                | tail -n +2 \
+                | docjoin \
+                    -l {input.url1} -r {input.url2} \
+                    -l {input.plain1} -r {input.plain2} \
+                | cat <(echo "$header") - \
+                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \
+                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
+                    --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \
+                    --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \
+                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \
+                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
+                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
+                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
+                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
+                | pigz -c > "{output}"
 
             touch "{params.gpu_ofile_token}"
             """
