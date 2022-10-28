@@ -968,6 +968,7 @@ checkpoint shard:
         """
 
 
+# TODO can paragraphs be stored in a separated file in order to avoid extra process in future rules?
 rule split:
     """
     Use sentence splitter to obtain sentences from the plain text file
@@ -1090,12 +1091,20 @@ rule custom_translate:
             exit 1
         fi
         if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            # Merge translations and paragraphs
             paste <(zcat "$output") <(cat "{params.paragraphs_file}") \
                 | python3 {WORKFLOW}/utils/join_b64_docs.py \
                 | pigz -c > "{output}"
-        fi
 
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
+            # Check again if the lines are the expected
+            n_after_again=$(zcat "{output}" | base64 -d | wc -l)
+
+            if [ $initial_nolines -ne $n_after ]; then
+                >&2 echo "Lines count differs after final file was created: source $n_after, target $n_after_again"
+                exit 1
+            fi
+
+            # Remove tmp files
             rm -f "{params.paragraphs_file}"
             rm -f "{params.tmp_translations_file}"
         fi

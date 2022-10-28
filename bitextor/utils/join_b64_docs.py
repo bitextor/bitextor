@@ -31,7 +31,7 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, enco
         cm = open(input_file)
 
     with cm as doc_fd:
-        for idx, doc in enumerate(doc_fd):
+        for idx, doc in enumerate(doc_fd, 1):
             try:
                 doc = doc.strip('\n').split(separator)
                 segments = []
@@ -43,6 +43,9 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, enco
                         segment = base64.b64decode(segment).decode('utf-8', errors=decode_errors)
 
                     segments.append(segment)
+
+                if len(segment) <= 1:
+                    raise Exception(f"document {idx}: at least 2 columns are needed, but {len(segment)} were found")
 
                 columns.add(len(segments))
                 nosentences = set()
@@ -59,7 +62,7 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, enco
                     nosentences.add(len(sentences))
 
                 if len(nosentences) not in (0, 1):
-                    raise Exception(f"document #{idx + 1}: same number of sentences were expected, but got different")
+                    raise Exception(f"document #{idx}: same number of sentences were expected, but got different")
 
                 # Join all the sentences from the segments for the current document
                 if len(nosentences) == 1:
@@ -70,12 +73,14 @@ def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, enco
 
                         text.append(current_sentence)
 
+                    text.append('') # Avoid that multiple rows are merged due to the lack of '\n'
+
                 doc = '\n'.join(text).encode('utf-8', errors=encode_errors)
                 doc = base64.b64encode(doc).decode('utf-8', errors=decode_errors)
 
                 print(doc)
             except Exception as e:
-                raise Exception(f"document #{idx + 1} could not be processed") from e
+                raise Exception(f"document #{idx} could not be processed") from e
 
     if len(columns) not in (0, 1):
         logging.warning("different number of segments (columns) were processed: %s", columns)

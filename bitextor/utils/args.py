@@ -233,6 +233,8 @@ def validate_args(config):
         'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}},
     }
 
+    # TODO add new option for generic batch size of neural tools
+
     provided_in_config = {} # contains info about the definition of rules in the configuration file
     monolingual_workflow = False
 
