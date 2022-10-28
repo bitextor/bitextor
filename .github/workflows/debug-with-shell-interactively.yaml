@@ -50,6 +50,7 @@ jobs:
          uses: actions/setup-java@v3
          with:
             java-version: 8
+            distribution: zulu
             java-package: jdk
             architecture: x64
       -  uses: actions/checkout@v3
