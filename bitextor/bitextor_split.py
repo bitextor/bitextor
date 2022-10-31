@@ -76,6 +76,8 @@ oparser.add_argument("--customnbp",
                      help="Path for custom non breaking prefixes used by Moses Sentence Splitter Python port")
 oparser.add_argument("--sentences-output", dest="sent_output", default="-",
                      help="Path of the output file that will contain sentence splitted text")
+oparser.add_argument("--metadata-output", default="-",
+                     help="Metadata output file")
 oparser.add_argument("--prune", dest="prune_threshold", type=int, default=0,
                      help="Prune sentences longer than n (words/characters)")
 oparser.add_argument("--prune-type", choices={"words", "chars"}, default="words",
@@ -107,7 +109,7 @@ elif splitter == "moses":
         else:
             splitter_func = SentenceSplitter(language=options.langcode)
     except SentenceSplitterException as e:
-        sys.stderr.write(str(e) + "\n")
+        logging.error("%s", str(e))
         splitter_func = SentenceSplitter(language='en')
 
     splitter_func = splitter_func.split
@@ -119,10 +121,21 @@ elif splitter == "none":
 else:
     splitter_func = ExternalTextProcessor(os.path.expanduser(splitter)).process
 
-with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdin as reader, \
-     open(options.sent_output, 'w') if options.sent_output != "-" else sys.stdout as writer:
+same_output_file = options.sent_output == options.metadata_output # Not perfect approach for detecting the same path
+not_only_text = process_paragraphs or propagate_metadata
+no_columns = set()
+output_decode = options.sent_output == '-'
+metadata_decode = options.metadata_output == '-'
+
+if same_output_file and options.sent_output != '-':
+    logging.warning("Same output and metadata output files: it will be handled using different columns")
+
+with open_xz_or_gzip_or_plain(options.text) as reader, \
+     open_xz_or_gzip_or_plain(options.sent_output, "wb") as writer, \
+     open_xz_or_gzip_or_plain(options.metadata_output, "wb") as metadata_writer:
     for doc_idx, doc in enumerate(reader, 1):
         sentences = ""
+        metadata = ""
         content = ""
         doc = doc.strip()
         skip = False
@@ -145,31 +158,86 @@ with open_xz_or_gzip_or_plain(options.text) if options.text != "-" else sys.stdi
 
         # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
         for sent_idx, sentence in enumerate(content, 1):
-            column = sentence.split('\t')
-            paragraph_text = column[0].strip()
+            columns = sentence.split('\t')
+            paragraph_text = columns[0].strip()
+            current_metadata = ''
 
-            if process_paragraphs and len(column) == 1:
-                sentences += f"{paragraph_text}\tp-1s-1\n"
+            # Some sanity checks
+            if len(columns) == 1 and not_only_text:
+                logging.error("Expected columns is >1, but got 1: document %d, sentence %d: "
+                              "ignoring all columns but the first", doc_idx, sent_idx)
+            if len(columns) > 1 and not not_only_text:
+                logging.error("Expected columns is 1, but got %d: document %d, sentence %d: "
+                              "ignoring all columns but the first", len(columns), doc_idx, sent_idx)
+            if len(columns) > 2 and process_paragraphs and not propagate_metadata:
+                logging.error("Expected columns is 2, but got %d: document %d, sentence %d: "
+                              "ignoring all columns but the first and second", len(columns), doc_idx, sent_idx)
 
-                logging.error("Could not get the paragraph identification data for the doc #%d, sentence #%d: using 'p-1s-1'", doc_idx, sent_idx)
+            no_columns.add(len(columns))
+
+            if len(columns) == 1 and process_paragraphs:
+                logging.error("Could not get the paragraph identification data: document %d, sentence %d: "
+                              "using 'p-1s-1'", doc_idx, sent_idx)
+
+                if same_output_file:
+                    sentences += f"{paragraph_text}\tp-1s-1\n"
+                else:
+                    sentences += f"{paragraph_text}\n"
+
+                metadata += "p-1s-1\n"
 
                 continue
 
+            # Sentence splitting
             sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
-                                                        options.prune_threshold, not options.dont_filter, return_list=True)
-            suffix_offset = 2 if process_paragraphs else 1
-            suffix = ('\t' if len(column) > suffix_offset else '') + '\t'.join(column[suffix_offset:]) + '\n' if propagate_metadata else '\n'
+                                                     options.prune_threshold, not options.dont_filter, return_list=True)
 
+            # Process paragraphs
             if process_paragraphs:
                 try:
-                    paragraph_id = int(column[1]) + 1 # Start at 1
+                    paragraph_id = int(columns[1]) + 1 # Start at 1
                 except ValueError as e:
-                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}") from e
+                    raise Exception(f"Couldn't parse paragraph identifier: document {doc_idx}, sentence {sent_idx}") from e
 
+            # Process metadata
+            if propagate_metadata:
+                metadata_offset = 2 if process_paragraphs else 1
+                current_metadata = '\t'.join(columns[metadata_offset:])
+
+            paragraph = ''
+
+            # Process output
             for idx in range(len(sentences_wo_paragraphs)):
-                infix = f"\tp{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else '' # Paragraph data
-                sentences += f"{sentences_wo_paragraphs[idx]}{infix}{suffix}"
+                paragraph = f"p{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else ''
+                sentences += f"{sentences_wo_paragraphs[idx]}"
+                _current_metadata = paragraph + ('\t' if current_metadata and paragraph else '') + current_metadata
+                metadata += f"{_current_metadata}\n"
 
-        sentences = base64.b64encode(sentences.encode("utf-8")).decode("utf-8")
+                if same_output_file and not_only_text:
+                    sentences += f"\t{_current_metadata}"
 
-        writer.write(f"{sentences}\n")
+                sentences += '\n'
+
+        no_sentences = sentences.count('\n') if not_only_text else -1 # Only calculated if metadata (purpose: sanity check)
+        sentences = base64.b64encode(sentences.encode("utf-8"))
+
+        if output_decode:
+            writer.write(f"{sentences.decode('utf-8')}\n")
+        else:
+            writer.write(sentences + b'\n')
+
+        if not_only_text and not same_output_file:
+            no_metadata = metadata.count('\n')
+            metadata = base64.b64encode(metadata.encode("utf-8"))
+
+            if metadata_decode:
+                metadata_writer.write(f"{metadata.decode('utf-8')}\n")
+            else:
+                metadata_writer.write(metadata + b'\n')
+
+            if no_sentences != no_metadata:
+                logging.error("Different number of lines in splitted sentences and metadata: document %d: %d vs %d",
+                              doc_idx, no_sentences, no_metadata)
+
+if len(no_columns) > 1:
+    logging.warning("Different number of columns were detected in the processed documents: %s", str(no_columns))

@@ -66,22 +66,43 @@ class ExternalTextProcessor(object):
 
 @contextmanager
 def open_xz_or_gzip_or_plain(file_path, mode='rt'):
-    f = None
-    try:
-        if file_path[-3:] == ".gz":
-            f = gzip.open(file_path, mode)
-        elif file_path[-3:] == ".xz":
-            f = lzma.open(file_path, mode)
+    special_case = False
+
+    if file_path == '-':
+        # Handle stdin and stdout for '-' special case
+        write = False
+        set_mode = set(mode)
+        special_case = True
+
+        if len(set_mode.intersection("+")) != 0:
+            # Can't be supported -> let the normal flow handle the behaviour
+            special_case = False
+
+            LOGGER.warning("Mode '+' not supported for '-' case")
         else:
-            f = open(file_path, mode)
-        yield f
+            if len(set_mode.intersection("wax")) != 0:
+                write = True
 
-    except Exception:
-        raise Exception("Error occurred while loading a file!")
+            yield sys.stdout if write else sys.stdin
 
-    finally:
-        if f:
-            f.close()
+    if not special_case:
+        f = None
+
+        try:
+            if file_path[-3:] == ".gz":
+                f = gzip.open(file_path, mode)
+            elif file_path[-3:] == ".xz":
+                f = lzma.open(file_path, mode)
+            else:
+                f = open(file_path, mode)
+            yield f
+
+        except Exception:
+            raise Exception("Error occurred while loading a file!")
+
+        finally:
+            if f:
+                f.close()
 
 
 @contextmanager
@@ -251,7 +272,7 @@ def initialize_persistent_dict(persistent_storage):
             persistent_storage.store(k, v)
 
     if err:
-        LOGGER.warning("There were values in the dictionary: if you're not running parallel instances, "
+        LOGGER.warning("There were values in the persistent dictionary: if you're not running parallel instances, "
                        "this is not expected: waiting 20s before proceed")
         flush_logger(LOGGER)
         time.sleep(20)
