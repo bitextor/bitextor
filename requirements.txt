@@ -1,6 +1,6 @@
 -r requirements/requirements-linguacrawl.txt
 -r requirements/requirements-prevertical2text.txt
-snakemake==7.17.2
+snakemake==7.18.1
 warcio==1.7.4
 tldextract>=3.1.0,<=3.4.0
 tqdm>=4.60.0,<=4.64.1
@@ -15,6 +15,6 @@ cchardet==2.1.7
 sentence-splitter==1.4
 loomchild-segment==2.0.4.2
 mosestokenizer==1.2.1
-regex>=2019.08.19,<=2022.9.13
+regex>=2019.08.19,<=2022.10.31
 numpy
 validators==0.20.0
