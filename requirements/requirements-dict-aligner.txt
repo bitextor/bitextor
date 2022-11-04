@@ -1,2 +1,2 @@
 python-Levenshtein==0.20.8
-scikit-learn==1.1.1
+scikit-learn==1.1.3
