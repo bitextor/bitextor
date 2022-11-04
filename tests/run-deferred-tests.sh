@@ -58,6 +58,9 @@ WARC="${WORK}/data/warc/primeminister.warc.gz"
 tar -xzf "${WORK}/output_reference/run-deferred-tests.tgz" -C "${WORK}/output_reference/" && \
 rm -f "${WORK}/output_reference/run-deferred-tests.tgz"
 
+# Check NLTK models and download them if they hasn't been downloaded yet
+check_nltk_models
+
 # MT (id >= 10)
 ## MT (en-el)
 init_test "10"
