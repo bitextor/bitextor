@@ -330,20 +330,24 @@ rule hunalign:
     params:
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
-        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
+        metadata=apply_format(','.join(PROPAGATE_METADATA_HEADERS), "--metadata-header-fields {}"),
+        src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
     shell:
         """
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_tokenized\ttrg_tokenized"
+
+        [[ ! -z "{params.metadata}" ]] && header=$(echo "${header}\tsrc_metadata\ttrg_metadata")
 
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
                 -l {input.plain1} -r {input.plain2} \
-                -l {input.tok1} -r {input.tok2} \
+                -l {input.tok1} -r {input.tok2} {params.src_metadata} {params.trg_metadata} \
             | cat <(echo "$header") - \
             | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {params.deferred} -d {input.hunaligndic} \
-                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.paragraphs} \
+                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.metadata} - \
             | gzip -c > {output}
         """

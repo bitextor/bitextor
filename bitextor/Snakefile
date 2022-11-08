@@ -1314,11 +1314,10 @@ rule bleualign:
         translated1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-        paragraphs="--paragraph-id-header paragraph_id" if PARAGRAPH_IDENTIFICATION else '',
         deferred="--print-sent-hash" if DEFERRED else '',
         metadata=apply_format(','.join(PROPAGATE_METADATA_HEADERS), "--metadata-header-fields {}"),
         src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
-        trg_metadata=f"-r {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
@@ -1341,8 +1340,8 @@ rule bleualign:
                 -l {input.plain1} -r {input.plain2} \
                 -l {input.translated1} {params.src_metadata} {params.trg_metadata} \
             | cat <(echo "$header") - \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} {params.paragraphs} \
-                --bleu-threshold {SEGALIGN_THRESHOLD} \
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} \
+                --bleu-threshold {SEGALIGN_THRESHOLD} {params.metadata} \
             | pigz -c > {output}
         """
 
@@ -1878,24 +1877,23 @@ rule sents:
     :output: the concatenated inputs, sorted, same columns as input
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+        filtered=lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+        sort_flags=rules.pre_filter_sort_flags.output,
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
-    params:
-        sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags",
     threads: THREADS["sents"]
     run:
         cmd = \
         """
-        sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
-        header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
+        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        header=$(head -1 <(cat {input.filtered[0]}) | tr -d '\\n')
 
         LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
         """
 
-        for filename in input:
+        for filename in input.filtered:
             # Use tmp named pipes since --merge does need the file descriptor and we need to get rid of the header
             cmd += f" <(tail -n +2 {filename})"
 
