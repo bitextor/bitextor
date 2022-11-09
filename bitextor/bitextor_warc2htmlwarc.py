@@ -60,8 +60,8 @@ def pdfextract(data, pdfextractor):
     except BaseException:
         return [b""]
 
-def tikkaextract(data):
-    pconverter = subprocess.Popen(["java", "-jar", "/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar", "-x"],
+def tikaextract(data, tika_path):
+    pconverter = subprocess.Popen(["java", "-jar", tika_path, "-x"],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
     converter_stdout, error = pconverter.communicate(input=data)
     return [converter_stdout.replace(b"&#160;", b" ")]
@@ -123,6 +123,8 @@ oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract en
                      default=False)
 oparser.add_argument('--pe_configfile', dest='configFile', default="",
                      help='PDFExtract configuration file for language model paths')
+oparser.add_argument('--at_file', dest='atFile', default="",
+                     help='Apache Tika model path')
 
 oparser.add_argument('--sentence_join_path', dest='sentenceJoinPath', help='sentence-join.py path', default="")
 oparser.add_argument('--kenlm_path', dest='kenlmPath', help='kenlm binary folder path', default="")
@@ -269,8 +271,8 @@ for record in f:
                 http_headers=http_headers)
             po.write_record(new_record)
             continue  # do not process further!
-        if options.pdfextract == "apacheTikka":
-            payloads = tikkaextract(payload)
+        if options.pdfextract == "apacheTika":
+            payloads = tikaextract(payload, atFile)
         elif options.pdfextract == "pdfextract":
             payloads = pdfextract(payload, extractor)
         else:
