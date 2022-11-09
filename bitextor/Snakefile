@@ -134,7 +134,8 @@ PARSER = ""
 PDFEXTRACT = ""
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-if "PDFextract" in config and config["PDFextract"]:
+#if "PDFextract" in config and config["PDFextract"]:
+if config["PDFextract"] == "pdfextract":
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
     PDFEXTRACT_KL = ""
@@ -146,7 +147,13 @@ if "PDFextract" in config and config["PDFextract"]:
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
         PDFEXTRACT_KL = f" --kenlm_path {config['PDFextract_kenlm_path']}"
 
-    PDFEXTRACT = f"--pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
+    PDFEXTRACT = f"--pdfextract pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
+
+if config["PDFextract"] == "apacheTikka":
+    PDFEXTRACT = "--pdfextract apacheTikka"
+
+if config["PDFextract"] == "pdf2html":
+    PDFEXTRACT = "--pdfextract pdf2html"
 
 # sentence splitting and tokenisation
 SENTTOKS = return_dict_value_if_key(config, "sentenceSplitters", {})
@@ -200,6 +207,7 @@ except:
     pass
 
 DIC = return_dict_value_if_key(config, "dic", None)
+DIC_GENERATE = return_dict_value_if_key(config, "generateDic", False)
 
 #################################################################
 # SEGALIGN
@@ -1036,7 +1044,7 @@ rule custom_translate:
             filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value '' 'cut -f 1'"
         fi
 
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
         zcat {input.source} \
             | eval "$filter_command" \

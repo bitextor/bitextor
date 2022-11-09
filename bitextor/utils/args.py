@@ -179,7 +179,12 @@ def validate_args(config):
         },
         'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
         ## pdfEXTRACT
-        'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+        #'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+        'PDFextract': {
+            'type': 'string',
+            'default': 'pdf2html',
+            'allowed': ['pdf2html', 'pdfextract', 'apacheTikka'],
+            'dependencies': {'preprocessor': 'warc2preprocess'}},
         'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},

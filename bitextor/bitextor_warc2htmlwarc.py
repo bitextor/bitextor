@@ -29,6 +29,9 @@ import zipfile
 import io
 from io import BytesIO
 
+from subprocess import PIPE, Popen
+
+
 
 def convert_encoding(data):
     encoding = cchardet.detect(data)['encoding']
@@ -56,6 +59,12 @@ def pdfextract(data, pdfextractor):
         return [bytes(pdfextractor.getHTML(), 'utf8')]
     except BaseException:
         return [b""]
+
+def tikkaextract(data):
+    pconverter = subprocess.Popen(["java", "-jar", "/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar", "-x"],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    converter_stdout, error = pconverter.communicate(input=data)
+    return [converter_stdout.replace(b"&#160;", b" ")]
 
 
 def openoffice2html(data):
@@ -110,7 +119,7 @@ oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', d
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
                      help="Only outputs broader document format records", default=False)
-oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
+oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
 oparser.add_argument('--pe_configfile', dest='configFile', default="",
                      help='PDFExtract configuration file for language model paths')
@@ -155,7 +164,7 @@ else:
 if options.pdfpass is not None:
     po = WARCWriter(open(options.pdfpass, 'wb'), gzip=not options.disable_pdfs_gzip)
 
-if not options.pdfpass and options.pdfextract:
+if not options.pdfpass and options.pdfextract=="pdfextract":
     from pdfextract.extract import Extractor as ExtrP
     extractor = ExtrP(
         configFile=options.configFile,
@@ -260,7 +269,9 @@ for record in f:
                 http_headers=http_headers)
             po.write_record(new_record)
             continue  # do not process further!
-        if options.pdfextract:
+        if options.pdfextract == "apacheTikka":
+            payloads = tikkaextract(payload)
+        elif options.pdfextract == "pdfextract":
             payloads = pdfextract(payload, extractor)
         else:
             payloads = pdf2html(payload)
