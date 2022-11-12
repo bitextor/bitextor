@@ -171,12 +171,15 @@ EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 # Metadata from text (it should be updated according to different options which might indicate that there is metadata)
 PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or len(PREVERTICALS) != 0
 PROPAGATE_METADATA_HEADERS = ''
+METADATA_HEADERS_NUMBER_FIELDS = 0
 
 if PROPAGATE_METADATA_FROM_TEXT:
     if PARAGRAPH_IDENTIFICATION:
         PROPAGATE_METADATA_HEADERS += "paragraph_id"
+        METADATA_HEADERS_NUMBER_FIELDS += 1
     if len(PREVERTICALS) != 0:
         PROPAGATE_METADATA_HEADERS += "\tdoc_title\tcrawl_date\tfile_type\tboilerplate\theading_html_tag"
+        METADATA_HEADERS_NUMBER_FIELDS += 5
 
 #################################################################
 # EMBEDDINGS
@@ -997,6 +1000,7 @@ rule split:
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
         metadata=lambda wildcards, output: "--propagate-metadata" if PROPAGATE_METADATA_FROM_TEXT else "",
         metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
+        metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}"),
     threads: THREADS["split"]
     resources:
         job_split=JOB_THREADS["split"],
@@ -1009,6 +1013,42 @@ rule split:
                 {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \
                 {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \
             | pigz -c > {output.sentences}
+
+        # Check metadata
+        if [[ ! -z "{output.metadata}" ]]; then
+            if [[ ! -f "{output.metadata}" ]]; then
+                >&2 echo "WARNING: metadata output file should exist but doesn't: creating fake metadata file"
+
+                zcat "{output.sentences}" \
+                    | python3 {WORKFLOW}/utils/fake_metadata.py -f "{METADATA_HEADERS_NUMBER_FIELDS}" --empty-fields \
+                    | pigz -c > "{output.metadata}"
+            else
+                header_number_fields=$(zcat "{output.metadata}" | tail -n1 | tr -cd $'\t' | wc -c)
+
+                if [[ "$header_number_fields" -ne "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
+                    if [[ "$header_number_fields" -gt "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
+                        # There are more metadata fields than expected: warn about it
+                        >&2 echo "WARNING: more metadata fields than expected: $header_number_fields vs "
+                                 "{METADATA_HEADERS_NUMBER_FIELDS}"
+                    else
+                        # We need to fake the missing header fields
+                        mkdir -p "$(dirname {params.metadata_aux_output})"
+
+                        missing_header_fields=$(( "{METADATA_HEADERS_NUMBER_FIELDS}" - "$header_number_fields" ))
+
+                        >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields"
+
+                        zcat "{output.sentences}" \
+                            | python3 {WORKFLOW}/utils/fake_metadata.py -f "$missing_header_fields" --empty-fields \
+                            | pigz -c > "{params.metadata_aux_output}"
+                        mv -n "{output.metadata}" "{output.metadata}.aux.gz"
+                        paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \
+                            | python3 {WORKFLOW}/utils/join_b64_docs.py \
+                            | pigz -c "{output.metadata}"
+                    fi
+                fi
+            fi
+        fi
         """
 
 
@@ -1076,7 +1116,7 @@ rule custom_translate:
         n_after=$(zcat "{output}" | base64 -d | wc -l)
 
         if [ $initial_nolines -ne $n_after ]; then
-            >&2 echo "Lines count differs: source $initial_nolines, target $n_after"
+            >&2 echo "ERROR: lines count differs: source $initial_nolines, target $n_after"
             exit 1
         fi
         """
