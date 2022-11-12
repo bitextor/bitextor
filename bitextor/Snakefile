@@ -825,14 +825,14 @@ rule warc2preprocess:
     shell:
         """
         mkdir -p {params.folder}
-        cat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \
-                --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \
+        cat {input} \\
+            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip \\
+            | {PROFILING} python3 {WORKFLOW}/bitextor_warc2preprocess.py --input - --langs {params.pproclangs} \\
+                --compression gz --langid {LANGID} {params.boilerplate} {params.heap_size} {HTML5LIB} {PARSER} \\
                 --output-dir {params.folder} {params.paragraphs}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/plain_text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
+                >&2 echo "WARNING: no '$lang' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
                 gzip {params.folder}/$lang/{{plain_text,mime,url,normalized_html,deboilerplate_html}}
@@ -868,7 +868,7 @@ rule warc2text:
         {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
+                >&2 echo "WARNING: no '$lang' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{{params.f}}}
                 gzip {params.folder}/$lang/{{{params.f}}}
@@ -904,13 +904,13 @@ rule prevertical2text:
         CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
 
         mkdir -p {params.folder}
-        $CAT {input} | \
-            python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
-            {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
+        $CAT {input} \\
+            | python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py \\ 
+            | {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
 
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
-                >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"
+                >&2 echo "WARNING: no '$lang' data found in {wildcards.target}: creating empty files instead"
                 mkdir -p {params.folder}/$lang
                 touch {params.folder}/$lang/{{{params.f}}}
                 gzip {params.folder}/$lang/{{{params.f}}}
@@ -1117,8 +1117,8 @@ rule custom_translate:
 
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input.source} \
-            | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \
+        zcat {input.source} \\
+            | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \\
             | pigz -c > "{output}"
 
         n_after=$(zcat "{output}" | base64 -d | wc -l)
@@ -1167,10 +1167,10 @@ rule tokenise_translated:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
-                {params.tokeniser} {params.lemmatizer} \
-                --langcode {TRG_LANG} \
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \\
+                {params.tokeniser} {params.lemmatizer} \\
+                --langcode {TRG_LANG} \\
             | pigz -c > {output}
         """
 
@@ -1198,10 +1198,10 @@ rule tokenise:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
-                {params.tokeniser} {params.lemmatizer} \
-                --langcode {wildcards.lang} \
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \\
+                {params.tokeniser} {params.lemmatizer} \\
+                --langcode {wildcards.lang} \\
             | pigz -c > {output}
         """
 
@@ -1299,18 +1299,18 @@ rule doc_emb_matches:
             mkdir -p {params.folder}
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
-            [[ "{gpu_cuda_device}" -ge "0" ]] && \
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \\
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
-            cat <(zcat {input.plain1} | sed "s:$:	-	src:") \
-                <(zcat {input.plain2} | sed "s:$:	-	trg:") \
-                | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
-                    {params.folder}/{params.trg_emb_name} {params.model} \
-                    --docalign-strategy 'faiss' --weights-strategy 0 \
-                    --merging-strategy 3 --results-strategy 0 \
-                    --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
-                    --output-with-idxs --paths-to-docs-are-base64-values \
-                    --threshold {DOC_THRESHOLD} --logging-level 30 \
+            cat <(zcat {input.plain1} | sed "s:$:	-	src:") \\
+                <(zcat {input.plain2} | sed "s:$:	-	trg:") \\
+                | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \\
+                    {params.folder}/{params.trg_emb_name} {params.model} \\
+                    --docalign-strategy 'faiss' --weights-strategy 0 \\
+                    --merging-strategy 3 --results-strategy 0 \\
+                    --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \\
+                    --output-with-idxs --paths-to-docs-are-base64-values \\
+                    --threshold {DOC_THRESHOLD} --logging-level 30 \\
                     --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
 
             touch "{params.gpu_ofile_token}"
@@ -1380,15 +1380,15 @@ rule bleualign:
 
         [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
-        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
-            | tail -n +2 \
-            | docjoin \
-                -l {input.url1} -r {input.url2} \
-                -l {input.plain1} -r {input.plain2} \
-                -l {input.translated1} {params.src_metadata} {params.trg_metadata} \
-            | cat <(echo "$header") - \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} \
-                --bleu-threshold {SEGALIGN_THRESHOLD} {params.metadata} \
+        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \\
+            | tail -n +2 \\
+            | docjoin \\
+                -l {input.url1} -r {input.url2} \\
+                -l {input.plain1} -r {input.plain2} \\
+                -l {input.translated1} {params.src_metadata} {params.trg_metadata} \\
+            | cat <(echo "$header") - \\
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} \\
+                --bleu-threshold {SEGALIGN_THRESHOLD} {params.metadata} \\
             | pigz -c > {output}
         """
 
@@ -1438,28 +1438,28 @@ rule vecalign:
             mkdir -p "{params.folder}"
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
-            [[ "{gpu_cuda_device}" -ge "0" ]] && \
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \\
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
             header="src_url\ttrg_url\tsrc_text\ttrg_text"
 
             [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
-            python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
-                | tail -n +2 \
-                | docjoin \
-                    -l {input.url1} -r {input.url2} \
-                    -l {input.plain1} -r {input.plain2} \
-                | cat <(echo "$header") - \
-                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \
-                    --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \
-                    --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \
-                    --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \
-                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \
-                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
-                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
-                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
-                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
+            python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \\
+                | tail -n +2 \\
+                | docjoin \\
+                    -l {input.url1} -r {input.url2} \\
+                    -l {input.plain1} -r {input.plain2} \\
+                | cat <(echo "$header") - \\
+                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \\
+                    --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \\
+                    --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \\
+                    --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \\
+                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \\
+                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \\
+                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \\
+                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \\
+                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \\
                 | pigz -c > "{output}"
 
             touch "{params.gpu_ofile_token}"
@@ -1509,10 +1509,10 @@ checkpoint split_segalign:
                 rm -f {params.folder}/* # remove anything that might be left after a previous run
                 header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
-                echo {input} \
-                    | tr ' ' '\n' \
-                    | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
-                    | cat <(echo "$header") - \
+                echo {input} \\
+                    | tr ' ' '\n' \\
+                    | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \\
+                    | cat <(echo "$header") - \\
                     | python3 {WORKFLOW}/bitextor_split_segalign.py -f src_text,trg_text -s {params.size} --gzip -o "{params.folder}/"
                 if [ -z "$(ls -A {params.folder})" ]; then
                     cat < /dev/null > {output.batches}
@@ -1542,9 +1542,9 @@ rule bifixer:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
 
-        zcat {input.segalign} \
-            | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
-                {BIFIXER_DEFERRED_COLS} {BIFIXER_PARAGRAPHS_COLS} --header - - {SRC_LANG} {TRG_LANG} \
+        zcat {input.segalign} \\
+            | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \\
+                {BIFIXER_DEFERRED_COLS} {BIFIXER_PARAGRAPHS_COLS} --header - - {SRC_LANG} {TRG_LANG} \\
             | pigz -c > {output}
         """
 
@@ -1590,9 +1590,9 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
             mkdir -p "{TMPDIR}/bicleaner_train"
             paste <(zcat {input.corpus_l1}) <(zcat {input.corpus_l2}) > {params.training_corpus}
 
-            {PROFILING} bicleaner-train {params.training_corpus} {params.tokenizer_l1} {params.tokenizer_l2} --treat_oovs \
-                --normalize_by_length -s {SRC_LANG} -t {TRG_LANG} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \
-                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
+            {PROFILING} bicleaner-train {params.training_corpus} {params.tokenizer_l1} {params.tokenizer_l2} --treat_oovs \\
+                --normalize_by_length -s {SRC_LANG} -t {TRG_LANG} -d {input.e2f} -D {input.f2e} -f {input.vcb1} \\
+                -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \\
                 --seed 71213
             """
 
@@ -1628,13 +1628,13 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
 
             # Target lang frequency
             echo "Frequency file (lang={TRG_LANG}): {params.tfreq}"
-            zcat {input.mono_l2} \
-                | {WORDTOK2} \
-                | awk '{{print tolower($0)}}' \
-                | tr ' ' '\n' \
-                | LC_ALL=C sort | uniq -c \
-                | LC_ALL=C sort -nr \
-                | grep -v "[[:space:]]*1" \
+            zcat {input.mono_l2} \\
+                | {WORDTOK2} \\
+                | awk '{{print tolower($0)}}' \\
+                | tr ' ' '\n' \\
+                | LC_ALL=C sort | uniq -c \\
+                | LC_ALL=C sort -nr \\
+                | grep -v "[[:space:]]*1" \\
                 | pigz -c > {params.tfreq}
 
             # Dev corpus
@@ -1652,9 +1652,9 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
             head -n $mono_min_nolines <(zcat {input.mono_l2}) >> {params.mono_corpus}
 
             # Train
-            {PROFILING} bicleaner-ai-train {params.tokenizer_l1} {params.tokenizer_l2} -s {SRC_LANG} -t {TRG_LANG} \
-                -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \
-                -F {params.tfreq} --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \
+            {PROFILING} bicleaner-ai-train {params.tokenizer_l1} {params.tokenizer_l2} -s {SRC_LANG} -t {TRG_LANG} \\
+                -m {params.metadata_dir} --classifier_type dec_attention --parallel_train {params.training_corpus} \\
+                -F {params.tfreq} --parallel_valid {params.dev_corpus} --mono_train {params.mono_corpus} --seed 71213 && \\
                     mv {params.metadata_dir} {output.model}
             """
 
@@ -1690,12 +1690,12 @@ rule bicleaner:
             """
             mkdir -p "$(dirname {params.gpu_ofile_token})"
 
-            [[ "{gpu_cuda_device}" -ge "0" ]] && \
+            [[ "{gpu_cuda_device}" -ge "0" ]] && \\
             export CUDA_VISIBLE_DEVICES="{gpu_cuda_device}"
 
             slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
-            text_fields=$(head -1 <(zcat {input.bifixer}) \
-                | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
+            text_fields=$(head -1 <(zcat {input.bifixer}) \\
+                | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \\
                 | tr -d '\n')
 
             bicleaner_src_lang=$(cat "{params.metadata_file}" | grep "^source_lang: " | awk '{{print $2}}')
@@ -1714,16 +1714,19 @@ rule bicleaner:
                     # Change src and trg
                     bicleaner_text_fields="--scol trg_text --tcol src_text"
                 else
-                    >&2 echo "WARNING: the provided Bicleaner model seems to don't expect the provided languages: {SRC_LANG}-{TRG_LANG} was provided, ${{bicleaner_src_lang}}-${{bicleaner_trg_lang}} was expected by Bicleaner ({BICLEANER_FLAVOUR})"
+                    >&2 echo "WARNING: the provided Bicleaner model seems to don't expect the provided languages:" \\
+                             "{SRC_LANG}-{TRG_LANG} was provided, ${{bicleaner_src_lang}}-${{bicleaner_trg_lang}}" \\
+                             "was expected by Bicleaner ({BICLEANER_FLAVOUR})"
                 fi
             fi
 
-            # We apply --score_only + paste because not all the data are dependant of the text fields! Check out: https://github.com/bitextor/bicleaner-ai/issues/23
-            zcat {input.bifixer} \
-            | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \
-                --header {params.tokenizer_l1} {params.tokenizer_l2} \
-                --score_only -q -p {threads} - - {input.model} \
-            | paste <(zcat {input.bifixer}) - \
+            # We apply --score_only + paste because not all the data are dependant of the text fields!
+            #  Check out: https://github.com/bitextor/bicleaner-ai/issues/23
+            zcat {input.bifixer} \\
+            | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \\
+                --header {params.tokenizer_l1} {params.tokenizer_l2} \\
+                --score_only -q -p {threads} - - {input.model} \\
+            | paste <(zcat {input.bifixer}) - \\
             | pigz -c > {output}
 
             touch "{params.gpu_ofile_token}"
@@ -1839,27 +1842,27 @@ rule filter:
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
-        FILTER_BICLEANER_CMD="\
-            [[ '{BICLEANER}' == 'True' ]] \
-                && ({PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \
-                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header}; true) \
+        FILTER_BICLEANER_CMD="\\
+            [[ '{BICLEANER}' == 'True' ]] \\
+                && ({PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \\
+                    --threshold {BICLEANER_THRESHOLD} --header-field {params.bicleaner_header}; true) \\
                 || cat"
-        ELRC_CMD="\
-            [[ '{ELRC}' == 'True' ]] \
-                && ({PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s; true) \
+        ELRC_CMD="\\
+            [[ '{ELRC}' == 'True' ]] \\
+                && ({PROFILING} python3 {WORKFLOW}/bitextor_elrc_filtering.py -s; true) \\
                 || cat"
 
-        zcat {input.f} \
-            | eval "$FILTER_BICLEANER_CMD" \
-            | eval "$ELRC_CMD" \
+        zcat {input.f} \\
+            | eval "$FILTER_BICLEANER_CMD" \\
+            | eval "$ELRC_CMD" \\
             > {output}
 
         header=$(head -1 <(cat {output}) | tr -d '\n')
 
         # Remove header, sort and add header (in-place) from output file
-        sed -i '1 d' {output} \
-            && LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} \
-                --compress-program=gzip -T {TMPDIR} -o {output} {output} \
+        sed -i '1 d' {output} \\
+            && LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} \\
+                --compress-program=gzip -T {TMPDIR} -o {output} {output} \\
             && sed -i '1 s/^/'"$header"'\\n/' {output}
 
         if [[ ! -s "{output}" ]]; then
@@ -1905,10 +1908,10 @@ rule raw:
         header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
         # Remove header from all input files and only print header once
-        echo {input} \
-            | tr ' ' '\n' \
-            | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
-            | cat <(echo "$header") - \
+        echo {input} \\
+            | tr ' ' '\n' \\
+            | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \\
+            | cat <(echo "$header") - \\
             | pigz -c > {output.corpus}
 
         # Stats
@@ -1981,8 +1984,8 @@ rule tmx:
         f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz",
     shell:
         """
-        zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
+        zcat {input} \\
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {SRC_LANG} --lang2 {TRG_LANG} \\
             | pigz -c > {output}
         """
 
@@ -2006,8 +2009,8 @@ rule deduped_tmx:
     shell:
         """
         zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
-                --dedup {params.dedup_fields} -f {output.txt} \
+            | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {SRC_LANG} --lang2 {TRG_LANG} \\
+                --dedup {params.dedup_fields} -f {output.txt} \\
             | pigz -c > {output.tmx}
 
         # Stats
@@ -2047,8 +2050,8 @@ rule roam_tmx:
             mix_files="-m {params.mix_files}"
         fi
 
-        zcat {input} \
-            | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
-                {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \
+        zcat {input} \\
+            | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \\
+                {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \\
             | pigz -c > {output}
         """

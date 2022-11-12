@@ -26,9 +26,9 @@ rule dic_generation_tokenize_file:
     shell:
         """
         mkdir -p {preprocCorpusDir}
-        zcat {input} \
-            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \
-            | {params.wordtok} \
+        zcat {input} \\
+            | sed -e \"s/&apos;/'/g\" -e 's/&quot;/\"/g' -e 's/&amp;/\&/g' \\
+            | {params.wordtok} \\
             | pigz -c > {output}
         """
 
@@ -117,8 +117,8 @@ rule dic_generation_mgiza:
     threads: THREADS["mgiza"]
     shell:
         """
-        {PROFILING} mgiza -ncpus {threads} -CoocurrenceFile {input.cooc} -c {input.snt} \
-            -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} \
+        {PROFILING} mgiza -ncpus {threads} -CoocurrenceFile {input.cooc} -c {input.snt} \\
+            -m1 5 -m2 0 -m3 3 -m4 3 -mh 5 -m5 0 -model1dumpfrequency 1 -o {wildcards.prefix}.{wildcards.l2}-{wildcards.l1} \\
             -s {input.vcb1} -t {input.vcb2} -emprobforempty 0.0 -probsmooth 1e-7 2> /dev/null > /dev/null
         """
 

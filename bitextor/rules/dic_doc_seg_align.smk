@@ -18,8 +18,8 @@ rule build_idx:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.idx.gz",
     shell:
         """
-        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_build_idx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
-            -m 15 --text1 {input.text1} --text2 {input.text2} \
+        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_build_idx.py --lang1 {SRC_LANG} --lang2 {TRG_LANG} \\
+            -m 15 --text1 {input.text1} --text2 {input.text2} \\
             | gzip -c > {output}
         """
 
@@ -39,12 +39,12 @@ rule idx2ridx:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.ridx.gz",
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--lang1 {SRC_LANG} --lang2 {TRG_LANG}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--lang1 {SRC_LANG} --lang2 {TRG_LANG}" || \\
                     echo "--lang1 {TRG_LANG} --lang2 {SRC_LANG}")
 
         zcat {input.idx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} $params \
+            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_idx2ridx.py -d {input.dic} $params \\
             | gzip -c > {output}
         """
 
@@ -67,12 +67,12 @@ rule image_set_overlap:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.imgoverlap.gz"),
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \\
                     echo "--html1 {input.html2} --html2 {input.html1}")
 
-        zcat {input.ridx} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py $params \
+        zcat {input.ridx} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_image_set_overlap.py $params \\
             | gzip -c > {output}
         """
 
@@ -95,12 +95,12 @@ rule structure_distance:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.structuredistance.gz"),
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \\
                     echo "--html1 {input.html2} --html2 {input.html1}")
 
-        zcat {input.imagesetoverlap} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structure_distance.py $params \
+        zcat {input.imagesetoverlap} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_structure_distance.py $params \\
             | gzip -c > {output}
         """
 
@@ -128,12 +128,12 @@ rule url_distance:
     priority: 8
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \\
                     echo "--html1 {input.html2} --html2 {input.html1} --url1 {input.url2} --url2 {input.url1}")
 
-        zcat {input.structuredistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_distance.py $params \
+        zcat {input.structuredistance} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_distance.py $params \\
             | gzip -c > {output}
         """
 
@@ -160,12 +160,12 @@ rule mutually_linked:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.mutuallylinked.gz"),
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--html1 {input.html1} --html2 {input.html2} --url1 {input.url1} --url2 {input.url2}" || \\
                     echo "--html1 {input.html2} --html2 {input.html1} --url1 {input.url2} --url2 {input.url1}")
 
-        zcat {input.urldistance} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutually_linked.py $params \
+        zcat {input.urldistance} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_mutually_linked.py $params \\
             | gzip -c > {output}
         """
 
@@ -188,12 +188,12 @@ rule urls_comparison:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlscomparison.gz"),
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--url1 {input.url1} --url2 {input.url2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--url1 {input.url1} --url2 {input.url2}" || \\
                     echo "--url1 {input.url2} --url2 {input.url1}")
 
-        zcat {input.mutuallylinked} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_comparison.py $params \
+        zcat {input.mutuallylinked} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_urls_comparison.py $params \\
             | gzip -c > {output}
         """
 
@@ -217,12 +217,12 @@ rule urls_overlap:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.urlsoverlap.gz",
     shell:
         """
-        params=$([[ {wildcards.direction} == src2trg* ]] && \
-                    echo "--html1 {input.html1} --html2 {input.html2}" || \
+        params=$([[ {wildcards.direction} == src2trg* ]] && \\
+                    echo "--html1 {input.html1} --html2 {input.html2}" || \\
                     echo "--html1 {input.html2} --html2 {input.html1}")
 
-        zcat {input.urlscomparison} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_url_set_overlap.py $params \
+        zcat {input.urlscomparison} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/features/bitextor_url_set_overlap.py $params \\
             | gzip -c > {output}
         """
 
@@ -240,8 +240,8 @@ rule ranking:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.{{direction}}.rank.gz",
     shell:
         """
-        zcat {input} \
-            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_rank.py -m {WORKFLOW}/data/model/docalign.svm.classifier \
+        zcat {input} \\
+            | {PROFILING} python3 {WORKFLOW}/docalign/bitextor_rank.py -m {WORKFLOW}/data/model/docalign.svm.classifier \\
             | gzip -c > {output}
         """
 
@@ -267,9 +267,9 @@ rule align_documents:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.DIC.06_01.matches",
     shell:
         """
-        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \
-            --lines1 $(zcat {input.url1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \
-            --threshold {DOC_THRESHOLD} -n 1 -i converge --print-score \
+        {PROFILING} python3 {WORKFLOW}/docalign/bitextor_align_documents.py \\
+            --lines1 $(zcat {input.url1} | wc -l) --lines2 $(zcat {input.url2} | wc -l) \\
+            --threshold {DOC_THRESHOLD} -n 1 -i converge --print-score \\
             {input.rank1} {input.rank2} > {output}
         """
 
@@ -340,14 +340,14 @@ rule hunalign:
 
         [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
-        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
-            | tail -n +2 \
-            | docjoin \
-                -l {input.url1} -r {input.url2} \
-                -l {input.plain1} -r {input.plain2} \
-                -l {input.tok1} -r {input.tok2} {params.src_metadata} {params.trg_metadata} \
-            | cat <(echo "$header") - \
-            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {params.deferred} -d {input.hunaligndic} \
-                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.metadata} - \
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \\
+            | tail -n +2 \\
+            | docjoin \\
+                -l {input.url1} -r {input.url2} \\
+                -l {input.plain1} -r {input.plain2} \\
+                -l {input.tok1} -r {input.tok2} {params.src_metadata} {params.trg_metadata} \\
+            | cat <(echo "$header") - \\
+            | {PROFILING} python3 {WORKFLOW}/bitextor_align_segments.py {params.deferred} -d {input.hunaligndic} \\
+                -t {TMPDIR} --hunalign "hunalign" --hunalign-thresh {SEGALIGN_THRESHOLD} {params.metadata} - \\
             | gzip -c > {output}
         """
