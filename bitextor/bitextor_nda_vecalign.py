@@ -25,9 +25,11 @@ import subprocess
 
 logger = logging
 
-def process_input_data(input_file):
+def process_input_data(input_file, metadata_header_fields=''):
     src_sentences, trg_sentences = [], []
     src_urls, trg_urls = [], []
+    src_metadata, trg_metadata = [], []
+    metadata = True if metadata_header_fields else False
 
     # Header
     header = next(input_file).strip().split('\t')
@@ -35,6 +37,8 @@ def process_input_data(input_file):
     trg_url_idx = header.index("trg_url")
     src_text_idx = header.index("src_text")
     trg_text_idx = header.index("trg_text")
+    src_metadata_idx = header.index("src_metadata") if metadata else None
+    trg_metadata_idx = header.index("trg_metadata") if metadata else None
 
     for line in input_file:
         line = line.rstrip('\n').split("\t")
@@ -49,17 +53,22 @@ def process_input_data(input_file):
         src_sentences.append(src_text)
         trg_sentences.append(trg_text)
 
-    return src_sentences, trg_sentences, src_urls, trg_urls
+        if metadata:
+            src_meta = line[src_metadata_idx]
+            trg_meta = line[trg_metadata_idx]
 
-def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps, paragraphs=False):
+            src_metadata.append(src_meta)
+            trg_metadata.append(trg_meta)
+
+    return src_sentences, trg_sentences, src_urls, trg_urls, src_metadata, trg_metadata
+
+def vecalign_overlap(base64_input_list, overlaps_output_path, num_overlaps):
     if os.path.isfile(overlaps_output_path):
         # Do not generate overlapping file because already exists
         return
 
-    paragraphs = ["--paragraph_identification"] if paragraphs else []
-
     # Generate overlapping file
-    result = subprocess.Popen(["vecalign-overlap", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps), *paragraphs],
+    result = subprocess.Popen(["vecalign-overlap", "-i", "-", "-o", overlaps_output_path, "-n", str(num_overlaps)],
                               stdin=subprocess.PIPE, stdout=None, stderr=None)
 
     result.communicate(input=("\n".join(base64_input_list)).encode("utf-8"))
@@ -81,9 +90,10 @@ def main(args):
     trg_overlapping = args.trg_overlapping
     src_embedding = args.src_embedding
     trg_embedding = args.trg_embedding
-    paragraph_identification = args.paragraph_identification
     sent_hash_cmd = args.print_sent_hash
     model = args.model
+    metadata_header_fields = args.metadata_header_fields
+    metadata = True if metadata_header_fields else False
 
     # Vecalign files
     vecalign_overlaps_src_path = f"{tmp_dir}/overlaps.src" if src_overlapping is None else src_overlapping
@@ -95,15 +105,21 @@ def main(args):
         raise Exception(f"temporal directory does not exist: {tmp_dir}")
 
     # Process output from NDA. Returned sentences are Base64 values where each Base64 entry is a document
-    src_sentences, trg_sentences, src_urls, trg_urls = process_input_data(input_path)
+    src_sentences, trg_sentences, src_urls, trg_urls, src_metadata, trg_metadata = \
+        process_input_data(input_path, metadata_header_fields=metadata_header_fields)
 
-    if (len(src_sentences) != len(trg_sentences) or len(trg_sentences) != len(src_urls) or len(src_urls) != len(trg_urls)):
+    if (len(src_sentences) != len(trg_sentences) or
+        len(src_urls) != len(trg_urls) or
+        len(trg_sentences) != len(src_urls)):
         raise Exception("unexpected lengths from [src, trg] sentences and [src, trg] URLs (all them should match): "
                         f"{len(src_sentences)} vs {len(trg_sentences)} vs {len(src_urls)} vs {len(trg_urls)}")
+    if metadata and (len(src_metadata) != len(trg_metadata) or len(trg_sentences) != len(src_metadata)):
+        raise Exception("unexpected lengths from [src, trg] sentences and [src, trg] metadata (all them should match): "
+                        f"{len(src_sentences)} vs {len(trg_sentences)} vs {len(src_metadata)} vs {len(trg_metadata)}")
 
     # Generate overlapping files
-    vecalign_overlap(src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps, paragraphs=paragraph_identification)
-    vecalign_overlap(trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps, paragraphs=paragraph_identification)
+    vecalign_overlap(src_sentences, vecalign_overlaps_src_path, vecalign_num_overlaps)
+    vecalign_overlap(trg_sentences, vecalign_overlaps_trg_path, vecalign_num_overlaps)
 
     # Execute vecalign (it will generate the embeddings and/or overlapping files if they do not exist)
     threshold = ["--threshold", str(args.threshold)] if args.threshold is not None else []
@@ -136,20 +152,24 @@ def main(args):
                           "--tgt_embeddings_optimization_strategy", str(args.trg_embeddings_optimization_strategy),
                           "--src_storage_embeddings_optimization_strategy", str(args.src_storage_embeddings_optimization_strategy),
                           "--tgt_storage_embeddings_optimization_strategy", str(args.trg_storage_embeddings_optimization_strategy)])
-    paragraphs = ["--paragraph_identification"] if paragraph_identification else []
+    metadata_args = ["--metadata_header_fields", metadata_header_fields] if metadata else []
     model_param = ["--embeddings_model", model] if model else []
 
     result = subprocess.Popen(["vecalign", "--alignment_max_size", str(alignment_max_size),
-                               "--src", "-", "--tgt", "-", "--src_urls", "-", "--tgt_urls", "-",
+                               "--read_from_stdin",
                                "--src_embed", vecalign_overlaps_src_path, vecalign_overlaps_src_embeddings_path,
                                "--tgt_embed", vecalign_overlaps_trg_path, vecalign_overlaps_trg_embeddings_path,
                                *threshold, "--embeddings_dim", str(dim), "--urls_format",
                                "--embeddings_batch_size", str(embeddings_batch_size), *storage_flags,
-                               *paragraphs, *model_param],
+                               *metadata_args, *model_param],
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
 
     # Pipe input and get output
-    input_base64 = "\n".join([f"{a}\t{b}\t{c}\t{d}" for a, b, c, d in zip(src_sentences, trg_sentences, src_urls, trg_urls)])
+    if metadata:
+        input_base64 = "\n".join([f"{a}\t{b}\t{c}\t{d}\t{e}\t{f}" for a, b, c, d, e, f in zip(src_sentences, trg_sentences, src_urls, trg_urls, src_metadata, trg_metadata)])
+    else:
+        input_base64 = "\n".join([f"{a}\t{b}\t{c}\t{d}" for a, b, c, d in zip(src_sentences, trg_sentences, src_urls, trg_urls)])
+
     stdout, _ = result.communicate(input=input_base64.encode("utf-8"))
 
     if result.returncode != 0:
@@ -166,9 +186,19 @@ def main(args):
         # Print deferred hashes
         sent_hash_cmd = shlex.split(sent_hash_cmd)
         stdout = stdout.split('\n')[1:]
+        metadata_fields = metadata_header_fields.split(',') if metadata else []
+        metadata_fields_dict = {}
 
         header.append("src_deferred_hash")
         header.append("trg_deferred_hash")
+
+        if metadata:
+            for field in metadata_fields:
+                header.append(f"src_{field}")
+                header.append(f"trg_{field}")
+
+                metadata_fields_dict[f"src_{field}"] = len(header) - 2
+                metadata_fields_dict[f"trg_{field}"] = len(header) - 1
 
         print('\t'.join(header))
 
@@ -183,6 +213,11 @@ def main(args):
 
             s.append(src_deferred)
             s.append(trg_deferred)
+
+            if metadata:
+                for field in metadata_fields:
+                    s.append(s[metadata_fields_dict[f"src_{field}"]])
+                    s.append(s[metadata_fields_dict[f"trg_{field}"]])
 
             print('\t'.join(s))
     else:
@@ -242,10 +277,10 @@ def parse_args():
                         help='Source embedding file. If does not exist, it will be generated')
     parser.add_argument('--trg-embedding', type=str,
                         help='Target embedding file. If does not exist, it will be generated')
-    parser.add_argument('--paragraph-identification', action='store_true',
-                        help='Enable paragraph identification')
     parser.add_argument('--model',
                         help='Model from SentenceTransformers to use in order to generate/load the embeddings')
+    parser.add_argument('--metadata-header-fields', type=str,
+                        help='Provide language agnostic comma separated header fields if metadata is provided in the input. If provided, metadata will be processed')
 
     args = parser.parse_args()
 

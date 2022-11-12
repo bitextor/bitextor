@@ -974,7 +974,6 @@ checkpoint shard:
         """
 
 
-# TODO can paragraphs be stored in a separated file in order to avoid extra process in future rules?
 rule split:
     """
     Use sentence splitter to obtain sentences from the plain text file
@@ -1376,6 +1375,8 @@ rule vecalign:
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
         gpu_ofile_token=temp(vecalign_gpu_token),
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: THREADS["segalign"]
@@ -1394,7 +1395,7 @@ rule vecalign:
 
             header="src_url\ttrg_url\tsrc_text\ttrg_text"
 
-            python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
+            python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
                 | tail -n +2 \
                 | docjoin \
                     -l {input.url1} -r {input.url2} \
@@ -1610,6 +1611,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
 
 bicleaner_gpu_token = f"{GPU_TOKENS_DIR}/bicleaner_{{batch}}"
 
+# TODO we should split bicleaner and bicleaner-hardrules in different rules in order to improve the GPU usage
+#  because the block processed by bicleaner will discard all the sentences discarded by bicleaner-hardrules
 rule bicleaner:
     """
     Compute bicleaner scores of the aligned sentence pairs
