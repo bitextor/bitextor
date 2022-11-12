@@ -551,7 +551,7 @@ onerror:
 
     allocate_cuda_devices_teardown(PERSISTENT_STORAGE, f"{GPU_TOKENS_DIR}/cuda_teardown_onerror")
 
-    LOGGER.warning("The execution finished with errors...")
+    LOGGER.error("The execution finished with errors...")
 
 onsuccess:
     LOGGER.info("Executing teardown...")
@@ -905,7 +905,7 @@ rule prevertical2text:
 
         mkdir -p {params.folder}
         $CAT {input} \\
-            | python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py \\ 
+            | python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py - \\
             | {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
 
         for lang in {LANGS}; do
@@ -1821,8 +1821,9 @@ rule pre_filter_sort_flags:
         """
 
 
-# TODO TBD move sorting to deduped step on the fly?
-# TODO are we sorting twice in rule filter and sent?
+# We sort in 'filter'' rule each batch, and later we sort in 'sents' rule again but blocks of sorted batches, so
+#  we can use '--merge' for make the sorting process more efficient
+# We could sort directly on deduped rule, but this might be very slow
 rule filter:
     """
     Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentence pair or bifixer hash
@@ -1891,7 +1892,7 @@ raw_input_filename = rules.filter.input[0].split("/")[-2] # {bleualign,hunalign,
 rule raw:
     """
     Create {lang1}-{lang2}.raw.gz file by concatenating the output chunks of the last step before filtering
-        may be segalign, bifixer or biclenaer, depending on what's enabled in the config
+        (may be segalign, bifixer or bicleaner, depending on what's enabled in the config)
     :input: the output of the last step
     :output.corpus: the concatenated inputs, columns are the same as the input
     :output:stats: the corresponding stats file in plain text
