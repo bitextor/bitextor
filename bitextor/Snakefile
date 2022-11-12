@@ -905,7 +905,7 @@ rule prevertical2text:
 
         mkdir -p {params.folder}
         $CAT {input} \\
-            | python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py - \\
+            | python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py \\
             | {PROFILING} prevertical2text -o {params.folder} -s -f {params.f} {params.boilerplate} {params.paragraphs} -
 
         for lang in {LANGS}; do
