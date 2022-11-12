@@ -331,14 +331,14 @@ rule hunalign:
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
-        metadata=apply_format(','.join(PROPAGATE_METADATA_HEADERS), "--metadata-header-fields {}"),
+        metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
         src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
         trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
     shell:
         """
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_tokenized\ttrg_tokenized"
 
-        [[ ! -z "{params.metadata}" ]] && header=$(echo "${header}\tsrc_metadata\ttrg_metadata")
+        [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
         python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
             | tail -n +2 \

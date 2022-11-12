@@ -511,7 +511,7 @@ if PROPAGATE_METADATA_FROM_TEXT:
         PROPAGATE_METADATA_HEADERS += "paragraph_id"
         METADATA_HEADERS_NUMBER_FIELDS += 1
     if len(PREVERTICALS) != 0:
-        PROPAGATE_METADATA_HEADERS += "\tdoc_title\tcrawl_date\tfile_type\tboilerplate\theading_html_tag"
+        PROPAGATE_METADATA_HEADERS += ",doc_title,crawl_date,file_type,boilerplate,heading_html_tag"
         METADATA_HEADERS_NUMBER_FIELDS += 5
 
 shell.prefix("set -euo pipefail;")
@@ -1000,7 +1000,7 @@ rule split:
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
         metadata=lambda wildcards, output: "--propagate-metadata" if PROPAGATE_METADATA_FROM_TEXT else "",
         metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
-        metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}"),
+        metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}.gz"),
     threads: THREADS["split"]
     resources:
         job_split=JOB_THREADS["split"],
@@ -1008,10 +1008,10 @@ rule split:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
-                {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \
-                {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \\
+                {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \\
+                {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \\
             | pigz -c > {output.sentences}
 
         # Check metadata
@@ -1019,32 +1019,40 @@ rule split:
             if [[ ! -f "{output.metadata}" ]]; then
                 >&2 echo "WARNING: metadata output file should exist but doesn't: creating fake metadata file"
 
-                zcat "{output.sentences}" \
-                    | b64filter awk '{for (i=1; i<'"{METADATA_HEADERS_NUMBER_FIELDS}"'; i++) printf "\\t"} {printf "\\n"}' \
+                zcat "{output.sentences}" \\
+                    | b64filter awk '{{for (i=1; i<'"{METADATA_HEADERS_NUMBER_FIELDS}"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
                     | pigz -c > "{output.metadata}"
             else
-                header_number_fields=$(zcat "{output.metadata}" | tail -n1 | tr -cd $'\t' | wc -c)
+                header_number_fields=$(zcat "{output.metadata}" | tail -n1 | base64 -d | tail -n1 | tr -cd $'\\t' | wc -c)
+                header_number_fields=$(( $header_number_fields + 1 )) # We want the number of fields, and we have the number of <tab>
 
                 if [[ "$header_number_fields" -ne "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
                     if [[ "$header_number_fields" -gt "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
                         # There are more metadata fields than expected: warn about it
-                        >&2 echo "WARNING: more metadata fields than expected: $header_number_fields vs "
+                        >&2 echo "WARNING: more metadata fields than expected: $header_number_fields vs" \\
                                  "{METADATA_HEADERS_NUMBER_FIELDS}"
                     else
+                        # TODO this is a workaround for allowing to run multiple preprocessor in one instance for preprocessors which
+                        #  doesn't provide any metadata but, optionally, the paragraph identification. This might not work in the
+                        #  moment that different preprocessor may provide different metadata, and in that case, all preprocessor
+                        #  will have to provide the same metadata (for those fields which doesn't have sense in a preprocessor, the
+                        #  solution might be to write empty metadata fields)
+
                         # We need to fake the missing header fields
                         mkdir -p "$(dirname {params.metadata_aux_output})"
 
                         missing_header_fields=$(( "{METADATA_HEADERS_NUMBER_FIELDS}" - "$header_number_fields" ))
 
-                        >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields"
+                        >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields" \\
+                                 "($header_number_fields vs {METADATA_HEADERS_NUMBER_FIELDS})"
 
-                        zcat "{output.sentences}" \
-                            | b64filter awk '{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"} {printf "\\n"}' \
+                        zcat "{output.sentences}" \\
+                            | b64filter awk '{{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
                             | pigz -c > "{params.metadata_aux_output}"
                         mv -n "{output.metadata}" "{output.metadata}.aux.gz"
-                        paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \
-                            | python3 {WORKFLOW}/utils/join_b64_docs.py \
-                            | pigz -c "{output.metadata}"
+                        paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \\
+                            | python3 {WORKFLOW}/utils/join_b64_docs.py \\
+                            | pigz -c > "{output.metadata}"
                     fi
                 fi
             fi
@@ -1354,7 +1362,7 @@ rule bleualign:
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
         deferred="--print-sent-hash" if DEFERRED else '',
-        metadata=apply_format(','.join(PROPAGATE_METADATA_HEADERS), "--metadata-header-fields {}"),
+        metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
         src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
         trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
@@ -1370,7 +1378,7 @@ rule bleualign:
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
-        [[ ! -z "{params.metadata}" ]] && header=$(echo "${header}\tsrc_metadata\ttrg_metadata")
+        [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
         python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
             | tail -n +2 \
@@ -1411,10 +1419,10 @@ rule vecalign:
         folder=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/vecalign/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}",
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
-        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
         gpu_ofile_token=temp(vecalign_gpu_token),
+        metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
     output:
@@ -1435,6 +1443,8 @@ rule vecalign:
 
             header="src_url\ttrg_url\tsrc_text\ttrg_text"
 
+            [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
+
             python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
                 | tail -n +2 \
                 | docjoin \
@@ -1442,7 +1452,7 @@ rule vecalign:
                     -l {input.plain1} -r {input.plain2} \
                 | cat <(echo "$header") - \
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \
-                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
+                    --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \
                     --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \
                     --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \
                     --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \
@@ -1848,7 +1858,7 @@ rule filter:
 
         # Remove header, sort and add header (in-place) from output file
         sed -i '1 d' {output} \
-            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
+            && LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} \
                 --compress-program=gzip -T {TMPDIR} -o {output} {output} \
             && sed -i '1 s/^/'"$header"'\\n/' {output}
 
