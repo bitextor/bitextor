@@ -1039,7 +1039,6 @@ rule split:
                         >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields"
 
                         zcat "{output.sentences}" \
-                            | python3 {WORKFLOW}/utils/fake_metadata.py -f "$missing_header_fields" --empty-fields \
                             | b64filter awk '{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"} {printf "\\n"}' \
                             | pigz -c > "{params.metadata_aux_output}"
                         mv -n "{output.metadata}" "{output.metadata}.aux.gz"
