@@ -168,19 +168,6 @@ PRUNE_TYPE = f"--prune-type {config['pruneType']}"
 EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
 EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 
-# Metadata from text (it should be updated according to different options which might indicate that there is metadata)
-PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or len(PREVERTICALS) != 0
-PROPAGATE_METADATA_HEADERS = ''
-METADATA_HEADERS_NUMBER_FIELDS = 0
-
-if PROPAGATE_METADATA_FROM_TEXT:
-    if PARAGRAPH_IDENTIFICATION:
-        PROPAGATE_METADATA_HEADERS += "paragraph_id"
-        METADATA_HEADERS_NUMBER_FIELDS += 1
-    if len(PREVERTICALS) != 0:
-        PROPAGATE_METADATA_HEADERS += "\tdoc_title\tcrawl_date\tfile_type\tboilerplate\theading_html_tag"
-        METADATA_HEADERS_NUMBER_FIELDS += 5
-
 #################################################################
 # EMBEDDINGS
 EMBEDDINGS_BATCH_SIZE_NEURAL = config["embeddingsBatchSize"]
@@ -513,6 +500,19 @@ if BIFIXER:
     check_nltk_model.check("tokenizers/punkt", "punkt")
 if BIROAMER:
     check_nltk_model.check("misc/perluniprops", "perluniprops")
+
+# Metadata from text (it should be updated according to different options which might indicate that there is metadata)
+PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or len(PREVERTICALS) != 0
+PROPAGATE_METADATA_HEADERS = ''
+METADATA_HEADERS_NUMBER_FIELDS = 0
+
+if PROPAGATE_METADATA_FROM_TEXT:
+    if PARAGRAPH_IDENTIFICATION:
+        PROPAGATE_METADATA_HEADERS += "paragraph_id"
+        METADATA_HEADERS_NUMBER_FIELDS += 1
+    if len(PREVERTICALS) != 0:
+        PROPAGATE_METADATA_HEADERS += "\tdoc_title\tcrawl_date\tfile_type\tboilerplate\theading_html_tag"
+        METADATA_HEADERS_NUMBER_FIELDS += 5
 
 shell.prefix("set -euo pipefail;")
 
@@ -1020,7 +1020,7 @@ rule split:
                 >&2 echo "WARNING: metadata output file should exist but doesn't: creating fake metadata file"
 
                 zcat "{output.sentences}" \
-                    | python3 {WORKFLOW}/utils/fake_metadata.py -f "{METADATA_HEADERS_NUMBER_FIELDS}" --empty-fields \
+                    | b64filter awk '{for (i=1; i<'"{METADATA_HEADERS_NUMBER_FIELDS}"'; i++) printf "\\t"} {printf "\\n"}' \
                     | pigz -c > "{output.metadata}"
             else
                 header_number_fields=$(zcat "{output.metadata}" | tail -n1 | tr -cd $'\t' | wc -c)
@@ -1040,6 +1040,7 @@ rule split:
 
                         zcat "{output.sentences}" \
                             | python3 {WORKFLOW}/utils/fake_metadata.py -f "$missing_header_fields" --empty-fields \
+                            | b64filter awk '{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"} {printf "\\n"}' \
                             | pigz -c > "{params.metadata_aux_output}"
                         mv -n "{output.metadata}" "{output.metadata}.aux.gz"
                         paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \
