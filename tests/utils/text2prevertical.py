@@ -41,7 +41,7 @@ def roulette_wheel_selection(values, likelihoods):
     return sorted_values[-1][0]
 
 def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate_likelihood, min_lang_diff_likelihood,
-                     seed=-1):
+                     random_date=False, seed=-1):
     random.seed(seed if seed >= 0 else None)
 
     for text_file, url_file in zip(text_files, url_files):
@@ -51,7 +51,17 @@ def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate
                 url = url.strip().replace('\t', ' ')
                 content = ""
                 prevertical_content = ""
-                current_date = datetime.now().strftime("%Y/%m/%d %H:%M")
+
+                if random_date:
+                    _year = random.randint(1970, 2021)
+                    _month = random.randint(1, 12)
+                    _day = random.randint(1, 25)
+                    _hour = random.randint(0, 23)
+                    _mins = random.randint(0, 59)
+
+                    current_date = f"{_year}/{_month}/{_day} {_hour}:{_mins}"
+                else:
+                    current_date = datetime.now().strftime("%Y/%m/%d %H:%M")
 
                 try:
                     content = base64.b64decode(doc.strip()).decode("utf-8")
@@ -124,6 +134,8 @@ def parse_args():
                         help="Language of the documents")
     parser.add_argument('--document-langs-likelihood', nargs='*', type=float,
                         help="Likelihood of the languages of the documents. The provided values has to add up to 1")
+    parser.add_argument('--random-date', action="store_true",
+                        help="Set random date instead of current date (useful for deterministic results if --seed is provided)")
     # Sentences
     parser.add_argument('--sentence-boilerplate-likelihood', default=0.2, type=float,
                         help="Likelihood of a sentence to be set as boilerplate")
@@ -155,4 +167,5 @@ if __name__ == '__main__':
     args.min_lang_diff_likelihood = min(args.min_lang_diff_likelihood, 1.0)
 
     text2prevertical(args.text_files, args.url_files, args.document_langs, args.document_langs_likelihood,
-                     args.sentence_boilerplate_likelihood, args.min_lang_diff_likelihood, seed=args.seed)
+                     args.sentence_boilerplate_likelihood, args.min_lang_diff_likelihood, random_date=args.random_date,
+                     seed=args.seed)

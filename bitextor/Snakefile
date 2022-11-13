@@ -123,6 +123,7 @@ BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
+ADDITIONAL_METADATA = config["additionalMetadata"]
 
 CLEANHTML = return_dict_value_if_key(config, "cleanHTML", "", pos_value="--cleanhtml")
 FTFY = return_dict_value_if_key(config, "ftfy", "", pos_value="--ftfy")
@@ -501,8 +502,9 @@ if BIFIXER:
 if BIROAMER:
     check_nltk_model.check("misc/perluniprops", "perluniprops")
 
-# Metadata from text (it should be updated according to different options which might indicate that there is metadata)
-PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or len(PREVERTICALS) != 0
+# Metadata from text
+ADDITIONAL_METADATA = ADDITIONAL_METADATA and (len(PREVERTICALS) != 0) # Update with additional conditions if needed
+PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or ADDITIONAL_METADATA
 PROPAGATE_METADATA_HEADERS = ''
 METADATA_HEADERS_NUMBER_FIELDS = 0
 
@@ -510,9 +512,11 @@ if PROPAGATE_METADATA_FROM_TEXT:
     if PARAGRAPH_IDENTIFICATION:
         PROPAGATE_METADATA_HEADERS += "paragraph_id"
         METADATA_HEADERS_NUMBER_FIELDS += 1
-    if len(PREVERTICALS) != 0:
-        PROPAGATE_METADATA_HEADERS += ",doc_title,crawl_date,file_type,boilerplate,heading_html_tag"
-        METADATA_HEADERS_NUMBER_FIELDS += 5
+    if ADDITIONAL_METADATA:
+        # Different conditions which adds metadata from preprocessors
+        if len(PREVERTICALS) != 0:
+            PROPAGATE_METADATA_HEADERS += ",doc_title,crawl_date,file_type,boilerplate,heading_html_tag"
+            METADATA_HEADERS_NUMBER_FIELDS += 5
 
 shell.prefix("set -euo pipefail;")
 

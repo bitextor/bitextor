@@ -149,6 +149,7 @@ def validate_args(config):
         'shards': {'type': 'integer', 'min': 0, 'default': 8},
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},
         'paragraphIdentification': {'type': 'boolean', 'default': False},
+        'additionalMetadata': {'type': 'boolean', 'default': False},
         ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
         ## specific to warc2preprocess:
