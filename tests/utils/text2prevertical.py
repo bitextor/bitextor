@@ -64,7 +64,7 @@ def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate
                     current_date = datetime.now().strftime("%Y/%m/%d %H:%M")
 
                 try:
-                    content = base64.b64decode(doc.strip()).decode("utf-8")
+                    content = base64.b64decode(doc).decode("utf-8")
                 except UnicodeDecodeError:
                     logging.warning("unicode decoding error while processing doc #%d", doc_idx)
 
@@ -84,12 +84,10 @@ def text2prevertical(text_files, url_files, langs, langs_likelihood, boilerplate
                                        f" ip=\"{ip}\" url=\"{url}\" file_type=\"html\"" \
                                        f" enc_meta=\"utf-8\" enc_chared=\"utf-8\">\n"
 
-                paragraphs = content.strip().replace('\t', ' ').split('\n')
+                paragraphs = content.rstrip('\n').replace('\t', ' ').split('\n')
                 printed_paragraphs = 0
 
                 for paragraph in paragraphs:
-                    paragraph = paragraph.strip()
-
                     if paragraph == '':
                         continue
 
