@@ -185,7 +185,7 @@ def validate_args(config):
             'default': 'pdf2html',
             'allowed': ['pdf2html', 'pdfextract', 'apacheTika'],
             'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'apacheTika_path': {'type': 'string', 'dependencies': 'PDFextract'}
+        'apacheTika_path': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},

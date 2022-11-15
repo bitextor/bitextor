@@ -146,15 +146,6 @@ class SimpleParser(HTMLTokenizer):
 def guess_lang_from_data2(data):
     reliable, text_bytes, detected_languages = cld2.detect(
         ''.join(x for x in data if x.isprintable()), isPlainText=False)
-    #lang_1 = []
-    #lang_2 = []
-    #for x in data:
-    #    reliable, text_bytes, detected_languages = cld2.detect(x,  isPlainText=False)
-    #    if detected_languages[0][1] == "ca":
-    #        lang_1.append(x)
-    #    if detected_languages[0][1] == "es":
-    #        lang_2.append(x)
-    print(detected_languages)
     return detected_languages[0][1]
 
 

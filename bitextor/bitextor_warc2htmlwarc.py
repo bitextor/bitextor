@@ -121,10 +121,10 @@ oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
                      help="Only outputs broader document format records", default=False)
 oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine or pdftohtml for PDFs',
                      default=False)
+oparser.add_argument('--tika_jar', dest="tikaJar", help='Apache Tika model path',
+                     default="")
 oparser.add_argument('--pe_configfile', dest='configFile', default="",
                      help='PDFExtract configuration file for language model paths')
-oparser.add_argument('--at_file', dest='atFile', default="",
-                     help='Apache Tika model path')
 
 oparser.add_argument('--sentence_join_path', dest='sentenceJoinPath', help='sentence-join.py path', default="")
 oparser.add_argument('--kenlm_path', dest='kenlmPath', help='kenlm binary folder path', default="")
@@ -272,7 +272,7 @@ for record in f:
             po.write_record(new_record)
             continue  # do not process further!
         if options.pdfextract == "apacheTika":
-            payloads = tikaextract(payload, atFile)
+            payloads = tikaextract(payload, options.tikaJar)
         elif options.pdfextract == "pdfextract":
             payloads = pdfextract(payload, extractor)
         else:
@@ -343,6 +343,9 @@ for record in f:
                 headers=[('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))]
             )
 
+        if url[-5:] == ".docx" or url[-5:] == ".epub" or url[-5:] == ".pptx" or url[-5:] == ".xlsx" or \
+           url[-4:] == ".odt" or url[-4:] == ".ods" or url[-4:] == ".odp" or url[-4:] == ".pdf":
+            url = f"{url}.converted"
         new_record = fo.create_warc_record(
             uri=url,
             record_type=record_type,

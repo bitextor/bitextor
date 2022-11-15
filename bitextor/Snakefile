@@ -150,7 +150,8 @@ if config["PDFextract"] == "pdfextract":
     PDFEXTRACT = f"--pdfextract pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
 
 if config["PDFextract"] == "apacheTika":
-    PDFEXTRACT = f"--pdfextract apacheTika --at_file {config["apacheTika_path"]}"
+    jar_path =  config['apacheTika_path']
+    PDFEXTRACT = f"--pdfextract apacheTika --tika_jar {jar_path}"
 
 if config["PDFextract"] == "pdf2html":
     PDFEXTRACT = "--pdfextract pdf2html"
