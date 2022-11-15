@@ -773,7 +773,7 @@ checkpoint linguacrawl_download:
                 if params.crawl_cat_max <= 0:
                     warcs = " ".join(warcs)
                     shell(
-                        """
+                        f"""
                         cat {warcs} > {params.folder}/linguacrawl.warc.gz
                         echo "{params.folder}/linguacrawl.warc.gz" > {{output[0]}}
                         """
