@@ -21,6 +21,7 @@ import argparse
 import base64
 import string
 import logging
+import re
 
 from sentence_splitter import SentenceSplitter, SentenceSplitterException
 from loomchild.segmenter import LoomchildSegmenter
@@ -191,13 +192,20 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
             # Sentence splitting
             sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
                                                      options.prune_threshold, not options.dont_filter, return_list=True)
-
-            # Process paragraphs
+            paragraph_id = 0
+            total_paragraphs = 0
             if process_paragraphs:
-                try:
-                    paragraph_id = int(columns[1]) + 1 # Start at 1
-                except ValueError as e:
-                    raise Exception(f"Couldn't parse paragraph identifier: document {doc_idx}, sentence {sent_idx}") from e
+                pattern = re.compile("^([0-9]+):([0-9]+)$")
+                m = re.match(pattern, columns[1])
+                if m:
+                    paragraph_id = int(m.group(1)) # Starts at 1
+                    total_paragraphs = int(m.group(2))
+
+                    if paragraph_id > total_paragraphs:
+                        logging.warning("Paragraph id > total paragraphs (bug?): %d > $d", paragraph_id, total_paragraphs)
+
+                else:
+                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}")
 
             # Process metadata
             if propagate_metadata:
@@ -208,7 +216,7 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
 
             # Process output
             for idx in range(len(sentences_wo_paragraphs)):
-                paragraph = f"p{paragraph_id}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else ''
+                paragraph = f"p{paragraph_id}:{total_paragraphs}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else ''
                 sentences += f"{sentences_wo_paragraphs[idx]}"
                 _current_metadata = paragraph + ('\t' if current_metadata and paragraph else '') + current_metadata
                 metadata += f"{_current_metadata}\n"
