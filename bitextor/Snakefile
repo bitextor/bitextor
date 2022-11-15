@@ -505,18 +505,20 @@ if BIROAMER:
 # Metadata from text
 ADDITIONAL_METADATA = ADDITIONAL_METADATA and (len(PREVERTICALS) != 0) # Update with additional conditions if needed
 PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or ADDITIONAL_METADATA
-PROPAGATE_METADATA_HEADERS = ''
+PROPAGATE_METADATA_HEADERS = []
 METADATA_HEADERS_NUMBER_FIELDS = 0
 
 if PROPAGATE_METADATA_FROM_TEXT:
     if PARAGRAPH_IDENTIFICATION:
-        PROPAGATE_METADATA_HEADERS += "paragraph_id"
+        PROPAGATE_METADATA_HEADERS.append("paragraph_id")
         METADATA_HEADERS_NUMBER_FIELDS += 1
     if ADDITIONAL_METADATA:
         # Different conditions which adds metadata from preprocessors
         if len(PREVERTICALS) != 0:
-            PROPAGATE_METADATA_HEADERS += ",doc_title,crawl_date,file_type,boilerplate,heading_html_tag"
+            PROPAGATE_METADATA_HEADERS.extend(["doc_title", "crawl_date", "file_type", "boilerplate", "heading_html_tag"])
             METADATA_HEADERS_NUMBER_FIELDS += 5
+
+PROPAGATE_METADATA_HEADERS = ','.join(PROPAGATE_METADATA_HEADERS)
 
 shell.prefix("set -euo pipefail;")
 
@@ -1427,6 +1429,8 @@ rule vecalign:
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
         gpu_ofile_token=temp(vecalign_gpu_token),
         metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
+        src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
     output:
@@ -1453,7 +1457,7 @@ rule vecalign:
                 | tail -n +2 \\
                 | docjoin \\
                     -l {input.url1} -r {input.url2} \\
-                    -l {input.plain1} -r {input.plain2} \\
+                    -l {input.plain1} -r {input.plain2} {params.src_metadata} {params.trg_metadata} \\
                 | cat <(echo "$header") - \\
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \\
                     --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \\
