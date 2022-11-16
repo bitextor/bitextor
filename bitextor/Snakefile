@@ -134,7 +134,6 @@ PARSER = ""
 PDFEXTRACT = ""
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-#if "PDFextract" in config and config["PDFextract"]:
 if config["PDFextract"] == "pdfextract":
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
@@ -826,7 +825,12 @@ rule warc2text:
     shell:
         """
         mkdir -p {params.folder}
-        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
+        if [{PDFEXTRACT} != '']; then
+            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} \
+            <(cat {input} | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip)
+        else
+            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
+        fi
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no \'$lang\' data found in {wildcards.target}: creating empty files instead"

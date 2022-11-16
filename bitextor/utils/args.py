@@ -162,11 +162,20 @@ def validate_args(config):
         'shards': {'type': 'integer', 'min': 0, 'default': 8},
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},
         'paragraphIdentification': {'type': 'boolean', 'default': False},
+        'cleanHTML': {'type': 'boolean'},
+        'ftfy': {'type': 'boolean'},
+        ## pdfEXTRACT
+        'PDFextract': {
+            'type': 'string',
+            'default': '',
+            'allowed': ['pdf2html', 'pdfextract', 'apacheTika', '']},
+        'apacheTika_path': {'type': 'string', 'dependencies': 'PDFextract'},
+        'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
+        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
+        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
         ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
-        ## specific to warc2preprocess:
-        'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+        ## specific to warc2preprocess:        
         'langID': {
             'type': 'string',
             'allowed': ['cld2', 'cld3'],
@@ -178,17 +187,6 @@ def validate_args(config):
             'dependencies': {'preprocessor': 'warc2preprocess'}
         },
         'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        ## pdfEXTRACT
-        #'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'PDFextract': {
-            'type': 'string',
-            'default': 'pdf2html',
-            'allowed': ['pdf2html', 'pdfextract', 'apacheTika'],
-            'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'apacheTika_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
         ## boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
         'boilerplateCleaning': {'type': 'boolean', 'default': False},
         'boilerpipeMaxHeapSize': {'type': 'integer', 'dependencies': {'boilerplateCleaning': True, 'preprocessor': 'warc2preprocess'}},
