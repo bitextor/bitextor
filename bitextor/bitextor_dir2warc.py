@@ -44,7 +44,8 @@ for dline in reader:
     get_files(dline.strip())
     
     for filepath in files:
-        url = filepath.split("/")[-1]
+        #url = filepath.split("/")[-1]
+        url =  '/'.join(filepath.split("/")[-2:])
         date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
 
         with open(filepath, 'rb') as content_file:

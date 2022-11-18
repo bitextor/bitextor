@@ -343,12 +343,17 @@ TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2
 TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS)+len(TARGET_2_DIRECTORIES), file_desc="preverticals")
 
 # group crawled WARCs by domains
+
 TARGET_2_CRAWLED_WARCS = dict([
     (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
     for (domain, hosts) in DOMAIN_2_HOSTS.items()
 ])
 
 # group generated WARCs by directories
+#TARGET_2_FROMDIR_WARCS = dict([
+#    (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz" for directory in directories])
+#    for (dir_id, directories) in TARGET_2_DIRECTORIES.items()
+#])
 TARGET_2_FROMDIR_WARCS = dict([
     (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
 ])
@@ -828,7 +833,7 @@ rule warc2text:
     shell:
         """
         mkdir -p {params.folder}
-        if [{PDFEXTRACT} != '']; then
+        if [[ "{PDFEXTRACT}" != "" ]]; then
             {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} \
             <(cat {input} | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip)
         else
