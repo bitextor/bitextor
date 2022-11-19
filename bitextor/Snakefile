@@ -1805,7 +1805,7 @@ rule aggregate_bicleaner:
 filter_input = rules.bicleaner.output if BICLEANER else rules.bicleaner.input.bifixer
 
 
-rule pre_filter:
+rule pre_filter_sort_flags:
     input:
         filter_input,
     output:
@@ -1841,36 +1841,6 @@ rule pre_filter:
 
         with open(output[0], 'w') as f:
             f.write(f"{sort_flags}\n")
-
-
-rule pre_filter_sort_flags:
-    input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
-    output:
-        f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/sort_flags"
-    shell:
-        """
-        value="/dev/null"
-        first="0"
-
-        for f in $(echo {input} | tr ' ' '\n'); do
-            if [[ "$first" == "0" ]]; then
-                value="$f"
-                first="1"
-            else
-                current_value="$f"
-                d=$(diff $value $current_value | wc -l)
-
-                if [[ "$d" != "0" ]]; then
-                    >&2 echo "ERROR: all sort flags have to be the same"
-
-                    false # Trigger exit (it will work since bash is executed in strict mode)
-                fi
-            fi
-        done
-
-        cat $value > {output}
-        """
 
 
 # We sort in 'filter'' rule each batch, and later we sort in 'sents' rule again but blocks of sorted batches, so
@@ -1987,7 +1957,7 @@ rule sents:
     """
     input:
         filtered=lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
-        sort_flags=rules.pre_filter_sort_flags.output,
+        sort_flags=[f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
@@ -1995,7 +1965,7 @@ rule sents:
     run:
         cmd = \
         """
-        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        sort_flags="$(cat {input.sort_flags[0]} | tr -d '\n')"
         header=$(head -1 <(cat {input.filtered[0]}) | tr -d '\\n')
 
         LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
