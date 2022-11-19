@@ -479,7 +479,6 @@ else:
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 
-
     if UNTIL == "docalign":
         OUTPUT.append(f"{TRANSIENT}/06_01.docalign.{LANG1}_{LANG2}")
     elif UNTIL == "segalign":
