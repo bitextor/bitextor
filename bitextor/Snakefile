@@ -1147,7 +1147,7 @@ rule custom_translate:
 
         if [ $initial_nolines -ne $n_after ]; then
             >&2 echo "ERROR: lines count differs: source $initial_nolines, target $n_after"
-            exit 1
+            false # Trigger exit
         fi
         """
 
@@ -1683,8 +1683,8 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
                 | {WORDTOK2} \\
                 | awk '{{print tolower($0)}}' \\
                 | tr ' ' '\n' \\
-                | LC_ALL=C sort | uniq -c \\
-                | LC_ALL=C sort -nr \\
+                | LC_ALL=C sort -T {TMPDIR} | uniq -c \\
+                | LC_ALL=C sort -T {TMPDIR} -nr \\
                 | grep -v "[[:space:]]*1" \\
                 | pigz -c > {params.tfreq}
 
@@ -1775,11 +1775,11 @@ rule bicleaner:
             # We apply --score_only + paste because not all the data are dependant of the text fields!
             #  Check out: https://github.com/bitextor/bicleaner-ai/issues/23
             zcat {input.bifixer} \\
-            | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \\
-                --header {params.tokenizer_l1} {params.tokenizer_l2} \\
-                --score_only -q -p {threads} {params.batch_size} - - {input.model} \\
-            | paste <(zcat {input.bifixer}) - \\
-            | pigz -c > {output}
+                | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \\
+                    --header {params.tokenizer_l1} {params.tokenizer_l2} \\
+                    --score_only -q -p {threads} {params.batch_size} - - {input.model} \\
+                | paste <(zcat {input.bifixer}) - \\
+                | pigz -c > {output}
 
             touch "{params.gpu_ofile_token}"
             """
@@ -1843,28 +1843,31 @@ rule pre_filter_sort_flags:
             f.write(f"{sort_flags}\n")
 
 
-# We sort in 'filter'' rule each batch, and later we sort in 'sents' rule again but blocks of sorted batches, so
-#  we can use '--merge' for make the sorting process more efficient
+# We sort in the 'filter' rule each batch, and later we sort in the 'sents' rule again but blocks of sorted batches,
+#  so we can use '--merge' for making the sorting process more efficient (because of this, we need that the output
+#  files are not compressed in the 'filter' rule)
 # We could sort directly on deduped rule, but this might be very slow
 rule filter:
     """
     Filter by biclenaer threshold (if applicable), compute ELRC metrics (if applicable), sort by sentence pair or bifixer hash
-    :input: either the output of bicleaner (if enabled), or the output of the previous step (i.e. what would be the input of bicleaner if it was enabled)
+    :input: either the output of bicleaner (if enabled), or the output of the previous step (i.e. what would be the input ofbicleaner if it was enabled)
     :output: plain-text file, marked as temp, the senteces are sorted by duplicates
         remove sentences below biclenaer threshold (if applicable)
         add new columns for ELRC if applicable: length_ration, num_tokens_src, num_tokens_trg
+        the header fields are stored in output.header instead of the file itself in order to simplify the 'sents' rule processing
     """
     input:
         f=filter_input,
         sort_flags=rules.pre_filter_sort_flags.output,
     output:
-        temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
+        out=temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
+        header=temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}.header"),
     params:
         bicleaner_header="bicleaner_score" if BICLEANER_FLAVOUR == "classic" else "bicleaner_ai_score",
     threads: THREADS["filter"]
     shell:
         """
-        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        sort_flags="$(cat {input.sort_flags} | tr -d '\\n')"
         FILTER_BICLEANER_CMD="\\
             [[ '{BICLEANER}' == 'True' ]] \\
                 && ({PROFILING} python3 {WORKFLOW}/bitextor_filter_bicleaner.py \\
@@ -1878,19 +1881,17 @@ rule filter:
         zcat {input.f} \\
             | eval "$FILTER_BICLEANER_CMD" \\
             | eval "$ELRC_CMD" \\
-            > {output}
+            > "{output.out}"
 
-        header=$(head -1 <(cat {output}) | tr -d '\n')
+        header=$(head -1 "{output.out}" | tr -d '\\n')
 
-        # Remove header, sort and add header (in-place) from output file
-        sed -i '1 d' {output} \\
-            && LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} \\
-                --compress-program=gzip -T {TMPDIR} -o {output} {output} \\
-            && sed -i '1 s/^/'"$header"'\\n/' {output}
+        # Remove header and sort (in-place) in the output file
+        sed -i '1 d' "{output.out}"
+        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} \\
+            --compress-program=gzip -T {TMPDIR} -o "{output.out}" "{output.out}"
 
-        if [[ ! -s "{output}" ]]; then
-            echo "$header" > {output}
-        fi
+        # Add header
+        echo "$header" > "{output.header}"
         """
 
 
@@ -1957,29 +1958,34 @@ rule sents:
     """
     input:
         filtered=lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+        header=lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.header" for batch in get_postproc_batches()],
         sort_flags=[f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}.sort_flags" for batch in get_postproc_batches()],
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
     threads: THREADS["sents"]
-    run:
-        cmd = \
+    shell:
         """
-        sort_flags="$(cat {input.sort_flags[0]} | tr -d '\n')"
-        header=$(head -1 <(cat {input.filtered[0]}) | tr -d '\\n')
+        num_sort_flags=$(cat {input.sort_flags} | sort -u | wc -l)
+        num_header=$(cat {input.header} | sort -u | wc -l)
+
+        if [[ "$num_header" != "1" ]]; then
+            >&2 echo "ERROR: expected lines in input.header is 1, but got $num_header"
+            false # Trigger exit
+        fi
+        if [[ "$num_sort_flags" != "1" ]]; then
+            >&2 echo "ERROR: expected lines in input.sort_flags is 1, but got $num_sort_flags"
+            false # Trigger exit
+        fi
+
+        sort_flags=$(cat {input.sort_flags[0]} | tr -d '\\n')
+        header=$(cat {input.header[0]} | tr -d '\\n')
 
         LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
-        """
-
-        for filename in input.filtered:
-            # Use tmp named pipes since --merge does need the file descriptor and we need to get rid of the header
-            cmd += f" <(tail -n +2 {filename})"
-
-        cmd += \
-        """ \\
-        | cat <(echo "$header") - \\
-        | pigz -c > {output.corpus}
+            {input.filtered} \\
+            | cat <(echo "$header") - \\
+            | pigz -c > {output.corpus}
 
         # Stats
         WC1=$(zcat {output.corpus} | python3 {WORKFLOW}/utils/cut_header.py -f src_text | tail -n +2 | wc -wl | tr -s ' ')
@@ -1992,7 +1998,6 @@ rule sents:
         echo "{TRG_LANG} words: $WC2" >> {output.stats}
         """
 
-        shell(cmd)
 
 rule documents:
     input:
