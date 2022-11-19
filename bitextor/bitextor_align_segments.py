@@ -71,8 +71,8 @@ def run_aligner(filename_s, filename_t, dic, hunalign_bin, threshold=0):
     return
 
 
-def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text_file_1, text_file_2, dic,
-          hashprogram, paragraph_id, threshold=0.0):
+def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text_file_1, text_file_2,
+          dic, hashprogram, metadata_1, metadata_2, threshold=0.0):
     filereader1 = open(text_file_1, "r")
     filereader2 = open(text_file_2, "r")
     threshold = min(max(int(float(threshold) * 100.0), 0), 100) # hunalign threshold is [0, 100]
@@ -95,6 +95,9 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
         # Hunalign couldn't find matches (the loop will not be executed since there are no lines)
         pass
 
+    file1_current_line, file2_current_line = 0, 0
+    metadata = metadata_1 and metadata_2
+
     # Process hunalign output
     for line_h in hunalign_output:
         hun_line = line_h.strip()
@@ -102,16 +105,13 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
         last_position2 = filereader2.tell()
         line1 = filereader1.readline().strip()
         line2 = filereader2.readline().strip()
-        para_id_1 = ""
-        para_id_2 = ""
+        file1_current_line += 1
+        file2_current_line += 1
+        meta1, meta2 = [], []
 
-        if paragraph_id:
-            line1 = line1.split('\t')
-            line2 = line2.split('\t')
-            para_id_1 = line1[1]
-            para_id_2 = line2[1]
-            line1 = line1[0].strip()
-            line2 = line2[0].strip()
+        if metadata:
+            meta1.append(metadata_1[file1_current_line - 1])
+            meta2.append(metadata_2[file2_current_line - 1])
 
         if hashprogram:
             hash1 = subprocess.run(
@@ -127,32 +127,36 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
 
         prev_fields = prev_hun.split(b"\t")
         hunalign_fields = hun_line.split(b"\t")
+        hunalign_score = prev_fields[2].decode("utf8")
+        match_should_be_skipped = math.isclose(float(hunalign_score), -0.3)
 
-        if math.isclose(float(prev_fields[2]), -0.3):
+        if match_should_be_skipped:
             # Skip match if the current match it is the same that the previous one (and hunalign said that has to be ignored)
 
-            # TODO is this right? shouldn't be applied the same condition to both fields instead of just 1? continue after condition applied?
+            # We only check if we have to go to the previous line in one file (if and elif) because if we were checking
+            #  both files (if and if), we could enter in an infinite loop in case that both conditions were met
             if int(hunalign_fields[0]) == int(prev_fields[0]):
                 line1 = ""
                 hash1 = ""
-                para_id_1 = ""
+                meta1 = []
                 filereader1.seek(last_position1)
+                file1_current_line -= 1
             elif int(hunalign_fields[1]) == int(prev_fields[1]):
                 line2 = ""
                 hash2 = ""
-                para_id_2 = ""
+                meta2 = []
                 filereader2.seek(last_position2)
+                file2_current_line -= 1
 
         # We join all the lines between the last match and the current if necessary (we assume that
         #  if the previous line and the current are aligned, the ones in the middle are aligned as well)
         if int(hunalign_fields[0]) - int(prev_fields[0]) > 1:
             for _ in range((int(hunalign_fields[0]) - int(prev_fields[0])) - 1):
                 tmp = filereader1.readline().strip()
+                file1_current_line += 1
 
-                if paragraph_id:
-                    tmp = tmp.split('\t')
-                    para_id_1 += f"+{tmp[1]}"
-                    tmp = tmp[0].strip()
+                if metadata:
+                    meta1.append(metadata_1[file1_current_line - 1])
 
                 if hashprogram:
                     hash1 += "+" + subprocess.run(hashprogram, stdout=subprocess.PIPE,
@@ -163,11 +167,10 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
         if int(hunalign_fields[1]) - int(prev_fields[1]) > 1:
             for _ in range((int(hunalign_fields[1]) - int(prev_fields[1])) - 1):
                 tmp = filereader2.readline().strip()
+                file2_current_line += 1
 
-                if paragraph_id:
-                    tmp = tmp.split('\t')
-                    para_id_2 += f"+{tmp[1]}"
-                    tmp = tmp[0].strip()
+                if metadata:
+                    meta2.append(metadata_2[file2_current_line - 1])
 
                 if hashprogram:
                     hash2 += "+" + subprocess.run(hashprogram, stdout=subprocess.PIPE,
@@ -175,15 +178,31 @@ def align(document_id_1, document_id_2, tokenized_file_1, tokenized_file_2, text
 
                 line2 += " " + tmp
 
-        hunalign_score = prev_fields[2].decode("utf8")
-
+        # BE AWARE: empty sentences (either src or trg but not both) will be printed if hunalign_score == -0.3
         sys.stdout.write(f"{document_id_1}\t{document_id_2}\t{line1}\t{line2}\t{hunalign_score}")
-
-        if paragraph_id:
-            sys.stdout.write(f"\t{para_id_1}\t{para_id_2}")
 
         if hashprogram:
             sys.stdout.write(f"\t{hash1}\t{hash2}")
+
+        if metadata:
+            _meta1, _meta2 = [], []
+
+            if meta1:
+                for j in range(len(meta1[0])):
+                    _meta1.append('+'.join([c[j] for c in [meta1[i] for i in range(len(meta1))]]))
+            if meta2:
+                for j in range(len(meta2[0])):
+                    _meta2.append('+'.join([c[j] for c in [meta2[i] for i in range(len(meta2))]]))
+
+            if match_should_be_skipped:
+                # Add "padding"
+                _meta1 = ['' for _ in range(len(_meta2))] if not _meta1 else _meta1
+                _meta2 = ['' for _ in range(len(_meta1))] if not _meta2 else _meta2
+            elif len(_meta1) != len(_meta2):
+                raise Exception(f"Different metadata length: {_meta1} vs {_meta2} ({hunalign_fields} vs {prev_fields})")
+
+            for i in range(len(_meta1)):
+                sys.stdout.write(f"\t{_meta1[i]}\t{_meta2[i]}")
 
         sys.stdout.write('\n')
 
@@ -198,7 +217,8 @@ oparser = argparse.ArgumentParser(
                 "documents")
 oparser.add_argument("aligned_docs", metavar="FILE", nargs='?',
                      help="File containing the set of aliged documents encoded as base64. Format is: "
-                          "url1 <tab> url2 <tab> sentences1 <tab> sentences2 <tab> tokenized1 <tab> tokenzed2")
+                          "url1 <tab> url2 <tab> sentences1 <tab> sentences2 <tab> tokenized1 <tab> tokenzed2"
+                          " [ <tab> src_metadata <tab> trg_metadata ]")
 oparser.add_argument("--hunalign", dest="hunalign_bin",
                      help="Path to the hunalign executable. If this option is not defined, the executable will "
                           "be searched in the same directory where this scritp is placed")
@@ -210,12 +230,12 @@ oparser.add_argument("--hunalign-threshold", dest="hunalignthresh", type=float, 
                           "this value will not be in the result. Allowed values are between 0.0 and 1.0.")
 oparser.add_argument("--print-sent-hash", dest="hashprogram", default="",
                      help="provide path for a shasum like program to print Murmurhash hashes of the output sentences")
-oparser.add_argument("--paragraph-identification", action="store_true",
-                     help="provide path for a shasum like program to print Murmurhash hashes of the output sentences")
+oparser.add_argument("--metadata-header-fields",
+                     help="provide language agnostic comma separated header fields if metadata is provided in the input")
 
 options = oparser.parse_args()
 
-if options.aligned_docs is None:
+if options.aligned_docs is None or options.aligned_docs == '-':
     reader_list = sys.stdin
 else:
     reader_list = open(options.aligned_docs, "r")
@@ -228,17 +248,26 @@ trg_text_idx = header.index("trg_text")
 src_tokenized_idx = header.index("src_tokenized")
 trg_tokenized_idx = header.index("trg_tokenized")
 hashprogram = options.hashprogram
+metadata_header_fields = options.metadata_header_fields
+
+if metadata_header_fields:
+    metadata_header_fields = [[f"src_{h}", f"trg_{h}"] for h in metadata_header_fields.split(',')]
+    metadata_header_fields = [item for sublist in metadata_header_fields for item in sublist]
+
+metadata = True if metadata_header_fields else False
+src_metadata_idx = header.index("src_metadata") if metadata else None
+trg_metadata_idx = header.index("trg_metadata") if metadata else None
 
 # Print output header
 sys.stdout.write("src_url\ttrg_url\tsrc_text\ttrg_text\thunalign_score")
-
-if options.paragraph_identification:
-    sys.stdout.write("\tsrc_paragraph_id\ttrg_paragraph_id")
 
 if hashprogram:
     sys.stdout.write("\tsrc_deferred_hash\ttrg_deferred_hash")
 
     hashprogram = shlex.split(hashprogram)
+
+if metadata:
+    sys.stdout.write('\t' + '\t'.join(metadata_header_fields))
 
 sys.stdout.write('\n')
 
@@ -256,12 +285,20 @@ for line in reader_list:
     encodedtext2 = fields[trg_text_idx]
     encodedtokenized1 = fields[src_tokenized_idx]
     encodedtokenized2 = fields[trg_tokenized_idx]
+    metadata1 = None
+    metadata2 = None
 
     tmp_file1_origtext.write(base64.b64decode(encodedtext1))
     tmp_file2_origtext.write(base64.b64decode(encodedtext2))
 
     tmp_file1.write(base64.b64decode(encodedtokenized1))
     tmp_file2.write(base64.b64decode(encodedtokenized2))
+
+    if metadata:
+        metadata1 = fields[src_metadata_idx]
+        metadata2 = fields[trg_metadata_idx]
+        metadata1 = [m.split('\t') for m in base64.b64decode(metadata1).decode("utf-8").rstrip('\n').split('\n')]
+        metadata2 = [m.split('\t') for m in base64.b64decode(metadata2).decode("utf-8").rstrip('\n').split('\n')]
 
     tmp_file1_name = tmp_file1.name
     tmp_file2_name = tmp_file2.name
@@ -274,7 +311,7 @@ for line in reader_list:
     tmp_file2_origtext.close()
 
     align(doc_id_1, doc_id_2, tmp_file1_name, tmp_file2_name, tmp_file1_orig_name, tmp_file2_orig_name,
-          options.dic, hashprogram, options.paragraph_identification, threshold=options.hunalignthresh)
+          options.dic, hashprogram, metadata1, metadata2, threshold=options.hunalignthresh)
 
     os.remove(tmp_file1.name)
     os.remove(tmp_file1_origtext.name)
