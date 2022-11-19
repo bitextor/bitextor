@@ -1607,7 +1607,7 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
         input:
             corpus_l1=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=SRC_LANG),
             corpus_l2=expand("{dataset}.{lang}.gz", dataset=BICLEANER_TRAINING_CORPUS_PREFIX, lang=TRG_LANG),
-            # 'optional_file' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
+            # 'optional_input_file' is needed because if 'config["generateDic"] == True and not BICLEANER_GENERATE_MODEL' then
             #   will trigger this rule ("reason: Input files updated by another job") even if the output already exists
             e2f=optional_input_file(f"{DIC}.lex.e2f.gz", BICLEANER_GENERATE_MODEL),
             f2e=optional_input_file(f"{DIC}.lex.f2e.gz", BICLEANER_GENERATE_MODEL),
