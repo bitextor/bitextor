@@ -117,7 +117,9 @@ def validate_args(config):
         # verbose
         'verbose': {'type': 'boolean', 'default': False},
         # data definition
-        # TODO: check that one of these is specified?
+        # check that one of these is specified?
+        #  We shouldn't since if we do so, we will not be able to run a previous execution which
+        #  didn't finished or that we want to execute "manually" in a posterior step (e.g. bicleaner)
         'hosts': {'type': 'list', 'dependencies': 'crawler'},
         'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
         'warcs': {'type': 'list', 'check_with': isfile},
@@ -199,8 +201,15 @@ def validate_args(config):
             'dependencies': {}
         },
         'documentAlignerThreshold': {'type': 'float'},
-        # embeddings
-        'embeddingsBatchSize': {'type': 'integer', 'min': 1, 'default': 32},
+        # neural
+        'neuralToolsBatchSize': {
+            'type': 'dict',
+            'allowed': [
+                'NDA', 'vecalign', 'bicleaner'
+            ],
+            'valuesrules': {'type': 'integer', 'min': 1},
+            'meta': 'Batch size for neural tools',
+        },
         'embeddingsModel': {'type': 'string', 'dependencies': {}},
         ## mt
         'alignerCmd': {'type': 'string', 'dependencies': {'documentAligner': 'externalMT'}},
@@ -241,8 +250,6 @@ def validate_args(config):
         'biroamerMixFiles': {'type': 'list', 'check_with': isfile, 'dependencies': {'biroamer': True}},
         'biroamerImproveAlignmentCorpus': {'type': 'string', 'check_with': isfile, 'dependencies': {'biroamer': True}},
     }
-
-    # TODO add new option for generic batch size of neural tools
 
     provided_in_config = {} # contains info about the definition of rules in the configuration file
     monolingual_workflow = False

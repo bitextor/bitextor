@@ -170,8 +170,22 @@ EMPTY_SHARD_CHECK = f"{TMPDIR}/empty_shard"
 EMPTY_SHARD_BATCH_DIR = "EMPTY/1"
 
 #################################################################
-# EMBEDDINGS
-EMBEDDINGS_BATCH_SIZE_NEURAL = config["embeddingsBatchSize"]
+# NEURAL
+NEURAL_TOOLS_BATCH_SIZE = {
+    "NDA": 32,
+    "vecalign": 32,
+    "bicleaner": None,
+}
+
+if "neuralToolsBatchSize" in config:
+    for k in config["neuralToolsBatchSize"]:
+        NEURAL_TOOLS_BATCH_SIZE[k] = config["neuralToolsBatchSize"][k]
+
+        if NEURAL_TOOLS_BATCH_SIZE[k] < 1:
+            LOGGER.warning("Zero or negative value in parallelWorkers['%s']: value resets to 1", k)
+
+            NEURAL_TOOLS_BATCH_SIZE[k] = 1
+
 EMBEDDINGS_MODEL = return_dict_value_if_key(config, "embeddingsModel", "", only_check_key=True)
 
 #################################################################
@@ -359,7 +373,7 @@ if "parallelWorkers" in config:
         THREADS[k] = config["parallelWorkers"][k]
 
         if THREADS[k] < 1:
-            LOGGER.warning("Negative value in parallelWorkers['%d']: value resets to 1", k)
+            LOGGER.warning("Zero or negative value in parallelWorkers['%s']: value resets to 1", k)
 
             THREADS[k] = 1
 
@@ -368,7 +382,7 @@ if "parallelJobs" in config:
         JOB_THREADS[k] = config["parallelJobs"][k]
 
         if JOB_THREADS[k] < 0:
-            LOGGER.warning("Negative value in parallelJobs['%d']: value resets to 0", k)
+            LOGGER.warning("Negative value in parallelJobs['%s']: value resets to 0", k)
 
             JOB_THREADS[k] = 0
 
@@ -1296,6 +1310,7 @@ rule doc_emb_matches:
         trg_emb_name="emb.trg",
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
         gpu_ofile_token=temp(doc_emb_matches_gpu_token),
+        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["NDA"], "--embeddings-batch-size {}"),
     threads: THREADS["docalign"]
     resources:
         job_docalign=JOB_THREADS["docalign"],
@@ -1318,8 +1333,7 @@ rule doc_emb_matches:
                     --merging-strategy 3 --results-strategy 0 \\
                     --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \\
                     --output-with-idxs --paths-to-docs-are-base64-values \\
-                    --threshold {DOC_THRESHOLD} --logging-level 30 \\
-                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
+                    --threshold {DOC_THRESHOLD} --logging-level 30 {params.batch_size} > {output}
 
             touch "{params.gpu_ofile_token}"
             """
@@ -1461,6 +1475,7 @@ rule vecalign:
         trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
+        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["vecalign"], "--embeddings-batch-size {}"),
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: THREADS["segalign"]
@@ -1489,7 +1504,7 @@ rule vecalign:
                 | cat <(echo "$header") - \\
                 | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \\
                     --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \\
-                    --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \\
+                    --tmp-dir "{params.folder}" {params.batch_size} \\
                     --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \\
                     --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \\
                     --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \\
@@ -1716,6 +1731,7 @@ rule bicleaner:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         gpu_ofile_token=temp(bicleaner_gpu_token),
+        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["bicleaner"] if BICLEANER_FLAVOUR == "ai" else None, "--batch_size {}"),
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
@@ -1761,7 +1777,7 @@ rule bicleaner:
             zcat {input.bifixer} \\
             | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \\
                 --header {params.tokenizer_l1} {params.tokenizer_l2} \\
-                --score_only -q -p {threads} - - {input.model} \\
+                --score_only -q -p {threads} {params.batch_size} - - {input.model} \\
             | paste <(zcat {input.bifixer}) - \\
             | pigz -c > {output}
 
