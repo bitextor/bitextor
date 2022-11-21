@@ -333,7 +333,7 @@ PREVERTICALS = sorted(list(PREVERTICALS))
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
 # assign an ID to each directory and check their validity
-TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, id_offset=len(DOMAIN_2_HOSTS), file_desc="directories")
+TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, file_desc="directories")
 
 # assign an ID to each WARC and check that all WARCs exist
 TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
@@ -343,23 +343,19 @@ TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2
 TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS)+len(TARGET_2_DIRECTORIES), file_desc="preverticals")
 
 # group crawled WARCs by domains
-
 TARGET_2_CRAWLED_WARCS = dict([
     (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
     for (domain, hosts) in DOMAIN_2_HOSTS.items()
 ])
 
 # group generated WARCs by directories
-#TARGET_2_FROMDIR_WARCS = dict([
-#    (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz" for directory in directories])
-#    for (dir_id, directories) in TARGET_2_DIRECTORIES.items()
-#])
 TARGET_2_FROMDIR_WARCS = dict([
     (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
 ])
 
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
-TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS, **TARGET_2_FROMDIR_WARCS}
+TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_FROMDIR_WARCS, **TARGET_2_PROVIDED_WARCS}
+print(TARGET_2_WARCS)
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
