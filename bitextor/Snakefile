@@ -105,6 +105,7 @@ PPROC = "warc2text"
 PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
 TEXT_FILE = "text.gz"
 HTML_FILE = ""
+MULTILANG = ""
 
 if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
@@ -117,6 +118,9 @@ if "preprocessor" in config:
         HTML_FILE = "deboilerplate_html.gz"
     else:
         PPROC = config["preprocessor"]
+
+if "multilang" in config and config["multilang"] == True:
+    MULTILANG = "--multilang"
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
@@ -134,7 +138,7 @@ PARSER = ""
 PDFEXTRACT = ""
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-if config["PDFextract"] == "pdfextract":
+if config["PDFprocessing"] == "pdfextract":
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
     PDFEXTRACT_KL = ""
@@ -148,11 +152,11 @@ if config["PDFextract"] == "pdfextract":
 
     PDFEXTRACT = f"--pdfextract pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
 
-if config["PDFextract"] == "apacheTika":
+if config["PDFprocessing"] == "apacheTika":
     jar_path =  config['apacheTika_path']
     PDFEXTRACT = f"--pdfextract apacheTika --tika_jar {jar_path}"
 
-if config["PDFextract"] == "pdf2html":
+if config["PDFprocessing"] == "pdf2html":
     PDFEXTRACT = "--pdfextract pdf2html"
 
 # sentence splitting and tokenisation
@@ -355,7 +359,6 @@ TARGET_2_FROMDIR_WARCS = dict([
 
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
 TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_FROMDIR_WARCS, **TARGET_2_PROVIDED_WARCS}
-print(TARGET_2_WARCS)
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
@@ -831,9 +834,9 @@ rule warc2text:
         mkdir -p {params.folder}
         if [[ "{PDFEXTRACT}" != "" ]]; then
             {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} \
-            <(cat {input} | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip)
+            <(cat {input} | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip) {MULTILANG}
         else
-            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
+            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input} {MULTILANG}
         fi
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then

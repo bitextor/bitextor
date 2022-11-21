@@ -172,17 +172,18 @@ def validate_args(config):
         'paragraphIdentification': {'type': 'boolean', 'default': False},
         'cleanHTML': {'type': 'boolean'},
         'ftfy': {'type': 'boolean'},
-        ## pdfEXTRACT
-        'PDFextract': {
+        ## PDF processing
+        'PDFprocessing': {
             'type': 'string',
             'default': '',
             'allowed': ['pdf2html', 'pdfextract', 'apacheTika', '']},
-        'apacheTika_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
+        'apacheTika_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'apacheTika'}},
+        'PDFextract_configfile': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
+        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
+        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
         ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
+        'multilang' : {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
         ## specific to warc2preprocess:        
         'langID': {
             'type': 'string',

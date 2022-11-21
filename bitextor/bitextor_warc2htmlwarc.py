@@ -119,7 +119,7 @@ oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', d
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
                      help="Only outputs broader document format records", default=False)
-oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine or pdftohtml for PDFs',
+oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine, pdftohtml or apache tika for PDFs',
                      default=False)
 oparser.add_argument('--tika_jar', dest="tikaJar", help='Apache Tika model path',
                      default="")
