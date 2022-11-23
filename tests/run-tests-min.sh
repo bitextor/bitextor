@@ -204,8 +204,44 @@ wait
 
 wait
 
+## Dir2warc with apache tika and warc2text
+(
+    init_test "30"
+
+    ${BITEXTOR} \
+        --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+            dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+            directories="['/home/agaliano/dir2warc/test_dir2warc']" PDFprocessing="apacheTika" apacheTika_path="/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar" \
+            preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/${TEST_ID}.report"
+
+    finish_test
+) &
+
+wait
+
+## Dir2warc with apache tika and warc2preprocess
+(
+    init_test "31"
+
+    ${BITEXTOR} \
+        --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+            dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+            directories="['/home/agaliano/dir2warc/test_dir2warc']" PDFprocessing="apacheTika" apacheTika_path="/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar"\
+            preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/${TEST_ID}.report"
+
+    finish_test
+) &
+
+wait
+
 # Get hashes from all files
-for TEST_ID in $(echo "10 11 20 60 100 101 102"); do
+for TEST_ID in $(echo "10 11 20 60 100 101 102 30 31"); do
     create_integrity_report "$WORK" "${WORK}/reports/hash_values_${TEST_ID}.report" "$TEST_ID"
 done
 
