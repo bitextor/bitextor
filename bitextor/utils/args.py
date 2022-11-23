@@ -125,28 +125,15 @@ def validate_args(config):
         'preverticals': {'type': 'list', 'check_with': isfile},
         'preverticalsFile': {'type': 'string', 'check_with': isfile},
         # crawling
-        'crawler': {'type': 'string', 'allowed': ["wget", "heritrix", "linguacrawl"]},
+        'crawler': {'type': 'string', 'allowed': ["wget", "heritrix"]},
         'crawlTimeLimit': {
             'type': 'string', 'dependencies': 'crawler',
             'check_with': isduration
         },
-        ## wget or linguacrawl:
-        'crawlerUserAgent': {'type': 'string', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
-        'crawlWait': {'type': 'integer', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
-        'crawlFileTypes': {'type': 'list', 'dependencies': {'crawler': ['wget', 'linguacrawl']}},
-        ## only linguacrawl:
-        'crawlTLD': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlSizeLimit': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlCat': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlCatMaxSize': {'type': 'integer', 'dependencies': {'crawlCat': True}},
-        'crawlMaxFolderTreeDepth': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlScoutSteps': {'type': 'string', 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlBlackListURL': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlPrefixFilter': {'type': 'list', 'check_with': isstrlist, 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlerNumThreads': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
-        'crawlerConnectionTimeout': {'type': 'integer', 'dependencies': {'crawler': 'linguacrawl'}},
-        'dumpCurrentCrawl': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
-        'resumePreviousCrawl': {'type': 'boolean', 'dependencies': {'crawler': 'linguacrawl'}},
+        ## wget:
+        'crawlerUserAgent': {'type': 'string', 'dependencies': {'crawler': ['wget']}},
+        'crawlWait': {'type': 'integer', 'dependencies': {'crawler': ['wget']}},
+        'crawlFileTypes': {'type': 'list', 'dependencies': {'crawler': ['wget']}},
         ## only heritrix
         'heritrixPath': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
         'heritrixUrl': {'type': 'string', 'dependencies': {'crawler': 'heritrix'}},
