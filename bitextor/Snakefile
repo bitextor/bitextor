@@ -91,11 +91,6 @@ HERITRIXUSER = return_dict_value_if_key(config, "heritrixUser", "admin:admin", o
 CRAWLMAXFOLDERTREEDEPTH = return_dict_value_if_key(config, "crawlMaxFolderTreeDepth", 20, only_check_key=True, apply_function=str)
 CRAWLSCOUTSTEPS = return_dict_value_if_key(config, "crawlScoutSteps", 200, only_check_key=True, apply_function=str)
 
-if "crawler" in config:
-    if CRAWLTARGET == "linguacrawl":
-        # TODO should we change this default value, as we have done with wget, as well?
-        CRAWLFILETYPES = ["text/html", "application/pdf"]
-
 USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
 CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
 CRAWLPREFIXFILTER = ['mailto:']
@@ -422,12 +417,9 @@ if not UNTIL: # config["until"] not provided -> run the whole pipeline
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
-    if CRAWLTARGET == "linguacrawl":
-        OUTPUT.append(f"{DATADIR}/warc/linguacrawl.finished")
-    else:
-        for domain, hosts in DOMAIN_2_HOSTS.items():
-            for host in hosts:
-                OUTPUT.append(f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz")
+    for domain, hosts in DOMAIN_2_HOSTS.items():
+        for host in hosts:
+            OUTPUT.append(f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz")
 elif UNTIL == "preprocess":
     OUTPUT = expand(
         "{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}",
@@ -590,155 +582,6 @@ rule heritrix_download:
         """
 
 
-rule linguacrawl_config:
-    """
-    Create a linguacrawl yaml config file from Bitextor's parameters
-    """
-    output:
-        yaml_file=temp(f"{TMPDIR}/linguacrawl.yaml"),
-    params:
-        user_agent=apply_format(USERAGENT, "user_agent: '{}'\n"),
-        output_dir=apply_format(f"{DATADIR}/warc/linguacrawl", "output_dir: '{}'\n"),
-        wait=apply_format(CRAWLWAIT, "crawl_delay: {}\n"),
-        time_limit=apply_format(CRAWLTIMELIMIT, "max_time_per_site: {}\n"),
-        size_limit=apply_format(CRAWLSIZELIMIT, "max_size_per_site: {}\n"),
-        timeout=apply_format(CRAWLTIMEOUT, "connection_timeout: {}\n"),
-        num_threads=apply_format(CRAWLJOBS, "max_jobs: {}\n"),
-        prefix_filter=apply_format(str(CRAWLPREFIXFILTER), "prefix_filter: {}\n"),
-        resume_crawling=apply_format(str(CONTINUECRAWL), "resume_crawling: {}\n"),
-        dump_args=apply_format(str(CRAWLDUMPARGS), "verbose: {}\n"),
-        file_types=apply_format(f"({'|'.join(CRAWLFILETYPES)})", "accepted_content: '{}'\n"),
-        max_folder_depth=apply_format(CRAWLMAXFOLDERTREEDEPTH, "max_folder_tree_depth: {}\n"),
-        scout_steps=apply_format(CRAWLSCOUTSTEPS, "scout_steps: {}\n"),
-        blacklist=apply_format(str(CRAWLBLACKLISTURL), "url_blacklist: {}\n"),
-    run:
-        yaml_content = ""
-
-        langs = "','".join(LANGS)
-        hosts = "','".join(HOSTS)
-
-        # Mandatory
-        yaml_content += params.user_agent
-        yaml_content += f"langs_of_interest: ['{langs}']\n"
-        yaml_content += params.output_dir
-        # Optional (the argument parser will not complain, but the crawler will crash in some cases)
-        yaml_content += params.wait
-        yaml_content += params.time_limit
-        yaml_content += params.size_limit
-        yaml_content += params.timeout
-        yaml_content += params.num_threads
-        yaml_content += params.resume_crawling
-        yaml_content += f"seed_urls: ['{hosts}']\n"
-        # yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
-        yaml_content += params.prefix_filter
-        yaml_content += params.dump_args
-        yaml_content += params.file_types
-        yaml_content += params.max_folder_depth
-        yaml_content += f"max_attempts: 3\n"
-        yaml_content += params.scout_steps
-        yaml_content += f"min_langs_in_site: 2\n"
-        yaml_content += params.blacklist
-
-        # TODO use specific argument? If not, use SRC_LANG/TRG_LANG?
-        if LANG1 or LANG2:
-            yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
-            yaml_content += f"min_percent_mandatory_lang: 10\n"
-
-        # tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
-        tld = LANGS.union([url.split(".")[-1] for url in HOSTS]).union(TLD_CRAWL)
-        tld = "','".join(tld)
-
-        yaml_content += f"accepted_tlds: ['{tld}']\n"
-
-        fdescriptor = open(output.yaml_file, "w")
-        fdescriptor.write(yaml_content)
-        fdescriptor.flush()
-        fdescriptor.close()
-
-
-# This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
-#  either join all the warcs (it loses important information like the source of the warcs) or not
-# Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
-# TODO move code to a single python script and call it
-checkpoint linguacrawl_download:
-    """
-    Download HOSTS with linguacrawl
-    """
-    input:
-        f"{TMPDIR}/linguacrawl.yaml"
-    params:
-        folder=f"{DATADIR}/warc/linguacrawl",
-        crawl_cat=config["crawlCat"] if "crawlCat" in config else False,
-        crawl_cat_max=config["crawlCatMaxSize"]*1024*1024 if "crawlCatMaxSize" in config else 0
-    output:
-        f"{DATADIR}/warc/linguacrawl.finished",
-    run:
-        shell(
-            """
-            mkdir -p {params.folder} {TMPDIR}
-            {PROFILING} linguacrawl {input}
-            """
-        )
-
-        all_files = subprocess.Popen(("ls", params.folder), stdout=subprocess.PIPE)
-        try:
-            # Process the resulted warcs
-            warcs = subprocess.check_output(
-                ("grep", "[.]warc[.]gz$"), stdin=all_files.stdout
-            )  # It will throw an exception if no warcs were downloaded
-            all_files.wait()
-
-            warcs = warcs.decode("utf-8").split("\n")
-            warcs = list(filter(lambda warc: len(warc) != 0, warcs))
-            warcs = list(map(lambda warc: f"{params.folder}/{warc}", warcs))
-
-            if not params.crawl_cat:
-                warcs = "\n".join(warcs)
-                shell(f'echo -e "{warcs}" > {{output[0]}}')
-            else:
-                if params.crawl_cat_max <= 0:
-                    warcs = " ".join(warcs)
-                    shell(
-                        f"""
-                        cat {warcs} > {params.folder}/linguacrawl.warc.gz
-                        echo "{params.folder}/linguacrawl.warc.gz" > {{output[0]}}
-                        """
-                    )
-                else:
-                    # Improve the number of preprocess rules that are executed
-                    current = 0
-                    blocks = 0
-                    files = [f"{params.folder}/linguacrawl{blocks}.warc.gz"]
-
-                    for warc in warcs:
-                        if current > {params.crawl_cat_max}:
-                            current = 0
-                            blocks += 1
-                            files.append(f"{params.folder}/linguacrawl{blocks}.warc.gz")
-
-                        shell(f"cat {warc} >> {files[-1]}")
-
-                        du_command = subprocess.Popen(("du", "-b", warc), stdout=subprocess.PIPE)
-
-                        try:
-                            du_warc = subprocess.check_output(("awk", "{print $1}"), stdin=du_command.stdout)
-                            du_command.wait()
-
-                            current += int(du_warc)
-                        except:
-                            sys.stderr.write(f"WARNING: could not retrieve the size of {warc}\n")
-
-                    files = "\n".join(files)
-                    shell(f'echo -e "{files}" > {{output[0]}}')
-        except:
-            # No warcs were downloaded: error or warning
-            if len(WARCS) == 0:
-                sys.stderr.write("ERROR: could not find any file after crawling\n")
-                sys.exit(1)
-            sys.stderr.write("WARNING: could not find any file after crawling\n")
-            shell(f"touch {output}")
-
-
 #################################################################
 ### PREPROCESS ##################################################
 rule warc2preprocess:
@@ -869,7 +712,6 @@ checkpoint shard:
         # this is separated in two functions to make sure that
         # the preprocessing of the provided files and the crawling
         # may be executed in parallel
-        # (otherwise the linguacrawl checkpoint might prevent that)
         get_shard_input_files,
         get_shard_input_crawled,
     output:
