@@ -78,7 +78,7 @@ if VERBOSE and is_first_snakemake_execution(TMPDIR):
 CRAWLTARGET = return_dict_value_if_key(config, "crawler", "")
 TLD_CRAWL = return_dict_value_if_key(config, "crawlTLD", [])
 CRAWLSIZELIMIT = return_dict_value_if_key(config, "crawlSizeLimit", "", apply_function=str)
-CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=str)
+CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=lambda t: str(duration_to_seconds(t)) if t else str(t))
 CRAWLWAIT = return_dict_value_if_key(config, "crawlWait", "", apply_function=str)
 CRAWLFILETYPES = return_dict_value_if_key(config, "crawlFileTypes", [])
 CRAWLJOBS = return_dict_value_if_key(config, "crawlerNumThreads", 2, only_check_key=True, apply_function=str)
