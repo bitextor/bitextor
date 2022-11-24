@@ -272,7 +272,7 @@ Helper function to format parameters to pass to scripts
 """
 def apply_format(string, replace_format, replace_token="{}", replace_only_if_true=True):
     if (replace_only_if_true and string) or not replace_only_if_true:
-        return replace_format.replace(replace_token, string)
+        return replace_format.replace(replace_token, str(string))
 
     return string
 
