@@ -113,7 +113,7 @@ check_nltk_models
             preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
             shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
-            deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
+            deferred=True tmx=True paragraphIdentification=True additionalMetadata=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report"
 
     finish_test
