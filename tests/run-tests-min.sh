@@ -95,10 +95,10 @@ check_nltk_models
         warc2text -o "${WORK}/data/tmp-w2t" -s -f "text,url" "${WORK}/data/warc/greenpeace.warc.gz" && \
         (
             python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/en/text.gz" \
-                --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --seed 1 \
+                --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --random-date --seed 1 \
             | pigz -c > "${WORK}/data/prevertical/greenpeace.en.prevertical.gz"
             python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/fr/text.gz" \
-                --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --seed 2 \
+                --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --random-date --seed 2 \
             | pigz -c > "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" \
         )
 
