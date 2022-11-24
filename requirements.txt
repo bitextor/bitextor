@@ -17,6 +17,3 @@ mosestokenizer==1.2.1
 regex>=2019.08.19,<=2022.10.31
 numpy
 validators==0.20.0
-tensorflow==2.10.1 # Temporary
-markdown==3 # Temporary
-fastspell==0.1.6 # Temporary
