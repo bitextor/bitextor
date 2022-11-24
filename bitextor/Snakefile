@@ -953,7 +953,7 @@ rule split:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
-        metadata=lambda wildcards, output: "--propagate-metadata" if PROPAGATE_METADATA_FROM_TEXT else "",
+        metadata=lambda wildcards, output: "--propagate-metadata" if ADDITIONAL_METADATA else "",
         metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
         metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}.gz"),
     threads: THREADS["split"]
