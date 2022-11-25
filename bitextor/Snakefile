@@ -1310,7 +1310,7 @@ rule doc_emb_matches:
         trg_emb_name="emb.trg",
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
         gpu_ofile_token=temp(doc_emb_matches_gpu_token),
-        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["NDA"], "--embeddings-batch-size {}"),
+        batch_size=apply_format(str(NEURAL_TOOLS_BATCH_SIZE["NDA"]), "--embeddings-batch-size {}"),
     threads: THREADS["docalign"]
     resources:
         job_docalign=JOB_THREADS["docalign"],
@@ -1475,7 +1475,7 @@ rule vecalign:
         trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
         c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
         c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
-        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["vecalign"], "--embeddings-batch-size {}"),
+        batch_size=apply_format(str(NEURAL_TOOLS_BATCH_SIZE["vecalign"]), "--embeddings-batch-size {}"),
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: THREADS["segalign"]
@@ -1731,7 +1731,9 @@ rule bicleaner:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-S "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         gpu_ofile_token=temp(bicleaner_gpu_token),
-        batch_size=apply_format(NEURAL_TOOLS_BATCH_SIZE["bicleaner"] if BICLEANER_FLAVOUR == "ai" else None, "--batch_size {}"),
+        batch_size=apply_format(str(NEURAL_TOOLS_BATCH_SIZE["bicleaner"]) if BICLEANER_FLAVOUR == "ai" \
+                                                                            and NEURAL_TOOLS_BATCH_SIZE["bicleaner"] is not None \
+                                                                          else '', "--batch_size {}"),
     threads: THREADS["bicleaner"]
     resources:
         job_bicleaner=JOB_THREADS["bicleaner"],
