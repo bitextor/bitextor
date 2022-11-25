@@ -239,7 +239,7 @@ In Docker it is located at `/home/docker/heritrix-3.4.0-20210923-dist` and is no
 
 ### [Optional] Protobuf
 
-CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract and [Linguacrawl](https://github.com/transducens/linguacrawl). CLD3 needs `protobuf` to work, the instructions for installation are the following:
+CLD3 (Compact Language Detector v3), is a language identification model that can be used optionally during preprocessing. It is also a requirement for PDFExtract. CLD3 needs `protobuf` to work, the instructions for installation are the following:
 
 ```bash
 # Install protobuf from official repository: https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
