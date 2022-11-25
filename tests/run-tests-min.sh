@@ -41,6 +41,7 @@ mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
 mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
+mkdir -p "${WORK}/data/documents-dir"
 mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
@@ -53,6 +54,8 @@ touch "$FAILS"
 # Download necessary files
 # WARCs
 download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
+# Directory
+download_file "${WORK}/data/documents-dir/documents.tar.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/documents.tar.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
@@ -61,11 +64,17 @@ download_dictionary "en-fr" "${WORK}/permanent" &
 # Output reference
 download_file "${WORK}/output_reference/run-tests-min.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-tests-min.tgz &
 
+#Temporal
+download_file "${WORK}/data/tika-app-2.6.0.jar"  https://dlcdn.apache.org/tika/2.6.0/tika-app-2.6.0.jar
+
 wait
 
 # Process downloaded files if necessary
 tar -xzf "${WORK}/output_reference/run-tests-min.tgz" -C "${WORK}/output_reference/" && \
 rm -f "${WORK}/output_reference/run-tests-min.tgz"
+
+tar -zxf "${WORK}/data/documents-dir/documents.tar.gz" -C "${WORK}/data/documents-dir/" && \
+rm "${WORK}/data/documents-dir/documents.tar.gz"
 
 # Check NLTK models and download them if they hasn't been downloaded yet
 check_nltk_models
@@ -211,7 +220,7 @@ wait
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
-            directories="['/home/agaliano/dir2warc/test_dir2warc']" PDFprocessing="apacheTika" apacheTika_path="/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar" \
+            directories="['${WORK}/data/documents-dir']" PDFprocessing="apacheTika" apacheTika_path="${WORK}/data/tika-app-2.6.0.jar" \
             preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
@@ -229,7 +238,7 @@ wait
     ${BITEXTOR} \
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
-            directories="['/home/agaliano/dir2warc/test_dir2warc']" PDFprocessing="apacheTika" apacheTika_path="/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar"\
+            directories="['${WORK}/data/documents-dir']" PDFprocessing="apacheTika" apacheTika_path="${WORK}/data/tika-app-2.6.0.jar"\
             preprocessor="warc2preprocess" parser="simple" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
