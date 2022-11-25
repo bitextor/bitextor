@@ -230,7 +230,7 @@ wait
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             directories="['/home/agaliano/dir2warc/test_dir2warc']" PDFprocessing="apacheTika" apacheTika_path="/home/agaliano/dir2warc/tikka/tika-app-2.6.0.jar"\
-            preprocessor="warc2preprocess" shards=1 batches=512 lang1=en lang2=fr \
+            preprocessor="warc2preprocess" parser="simple" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report"
