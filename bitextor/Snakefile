@@ -343,7 +343,12 @@ TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2
 
 # assign an ID to each prevertical and check that all preverticals exist
 TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=(len(TARGET_2_DIRECTORIES) + len(TARGET_2_PROVIDED_WARCS)), file_desc="preverticals")
-TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
+
+# group crawled WARCs by domains
+TARGET_2_CRAWLED_WARCS = dict([
+    (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
+    for (domain, hosts) in DOMAIN_2_HOSTS.items()
+])
 
 # group generated WARCs by directories
 TARGET_2_FROMDIR_WARCS = dict([
@@ -818,7 +823,7 @@ rule split:
         job_split=JOB_THREADS["split"]
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
@@ -953,20 +958,19 @@ rule tokenise_translated:
         output must have the same number of lines as the input (i.e. same number of docs)
         each tokenised document must have the same number of lines as the source
     """
+    input:
+        rules.custom_translate.output,
+    output:
+        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz",
+    params:
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
     threads: THREADS["tokenise"]
     resources:
         job_tokenise=JOB_THREADS["tokenise"],
-    output:
-        f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz",
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
-        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
-        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
-        threads=THREADS["tokenise"],
-    threads: JOB_THREADS["tokenise"]
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
-
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
@@ -985,20 +989,19 @@ rule tokenise:
         output must have the same number of lines as the input (i.e. same number of docs)
         each tokenised document must have the same number of lines as the source
     """
+    input:
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/sentences.gz",
+    output:
+        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/tokenised.gz",
+    params:
+        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, wildcards.lang), '--word-tokenizer "{}"'),
+        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, wildcards.lang), '--morph-analyser "{}"'),
     threads: THREADS["tokenise"]
     resources:
         job_tokenise=JOB_THREADS["tokenise"],
-    output:
-        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/tokenised.gz",
-        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
-        tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, wildcards.lang), '--word-tokenizer "{}"'),
-        lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, wildcards.lang), '--morph-analyser "{}"'),
-        threads=THREADS["tokenise"],
-    threads: JOB_THREADS["tokenise"]
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
-
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
@@ -1047,23 +1050,21 @@ rule mt_matches:
             idx_translated is the number of the aligned document in source language
             idx_trg is the number of the aligned document in target language
     """
-    threads: THREADS["docalign"]
-    resources:
-        job_docalign=JOB_THREADS["docalign"],
+    input:
+        l1=rules.tokenise_translated.output,
         l2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.externalMT.06_01.matches",
     params:
-        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
-        threads=THREADS["docalign"]
-    threads: JOB_THREADS["docalign"]
+        folder=lambda wildcards, output: os.path.dirname(output[0]),
+    threads: THREADS["docalign"]
+    resources:
+        job_docalign=JOB_THREADS["docalign"],
     shell:
         """
         mkdir -p {params.folder}
-
-        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {params.threads} > {output}
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
-
 
 rule doc_emb_matches:
     """
@@ -1080,14 +1081,14 @@ rule doc_emb_matches:
     input:
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
-    threads: THREADS["docalign"]
+    output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.NDA.06_01.matches",
     params:
         folder=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/nda/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}",
         src_emb_name="emb.src",
         trg_emb_name="emb.trg",
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
-    threads: JOB_THREADS["docalign"]
+    threads: THREADS["docalign"]
     shell:
         """
         mkdir -p {params.folder}
@@ -1186,7 +1187,7 @@ rule bleualign:
         """
         mkdir -p {params.folder}
 
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -l 1 --group --header 1" || echo "")
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
         python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
@@ -1324,12 +1325,12 @@ rule bifixer:
         segalign=f"{TRANSIENT}/{LANG1}_{LANG2}/{split_input_filename}/{{batch}}.gz",
     output:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_01.bifixer/{{batch}}.gz"),
-    params:
-        threads=THREADS["bifixer"],
-    threads: JOB_THREADS["bifixer"]
+    threads: THREADS["bifixer"]
+    resources:
+        job_bifixer=JOB_THREADS["bifixer"],
     shell:
         """
-        parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k --header 1" || echo "")
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k --header 1" || echo "")
 
         zcat {input.segalign} \
             | {PROFILING} ${{parallel_cmd}} bifixer -q {BIFIXER_AGGRESSIVE_DEDUP} {BIFIXER_IGNORE_SEGMENTATION} \
@@ -1608,8 +1609,7 @@ rule filter:
         temp(f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{{batch}}"),
     params:
         bicleaner_header="bicleaner_score" if BICLEANER_FLAVOUR == "classic" else "bicleaner_ai_score",
-        threads=THREADS["filter"]
-    threads: JOB_THREADS["filter"]
+    threads: THREADS["filter"]
     shell:
         """
         sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
@@ -1632,7 +1632,7 @@ rule filter:
 
         # Remove header, sort and add header (in-place) from output file
         sed -i '1 d' {output} \
-            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {params.threads} \
+            && LC_ALL=C sort -t $'\t' $sort_flags --parallel {threads} \
                 --compress-program=gzip -T {TMPDIR} -o {output} {output} \
             && sed -i '1 s/^/'"$header"'\\n/' {output}
 
@@ -1716,7 +1716,7 @@ rule sents:
         sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
         header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
 
-        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {params.threads} --compress-program=gzip \\
+        LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
         """
 

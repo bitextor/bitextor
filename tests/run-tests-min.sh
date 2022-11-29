@@ -64,9 +64,6 @@ download_dictionary "en-fr" "${WORK}/permanent" &
 # Output reference
 download_file "${WORK}/output_reference/run-tests-min.tgz" https://github.com/bitextor/bitextor-testing-output/releases/latest/download/run-tests-min.tgz &
 
-#Temporal
-download_file "${WORK}/data/tika-app-2.6.0.jar"  https://dlcdn.apache.org/tika/2.6.0/tika-app-2.6.0.jar
-
 wait
 
 # Process downloaded files if necessary

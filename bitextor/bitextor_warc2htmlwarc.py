@@ -30,7 +30,6 @@ import io
 from io import BytesIO
 
 from subprocess import PIPE, Popen
-from apachetika.extract import Extractor
 
 
 def convert_encoding(data):
@@ -171,6 +170,10 @@ if not options.pdfpass and options.pdfextract=="pdfextract":
         configFile=options.configFile,
         sentenceJoinPath=options.sentenceJoinPath,
         kenlmPath=options.kenlmPath)
+
+if not options.pdfpass and options.pdfextract=="apacheTika":
+    from apachetika.extract import Extractor
+
 
 cleaner = None
 if options.cleanhtml:
