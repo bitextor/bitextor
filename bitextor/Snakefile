@@ -597,6 +597,21 @@ rule heritrix_download:
         """
 
 
+rule dir2warc:
+    """
+    Process a list of directories (or a single directory)
+        and produce WARCs with the content of each directory
+    """
+    output:
+        f"{DATADIR}/generated_warc/{{target}}.warc.gz",
+    params:
+        directory=lambda wildcards: TARGET_2_DIRECTORIES[wildcards.target],
+        output_warc=lambda wildcards: TARGET_2_FROMDIR_WARCS[wildcards.target],
+    shell:
+        """
+        echo {params.directory} | python3 {WORKFLOW}/bitextor_dir2warc.py > {params.output_warc}
+        """
+
 #################################################################
 ### PREPROCESS ##################################################
 rule warc2preprocess:
