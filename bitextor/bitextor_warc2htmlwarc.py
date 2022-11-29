@@ -30,7 +30,7 @@ import io
 from io import BytesIO
 
 from subprocess import PIPE, Popen
-
+from apachetika.extract import Extractor
 
 
 def convert_encoding(data):
@@ -61,9 +61,8 @@ def pdfextract(data, pdfextractor):
         return [b""]
 
 def tikaextract(data, tika_path):
-    pconverter = subprocess.Popen(["java", "-jar", tika_path, "-x"],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    converter_stdout, error = pconverter.communicate(input=data)
+    extractor = Extractor()
+    converter_stdout, error = extractor.getHTML(data)
     return [converter_stdout.replace(b"&#160;", b" ")]
 
 
