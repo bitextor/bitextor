@@ -9,7 +9,8 @@ from bitextor.utils.common import (
     duration_to_seconds,
     return_dict_value_if_key,
     get_snakemake_execution_mark,
-    is_first_snakemake_execution
+    is_first_snakemake_execution,
+    path_exists,
 )
 import bitextor.utils.check_nltk_model as check_nltk_model
 
@@ -30,6 +31,13 @@ DATADIR = config["dataDir"]
 TRANSIENT = config["transientDir"]
 PERMANENT = config["permanentDir"]
 TMPDIR = config["tempDir"]
+
+# Create directories
+for f in (DATADIR, TRANSIENT, PERMANENT, TMPDIR):
+    try:
+        os.makedirs(f)
+    except FileExistsError:
+        pass
 
 LANGS = set()
 
@@ -200,11 +208,6 @@ if "translationDirection" in config and config["translationDirection"] == f"{LAN
 # dic
 # snakemake/include/dic-generation
 
-try:
-    os.makedirs(TMPDIR)
-except:
-    pass
-
 DIC = return_dict_value_if_key(config, "dic", None)
 DIC_GENERATE = return_dict_value_if_key(config, "generateDic", False)
 
@@ -274,10 +277,11 @@ if DEDUPED:
     OUTPUT_FILES.append("deduped.txt")
     STATS_FILES.append("deduped")
 if BIROAMER:
-    if "deduped.tmx" in OUTPUT_FILES:
-        OUTPUT_FILES.append("deduped.roamed.tmx")
-    else:
+    if TMX:
         OUTPUT_FILES.append("not-deduped.roamed.tmx")
+
+    if DEDUPED:
+        OUTPUT_FILES.append("deduped.roamed.tmx")
 
     if "biroamerMixFiles" in config and len(config["biroamerMixFiles"]) > 0:
         BIROAMER_MIX_FILES = " ".join(config["biroamerMixFiles"])
@@ -336,16 +340,10 @@ TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, file_desc="directori
 
 # assign an ID to each WARC and check that all WARCs exist
 TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
-#TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, file_desc="WARCs")
 
 # assign an ID to each prevertical and check that all preverticals exist
 TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=(len(TARGET_2_DIRECTORIES) + len(TARGET_2_PROVIDED_WARCS)), file_desc="preverticals")
-
-# group crawled WARCs by domains
-TARGET_2_CRAWLED_WARCS = dict([
-    (domain, [f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz" for host in hosts])
-    for (domain, hosts) in DOMAIN_2_HOSTS.items()
-])
+TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
 
 # group generated WARCs by directories
 TARGET_2_FROMDIR_WARCS = dict([
@@ -371,15 +369,13 @@ THREADS = {
     "mgiza": 1,
 }
 JOB_THREADS = {
-    "split": 1,
-    "translate": 2,
-    "tokenise": 1,
-    "docalign": 1,
-    "segalign": 2,
-    "bifixer": 1,
-    "bicleaner": 1,
-    "filter": 1,
-    "sents": 1,
+     "split": 0,
+    "translate": 0,
+    "tokenise": 0,
+    "docalign": 0,
+    "segalign": 0,
+    "bifixer": 0,
+    "bicleaner": 0,
 }
 
 if "parallelWorkers" in config:
@@ -389,6 +385,18 @@ if "parallelWorkers" in config:
 if "parallelJobs" in config:
     for k in config["parallelJobs"]:
         JOB_THREADS[k] = config["parallelJobs"][k]
+        
+        # Modify the snakemake resources if they were not provided
+        job_resource_name = f"job_{k}"
+
+        if job_resource_name not in workflow.global_resources:
+            # Since we want to run as parallel jobs as configured, the resources
+            #  are squared in order to leave available the exact number of resources
+            #  for each job.
+            # E.g., if parallelJobs["bicleaner"] = 4, we want 4 jobs at max. to run
+            #  in parallel, so we need 4 "job_bicleaner" resources to be free for each
+            #  "bicleaner" job, so 4 * 4 = 16 necessary "job_bicleaner" resources
+            workflow.global_resources[job_resource_name] = JOB_THREADS[k] ** 2
 
 OUTPUT = []
 UNTIL = return_dict_value_if_key(config, "until", "")
@@ -805,12 +813,12 @@ rule split:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
-        threads=THREADS["split"],
-    threads: JOB_THREADS["split"]
+    threads: THREADS["split"],
+    resources:
+        job_split=JOB_THREADS["split"]
     shell:
         """
         parallel_cmd=$([[ {params.threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {params.threads} -k" || echo "")
-
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
@@ -945,11 +953,12 @@ rule tokenise_translated:
         output must have the same number of lines as the input (i.e. same number of docs)
         each tokenised document must have the same number of lines as the source
     """
-    input:
-        rules.custom_translate.output,
+    threads: THREADS["tokenise"]
+    resources:
+        job_tokenise=JOB_THREADS["tokenise"],
     output:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/tokenised_{TRG_LANG}.gz",
-    params:
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
         tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '--word-tokenizer "{}"'),
         lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, TRG_LANG), '--morph-analyser "{}"'),
         threads=THREADS["tokenise"],
@@ -976,11 +985,12 @@ rule tokenise:
         output must have the same number of lines as the input (i.e. same number of docs)
         each tokenised document must have the same number of lines as the source
     """
-    input:
-        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/sentences.gz",
+    threads: THREADS["tokenise"]
+    resources:
+        job_tokenise=JOB_THREADS["tokenise"],
     output:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{trg_batch}}/tokenised.gz",
-    params:
+        parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
         tokeniser=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, wildcards.lang), '--word-tokenizer "{}"'),
         lemmatizer=lambda wildcards: apply_format(get_lang_or_default(MORPHTOKS, wildcards.lang), '--morph-analyser "{}"'),
         threads=THREADS["tokenise"],
@@ -1037,13 +1047,14 @@ rule mt_matches:
             idx_translated is the number of the aligned document in source language
             idx_trg is the number of the aligned document in target language
     """
-    input:
-        l1=rules.tokenise_translated.output,
+    threads: THREADS["docalign"]
+    resources:
+        job_docalign=JOB_THREADS["docalign"],
         l2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/tokenised.gz",
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.externalMT.06_01.matches",
     params:
-        folder=lambda wildcards, output: os.path.dirname(output[0]),
+        {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         threads=THREADS["docalign"]
     threads: JOB_THREADS["docalign"]
     shell:
@@ -1069,7 +1080,7 @@ rule doc_emb_matches:
     input:
         plain1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
         plain2=f"{DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/sentences.gz",
-    output:
+    threads: THREADS["docalign"]
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.NDA.06_01.matches",
     params:
         folder=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/nda/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}",
@@ -1698,8 +1709,7 @@ rule sents:
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
     params:
         sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags",
-        threads=THREADS["sents"],
-    threads: JOB_THREADS["sents"]
+    threads: THREADS["sents"]
     run:
         cmd = \
         f"""
@@ -1743,13 +1753,13 @@ rule documents:
         f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
     shell:
         """
-	sent_file={input.sents}
-	document_file={input.documents}
-	header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
-        awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
-		<(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
-		<(zcat $document_file | tail -n +2) | \\
-		cat <(echo "$header") - | pigz -c > {output}
+        sent_file={input.sents}
+        document_file={input.documents}
+        header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
+            awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
+            <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
+            <(zcat $document_file | tail -n +2) | \\
+            cat <(echo "$header") - | pigz -c > {output}
         """
 
 
@@ -1806,48 +1816,29 @@ rule deduped_tmx:
         echo "{TRG_LANG} words: $WC2" >> {output.stats}
         """
 
-
-roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.roamed.tmx.gz"
-roam_tmx_input = rules.tmx.output
-roam_txt_input = rules.sents.output.corpus
-
-if DEDUPED:
-    roam_tmx_output = f"{PERMANENT}/{LANG1}-{LANG2}.deduped.roamed.tmx.gz"
-    roam_tmx_input = rules.deduped_tmx.output.tmx
-    roam_txt_input = rules.deduped_tmx.output.txt
-
-
 rule roam_tmx:
     """
-    Use biroamer to created ROAMED version of the corpus
-    :input.tmx: deduped.tmx corpus if dedup is active, not-deduped.tmx corpus if only tmx=true and dedup=false
-    :input.txt: deduped.txt corpus if dedup is active, sents corpus if tmx=true and dedup=false
-    :output: deduped.roamed.tmx corpus if dedup is active, not-deduped.roamed.tmx corpus if tmx=true and dedup=false
+    Use biroamer to created ROAMed version of the corpus
+    :input.tmx: TMX file, both non-deduped and deduped if dedup=true
+    :output: ROAMed TMX file, both non-deduped and deduped if dedup=true
     """
     input:
-        tmx=roam_tmx_input,
-        txt=roam_txt_input,
+        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.tmx.gz",
     output:
-        roam_tmx_output,
+        f"{PERMANENT}/{LANG1}-{LANG2}.{{deduped}}.roamed.tmx.gz",
     params:
         tokenizer_l1=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, SRC_LANG), '-t "{}"'),
         tokenizer_l2=lambda wildcards: apply_format(get_lang_or_default(WORDTOKS, TRG_LANG), '-T "{}"'),
         mix_files=temp(f"{TMPDIR}/biroamer_mix_files.txt"),
     shell:
         """
-        mix_files="$(mktemp {TMPDIR}/roam_tmx_mix.{LANG1}-{LANG2}.XXXXXX)"
-        cat {BIROAMER_MIX_FILES} > $mix_files
-        nolines=$(cat $mix_files | wc -l)
-        mix_files=$([[ "$nolines" != "0" ]] && echo "-m $mix_files" || echo "")
-        nolines_txt=$(zcat {input.txt} | wc -l)
-        total_nolines=$(echo $nolines + $nolines_txt | bc)
-
-        if [[ "$total_nolines" -lt "100000" ]] && [[ "{BIROAMER_ALIGNMENT_CORPUS}" == "" ]]; then
-            >&2 echo "WARNING: biroamer suggests, at least, 100k lines in order to have a good alignment (current nolines: $total_nolines)."\
-                     "Check 'biroamerImproveAlignmentCorpus' config option if you want to improve the resulted roamed tmx"
+        mix_files=""
+        nolines=$(cat {BIROAMER_MIX_FILES} | wc -l)
+        if [[ "$nolines" != "0" ]]; then
+            cat {BIROAMER_MIX_FILES} > {params.mix_files}
+            mix_files="-m {params.mix_files}"
         fi
-
-        zcat {input.tmx} \
+        zcat {input} \
             | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \
             | pigz -c > {output}
