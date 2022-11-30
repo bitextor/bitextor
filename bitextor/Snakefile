@@ -389,6 +389,7 @@ if "parallelWorkers" in config:
 if "parallelJobs" in config:
     for k in config["parallelJobs"]:
         JOB_THREADS[k] = config["parallelJobs"][k]
+
         # Modify the snakemake resources if they were not provided
         job_resource_name = f"job_{k}"
 
@@ -821,6 +822,7 @@ rule split:
     shell:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+
         zcat {input} \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
                 {params.splitter} {params.customnbp} \
@@ -1783,7 +1785,6 @@ rule tmx:
         """
 
 
-
 rule deduped_tmx:
     """
     Create deduped corpus, TMX and txt versions
@@ -1817,6 +1818,7 @@ rule deduped_tmx:
         echo "{SRC_LANG} words: $(echo $WC1 | cut -d ' ' -f 2)" >> {output.stats}
         echo "{TRG_LANG} words: $WC2" >> {output.stats}
         """
+
 
 rule roam_tmx:
     """
