@@ -59,11 +59,10 @@ def pdfextract(data, pdfextractor):
     except BaseException:
         return [b""]
 
-def tikaextract(data, tika_path):
+def tikaextract(data):
     extractor = Extractor()
     converter_stdout, error = extractor.getHTML(data)
     return [converter_stdout.replace(b"&#160;", b" ")]
-
 
 def openoffice2html(data):
     datastream = io.BytesIO(data)
@@ -119,8 +118,6 @@ oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
                      help="Only outputs broader document format records", default=False)
 oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine, pdftohtml or apache tika for PDFs',
                      default=False)
-oparser.add_argument('--tika_jar', dest="tikaJar", help='Apache Tika model path',
-                     default="")
 oparser.add_argument('--pe_configfile', dest='configFile', default="",
                      help='PDFExtract configuration file for language model paths')
 
@@ -274,7 +271,7 @@ for record in f:
             po.write_record(new_record)
             continue  # do not process further!
         if options.pdfextract == "apacheTika":
-            payloads = tikaextract(payload, options.tikaJar)
+            payloads = tikaextract(payload)
         elif options.pdfextract == "pdfextract":
             payloads = pdfextract(payload, extractor)
         else:
