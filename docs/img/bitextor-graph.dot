@@ -6,7 +6,6 @@ digraph Snakemake {
   Httrack [label="Httrack\n-url"]
   Wget [label="Wget\n-url"]
   Heritrix [label="Heritrix\n-url"]
-  Linguacrawl [label="Linguacrawl\n-url"]
   WARCProcess [label="WARC processor"]
   DocalignDict [label="Docalign Dict\n-dic\n-wordtok1\n-wordtok2"]
   DocalignMT [label="Docalign Custom MT\n-doc_threshold\n-mt_command\n-wordtok1"]
@@ -25,7 +24,7 @@ digraph Snakemake {
   DedupTMX [style=rounded]
 
   #Relations
-  {Creepy,Httrack,Wget,Heritrix,Linguacrawl} -> WARCProcess [label="!warc", style=dashed]
+  {Creepy,Httrack,Wget,Heritrix} -> WARCProcess [label="!warc", style=dashed]
   WARCProcess -> {DocalignDict,DocalignMT}
   SymmetriseDic -> {DocalignDict,Hunalign} [label="!dict", style=dotted]
   TrainMT -> DocalignMT [label="!model", style=dotted]
