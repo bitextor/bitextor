@@ -373,7 +373,7 @@ THREADS = {
     "mgiza": 1,
 }
 JOB_THREADS = {
-     "split": 0,
+    "split": 0,
     "translate": 0,
     "tokenise": 0,
     "docalign": 0,
@@ -389,7 +389,6 @@ if "parallelWorkers" in config:
 if "parallelJobs" in config:
     for k in config["parallelJobs"]:
         JOB_THREADS[k] = config["parallelJobs"][k]
-        
         # Modify the snakemake resources if they were not provided
         job_resource_name = f"job_{k}"
 
@@ -537,8 +536,7 @@ rule wget_download:
     params:
         url="http://{target}",
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-        #time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
-        time_limit=apply_format(CRAWLTIMELIMIT, "-t {}"),
+        time_limit=apply_format(CRAWLTIMELIMIT, "-t {}s"),
         user_agent=apply_format(USERAGENT, "-a '{}'"),
         wait=apply_format(CRAWLWAIT, "--wait {}"),
         file_types=apply_format(",".join(CRAWLFILETYPES), "-f {}")
@@ -817,9 +815,9 @@ rule split:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
-    threads: THREADS["split"],
+    threads: THREADS["split"]
     resources:
-        job_split=JOB_THREADS["split"]
+        job_split=JOB_THREADS["split"],
     shell:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
@@ -970,6 +968,7 @@ rule tokenise_translated:
     shell:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
@@ -1001,6 +1000,7 @@ rule tokenise:
     shell:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
+
         zcat {input} \
             | eval "{BASE64_FILTER_CMD}" \
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
@@ -1062,8 +1062,10 @@ rule mt_matches:
     shell:
         """
         mkdir -p {params.folder}
+
         {PROFILING} docalign {input.l1} {input.l2} --threshold {DOC_THRESHOLD} -j {threads} > {output}
         """
+
 
 rule doc_emb_matches:
     """
@@ -1173,7 +1175,6 @@ rule bleualign:
         translated1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-        threads=THREADS["segalign"],
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred="--print-sent-hash" if DEFERRED else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
@@ -1351,6 +1352,7 @@ rule aggregate_bifixer:
     shell:
         """ echo {input} | tr ' ' '\n' > {output} """
 
+
 if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
     rule bicleaner_train_model:
         """
@@ -1383,7 +1385,6 @@ if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "classic":
                 -F {input.vcb2} -c {params.classifier} -m {output.model} --classifier_type random_forest \
                 --seed 71213
             """
-
 
 if BICLEANER_GENERATE_MODEL and BICLEANER_FLAVOUR == "ai":
     rule bicleaner_train_model:
@@ -1471,7 +1472,7 @@ rule bicleaner:
         """
         slang=$(egrep "source_lang" {params.metadata_file} | cut -d " " -f 2)
         text_fields=$(head -1 <(zcat {input.bifixer}) \
-            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs \
+            | python3 {WORKFLOW}/utils/cut_header.py -f src_text,trg_text --only-print-idxs --respect-original-sorting \
             | tr -d '\n')
 
         bicleaner_src_lang=$(cat "{params.metadata_file}" | grep "^source_lang: " | awk '{{print $2}}')
@@ -1677,6 +1678,7 @@ rule raw:
         """
         header=$(head -1 <(zcat {input[0]}) | tr -d '\n')
 
+        # Remove header from all input files and only print header once
         echo {input} \
             | tr ' ' '\n' \
             | xargs -I[] bash -c 'zcat "[]" | tail -n +2' \
@@ -1755,7 +1757,7 @@ rule documents:
         sent_file={input.sents}
         document_file={input.documents}
         header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
-            awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
+        awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
             <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
             <(zcat $document_file | tail -n +2) | \\
             cat <(echo "$header") - | pigz -c > {output}
@@ -1779,6 +1781,7 @@ rule tmx:
             | {PROFILING} python3 {WORKFLOW}/bitextor_build_TMX.py --no-delete-seg --lang1 {SRC_LANG} --lang2 {TRG_LANG} \
             | pigz -c > {output}
         """
+
 
 
 rule deduped_tmx:
@@ -1833,10 +1836,13 @@ rule roam_tmx:
         """
         mix_files=""
         nolines=$(cat {BIROAMER_MIX_FILES} | wc -l)
+
         if [[ "$nolines" != "0" ]]; then
             cat {BIROAMER_MIX_FILES} > {params.mix_files}
+            
             mix_files="-m {params.mix_files}"
         fi
+
         zcat {input} \
             | {PROFILING} biroamer {params.tokenizer_l1} {params.tokenizer_l2} \
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \
