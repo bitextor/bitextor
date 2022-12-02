@@ -634,7 +634,7 @@ rule warc2preprocess:
         get_pproc_input,
     output:
         expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES),
-    threads: 2
+    threads: 1
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         pproclangs=','.join(LANGS),
@@ -1751,7 +1751,7 @@ rule documents:
             f"{TMPDIR}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}/tempDocumentsOutput.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
-        sents=rules.sents.output.corpus,
+        sents=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
     output:
         f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
     shell:
