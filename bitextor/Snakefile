@@ -78,7 +78,7 @@ if VERBOSE and is_first_snakemake_execution(TMPDIR):
 CRAWLTARGET = return_dict_value_if_key(config, "crawler", "")
 TLD_CRAWL = return_dict_value_if_key(config, "crawlTLD", [])
 CRAWLSIZELIMIT = return_dict_value_if_key(config, "crawlSizeLimit", "", apply_function=str)
-CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=str)
+CRAWLTIMELIMIT = return_dict_value_if_key(config, "crawlTimeLimit", "", apply_function=lambda t: str(duration_to_seconds(t)) if t else str(t))
 CRAWLWAIT = return_dict_value_if_key(config, "crawlWait", "", apply_function=str)
 CRAWLFILETYPES = return_dict_value_if_key(config, "crawlFileTypes", [])
 CRAWLJOBS = return_dict_value_if_key(config, "crawlerNumThreads", 2, only_check_key=True, apply_function=str)
@@ -90,11 +90,6 @@ HERITRIXURL = return_dict_value_if_key(config, "heritrixUrl", "https://localhost
 HERITRIXUSER = return_dict_value_if_key(config, "heritrixUser", "admin:admin", only_check_key=True)
 CRAWLMAXFOLDERTREEDEPTH = return_dict_value_if_key(config, "crawlMaxFolderTreeDepth", 20, only_check_key=True, apply_function=str)
 CRAWLSCOUTSTEPS = return_dict_value_if_key(config, "crawlScoutSteps", 200, only_check_key=True, apply_function=str)
-
-if "crawler" in config:
-    if CRAWLTARGET == "linguacrawl":
-        # TODO should we change this default value, as we have done with wget, as well?
-        CRAWLFILETYPES = ["text/html", "application/pdf"]
 
 USERAGENT = "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
 CRAWLBLACKLISTURL = ['wordpress','blogspot','facebook','google','wikipedia','youtube','perehodi','twitter','instagram']
@@ -131,6 +126,7 @@ BATCHES = config["batches"]
 
 BOILERPLATE_CLEANING = config["boilerplateCleaning"]
 PARAGRAPH_IDENTIFICATION = config["paragraphIdentification"]
+ADDITIONAL_METADATA = config["additionalMetadata"]
 
 CLEANHTML = return_dict_value_if_key(config, "cleanHTML", "", pos_value="--cleanhtml")
 FTFY = return_dict_value_if_key(config, "ftfy", "", pos_value="--ftfy")
@@ -422,12 +418,9 @@ if not UNTIL: # config["until"] not provided -> run the whole pipeline
     elif DOCALIGN in ("DIC", "NDA"):
         OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
 elif UNTIL == "crawl":
-    if CRAWLTARGET == "linguacrawl":
-        OUTPUT.append(f"{DATADIR}/warc/linguacrawl.finished")
-    else:
-        for domain, hosts in DOMAIN_2_HOSTS.items():
-            for host in hosts:
-                OUTPUT.append(f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz")
+    for domain, hosts in DOMAIN_2_HOSTS.items():
+        for host in hosts:
+            OUTPUT.append(f"{DATADIR}/warc/{host}/{CRAWLTARGET}.warc.gz")
 elif UNTIL == "preprocess":
     OUTPUT = expand(
         "{datadir}/preprocess/{target}/{pproc}/{lang}/{pproc_file}",
@@ -464,7 +457,12 @@ elif UNTIL == "tokenise_src":
         OUTPUT = f"{DATADIR}/shards/05.tokenise.{SRC_LANG}"
 else:
     OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{TRG_LANG}")
-    OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+
+    if DOCALIGN == "externalMT":
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}2{TRG_LANG}")
+    elif DOCALIGN in ("DIC", "NDA"):
+        OUTPUT.append(f"{DATADIR}/shards/05.tokenise.{SRC_LANG}")
+
     if UNTIL == "docalign":
         OUTPUT.append(f"{TRANSIENT}/06_01.docalign.{LANG1}_{LANG2}")
     elif UNTIL == "segalign":
@@ -478,10 +476,6 @@ else:
 
 #################################################################
 # OTHER
-BASE64_FILTER_CMD = "cat"
-
-if PARAGRAPH_IDENTIFICATION:
-    BASE64_FILTER_CMD = f"python3 {WORKFLOW}/utils/apply_command_b64_doc.py 'cut -f 1'"
 
 # Create mark
 with open(get_snakemake_execution_mark(TMPDIR), "w"):
@@ -492,6 +486,24 @@ if BIFIXER:
     check_nltk_model.check("tokenizers/punkt", "punkt")
 if BIROAMER:
     check_nltk_model.check("misc/perluniprops", "perluniprops")
+
+# Metadata from text
+ADDITIONAL_METADATA = ADDITIONAL_METADATA and (len(PREVERTICALS) != 0) # Update with additional conditions if needed
+PROPAGATE_METADATA_FROM_TEXT = PARAGRAPH_IDENTIFICATION or ADDITIONAL_METADATA
+PROPAGATE_METADATA_HEADERS = []
+METADATA_HEADERS_NUMBER_FIELDS = 0
+
+if PROPAGATE_METADATA_FROM_TEXT:
+    if PARAGRAPH_IDENTIFICATION:
+        PROPAGATE_METADATA_HEADERS.append("paragraph_id")
+        METADATA_HEADERS_NUMBER_FIELDS += 1
+    if ADDITIONAL_METADATA:
+        # Different conditions which adds metadata from preprocessors
+        if len(PREVERTICALS) != 0:
+            PROPAGATE_METADATA_HEADERS.extend(["doc_title", "crawl_date", "file_type", "boilerplate", "heading_html_tag"])
+            METADATA_HEADERS_NUMBER_FIELDS += 5
+
+PROPAGATE_METADATA_HEADERS = ','.join(PROPAGATE_METADATA_HEADERS)
 
 shell.prefix("set -euo pipefail;")
 
@@ -588,155 +600,6 @@ rule heritrix_download:
             cat {HERITRIXPATH}/jobs/{wildcards.target}/*/warcs/*warc.gz > {output}
         fi
         """
-
-
-rule linguacrawl_config:
-    """
-    Create a linguacrawl yaml config file from Bitextor's parameters
-    """
-    output:
-        yaml_file=temp(f"{TMPDIR}/linguacrawl.yaml"),
-    params:
-        user_agent=apply_format(USERAGENT, "user_agent: '{}'\n"),
-        output_dir=apply_format(f"{DATADIR}/warc/linguacrawl", "output_dir: '{}'\n"),
-        wait=apply_format(CRAWLWAIT, "crawl_delay: {}\n"),
-        time_limit=apply_format(CRAWLTIMELIMIT, "max_time_per_site: {}\n"),
-        size_limit=apply_format(CRAWLSIZELIMIT, "max_size_per_site: {}\n"),
-        timeout=apply_format(CRAWLTIMEOUT, "connection_timeout: {}\n"),
-        num_threads=apply_format(CRAWLJOBS, "max_jobs: {}\n"),
-        prefix_filter=apply_format(str(CRAWLPREFIXFILTER), "prefix_filter: {}\n"),
-        resume_crawling=apply_format(str(CONTINUECRAWL), "resume_crawling: {}\n"),
-        dump_args=apply_format(str(CRAWLDUMPARGS), "verbose: {}\n"),
-        file_types=apply_format(f"({'|'.join(CRAWLFILETYPES)})", "accepted_content: '{}'\n"),
-        max_folder_depth=apply_format(CRAWLMAXFOLDERTREEDEPTH, "max_folder_tree_depth: {}\n"),
-        scout_steps=apply_format(CRAWLSCOUTSTEPS, "scout_steps: {}\n"),
-        blacklist=apply_format(str(CRAWLBLACKLISTURL), "url_blacklist: {}\n"),
-    run:
-        yaml_content = ""
-
-        langs = "','".join(LANGS)
-        hosts = "','".join(HOSTS)
-
-        # Mandatory
-        yaml_content += params.user_agent
-        yaml_content += f"langs_of_interest: ['{langs}']\n"
-        yaml_content += params.output_dir
-        # Optional (the argument parser will not complain, but the crawler will crash in some cases)
-        yaml_content += params.wait
-        yaml_content += params.time_limit
-        yaml_content += params.size_limit
-        yaml_content += params.timeout
-        yaml_content += params.num_threads
-        yaml_content += params.resume_crawling
-        yaml_content += f"seed_urls: ['{hosts}']\n"
-        # yaml_content += f"seed_urls_from_file: \n" # HOSTS contain all hosts if hosts defined either with or without file
-        yaml_content += params.prefix_filter
-        yaml_content += params.dump_args
-        yaml_content += params.file_types
-        yaml_content += params.max_folder_depth
-        yaml_content += f"max_attempts: 3\n"
-        yaml_content += params.scout_steps
-        yaml_content += f"min_langs_in_site: 2\n"
-        yaml_content += params.blacklist
-
-        # TODO use specific argument? If not, use SRC_LANG/TRG_LANG?
-        if LANG1 or LANG2:
-            yaml_content += f"mandatory_lang: '{LANG1}'\n" if LANG1 else f"mandatory_lang: '{LANG2}'\n"
-            yaml_content += f"min_percent_mandatory_lang: 10\n"
-
-        # tld = LANGS.union([params.url.split('.')[-1]]).union(TLD_CRAWL)
-        tld = LANGS.union([url.split(".")[-1] for url in HOSTS]).union(TLD_CRAWL)
-        tld = "','".join(tld)
-
-        yaml_content += f"accepted_tlds: ['{tld}']\n"
-
-        fdescriptor = open(output.yaml_file, "w")
-        fdescriptor.write(yaml_content)
-        fdescriptor.flush()
-        fdescriptor.close()
-
-
-# This must be a checkpoint because we do not know the resulted warcs since we let the user decide if they want to
-#  either join all the warcs (it loses important information like the source of the warcs) or not
-# Manual stopping: kill -s sigint `ps aux | grep bin/linguacrawl | grep -v grep | awk '{print $2}'`
-# TODO move code to a single python script and call it
-checkpoint linguacrawl_download:
-    """
-    Download HOSTS with linguacrawl
-    """
-    input:
-        f"{TMPDIR}/linguacrawl.yaml"
-    params:
-        folder=f"{DATADIR}/warc/linguacrawl",
-        crawl_cat=config["crawlCat"] if "crawlCat" in config else False,
-        crawl_cat_max=config["crawlCatMaxSize"]*1024*1024 if "crawlCatMaxSize" in config else 0
-    output:
-        f"{DATADIR}/warc/linguacrawl.finished",
-    run:
-        shell(
-            """
-            mkdir -p {params.folder} {TMPDIR}
-            {PROFILING} linguacrawl {input}
-            """
-        )
-
-        all_files = subprocess.Popen(("ls", params.folder), stdout=subprocess.PIPE)
-        try:
-            # Process the resulted warcs
-            warcs = subprocess.check_output(
-                ("grep", "[.]warc[.]gz$"), stdin=all_files.stdout
-            )  # It will throw an exception if no warcs were downloaded
-            all_files.wait()
-
-            warcs = warcs.decode("utf-8").split("\n")
-            warcs = list(filter(lambda warc: len(warc) != 0, warcs))
-            warcs = list(map(lambda warc: f"{params.folder}/{warc}", warcs))
-
-            if not params.crawl_cat:
-                warcs = "\n".join(warcs)
-                shell(f'echo -e "{warcs}" > {{output[0]}}')
-            else:
-                if params.crawl_cat_max <= 0:
-                    warcs = " ".join(warcs)
-                    shell(
-                        f"""
-                        cat {warcs} > {params.folder}/linguacrawl.warc.gz
-                        echo "{params.folder}/linguacrawl.warc.gz" > {{output[0]}}
-                        """
-                    )
-                else:
-                    # Improve the number of preprocess rules that are executed
-                    current = 0
-                    blocks = 0
-                    files = [f"{params.folder}/linguacrawl{blocks}.warc.gz"]
-
-                    for warc in warcs:
-                        if current > {params.crawl_cat_max}:
-                            current = 0
-                            blocks += 1
-                            files.append(f"{params.folder}/linguacrawl{blocks}.warc.gz")
-
-                        shell(f"cat {warc} >> {files[-1]}")
-
-                        du_command = subprocess.Popen(("du", "-b", warc), stdout=subprocess.PIPE)
-
-                        try:
-                            du_warc = subprocess.check_output(("awk", "{print $1}"), stdin=du_command.stdout)
-                            du_command.wait()
-
-                            current += int(du_warc)
-                        except:
-                            sys.stderr.write(f"WARNING: could not retrieve the size of {warc}\n")
-
-                    files = "\n".join(files)
-                    shell(f'echo -e "{files}" > {{output[0]}}')
-        except:
-            # No warcs were downloaded: error or warning
-            if len(WARCS) == 0:
-                sys.stderr.write("ERROR: could not find any file after crawling\n")
-                sys.exit(1)
-            sys.stderr.write("WARNING: could not find any file after crawling\n")
-            shell(f"touch {output}")
 
 
 #################################################################
@@ -869,7 +732,6 @@ checkpoint shard:
         # this is separated in two functions to make sure that
         # the preprocessing of the provided files and the crawling
         # may be executed in parallel
-        # (otherwise the linguacrawl checkpoint might prevent that)
         get_shard_input_files,
         get_shard_input_crawled,
     output:
@@ -923,11 +785,19 @@ rule split:
     input:
         f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/{TEXT_FILE}",
     output:
-        f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz",
+        sentences=f"{DATADIR}/shards/{{lang}}/{{shard}}/{{batch}}/sentences.gz",
+        metadata=expand(
+            "{data}/shards/{{lang}}/{{shard}}/{{batch}}/{f}.gz",
+            data=DATADIR,
+            f=["metadata"] if PROPAGATE_METADATA_FROM_TEXT else []
+        ),
     params:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
+        metadata=lambda wildcards, output: "--propagate-metadata" if ADDITIONAL_METADATA else "",
+        metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
+        metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}.gz"),
     threads: THREADS["split"]
     resources:
         job_split=JOB_THREADS["split"],
@@ -935,12 +805,55 @@ rule split:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \
-                {params.splitter} {params.customnbp} \
-                --langcode {wildcards.lang} \
-                {PRUNE_THRESHOLD} {PRUNE_TYPE} {params.paragraphs} \
-            | pigz -c > {output}
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \\
+                {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \\
+                {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \\
+            | pigz -c > {output.sentences}
+
+        # Check metadata
+        if [[ ! -z "{output.metadata}" ]]; then
+            if [[ ! -f "{output.metadata}" ]]; then
+                >&2 echo "WARNING: metadata output file should exist but doesn't: creating fake metadata file"
+
+                zcat "{output.sentences}" \\
+                    | b64filter awk '{{for (i=1; i<'"{METADATA_HEADERS_NUMBER_FIELDS}"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
+                    | pigz -c > "{output.metadata}"
+            else
+                header_number_fields=$(zcat "{output.metadata}" | tail -n1 | base64 -d | tail -n1 | tr -cd $'\\t' | wc -c)
+                header_number_fields=$(( $header_number_fields + 1 )) # We want the number of fields, and we have the number of <tab>
+
+                if [[ "$header_number_fields" -ne "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
+                    if [[ "$header_number_fields" -gt "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
+                        # There are more metadata fields than expected: warn about it
+                        >&2 echo "WARNING: more metadata fields than expected: $header_number_fields vs" \\
+                                 "{METADATA_HEADERS_NUMBER_FIELDS}"
+                    else
+                        # TODO this is a workaround for allowing to run multiple preprocessor in one instance for preprocessors which
+                        #  doesn't provide any metadata but, optionally, the paragraph identification. This might not work in the
+                        #  moment that different preprocessor may provide different metadata, and in that case, all preprocessor
+                        #  will have to provide the same metadata (for those fields which doesn't have sense in a preprocessor, the
+                        #  solution might be to write empty metadata fields)
+
+                        # We need to fake the missing header fields
+                        mkdir -p "$(dirname {params.metadata_aux_output})"
+
+                        missing_header_fields=$(( "{METADATA_HEADERS_NUMBER_FIELDS}" - "$header_number_fields" ))
+
+                        >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields" \\
+                                 "($header_number_fields vs {METADATA_HEADERS_NUMBER_FIELDS})"
+
+                        zcat "{output.sentences}" \\
+                            | b64filter awk '{{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
+                            | pigz -c > "{params.metadata_aux_output}"
+                        mv -n "{output.metadata}" "{output.metadata}.aux.gz"
+                        paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \\
+                            | python3 {WORKFLOW}/utils/join_b64_docs.py \\
+                            | pigz -c > "{output.metadata}"
+                    fi
+                fi
+            fi
+        fi
         """
 
 
@@ -991,57 +904,25 @@ rule custom_translate:
         source=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences.gz",
     output:
         f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
-    params:
-        paragraphs_file=f"{TMPDIR}/custom_translate_{{shard}}_{{src_batch}}.paragraphs",
-        tmp_translations_file=f"{TMPDIR}/custom_translate_{{shard}}_{{src_batch}}.translations",
     threads: THREADS["translate"]
     resources:
         job_translate=JOB_THREADS["translate"],
     shell:
         """
         mkdir -p {TMPDIR}
-        initial_nolines=$(zcat {input.source} | base64 -d | wc -l)
-        output="{output}"
-        filter_command="cat"
-
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            zcat {input.source} \
-                | python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value "" "cut -f 2" > "{params.paragraphs_file}"
-
-            para_nolines=$(cat "{params.paragraphs_file}" | base64 -d \
-                | grep -E "^p[0-9]+:[0-9]+s[0-9]+/[0-9]+$|^p-1s-1$" | sed "/^\s*$/d" | wc -l)
-
-            if [[ "$initial_nolines" -ne "$para_nolines" ]]; then
-                >&2 echo "Lines count differs: source $initial_nolines, paragraph identification $para_nolines"
-                exit 1
-            fi
-
-            output="{params.tmp_translations_file}"
-            filter_command="python3 {WORKFLOW}/utils/apply_command_b64_doc.py --empty-docs-value '' 'cut -f 1'"
-        fi
+        initial_nolines=$(zcat "{input.source}" | base64 -d | wc -l)
 
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input.source} \
-            | eval "$filter_command" \
-            | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \
-            | pigz -c > "$output"
+        zcat {input.source} \\
+            | {PROFILING} b64filter cache ${{parallel_cmd}} {MT_COMMAND} \\
+            | pigz -c > "{output}"
 
-        n_after=$(zcat "$output" | base64 -d | wc -l)
+        n_after=$(zcat "{output}" | base64 -d | wc -l)
 
         if [ $initial_nolines -ne $n_after ]; then
-            >&2 echo "Lines count differs: source $initial_nolines, target $n_after"
+            >&2 echo "ERROR: lines count differs: source $initial_nolines, target $n_after"
             exit 1
-        fi
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            paste <(zcat "$output") <(cat "{params.paragraphs_file}") \
-                | python3 {WORKFLOW}/utils/join_b64_docs.py \
-                | pigz -c > "{output}"
-        fi
-
-        if [[ "{PARAGRAPH_IDENTIFICATION}" == "True" ]]; then
-            rm -f "{params.paragraphs_file}"
-            rm -f "{params.tmp_translations_file}"
         fi
         """
 
@@ -1083,11 +964,10 @@ rule tokenise_translated:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | eval "{BASE64_FILTER_CMD}" \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
-                {params.tokeniser} {params.lemmatizer} \
-                --langcode {TRG_LANG} \
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \\
+                {params.tokeniser} {params.lemmatizer} \\
+                --langcode {TRG_LANG} \\
             | pigz -c > {output}
         """
 
@@ -1115,11 +995,10 @@ rule tokenise:
         """
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -k" || echo "")
 
-        zcat {input} \
-            | eval "{BASE64_FILTER_CMD}" \
-            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \
-                {params.tokeniser} {params.lemmatizer} \
-                --langcode {wildcards.lang} \
+        zcat {input} \\
+            | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_tokenize.py \\
+                {params.tokeniser} {params.lemmatizer} \\
+                --langcode {wildcards.lang} \\
             | pigz -c > {output}
         """
 
@@ -1207,15 +1086,15 @@ rule doc_emb_matches:
     shell:
         """
         mkdir -p {params.folder}
-        cat <(zcat {input.plain1} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	src:") \
-            <(zcat {input.plain2} | eval "{BASE64_FILTER_CMD}" | sed "s:$:	-	trg:") \
-            | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \
-                {params.folder}/{params.trg_emb_name} {params.model} \
-                --docalign-strategy 'faiss' --weights-strategy 0 \
-                --merging-strategy 3 --results-strategy 0 \
-                --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \
-                --output-with-idxs --paths-to-docs-are-base64-values \
-                --threshold {DOC_THRESHOLD} --logging-level 30 \
+        cat <(zcat {input.plain1} | sed "s:$:	-	src:") \\
+            <(zcat {input.plain2} | sed "s:$:	-	trg:") \\
+            | {PROFILING} neural-document-aligner - {params.folder}/{params.src_emb_name} \\
+                {params.folder}/{params.trg_emb_name} {params.model} \\
+                --docalign-strategy 'faiss' --weights-strategy 0 \\
+                --merging-strategy 3 --results-strategy 0 \\
+                --emb-optimization-strategy 2 --gen-emb-optimization-strategy 2 \\
+                --output-with-idxs --paths-to-docs-are-base64-values \\
+                --threshold {DOC_THRESHOLD} --logging-level 30 \\
                 --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} > {output}
         """
 
@@ -1289,8 +1168,10 @@ rule bleualign:
         translated1=f"{DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/sentences_{TRG_LANG}.gz",
     params:
         folder=lambda wildcards, output: os.path.dirname(output[0]),
-        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred="--print-sent-hash" if DEFERRED else '',
+        metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
+        src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
     # in segalign rule output columns are reordered (or not) in accordance with translationDirection
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.bleualign.06_02.segalign.gz",
@@ -1304,15 +1185,17 @@ rule bleualign:
         parallel_cmd=$([[ {threads} -gt 1 ]] && echo "parallel --gnu --halt 2 --pipe --j {threads} -l 1 --group --header 1" || echo "")
         header="src_url\ttrg_url\tsrc_text\ttrg_text\tsrc_translated"
 
-        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \
-            | tail -n +2 \
-            | docjoin \
-                -l {input.url1} -r {input.url2} \
-                -l {input.plain1} -r {input.plain2} \
-                -l {input.translated1} \
-            | cat <(echo "$header") - \
-            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} {params.paragraphs} \
-                --bleu-threshold {SEGALIGN_THRESHOLD} \
+        [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
+
+        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \\
+            | tail -n +2 \\
+            | docjoin \\
+                -l {input.url1} -r {input.url2} \\
+                -l {input.plain1} -r {input.plain2} \\
+                -l {input.translated1} {params.src_metadata} {params.trg_metadata} \\
+            | cat <(echo "$header") - \\
+            | {PROFILING} ${{parallel_cmd}} bleualign_cpp {params.deferred} \\
+                --bleu-threshold {SEGALIGN_THRESHOLD} {params.metadata} \\
             | pigz -c > {output}
         """
 
@@ -1341,9 +1224,13 @@ rule vecalign:
         folder=f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/vecalign/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}",
         src_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.src_emb_name}",
         trg_emb_storage=f"{rules.doc_emb_matches.params.folder}/{rules.doc_emb_matches.params.trg_emb_name}",
-        paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',
         deferred=f"--print-sent-hash \"{DEFERRED_CMD}\"" if DEFERRED else '',
         model=apply_format(EMBEDDINGS_MODEL, "--model {}"),
+        metadata=apply_format(PROPAGATE_METADATA_HEADERS, "--metadata-header-fields {}"),
+        src_metadata=f"-l {DATADIR}/shards/{SRC_LANG}/{{shard}}/{{src_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        trg_metadata=f"-r {DATADIR}/shards/{TRG_LANG}/{{shard}}/{{trg_batch}}/metadata.gz" if PROPAGATE_METADATA_FROM_TEXT else '',
+        c1="src_index" if DOCALIGN == "DIC" else "src_idx" if DOCALIGN == "NDA" else "idx_translated",
+        c2="trg_index" if DOCALIGN == "DIC" else "trg_idx" if DOCALIGN == "NDA" else "idx_trg",
     output:
         f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{{shard}}/{SRC_LANG}{{src_batch}}_{TRG_LANG}{{trg_batch}}.vecalign.06_02.segalign.gz",
     threads: THREADS["segalign"]
@@ -1353,21 +1240,26 @@ rule vecalign:
         """
         mkdir -p "{params.folder}"
 
-        cat <(zcat "{input.plain1}") <(zcat "{input.plain2}") \
-            <(zcat "{input.url1}" | sed "s:$:\tsrc:") <(zcat "{input.url2}" | sed "s:$:\ttrg:") \
-                | python3 "{WORKFLOW}/utils/print_alternatively_lines_cli.py" 2 | paste - - \
-                | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - "{input.indices}" \
-                    --threshold {SEGALIGN_THRESHOLD} {params.paragraphs} {params.deferred} {params.model} \
-                    --tmp-dir "{params.folder}" --nda-input-is-base64 \
-                    --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} --first-match-offset 1 \
-                    --embedding-src-storage-input "{input.plain1}" --embedding-src-storage-input-base64 \
-                    --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-input "{input.plain2}" \
-                    --embedding-trg-storage-input-base64 --embedding-trg-storage-path "{params.trg_emb_storage}" \
-                    --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \
-                    --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \
-                    --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \
-                    --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \
-                | pigz -c > "{output}"
+        header="src_url\ttrg_url\tsrc_text\ttrg_text"
+
+        [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
+
+        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \\
+            | tail -n +2 \\
+            | docjoin \\
+                -l {input.url1} -r {input.url2} \\
+                -l {input.plain1} -r {input.plain2} {params.src_metadata} {params.trg_metadata} \\
+            | cat <(echo "$header") - \\
+            | {PROFILING} python3 "{WORKFLOW}/bitextor_nda_vecalign.py" - \\
+                --threshold {SEGALIGN_THRESHOLD} {params.deferred} {params.model} {params.metadata} \\
+                --tmp-dir "{params.folder}" --embeddings-batch-size {EMBEDDINGS_BATCH_SIZE_NEURAL} \\
+                --embedding-src-storage-input "{input.plain1}" --embedding-trg-storage-input "{input.plain2}" \\
+                --embedding-src-storage-path "{params.src_emb_storage}" --embedding-trg-storage-path "{params.trg_emb_storage}" \\
+                --src-embeddings-optimization-strategy 2 --trg-embeddings-optimization-strategy 2 \\
+                --src-storage-embeddings-optimization-strategy 2 --trg-storage-embeddings-optimization-strategy 2 \\
+                --embedding-src-storage-not-uniq --embedding-trg-storage-not-uniq \\
+                --vecalign-num-overlaps 2 --vecalign-alignment-max-size 2 \\
+            | pigz -c > "{output}"
         """
 
 
@@ -1818,29 +1710,28 @@ rule sents:
     :output: the concatenated inputs, sorted, same columns as input
     """
     input:
-        lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+        filtered=lambda wildcards: [f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/{batch}" for batch in get_postproc_batches()],
+        sort_flags=rules.pre_filter_sort_flags.output,
     output:
         corpus=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
         stats=f"{PERMANENT}/{LANG1}-{LANG2}.stats.sent",
-    params:
-        sort_flags=f"{TRANSIENT}/{LANG1}_{LANG2}/07_03.filtered/0.sort_flags",
     threads: THREADS["sents"]
     run:
         cmd = \
-        f"""
-        sort_flags="$(cat {params.sort_flags} | tr -d '\n')"
-        header=$(head -1 <(cat {input[0]}) | tr -d '\\n')
+        """
+        sort_flags="$(cat {input.sort_flags} | tr -d '\n')"
+        header=$(head -1 <(cat {input.filtered[0]}) | tr -d '\\n')
 
         LC_ALL=C sort -t $'\\t' $sort_flags --parallel {threads} --compress-program=gzip \\
             -T {TMPDIR} --merge \\
         """
 
-        for filename in input:
+        for filename in input.filtered:
             # Use tmp named pipes since --merge does need the file descriptor and we need to get rid of the header
             cmd += f" <(tail -n +2 {filename})"
 
         cmd += \
-        f""" \\
+        """ \\
         | cat <(echo "$header") - \\
         | pigz -c > {output.corpus}
 

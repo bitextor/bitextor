@@ -77,14 +77,14 @@ preverticalsFile: ~/preverticals.gz
 
 ## Crawling
 
-Three crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3), `wget` tool and [linguacrawl](https://github.com/transducens/linguacrawl/). The basic options are:
+Two crawlers are supported by Bitextor: [Heritrix](https://github.com/internetarchive/heritrix3) and `wget` tool. The basic options are:
 
 ```yaml
 crawler: wget
 crawlTimeLimit: 1h
 ```
 
-* `crawler`: set which crawler is used (`heritrix`, `wget` or `linguacrawl`)
+* `crawler`: set which crawler is used (`heritrix` or `wget`)
 * `crawlTimeLimit`: time for which a website can be crawled; the format of this field is an integer number followed by a suffix indicating the units (accepted units are s(seconds), m(minutes), h(hours), d(days), w(weeks)), for example: `86400s`, or `1440m` or `24h`, or `1d`
 
 ### wget
@@ -100,57 +100,6 @@ crawlFileTypes: ["html", "pdf"]
 * `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
 * `crawlWait`: time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due too many connections in a low interval of time
 * `crawlFileTypes`: filetypes that sould be retrieved; `wget` will check the extension of the document
-
-### Linguacrawl
-
-Linguacrawl is a top-level domain crawler, i.e. when crawling it visits and downloads pages outside of the provided hosts.
-Linguacrawl implements a scouting strategy to download the most productive content for the target languages.
-The provided hosts will act a starting point for this process, the more hosts are provided the lower the chances that the crawler will run out of URLs to visit.
-For this reason, the overall time taken to crawl with Linguacrawl will be significatly higher than the `crawlTimeLimit` value (as it represents the maximum time to spend in a single host).
-Linguacrawl runs a single crawling job, as opposed to running a job per host, so it is recommended to use this crawler with multiple threads.
-
-```yaml
-crawlUserAgent: "Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)"
-crawlWait: 5
-crawlFileTypes: ["html", "pdf"]
-crawlTLD: ['es', 'fr', 'org']
-crawlSizeLimit: 1024 # 1GB
-crawlMaxFolderTreeDepth: 20
-crawlScoutSteps: 200
-crawlBlackListURL: ["wordpress", "blogspot", "facebook", "google", "wikipedia", "youtube", "perehodi", "twitter", "instagram"]
-crawlPrefixFilter: ["mailto:"]
-crawlerNumThreads: 1
-crawlerConnectionTimeout: 10
-dumpCurrentCrawl: False
-resumePreviousCrawl: False
-
-crawlCat: True
-crawlCatMaxSize: 1024 # 1GB
-```
-
-* `crawlerUserAgent`: [user agent](https://developers.whatismybrowser.com/useragents/explore/software_type_specific/crawler/) to be added to the header of the crawler when doing requests to a web server (identifies your crawler when downloading a website)
-* `crawlWait`: time (in seconds) that should be waited between the retrievals; it is intended to avoid a web-site to cut the connection of the crawler due to too many connections in a low interval of time
-* `crawlFileTypes`: filetypes that should be retrieved; `linguacrawl` will search the provided pattern in the [Content-Type header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) of the document (in this case, either the full MIME type may be specified (`text/html`,`application/pdf`), or only the subtype (`html`,`pdf`))
-* `crawlTLD`: accepted [top-level domains](https://en.wikipedia.org/wiki/Top-level_domain) (TLD); the TLDs of the specified hosts, as well as the specified languages will always be added
-* `crawlSizeLimit`:  maximum size limit, expressed in MB, for a single host; i.e. when this limit is reached the crawler will stop downloading pages from the host
-* `crawlMaxFolderTreeDepth`: the maximum folder depth for a URL to be taken into account
-* `crawlScoutSteps`: the number of documents to be downloaded from a web-site before the scouting criterion is evaluated
-* `crawlBlackListURL`: a list of domains which will not be crawled, the default values are specified in the example above
-* `crawlPrefixFilter`: allows to exclude documents that begin with the specified patterns, the default value is the one specified in the example above
-* `crawlerNumThreads`: the number of threads to be be used by the crawler, default is 1
-* `crawlerConnectionTimeout`: the connection timeout (in seconds) to a web server
-* `dumpCurrentCrawl`: print progress information (WARNING: *very* verbose)
-* `resumePreviousCrawl`: resume the crawling from a previous run; this option is not trivial to use since Snakemake executes the workflow based on the files which are needed, to the use this the crawling step should be re-run, which can be achieved either by removing the files so that running the crawler becomes necessary (tricky), or forcing the crawl to re-run via `--forcerun linguacrawl_download` argument provided to `bitextor` command
-* `crawlCat`: allows to merge all the downloaded WARCs in just one (normally `linguacrawl` generates one warc per domain/subdomain) in order to improve the number of rules of preprocessing to run, but will result is a loss of important information like the source of the WARCs; this option should be used in conjunction with `crawlCatMaxSize` to avoid generating WARCs that are extremely large
-* `crawlCatMaxSize`: intead of generating a single WARC, generate multiple WARCs of the specified size, expressed in MB
-
-If Linguacrawl is used, a YAML file is created on the fly in order to use it as configuration file, and you can check this file out to be sure that is configured as you want. There are multiple options which are provided with a default value if none was set, so might be interesting to visualize the generated YAML configuration file if you want a concrete behaviour or something is not working as you expected. Those default values are set because are mandatory for Linguacrawl. Other than the parameters explained above, default behaviour which should be taken into account is:
-
-* A maximum of 3 attempts will be made in order to download a resource.
-* The number of minimum languages in a site will be 2, and in the case of not satisfy this condition, the site will be discarted
-* The mandatory lang to be found in a site will be determined by `lang1` or `lang2` if not defined. A minimum of 10% of content has to be present in the mandatory language in order to not discard a resource
-* The accepted TLDs will be those specified in `lang1`, `lang2`, `langs` and `crawlTLD`
-* WARNING: if you use linguacrawl in a cluster, it is highly recommended to use `crawlCat` and `crawlCatMaxSize` in order to balance the work (it is not usual to use a crawler in a cluster)
 
 ### Heritrix
 
@@ -197,6 +146,9 @@ boilerplateCleaning: true
 ## identify paragraphs
 paragraphIdentification: true
 
+## other metadata
+additionalMetadata: true
+
 # sharding
 shards: 8 # 2^8 shards
 batches: 1024 # batches of up to 1024MB
@@ -223,9 +175,10 @@ Boilerplate:
 * `boilerplateCleaning`: if `preprocessor: warc2preprocess`, enables [boilerpipe](https://boilerpipe-web.appspot.com/) to remove boilerplates from HTML documents. If you have provided `preverticals` files, it will discard those entries detected as boilerplate by `prevertical2text` automatically. `warc2text` does not support this option. It is disabled by default
 * `boilerpipeMaxHeapSize`: in order to run `boilerpipe`, we use a library that one of its dependencies is [`jpype`](https://jpype.readthedocs.io/). `jpype` does take the default max. heap size of the JVM and does not take into account the environment variable `JAVA_OPTS` (common envvar to provide options to the JVM). If big documents are being processed, you might like to increase the max. heap size in order to be able to process them with `boilerpipe`
 
-Paragraph identification:
+Metadata:
 
 * `paragraphIdentification`: if this option is enabled, the selected `preprocessor` will generate information which will identify the paragraphs. This information will be used to link every sentence to the position which it took in the original paragraph.
+* `additionalMetadata`: if this option is enabled, the selected `preprocessor` will generate metadata which will be propagated through the execution (currently, this option only generates metadata when `preverticals` are provided).
 
 Sharding options:
 

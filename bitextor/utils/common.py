@@ -26,6 +26,9 @@ import sys
 import os
 import requests
 import shlex
+import logging
+
+LOGGER = logging.getLogger("bitextor")
 
 class ExternalTextProcessor(object):
 
@@ -60,22 +63,43 @@ class ExternalTextProcessor(object):
 
 @contextmanager
 def open_xz_or_gzip_or_plain(file_path, mode='rt'):
-    f = None
-    try:
-        if file_path[-3:] == ".gz":
-            f = gzip.open(file_path, mode)
-        elif file_path[-3:] == ".xz":
-            f = lzma.open(file_path, mode)
+    special_case = False
+
+    if file_path == '-':
+        # Handle stdin and stdout for '-' special case
+        write = False
+        set_mode = set(mode)
+        special_case = True
+
+        if len(set_mode.intersection("+")) != 0:
+            # Can't be supported -> let the normal flow handle the behaviour
+            special_case = False
+
+            LOGGER.warning("Mode '+' not supported for '-' case")
         else:
-            f = open(file_path, mode)
-        yield f
+            if len(set_mode.intersection("wax")) != 0:
+                write = True
 
-    except Exception:
-        raise Exception("Error occurred while loading a file!")
+            yield sys.stdout if write else sys.stdin
 
-    finally:
-        if f:
-            f.close()
+    if not special_case:
+        f = None
+
+        try:
+            if file_path[-3:] == ".gz":
+                f = gzip.open(file_path, mode)
+            elif file_path[-3:] == ".xz":
+                f = lzma.open(file_path, mode)
+            else:
+                f = open(file_path, mode)
+            yield f
+
+        except Exception:
+            raise Exception("Error occurred while loading a file!")
+
+        finally:
+            if f:
+                f.close()
 
 
 @contextmanager
@@ -143,18 +167,19 @@ def check_connection(url):
         except BaseException as e:
             if check:
                 connection_error = True
-                sys.stderr.write(f"WARNING: error connecting to {url}\n")
-                sys.stderr.write(str(e) + "\n")
+
+                LOGGER.warning("Error connecting to URL: %s", url)
+                LOGGER.warning("Message: %s", str(e))
 
     return connection_error, url
 
 
-duration_suffix = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+_duration_suffix = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
 # expected duration: integer + one-letter suffix
 # allowed suffixes: s (seconds), m (minutes), h (hours), d (days), w (weeks)
 def duration_to_seconds(value):
     suffix = value[-1]
-    seconds = int(value[:-1]) * duration_suffix[suffix]
+    seconds = int(value[:-1]) * _duration_suffix[suffix]
     return seconds
 
 

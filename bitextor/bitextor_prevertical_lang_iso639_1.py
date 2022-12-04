@@ -23,7 +23,7 @@ import contextlib
 import langcodes
 
 def main(args):
-    if (not args.input or args.input[0] == "-"):
+    if not args.input or '-' in args.input:
         args.input = ["-"]
 
     for fn in args.input:
@@ -41,7 +41,12 @@ def main(args):
                         continue
 
                     lang = l[lang_str_idx + 6:lang_end_idx]
-                    lang_iso_639_1 = langcodes.find(lang)
+                    if lang == "Serbo_Croatian_Cyrillic":
+                        lang_iso_639_1 = "hbs_cyrillic"
+                    elif lang == "Serbo_Croatian_Latin":
+                        lang_iso_639_1 = "hbs_latin"
+                    else:
+                        lang_iso_639_1 = langcodes.find(lang)
 
                     l = f"{l[:lang_str_idx]}lang=\"{lang_iso_639_1}{l[lang_end_idx:]}"
 
@@ -51,7 +56,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Process prevertical format in order to change full language names to ISO 639-1.')
 
-    parser.add_argument('--input', nargs='+',
+    parser.add_argument('--input', nargs='*',
                         help='Input files (prevertical)')
 
     args = parser.parse_args()
