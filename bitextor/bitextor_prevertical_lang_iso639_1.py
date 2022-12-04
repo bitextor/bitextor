@@ -41,7 +41,12 @@ def main(args):
                         continue
 
                     lang = l[lang_str_idx + 6:lang_end_idx]
-                    lang_iso_639_1 = langcodes.find(lang)
+                    if lang == "Serbo_Croatian_Cyrillic":
+                        lang_iso_639_1 = "hbs_cyrillic"
+                    elif lang == "Serbo_Croatian_Latin":
+                        lang_iso_639_1 = "hbs_latin"
+                    else:
+                        lang_iso_639_1 = langcodes.find(lang)
 
                     l = f"{l[:lang_str_idx]}lang=\"{lang_iso_639_1}{l[lang_end_idx:]}"
 
