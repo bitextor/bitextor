@@ -23,7 +23,7 @@ import contextlib
 import langcodes
 
 def main(args):
-    if (not args.input or args.input[0] == "-"):
+    if not args.input or '-' in args.input:
         args.input = ["-"]
 
     for fn in args.input:
@@ -56,7 +56,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Process prevertical format in order to change full language names to ISO 639-1.')
 
-    parser.add_argument('--input', nargs='+',
+    parser.add_argument('--input', nargs='*',
                         help='Input files (prevertical)')
 
     args = parser.parse_args()
