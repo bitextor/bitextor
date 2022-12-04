@@ -101,10 +101,10 @@ check_nltk_models
         warc2text -o "${WORK}/data/tmp-w2t" -s -f "text,url" "${WORK}/data/warc/greenpeace.warc.gz" && \
         (
             python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/en/text.gz" \
-                --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --seed 1 \
+                --url-files "${WORK}/data/tmp-w2t/en/url.gz" --document-langs English --random-date --seed 1 \
             | pigz -c > "${WORK}/data/prevertical/greenpeace.en.prevertical.gz"
             python3 ${DIR}/utils/text2prevertical.py --text-files "${WORK}/data/tmp-w2t/fr/text.gz" \
-                --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --seed 2 \
+                --url-files "${WORK}/data/tmp-w2t/fr/url.gz" --document-langs French --random-date --seed 2 \
             | pigz -c > "${WORK}/data/prevertical/greenpeace.fr.prevertical.gz" \
         )
 
@@ -119,7 +119,7 @@ check_nltk_models
             preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
             shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
             sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
-            deferred=True tmx=True paragraphIdentification=True ${BITEXTOR_EXTRA_ARGS} \
+            deferred=True tmx=True paragraphIdentification=True additionalMetadata=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report"
 
     finish_test

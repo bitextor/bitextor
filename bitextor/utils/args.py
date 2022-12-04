@@ -167,6 +167,7 @@ def validate_args(config):
         'PDFextract_configfile': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
         'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
         'PDFextract_kenlm_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
+        'additionalMetadata': {'type': 'boolean', 'default': False},
         ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
         'multilang' : {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
