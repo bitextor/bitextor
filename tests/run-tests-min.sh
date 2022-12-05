@@ -41,6 +41,7 @@ mkdir -p "${WORK}"
 mkdir -p "${WORK}/permanent"
 mkdir -p "${WORK}/transient"
 mkdir -p "${WORK}/data/warc"
+mkdir -p "${WORK}/data/documents-dir"
 mkdir -p "${WORK}/data/parallel-corpus"
 mkdir -p "${WORK}/data/prevertical"
 mkdir -p "${WORK}/reports"
@@ -53,6 +54,8 @@ touch "$FAILS"
 # Download necessary files
 # WARCs
 download_file "${WORK}/data/warc/greenpeace.warc.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/greenpeace.canada-small.warc.gz &
+# Directory
+download_file "${WORK}/data/documents-dir/documents.tar.gz" https://github.com/bitextor/bitextor-data/releases/download/bitextor-warc-v1.1/documents.tar.gz &
 # Bicleaner models
 download_bicleaner_model "en-fr" "${BICLEANER}" &
 download_bicleaner_ai_model "en-fr" "${BICLEANER_AI}" lite &
@@ -66,6 +69,9 @@ wait
 # Process downloaded files if necessary
 tar -xzf "${WORK}/output_reference/run-tests-min.tgz" -C "${WORK}/output_reference/" && \
 rm -f "${WORK}/output_reference/run-tests-min.tgz"
+
+tar -zxf "${WORK}/data/documents-dir/documents.tar.gz" -C "${WORK}/data/documents-dir/" && \
+rm "${WORK}/data/documents-dir/documents.tar.gz"
 
 # Check NLTK models and download them if they hasn't been downloaded yet
 check_nltk_models
@@ -204,8 +210,44 @@ wait
 
 wait
 
+## Dir2warc with apache tika and warc2text
+(
+    init_test "30"
+
+    ${BITEXTOR} \
+        --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+            dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+            directories="['${WORK}/data/documents-dir']" PDFprocessing="apacheTika"\
+            preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/${TEST_ID}.report"
+
+    finish_test
+) &
+
+wait
+
+## Dir2warc with apache tika and warc2preprocess
+(
+    init_test "31"
+
+    ${BITEXTOR} \
+        --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+            dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+            directories="['${WORK}/data/documents-dir']" PDFprocessing="apacheTika" \
+            preprocessor="warc2preprocess" parser="simple" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/${TEST_ID}.report"
+
+    finish_test
+) &
+
+wait
+
 # Get hashes from all files
-for TEST_ID in $(echo "10 11 20 60 100 101 102"); do
+for TEST_ID in $(echo "10 11 20 60 100 101 102 30 31"); do
     create_integrity_report "$WORK" "${WORK}/reports/hash_values_${TEST_ID}.report" "$TEST_ID"
 done
 
