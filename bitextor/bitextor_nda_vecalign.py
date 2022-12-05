@@ -186,19 +186,9 @@ def main(args):
         # Print deferred hashes
         sent_hash_cmd = shlex.split(sent_hash_cmd)
         stdout = stdout.split('\n')[1:]
-        metadata_fields = metadata_header_fields.split(',') if metadata else []
-        metadata_fields_dict = {}
 
         header.append("src_deferred_hash")
         header.append("trg_deferred_hash")
-
-        if metadata:
-            for field in metadata_fields:
-                header.append(f"src_{field}")
-                header.append(f"trg_{field}")
-
-                metadata_fields_dict[f"src_{field}"] = len(header) - 2
-                metadata_fields_dict[f"trg_{field}"] = len(header) - 1
 
         print('\t'.join(header))
 
@@ -213,11 +203,6 @@ def main(args):
 
             s.append(src_deferred)
             s.append(trg_deferred)
-
-            if metadata:
-                for field in metadata_fields:
-                    s.append(s[metadata_fields_dict[f"src_{field}"]])
-                    s.append(s[metadata_fields_dict[f"trg_{field}"]])
 
             print('\t'.join(s))
     else:

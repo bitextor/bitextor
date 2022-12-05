@@ -109,6 +109,8 @@ def main():
 def main_full():
     snakefile = get_snakefile()
     options = argv[1:]
+    options.append("--rerun-trigger") # Temporary, until we understand what is making Snakemake >= 7.8 re-run warc2preprocess step
+    options.append("mtime") # This line too. See pinned issue/announcement https://github.com/snakemake/snakemake/issues/1694
     options.append("-s")
     options.append(snakefile)
     snakemake.main(options)

@@ -17,3 +17,4 @@ mosestokenizer==1.2.1
 regex>=2019.08.19,<=2022.10.31
 numpy
 validators==0.20.0
+python-apachetika
