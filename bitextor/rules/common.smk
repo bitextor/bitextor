@@ -37,6 +37,26 @@ def create_domain_key_2_host_map(hosts):
         raise ValueError("ERROR: Some hosts are not valid: \n%s" % ("\n".join(badhosts)))
     return key2hosts
 
+"""
+Check the validity of directories (i.e. that they exist on disk),
+    and assign an ID to each valid directory, so that each direcctory is processed individually
+:param directories: a list of directories provided by the user
+:returns: a dictionary with IDs as keys and direcctories as values
+"""
+def create_id_key_2_dir_map(directories, id_offset=0, file_desc=None):
+    bad_directories=[]
+    id2dir = {}
+    for i, _dir in enumerate(directories, id_offset):
+        _dir = os.path.expanduser(_dir)
+        if not os.path.isdir(_dir):
+            bad_directories.append(_dir)
+        else:
+            id2dir[f"{i}"] = _dir
+    if bad_directories:
+        bad_directories_msg = "\n".join(bad_directories)
+        raise ValueError(f"ERROR: Some directories ({file_desc if file_desc else '-'}) could not be found:\n{bad_directories_msg}")
+    return id2dir
+
 
 """
 Check the validity of files (i.e. that they exist on disk),
@@ -104,6 +124,14 @@ def get_shard_input_files(lang):
         target=list(TARGET_2_PROVIDED_WARCS.keys()),
         pproc=PPROC
     )
+
+    # FromDirectories
+    result.extend(expand(
+        "{datadir}/preprocess/{target}/{pproc}/{{lang}}/url.gz",
+        datadir=DATADIR,
+        target=list(TARGET_2_FROMDIR_WARCS.keys()),
+        pproc=PPROC
+    ))
 
     # preverticals
     result.extend(expand(

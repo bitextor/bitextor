@@ -39,6 +39,17 @@ def isfile(field, value, error):
     elif not path_exists(value):
         error(field, f'{value} does not exist')
 
+def isdir(field, value, error):
+    if isinstance(value, list):
+        for element in value:
+            if not path_exists(element, True, os.path.isdir):
+                error(field, f'{element} path does not exist')
+    elif isinstance(value, dict):
+        for element in value:
+            if not path_exists(value[element], True,  os.path.isdir):
+                error(field, f'{value[element]} does not exist')
+    elif not path_exists(value):
+        error(field, f'{value} does not exist')
 
 def isstrlist(field, value, error):
     if not isinstance(value, list):
@@ -122,6 +133,8 @@ def validate_args(config):
         #  didn't finished or that we want to execute "manually" in a posterior step (e.g. bicleaner)
         'hosts': {'type': 'list', 'dependencies': 'crawler'},
         'hostsFile': {'type': 'string', 'dependencies': 'crawler', 'check_with': isfile},
+        'directories': {'type': 'list', 'check_with': isdir},
+        'directoriesFile': {'type': 'string', 'check_with': isdir},
         'warcs': {'type': 'list', 'check_with': isfile},
         'warcsFile': {'type': 'string', 'check_with': isfile},
         'preverticals': {'type': 'list', 'check_with': isfile},
@@ -146,12 +159,21 @@ def validate_args(config):
         'shards': {'type': 'integer', 'min': 0, 'default': 8},
         'batches': {'type': 'integer', 'min': 1, 'default': 1024},
         'paragraphIdentification': {'type': 'boolean', 'default': False},
+        'cleanHTML': {'type': 'boolean'},
+        'ftfy': {'type': 'boolean'},
+        ## PDF processing
+        'PDFprocessing': {
+            'type': 'string',
+            'default': '',
+            'allowed': ['pdf2html', 'pdfextract', 'apacheTika', '']},
+        'PDFextract_configfile': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
+        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
+        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': {'PDFprocessing': 'pdfextract'}},
         'additionalMetadata': {'type': 'boolean', 'default': False},
         ## specific to warc2text:
         'writeHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
-        ## specific to warc2preprocess:
-        'cleanHTML': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'ftfy': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
+        'multilang' : {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2text'}},
+        ## specific to warc2preprocess:        
         'langID': {
             'type': 'string',
             'allowed': ['cld2', 'cld3'],
@@ -163,11 +185,6 @@ def validate_args(config):
             'dependencies': {'preprocessor': 'warc2preprocess'}
         },
         'html5lib': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        ## pdfEXTRACT
-        'PDFextract': {'type': 'boolean', 'dependencies': {'preprocessor': 'warc2preprocess'}},
-        'PDFextract_configfile': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_sentence_join_path': {'type': 'string', 'dependencies': 'PDFextract'},
-        'PDFextract_kenlm_path': {'type': 'string', 'dependencies': 'PDFextract'},
         ## boilerplate (prevertical2text, i.e. preverticals, and warc2preprocess)
         'boilerplateCleaning': {'type': 'boolean', 'default': False},
         'boilerpipeMaxHeapSize': {'type': 'integer', 'dependencies': {'boilerplateCleaning': True, 'preprocessor': 'warc2preprocess'}},

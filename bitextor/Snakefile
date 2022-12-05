@@ -100,6 +100,7 @@ PPROC = "warc2text"
 PPROC_FILES = ["text.gz", "url.gz", "mime.gz"]
 TEXT_FILE = "text.gz"
 HTML_FILE = ""
+MULTILANG = ""
 
 if "writeHTML" in config and config["writeHTML"]:
     HTML_FILE = "html.gz"
@@ -112,6 +113,9 @@ if "preprocessor" in config:
         HTML_FILE = "deboilerplate_html.gz"
     else:
         PPROC = config["preprocessor"]
+
+if "multilang" in config and config["multilang"] == True:
+    MULTILANG = "--multilang"
 
 SHARDS = config["shards"]
 BATCHES = config["batches"]
@@ -130,7 +134,7 @@ PARSER = ""
 PDFEXTRACT = ""
 if "parser" in config:
     PARSER = f"--parser {config['parser']}"
-if "PDFextract" in config and config["PDFextract"]:
+if config["PDFprocessing"] == "pdfextract":
     PDFEXTRACT_CF = ""
     PDFEXTRACT_SJ = ""
     PDFEXTRACT_KL = ""
@@ -142,7 +146,13 @@ if "PDFextract" in config and config["PDFextract"]:
     if "PDFextract_kenlm_path" in config and config["PDFextract_kenlm_path"]:
         PDFEXTRACT_KL = f" --kenlm_path {config['PDFextract_kenlm_path']}"
 
-    PDFEXTRACT = f"--pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
+    PDFEXTRACT = f"--pdfextract pdfextract {PDFEXTRACT_CF} {PDFEXTRACT_SJ} {PDFEXTRACT_KL}"
+
+if config["PDFprocessing"] == "apacheTika":
+    PDFEXTRACT = f"--pdfextract apacheTika"
+
+if config["PDFprocessing"] == "pdf2html":
+    PDFEXTRACT = "--pdfextract pdf2html"
 
 # sentence splitting and tokenisation
 SENTTOKS = return_dict_value_if_key(config, "sentenceSplitters", {})
@@ -293,11 +303,14 @@ if not BICLEANER_GENERATE_MODEL:
 #################################################################
 # DATASOURCES
 HOSTS = set()
+DIRECTORIES = set()
 WARCS = set()
 PREVERTICALS = set()
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
+if "directories" in config:
+    DIRECTORIES = DIRECTORIES.union(config["directories"])
 if "hosts" in config:
     HOSTS = HOSTS.union(config["hosts"])
 if "preverticals" in config:
@@ -306,6 +319,10 @@ if "hostsFile" in config:
     with open_xz_or_gzip_or_plain(config["hostsFile"]) as f:
         for line in f:
             HOSTS.add(line.strip())
+if "directoriesFile" in config:
+    with open_xz_or_gzip_or_plain(config["directoriesFile"]) as f:
+        for line in f:
+            DIRECTORIES.add(line.strip())
 if "warcsFile" in config:
     with open_xz_or_gzip_or_plain(config["warcsFile"]) as f:
         for line in f:
@@ -317,17 +334,21 @@ if "preverticalsFile" in config:
 
 # sort in order to avoid different results across executions
 HOSTS = sorted(list(HOSTS))
+DIRECTORIES = sorted(list(DIRECTORIES))
 WARCS = sorted(list(WARCS))
 PREVERTICALS = sorted(list(PREVERTICALS))
 
 # group hosts by domain and check their validity
 DOMAIN_2_HOSTS = create_domain_key_2_host_map(HOSTS)
 
+# assign an ID to each directory and check their validity
+TARGET_2_DIRECTORIES = create_id_key_2_dir_map(DIRECTORIES, file_desc="directories")
+
 # assign an ID to each WARC and check that all WARCs exist
-TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, file_desc="WARCs")
+TARGET_2_PROVIDED_WARCS = create_id_key_2_file_map(WARCS, id_offset=len(TARGET_2_DIRECTORIES), file_desc="WARCs")
 
 # assign an ID to each prevertical and check that all preverticals exist
-TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=len(TARGET_2_PROVIDED_WARCS), file_desc="preverticals")
+TARGET_2_PROVIDED_PREVERTICALS = create_id_key_2_file_map(PREVERTICALS, id_offset=(len(TARGET_2_DIRECTORIES) + len(TARGET_2_PROVIDED_WARCS)), file_desc="preverticals")
 
 # group crawled WARCs by domains
 TARGET_2_CRAWLED_WARCS = dict([
@@ -335,8 +356,13 @@ TARGET_2_CRAWLED_WARCS = dict([
     for (domain, hosts) in DOMAIN_2_HOSTS.items()
 ])
 
+# group generated WARCs by directories
+TARGET_2_FROMDIR_WARCS = dict([
+    (dir_id, [f"{DATADIR}/generated_warc/{dir_id}.warc.gz"]) for (dir_id, directory) in TARGET_2_DIRECTORIES.items()
+])
+
 # group all files (e.g. WARCs, prevertical) by target (either domain if crawled, or ID if provided by user)
-TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_PROVIDED_WARCS}
+TARGET_2_WARCS = {**TARGET_2_CRAWLED_WARCS, **TARGET_2_FROMDIR_WARCS, **TARGET_2_PROVIDED_WARCS}
 TARGET_2_PREVERTICALS = {**TARGET_2_PROVIDED_PREVERTICALS}
 
 #################################################################
@@ -669,6 +695,21 @@ rule heritrix_download:
         """
 
 
+rule dir2warc:
+    """
+    Process a list of directories (or a single directory)
+        and produce WARCs with the content of each directory
+    """
+    output:
+        f"{DATADIR}/generated_warc/{{target}}.warc.gz",
+    params:
+        directory=lambda wildcards: TARGET_2_DIRECTORIES[wildcards.target],
+        output_warc=lambda wildcards: TARGET_2_FROMDIR_WARCS[wildcards.target],
+    shell:
+        """
+        echo {params.directory} | python3 {WORKFLOW}/bitextor_dir2warc.py > {params.output_warc}
+        """
+
 #################################################################
 ### PREPROCESS ##################################################
 rule warc2preprocess:
@@ -730,7 +771,12 @@ rule warc2text:
     shell:
         """
         mkdir -p {params.folder}
-        {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input}
+        if [[ "{PDFEXTRACT}" != "" ]]; then
+            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} \
+            <(cat {input} | {PROFILING} python3 {WORKFLOW}/bitextor_warc2htmlwarc.py {CLEANHTML} {FTFY} {PDFEXTRACT} --disable-output-gzip) {MULTILANG}
+        else
+            {PROFILING} warc2text -o {params.folder} -s -f {params.f} {params.paragraphs} {input} {MULTILANG}
+        fi
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then
                 >&2 echo "WARNING: no '$lang' data found in {wildcards.target}: creating empty files instead"
@@ -1854,13 +1900,13 @@ rule documents:
         f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
     shell:
         """
-	sent_file={input.sents}
-	document_file={input.documents}
-	header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
+        sent_file={input.sents}
+        document_file={input.documents}
+        header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
         awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
-		<(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
-		<(zcat $document_file | tail -n +2) | \\
-		cat <(echo "$header") - | pigz -c > {output}
+            <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
+            <(zcat $document_file | tail -n +2) | \\
+            cat <(echo "$header") - | pigz -c > {output}
         """
 
 
@@ -1939,7 +1985,7 @@ rule roam_tmx:
 
         if [[ "$nolines" != "0" ]]; then
             cat {BIROAMER_MIX_FILES} > {params.mix_files}
-
+            
             mix_files="-m {params.mix_files}"
         fi
 
@@ -1948,3 +1994,4 @@ rule roam_tmx:
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \\
             | pigz -c > {output}
         """
+

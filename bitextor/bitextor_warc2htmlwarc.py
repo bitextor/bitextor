@@ -29,6 +29,8 @@ import zipfile
 import io
 from io import BytesIO
 
+from subprocess import PIPE, Popen
+
 
 def convert_encoding(data):
     encoding = cchardet.detect(data)['encoding']
@@ -57,6 +59,10 @@ def pdfextract(data, pdfextractor):
     except BaseException:
         return [b""]
 
+def tikaextract(data):
+    extractor = Extractor()
+    converter_stdout, error = extractor.getHTML(data)
+    return [converter_stdout.replace(b"&#160;", b" ")]
 
 def openoffice2html(data):
     datastream = io.BytesIO(data)
@@ -110,7 +116,7 @@ oparser.add_argument('-o', '--output', dest='output', help='Output WARC file', d
 oparser.add_argument('-i', '--input', dest='input', help='Input WARC file', default=sys.stdin)
 oparser.add_argument('--only-broader', dest='onlybroader', action="store_true",
                      help="Only outputs broader document format records", default=False)
-oparser.add_argument('--pdfextract', action="store_true", help='Use pdf-extract engine or pdftohtml for PDFs',
+oparser.add_argument('--pdfextract', dest="pdfextract", help='Use pdf-extract engine, pdftohtml or apache tika for PDFs',
                      default=False)
 oparser.add_argument('--pe_configfile', dest='configFile', default="",
                      help='PDFExtract configuration file for language model paths')
@@ -155,12 +161,16 @@ else:
 if options.pdfpass is not None:
     po = WARCWriter(open(options.pdfpass, 'wb'), gzip=not options.disable_pdfs_gzip)
 
-if not options.pdfpass and options.pdfextract:
+if not options.pdfpass and options.pdfextract=="pdfextract":
     from pdfextract.extract import Extractor as ExtrP
     extractor = ExtrP(
         configFile=options.configFile,
         sentenceJoinPath=options.sentenceJoinPath,
         kenlmPath=options.kenlmPath)
+
+if not options.pdfpass and options.pdfextract=="apacheTika":
+    from apachetika.extract import Extractor
+
 
 cleaner = None
 if options.cleanhtml:
@@ -260,7 +270,9 @@ for record in f:
                 http_headers=http_headers)
             po.write_record(new_record)
             continue  # do not process further!
-        if options.pdfextract:
+        if options.pdfextract == "apacheTika":
+            payloads = tikaextract(payload)
+        elif options.pdfextract == "pdfextract":
             payloads = pdfextract(payload, extractor)
         else:
             payloads = pdf2html(payload)
@@ -330,6 +342,9 @@ for record in f:
                 headers=[('Content-Type', 'text/html'), ('Content-Length', str(len(clean_tree)))]
             )
 
+        if url[-5:] == ".docx" or url[-5:] == ".epub" or url[-5:] == ".pptx" or url[-5:] == ".xlsx" or \
+           url[-4:] == ".odt" or url[-4:] == ".ods" or url[-4:] == ".odp" or url[-4:] == ".pdf":
+            url = f"{url}.converted"
         new_record = fo.create_warc_record(
             uri=url,
             record_type=record_type,

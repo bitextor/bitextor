@@ -18,3 +18,4 @@ regex>=2019.08.19,<=2022.10.31
 numpy
 validators==0.20.0
 pytools==2022.1.12
+python-apachetika
