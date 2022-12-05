@@ -654,7 +654,7 @@ rule warc2preprocess:
         get_pproc_input,
     output:
         expand("{data}/preprocess/{{target}}/w2p/{lang}/{pproc_file}", data=DATADIR, lang=LANGS, pproc_file=PPROC_FILES),
-    threads: 1
+    threads: 2
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
         pproclangs=','.join(LANGS),
@@ -1800,7 +1800,7 @@ rule documents:
             f"{TMPDIR}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}/tempDocumentsOutput.gz"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
-        sents=f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
+        sents=rules.sents.output.corpus,
     output:
         f"{PERMANENT}/{LANG1}-{LANG2}.documents.gz",
     shell:
@@ -1823,8 +1823,7 @@ rule tmx:
     :output: corpus after filtering in TMX format
     """
     input:
-        f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
-        #rules.sents.output.corpus,
+        rules.sents.output.corpus,
     output:
         f"{PERMANENT}/{LANG1}-{LANG2}.not-deduped.tmx.gz",
     shell:
@@ -1844,8 +1843,7 @@ rule deduped_tmx:
     :output.stats: the corresponding stats file (calculated from dedup txt version)
     """
     input:
-        f"{PERMANENT}/{LANG1}-{LANG2}.sent.gz",
-        #rules.sents.output.corpus,
+        rules.sents.output.corpus,
     output:
         tmx=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.tmx.gz",
         txt=f"{PERMANENT}/{LANG1}-{LANG2}.deduped.txt.gz",
@@ -1901,3 +1899,4 @@ rule roam_tmx:
                 {BIROAMER_OMIT} {BIROAMER_ALIGNMENT_CORPUS} $mix_files {SRC_LANG} {TRG_LANG} \
             | pigz -c > {output}
         """
+
