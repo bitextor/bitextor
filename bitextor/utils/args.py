@@ -237,6 +237,7 @@ def validate_args(config):
         'bicleaner': {'type': 'boolean', 'default': False},
         'bicleanerFlavour': {'type': 'string', 'allowed': ['classic', 'ai'], 'default': 'ai'},
         'bicleanerModel': {'type': 'string', 'dependencies': {'bicleaner': True}},
+        'bicleanerExtraArgs': {'type': 'string', 'dependencies': {'bicleaner': True}},
         'bicleanerGenerateModel': {'type': 'boolean', 'default': False},
         'bicleanerThreshold': {'type': 'float'},
         'bicleanerParallelCorpusTrainingPrefix': {'type': 'list'},

@@ -249,6 +249,7 @@ BICLEANER_TRAINING_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerPa
 BICLEANER_AI_MONO_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerMonoCorpusPrefix", [])
 BICLEANER_AI_DEV_CORPUS_PREFIX = return_dict_value_if_key(config, "bicleanerParallelCorpusDevPrefix", [])
 BICLEANER_BIN = "bicleaner-classify" if BICLEANER_FLAVOUR == "classic" else "bicleaner-ai-classify"
+BICLEANER_EXTRA_ARGS = return_dict_value_if_key(config, "bicleanerExtraArgs", "")
 
 if BICLEANER:
     is_flavour_ai = BICLEANER_FLAVOUR == "ai"
@@ -1667,7 +1668,7 @@ rule bicleaner:
             zcat {input.bifixer} \\
                 | {PROFILING} cache -k $text_fields {BICLEANER_BIN} $bicleaner_text_fields \\
                     --header {params.tokenizer_l1} {params.tokenizer_l2} \\
-                    --score_only -q -p {threads} {params.batch_size} - - {input.model} \\
+                    {BICLEANER_EXTRA_ARGS} --score_only -q -p {threads} {params.batch_size} - - {input.model} \\
                 | paste <(zcat {input.bifixer}) - \\
                 | pigz -c > {output}
 
