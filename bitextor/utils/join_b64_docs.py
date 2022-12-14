@@ -13,69 +13,64 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import base64
 import logging
 import argparse
-import contextlib
 
-def join(input_file='-', separator='\t', join_str='\t', is_plaintext=False, encode_errors='strict',
+def join(doc_fd, separator='\t', join_str='\t', is_plaintext=False, encode_errors='strict',
          decode_errors='strict'):
     if separator == '\n':
         raise Exception(f"the provided separator is not valid: '{repr(separator)}'")
 
-    cm = contextlib.nullcontext(sys.stdin)
     columns = set()
 
-    if input_file != '-':
-        cm = open(input_file)
+    for idx, doc in enumerate(doc_fd, 1):
+        try:
+            doc = doc.strip('\n').split(separator)
+            segments = []
+            text = []
 
-    with cm as doc_fd:
-        for idx, doc in enumerate(doc_fd):
-            try:
-                doc = doc.strip('\n').split(separator)
-                segments = []
-                text = []
+            # Get all the segments from the current document
+            for segment in doc:
+                if not is_plaintext:
+                    segment = base64.b64decode(segment).decode('utf-8', errors=decode_errors)
 
-                # Get all the segments from the current document
-                for segment in doc:
-                    if not is_plaintext:
-                        segment = base64.b64decode(segment).decode('utf-8', errors=decode_errors)
+                segments.append(segment)
 
-                    segments.append(segment)
+            if len(segment) <= 1:
+                raise Exception(f"document {idx}: at least 2 columns are needed, but {len(segment)} were found")
 
-                columns.add(len(segments))
-                nosentences = set()
-                sentences_from_segments = []
+            columns.add(len(segments))
+            nosentences = set()
+            sentences_from_segments = []
 
-                # Get all the sentences from all the segments
-                for segment in segments:
-                    if len(segment) > 0 and segment[-1] == '\n':
-                        segment = segment[:-1]
+            # Get all the sentences from all the segments
+            for segment in segments:
+                sentences = segment.rstrip('\n').split('\n')
 
-                    sentences = segment.split('\n')
+                sentences_from_segments.append(sentences)
+                nosentences.add(len(sentences))
 
-                    sentences_from_segments.append(sentences)
-                    nosentences.add(len(sentences))
+            if len(nosentences) not in (0, 1):
+                raise Exception(f"document #{idx}: same number of sentences were expected, but got different")
 
-                if len(nosentences) not in (0, 1):
-                    raise Exception(f"document #{idx + 1}: same number of sentences were expected, but got different")
+            # Join all the sentences from the segments for the current document
+            if len(nosentences) == 1:
+                nosentences = nosentences.pop()
 
-                # Join all the sentences from the segments for the current document
-                if len(nosentences) == 1:
-                    nosentences = nosentences.pop()
+                for i in range(nosentences):
+                    current_sentence = join_str.join([sentences_from_segments[j][i] for j in range(len(sentences_from_segments))])
 
-                    for i in range(nosentences):
-                        current_sentence = join_str.join([sentences_from_segments[j][i] for j in range(len(sentences_from_segments))])
+                    text.append(current_sentence)
 
-                        text.append(current_sentence)
+                text.append('') # Avoid that multiple rows are merged due to the lack of '\n'
 
-                doc = '\n'.join(text).encode('utf-8', errors=encode_errors)
-                doc = base64.b64encode(doc).decode('utf-8', errors=decode_errors)
+            doc = '\n'.join(text).encode('utf-8', errors=encode_errors)
+            doc = base64.b64encode(doc).decode('utf-8', errors=decode_errors)
 
-                print(doc)
-            except Exception as e:
-                raise Exception(f"document #{idx + 1} could not be processed") from e
+            print(doc)
+        except Exception as e:
+            raise Exception(f"document #{idx} could not be processed") from e
 
     if len(columns) not in (0, 1):
         logging.warning("different number of segments (columns) were processed: %s", columns)
@@ -84,8 +79,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="It joins the sentences of the content from BASE64 documents and returns a new BASE64-encoded document",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--input', default='-',
-                        help="Input file. If '-' is provided, stdin will be used")
+    parser.add_argument('--input', default='-', type=argparse.FileType('r'),
+                        help="Input file")
     parser.add_argument('--input-is-not-base64', action='store_true',
                         help="Input is expected to be BASE64-encoded text, but with this option plaintext will be expected instead")
     parser.add_argument('--separator', default='\t',
@@ -108,5 +103,5 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=args.logging_level)
 
-    join(input_file=args.input, separator=args.separator, join_str=args.join_str, is_plaintext=args.input_is_not_base64,
+    join(args.input, separator=args.separator, join_str=args.join_str, is_plaintext=args.input_is_not_base64,
          encode_errors=args.encode_errors, decode_errors=args.decode_errors)

@@ -43,7 +43,7 @@ jobs:
    tests:
       name: ${{ matrix.name }}
       runs-on: ubuntu-20.04
-      timeout-minutes: 360
+      timeout-minutes: 720
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
          matrix:
