@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <unordered_set>
 #include <sstream>
 #include <memory>
 #include "util/file_piece.hh"
@@ -114,11 +115,14 @@ int main(int argc, char *argv[]) {
 	// Read our joins into memory
 	vector<Join> joins;
 	string line;
+	std::unordered_set<int> left_indexes;
 	while (getline(cin, line)) {
 		istringstream iline(line);
 		Join join;
-		if (iline >> join.left_index >> join.right_index)
+		if (iline >> join.left_index >> join.right_index){
 			joins.push_back(join);
+			left_indexes.insert (int(join.left_index));
+		}
 	}
 
 	// Sort our joins by the right index so we can go through all right rows
@@ -129,11 +133,16 @@ int main(int argc, char *argv[]) {
 
 	// Read all of the left in memory
 	vector<Row> left_rows;
+	size_t left_index = 0; // the indices used by docalign start at 1
 	while (true) {
 		Row row;
+		left_index++;
 		if (!read_row(left_files, row))
 			break;
-		left_rows.push_back(move(row));
+		if (left_indexes.count(left_index) >= 1)
+			left_rows.push_back(move(row));
+		else
+			left_rows.push_back(Row());
 	}
 
 	// For all joins (sorted by their right index) start reading through right
