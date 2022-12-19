@@ -82,7 +82,7 @@ download_dictionary()
 
 download_bicleaner_model()
 {
-    local base="https://github.com/bitextor/bicleaner-data/releases/download/v1.5"
+    local base="https://github.com/bitextor/bicleaner-data/releases/latest/download"
     local langs=$1
     local output=$2
     local output_file="${output}/${langs}.tar.gz"
