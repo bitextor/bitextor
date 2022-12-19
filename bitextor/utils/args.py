@@ -296,7 +296,7 @@ def validate_args(config):
     if config['documentAligner'] == 'externalMT':
         schema['alignerCmd']['required'] = True
 
-        if monolingual_workflow and not provided_in_config['alignedCmd']:
+        if monolingual_workflow and not provided_in_config['alignerCmd']:
             # document aligner is not going to be used, so fake value is provided
             config["alignerCmd"] = ""
 
