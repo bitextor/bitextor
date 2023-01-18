@@ -179,7 +179,7 @@ pip3 install .
 # additional dependencies:
 pip3 install ./third_party/bifixer
 pip3 install ./third_party/bicleaner
-pip3 install ./third_party/bicleaner-ai
+pip3 install ./third_party/bicleaner-ai[transliterate]
 pip3 install ./third_party/kenlm --install-option="--max_order 7" # Bicleaner and Bicleaner AI dependency
 pip3 install ./third_party/biroamer && \
 python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
