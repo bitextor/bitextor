@@ -105,6 +105,8 @@ If you are using a RPM based system, use these instead:
 ```bash
 # mandatory:
 sudo dnf install git time python-devel python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
+## sentence splitter:
+sudo dnf install java-latest-openjdk-devel.x86_64
 ## Moses Perl tokenizer
 sudo dnf install perl-FindBin perl-Time-HiRes perl-Thread
 ## warc2text:
@@ -179,7 +181,7 @@ pip3 install .
 # additional dependencies:
 pip3 install ./third_party/bifixer
 pip3 install ./third_party/bicleaner
-pip3 install ./third_party/bicleaner-ai
+pip3 install ./third_party/bicleaner-ai[transliterate]
 pip3 install ./third_party/kenlm --install-option="--max_order 7" # Bicleaner and Bicleaner AI dependency
 pip3 install ./third_party/biroamer && \
 python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
