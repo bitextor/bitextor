@@ -105,6 +105,8 @@ If you are using a RPM based system, use these instead:
 ```bash
 # mandatory:
 sudo dnf install git time python-devel python3-pip golang-go cmake pigz parallel boost-devel xz-devel uchardet zlib-devel gcc-c++
+## sentence splitter:
+sudo dnf install java-latest-openjdk-devel.x86_64
 ## Moses Perl tokenizer
 sudo dnf install perl-FindBin perl-Time-HiRes perl-Thread
 ## warc2text:
