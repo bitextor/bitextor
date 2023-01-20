@@ -1,2 +1,2 @@
-python-Levenshtein==0.20.8
+python-Levenshtein==0.20.9
 scikit-learn==0.22.1
