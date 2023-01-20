@@ -140,7 +140,7 @@ annotate_and_echo_info_wrapper()
                 file="${1#*=}"
                 ;;
             --skipped-test=*)
-                file="${1#*=}"
+                skip_reason="${1#*=}"
                 ;;
         *)
         esac
@@ -148,8 +148,6 @@ annotate_and_echo_info_wrapper()
     done
 
     local status="$?"
-    #local skip_reason="$1"
-    #local skip_count_nolines=$([[ "$2" != "" ]] && echo "$2" || echo "true")
 
     local output_file="$(ls ${WORK}/permanent/${TEST_ID}/*.$file.gz 2> /dev/null)"
     local output_file_nolines="$(get_nolines ${output_file})"
@@ -157,9 +155,7 @@ annotate_and_echo_info_wrapper()
     local reference_file_nolines="$(get_nolines ${reference_file})"
 
     if [[ "$skip_reason" != "" ]]; then
-        #if [[ "$skip_count_nolines" == "true" ]]; then
         local output_file_nolines="0"
-        #fi
 
         annotate_and_echo_info "${TEST_ID}" "${status}" "${output_file_nolines}" "${skip_reason}" "${skip_count_nolines}"
 
