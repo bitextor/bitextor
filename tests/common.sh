@@ -132,33 +132,44 @@ annotate_and_echo_info()
 
 annotate_and_echo_info_wrapper()
 {
-    local status="$?"
-    local skip_reason="$1"
-    local skip_count_nolines=$([[ "$2" != "" ]] && echo "$2" || echo "true")
+    local file="sent"
+    local skip_reason=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --output-file=*)
+                file="${1#*=}"
+                ;;
+            --skipped-test=*)
+                skip_reason="${1#*=}"
+                ;;
+        *)
+        esac
+        shift
+    done
 
-    local sent_file="$(ls ${WORK}/permanent/${TEST_ID}/*.sent.gz 2> /dev/null)"
-    local sent_file_nolines="$(get_nolines ${sent_file})"
-    local reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.sent.gz 2> /dev/null)"
+    local status="$?"
+
+    local output_file="$(ls ${WORK}/permanent/${TEST_ID}/*.$file.gz 2> /dev/null)"
+    local output_file_nolines="$(get_nolines ${output_file})"
+    local reference_file="$(ls ${WORK}/output_reference/${TEST_ID}/*.$file.gz 2> /dev/null)"
     local reference_file_nolines="$(get_nolines ${reference_file})"
 
     if [[ "$skip_reason" != "" ]]; then
-        if [[ "$skip_count_nolines" == "true" ]]; then
-            local sent_file_nolines="0"
-        fi
+        local output_file_nolines="0"
 
-        annotate_and_echo_info "${TEST_ID}" "${status}" "${sent_file_nolines}" "${skip_reason}" "${skip_count_nolines}"
+        annotate_and_echo_info "${TEST_ID}" "${status}" "${output_file_nolines}" "${skip_reason}" "${skip_count_nolines}"
 
         return
     fi
 
-    local sent_file_hash="$(get_hash ${sent_file})"
+    local output_file_hash="$(get_hash ${output_file})"
     local reference_hash="$(get_hash ${reference_file})"
-    local compared_hashes="$(compare_hashes ${sent_file_hash} ${reference_hash})"
-    local compared_nolines="$(compare_nolines ${sent_file_nolines} ${reference_file_nolines})"
+    local compared_hashes="$(compare_hashes ${output_file_hash} ${reference_hash})"
+    local compared_nolines="$(compare_nolines ${output_file_nolines} ${reference_file_nolines})"
     local desc="test status: ${status} | ${compared_nolines} | ${compared_hashes}"
-    local status="$([[ "${sent_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
+    local status="$([[ "${output_file_hash}" != "${reference_hash}" ]] && echo 1 || echo ${status})"
 
-    annotate_and_echo_info "${TEST_ID}" "${status}" "${sent_file_nolines}" "${desc}"
+    annotate_and_echo_info "${TEST_ID}" "${status}" "${output_file_nolines}" "${desc}"
 }
 
 create_integrity_report()
@@ -206,7 +217,8 @@ init_test()
 
 finish_test()
 {
-    annotate_and_echo_info_wrapper
+    local output_file=$1
+    annotate_and_echo_info_wrapper $output_file
 
     popd > /dev/null
 }
