@@ -995,7 +995,7 @@ rule aggregate_matches:
     """
     input:
         lambda wildcards: [
-            f"{TRANSIENT}/{LANG1}_{LANG2}/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{DOCALIGN}.06_01.matches"
+            f"{TRANSIENT}/{LANG1}_{LANG2}/shards/{shard}/{SRC_LANG}{src_batch}_{TRG_LANG}{trg_batch}.{DOCALIGN}.06_01.matches"
             for (shard, (src_batch, trg_batch)) in get_align_inputs(SRC_LANG, TRG_LANG)
         ],
     output:
@@ -1902,12 +1902,16 @@ rule documents:
     shell:
         """
         sent_file={input.sents}
-        document_file={input.documents}
-        header=$(head -1 <(zcat {input.documents[0]}) | tr -d '\\n')
-        awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
-            <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
-            <(zcat $document_file | tail -n +2) | \\
-            cat <(echo "$header") - | pigz -c > {output}
+        documents_aligned=(`echo {input.documents} | tr ", " "\n"`)
+
+        for document in "$documents_aligned"
+        do
+            header=$(head -1 <(zcat $document) | tr -d '\\n')
+            awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
+                <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
+                <(zcat $document | tail -n +2) | \\
+                cat <(echo "$header") - | pigz -c >> {output}
+        done
         """
 
 

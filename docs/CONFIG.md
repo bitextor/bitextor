@@ -55,7 +55,7 @@ verbose: True
 ## Data sources
 
 The next set of option srefer to the source from which data will be harvested. It is possible to specify a list of websites to be crawled and/or a list of [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files that contain pre-crawled websites.
-Both can be specified either via a list of source directly in the config file, or via a separated gzipped file that contains one source per line.
+Both can be specified either via a list of source directly in the config file, or via a separated gzipped file that contains one source per line. It is also possible to specify a local directory containing files in different formats (pdf, docx, doc...). The directory can contain subdirectories with more documents.
 
 ```yaml
 hosts: ["www.elisabethtea.com","vade-antea.fr"]
@@ -66,6 +66,9 @@ warcsFile: ~/warcs.gz
 
 preverticals: ["/path/to/a.prevert.gz", "/path/to/b.prevert.gz"]
 preverticalsFile: ~/preverticals.gz
+
+directories: ["/path/to/dir_1", "/path/to/dir_2"]
+directoriesFile: ~/directories.gz
 ```
 
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
@@ -74,6 +77,8 @@ preverticalsFile: ~/preverticals.gz
 * `warcsFile`: a path to a file that contains a list of WARC files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 * `preverticals`: specify one or multiple prevertical files to use; prevertical files are the output of the SpiderLing crawler
 * `preverticalsFile`: a path to a file that contains a list of prevertical files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
+* `directories`: list of directories with files to be included in parallel text mining. Files can be in office, openoffice, epub and pdf format.
+* `directoriesFile`: a path to a file that contains a list of directories to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 
 ## Crawling
 
@@ -156,6 +161,10 @@ batches: 1024 # batches of up to 1024MB
 
 * `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`. `warc2text` is faster but less flexibile (less options) than `warc2preprocess`. There is another preprocessor, but cannot be set, and that is `prevertical2text`. This preprocessor will be used automatically when you have prevertical files, which is the format of the SpiderLing crawler. The reason why cannot be set is because is not a generic preprocessor, but specific for SpiderLing files.
 * `langs`: list of languages that will be processed in addition to `lang1` and `lang2`
+* `PDFprocessing`: option that allows to select a specific PDF processor. It is possible to use [pdfextraxt](https://github.com/bitextor/python-pdfextract) or [apacheTika](https://github.com/bitextor/python-apachetika) instead of poppler `pdf2html` converter
+* `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
+* `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
+* `PDFextract_kenlm_path`: set path for kenlm binaries
 
 Options specific to `warc2preprocess`:
 
@@ -164,11 +173,10 @@ Options specific to `warc2preprocess`:
 * `cleanHTML`: attempt to remove some parts of HTML that don't contain text (such as CSS, embedded scripts or special tags) before running ftfy, which is a quite slow, in order to improve overall speed; this has an unwanted side effect of removing too much content if the HTML document is malformed (disabled by default)
 * `html5lib`: extra parsing with [`html5lib`](https://pypi.org/project/html5lib/), which is slow but the cleanest option and parses the HTML the same way as the modern browsers, which is interesting for broken HTMLs (disabled by default)
 * `parser`: select HTML parsing library for text extraction; options are: [`bs4`](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) (default), [`modest`](https://github.com/rushter/selectolax), `lxml` (uses `html5lib`) or `simple` (very basic HTML tokenizer)
-* `PDFextract`: use [PDFExtraxt](https://github.com/bitextor/python-pdfextract) instead of poppler `pdf2html` converter
-* `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
-* `PDFextract_sentence_join_path`: set a path for sentence-join.py script, otherwise, the one included with bitextor will be used
-* `PDFextract_kenlm_path`: set path for kenlm binaries
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
+
+Options specific to `warc2text`:
+* `multilingual`: option to detect and separate multiple languages in a single document
 
 Boilerplate:
 
@@ -371,6 +379,8 @@ elrc: True
 tmx: True
 deduped: False
 
+granularity: ["sentences","documents"]
+
 biroamer: True
 biroamerOmitRandomSentences: True
 biroamerMixFiles: ["/home/user/file-tp-mix1", "/home/user/file-to-mix2"]
@@ -384,6 +394,7 @@ biroamerImproveAlignmentCorpus: /home/user/Europarl.en-fr.txt
 * `elrc`: include some ELRC quality indicators in the final corpus, such as the ratio of target length to source length; these indicators can be used later to filter-out some segment pairs manually
 * `tmx`: generate a [TMX](https://en.wikipedia.org/wiki/Translation_Memory_eXchange) translation memory of the output corpus
 * `deduped`: generate a de-duplicated tmx and regular versions of the corpus; the tmx corpus will contain a list of URLs for the sentence pairs that were found in multiple websites
+* `granularity`: by default, Bitextor generates a file with parallel sentences. With this option it is possible to add an additional output file containing the full parallel documents. For this output, two documents are parallel when the `{lang1}-{lang2}.sents.gz` file contains at least one pair of sentences extracted from these documents. 
 * `biroamer`: use [Biroamer](https://github.com/bitextor/biroamer) to ROAM (randomize, omit, anonymize and mix) the parallel corpus; in order to use this feature, `tmx: True` or `deduped: True` will be necessary
 * `biroamerOmitRandomSentences`: omit close to 10% of the tmx corpus
 * `biroamerMixFiles`: use extra sentences to improve anonymization, this option accepts a list of files which will add the stored sentences, the files are expected to be in Moses format
