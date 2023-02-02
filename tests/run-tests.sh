@@ -272,6 +272,28 @@ tests-db()
     ) &
 }
 
+tests-outputs()
+{
+    ## Use dictionary pipeline (en-fr)
+    (
+        init_test "80"
+
+        ${BITEXTOR} \
+            --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+                granularity="['sentences','documents']" \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+                warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+                documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True \
+                bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" bicleanerThreshold=0.1 \
+                deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+            &> "${WORK}/reports/${TEST_ID}.report"
+
+        finish_test --output-file="documents"
+    ) &
+}
+
+
+
 # Generate dictionary (id >= 30)
 tests-gendic()
 {
@@ -307,7 +329,7 @@ tests-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "40"); do
-            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
+            annotate_and_echo_info_wrapper --skipped-test="very time-consuming" #"skipped test: very time-consuming"
         done
 
         test40_dic_hash_after="$test40_dic_hash_before"
@@ -353,7 +375,7 @@ tests-gendic-genbicleaner()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "50"); do
-            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
+            annotate_and_echo_info_wrapper --skipped-test="very time-consuming" #"skipped test: very time-consuming"
         done
         return
     fi
@@ -417,7 +439,7 @@ tests-neural()
     if [[ "$CI" == "true" ]]; then
         # Disable these tests since they are very time-consuming and exceed the time limits of the CI
         for TEST_ID in $(echo "70 71 72 73"); do
-            annotate_and_echo_info_wrapper "skipped test: very time-consuming"
+            annotate_and_echo_info_wrapper --skipped-test="very time-consuming" #"skipped test: very time-consuming"
         done
         return
     fi
@@ -551,7 +573,7 @@ run-tests()
 
     tests=(tests-mt tests-db tests-gendic tests-genbicleaner \
            tests-gendic-genbicleaner tests-mt-db tests-neural \
-           tests-others)
+           tests-others tests-outputs)
 
     for i in $(seq 0 "$(echo ${#tests[@]}-1 | bc)"); do
         # (flag & 2^notest) >> notest # will behaviour like chmod's mode
@@ -588,7 +610,7 @@ if [[ "$DRYRUN" == "false" ]]; then
 fi
 
 # Get hashes from all files
-for TEST_ID in $(echo "10 11 12 13 20 30 40 50 60 70 71 72 73 100 101 102"); do
+for TEST_ID in $(echo "10 11 12 13 20 30 40 50 60 70 71 72 73 80 100 101 102"); do
     create_integrity_report "$WORK" "${WORK}/reports/hash_values_${TEST_ID}.report" "$TEST_ID"
 done
 

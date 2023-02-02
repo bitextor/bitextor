@@ -246,8 +246,27 @@ wait
 
 wait
 
+# Dictionary-based, check the documents output
+## Use dictionary pipeline (en-fr)
+(
+    init_test "40"
+
+    ${BITEXTOR} \
+        --config permanentDir="${WORK}/permanent/${TEST_ID}" \
+            granularity="['sentences','documents']" \
+            dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
+            warcs="['${WORK}/data/warc/greenpeace.warc.gz']" preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
+            bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
+        &> "${WORK}/reports/${TEST_ID}.report"
+
+    finish_test --output-file="documents"
+) &
+
+wait
+
 # Get hashes from all files
-for TEST_ID in $(echo "10 11 20 60 100 101 102 30 31"); do
+for TEST_ID in $(echo "10 11 20 60 100 101 102 30 31 40"); do
     create_integrity_report "$WORK" "${WORK}/reports/hash_values_${TEST_ID}.report" "$TEST_ID"
 done
 
