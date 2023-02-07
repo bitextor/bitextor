@@ -16,7 +16,7 @@ env:
 jobs:
    conda_build_testing:
       name: Build and testing
-      runs-on: ubuntu-20.04
+      runs-on: ubuntu-latest
       timeout-minutes: 360
       defaults:
          run:

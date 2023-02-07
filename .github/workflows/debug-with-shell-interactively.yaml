@@ -26,7 +26,7 @@ env:
 
 jobs:
    interactive_shell:
-      runs-on: ubuntu-20.04
+      runs-on: ubuntu-latest
       steps:
       -  name: Install required linux packages
          if: ${{ github.event.inputs.install_bitextor == 'true' }}
