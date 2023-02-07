@@ -42,7 +42,7 @@ env:
 jobs:
    tests:
       name: ${{ matrix.name }}
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       timeout-minutes: 720
       strategy:
          fail-fast: false # Continue even when a matrix job fails in order to detect as many errors as possible
@@ -72,7 +72,7 @@ jobs:
          uses: conda-incubator/setup-miniconda@v2.1.1
          with:
             miniconda-version: "latest"
-            python-version: 3.8.5
+            python-version: 3.10.6
             activate-environment: bitextor-tests
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v3
@@ -84,7 +84,7 @@ jobs:
          if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          working-directory: ./conda-build
          run: |
-            ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
+            ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.10 -s -r
       -  name: Install Bitextor locally
          if: ${{ env.CREATE_BUILD == 'true' && (env.TEST_ID == 'all' || env.TEST_ID == matrix.test_id) }}
          run: |

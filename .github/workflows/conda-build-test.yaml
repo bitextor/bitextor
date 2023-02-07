@@ -16,7 +16,7 @@ env:
 jobs:
    conda_build_testing:
       name: Build and testing
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       timeout-minutes: 360
       defaults:
          run:
@@ -26,7 +26,7 @@ jobs:
          uses: conda-incubator/setup-miniconda@v2.1.1
          with:
             miniconda-version: "latest"
-            python-version: 3.8.5
+            python-version: 3.10.6
             activate-environment: bitextor-build
             channels: conda-forge,bitextor,bioconda,dmnapolitano,esarrias
       -  uses: actions/checkout@v3
@@ -35,7 +35,7 @@ jobs:
       -  name: Create Bitextor conda build
          working-directory: ./conda-build
          run: |
-            ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.8 -s -r
+            ./make_build.sh -n bitextor-pkg -e bitextor-pkg-build -p 3.10 -s -r
       -  name: Install Bitextor
          run: |
             # Tmp workaround: we install the package in the same environment (waiting answers: https://github.com/conda-incubator/setup-miniconda/issues/221)
