@@ -218,7 +218,7 @@ wait
         --config permanentDir="${WORK}/permanent/${TEST_ID}" \
             dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" \
             directories="['${WORK}/data/documents-dir']" PDFprocessing="apacheTika"\
-            preprocessor="warc2text" shards=1 batches=512 lang1=en lang2=fr \
+            preprocessor="warc2text" langs="['en', 'fr', 'es']" shards=1 batches=512 lang1=en lang2=fr \
             documentAligner="DIC" dic="${WORK}/permanent/en-fr.dic" sentenceAligner="hunalign" bicleaner=True bicleanerFlavour="classic" \
             bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerThreshold=0.1 deferred=False tmx=True ${BITEXTOR_EXTRA_ARGS} \
         &> "${WORK}/reports/${TEST_ID}.report"

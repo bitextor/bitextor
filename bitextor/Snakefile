@@ -54,6 +54,10 @@ if "lang1" in config:
 if "lang2" in config:
     LANGS.add(LANG2)
 
+# set() is useful to avoid repeated languages, but an ordered list, which always returns the elements in the same order, is better
+# for reproducibility and avoid re-runs due to changes in rules params
+LANGS = list(LANGS)
+
 PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 VERBOSE = config["verbose"]
 
@@ -658,7 +662,7 @@ rule warc2preprocess:
     threads: 2
     params:
         folder=lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),  # remove "{lang}/{pproc_file}"
-        pproclangs=','.join(LANGS),
+        pproclangs=f"{LANG1},{LANG2}",
         boilerplate="--boilerpipe" if BOILERPLATE_CLEANING else '',
         heap_size=apply_format(str(BOILERPIPE_MAX_HEAP_SIZE) if BOILERPIPE_MAX_HEAP_SIZE >= 0 else '', "--boilerpipe-max-heap-size {}"),
         paragraphs="--paragraph-identification" if PARAGRAPH_IDENTIFICATION else '',

@@ -22,7 +22,7 @@ fi
 if [[ ! -f $PREFIX/lib/libhunspell.a ]]; then
   ln -s $PREFIX/lib/libhunspell{-1.7,}.a
 fi
-
+$PYTHON -m pip install pip Cython setuptools wheel -U
 $PYTHON -m pip install .[all]
 ### FastSpell (bicleaner-hardrules)
 INCLUDE_PATH="$PREFIX/include" $PYTHON -m pip install hunspell
@@ -39,7 +39,6 @@ $PYTHON -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/
 $PYTHON -m pip install ./third_party/neural-document-aligner
 $PYTHON -m pip install ./third_party/vecalign
 ## CLD3
-$PYTHON -m pip install Cython
 $PYTHON -m pip install pycld3
 
 echo -e " - \e[4mMake...\e[0m"
