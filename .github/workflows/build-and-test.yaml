@@ -16,22 +16,22 @@ env:
 jobs:
    build_and_testing:
       name: Build and testing
-      runs-on: ubuntu-20.04
+      runs-on: ubuntu-22.04
       timeout-minutes: 360
       steps:
       -  name: Install required linux packages
          run: |
-            sudo apt-get --assume-yes update
-            sudo apt-get --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
+            sudo apt --assume-yes update
+            sudo apt --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libunwind-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
       -  name: Set up Python3
          uses: actions/setup-python@v2
          with:
-            python-version: '3.8.5'
+            python-version: '3.10.6'
             architecture: 'x64'
       -  name: Install Python dev tools
          run: |
-            pip3 install --upgrade pip
-            sudo apt-get --assume-yes install python3-venv python3-setuptools
+            sudo apt --assume-yes install python3-venv python3-setuptools
+            pip3 install --upgrade pip setuptools wheel
             pip3 install Cython
       -  name: Set up JDK
          uses: actions/setup-java@v1
