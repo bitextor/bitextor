@@ -61,6 +61,10 @@ if "lang1" in config:
 if "lang2" in config:
     LANGS.add(LANG2)
 
+# set() is useful to avoid repeated languages, but an ordered list, which always returns the elements in the same order, is better
+# for reproducibility and avoid re-runs due to changes in rules params
+LANGS = list(LANGS)
+
 PROFILING = return_dict_value_if_key(config, "profiling", "", pos_value="\\time -v")
 VERBOSE = config["verbose"]
 LOGGER = set_up_logging_logger(logging.getLogger("bitextor"), level=logging.DEBUG if VERBOSE else logging.INFO)
