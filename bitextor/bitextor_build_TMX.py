@@ -232,7 +232,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 options.no_delete_seg)
 
             if text_writer:
-                text_writer.write("\t".join([x for x in bestseg.values() if x]) + "\n")
+                text_writer.write("\t".join([x for x in bestseg.values()]) + "\n")
 
             urls1 = set()
             urls2 = set()
@@ -257,7 +257,7 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 options.no_delete_seg)
 
         if text_writer:
-            dedup_output = "\t".join([x for x in fieldsdict.values() if x])
+            dedup_output = "\t".join([x for x in fieldsdict.values()])
 
             if dedup_output:
                 text_writer.write(dedup_output + "\n")
