@@ -1,11 +1,10 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <thread>
 #include <memory>
-#include <mutex>
 #include <vector>
 #include <cmath>
 #include <boost/program_options.hpp>
@@ -64,16 +63,16 @@ template <typename T> void stop(blocking_queue<unique_ptr<T>> &queue, vector<thr
 
 ostream &operator<<(ostream &out, queue_performance const &performance) {
 	return out << "  underflow: " << performance.underflow << '\n'
-	           << "   overflow: " << performance.overflow << '\n';
+			   << "   overflow: " << performance.overflow << '\n';
 }
 
 void print_score(float score, size_t left_id, size_t right_id)
 {
 	cout << fixed << setprecision(5)
-	     << score
-	     << '\t' << left_id
-	     << '\t' << right_id
-	     << '\n';
+		 << score
+		 << '\t' << left_id
+		 << '\t' << right_id
+		 << '\n';
 }
 
 size_t queue_lines(util::FilePiece &fin, blocking_queue<unique_ptr<vector<Line>>> &queue, size_t skip_rate = 1)
@@ -97,7 +96,7 @@ size_t queue_lines(util::FilePiece &fin, blocking_queue<unique_ptr<vector<Line>>
 				break;
 		}
 
-		queue.push(move(line_batch));
+		queue.push(std::move(line_batch));
 	}
 
 	return document_count;
@@ -163,8 +162,8 @@ int main(int argc, char *argv[])
 	
 	if (vm.count("help") || !vm.count("translated-tokens") || !vm.count("english-tokens")) {
 		cout << "Usage: " << argv[0]
-		     << " TRANSLATED-TOKENS ENGLISH-TOKENS\n\n"
-		     << generic_desc << endl;
+			 << " TRANSLATED-TOKENS ENGLISH-TOKENS\n\n"
+			 << generic_desc << endl;
 		return 1;
 	}
 
@@ -185,6 +184,7 @@ int main(int argc, char *argv[])
 	// that parse documents and keep a local hash table for counting. At the
 	// end these tables are merged into df.
 	unordered_map<NGram,size_t> df;
+	unordered_set<NGram> max_ngram_pruned;
 	size_t in_document_cnt, en_document_cnt, document_cnt;
 
 	{
@@ -243,8 +243,10 @@ int main(int argc, char *argv[])
 			if (entry.second < min_ngram_cnt)
 				continue;
 
-			if (entry.second > max_ngram_cnt)
+			if (entry.second > max_ngram_cnt) {
+				max_ngram_pruned.insert(entry.first);
 				continue;
+			}
 
 			pruned_df[entry.first] = entry.second;
 		}
@@ -262,7 +264,7 @@ int main(int argc, char *argv[])
 		mutex ref_index_mutex;
 
 		blocking_queue<unique_ptr<vector<Line>>> queue(n_load_threads * QUEUE_SIZE_PER_THREAD);
-		vector<thread> workers(start(n_load_threads, [&queue, &ref_index, &ref_index_mutex, &df, &document_cnt, &ngram_size]() {
+		vector<thread> workers(start(n_load_threads, [&queue, &ref_index, &ref_index_mutex, &df, &max_ngram_pruned, &document_cnt, &ngram_size]() {
 			unordered_map<NGram, vector<DocumentNGramScore>> local_ref_index;
 
 			while (true) {
@@ -280,7 +282,7 @@ int main(int argc, char *argv[])
 					// so there should be no concurrency issue.
 					// DF is accessed read-only. N starts counting at 1.
 					DocumentRef ref;
-					calculate_tfidf(doc, ref, document_cnt, df);
+					calculate_tfidf(doc, ref, document_cnt, df, max_ngram_pruned);
 
 					for (auto const &entry : ref.wordvec) {
 						local_ref_index[entry.hash].push_back(DocumentNGramScore{
@@ -330,7 +332,7 @@ int main(int argc, char *argv[])
 
 		blocking_queue<unique_ptr<vector<DocumentRef>>> score_queue(n_score_threads * QUEUE_SIZE_PER_THREAD);
 
-		vector<thread> read_workers(start(n_read_threads, [&read_queue, &score_queue, &document_cnt, &df, &ngram_size]() {
+		vector<thread> read_workers(start(n_read_threads, [&read_queue, &score_queue, &document_cnt, &df, &max_ngram_pruned, &ngram_size]() {
 			while (true) {
 				unique_ptr<vector<Line>> line_batch(read_queue.pop());
 
@@ -346,10 +348,10 @@ int main(int argc, char *argv[])
 					ReadDocument(line.str, doc, ngram_size);
 
 					ref_batch->emplace_back();
-					calculate_tfidf(doc, ref_batch->back(), document_cnt, df);
+					calculate_tfidf(doc, ref_batch->back(), document_cnt, df, max_ngram_pruned);
 				}
 
-				score_queue.push(move(ref_batch));
+				score_queue.push(std::move(ref_batch));
 			}
 		}));
 
@@ -459,7 +461,7 @@ int main(int argc, char *argv[])
 
 		if (verbose)
 			cerr << "Read queue performance (Note: blocks when score queue fills up):\n" << read_queue.performance()
-			     << "Score queue performance:\n" << score_queue.performance();
+				 << "Score queue performance:\n" << score_queue.performance();
 	}
 
 	return 0;

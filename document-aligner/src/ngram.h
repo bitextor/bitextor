@@ -22,7 +22,7 @@ public:
 		return end_;
 	}
 
-	inline operator bool() const {
+	inline explicit operator bool() const {
 		return !end_;
 	}
 
