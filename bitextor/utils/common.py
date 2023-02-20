@@ -155,10 +155,17 @@ def check_lengths(file_path_from, file_path_to, throw=True):
 def check_connection(url):
     connection_error = False
     connection = None
+    headers = requests.utils.default_headers()
+
+    headers.update(
+        {
+            'User-Agent': 'Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)',
+        }
+    )
 
     for check in range(2):
         try:
-            connection = requests.get(url, timeout=15)
+            connection = requests.get(url, timeout=15, headers=headers)
         except requests.exceptions.ConnectTimeout:
             if check:
                 connection_error = True

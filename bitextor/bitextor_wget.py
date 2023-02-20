@@ -132,14 +132,20 @@ if __name__ == "__main__":
 
     if '//' not in args.url:
         args.url = '%s%s' % ('http://', args.url)
+    headers = requests.utils.default_headers()
 
+    headers.update(
+        {
+            'User-Agent': 'Mozilla/5.0 (compatible; Bitextor/8 +https://github.com/bitextor/bitextor)',
+        }
+    )
     connection_error, fixed_url = check_connection(args.url)
 
     if not connection_error:
         args.url = fixed_url
 
         try:
-            robots = requests.get(args.url + "/robots.txt", timeout=15).text.split("\n")
+            robots = requests.get(args.url + "/robots.txt", timeout=15, headers=headers).text.split("\n")
             for line in robots:
                 if "Crawl-delay" in line:
                     try:
