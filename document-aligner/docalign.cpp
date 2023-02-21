@@ -251,8 +251,11 @@ int main(int argc, char *argv[])
 			pruned_df[entry.first] = entry.second;
 		}
 
-		if (verbose)
-			cerr << "Pruned " << df.size() - pruned_df.size() << " (" << 100.0 - 100.0 * pruned_df.size() / df.size() << "%) entries from DF" << endl;
+		if (verbose) {
+            cerr << "Pruned " << df.size() - pruned_df.size() << " (" << 100.0 - 100.0 * pruned_df.size() / df.size()
+                 << "%) entries from DF" << endl;
+            cerr << "Very frequent ngram set is now " << max_ngram_pruned.size() << " long." << endl;
+        }
 
 		swap(df, pruned_df);
 	}
