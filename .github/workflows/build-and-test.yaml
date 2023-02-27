@@ -24,7 +24,7 @@ jobs:
             sudo apt --assume-yes update
             sudo apt --assume-yes install cmake automake liblzma-dev time poppler-utils libboost-all-dev pkg-config curl git pigz wget zlib1g zlib1g-dev libgoogle-perftools-dev libunwind-dev libsparsehash-dev coreutils uchardet libuchardet-dev libzip-dev libhunspell-dev hunspell-fr
       -  name: Set up Python3
-         uses: actions/setup-python@v2
+         uses: actions/setup-python@v4
          with:
             python-version: '3.10.6'
             architecture: 'x64'
@@ -34,9 +34,10 @@ jobs:
             pip3 install --upgrade pip setuptools wheel
             pip3 install Cython
       -  name: Set up JDK
-         uses: actions/setup-java@v1
+         uses: actions/setup-java@v3
          with:
             java-version: 8
+            distribution: zulu
             java-package: jdk
             architecture: x64
       -  uses: actions/checkout@v3
@@ -54,7 +55,7 @@ jobs:
             pip3 install ./third_party/neural-document-aligner
             pip3 install ./third_party/vecalign
       -  name: Setup golang
-         uses: actions/setup-go@v2
+         uses: actions/setup-go@v3
          with:
             go-version: 1.17.3
       -  name: Install giashard

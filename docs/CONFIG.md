@@ -40,14 +40,14 @@ There are some optional parameters that allow for a finer control of the executi
 
 ```yaml
 until: preprocess
-parallelJobs: {translate: 1, docaling: 2, segaling: 2, bicleaner: 1}
-parallelWorkers: {translate: 4, docaling: 8, segaling: 8, bicleaner: 2, mgiza: 2}
+parallelJobs: {translate: 1, docaling: 2, segalign: 2, bicleaner: 1}
+parallelWorkers: {translate: 4, docaling: 8, segalign: 8, bicleaner: 2, mgiza: 2}
 profiling: True
 verbose: True
 ```
 
-* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`
-* `parallelJobs`: a dictionary specifying the number snakemake jobs which will be running in parallel. By default, all the jobs will be run in parallel only being limited by the number of cores or threads provided to Bitextor (check `-c` and `-j` from [snakemake CLI arguments](https://snakemake.readthedocs.io/en/stable/executing/cli.html)). This option might be useful for cases where, e.g., you need to limit the resources for a specific job (e.g. run Bicleaner with GPU and only 1 GPU is available). Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer` and `bicleaner`.
+* `until`: pipeline executes until specified step and stops. The resulting files will not necessarily be in `permanentDir`, they can also be found in `dataDir` or `transientDir` depending on the rule. Allowed values: `crawl`, `preprocess`, `shard`, `split`, `translate`, `tokenise`, `tokenise_src`, `tokenise_trg`, `docalign`, `segalign`, `bifixer`, `bicleaner` and `filter`.
+* `parallelJobs`: a dictionary specifying the number snakemake jobs which will be running in parallel. By default, all the jobs will be run in parallel only being limited by the number of cores or threads provided to Bitextor (check `-c` and `-j` from [snakemake CLI arguments](https://snakemake.readthedocs.io/en/stable/executing/cli.html)). This option might be useful for cases where, e.g., you need to limit the resources for a specific job (e.g. run Bicleaner with GPU and only 1 GPU is available). This options is also used for limit GPU resources, which is unlimited by default (you can avoid setting this option to handle GPU resources and export `CUDA_VISIBLE_DEVICES` envvar instead at environment level, or combine both configuration approaches). Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer` and `bicleaner`.
 * `parallelWorkers`: a dictionary specifying the number of cores or threads that should be used for a tool (this might be done throught `parallel` or native configuration of the specific tool). Allowed values: `split`, `translate`, `tokenise`, `docalign`, `segalign`, `bifixer`, `bicleaner`, `filter`, `sents` and `mgiza`. Be aware that, if the provided value to `mgiza` is greater than 1, the result will not be deterministic (check out [this issue](https://github.com/moses-smt/mgiza/issues/26) for more information).
 * `profiling`: use `/usr/bin/time` tool to obtain profiling information about each step.
 * `verbose`: output more details about the pipeline execution.
@@ -302,11 +302,11 @@ documentAlignerThreshold: 0.1
 
 ```yaml
 documentAligner: NDA
-embeddingsBatchSize: 64
+neuralToolsBatchSize: {NDA: 32, vecalign: 32, bicleaner: 32}
 embeddingsModel: LaBSE
 ```
 
-* `embeddingsBatchSize`: specify the batch size of the embeddings when processing them. This may allow you to control the total amount of size used in your device, what may be very useful for GPUs.
+* `neuralToolsBatchSize`: specify the batch size of the neural tools. This may allow you to control the total amount of size used in your device, what may be very useful for GPUs. Allowed values: `NDA` (default value is 32), `vecalign` (default value is 32) and `bicleaner`.
 * `embeddingsModel`: model which will be used in order to generate the embeddings. There are different models available from SentenceTransformers, but there should be used a [multilingual model](https://www.sbert.net/docs/pretrained_models.html#multi-lingual-models). This option affects to the `vecalign` segment aligner as well.
 
 ## Segment alignment

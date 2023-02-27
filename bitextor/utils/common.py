@@ -26,7 +26,10 @@ import sys
 import os
 import requests
 import shlex
+import time
 import logging
+
+from pytools.persistent_dict import NoSuchEntryError
 
 LOGGER = logging.getLogger("bitextor")
 
@@ -242,26 +245,6 @@ def get_all_idxs_from_list(l, element):
     return idxs
 
 
-def get_snakemake_execution_mark(tmp_path):
-    mark_path = f"{tmp_path}/mark_first_execution"
-
-    return mark_path
-
-
-def is_first_snakemake_execution(tmp_path, create_mark=False):
-    mark_path = get_snakemake_execution_mark(tmp_path)
-
-    if path_exists(mark_path):
-        return False
-
-    # Create mark?
-    if create_mark:
-        with open(mark_path, "w"):
-            pass
-
-    return True
-
-
 def path_exists(path, expand=True, f=os.path.isfile):
     _path = path
 
@@ -269,3 +252,63 @@ def path_exists(path, expand=True, f=os.path.isfile):
         _path = os.path.expanduser(path)
 
     return f(_path)
+
+def debug_if_true(msg, debug, flush=True):
+    if debug:
+        LOGGER.debug("%s", msg)
+
+        if flush:
+            flush_logger(LOGGER)
+
+def initialize_persistent_dict(persistent_storage):
+    # WARNING: call only once! Remember that Snakemake resets the WHOLE workflow a few times...
+
+    err = False
+    d = {"gpu": {},
+         "mutex": ''}
+
+    for k, v in d.items():
+        try:
+            persistent_storage.fetch(k)
+
+            LOGGER.warning("The dictionary is expected to be empty if this is the only instance running: "
+                           "found key '%s' (if this is unexpected, check out ~/.cache/pytools)", k)
+
+            err = True
+        except NoSuchEntryError:
+            persistent_storage.store(k, v)
+
+    if err:
+        LOGGER.warning("There were values in the persistent dictionary: if you're not running parallel instances, "
+                       "this is not expected: waiting 20s before proceed")
+        flush_logger(LOGGER)
+        time.sleep(20)
+
+def set_up_logging_logger(logger, filename=None, level=logging.INFO, format="[%(asctime)s] [%(name)s] [%(levelname)s] [%(module)s:%(lineno)d] %(message)s",
+                          display_when_file=False):
+    handlers = [
+        logging.StreamHandler()
+    ]
+
+    if filename is not None:
+        if display_when_file:
+            # Logging messages will be stored and displayed
+            handlers.append(logging.FileHandler(filename))
+        else:
+            # Logging messages will be stored and not displayed
+            handlers[0] = logging.FileHandler(filename)
+
+    formatter = logging.Formatter(format)
+
+    for h in handlers:
+        h.setFormatter(formatter)
+
+        logger.addHandler(h)
+
+    logger.setLevel(level)
+
+    return logger
+
+def flush_logger(logger):
+    for handler in logger.handlers:
+        handler.flush()

@@ -7,7 +7,9 @@ import os
 import tldextract
 import validators
 from itertools import product
+import logging
 
+LOGGER = logging.getLogger("bitextor")
 
 """
 Group hosts by domain
@@ -246,7 +248,7 @@ def apply_format(string, replace_format, replace_token="{}", replace_only_if_tru
 """
 Helper function to make optional an input file
 """
-def optional_str_input(str_input, condition, key=None):
+def optional_input_file(str_input, condition, key=None):
     if key is not None:
         if key in str_input:
             return [str_input[key]] if condition else []
