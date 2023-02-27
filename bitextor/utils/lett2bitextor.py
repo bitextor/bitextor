@@ -26,6 +26,8 @@ from tldextract import extract
 from common import open_xz_or_gzip_or_plain
 
 def main(args):
+    sys.stdin.reconfigure(encoding='utf-8', errors="backslashreplace")
+
     lett_file = args.lett_file
     langs = args.langs
     output_prefix = args.output_prefix
@@ -39,7 +41,7 @@ def main(args):
     output_files = {}
     number_output_files_open = {}
     preprocess_files = ("text", "url", "mime", "html")
-    lett_context = gzip.open(lett_file, 'rt', errors='ignore') if lett_file != '-' else contextlib.nullcontext(enter_result=sys.stdin)
+    lett_context = gzip.open(lett_file, 'rt') if lett_file != '-' else contextlib.nullcontext(enter_result=sys.stdin)
 
     with lett_context as lett:
         for idx, line in enumerate(lett, 1):
