@@ -14,7 +14,7 @@ struct queue_performance {
 template <typename T> class blocking_queue
 {
 public:
-	explicit blocking_queue(size_t capacity);
+	explicit blocking_queue(size_t size);
 	
 	void push(T const &item);
 	void push(T &&item);
