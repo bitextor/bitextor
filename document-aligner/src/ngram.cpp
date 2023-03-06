@@ -1,7 +1,5 @@
 #include "ngram.h"
 #include "murmur_hash.h"
-#include <sstream>
-#include <iostream>
 
 using namespace std;
 
