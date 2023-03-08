@@ -146,7 +146,6 @@ annotate_and_echo_info_wrapper()
         esac
         shift
     done
-    local skip_count_nolines=$([[ "$2" != "" ]] && echo "$2" || echo "true")
 
     local status="$?"
 
@@ -156,9 +155,8 @@ annotate_and_echo_info_wrapper()
     local reference_file_nolines="$(get_nolines ${reference_file})"
 
     if [[ "$skip_reason" != "" ]]; then
-        if [[ "$skip_count_nolines" == "true" ]]; then
-            local output_file_nolines="0"
-        fi
+        local output_file_nolines="0"
+
         annotate_and_echo_info "${TEST_ID}" "${status}" "${output_file_nolines}" "${skip_reason}" "${skip_count_nolines}"
 
         return
