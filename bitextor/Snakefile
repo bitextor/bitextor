@@ -1811,16 +1811,23 @@ rule documents:
     shell:
         """
         sent_file={input.sents}
-        documents_aligned=(`echo {input.documents} | tr ", " "\n"`)
+        documents_aligned=$(echo {input.documents} | tr ", " "\n")
+        header_ok=""
 
-        for document in "$documents_aligned"
+        for document in $documents_aligned
         do
-            header=$(head -1 <(zcat $document) | tr -d '\\n')
+            header="-n" #echo flag in order to avoid the new line
+            if [[ -z "$header_ok" ]]; then
+                header=$(head -1 <(zcat $document) | tr -d '\\n')
+                header_ok="true"
+            fi
             awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
                 <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
                 <(zcat $document | tail -n +2) | \\
-                cat <(echo "$header") - | pigz -c >> {output}
+                cat <(echo "$header") - | pigz -c >> {PERMANENT}.non_deduped.gz
         done
+        zcat {PERMANENT}.non_deduped.gz | sort | uniq | pigz -c > {output}
+        rm {PERMANENT}.non_deduped.gz
         """
 
 
