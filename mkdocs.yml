@@ -6,6 +6,11 @@ site_author: Bitextor Team
 
 repo_url: https://github.com/bitextor/bitextor/
 
+build:
+    os: ubuntu-22.04
+    tools:
+        python: "3.10"
+
 theme:
     name: readthedocs
     nav_style: dark
