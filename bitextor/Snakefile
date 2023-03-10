@@ -1824,10 +1824,10 @@ rule documents:
             awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
                 <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
                 <(zcat $document | tail -n +2) | \\
-                cat <(echo "$header") - | pigz -c >> {PERMANENT}.non_deduped.gz
+                cat <(echo "$header") - | pigz -c >> {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz
         done
-        zcat {PERMANENT}.non_deduped.gz | sort | uniq | pigz -c > {output}
-        rm {PERMANENT}.non_deduped.gz
+        zcat {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz | LC_ALL=C sort | uniq | pigz -c > {output}
+        rm {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz
         """
 
 
