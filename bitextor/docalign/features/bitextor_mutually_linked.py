@@ -19,9 +19,18 @@ import sys
 import argparse
 import re
 import base64
+from urllib.parse import urljoin, urlparse
 
 from bitextor.utils.common import open_xz_or_gzip_or_plain
 
+def is_url_absolute(url):
+    absolute = False
+    # urlib module raises a "ValueError: Invalid IPv6 URL" error if the url contains special characters
+    try:
+        absolute = bool(urlparse(url).netloc)
+    except:
+        absolute = True
+    return absolute
 
 def extract_urls(html_file, url_file, docs, offset=1):
     with open_xz_or_gzip_or_plain(html_file) as hd:
@@ -29,7 +38,11 @@ def extract_urls(html_file, url_file, docs, offset=1):
             for url in ud:
                 html_content = base64.b64decode(next(hd, None)).decode("utf-8", errors="ignore")
                 links = re.findall('''href\s*=\s*['"]\s*([^'"]+)['"]''', html_content, re.S)
-                docs[offset] = [url, set(list(links))]
+                for idx, link in enumerate(links):
+                    if not is_url_absolute(link):
+                            # Resolve relative URL
+                            links[idx] = urljoin(url, link)
+                docs[offset] = [url.strip(), set(list(links))]
                 offset += 1
 
     return offset
