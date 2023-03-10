@@ -29,7 +29,7 @@ INCLUDE_PATH="$PREFIX/include" $PYTHON -m pip install hunspell
 ### Bicleaner, Bicleaner AI and KenLM
 $PYTHON -m pip install ./third_party/bicleaner
 $PYTHON -m pip install ./third_party/bicleaner-ai
-$PYTHON -m pip install ./third_party/kenlm --install-option="--max_order 7"
+$PYTHON -m pip install ./third_party/kenlm --config-settings="--build-option=--max_order=7"
 ### Bifixer
 $PYTHON -m pip install ./third_party/bifixer
 ### Biroamer and model

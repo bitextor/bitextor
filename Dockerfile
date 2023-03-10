@@ -89,7 +89,7 @@ RUN pip3 install .[all]
 ## bicleaner
 RUN pip3 install ./third_party/bicleaner
 RUN pip3 install ./third_party/bicleaner-ai
-RUN pip3 install ./third_party/kenlm --install-option="--max_order=7"
+RUN pip3 install ./third_party/kenlm --config-settings="--build-option=--max_order=7"
 ##  bifixer
 RUN pip3 install ./third_party/bifixer
 ## biroamer
