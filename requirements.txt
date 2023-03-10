@@ -1,8 +1,8 @@
 -r requirements/requirements-prevertical2text.txt
-snakemake==7.20.0
+snakemake==7.24.1
 warcio==1.7.4
 tldextract>=3.1.0,<=3.4.0
-tqdm>=4.60.0,<=4.64.1
+tqdm>=4.60.0,<=4.65.0
 toolwrapper>=0.4.1,<=2.1.0
 sacrebleu==2.3.1
 func_timeout==4.3.5
