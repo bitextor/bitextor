@@ -513,6 +513,16 @@ tests-neural()
 # Other options (id >= 100)
 tests-others()
 {
+    if [[ "$CI" == "true" ]]; then
+        # Disable these tests since they are very time-consuming and exceed the time limits of the CI because biroamer GPU use
+        for TEST_ID in $(echo "100 101 102"); do
+            annotate_and_echo_info_wrapper --skipped-test="very time-consuming" #"skipped test: very time-consuming"
+        done
+        return
+    fi
+
+    wait-if-envvar-is-true
+    
     ## MT and Biroamer (en-fr)
     (
         init_test "100"
