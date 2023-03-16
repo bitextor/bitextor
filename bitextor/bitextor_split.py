@@ -15,7 +15,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Bitextor.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
 import os
 import argparse
 import base64
@@ -90,12 +89,15 @@ oparser.add_argument("--process-paragraphs", action="store_true",
 oparser.add_argument("--propagate-metadata", action="store_true",
                      help="All columns, starting from 2nd, will be propagated. If --process-paragraphs is set, columns starting"
                           " from 3rd column will be propagated")
+oparser.add_argument("--expected-metadata-fields", type=int, default=-1,
+                     help="Number of expected metadata fields. It will be used only if --propagate-metadata is set")
 
 options = oparser.parse_args()
 
 splitter = options.splitter
 process_paragraphs = options.process_paragraphs
 propagate_metadata = options.propagate_metadata
+expected_metadata_fields = options.expected_metadata_fields if propagate_metadata else -1
 
 splitter_func = lambda s: s.split('\n')
 
@@ -155,13 +157,20 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
             #  malformed BASE64 content might lead to further stages to fail as well
             content = ""
 
+            # Add the necessary missing data (fake)
+            content += '\t-1:-1' if process_paragraphs else '' # Add paragraph identification
+            content += '\t' * expected_metadata_fields if expected_metadata_fields > 0 else '' # Add metadata
+
         content = content.split("\n")
+        content_not_processed = True
+        fake_document = False
 
         # Split each sentence of the paragraph and identify each of them with the corresponding paragraph
         for sent_idx, sentence in enumerate(content, 1):
             columns = sentence.split('\t')
             paragraph_text = columns[0].strip()
             current_metadata = ''
+            empty_but_valid_metadata = False
 
             # Some sanity checks
             if len(columns) == 1 and not_only_text:
@@ -178,16 +187,9 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
 
             if len(columns) == 1 and process_paragraphs:
                 logging.error("Could not get the paragraph identification data: document %d, sentence %d: "
-                              "using 'p-1s-1'", doc_idx, sent_idx)
+                              "using 'p-1:-1sM/N' (it might not even appear)", doc_idx, sent_idx)
 
-                if same_output_file:
-                    sentences += f"{paragraph_text}\tp-1s-1\n"
-                else:
-                    sentences += f"{paragraph_text}\n"
-
-                metadata += "p-1s-1\n"
-
-                continue
+                columns.append("-1:-1") # Fake paragraph identification
 
             # Sentence splitting
             sentences_wo_paragraphs = split_segments(paragraph_text, splitter_func, options.prune_type,
@@ -195,7 +197,7 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
             paragraph_id = 0
             total_paragraphs = 0
             if process_paragraphs:
-                pattern = re.compile("^([0-9]+):([0-9]+)$")
+                pattern = re.compile("^(-?[0-9]+):(-?[0-9]+)$")
                 m = re.match(pattern, columns[1])
                 if m:
                     paragraph_id = int(m.group(1)) # Starts at 1
@@ -205,26 +207,65 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
                         logging.warning("Paragraph id > total paragraphs (bug?): %d > $d", paragraph_id, total_paragraphs)
 
                 else:
-                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}")
+                    raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}: expected pattern didn't match")
 
             # Process metadata
             if propagate_metadata:
                 metadata_offset = 2 if process_paragraphs else 1
+                metadata_fields = len(columns[metadata_offset:])
                 current_metadata = '\t'.join(columns[metadata_offset:])
+
+                if expected_metadata_fields >= 0 and metadata_fields != expected_metadata_fields:
+                    needed_metadata_fields = expected_metadata_fields - metadata_fields
+
+                    if needed_metadata_fields > 0:
+                        logging.warning("Got %d metadata fields, but %d were expected: document %d, sentence %d: adding %d fake metadata fields",
+                                        metadata_fields, expected_metadata_fields, doc_idx, sent_idx, needed_metadata_fields)
+
+                        current_metadata += '\t' * (needed_metadata_fields - (1 if metadata_fields == 0 else 0))
+
+                        if not current_metadata:
+                            empty_but_valid_metadata = True
+                    else:
+                        logging.error("Got %d metadata fields, but %d were expected: document %d, sentence %d: %d unexpected metadata fields",
+                                      metadata_fields, expected_metadata_fields, doc_idx, sent_idx, abs(needed_metadata_fields))
 
             paragraph = ''
 
+            if len(sentences_wo_paragraphs) == 0:
+                # Reason: skip == true or filter_trash() filtered out all the sentences
+                if sent_idx == len(content) and content_not_processed:
+                    # Any sentence from the document was processed
+                    sentences_wo_paragraphs.append('') # Add "empty" sentence
+
+                    fake_document = True
+            else:
+                content_not_processed = False
+
             # Process output
             for idx in range(len(sentences_wo_paragraphs)):
-                paragraph = f"p{paragraph_id}:{total_paragraphs}s{idx + 1}/{len(sentences_wo_paragraphs)}" if process_paragraphs else ''
+                # TODO total_sentences might be greater than len(sentences_wo_paragraphs) if any sentence was filtered out
+                #   due to filter_trash and current_sentence_idx, in that case, might not be increased only in 1
+                current_sentence_idx = idx + 1
+                total_sentences = len(sentences_wo_paragraphs)
+
+                if skip:
+                    # Format of paragraph id.: p-1:-1s-1/-1
+                    current_sentence_idx = -1
+                    total_sentences = -1
+
+                paragraph = f"p{paragraph_id}:{total_paragraphs}s{current_sentence_idx}/{total_sentences}" if process_paragraphs else ''
                 sentences += f"{sentences_wo_paragraphs[idx]}"
-                _current_metadata = paragraph + ('\t' if current_metadata and paragraph else '') + current_metadata
+                _current_metadata = paragraph + ('\t' if (current_metadata or empty_but_valid_metadata) and paragraph else '') + current_metadata
                 metadata += f"{_current_metadata}\n"
 
                 if same_output_file and not_only_text:
                     sentences += f"\t{_current_metadata}"
 
-                sentences += '\n'
+                if fake_document and not sentences:
+                    pass # Empty document
+                else:
+                    sentences += '\n'
 
         no_sentences = sentences.count('\n') if not_only_text else -1 # Only calculated if metadata (purpose: sanity check)
         sentences = base64.b64encode(sentences.encode("utf-8"))
@@ -236,16 +277,30 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
 
         if not_only_text and not same_output_file:
             no_metadata = metadata.count('\n')
+
+            # Sanity checks
+            if expected_metadata_fields >= 0:
+                no_metadata_tabs = metadata.count('\t')
+                no_metadata_tabs_expected = no_metadata * max(0, expected_metadata_fields - 1 + (1 if process_paragraphs else 0))
+
+                if no_metadata_tabs != no_metadata_tabs_expected:
+                    logging.error("Different number of tabs in metadata file: document %d: got %d, but %d were expected",
+                                  doc_idx, no_metadata_tabs, no_metadata_tabs_expected)
+
+            if no_sentences != no_metadata:
+                if fake_document and no_sentences == 0 and no_metadata == 1:
+                    pass # Special case
+                else:
+                    logging.error("Different number of lines in split sentences and metadata: document %d: %d vs %d",
+                                  doc_idx, no_sentences, no_metadata)
+
+            # Encode and write metadata
             metadata = base64.b64encode(metadata.encode("utf-8"))
 
             if metadata_decode:
                 metadata_writer.write(f"{metadata.decode('utf-8')}\n")
             else:
                 metadata_writer.write(metadata + b'\n')
-
-            if no_sentences != no_metadata:
-                logging.error("Different number of lines in splitted sentences and metadata: document %d: %d vs %d",
-                              doc_idx, no_sentences, no_metadata)
 
 if len(no_columns) > 1:
     logging.warning("Different number of columns were detected in the processed documents: %s", str(no_columns))

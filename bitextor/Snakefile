@@ -846,9 +846,8 @@ rule split:
         splitter=lambda wildcards: apply_format(get_lang_or_default(SENTTOKS, wildcards.lang), '--sentence-splitter "{}"'),
         customnbp=lambda wildcards: apply_format(get_customnbp(CUSTOMNBPS, wildcards.lang), '--customnbp "{}"'),
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
-        metadata=lambda wildcards, output: "--propagate-metadata" if ADDITIONAL_METADATA else "",
+        metadata="--propagate-metadata" if ADDITIONAL_METADATA else '',
         metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
-        metadata_aux_output=temp(f"{TMPDIR}/split_rule_metadata/aux_metadata_output.{{lang}}.{{shard}}_{{batch}}.gz"),
     threads: THREADS["split"]
     resources:
         job_split=JOB_THREADS["split"],
@@ -860,51 +859,8 @@ rule split:
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \\
                 {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \\
                 {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \\
+                --expected-metadata-fields {METADATA_HEADERS_NUMBER_FIELDS} \\
             | pigz -c > {output.sentences}
-
-        # Check metadata
-        if [[ ! -z "{output.metadata}" ]]; then
-            if [[ ! -f "{output.metadata}" ]]; then
-                >&2 echo "WARNING: metadata output file should exist but doesn't: creating fake metadata file"
-
-                zcat "{output.sentences}" \\
-                    | b64filter awk '{{for (i=1; i<'"{METADATA_HEADERS_NUMBER_FIELDS}"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
-                    | pigz -c > "{output.metadata}"
-            else
-                header_number_fields=$(zcat "{output.metadata}" | tail -n1 | base64 -d | tail -n1 | tr -cd $'\\t' | wc -c)
-                header_number_fields=$(( $header_number_fields + 1 )) # We want the number of fields, and we have the number of <tab>
-
-                if [[ "$header_number_fields" -ne "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
-                    if [[ "$header_number_fields" -gt "{METADATA_HEADERS_NUMBER_FIELDS}" ]]; then
-                        # There are more metadata fields than expected: warn about it
-                        >&2 echo "WARNING: more metadata fields than expected: $header_number_fields vs" \\
-                                 "{METADATA_HEADERS_NUMBER_FIELDS}"
-                    else
-                        # TODO this is a workaround for allowing to run multiple preprocessor in one instance for preprocessors which
-                        #  doesn't provide any metadata but, optionally, the paragraph identification. This might not work in the
-                        #  moment that different preprocessor may provide different metadata, and in that case, all preprocessor
-                        #  will have to provide the same metadata (for those fields which doesn't have sense in a preprocessor, the
-                        #  solution might be to write empty metadata fields)
-
-                        # We need to fake the missing header fields
-                        mkdir -p "$(dirname {params.metadata_aux_output})"
-
-                        missing_header_fields=$(( "{METADATA_HEADERS_NUMBER_FIELDS}" - "$header_number_fields" ))
-
-                        >&2 echo "WARNING: metadata fields are not enough: creating fake metadata for the missing fields" \\
-                                 "($header_number_fields vs {METADATA_HEADERS_NUMBER_FIELDS})"
-
-                        zcat "{output.sentences}" \\
-                            | b64filter awk '{{for (i=1; i<'"$missing_header_fields"'; i++) printf "\\t"}} {{printf "\\n"}}' \\
-                            | pigz -c > "{params.metadata_aux_output}"
-                        mv -n "{output.metadata}" "{output.metadata}.aux.gz"
-                        paste <(zcat "{output.metadata}.aux.gz") <(zcat "{params.metadata_aux_output}") \\
-                            | python3 {WORKFLOW}/utils/join_b64_docs.py \\
-                            | pigz -c > "{output.metadata}"
-                    fi
-                fi
-            fi
-        fi
         """
 
 
