@@ -848,6 +848,7 @@ rule split:
         paragraphs='--process-paragraphs' if PARAGRAPH_IDENTIFICATION else '',
         metadata="--propagate-metadata" if ADDITIONAL_METADATA else '',
         metadata_output=lambda wildcards, output: apply_format('¿?'.join(output.metadata), '--metadata-output "{}"'),
+        metadata_header_fields=METADATA_HEADERS_NUMBER_FIELDS - (1 if PARAGRAPH_IDENTIFICATION else 0),
     threads: THREADS["split"]
     resources:
         job_split=JOB_THREADS["split"],
@@ -859,7 +860,7 @@ rule split:
             | {PROFILING} ${{parallel_cmd}} python3 {WORKFLOW}/bitextor_split.py \\
                 {params.splitter} {params.customnbp} --langcode {wildcards.lang} {PRUNE_THRESHOLD} \\
                 {PRUNE_TYPE} {params.paragraphs} {params.metadata} {params.metadata_output} \\
-                --expected-metadata-fields {METADATA_HEADERS_NUMBER_FIELDS} \\
+                --expected-metadata-fields {params.metadata_header_fields} \\
             | pigz -c > {output.sentences}
         """
 
