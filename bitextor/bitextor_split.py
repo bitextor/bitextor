@@ -204,7 +204,7 @@ with open_xz_or_gzip_or_plain(options.text) as reader, \
                     total_paragraphs = int(m.group(2))
 
                     if paragraph_id > total_paragraphs:
-                        logging.warning("Paragraph id > total paragraphs (bug?): %d > $d", paragraph_id, total_paragraphs)
+                        logging.warning(f"Paragraph id > total paragraphs (bug?): {paragraph_id} > {total_paragraphs}")
 
                 else:
                     raise Exception(f"Couldn't process document #{doc_idx}, sentence #{sent_idx}: expected pattern didn't match")
