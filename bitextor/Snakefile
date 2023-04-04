@@ -1769,21 +1769,19 @@ rule documents:
         """
         sent_file={input.sents}
         documents_aligned=$(echo {input.documents} | tr ", " "\n")
-        header_ok=""
+        header=""
 
         for document in $documents_aligned
         do
-            header="-n" #echo flag in order to avoid the new line
-            if [[ -z "$header_ok" ]]; then
+            if [[ "$header" = "" ]]; then
                 header=$(head -1 <(zcat $document) | tr -d '\\n')
-                header_ok="true"
             fi
             awk -F $'\t' 'NR == FNR {{ a[$0]; next}} $1"\t"$2 in a{{print $0}}' \\
                 <(zcat $sent_file | tail -n +2 | cut -f 1,2) \\
                 <(zcat $document | tail -n +2) | \\
-                cat <(echo "$header") - | pigz -c >> {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz
+                pigz -c >> {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz
         done
-        zcat {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz | LC_ALL=C sort | uniq | pigz -c > {output}
+        zcat {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz | LC_ALL=C sort | uniq | cat <(echo "$header") - | pigz -c > {output}
         rm {PERMANENT}/{LANG1}-{LANG2}.documents.non_deduped.gz
         """
 
