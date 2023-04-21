@@ -39,7 +39,7 @@ from xml.sax.saxutils import escape
 from bitextor.utils.common import open_xz_or_gzip_or_plain, dummy_open
 
 
-def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False, paragraph_id=None):
+def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_delete_seg=False, paragraph_id=None, endsi=None, envariety=None, hbsvariety=None, endomainvariety=None, hbsdomainvariety=None):
     info_tag = []
 
     print("    <tuv xml:lang=\"" + lang + "\">")
@@ -47,6 +47,18 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
     if "src_url" in seg_columns:
         for url in urls:
             print("     <prop type=\"source-document\">" + escape(url) + "</prop>")
+    if lang == "en":
+        for dsi in endsi:
+            print("     <prop type=\"dsi\">" + dsi + "</prop>")
+        for variety in envariety:
+            print("     <prop type=\"english-variant-document\">" + variety + "</prop>")
+        for variety in endomainvariety:
+            print("     <prop type=\"english-variant-domain\">" + variety + "</prop>")
+    if lang == "hbs_cyrillic" or lang == "hbs_latin":
+        for variety in hbsvariety:
+            print("     <prop type=\"hbs-variant-document\">" + variety + "</prop>")
+        for variety in hbsdomainvariety:
+            print("     <prop type=\"hbs-variant-domain\">" + variety + "</prop>")
 
     if checksum:
         print("     <prop type=\"checksum-seg\">" + checksum + "</prop>")
@@ -69,7 +81,7 @@ def printseg(lang, seg_columns, urls, seg, fields_dict, mint, checksum=None, no_
     print("    </tuv>")
 
 
-def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_dict, mint, no_delete_seg):
+def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_dict, mint, no_delete_seg, endsi, envariety, translationdirection, hbsvariety, endomainvariety, hbsdomainvariety):
     info_tag = []
 
     print("   <tu tuid=\"" + str(tu_idcounter) + "\" datatype=\"Text\">")
@@ -83,6 +95,14 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         print("    <prop type=\"score-bicleaner\">" + fields_dict['bicleaner_score'] + "</prop>")
     elif 'bicleaner_ai_score' in fields_dict and fields_dict['bicleaner_ai_score'] != "":
         print("    <prop type=\"score-bicleaner-ai\">" + fields_dict['bicleaner_ai_score'] + "</prop>")
+
+    if 'biroamer_entities_detected' in fields_dict and fields_dict['biroamer_entities_detected'] != "":
+        print("    <prop type=\"biroamer-entitites-detected\">" + fields_dict['biroamer_entities_detected'] + "</prop>")
+    if translationdirection:
+        for item in translationdirection:
+            print("    <prop type=\"translation-direction\">" + item + "</prop>")
+
+
 
     # Output info data ILSP-FC specification
     if re.sub("[^0-9]", "", fields_dict["src_text"]) != re.sub("[^0-9]", "", fields_dict["trg_text"]):
@@ -110,7 +130,12 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         mint,
         fields_dict['src_deferred_hash'],
         no_delete_seg,
-        fields_dict['src_paragraph_id'])
+        fields_dict['src_paragraph_id'],
+        endsi,
+        envariety,
+        hbsvariety,
+        endomainvariety,
+        hbsdomainvariety)
     printseg(
         lang2,
         tu_columns,
@@ -120,7 +145,12 @@ def printtu(tu_idcounter, lang1, lang2, tu_columns, tu_urls1, tu_urls2, fields_d
         mint,
         fields_dict['trg_deferred_hash'],
         no_delete_seg,
-        fields_dict['trg_paragraph_id'])
+        fields_dict['trg_paragraph_id'],
+        endsi,
+        envariety,
+        hbsvariety,
+        endomainvariety,
+        hbsdomainvariety)
 
     print("   </tu>")
 
@@ -173,6 +203,12 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
     prev_hash = ""
     urls1 = set()
     urls2 = set()
+    endsi = set()
+    envariety = set()
+    hbsvariety = set()
+    endomainvariety = set()
+    hbsdomainvariety = set()
+    translationdirection = set()
     bestseg = dict()
     bestchecksum1 = ""
     bestchecksum2 = ""
@@ -205,19 +241,61 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
             bestseg = dict(fieldsdict)
             urls1.add(fieldsdict['src_url'])
             urls2.add(fieldsdict['trg_url'])
+            if "dsi" in fieldsdict:
+                endsi.add(fieldsdict['dsi'])
+            if "en_document_level_variant" in fieldsdict:
+                envariety.add(fieldsdict['en_document_level_variant'])
+            if "hbs_document_level_variant" in fieldsdict:
+                hbsvariety.add(fieldsdict['hbs_document_level_variant'])
+            if "en_domain_level_variant" in fieldsdict:
+                endomainvariety.add(fieldsdict['en_domain_level_variant'])
+            if "hbs_domain_level_variant" in fieldsdict:
+                hbsdomainvariety.add(fieldsdict['hbs_domain_level_variant'])
+            if "translation_direction" in fieldsdict:
+                translationdirection.add(fieldsdict['translation_direction'])
             prev_hash = line_hash
         elif prev_hash == line_hash and options.dedup:
             urls1.add(fieldsdict['src_url'])
             urls2.add(fieldsdict['trg_url'])
+            if "dsi" in fieldsdict:
+                endsi.add(fieldsdict['dsi'])
+            if "en_document_level_variant" in fieldsdict:
+                envariety.add(fieldsdict['en_document_level_variant'])
+            if "hbs_document_level_variant" in fieldsdict:
+                hbsvariety.add(fieldsdict['hbs_document_level_variant'])
+            if "en_domain_level_variant" in fieldsdict:
+                endomainvariety.add(fieldsdict['en_domain_level_variant'])
+            if "hbs_domain_level_variant" in fieldsdict:
+                hbsdomainvariety.add(fieldsdict['hbs_domain_level_variant'])
+            if "translation_direction" in fieldsdict:
+                translationdirection.add(fieldsdict['translation_direction'])
             prev_hash = line_hash
         elif not options.dedup:
             urls1.add(fieldsdict['src_url'])
             urls2.add(fieldsdict['trg_url'])
+            if "dsi" in fieldsdict:
+                endsi.add(fieldsdict['dsi'])
+            if "en_document_level_variant" in fieldsdict:
+                envariety.add(fieldsdict['en_document_level_variant'])
+            if "hbs_document_level_variant" in fieldsdict:
+                hbsvariety.add(fieldsdict['hbs_document_level_variant'])
+            if "en_domain_level_variant" in fieldsdict:
+                endomainvariety.add(fieldsdict['en_domain_level_variant'])
+            if "hbs_domain_level_variant" in fieldsdict:
+                hbsdomainvariety.add(fieldsdict['hbs_domain_level_variant'])
+            if "translation_direction" in fieldsdict:
+                translationdirection.add(fieldsdict['translation_direction'])
             idcounter += 1
             printtu(idcounter, options.lang1, options.lang2, header, urls1, urls2, fieldsdict, options.mint,
-                    options.no_delete_seg)
+                    options.no_delete_seg, endsi, envariety, translationdirection, hbsvariety, endomainvariety, endomainvariety)
             urls1 = set()
             urls2 = set()
+            endsi = set()
+            envariety = set()
+            hbsvariety = set()
+            endomainvariety = set()
+            hbsdomainvariety = set()
+            translationdirection = set()
         else:
             idcounter += 1
             printtu(
@@ -229,16 +307,40 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 urls2,
                 bestseg,
                 options.mint,
-                options.no_delete_seg)
+                options.no_delete_seg,
+                endsi,
+                envariety,
+                translationdirection,
+                hbsvariety,
+                endomainvariety,
+                hbsdomainvariety)
 
             if text_writer:
                 text_writer.write("\t".join([x for x in bestseg.values() if x is not None]) + "\n")
 
             urls1 = set()
             urls2 = set()
+            endsi = set()
+            envariety = set()
+            hbsvariety = set()
+            endomainvariety = set()
+            hbsdomainvariety = set()
+            translationdirection = set()
             bestseg = dict(fieldsdict)
             urls1.add(fieldsdict['src_url'])
             urls2.add(fieldsdict['trg_url'])
+            if "dsi" in fieldsdict:
+                endsi.add(fieldsdict['dsi'])
+            if "en_document_level_variant" in fieldsdict:
+                envariety.add(fieldsdict['en_document_level_variant'])
+            if "hbs_document_level_variant" in fieldsdict:
+                hbsvariety.add(fieldsdict['hbs_document_level_variant'])
+            if "en_domain_level_variant" in fieldsdict:
+                endomainvariety.add(fieldsdict['en_domain_level_variant'])
+            if "hbs_domain_level_variant" in fieldsdict:
+                hbsdomainvariety.add(fieldsdict['hbs_domain_level_variant'])
+            if "translation_direction" in fieldsdict:
+                translationdirection.add(fieldsdict['translation_direction'])
             prev_hash = line_hash
 
     if options.dedup:
@@ -254,7 +356,13 @@ with open_xz_or_gzip_or_plain(options.clean_alignments, 'rt') if options.clean_a
                 urls2,
                 fieldsdict,
                 options.mint,
-                options.no_delete_seg)
+                options.no_delete_seg,
+                endsi,
+                envariety,
+                translationdirection,
+                hbsvariety,
+                endomainvariety,
+                hbsdomainvariety)
 
         if text_writer:
             dedup_output = "\t".join([x for x in fieldsdict.values() if x is not None])
