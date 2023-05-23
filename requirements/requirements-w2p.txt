@@ -1,9 +1,9 @@
-beautifulsoup4==4.11.2
+beautifulsoup4==4.12.2
 pycld2>=0.31,<=0.41
 python-magic>=0.4.22,<=0.4.27
-selectolax>=0.2.11,<=0.3.12
-Cython>=0.29.23,<=0.29.33
+selectolax>=0.2.11,<=0.3.13
+Cython>=0.29.23,<=0.29.34
 ftfy==6.1.1
-mmh3==3.0.0
+mmh3==3.1.0
 lxml>=4.6.3,<=4.9.2
 html5lib==1.1

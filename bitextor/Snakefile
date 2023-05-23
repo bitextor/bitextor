@@ -305,6 +305,7 @@ HOSTS = set()
 DIRECTORIES = set()
 WARCS = set()
 PREVERTICALS = set()
+CLD2_IDENTIFICATION = config["preverticals_cld2"]
 
 if "warcs" in config:
     WARCS = WARCS.union(config["warcs"])
@@ -748,6 +749,7 @@ rule prevertical2text:
         f=",".join([f.strip(".gz") for f in PPROC_FILES]),
         boilerplate='-b' if BOILERPLATE_CLEANING else '',
         paragraphs='-p' if PARAGRAPH_IDENTIFICATION else '',
+        cld2='-c' if CLD2_IDENTIFICATION else '',
     shell:
         """
         CAT=$([[ {input} == *.gz ]] && echo "zcat" || echo "cat")
@@ -755,7 +757,7 @@ rule prevertical2text:
         mkdir -p {params.folder}
         $CAT {input} | \
             python3 {WORKFLOW}/bitextor_prevertical_lang_iso639_1.py | \
-            {PROFILING} prevertical2text -o {params.folder} -s -c -f {params.f} {params.boilerplate} {params.paragraphs} -
+            {PROFILING} prevertical2text -o {params.folder} -s {params.cld2} -f {params.f} {params.boilerplate} {params.paragraphs} -
 
         for lang in {LANGS}; do
             if [ ! -f {params.folder}/$lang/text.gz ]; then

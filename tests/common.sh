@@ -96,7 +96,7 @@ download_bicleaner_model()
 
 download_bicleaner_ai_model()
 {
-    local base="https://github.com/bitextor/bicleaner-ai-data/releases/latest/download"
+    local base="https://github.com/bitextor/bicleaner-ai-data/releases/download/v1.0"
     local langs=$1
     local output=$2
     local flavour=$([[ "$3" == "" ]] && echo "full" || echo "$3")

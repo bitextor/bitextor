@@ -176,7 +176,7 @@ Options specific to `warc2preprocess`:
 <!-- * `plainTextHashes`: file with plain text MurmurHashes from a previous Bitextor run, so only hashes that are not found in this file are processed in Bitextor. This is useful in case you want to fully recrawl a domain but only process updated content. Works with `bitextor-warc2preprocess` -->
 
 Options specific to `warc2text`:
-* `multilingual`: option to detect and separate multiple languages in a single document
+* `multilang`: option to detect and separate multiple languages in a single document
 
 Boilerplate:
 

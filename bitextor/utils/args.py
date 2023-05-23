@@ -137,6 +137,7 @@ def validate_args(config):
         'warcsFile': {'type': 'string', 'check_with': isfile},
         'preverticals': {'type': 'list', 'check_with': isfile},
         'preverticalsFile': {'type': 'string', 'check_with': isfile},
+        'preverticals_cld2': {'type': 'boolean', 'default': False},
         # crawling
         'crawler': {'type': 'string', 'allowed': ["wget", "heritrix"]},
         'crawlTimeLimit': {
