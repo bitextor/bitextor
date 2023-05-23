@@ -2,6 +2,8 @@ import argparse
 import gzip
 from sys import stdin
 
+stdin.reconfigure(encoding='utf-8', errors="ignore")
+
 def columns(cols, header):
     ranges = []
     h = header.strip().split('\t')
