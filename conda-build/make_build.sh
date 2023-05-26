@@ -94,6 +94,7 @@ fi
 conda create -y -n $CONDA_ENV_NAME -c conda-forge conda-build conda-verify python=$CONDA_PYTHON_VERSION
 conda activate $CONDA_ENV_NAME
 conda update -y conda
+conda install -y -c conda-forge pkg-config
 
 CONDA_CHANNELS="-c conda-forge -c bitextor -c bioconda -c dmnapolitano -c esarrias"
 

@@ -42,7 +42,7 @@ $PYTHON -m pip install ./third_party/vecalign
 $PYTHON -m pip install pycld3
 
 echo -e " - \e[4mMake...\e[0m"
-mkdir -p build && cd build
+rm -rf build && mkdir -p build && cd build
 CPATH="$PREFIX/include:$CPATH" cmake "-DCMAKE_INSTALL_PREFIX=$PREFIX" ..
 CPATH="$PREFIX/include:$CPATH" LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH" make install
 
