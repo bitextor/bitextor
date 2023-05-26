@@ -27,6 +27,7 @@ $PYTHON -m pip install .[all]
 ### FastSpell (bicleaner-hardrules)
 INCLUDE_PATH="$PREFIX/include" $PYTHON -m pip install hunspell
 ### Bicleaner, Bicleaner AI and KenLM
+$PYTHON -m pip install git+https://github.com/MSeal/cython_hunspell@2.0.3
 $PYTHON -m pip install ./third_party/bicleaner
 $PYTHON -m pip install ./third_party/bicleaner-ai
 $PYTHON -m pip install ./third_party/kenlm --config-settings="--build-option=--max_order=7"

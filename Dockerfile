@@ -87,6 +87,7 @@ RUN pip3 install --upgrade pip
 ## bitextor
 RUN pip3 install .[all]
 ## bicleaner
+RUN pip3 install git+https://github.com/MSeal/cython_hunspell@2.0.3
 RUN pip3 install ./third_party/bicleaner
 RUN pip3 install ./third_party/bicleaner-ai
 RUN pip3 install ./third_party/kenlm --config-settings="--build-option=--max_order=7"
