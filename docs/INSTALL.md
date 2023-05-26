@@ -176,8 +176,8 @@ source /path/to/virtual/environment/bin/activate
 
 # install dependencies in virtual enviroment
 pip3 install --upgrade pip
-# bitextor (mandatory dependencies):
-pip3 install .
+# bitextor (all dependencies):
+pip3 install .[all]
 # additional dependencies:
 pip3 install git+https://github.com/MSeal/cython_hunspell@2.0.3
 pip3 install ./third_party/bifixer
@@ -200,6 +200,8 @@ pip3 install .[all]
 pip3 install .[w2p]
 # Install dictionary pipeline dependencies instead of MT
 pip3 install .[dictionary]
+# Install only the mandatory dependencies
+pip3 install .
 ```
 
 ### [Optional] Heritrix
