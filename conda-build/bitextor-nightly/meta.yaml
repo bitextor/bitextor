@@ -36,7 +36,7 @@ requirements:
     - unzip
     - libtool
     - wget
-    - protobuf
+    - protobuf 3.21.12 h3eb15da_0
     - libmagic
     - libzip
     - uchardet
@@ -58,7 +58,7 @@ requirements:
     - pigz
     - icu
     - wget
-    - protobuf
+    - protobuf 3.21.12 h3eb15da_0
     - libmagic
     - libzip
     - uchardet
