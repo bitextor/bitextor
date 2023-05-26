@@ -241,7 +241,7 @@ tests-mt()
 
         ${BITEXTOR} \
             --config permanentDir="${WORK}/permanent/${TEST_ID}" \
-                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" preverticals_cld=False \
+                dataDir="${WORK}/data/${TEST_ID}" transientDir="${TRANSIENT_DIR}" preverticals_cld2=False \
                 preverticals="['${WORK}/data/prevertical/greenpeace.en.prevertical.gz', '${WORK}/data/prevertical/greenpeace.fr.prevertical.gz']" \
                 shards=1 batches=512 lang1=en lang2=fr documentAligner="externalMT" alignerCmd="bash ${DIR}/../bitextor/example/dummy-translate.sh" \
                 sentenceAligner="bleualign" bicleaner=True bicleanerModel="${BICLEANER}/en-fr/en-fr.yaml" bicleanerFlavour="classic" \
