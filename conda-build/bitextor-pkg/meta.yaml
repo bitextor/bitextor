@@ -43,6 +43,7 @@ requirements:
     - gperftools
     - google-sparsehash
     - hunspell
+    - gettext
   run:
     - pip
     - setuptools

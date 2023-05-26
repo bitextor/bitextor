@@ -28,7 +28,7 @@ RUN /bin/echo -e "${RED}Installing biroamer apt dependencies${NC}"
 RUN apt-get -y install libgoogle-perftools-dev libsparsehash-dev
 # fastspell
 RUN /bin/echo -e "${RED}Installing fastspell apt dependencies${NC}"
-RUN apt-get -y install hunspell-af hunspell-bg hunspell-bs hunspell-ca hunspell-cs hunspell-da hunspell-es hunspell-gl hunspell-hr hunspell-nl hunspell-no hunspell-pt-pt hunspell-sk hunspell-sl hunspell-sr
+RUN apt-get -y install autopoint hunspell-af hunspell-bg hunspell-bs hunspell-ca hunspell-cs hunspell-da hunspell-es hunspell-gl hunspell-hr hunspell-nl hunspell-no hunspell-pt-pt hunspell-sk hunspell-sl hunspell-sr
 
 
 # random utilities:

@@ -88,7 +88,7 @@ sudo apt install wget
 ## warc2text:
 sudo apt install uchardet libuchardet-dev libzip-dev
 ## Bicleaner and Bicleaner AI:
-sudo apt install libhunspell-dev
+sudo apt install autopoint libhunspell-dev
 ### Hunspell dictionaries (example)
 sudo apt install hunspell-es
 ## Biroamer:
@@ -116,7 +116,7 @@ sudo dnf install hunspell hunspell-devel
 ### Hunspell dictionaries (example)
 sudo dnf install hunspell-es
 ## Bicleaner:
-sudo dnf install gcc-gfortran python3-devel openblas-devel lapack-devel
+sudo dnf install gettext-devel gcc-gfortran python3-devel openblas-devel lapack-devel
 ```
 
 ### C++ dependencies
