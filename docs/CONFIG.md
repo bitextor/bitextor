@@ -72,12 +72,12 @@ directoriesFile: ~/directories.gz
 ```
 
 * `hosts`: list of [hosts](https://en.wikipedia.org/wiki/URL) to be crawled; the host is the part of the URL of a website that identifies the web domain, i.e. the URL without the protocol and the path. For example, in the case of the url *<https://github.com/bitextor/bitextor>* the host would be *github.com*
-* `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above.
+* `hostsFile`: a path to a file that contains a list of hosts to be crawled; in this file each line should contain a single host, written in the format described above
 * `warcs`: specify one or multiple [WARC](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1) files to use; WARC files must contain individually compressed records
 * `warcsFile`: a path to a file that contains a list of WARC files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 * `preverticals`: specify one or multiple prevertical files to use; prevertical files are the output of the SpiderLing crawler
 * `preverticalsFile`: a path to a file that contains a list of prevertical files to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
-* `directories`: list of directories with files to be included in parallel text mining. Files can be in office, openoffice, epub and pdf format.
+* `directories`: list of directories with files to be included in parallel text mining. All files in the directories will be processed. Files can be in office, openoffice, epub, pdf, txt and html formats
 * `directoriesFile`: a path to a file that contains a list of directories to be included in parallel text mining (silimar to `hosts` and `hostsFile`)
 
 ## Crawling
@@ -151,6 +151,9 @@ boilerplateCleaning: true
 ## identify paragraphs
 paragraphIdentification: true
 
+## language identification at paragraph level
+preverticals_cld2: true
+
 ## other metadata
 additionalMetadata: true
 
@@ -160,6 +163,7 @@ batches: 1024 # batches of up to 1024MB
 ```
 
 * `preprocessor`: this options allows to select one of two text extraction tools, `warc2text` (default) or `warc2preprocess`. `warc2text` is faster but less flexibile (less options) than `warc2preprocess`. There is another preprocessor, but cannot be set, and that is `prevertical2text`. This preprocessor will be used automatically when you have prevertical files, which is the format of the SpiderLing crawler. The reason why cannot be set is because is not a generic preprocessor, but specific for SpiderLing files.
+* `preverticals_cld2`: by default, `prevertical2text` looks for a cld2 paragraph language identification. If the preverticals used don't have this mark, preverticals_cld2 must be False to use the trigram model language identification
 * `langs`: list of languages that will be processed in addition to `lang1` and `lang2`
 * `PDFprocessing`: option that allows to select a specific PDF processor. It is possible to use [pdfextraxt](https://github.com/bitextor/python-pdfextract) or [apacheTika](https://github.com/bitextor/python-apachetika) instead of poppler `pdf2html` converter
 * `PDFextract_configfile`: set a path for a PDFExtract config file, specially for language models for a better sentence splitting (see [more info](https://github.com/bitextor/pdf-extract/#pdfextractjson))
