@@ -23,12 +23,8 @@ public:
 		return backing_[std::hash<K>{}(key) % backing_.size()];
 	}
 
-	const_iterator find(K const &key) const {
-		return backing_.begin() + (std::hash<K>{}(key) % backing_.size());
-	}
-
-	const_iterator end() const {
-		return backing_.end();
+	T const &operator[](K const &key) const {
+		return backing_[std::hash<K>{}(key) % backing_.size()];
 	}
 
 	void add(HashMap const &other, float alpha = 1.0f) {

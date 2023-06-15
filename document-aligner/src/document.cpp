@@ -39,25 +39,12 @@ void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t
 	float total_tfidf_l2 = 0;
 
 	for (auto const &entry : document.vocab) {
-		// How often does the term occur in the whole dataset?
-		auto it = df.find(entry.first);
+		float document_tfidf = tfidf(entry.second, document_count, std::max(df[entry.first], 1ul));
 
-		float document_tfidf;
-
-		if (it == df.end()) { // unknown ngram
-			document_tfidf = tfidf(entry.second, document_count, 1);
-		}
-		// else if (*it > max_ngram_cnt) { // Very well known ngram, like stop-word
-		// 	continue;
-		// }
-		else { // Regular ngram
-			document_tfidf = tfidf(entry.second, document_count, *it);
-
-			document_ref.wordvec.push_back(WordScore{
-					.hash = entry.first,
-					.tfidf = document_tfidf
-			});
-		}
+		document_ref.wordvec.push_back(WordScore{
+				.hash = entry.first,
+				.tfidf = document_tfidf
+		});
 		
 		// Keep track of the squared sum of all values for L2 normalisation
 		total_tfidf_l2 += document_tfidf * document_tfidf;
