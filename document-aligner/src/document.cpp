@@ -30,7 +30,7 @@ inline float tfidf(size_t tf, size_t dc, size_t df) {
  * across all documents. Only terms that are seen in this document and in the document frequency table are
  * counted. All other terms are ignored.
 */
-void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, unordered_map<NGram, size_t> const &df, unordered_set<NGram> const &max_ngram_pruned) {
+void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, HashMap<NGram, size_t> const &df, size_t max_ngram_cnt) {
 	document_ref.id = document.id;
 
 	document_ref.wordvec.clear();
@@ -44,16 +44,14 @@ void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t
 
 		float document_tfidf;
 
-		if (it == df.end()) {
-			if (max_ngram_pruned.find(entry.first) == max_ngram_pruned.end()) {
-				document_tfidf = tfidf(entry.second, document_count, 1);
-			}
-			else{
-				continue;
-			}
+		if (it == df.end()) { // unknown ngram
+			document_tfidf = tfidf(entry.second, document_count, 1);
 		}
-		else {
-			document_tfidf = tfidf(entry.second, document_count, it->second);
+		// else if (*it > max_ngram_cnt) { // Very well known ngram, like stop-word
+		// 	continue;
+		// }
+		else { // Regular ngram
+			document_tfidf = tfidf(entry.second, document_count, *it);
 
 			document_ref.wordvec.push_back(WordScore{
 					.hash = entry.first,
