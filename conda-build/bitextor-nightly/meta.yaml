@@ -24,8 +24,8 @@ requirements:
     - git
     - make
     - cmake
-    - gcc_linux-64
-    - gxx_linux-64
+    - gcc_linux-64 12.2.0
+    - gxx_linux-64 12.2.0
     - go-cgo 1.13.5 h77d97cf_0
   host:
     - boost-cpp 1.81.0 he95ae9e_0
@@ -36,7 +36,7 @@ requirements:
     - unzip
     - libtool
     - wget
-    - protobuf==4.21.12
+    - protobuf 4.21.12
     - libmagic
     - libzip
     - uchardet
@@ -58,7 +58,7 @@ requirements:
     - pigz
     - icu
     - wget
-    - protobuf==4.21.12
+    - protobuf 4.21.12
     - libmagic
     - libzip
     - uchardet
