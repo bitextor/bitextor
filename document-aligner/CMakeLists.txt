@@ -37,7 +37,7 @@ include_directories(
 # kpu/preprocess dependency:
 if (NOT PREPROCESS_PATH)
     # if preprocess_path is not defined, use the one in the parent folder of document-aligner
-    set(PREPROCESS_PATH "${PROJECT_SOURCE_DIR}/../preprocess")
+    set(PREPROCESS_PATH "${PROJECT_SOURCE_DIR}/../third_party/preprocess")
 endif()
 
 if (NOT SKIP_PREPROCESS_BUILD)

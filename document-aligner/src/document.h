@@ -1,6 +1,7 @@
 #pragma once
 #include "util/string_piece.hh"
 #include "ngram.h"
+#include "hashmap.h"
 #include <istream>
 #include <unordered_map>
 #include <unordered_set>
@@ -32,6 +33,6 @@ struct DocumentRef {
 // Assumes base64 encoded still.
 void ReadDocument(const util::StringPiece &encoded, Document &to, size_t ngram_size);
 
-void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, std::unordered_map<NGram, size_t> const &df, std::unordered_set<NGram> const &max_ngram_pruned);
+void calculate_tfidf(Document const &document, DocumentRef &document_ref, size_t document_count, HashMap<NGram, size_t> const &df, size_t max_ngram_cnt);
 
 } // namespace bitextor
