@@ -295,6 +295,11 @@ rule create_hunalign_dic_format:
                     inverse = False
                 for inline in inr:
                     columns = inline.strip().split("\t")
+                    if len(columns) == 0:
+                        continue
+                    elif len(columns) != 2:
+                        print("Warning: skipping wrong dictionary entry: " + inline.strip())
+                        continue
                     if inverse:
                         outw.write(f"{columns[1]} @ {columns[0]}\n")
                     else:
