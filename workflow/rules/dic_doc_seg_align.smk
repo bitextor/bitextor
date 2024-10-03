@@ -1,0 +1,1 @@
+../../bitextor/rules/dic_doc_seg_align.smk
