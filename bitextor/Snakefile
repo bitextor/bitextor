@@ -1126,7 +1126,7 @@ rule make_documents_output_file:
         """
         header="src_url\ttrg_url\tsrc_doc\ttrg_doc"
 
-        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \
+        cat {input.indices} \
             | tail -n +2 \
             | docjoin \
                 -l {input.url1} -r {input.url2} \
@@ -1197,7 +1197,7 @@ rule bleualign:
 
         [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
-        python3 {WORKFLOW}/utils/cut_header.py -f idx_translated,idx_trg --input {input.indices} \\
+        cat {input.indices} \\
             | tail -n +2 \\
             | docjoin \\
                 -l {input.url1} -r {input.url2} \\
@@ -1254,7 +1254,7 @@ rule vecalign:
 
         [[ ! -z "{params.metadata}" ]] && header=$(echo "${{header}}\tsrc_metadata\ttrg_metadata")
 
-        python3 {WORKFLOW}/utils/cut_header.py -f {params.c1},{params.c2} --input {input.indices} \\
+        cat {input.indices} \\
             | tail -n +2 \\
             | docjoin \\
                 -l {input.url1} -r {input.url2} \\

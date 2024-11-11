@@ -14,6 +14,7 @@ using namespace std;
 struct Join {
 	size_t left_index;
 	size_t right_index;
+	float score;
 };
 
 struct Row {
@@ -71,7 +72,7 @@ enum Source {
 
 int usage(char *progname) {
 	cout << "Usage: " << progname << " [ -l filename | -r filename | -li | -ri ] ...\n"
-	        "Input via stdin: <left index> \"\\t\" <right index> \"\\n\"\n"
+	        "Input via stdin: <alignment_score> \"\\t\" <left index> \"\\t\" <right index> \"\\n\"\n"
 	        "\n"
 	        "This program joins rows from two sets of files into tab-separated output.\n"
 	      	"\n"
@@ -80,6 +81,7 @@ int usage(char *progname) {
 	        "  -r    Use right index for the following files\n"
 	        "  -li   Print the left index\n"
 	        "  -ri   Print the right index\n"
+	        "  -s    Print the alignment score\n"
 	        "\n"
 	        "The order of the columns in the output is the same as the order of the\n"
 	        "arguments given to the program.\n";
@@ -96,6 +98,7 @@ int main(int argc, char *argv[]) {
 	FileSet left_files, right_files;
 	vector<Source> order;
 	Source side = LEFT;
+	bool print_score = false;
 	FileSet *files[]{&left_files, &right_files};
 	for (int pos = 1; pos < argc; ++pos) {
 		if (string(argv[pos]) == "-l")
@@ -106,6 +109,8 @@ int main(int argc, char *argv[]) {
 			order.push_back(LEFT_INDEX);
 		else if (string(argv[pos]) == "-ri")
 			order.push_back(RIGHT_INDEX);
+		else if (string(argv[pos]) == "-s")
+			print_score = true;
 		else {
 			files[side]->emplace_back(new util::FilePiece(argv[pos]));
 			order.push_back(side);
@@ -119,7 +124,7 @@ int main(int argc, char *argv[]) {
 	while (getline(cin, line)) {
 		istringstream iline(line);
 		Join join;
-		if (iline >> join.left_index >> join.right_index){
+		if (iline >> join.score >> join.left_index >> join.right_index){
 			joins.push_back(join);
 			left_indexes.insert (int(join.left_index));
 		}
@@ -197,6 +202,8 @@ int main(int argc, char *argv[]) {
 					break;
 			}
 		}
+		if (print_score)
+			cout << '\t' << join_it->score;
 		cout << endl;
 	}
 
