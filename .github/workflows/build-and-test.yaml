@@ -55,9 +55,9 @@ jobs:
             pip3 install ./third_party/neural-document-aligner
             pip3 install ./third_party/vecalign
       -  name: Setup golang
-         uses: actions/setup-go@v2
+         uses: actions/setup-go@v5
          with:
-            go-version: 1.20
+            go-version: 1.20.13
       -  name: Install giashard
          run: |
             go install github.com/paracrawl/giashard/cmd/giashard@latest

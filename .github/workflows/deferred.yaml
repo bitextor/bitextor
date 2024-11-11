@@ -53,9 +53,9 @@ jobs:
             python3 -c "from flair.models import SequenceTagger; SequenceTagger.load('flair/ner-english-fast')"
             pip3 install -r ./third_party/deferred-crawling/requirements.txt
       -  name: Setup golang
-         uses: actions/setup-go@v2
+         uses: actions/setup-go@v5
          with:
-            go-version: 1.17.3
+            go-version: 1.20.13
       -  name: Install giashard
          run: |
             go install github.com/paracrawl/giashard/cmd/giashard@latest
